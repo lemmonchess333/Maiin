@@ -7,13 +7,15 @@ import {
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "000000000000",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:000:web:000",
+  apiKey: "AIzaSyB-JX_RC7zxR6WopylzqG3B0RFzX32zjic",
+  authDomain: "adaptive-fitness-af8bb.firebaseapp.com",
+  projectId: "adaptive-fitness-af8bb",
+  storageBucket: "adaptive-fitness-af8bb.firebasestorage.app",
+  messagingSenderId: "110047207547",
+  appId: "1:110047207547:web:04c99eb6c034e0f6cc02de",
+  measurementId: "G-LNJVR4L2SL",
 };
+
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
