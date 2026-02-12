@@ -10,7 +10,7 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, isDemoMode } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import {
   startOfWeek,
@@ -29,8 +29,26 @@ export interface DailyLog {
   hasPR: boolean;
   weightKg?: number;
   notes: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | null;
 }
+
+// --- localStorage helpers for demo mode ---
+const DEMO_LOGS_KEY = "adaptfit_demo_logs";
+
+function loadDemoLogs(): DailyLog[] {
+  try {
+    const raw = localStorage.getItem(DEMO_LOGS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDemoLogs(logs: DailyLog[]) {
+  localStorage.setItem(DEMO_LOGS_KEY, JSON.stringify(logs));
+}
+
+// --- Hooks ---
 
 export function useDailyLogs() {
   const { user } = useAuth();
@@ -44,7 +62,13 @@ export function useDailyLogs() {
       return;
     }
 
-    const logsRef = collection(db, "users", user.uid, "logs");
+    if (isDemoMode) {
+      setLogs(loadDemoLogs().sort((a, b) => b.date.localeCompare(a.date)));
+      setLoading(false);
+      return;
+    }
+
+    const logsRef = collection(db!, "users", user.uid, "logs");
     const q = query(logsRef, orderBy("date", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -62,7 +86,22 @@ export function useDailyLogs() {
   const saveLog = useCallback(
     async (log: Omit<DailyLog, "id" | "createdAt">) => {
       if (!user) return;
-      const logRef = doc(db, "users", user.uid, "logs", log.date);
+
+      if (isDemoMode) {
+        const existing = loadDemoLogs();
+        const idx = existing.findIndex((l) => l.date === log.date);
+        const newLog: DailyLog = { ...log, id: log.date, createdAt: null };
+        if (idx >= 0) {
+          existing[idx] = newLog;
+        } else {
+          existing.push(newLog);
+        }
+        saveDemoLogs(existing);
+        setLogs(existing.sort((a, b) => b.date.localeCompare(a.date)));
+        return;
+      }
+
+      const logRef = doc(db!, "users", user.uid, "logs", log.date);
       await setDoc(logRef, { ...log, createdAt: Timestamp.now() }, { merge: true });
     },
     [user]
@@ -88,7 +127,27 @@ export function useWeeklyStats() {
     const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
     const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
 
-    const logsRef = collection(db, "users", user.uid, "logs");
+    if (isDemoMode) {
+      const logs = loadDemoLogs().filter(
+        (l) => l.date >= weekStart && l.date <= weekEnd
+      );
+      let workouts = 0, meals = 0, pr = false;
+      logs.forEach((l) => {
+        workouts += l.workouts || 0;
+        meals += l.meals || 0;
+        if (l.hasPR) pr = true;
+      });
+      setStats({
+        workoutsDone: workouts,
+        workoutsTarget: profile?.weeklyWorkoutsTarget || 4,
+        mealsDone: meals,
+        mealsTarget: profile?.weeklyMealsTarget || 10,
+        hasPR: pr,
+      });
+      return;
+    }
+
+    const logsRef = collection(db!, "users", user.uid, "logs");
     const q = query(
       logsRef,
       where("date", ">=", weekStart),
@@ -137,7 +196,27 @@ export function useMonthlyStats() {
     const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
     const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
 
-    const logsRef = collection(db, "users", user.uid, "logs");
+    if (isDemoMode) {
+      const logs = loadDemoLogs().filter(
+        (l) => l.date >= monthStart && l.date <= monthEnd
+      );
+      let workouts = 0, meals = 0, pr = false;
+      logs.forEach((l) => {
+        workouts += l.workouts || 0;
+        meals += l.meals || 0;
+        if (l.hasPR) pr = true;
+      });
+      setStats({
+        workoutsDone: workouts,
+        workoutsTarget: (profile?.weeklyWorkoutsTarget || 4) * 4,
+        mealsDone: meals,
+        mealsTarget: (profile?.weeklyMealsTarget || 10) * 4,
+        hasPR: pr,
+      });
+      return;
+    }
+
+    const logsRef = collection(db!, "users", user.uid, "logs");
     const q = query(
       logsRef,
       where("date", ">=", monthStart),
@@ -182,7 +261,17 @@ export function useHistoryData(days: number = 30) {
     }
 
     const startDate = format(subDays(new Date(), days), "yyyy-MM-dd");
-    const logsRef = collection(db, "users", user.uid, "logs");
+
+    if (isDemoMode) {
+      const logs = loadDemoLogs()
+        .filter((l) => l.date >= startDate)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setData(logs);
+      setLoading(false);
+      return;
+    }
+
+    const logsRef = collection(db!, "users", user.uid, "logs");
     const q = query(logsRef, where("date", ">=", startDate), orderBy("date", "asc"));
 
     getDocs(q).then((snapshot) => {

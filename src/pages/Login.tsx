@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, tryDemo, isDemo } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,18 +141,27 @@ export default function Login() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        {/* Google Sign In */}
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className={cn(
-            "w-full py-3 rounded-xl font-medium transition-all",
-            "bg-muted text-foreground border border-border/50 hover:bg-muted/80",
-            loading && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          Continue with Google
-        </button>
+        {/* Try Demo (shown when Firebase isn't configured) */}
+        {isDemo ? (
+          <button
+            onClick={tryDemo}
+            className="w-full py-3 rounded-xl font-medium transition-all bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+          >
+            Try Demo (No Account Needed)
+          </button>
+        ) : (
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            className={cn(
+              "w-full py-3 rounded-xl font-medium transition-all",
+              "bg-muted text-foreground border border-border/50 hover:bg-muted/80",
+              loading && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            Continue with Google
+          </button>
+        )}
 
         {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
