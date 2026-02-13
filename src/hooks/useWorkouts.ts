@@ -5,7 +5,6 @@ import {
   setDoc,
   deleteDoc,
   query,
-  where,
   orderBy,
   onSnapshot,
   Timestamp,
