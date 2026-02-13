@@ -91,6 +91,7 @@ export default function Log() {
         </p>
       </div>
 
+      {/* Date Switcher */}
       <div className="flex items-center justify-between bg-card rounded-xl border border-border/50 p-3">
         <button
           onClick={() => changeDate(-1)}
@@ -124,6 +125,7 @@ export default function Log() {
         </button>
       </div>
 
+      {/* Tabs */}
       <div className="flex gap-2 bg-muted rounded-xl p-1">
         <button
           onClick={() => setActiveTab("workout")}
@@ -150,6 +152,7 @@ export default function Log() {
         </button>
       </div>
 
+      {/* Workout Tab */}
       {activeTab === "workout" && (
         <div className="space-y-4">
           {todaysWorkouts.length > 0 && (
@@ -213,8 +216,10 @@ export default function Log() {
         </div>
       )}
 
+      {/* Quick Log Tab */}
       {activeTab === "quick" && (
         <div className="space-y-6">
+          {/* Workouts */}
           <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />
@@ -247,6 +252,103 @@ export default function Log() {
             </div>
           </div>
 
+          {/* Protein Meals */}
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <UtensilsCrossed className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">
+                Protein Meals
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              {[0, 1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setMeals(n)}
+                  className={cn(
+                    "w-10 h-10 rounded-lg font-medium text-sm transition-all",
+                    meals === n
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* PR Toggle */}
+          <div className="bg-card rounded-xl border border-border/50 p-4">
+            <button
+              onClick={() => setHasPR(!hasPR)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Trophy
+                  className={cn(
+                    "w-4 h-4",
+                    hasPR ? "text-yellow-500" : "text-muted-foreground"
+                  )}
+                />
+                <p className="text-sm font-medium text-foreground">
+                  New Personal Record?
+                </p>
+              </div>
+
+              <div
+                className={cn(
+                  "w-12 h-7 rounded-full transition-all flex items-center",
+                  hasPR
+                    ? "bg-primary justify-end"
+                    : "bg-muted justify-start"
+                )}
+              >
+                <div className="w-5 h-5 bg-white rounded-full mx-1 shadow-sm" />
+              </div>
+            </button>
+          </div>
+
+          {/* Weight */}
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Scale className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">
+                Weight Check-in (optional)
+              </p>
+            </div>
+
+            <input
+              type="number"
+              value={weightKg ?? ""}
+              onChange={(e) =>
+                setWeightKg(
+                  e.target.value ? Number(e.target.value) : undefined
+                )
+              }
+              placeholder={`${profile?.weightKg || 70} kg`}
+              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <NotebookPen className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">Notes</p>
+            </div>
+
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="How did it go today?"
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            />
+          </div>
+
+          {/* Save Button */}
           <button
             onClick={handleSave}
             disabled={saving}
