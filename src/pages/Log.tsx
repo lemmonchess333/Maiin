@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useDailyLogs } from "@/hooks/useFirestore";
+import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import WorkoutLogger from "@/components/WorkoutLogger";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -12,11 +14,14 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Flame,
+  Trash2,
 } from "lucide-react";
 
 export default function Log() {
   const { profile } = useAuth();
   const { logs, saveLog } = useDailyLogs();
+  const { getWorkoutsForDate, deleteWorkout } = useWorkouts();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
@@ -27,8 +32,10 @@ export default function Log() {
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<"quick" | "workout">("workout");
 
-  // Load existing log for selected date
+  const todaysWorkouts = getWorkoutsForDate(selectedDate);
+
   useEffect(() => {
     const existing = logs.find((l) => l.date === selectedDate);
     if (existing) {
@@ -109,145 +116,66 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Workout counter */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-4 h-4 text-primary" />
-          <p className="text-sm font-medium text-foreground">Workouts</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            {[0, 1, 2, 3].map((n) => (
-              <button
-                key={n}
-                onClick={() => setWorkouts(n)}
-                className={cn(
-                  "w-10 h-10 rounded-lg font-medium text-sm transition-all",
-                  workouts === n
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Target: {profile?.weeklyWorkoutsTarget || 4}/week
-          </p>
-        </div>
-      </div>
-
-      {/* Meals counter */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <UtensilsCrossed className="w-4 h-4 text-primary" />
-          <p className="text-sm font-medium text-foreground">Protein Meals</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            {[0, 1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                onClick={() => setMeals(n)}
-                className={cn(
-                  "w-10 h-10 rounded-lg font-medium text-sm transition-all",
-                  meals === n
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* PR toggle */}
-      <div className="bg-card rounded-xl border border-border/50 p-4">
+      {/* Tab Switcher */}
+      <div className="flex gap-2 bg-muted rounded-xl p-1">
         <button
-          onClick={() => setHasPR(!hasPR)}
-          className="w-full flex items-center justify-between"
+          onClick={() => setActiveTab("workout")}
+          className={cn(
+            "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+            activeTab === "workout"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground"
+          )}
         >
-          <div className="flex items-center gap-2">
-            <Trophy
-              className={cn(
-                "w-4 h-4",
-                hasPR ? "text-yellow-500" : "text-muted-foreground"
-              )}
-            />
-            <p className="text-sm font-medium text-foreground">
-              New Personal Record?
-            </p>
-          </div>
-          <div
-            className={cn(
-              "w-12 h-7 rounded-full transition-all flex items-center",
-              hasPR ? "bg-primary justify-end" : "bg-muted justify-start"
-            )}
-          >
-            <div className="w-5 h-5 bg-white rounded-full mx-1 shadow-sm" />
-          </div>
+          <Dumbbell className="w-4 h-4" /> Workout
+        </button>
+        <button
+          onClick={() => setActiveTab("quick")}
+          className={cn(
+            "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+            activeTab === "quick"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground"
+          )}
+        >
+          <NotebookPen className="w-4 h-4" /> Quick Log
         </button>
       </div>
 
-      {/* Weight check-in */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-primary" />
-          <p className="text-sm font-medium text-foreground">
-            Weight Check-in (optional)
-          </p>
-        </div>
-        <input
-          type="number"
-          value={weightKg ?? ""}
-          onChange={(e) =>
-            setWeightKg(e.target.value ? Number(e.target.value) : undefined)
-          }
-          placeholder={`${profile?.weightKg || 70} kg`}
-          className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-        />
-      </div>
-
-      {/* Notes */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <NotebookPen className="w-4 h-4 text-primary" />
-          <p className="text-sm font-medium text-foreground">Notes</p>
-        </div>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="How did it go today?"
-          rows={3}
-          className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-        />
-      </div>
-
-      {/* Save button */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className={cn(
-          "w-full py-3.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
-          saved
-            ? "bg-green-500 text-white"
-            : "bg-primary text-primary-foreground hover:opacity-90",
-          saving && "opacity-50 cursor-not-allowed"
-        )}
-      >
-        {saved ? (
-          <>
-            <Check className="w-4 h-4" /> Saved!
-          </>
-        ) : saving ? (
-          "Saving..."
-        ) : (
-          "Save Log"
-        )}
-      </button>
-    </div>
-  );
-}
+      {/* Workout Tab */}
+      {activeTab === "workout" && (
+        <div className="space-y-4">
+          {/* Previous Workouts for this date */}
+          {todaysWorkouts.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                Saved Workouts
+              </p>
+              {todaysWorkouts.map((w) => (
+                <div
+                  key={w.id}
+                  className="bg-card rounded-xl border border-border/50 p-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Dumbbell className="w-4 h-4 text-primary" />
+                      <p className="text-sm font-medium text-foreground">
+                        {w.exercises.length} exercise{w.exercises.length !== 1 && "s"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 text-xs text-orange-500 font-medium">
+                        <Flame className="w-3.5 h-3.5" />
+                        {w.totalCalories} cal
+                      </div>
+                      <button
+                        onClick={() => deleteWorkout(w.id)}
+                        className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    {w.exercises.map((ex, i) => (
+                      <p key={i} className="text-xs text-muted-foreground">
