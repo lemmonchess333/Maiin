@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts";
+import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts"; 
 import { EXERCISE_CATEGORIES, getExercisesByCategory, getExerciseById } from "@/lib/exercises";
 import {
   Dumbbell,
