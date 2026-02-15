@@ -29,4 +29,5 @@ jobs:
         run: cd functions && npm install
 
       - name: Deploy functions
-        run: firebase deploy --only functions --project adaptive-fitness-af8bb
+        run:  firebase deploy --only functions --project adaptive-fitness-af8bb --force
+
