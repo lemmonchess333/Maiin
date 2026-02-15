@@ -1,11 +1,8 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors")({ origin: true });
 
 admin.initializeApp();
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 exports.analyzeFood = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
@@ -30,39 +27,36 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const projectId = process.env.GCLOUD_PROJECT;
+      const accessToken = await admin.credential.applicationDefault().getAccessToken();
 
-      const prompt = `Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text:
-{
-  "foodName": "name of the food/meal",
-  "items": [
-    {
-      "name": "item name",
-      "portionSize": "estimated portion",
-      "calories": 0,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 0
-    }
-  ],
-  "totalCalories": 0,
-  "totalProtein": 0,
-  "totalCarbs": 0,
-  "totalFat": 0,
-  "confidence": "high/medium/low"
-}`;
+      const prompt = "Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {\"foodName\": \"name of the food/meal\", \"items\": [{\"name\": \"item name\", \"portionSize\": \"estimated portion\", \"calories\": 0, \"protein\": 0, \"carbs\": 0, \"fat\": 0}], \"totalCalories\": 0, \"totalProtein\": 0, \"totalCarbs\": 0, \"totalFat\": 0, \"confidence\": \"high/medium/low\"}";
 
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: imageBase64,
-          },
+      const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" + projectId + "/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent";
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + accessToken.access_token,
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }
+            ]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
 
-      const responseText = result.response.text();
+      const data = await response.json();
+      const responseText = data.candidates[0].content.parts[0].text;
       const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       const nutrition = JSON.parse(cleaned);
 
