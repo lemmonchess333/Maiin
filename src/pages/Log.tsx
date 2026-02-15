@@ -34,7 +34,8 @@ export default function Log() {
   const [notes, setNotes] = useState("");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"workout" | "quick">("workout");
+  const [activeTab, setActiveTab] = useState<"workout" | "food" | "quick">("workout");
+
 
   const todaysWorkouts = getWorkoutsForDate(selectedDate);
 
