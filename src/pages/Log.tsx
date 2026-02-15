@@ -127,7 +127,7 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Tabs */}
+           {/* Tabs */}
       <div className="flex gap-2 bg-muted rounded-xl p-1">
         <button
           onClick={() => setActiveTab("workout")}
@@ -142,6 +142,18 @@ export default function Log() {
         </button>
 
         <button
+          onClick={() => setActiveTab("food")}
+          className={cn(
+            "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
+            activeTab === "food"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground"
+          )}
+        >
+          <UtensilsCrossed className="w-4 h-4" /> Food
+        </button>
+
+        <button
           onClick={() => setActiveTab("quick")}
           className={cn(
             "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
@@ -150,9 +162,10 @@ export default function Log() {
               : "text-muted-foreground"
           )}
         >
-          <NotebookPen className="w-4 h-4" /> Quick Log
+          <NotebookPen className="w-4 h-4" /> Quick
         </button>
       </div>
+
 
       {/* Workout Tab */}
       {activeTab === "workout" && (
@@ -215,6 +228,13 @@ export default function Log() {
           )}
 
           <WorkoutLogger date={selectedDate} />
+        </div>
+      )}
+
+      {/* Food Tab */}
+      {activeTab === "food" && (
+        <div className="space-y-4">
+          <FoodAnalyzer date={selectedDate} />
         </div>
       )}
 
