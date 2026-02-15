@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import WorkoutLogger from "@/components/WorkoutLogger";
+import FoodAnalyzer from "@/components/FoodAnalyzer";
 import {
   Dumbbell,
   UtensilsCrossed,
