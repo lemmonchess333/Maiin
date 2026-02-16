@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import WorkoutLogger from "@/components/WorkoutLogger";
+import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
 import {
   Dumbbell,
@@ -38,6 +39,10 @@ export default function Log() {
 
 
   const todaysWorkouts = getWorkoutsForDate(selectedDate);
+
+  const { getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
+  const todaysMeals = getMealsForDate(selectedDate);
+  const dailyTotals = getDailyTotals(selectedDate);
 
   useEffect(() => {
     const existing = logs.find((l) => l.date === selectedDate);
