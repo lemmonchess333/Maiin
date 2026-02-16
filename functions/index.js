@@ -56,7 +56,25 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
       });
 
       const data = await response.json();
-      const responseText = data.candidates[0].content.parts[0].text;
+      console.log("Vertex AI response:", JSON.stringify(data));
+
+      if (!response.ok) {
+        console.error("Vertex AI error:", JSON.stringify(data));
+        res.status(500).json({ error: "AI service error" });
+        return;
+      }
+
+      let responseText = "";
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+        responseText = data.candidates[0].content.parts[0].text;
+      } else if (data.predictions && data.predictions[0]) {
+        responseText = data.predictions[0];
+      } else {
+        console.error("Unexpected response format:", JSON.stringify(data));
+        res.status(500).json({ error: "Unexpected AI response format" });
+        return;
+      }
+
       const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       const nutrition = JSON.parse(cleaned);
 
@@ -64,6 +82,4 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
     } catch (error) {
       console.error("Error analyzing food:", error);
       res.status(500).json({ error: "Failed to analyze food image" });
-    }
-  });
-});
+
