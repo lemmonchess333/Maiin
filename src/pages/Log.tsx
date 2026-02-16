@@ -237,11 +237,65 @@ export default function Log() {
       )}
 
       {/* Food Tab */}
-      {activeTab === "food" && (
+            {activeTab === "food" && (
         <div className="space-y-4">
+          {todaysMeals.length > 0 && (
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <p className="text-sm font-medium text-foreground">Daily Totals</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="bg-orange-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-orange-600">{dailyTotals.calories}</p>
+                  <p className="text-xs text-orange-500">cal</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-blue-600">{dailyTotals.protein}g</p>
+                  <p className="text-xs text-blue-500">protein</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-amber-600">{dailyTotals.carbs}g</p>
+                  <p className="text-xs text-amber-500">carbs</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-purple-600">{dailyTotals.fat}g</p>
+                  <p className="text-xs text-purple-500">fat</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {todaysMeals.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Saved Meals</p>
+              {todaysMeals.map((m) => (
+                <div key={m.id} className="bg-card rounded-xl border border-border/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-foreground">{m.foodName}</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-orange-500 font-medium">{m.totalCalories} cal</p>
+                      <button onClick={() => deleteMeal(m.id)} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    <span>P: {m.totalProtein}g</span>
+                    <span>C: {m.totalCarbs}g</span>
+                    <span>F: {m.totalFat}g</span>
+                  </div>
+                  {m.items.length > 1 && (
+                    <div className="mt-2 space-y-1">
+                      {m.items.map((item, i) => (
+                        <p key={i} className="text-xs text-muted-foreground">{item.name} ({item.portionSize}) - {item.calories} cal</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <FoodAnalyzer date={selectedDate} />
         </div>
       )}
+
 
       {/* Quick Log Tab */}
       {activeTab === "quick" && (
