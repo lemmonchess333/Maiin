@@ -115,6 +115,40 @@ function calculatePercentile(workoutsDone: number, workoutsTarget: number, meals
   return 75;
 }
 
+import { calculateProgress } from "../utils/progressCalculator";
+
+// Add new props (bodyweight and user goal)
+export function AdaptiveSummary({
+  athleteType = "Lifter",
+  mode = "weekly",
+  compactMode = false,
+  weightKg,
+  heightCm,
+  weeklyBodyweightTrend = [],
+  userGoal = "recomp",
+  weeklyWorkoutsDone = [],
+  ...rest
+}: AdaptiveSummaryProps) {
+  const workoutsDone = mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone;
+  const bodyweightTrend = mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend;
+
+  // Call progress calculation utility
+  const progress = calculateProgress({
+    workoutsDone,
+    bodyweightTrend,
+    userGoal,
+  });
+
+  return (
+    <div>
+      {/* Existing UI */}
+      <h2>Calories: {progress.calorieBase}</h2>
+      <h3>Macros: Protein {progress.macros.protein}g, Carbs {progress.macros.carbs}g, Fat {progress.macros.fat}g</h3>
+      <h4>Progress: Squat Volume {progress.liftProgress["squat"]}, Bench Volume {progress.liftProgress["bench"]}, Deadlift Volume {progress.liftProgress["deadlift"]}</h4>
+    </div>
+  );
+}
+
 export function AdaptiveSummary({
   athleteType = "Lifter",
   mode = "weekly",
