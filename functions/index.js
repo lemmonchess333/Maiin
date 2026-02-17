@@ -86,3 +86,4 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
   });
 });
 
+
