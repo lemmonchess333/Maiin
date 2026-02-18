@@ -30,11 +30,11 @@ export default function Home() {
     fat: 0,
   });
 
-    useEffect(() => {
+  useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
 
-    (async () => {
+    const fetchTodayMeals = async () => {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
@@ -57,31 +57,7 @@ export default function Home() {
       });
 
       setDailyTotals(totals);
-    })();
-  }, [user]);
-
-      todayStart.setHours(0, 0, 0, 0);
-
-      const mealsRef = collection(db, "users", uid, "meals");
-      const q = query(
-        mealsRef,
-        where("createdAt", ">=", Timestamp.fromDate(todayStart))
-      );
-
-      const snapshot = await getDocs(q);
-
-      const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        totals.calories += data.totalCalories || data.calories || 0;
-        totals.protein += data.totalProtein || data.protein || 0;
-        totals.carbs += data.totalCarbs || data.carbs || 0;
-        totals.fat += data.totalFat || data.fat || 0;
-      });
-
-      setDailyTotals(totals);
-    }
+    };
 
     fetchTodayMeals();
   }, [user]);
