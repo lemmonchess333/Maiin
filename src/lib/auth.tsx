@@ -18,8 +18,9 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 export interface UserProfile {
+  uid: string; // ✅ Added uid
   displayName: string;
-  email: string;
+  email: string | null;
   athleteType: string;
   weightKg: number;
   heightCm: number;
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (profileDoc.exists()) {
-          setProfile(profileDoc.data() as UserProfile);
+          setProfile({ uid: firebaseUser.uid, ...(profileDoc.data() as Omit<UserProfile, "uid">) });
         } else {
           setProfile(null);
         }
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, "users", cred.user.uid), {
+      uid: cred.user.uid,
       displayName: "",
       email: cred.user.email,
       athleteType: "Lifter",
@@ -95,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
     if (!profileDoc.exists()) {
       await setDoc(doc(db, "users", cred.user.uid), {
+        uid: cred.user.uid,
         displayName: cred.user.displayName || "",
         email: cred.user.email,
         athleteType: "Lifter",
