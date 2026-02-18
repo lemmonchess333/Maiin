@@ -8,19 +8,21 @@ export function useBodyweightTrend() {
   const [monthlyTrend, setMonthlyTrend] = useState<number[]>([]);
 
   useEffect(() => {
-    async function fetchAndProcessData() {
-      if (!user) return;
+    if (!user) return;
 
-      const logs: BodyweightLog[] = await fetchBodyweightLogs(user.uid);
+    (async () => {
+      try {
+        const logs: BodyweightLog[] = await fetchBodyweightLogs(user.uid);
 
-      if (logs.length) {
-        logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setWeeklyTrend(calculateWeightTrend(logs, 7));
-        setMonthlyTrend(calculateWeightTrend(logs, 30));
+        if (logs.length) {
+          logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setWeeklyTrend(calculateWeightTrend(logs, 7));
+          setMonthlyTrend(calculateWeightTrend(logs, 30));
+        }
+      } catch (error) {
+        console.error("useBodyweightTrend error:", error);
       }
-    }
-
-    fetchAndProcessData();
+    })();
   }, [user]);
 
   return { weekly: weeklyTrend, monthly: monthlyTrend };
