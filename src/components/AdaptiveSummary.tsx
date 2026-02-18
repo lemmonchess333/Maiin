@@ -10,6 +10,7 @@ import {
   Lock,
 } from "lucide-react";
 import { calculateProgress } from "@/utils/progressCalculator";
+import { useSubscription } from "@/lib/subscription";
 
 /* ================================
    MONETISATION CONFIG
