@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
-import { AdaptiveSummary } from "@/components/AdaptiveSummary";
+import { AdaptiveSummary, AdaptiveSummaryProps } from "@/components/AdaptiveSummary";
 import BodyweightLogger from "@/components/BodyweightLogger";
 
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
@@ -32,7 +32,7 @@ export default function Home() {
 
   // Fetch today's meals safely
   useEffect(() => {
-    const uid = profile?.uid;
+    const uid = profile?.id ?? profile?.userId ?? ""; // adjust if your auth returns a different id field
     if (!uid) return;
 
     async function fetchTodayMeals() {
@@ -47,7 +47,7 @@ export default function Home() {
 
       const snapshot = await getDocs(q);
 
-      let totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -61,11 +61,31 @@ export default function Home() {
     }
 
     fetchTodayMeals();
-  }, [profile?.uid]);
+  }, [profile]);
 
   if (!profile) {
     return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
   }
+
+  // Prepare props for AdaptiveSummary safely
+  const adaptiveProps: AdaptiveSummaryProps = {
+    athleteType: profile.athleteType ?? "unknown",
+    mode,
+    weightKg: profile.weightKg ?? 0,
+    heightCm: profile.heightCm ?? 0,
+    weeklyWorkoutsDone: weeklyStats?.workoutsDone ?? 0,
+    weeklyWorkoutsTarget: weeklyStats?.workoutsTarget ?? 0,
+    weeklyMealsDone: weeklyStats?.mealsDone ?? 0,
+    weeklyMealsTarget: weeklyStats?.mealsTarget ?? 0,
+    weeklyPR: weeklyStats?.hasPR ?? false,
+    weeklyBodyweightTrend: bodyweightTrend?.weekly ?? [],
+    monthlyWorkoutsDone: monthlyStats?.workoutsDone ?? 0,
+    monthlyWorkoutsTarget: monthlyStats?.workoutsTarget ?? 0,
+    monthlyMealsDone: monthlyStats?.mealsDone ?? 0,
+    monthlyMealsTarget: monthlyStats?.mealsTarget ?? 0,
+    monthlyPR: monthlyStats?.hasPR ?? false,
+    monthlyBodyweightTrend: bodyweightTrend?.monthly ?? [],
+  };
 
   return (
     <div className="space-y-6">
@@ -107,24 +127,7 @@ export default function Home() {
         </div>
       </div>
 
-      <AdaptiveSummary
-        athleteType={profile.athleteType}
-        mode={mode}
-        weightKg={profile.weightKg}
-        heightCm={profile.heightCm}
-        weeklyWorkoutsDone={weeklyStats.workoutsDone}
-        weeklyWorkoutsTarget={weeklyStats.workoutsTarget}
-        weeklyMealsDone={weeklyStats.mealsDone}
-        weeklyMealsTarget={weeklyStats.mealsTarget}
-        weeklyPR={weeklyStats.hasPR}
-        weeklyBodyweightTrend={bodyweightTrend.weekly}
-        monthlyWorkoutsDone={monthlyStats.workoutsDone}
-        monthlyWorkoutsTarget={monthlyStats.workoutsTarget}
-        monthlyMealsDone={monthlyStats.mealsDone}
-        monthlyMealsTarget={monthlyStats.mealsTarget}
-        monthlyPR={monthlyStats.hasPR}
-        monthlyBodyweightTrend={bodyweightTrend.monthly}
-      />
+      <AdaptiveSummary {...adaptiveProps} />
 
       <BodyweightLogger />
 
