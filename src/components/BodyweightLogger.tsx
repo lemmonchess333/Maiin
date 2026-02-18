@@ -1,33 +1,139 @@
-import { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "../lib/auth";
-import { db } from "../lib/firebase";
+import { useState, useEffect } from "react";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
+import { Scale, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+
+interface WeightLog {
+  id: string;
+  date: string;
+  weight: number;
+}
 
 export default function BodyweightLogger() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [weight, setWeight] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<WeightLog[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const logsRef = collection(db, "users", user.uid, "bodyweightLogs");
+    const q = query(logsRef, orderBy("date", "desc"), limit(7));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const logs = snapshot.docs.map((d) => ({
+        id: d.id,
+        date: d.data().date,
+        weight: d.data().weight,
+      }));
+      setRecentLogs(logs);
+    });
+
+    return unsubscribe;
+  }, [user]);
 
   async function handleSubmit() {
-    if (!weight || !profile) return;
+    if (!weight || !user) return;
 
-    await addDoc(collection(db, "users", profile.uid, "bodyweight"), {
+    setSaving(true);
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), {
+      date: today,
       weight: Number(weight),
       createdAt: serverTimestamp(),
     });
 
     setWeight("");
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   }
 
+  const unit = profile?.preferredWeightUnit || "kg";
+  const displayWeight = (w: number) =>
+    unit === "lbs" ? (w * 2.20462).toFixed(1) : w.toFixed(1);
+
+  const trend =
+    recentLogs.length >= 2
+      ? recentLogs[0].weight - recentLogs[1].weight
+      : null;
+
   return (
-    <div>
-      <h3>Log Bodyweight</h3>
-      <input
-        type="number"
-        placeholder="Weight (kg)"
-        value={weight}
-        onChange={(e) => setWeight(e.target.value)}
-      />
-      <button onClick={handleSubmit}>Save</button>
+    <div className="bg-card rounded-xl border border-border/50 p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <Scale className="w-4 h-4 text-primary" />
+        <p className="text-sm font-medium text-foreground">Bodyweight Check-in</p>
+        {trend !== null && (
+          <div className="flex items-center gap-1 ml-auto text-xs">
+            {trend > 0 ? (
+              <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+            ) : trend < 0 ? (
+              <TrendingDown className="w-3.5 h-3.5 text-blue-500" />
+            ) : null}
+            <span className={trend > 0 ? "text-green-500" : trend < 0 ? "text-blue-500" : "text-muted-foreground"}>
+              {trend > 0 ? "+" : ""}{displayWeight(trend)} {unit}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Input Row */}
+      <div className="flex gap-2">
+        <input
+          type="number"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          placeholder={`${displayWeight(profile?.weightKg || 70)} ${unit}`}
+          step="0.1"
+          className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={saving || !weight}
+          className={cn(
+            "px-5 py-3 rounded-xl font-medium text-sm transition-all",
+            saved
+              ? "bg-green-500 text-white"
+              : "bg-primary text-primary-foreground hover:opacity-90",
+            (saving || !weight) && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          {saved ? <Check className="w-4 h-4" /> : saving ? "..." : "Log"}
+        </button>
+      </div>
+
+      {/* Recent Logs */}
+      {recentLogs.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {recentLogs.map((log) => (
+            <div
+              key={log.id}
+              className="flex-shrink-0 bg-muted rounded-lg px-3 py-2 text-center min-w-[60px]"
+            >
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(log.date), "dd/MM")}
+              </p>
+              <p className="text-sm font-semibold text-foreground">
+                {displayWeight(log.weight)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
