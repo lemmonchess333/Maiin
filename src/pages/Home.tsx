@@ -5,7 +5,13 @@ import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import BodyweightLogger from "@/components/BodyweightLogger";
 
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 type DailyTotals = {
@@ -13,6 +19,14 @@ type DailyTotals = {
   protein: number;
   carbs: number;
   fat: number;
+};
+
+type MealDoc = {
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  createdAt?: Timestamp;
 };
 
 export default function Home() {
@@ -23,7 +37,7 @@ export default function Home() {
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
 
-  // ✅ NEW STATE: Daily Macro Totals
+  // ✅ Daily Macro Totals State
   const [dailyTotals, setDailyTotals] = useState<DailyTotals>({
     calories: 0,
     protein: 0,
@@ -31,40 +45,49 @@ export default function Home() {
     fat: 0,
   });
 
-  // ✅ NEW FETCH LOGIC: Pull today's meals
+  // ✅ Fetch Today's Meals
   useEffect(() => {
     if (!profile?.uid) return;
 
     async function fetchTodayMeals() {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-      const mealsRef = collection(db, "users", profile.uid, "meals");
+        const mealsRef = collection(
+          db,
+          "users",
+          profile.uid,
+          "meals"
+        );
 
-      const q = query(
-        mealsRef,
-        where("createdAt", ">=", Timestamp.fromDate(todayStart))
-      );
+        const q = query(
+          mealsRef,
+          where("createdAt", ">=", Timestamp.fromDate(todayStart))
+        );
 
-      const snapshot = await getDocs(q);
+        const snapshot = await getDocs(q);
 
-      let totals = {
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      };
+        const totals: DailyTotals = {
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        };
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+        snapshot.forEach((doc) => {
+          const data = doc.data() as MealDoc;
 
-        totals.calories += data.calories || 0;
-        totals.protein += data.protein || 0;
-        totals.carbs += data.carbs || 0;
-        totals.fat += data.fat || 0;
-      });
+          totals.calories += data.calories ?? 0;
+          totals.protein += data.protein ?? 0;
+          totals.carbs += data.carbs ?? 0;
+          totals.fat += data.fat ?? 0;
+        });
 
-      setDailyTotals(totals);
+        setDailyTotals(totals);
+      } catch (error) {
+        console.error("Error fetching daily meals:", error);
+      }
     }
 
     fetchTodayMeals();
@@ -102,7 +125,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* ✅ NEW: Daily Intake Card */}
+      {/* ✅ Daily Intake Card */}
       <div className="p-4 rounded-xl bg-card border border-border">
         <h2 className="text-sm font-semibold text-foreground mb-3">
           Today's Intake
@@ -128,7 +151,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Existing Adaptive Summary */}
+      {/* Adaptive Summary */}
       <AdaptiveSummary
         athleteType={profile.athleteType}
         mode={mode}
@@ -148,16 +171,19 @@ export default function Home() {
         monthlyBodyweightTrend={bodyweightTrend.monthly}
       />
 
-      {/* ✅ NEW: Bodyweight Logger */}
+      {/* Bodyweight Logger */}
       <BodyweightLogger />
 
       {/* Quick Tip */}
       <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-        <p className="text-sm text-foreground font-medium">Quick Tip</p>
+        <p className="text-sm text-foreground font-medium">
+          Quick Tip
+        </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Log your workouts, bodyweight and meals daily to maximise performance adaptation.
+          Log workouts, bodyweight, and meals daily to maximise adaptive performance feedback.
         </p>
       </div>
+
     </div>
   );
 }
