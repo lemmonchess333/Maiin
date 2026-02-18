@@ -23,7 +23,6 @@ export default function Home() {
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
 
-  // ✅ NEW STATE: Daily Macro Totals
   const [dailyTotals, setDailyTotals] = useState<DailyTotals>({
     calories: 0,
     protein: 0,
@@ -31,16 +30,16 @@ export default function Home() {
     fat: 0,
   });
 
-  // ✅ NEW FETCH LOGIC: Pull today's meals
+  // Fetch today's meals safely
   useEffect(() => {
-    if (!profile?.uid) return;
+    const uid = profile?.uid;
+    if (!uid) return;
 
     async function fetchTodayMeals() {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const mealsRef = collection(db, "users", profile.uid, "meals");
-
+      const mealsRef = collection(db, "users", uid, "meals");
       const q = query(
         mealsRef,
         where("createdAt", ">=", Timestamp.fromDate(todayStart))
@@ -48,16 +47,10 @@ export default function Home() {
 
       const snapshot = await getDocs(q);
 
-      let totals = {
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      };
+      let totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-
         totals.calories += data.calories || 0;
         totals.protein += data.protein || 0;
         totals.carbs += data.carbs || 0;
@@ -70,11 +63,12 @@ export default function Home() {
     fetchTodayMeals();
   }, [profile?.uid]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
+  }
 
   return (
     <div className="space-y-6">
-
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-foreground">
@@ -102,33 +96,17 @@ export default function Home() {
         ))}
       </div>
 
-      {/* ✅ NEW: Daily Intake Card */}
+      {/* Today's Intake */}
       <div className="p-4 rounded-xl bg-card border border-border">
-        <h2 className="text-sm font-semibold text-foreground mb-3">
-          Today's Intake
-        </h2>
-
+        <h2 className="text-sm font-semibold text-foreground mb-3">Today's Intake</h2>
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <p className="text-muted-foreground">Calories</p>
-            <p className="font-semibold">{dailyTotals.calories}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Protein</p>
-            <p className="font-semibold">{dailyTotals.protein}g</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Carbs</p>
-            <p className="font-semibold">{dailyTotals.carbs}g</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Fat</p>
-            <p className="font-semibold">{dailyTotals.fat}g</p>
-          </div>
+          <div><p className="text-muted-foreground">Calories</p><p className="font-semibold">{dailyTotals.calories}</p></div>
+          <div><p className="text-muted-foreground">Protein</p><p className="font-semibold">{dailyTotals.protein}g</p></div>
+          <div><p className="text-muted-foreground">Carbs</p><p className="font-semibold">{dailyTotals.carbs}g</p></div>
+          <div><p className="text-muted-foreground">Fat</p><p className="font-semibold">{dailyTotals.fat}g</p></div>
         </div>
       </div>
 
-      {/* Existing Adaptive Summary */}
       <AdaptiveSummary
         athleteType={profile.athleteType}
         mode={mode}
@@ -148,10 +126,8 @@ export default function Home() {
         monthlyBodyweightTrend={bodyweightTrend.monthly}
       />
 
-      {/* ✅ NEW: Bodyweight Logger */}
       <BodyweightLogger />
 
-      {/* Quick Tip */}
       <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
         <p className="text-sm text-foreground font-medium">Quick Tip</p>
         <p className="text-xs text-muted-foreground mt-1">
