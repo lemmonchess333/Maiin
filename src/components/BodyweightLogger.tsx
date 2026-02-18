@@ -30,37 +30,51 @@ export default function BodyweightLogger() {
   useEffect(() => {
     if (!user) return;
 
-    const logsRef = collection(db, "users", user.uid, "bodyweightLogs");
-    const q = query(logsRef, orderBy("date", "desc"), limit(7));
+    try {
+      const logsRef = collection(db, "users", user.uid, "bodyweightLogs");
+      const q = query(logsRef, orderBy("date", "desc"), limit(7));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logs = snapshot.docs.map((d) => ({
-        id: d.id,
-        date: d.data().date,
-        weight: d.data().weight,
-      }));
-      setRecentLogs(logs);
-    });
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const logs = snapshot.docs.map((d) => ({
+            id: d.id,
+            date: d.data().date,
+            weight: d.data().weight,
+          }));
+          setRecentLogs(logs);
+        },
+        (error) => {
+          console.error("BodyweightLogger snapshot error:", error);
+        }
+      );
 
-    return unsubscribe;
+      return unsubscribe;
+    } catch (error) {
+      console.error("BodyweightLogger setup error:", error);
+    }
   }, [user]);
 
   async function handleSubmit() {
     if (!weight || !user) return;
 
     setSaving(true);
-    const today = format(new Date(), "yyyy-MM-dd");
+    try {
+      const today = format(new Date(), "yyyy-MM-dd");
 
-    await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), {
-      date: today,
-      weight: Number(weight),
-      createdAt: serverTimestamp(),
-    });
+      await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), {
+        date: today,
+        weight: Number(weight),
+        createdAt: serverTimestamp(),
+      });
 
-    setWeight("");
+      setWeight("");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error("Error saving weight:", error);
+    }
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
   }
 
   const unit = profile?.preferredWeightUnit || "kg";
