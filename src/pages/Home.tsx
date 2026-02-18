@@ -34,7 +34,7 @@ export default function Home() {
     const uid = user?.uid;
     if (!uid) return;
 
-    const fetchTodayMeals = async () => {
+    (async () => {
       try {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -61,9 +61,7 @@ export default function Home() {
       } catch (error) {
         console.error("Error fetching today's meals:", error);
       }
-    };
-
-    fetchTodayMeals();
+    })();
   }, [user]);
 
   if (!profile) {
