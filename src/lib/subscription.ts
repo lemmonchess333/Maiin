@@ -12,3 +12,11 @@ export const featureAccess = {
     phaseModes: true,
   },
 };
+
+export function useSubscription() {
+  const tier: Tier = "free"; // Replace later with Stripe/Firebase
+  return {
+    tier,
+    features: featureAccess[tier],
+  };
+}
