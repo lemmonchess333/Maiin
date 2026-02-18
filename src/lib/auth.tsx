@@ -18,9 +18,9 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 export interface UserProfile {
-  uid: string; // ✅ Added uid
+  uid: string; // added
   displayName: string;
-  email: string | null;
+  email: string;
   athleteType: string;
   weightKg: number;
   heightCm: number;
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (profileDoc.exists()) {
-          setProfile({ uid: firebaseUser.uid, ...(profileDoc.data() as Omit<UserProfile, "uid">) });
+          setProfile({ uid: firebaseUser.uid, ...profileDoc.data() } as UserProfile);
         } else {
           setProfile(null);
         }
@@ -74,10 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", cred.user.uid), {
+    const newProfile: UserProfile = {
       uid: cred.user.uid,
       displayName: "",
-      email: cred.user.email,
+      email: cred.user.email || "",
       athleteType: "Lifter",
       weightKg: 70,
       heightCm: 170,
@@ -87,8 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: false,
-      createdAt: serverTimestamp(),
-    });
+    };
+    await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
+    setProfile(newProfile);
   };
 
   const signInWithGoogle = async () => {
@@ -96,10 +97,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cred = await signInWithPopup(auth, provider);
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
     if (!profileDoc.exists()) {
-      await setDoc(doc(db, "users", cred.user.uid), {
+      const newProfile: UserProfile = {
         uid: cred.user.uid,
         displayName: cred.user.displayName || "",
-        email: cred.user.email,
+        email: cred.user.email || "",
         athleteType: "Lifter",
         weightKg: 70,
         heightCm: 170,
@@ -109,8 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: false,
-        createdAt: serverTimestamp(),
-      });
+      };
+      await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
+      setProfile(newProfile);
     }
   };
 
