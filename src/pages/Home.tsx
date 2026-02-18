@@ -35,28 +35,32 @@ export default function Home() {
     if (!uid) return;
 
     const fetchTodayMeals = async () => {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-      const mealsRef = collection(db, "users", uid, "meals");
-      const q = query(
-        mealsRef,
-        where("createdAt", ">=", Timestamp.fromDate(todayStart))
-      );
+        const mealsRef = collection(db, "users", uid, "meals");
+        const q = query(
+          mealsRef,
+          where("createdAt", ">=", Timestamp.fromDate(todayStart))
+        );
 
-      const snapshot = await getDocs(q);
+        const snapshot = await getDocs(q);
 
-      const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+        const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        totals.calories += data.totalCalories || data.calories || 0;
-        totals.protein += data.totalProtein || data.protein || 0;
-        totals.carbs += data.totalCarbs || data.carbs || 0;
-        totals.fat += data.totalFat || data.fat || 0;
-      });
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          totals.calories += data.totalCalories || data.calories || 0;
+          totals.protein += data.totalProtein || data.protein || 0;
+          totals.carbs += data.totalCarbs || data.carbs || 0;
+          totals.fat += data.totalFat || data.fat || 0;
+        });
 
-      setDailyTotals(totals);
+        setDailyTotals(totals);
+      } catch (error) {
+        console.error("Error fetching today's meals:", error);
+      }
     };
 
     fetchTodayMeals();
