@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useAuth } from "../lib/auth";
 import { db } from "../lib/firebase";
 
 export default function BodyweightLogger() {
+  const { profile } = useAuth();
   const [weight, setWeight] = useState("");
 
   async function handleSubmit() {
-    if (!weight) return;
+    if (!weight || !profile) return;
 
-    await addDoc(collection(db, "bodyweight"), {
+    await addDoc(collection(db, "users", profile.uid, "bodyweight"), {
       weight: Number(weight),
       createdAt: serverTimestamp(),
     });
