@@ -31,15 +31,14 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    const uid = user?.uid;
+    if (!uid) return;
 
     async function fetchTodayMeals() {
-      if (!user) return;
-
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const mealsRef = collection(db, "users", user.uid, "meals");
+      const mealsRef = collection(db, "users", uid, "meals");
       const q = query(
         mealsRef,
         where("createdAt", ">=", Timestamp.fromDate(todayStart))
