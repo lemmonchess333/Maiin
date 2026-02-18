@@ -8,16 +8,10 @@ import BodyweightLogger from "@/components/BodyweightLogger";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-type DailyTotals = {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-};
+type DailyTotals = { calories: number; protein: number; carbs: number; fat: number };
 
 export default function Home() {
   const { profile } = useAuth();
-
   const weeklyStats = useWeeklyStats();
   const monthlyStats = useMonthlyStats();
   const bodyweightTrend = useBodyweightTrend();
@@ -31,21 +25,19 @@ export default function Home() {
     fat: 0,
   });
 
-  // Fetch today's meals safely
   useEffect(() => {
-    if (!profile?.uid) return;
+    const uid = profile?.uid;
+    if (!uid) return;
 
     async function fetchTodayMeals() {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const mealsRef = collection(db, "users", profile.uid, "meals");
+      const mealsRef = collection(db, "users", uid, "meals");
       const q = query(mealsRef, where("createdAt", ">=", Timestamp.fromDate(todayStart)));
-
       const snapshot = await getDocs(q);
 
-      const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-
+      let totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
       snapshot.forEach((doc) => {
         const data = doc.data();
         totals.calories += data.calories || 0;
@@ -60,32 +52,22 @@ export default function Home() {
     fetchTodayMeals();
   }, [profile?.uid]);
 
-  if (!profile) {
-    return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
-  }
+  if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-foreground">
-          Hey, {profile.displayName || "Athlete"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Here's your {mode} summary
-        </p>
+        <h1 className="text-xl font-bold text-foreground">Hey, {profile.displayName || "Athlete"}</h1>
+        <p className="text-sm text-muted-foreground">Here's your {mode} summary</p>
       </div>
 
-      {/* Mode Toggle */}
       <div className="flex gap-1 bg-muted rounded-lg p-1">
         {(["weekly", "monthly"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              mode === m
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -93,26 +75,13 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Today's Intake */}
       <div className="p-4 rounded-xl bg-card border border-border">
         <h2 className="text-sm font-semibold text-foreground mb-3">Today's Intake</h2>
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <p className="text-muted-foreground">Calories</p>
-            <p className="font-semibold">{dailyTotals.calories}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Protein</p>
-            <p className="font-semibold">{dailyTotals.protein}g</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Carbs</p>
-            <p className="font-semibold">{dailyTotals.carbs}g</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Fat</p>
-            <p className="font-semibold">{dailyTotals.fat}g</p>
-          </div>
+          <div><p className="text-muted-foreground">Calories</p><p className="font-semibold">{dailyTotals.calories}</p></div>
+          <div><p className="text-muted-foreground">Protein</p><p className="font-semibold">{dailyTotals.protein}g</p></div>
+          <div><p className="text-muted-foreground">Carbs</p><p className="font-semibold">{dailyTotals.carbs}g</p></div>
+          <div><p className="text-muted-foreground">Fat</p><p className="font-semibold">{dailyTotals.fat}g</p></div>
         </div>
       </div>
 
