@@ -31,6 +31,13 @@ export interface UserProfile {
   darkMode: boolean;
   onboardingComplete: boolean;
   subscriptionTier: "free" | "pro";
+
+  // ✅ NEW: Program Engine Data
+  program?: {
+    currentWeek: number;
+    mesoLength: number;
+    startDate: number;
+  };
 }
 
 interface AuthContextType {
@@ -51,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 DARK MODE SYNC (this was missing)
+  // 🔥 DARK MODE SYNC
   useEffect(() => {
     if (profile?.darkMode !== undefined) {
       if (profile.darkMode) {
@@ -74,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setProfile(null);
-        document.documentElement.classList.remove("dark"); // reset on logout
+        document.documentElement.classList.remove("dark");
       }
       setLoading(false);
     });
@@ -87,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+
     const newProfile: UserProfile = {
       uid: cred.user.uid,
       displayName: "",
@@ -101,8 +109,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       darkMode: false,
       onboardingComplete: false,
       subscriptionTier: "free",
+
+      // ✅ NEW: Default Program Data
+      program: {
+        currentWeek: 1,
+        mesoLength: 4,
+        startDate: Date.now(),
+      },
     };
-    await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
+
+    await setDoc(doc(db, "users", cred.user.uid), {
+      ...newProfile,
+      createdAt: serverTimestamp(),
+    });
+
     setProfile(newProfile);
   };
 
@@ -110,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
+
     if (!profileDoc.exists()) {
       const newProfile: UserProfile = {
         uid: cred.user.uid,
@@ -125,8 +146,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         darkMode: false,
         onboardingComplete: false,
         subscriptionTier: "free",
+
+        // ✅ NEW: Default Program Data
+        program: {
+          currentWeek: 1,
+          mesoLength: 4,
+          startDate: Date.now(),
+        },
       };
-      await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
+
+      await setDoc(doc(db, "users", cred.user.uid), {
+        ...newProfile,
+        createdAt: serverTimestamp(),
+      });
+
       setProfile(newProfile);
     } else {
       setProfile({ uid: cred.user.uid, ...profileDoc.data() } as UserProfile);
