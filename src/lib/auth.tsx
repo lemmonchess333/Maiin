@@ -30,7 +30,7 @@ export interface UserProfile {
   preferredHeightUnit: "cm" | "ft";
   darkMode: boolean;
   onboardingComplete: boolean;
-  subscriptionTier: "free" | "pro";   // ← ADDED
+  subscriptionTier: "free" | "pro";
 }
 
 interface AuthContextType {
@@ -51,6 +51,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 DARK MODE SYNC (this was missing)
+  useEffect(() => {
+    if (profile?.darkMode !== undefined) {
+      if (profile.darkMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [profile?.darkMode]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
@@ -63,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setProfile(null);
+        document.documentElement.classList.remove("dark"); // reset on logout
       }
       setLoading(false);
     });
@@ -88,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: false,
-      subscriptionTier: "free",   // ← ADDED
+      subscriptionTier: "free",
     };
     await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
     setProfile(newProfile);
@@ -112,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: false,
-        subscriptionTier: "free",   // ← ADDED
+        subscriptionTier: "free",
       };
       await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
       setProfile(newProfile);
@@ -124,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOutUser = async () => {
     await firebaseSignOut(auth);
     setProfile(null);
+    document.documentElement.classList.remove("dark");
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
