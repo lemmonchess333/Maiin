@@ -1,3 +1,5 @@
+import { useAuth } from "./auth";
+
 export type Tier = "free" | "pro";
 
 export const pricing = {
@@ -28,8 +30,10 @@ export const featureAccess = {
 };
 
 export function useSubscription(): { tier: Tier; features: typeof featureAccess.free } {
-  // TODO: Replace with real Stripe/RevenueCat check
-  const tier: Tier = "free";
+  const { profile } = useAuth();
+  
+  const tier: Tier = profile?.subscriptionTier || "free";
+
   return {
     tier,
     features: featureAccess[tier],
