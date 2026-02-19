@@ -47,14 +47,21 @@ export function useDailyLogs() {
     const logsRef = collection(db, "users", user.uid, "logs");
     const q = query(logsRef, orderBy("date", "desc"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as DailyLog[];
-      setLogs(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as DailyLog[];
+        setLogs(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("useDailyLogs error:", error);
+        setLoading(false);
+      }
+    );
 
     return unsubscribe;
   }, [user]);
@@ -95,24 +102,30 @@ export function useWeeklyStats() {
       where("date", "<=", weekEnd)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      let workouts = 0;
-      let meals = 0;
-      let pr = false;
-      snapshot.docs.forEach((d) => {
-        const data = d.data();
-        workouts += data.workouts || 0;
-        meals += data.meals || 0;
-        if (data.hasPR) pr = true;
-      });
-      setStats({
-        workoutsDone: workouts,
-        workoutsTarget: profile?.weeklyWorkoutsTarget || 4,
-        mealsDone: meals,
-        mealsTarget: profile?.weeklyMealsTarget || 10,
-        hasPR: pr,
-      });
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        let workouts = 0;
+        let meals = 0;
+        let pr = false;
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          workouts += data.workouts || 0;
+          meals += data.meals || 0;
+          if (data.hasPR) pr = true;
+        });
+        setStats({
+          workoutsDone: workouts,
+          workoutsTarget: profile?.weeklyWorkoutsTarget || 4,
+          mealsDone: meals,
+          mealsTarget: profile?.weeklyMealsTarget || 10,
+          hasPR: pr,
+        });
+      },
+      (error) => {
+        console.error("useWeeklyStats error:", error);
+      }
+    );
 
     return unsubscribe;
   }, [user, profile]);
@@ -144,24 +157,30 @@ export function useMonthlyStats() {
       where("date", "<=", monthEnd)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      let workouts = 0;
-      let meals = 0;
-      let pr = false;
-      snapshot.docs.forEach((d) => {
-        const data = d.data();
-        workouts += data.workouts || 0;
-        meals += data.meals || 0;
-        if (data.hasPR) pr = true;
-      });
-      setStats({
-        workoutsDone: workouts,
-        workoutsTarget: (profile?.weeklyWorkoutsTarget || 4) * 4,
-        mealsDone: meals,
-        mealsTarget: (profile?.weeklyMealsTarget || 10) * 4,
-        hasPR: pr,
-      });
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        let workouts = 0;
+        let meals = 0;
+        let pr = false;
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          workouts += data.workouts || 0;
+          meals += data.meals || 0;
+          if (data.hasPR) pr = true;
+        });
+        setStats({
+          workoutsDone: workouts,
+          workoutsTarget: (profile?.weeklyWorkoutsTarget || 4) * 4,
+          mealsDone: meals,
+          mealsTarget: (profile?.weeklyMealsTarget || 10) * 4,
+          hasPR: pr,
+        });
+      },
+      (error) => {
+        console.error("useMonthlyStats error:", error);
+      }
+    );
 
     return unsubscribe;
   }, [user, profile]);
@@ -185,14 +204,19 @@ export function useHistoryData(days: number = 30) {
     const logsRef = collection(db, "users", user.uid, "logs");
     const q = query(logsRef, where("date", ">=", startDate), orderBy("date", "asc"));
 
-    getDocs(q).then((snapshot) => {
-      const result = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as DailyLog[];
-      setData(result);
-      setLoading(false);
-    });
+    getDocs(q)
+      .then((snapshot) => {
+        const result = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as DailyLog[];
+        setData(result);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("useHistoryData error:", error);
+        setLoading(false);
+      });
   }, [user, days]);
 
   return { data, loading };

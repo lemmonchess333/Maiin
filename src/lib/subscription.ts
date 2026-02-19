@@ -1,22 +1,63 @@
 import type { UserProfile } from "./auth";
+import { useMemo } from "react";
+import { useAuth } from "./auth";
+
+/* ================================
+   PRICING & FEATURE ACCESS (from main)
+================================ */
+
+export const pricing = {
+  monthly: 2.99,
+  yearly: 29.99,
+  lifetime: 99,
+  currency: "GBP",
+};
+
+export const featureAccess = {
+  free: {
+    workoutLogging: true,
+    foodLogging: true,
+    basicSummary: true,
+    aiAdjustments: false,
+    plateauDetection: false,
+    phaseModes: false,
+    performanceInsights: false,
+  },
+  pro: {
+    workoutLogging: true,
+    foodLogging: true,
+    basicSummary: true,
+    aiAdjustments: true,
+    plateauDetection: true,
+    phaseModes: true,
+    performanceInsights: true,
+  },
+};
+
+/* ================================
+   TRIAL + SUBSCRIPTION INFO (from feature branch)
+================================ */
+
+export type Tier = "free" | "pro";
 
 export interface SubscriptionInfo {
-  tier: "free" | "pro";
+  tier: Tier;
   isInTrial: boolean;
   trialDaysLeft: number;
   isPro: boolean;
+  features: typeof featureAccess.free;
 }
 
 export function getSubscriptionInfo(
   profile: UserProfile | null
 ): SubscriptionInfo {
   if (!profile) {
-    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
+    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
   }
 
-  // Dev override: if subscriptionTier is manually set to "pro" (Dev toggle or Stripe webhook)
+  // Dev override or Stripe webhook: subscriptionTier manually set to "pro"
   if (profile.subscriptionTier === "pro") {
-    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true };
+    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true, features: featureAccess.pro };
   }
 
   // Check trial
@@ -32,17 +73,18 @@ export function getSubscriptionInfo(
         isInTrial: true,
         trialDaysLeft: daysLeft,
         isPro: true, // During trial, user has full Pro access
+        features: featureAccess.pro,
       };
     }
   }
 
   // No trial, no pro subscription
-  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
+  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
 }
 
-// Hook-style helper
-import { useMemo } from "react";
-import { useAuth } from "./auth";
+/* ================================
+   HOOK
+================================ */
 
 export function useSubscription(): SubscriptionInfo {
   const { profile } = useAuth();

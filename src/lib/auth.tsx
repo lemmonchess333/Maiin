@@ -17,7 +17,12 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
+/* ================================
+   USER PROFILE TYPE
+================================ */
+
 export interface UserProfile {
+  uid: string;
   displayName: string;
   email: string;
   athleteType: string;
@@ -37,7 +42,17 @@ export interface UserProfile {
   // Streak
   currentStreak: number;
   lastLogDate: string | null;
+  // Goal-based program engine
+  program?: {
+    goal: "cut" | "lean bulk" | "recomp";
+    startWeight: number;
+    currentPhase: string;
+  };
 }
+
+/* ================================
+   HELPERS
+================================ */
 
 function getTrialExpiresAt(): string {
   const d = new Date();
@@ -45,23 +60,17 @@ function getTrialExpiresAt(): string {
   return d.toISOString();
 }
 
-const DEFAULT_PROFILE: UserProfile = {
-  displayName: "",
-  email: "",
-  athleteType: "Lifter",
-  weightKg: 70,
-  heightCm: 170,
-  weeklyWorkoutsTarget: 4,
-  weeklyMealsTarget: 10,
-  preferredWeightUnit: "kg",
-  preferredHeightUnit: "cm",
-  darkMode: false,
-  onboardingComplete: false,
-  trialExpiresAt: null,
-  subscriptionTier: "free",
-  currentStreak: 0,
-  lastLogDate: null,
-};
+function syncDarkMode(dark: boolean) {
+  if (dark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}
+
+/* ================================
+   AUTH CONTEXT
+================================ */
 
 interface AuthContextType {
   user: User | null;
@@ -76,19 +85,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function syncDarkMode(dark: boolean) {
-  if (dark) {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Dark mode sync
   useEffect(() => {
     syncDarkMode(profile?.darkMode ?? false);
   }, [profile?.darkMode]);
@@ -99,9 +101,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (profileDoc.exists()) {
-          const data = profileDoc.data() as UserProfile;
-          setProfile(data);
-          syncDarkMode(data.darkMode ?? false);
+          const data = profileDoc.data();
+          // Safe profile construction with fallback defaults
+          const safeProfile: UserProfile = {
+            uid: firebaseUser.uid,
+            displayName: data.displayName ?? "",
+            email: data.email ?? firebaseUser.email ?? "",
+            athleteType: data.athleteType ?? "Lifter",
+            weightKg: data.weightKg ?? 70,
+            heightCm: data.heightCm ?? 170,
+            weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
+            weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
+            preferredWeightUnit: data.preferredWeightUnit ?? "kg",
+            preferredHeightUnit: data.preferredHeightUnit ?? "cm",
+            darkMode: data.darkMode ?? false,
+            onboardingComplete: data.onboardingComplete ?? false,
+            trialExpiresAt: data.trialExpiresAt ?? null,
+            subscriptionTier: data.subscriptionTier ?? "free",
+            stripeCustomerId: data.stripeCustomerId,
+            stripeSubscriptionId: data.stripeSubscriptionId,
+            currentStreak: data.currentStreak ?? 0,
+            lastLogDate: data.lastLogDate ?? null,
+            program: {
+              goal: data.program?.goal ?? "recomp",
+              startWeight: data.program?.startWeight ?? 0,
+              currentPhase: data.program?.currentPhase ?? "base",
+            },
+          };
+          setProfile(safeProfile);
+          syncDarkMode(safeProfile.darkMode);
         } else {
           setProfile(null);
         }
@@ -120,26 +148,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", cred.user.uid), {
-      ...DEFAULT_PROFILE,
-      email: cred.user.email || email,
+
+    const newProfile: UserProfile = {
+      uid: cred.user.uid,
+      displayName: "",
+      email: cred.user.email || "",
+      athleteType: "Lifter",
+      weightKg: 70,
+      heightCm: 170,
+      weeklyWorkoutsTarget: 4,
+      weeklyMealsTarget: 10,
+      preferredWeightUnit: "kg",
+      preferredHeightUnit: "cm",
+      darkMode: false,
+      onboardingComplete: false,
       trialExpiresAt: getTrialExpiresAt(),
+      subscriptionTier: "free",
+      currentStreak: 0,
+      lastLogDate: null,
+      program: {
+        goal: "recomp",
+        startWeight: 70,
+        currentPhase: "base",
+      },
+    };
+
+    await setDoc(doc(db, "users", cred.user.uid), {
+      ...newProfile,
       createdAt: serverTimestamp(),
     });
+    setProfile(newProfile);
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
+
     if (!profileDoc.exists()) {
-      await setDoc(doc(db, "users", cred.user.uid), {
-        ...DEFAULT_PROFILE,
+      const newProfile: UserProfile = {
+        uid: cred.user.uid,
         displayName: cred.user.displayName || "",
         email: cred.user.email || "",
+        athleteType: "Lifter",
+        weightKg: 70,
+        heightCm: 170,
+        weeklyWorkoutsTarget: 4,
+        weeklyMealsTarget: 10,
+        preferredWeightUnit: "kg",
+        preferredHeightUnit: "cm",
+        darkMode: false,
+        onboardingComplete: false,
         trialExpiresAt: getTrialExpiresAt(),
+        subscriptionTier: "free",
+        currentStreak: 0,
+        lastLogDate: null,
+        program: {
+          goal: "recomp",
+          startWeight: 70,
+          currentPhase: "base",
+        },
+      };
+
+      await setDoc(doc(db, "users", cred.user.uid), {
+        ...newProfile,
         createdAt: serverTimestamp(),
       });
+      setProfile(newProfile);
+    } else {
+      const data = profileDoc.data();
+      const safeProfile: UserProfile = {
+        uid: cred.user.uid,
+        displayName: data.displayName ?? cred.user.displayName ?? "",
+        email: data.email ?? cred.user.email ?? "",
+        athleteType: data.athleteType ?? "Lifter",
+        weightKg: data.weightKg ?? 70,
+        heightCm: data.heightCm ?? 170,
+        weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
+        weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
+        preferredWeightUnit: data.preferredWeightUnit ?? "kg",
+        preferredHeightUnit: data.preferredHeightUnit ?? "cm",
+        darkMode: data.darkMode ?? false,
+        onboardingComplete: data.onboardingComplete ?? false,
+        trialExpiresAt: data.trialExpiresAt ?? null,
+        subscriptionTier: data.subscriptionTier ?? "free",
+        stripeCustomerId: data.stripeCustomerId,
+        stripeSubscriptionId: data.stripeSubscriptionId,
+        currentStreak: data.currentStreak ?? 0,
+        lastLogDate: data.lastLogDate ?? null,
+        program: {
+          goal: data.program?.goal ?? "recomp",
+          startWeight: data.program?.startWeight ?? 0,
+          currentPhase: data.program?.currentPhase ?? "base",
+        },
+      };
+      setProfile(safeProfile);
     }
   };
 

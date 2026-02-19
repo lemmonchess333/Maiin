@@ -1,86 +1,168 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, Target, Flame, Zap, Lock, TrendingUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
-import { useSubscription } from "@/lib/subscription";
-import type { DailyLog } from "@/hooks/useFirestore";
+  Trophy,
+  Target,
+  Flame,
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  Lock,
+  ChevronDown,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { useSubscription, pricing } from "@/lib/subscription";
 
-interface AdaptiveSummaryProps {
-  athleteType?: string;
-  mode?: "weekly" | "monthly";
-  compactMode?: boolean;
-  weightKg: number;
-  heightCm: number;
-  weeklyWorkoutsDone?: number;
-  weeklyWorkoutsTarget?: number;
-  weeklyMealsDone?: number;
-  weeklyMealsTarget?: number;
-  weeklyPR?: boolean;
-  monthlyWorkoutsDone?: number;
-  monthlyWorkoutsTarget?: number;
-  monthlyMealsDone?: number;
-  monthlyMealsTarget?: number;
-  monthlyPR?: boolean;
-  onWeightUnitChange?: (unit: "kg" | "lbs") => void;
-  onHeightUnitChange?: (unit: "cm" | "ft") => void;
-  historyData?: DailyLog[];
+/* ================================
+   PHASE MODE CONFIG
+================================ */
+
+type PhaseMode = "lean bulk" | "cut" | "recomp" | "strength peak";
+
+const phaseConfig: Record<PhaseMode, {
+  calorieMultiplier: number;
+  proteinRatio: number;
+  fatRatio: number;
+  plateauSensitivity: number;
+}> = {
+  "lean bulk": {
+    calorieMultiplier: 1.1,
+    proteinRatio: 2.2,
+    fatRatio: 0.25,
+    plateauSensitivity: 1,
+  },
+  cut: {
+    calorieMultiplier: 0.85,
+    proteinRatio: 2.4,
+    fatRatio: 0.3,
+    plateauSensitivity: 0.8,
+  },
+  recomp: {
+    calorieMultiplier: 1,
+    proteinRatio: 2.3,
+    fatRatio: 0.25,
+    plateauSensitivity: 1.2,
+  },
+  "strength peak": {
+    calorieMultiplier: 1.15,
+    proteinRatio: 2.2,
+    fatRatio: 0.25,
+    plateauSensitivity: 1.5,
+  },
+};
+
+/* ================================
+   SAFE NUMBER HELPER
+================================ */
+
+function safeNum(val: unknown, fallback: number = 0): number {
+  if (typeof val === "number" && !isNaN(val) && isFinite(val)) return val;
+  return fallback;
 }
 
-function convertWeight(weightKg: number, unit: "kg" | "lbs"): number {
-  if (unit === "lbs") return Math.round(weightKg * 2.20462);
-  return weightKg;
+/* ================================
+   PLATEAU DETECTION ENGINE
+================================ */
+
+interface PlateauResult {
+  status: "progressing" | "stalling" | "regressing" | "weight_only";
+  message: string;
+  calorieAdjust: number;
+  volumeAdjust: number;
+  macroNote: string;
 }
 
-function convertHeight(heightCm: number, unit: "cm" | "ft"): string {
-  if (unit === "ft") {
-    const totalInches = heightCm / 2.54;
-    const feet = Math.floor(totalInches / 12);
-    const inches = Math.round(totalInches % 12);
-    return `${feet}ft ${inches}in`;
+function detectPlateau(
+  avgLiftChange: number,
+  avgWeightChange: number,
+  sensitivity: number
+): PlateauResult {
+  const threshold = 0.1 * sensitivity;
+
+  if (avgLiftChange < -threshold) {
+    return {
+      status: "regressing",
+      message: "Strength declining. Consider a deload week or reduce volume by 10%.",
+      calorieAdjust: 100,
+      volumeAdjust: -0.1,
+      macroNote: "Increase carbs slightly to support recovery.",
+    };
   }
-  return `${heightCm}`;
+
+  if (Math.abs(avgLiftChange) < threshold && Math.abs(avgWeightChange) < 0.2) {
+    return {
+      status: "stalling",
+      message: "Performance stagnant. Increase calories by ~150 to break plateau.",
+      calorieAdjust: 150,
+      volumeAdjust: 0,
+      macroNote: "Add 20-30g carbs around training.",
+    };
+  }
+
+  if (avgWeightChange > 0.4 && avgLiftChange < threshold) {
+    return {
+      status: "weight_only",
+      message: "Weight rising without strength gains. Shift macros toward protein and carbs.",
+      calorieAdjust: -100,
+      volumeAdjust: 0,
+      macroNote: "Reduce fat by 10g, increase protein by 15g.",
+    };
+  }
+
+  return {
+    status: "progressing",
+    message: "Progress trending well. Stay consistent with current plan.",
+    calorieAdjust: 0,
+    volumeAdjust: 0,
+    macroNote: "No changes needed.",
+  };
 }
 
-function ProgressBar({
-  done,
-  target,
-  label,
-}: {
-  done: number;
-  target: number;
-  label: string;
-}) {
-  const ratio = Math.min(done / target, 1);
-  const percentage = Math.round(ratio * 100);
+/* ================================
+   AI MACRO ADJUSTMENT ENGINE
+================================ */
 
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>{label}</span>
-        <span>
-          {done}/{target}
-        </span>
-      </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="h-full bg-primary rounded-full"
-        />
-      </div>
-    </div>
-  );
+interface MacroTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }
+
+function calculateAdaptiveMacros(
+  bodyweight: number,
+  avgLiftChange: number,
+  avgWeightChange: number,
+  phase: PhaseMode
+): MacroTargets {
+  const config = phaseConfig[phase];
+  const bw = safeNum(bodyweight, 70);
+
+  let baseCalories = bw * 33;
+
+  if (avgLiftChange <= 0 && avgWeightChange <= 0) {
+    baseCalories += 150;
+  }
+  if (avgWeightChange > 0.5 && avgLiftChange <= 0) {
+    baseCalories -= 100;
+  }
+
+  const adjustedCalories = Math.round(baseCalories * config.calorieMultiplier);
+  const protein = Math.round(bw * config.proteinRatio);
+  const fats = Math.round((adjustedCalories * config.fatRatio) / 9);
+  const carbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);
+
+  return {
+    calories: adjustedCalories,
+    protein,
+    carbs: Math.max(carbs, 50),
+    fat: fats,
+  };
+}
+
+/* ================================
+   BADGE SYSTEM
+================================ */
 
 function getBadgeInfo(
   newPR: boolean,
@@ -90,44 +172,23 @@ function getBadgeInfo(
   mealsTarget: number
 ) {
   if (newPR) {
-    return {
-      badge: "PR Crusher",
-      icon: Trophy,
-      motivational: "New personal best logged! Small wins, huge gains.",
-      achievement: "PR achieved!",
-    };
+    return { badge: "PR Crusher", icon: Trophy, motivational: "New personal best! Small wins, huge gains." };
   }
   if (workoutsDone >= workoutsTarget && mealsDone >= mealsTarget) {
-    return {
-      badge: "Consistency Champ",
-      icon: Target,
-      motivational: "Consistency compounds faster than motivation!",
-      achievement: "Perfect consistency!",
-    };
+    return { badge: "Consistency Champ", icon: Target, motivational: "Consistency compounds faster than motivation!" };
   }
   if (workoutsDone >= workoutsTarget) {
-    return {
-      badge: "Consistency Champ",
-      icon: Target,
-      motivational: "Consistency compounds faster than motivation!",
-      achievement: "All workouts done!",
-    };
+    return { badge: "Iron Regular", icon: Target, motivational: "All workouts done. Keep the nutrition tight!" };
   }
   if (mealsDone >= mealsTarget) {
-    return {
-      badge: "Protein Hero",
-      icon: Flame,
-      motivational: "Nutrition goals hit — muscle growth is tracked!",
-      achievement: "Nutrition goals met!",
-    };
+    return { badge: "Protein Hero", icon: Flame, motivational: "Nutrition goals hit. Muscle growth is on track!" };
   }
-  return {
-    badge: "Weekly Warrior",
-    icon: Zap,
-    motivational: "Keep going! Progress is built one session at a time.",
-    achievement: "Keep pushing!",
-  };
+  return { badge: "Weekly Warrior", icon: Zap, motivational: "Keep going! Progress is built one session at a time." };
 }
+
+/* ================================
+   PERCENTILE
+================================ */
 
 function calculatePercentile(
   workoutsDone: number,
@@ -136,8 +197,8 @@ function calculatePercentile(
   mealsTarget: number,
   newPR: boolean
 ) {
-  const workoutScore = Math.min(workoutsDone / workoutsTarget, 1) * 50;
-  const mealScore = Math.min(mealsDone / mealsTarget, 1) * 30;
+  const workoutScore = Math.min(workoutsDone / Math.max(workoutsTarget, 1), 1) * 50;
+  const mealScore = Math.min(mealsDone / Math.max(mealsTarget, 1), 1) * 30;
   const PRScore = newPR ? 20 : 0;
   const performanceScore = workoutScore + mealScore + PRScore;
 
@@ -148,121 +209,106 @@ function calculatePercentile(
   return 75;
 }
 
-const PHASES = ["Building", "Peaking", "Deload", "Maintenance"] as const;
+/* ================================
+   PROGRESS BAR
+================================ */
+
+function ProgressBar({ done, target, label }: { done: number; target: number; label: string }) {
+  const safeDone = safeNum(done);
+  const safeTarget = safeNum(target, 1);
+  const ratio = Math.min(safeDone / Math.max(safeTarget, 1), 1);
+  const pct = Math.round(ratio * 100);
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{label}</span>
+        <span>{safeDone}/{safeTarget}</span>
+      </div>
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="h-full bg-primary rounded-full"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ================================
+   MAIN COMPONENT
+================================ */
+
+interface AdaptiveSummaryProps {
+  athleteType?: string;
+  mode?: "weekly" | "monthly";
+  weightKg?: number;
+  heightCm?: number;
+  weeklyWorkoutsDone?: number;
+  weeklyWorkoutsTarget?: number;
+  weeklyMealsDone?: number;
+  weeklyMealsTarget?: number;
+  weeklyPR?: boolean;
+  weeklyBodyweightTrend?: number[];
+  monthlyWorkoutsDone?: number;
+  monthlyWorkoutsTarget?: number;
+  monthlyMealsDone?: number;
+  monthlyMealsTarget?: number;
+  monthlyPR?: boolean;
+  monthlyBodyweightTrend?: number[];
+}
 
 export function AdaptiveSummary({
   athleteType = "Lifter",
   mode = "weekly",
-  compactMode = false,
-  weightKg,
-  heightCm,
+  weightKg = 70,
   weeklyWorkoutsDone = 0,
   weeklyWorkoutsTarget = 4,
   weeklyMealsDone = 0,
   weeklyMealsTarget = 10,
   weeklyPR = false,
+  weeklyBodyweightTrend = [],
   monthlyWorkoutsDone = 0,
   monthlyWorkoutsTarget = 16,
   monthlyMealsDone = 0,
   monthlyMealsTarget = 40,
   monthlyPR = false,
-  onWeightUnitChange,
-  onHeightUnitChange,
-  historyData = [],
+  monthlyBodyweightTrend = [],
 }: AdaptiveSummaryProps) {
-  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
-  const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
-  const [activePhase, setActivePhase] =
-    useState<(typeof PHASES)[number]>("Building");
   const { isPro } = useSubscription();
 
-  const handleWeightUnitChange = (unit: "kg" | "lbs") => {
-    setWeightUnit(unit);
-    onWeightUnitChange?.(unit);
-  };
+  const [phase, setPhase] = useState<PhaseMode>("recomp");
 
-  const handleHeightUnitChange = (unit: "cm" | "ft") => {
-    setHeightUnit(unit);
-    onHeightUnitChange?.(unit);
-  };
-
-  const workoutsDone =
-    mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone;
-  const workoutsTarget =
-    mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget;
-  const mealsDone = mode === "weekly" ? weeklyMealsDone : monthlyMealsDone;
-  const mealsTarget =
-    mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget;
+  const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
+  const workoutsTarget = safeNum(mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget, 4);
+  const mealsDone = safeNum(mode === "weekly" ? weeklyMealsDone : monthlyMealsDone);
+  const mealsTarget = safeNum(mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget, 10);
   const newPR = mode === "weekly" ? weeklyPR : monthlyPR;
+  const bodyweightTrend = (mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend) || [];
 
-  const badgeInfo = getBadgeInfo(
-    newPR,
-    workoutsDone,
-    workoutsTarget,
-    mealsDone,
-    mealsTarget
-  );
+  const badgeInfo = getBadgeInfo(newPR, workoutsDone, workoutsTarget, mealsDone, mealsTarget);
   const BadgeIcon = badgeInfo.icon;
-  const percentile = calculatePercentile(
-    workoutsDone,
-    workoutsTarget,
-    mealsDone,
-    mealsTarget,
-    newPR
-  );
+  const percentile = calculatePercentile(workoutsDone, workoutsTarget, mealsDone, mealsTarget, newPR);
 
-  const displayWeight = convertWeight(weightKg, weightUnit);
-  const displayHeight = convertHeight(heightCm, heightUnit);
-  const weightLabel = weightUnit === "lbs" ? "lbs" : "kg";
-  const heightLabel = heightUnit === "ft" ? "" : "cm";
+  const recentWeights = bodyweightTrend.slice(-3).filter((v) => typeof v === "number" && !isNaN(v));
+  const avgWeightChange = recentWeights.length > 0
+    ? recentWeights.reduce((a, b) => a + b, 0) / recentWeights.length
+    : 0;
+
+  const avgLiftChange = newPR ? 1 : 0;
+
+  const config = phaseConfig[phase];
+  const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
+  const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
+
+  const weightTrending = avgWeightChange > 0.1 ? "up" : avgWeightChange < -0.1 ? "down" : "stable";
 
   let athleteLabel = athleteType;
   if (badgeInfo.badge === "PR Crusher") athleteLabel += " PR Crushers";
-  else if (badgeInfo.badge === "Consistency Champ")
-    athleteLabel += " Champions";
-  else if (badgeInfo.badge === "Protein Hero")
-    athleteLabel += " Nutrition Heroes";
+  else if (badgeInfo.badge === "Consistency Champ") athleteLabel += " Champions";
+  else if (badgeInfo.badge === "Protein Hero") athleteLabel += " Nutrition Heroes";
   else athleteLabel += " Warriors";
-
-  const chartData = historyData.slice(-14).map((log) => ({
-    date: log.date.slice(5),
-    workouts: log.workouts,
-    meals: log.meals,
-  }));
-
-  if (compactMode) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card rounded-xl border border-border/50 p-4"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <BadgeIcon className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {badgeInfo.badge}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Top {percentile}%
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <span>
-              {workoutsDone}/{workoutsTarget} workouts
-            </span>
-            <span>
-              {mealsDone}/{mealsTarget} meals
-            </span>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div
@@ -276,73 +322,29 @@ export function AdaptiveSummary({
           <div className="p-2.5 rounded-xl bg-primary/10">
             <BadgeIcon className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h3 className="font-display font-semibold text-foreground">
-              {athleteType} {mode.charAt(0).toUpperCase() + mode.slice(1)}{" "}
-              Summary
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground">
+              {athleteType} {mode.charAt(0).toUpperCase() + mode.slice(1)} Summary
             </h3>
             <p className="text-sm text-muted-foreground">{badgeInfo.badge}</p>
           </div>
+          {weightTrending !== "stable" && (
+            <div className="flex items-center gap-1 text-xs">
+              {weightTrending === "up" ? (
+                <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5 text-blue-500" />
+              )}
+              <span className={weightTrending === "up" ? "text-green-500" : "text-blue-500"}>
+                {avgWeightChange > 0 ? "+" : ""}{safeNum(avgWeightChange).toFixed(1)}kg
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Profile with unit pickers */}
-        <div className="flex gap-4">
-          <div className="flex-1 space-y-2">
-            <p className="text-xs text-muted-foreground">Weight</p>
-            <p className="text-lg font-semibold text-foreground">
-              {displayWeight}
-              <span className="text-sm font-normal text-muted-foreground">
-                {weightLabel}
-              </span>
-            </p>
-            <div className="flex gap-1">
-              {(["kg", "lbs"] as const).map((unit) => (
-                <button
-                  key={unit}
-                  onClick={() => handleWeightUnitChange(unit)}
-                  className={cn(
-                    "px-2 py-1 text-xs rounded-md transition-colors",
-                    weightUnit === unit
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {unit}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex-1 space-y-2">
-            <p className="text-xs text-muted-foreground">Height</p>
-            <p className="text-lg font-semibold text-foreground">
-              {displayHeight}
-              <span className="text-sm font-normal text-muted-foreground">
-                {heightLabel}
-              </span>
-            </p>
-            <div className="flex gap-1">
-              {(["cm", "ft"] as const).map((unit) => (
-                <button
-                  key={unit}
-                  onClick={() => handleHeightUnitChange(unit)}
-                  className={cn(
-                    "px-2 py-1 text-xs rounded-md transition-colors",
-                    heightUnit === unit
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {unit}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Progress bars */}
+        {/* Progress Bars */}
         <div className="space-y-3">
           <ProgressBar
             done={workoutsDone}
@@ -356,142 +358,84 @@ export function AdaptiveSummary({
           />
         </div>
 
-        {/* Mini progress chart */}
-        {chartData.length > 2 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5 text-primary" />
-              <p className="text-xs font-medium text-muted-foreground">
-                Recent Activity
-              </p>
-            </div>
-            <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="hsl(var(--border))"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{
-                      fontSize: 9,
-                      fill: "hsl(var(--muted-foreground))",
-                    }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    tick={{
-                      fontSize: 9,
-                      fill: "hsl(var(--muted-foreground))",
-                    }}
-                    allowDecimals={false}
-                    width={20}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "0.5rem",
-                      fontSize: "11px",
-                    }}
-                  />
-                  <defs>
-                    <linearGradient
-                      id="summaryGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="hsl(var(--primary))"
-                        stopOpacity={0.3}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor="hsl(var(--primary))"
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="workouts"
-                    stroke="hsl(var(--primary))"
-                    fill="url(#summaryGradient)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Badge/Motivation */}
+        <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <p className="text-xs text-muted-foreground">{badgeInfo.motivational}</p>
+        </div>
+
+        {/* PRO GATE */}
+        {!isPro && (
+          <div className="p-4 rounded-xl bg-muted/30 border border-border text-center space-y-3">
+            <Lock className="mx-auto w-5 h-5 text-muted-foreground" />
+            <p className="text-sm font-medium text-foreground">Unlock Performance Engine</p>
+            <p className="text-xs text-muted-foreground">
+              AI macro adjustments, plateau detection, phase modes, and performance insights.
+            </p>
+            <p className="text-xs font-semibold text-foreground">
+              {"\u00A3"}{pricing.monthly}/month or {"\u00A3"}{pricing.yearly}/year
+            </p>
           </div>
         )}
 
-        {/* Achievement */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={badgeInfo.achievement}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            className="p-3 rounded-xl bg-primary/5 border border-primary/10"
-          >
-            <p className="text-sm font-medium text-foreground">
-              {badgeInfo.achievement}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {badgeInfo.motivational}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Performance Engine (Pro only) */}
-        {isPro ? (
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Performance Engine
-            </p>
-            <div className="flex gap-1">
-              {PHASES.map((phase) => (
-                <button
-                  key={phase}
-                  onClick={() => setActivePhase(phase)}
-                  className={cn(
-                    "flex-1 px-2 py-1.5 text-xs rounded-lg transition-colors",
-                    activePhase === phase
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  )}
+        {/* PRO: Phase Selector + AI Engine */}
+        {isPro && (
+          <>
+            {/* Phase Selector */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-foreground">Training Phase</p>
+              <div className="relative">
+                <select
+                  value={phase}
+                  onChange={(e) => setPhase(e.target.value as PhaseMode)}
+                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-border bg-muted text-foreground"
                 >
-                  {phase}
-                </button>
-              ))}
+                  <option value="lean bulk">Lean Bulk</option>
+                  <option value="cut">Cut</option>
+                  <option value="recomp">Recomp</option>
+                  <option value="strength peak">Strength Peak</option>
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 border border-border/30">
-              <p className="text-xs text-muted-foreground">
-                {activePhase === "Building" &&
-                  "Progressive overload phase — increase volume 5-10% weekly."}
-                {activePhase === "Peaking" &&
-                  "Intensity phase — reduce volume, increase intensity to peak."}
-                {activePhase === "Deload" &&
-                  "Recovery phase — reduce volume & intensity by 40-50%."}
-                {activePhase === "Maintenance" &&
-                  "Holding phase — maintain current strength & conditioning."}
-              </p>
+
+            {/* Plateau Insight */}
+            <div className={cn(
+              "p-4 rounded-xl border",
+              plateau.status === "progressing" ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" :
+              plateau.status === "stalling" ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" :
+              plateau.status === "regressing" ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" :
+              "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+            )}>
+              <p className="text-sm font-medium text-foreground">Performance Insight</p>
+              <p className="text-xs text-muted-foreground mt-1">{plateau.message}</p>
+              {plateau.macroNote !== "No changes needed." && (
+                <p className="text-xs text-muted-foreground mt-1 italic">{plateau.macroNote}</p>
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center space-y-2">
-            <Lock className="w-5 h-5 text-muted-foreground mx-auto" />
-            <p className="text-sm font-medium text-foreground">
-              Performance Engine
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Unlock phases, plateau detection & AI macros with Pro
-            </p>
-          </div>
+
+            {/* AI Macro Targets */}
+            <div>
+              <p className="text-sm font-medium text-foreground mb-3">AI Macro Targets</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{macros.calories}</p>
+                  <p className="text-xs text-orange-500">cal</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{macros.protein}g</p>
+                  <p className="text-xs text-blue-500">protein</p>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{macros.carbs}g</p>
+                  <p className="text-xs text-amber-500">carbs</p>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{macros.fat}g</p>
+                  <p className="text-xs text-purple-500">fat</p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Percentile */}
