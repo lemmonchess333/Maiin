@@ -51,6 +51,15 @@ const phaseConfig: Record<PhaseMode, {
 };
 
 /* ================================
+   SAFE NUMBER HELPER
+================================ */
+
+function safeNum(val: unknown, fallback: number = 0): number {
+  if (typeof val === "number" && !isNaN(val) && isFinite(val)) return val;
+  return fallback;
+}
+
+/* ================================
    PLATEAU DETECTION ENGINE
 ================================ */
 
@@ -126,8 +135,9 @@ function calculateAdaptiveMacros(
   phase: PhaseMode
 ): MacroTargets {
   const config = phaseConfig[phase];
+  const bw = safeNum(bodyweight, 70);
 
-  let baseCalories = bodyweight * 33;
+  let baseCalories = bw * 33;
 
   if (avgLiftChange <= 0 && avgWeightChange <= 0) {
     baseCalories += 150;
@@ -137,7 +147,7 @@ function calculateAdaptiveMacros(
   }
 
   const adjustedCalories = Math.round(baseCalories * config.calorieMultiplier);
-  const protein = Math.round(bodyweight * config.proteinRatio);
+  const protein = Math.round(bw * config.proteinRatio);
   const fats = Math.round((adjustedCalories * config.fatRatio) / 9);
   const carbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);
 
@@ -180,13 +190,15 @@ function getBadgeInfo(
 ================================ */
 
 function ProgressBar({ done, target, label }: { done: number; target: number; label: string }) {
-  const ratio = Math.min(done / Math.max(target, 1), 1);
+  const safeDone = safeNum(done);
+  const safeTarget = safeNum(target, 1);
+  const ratio = Math.min(safeDone / Math.max(safeTarget, 1), 1);
   const pct = Math.round(ratio * 100);
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{label}</span>
-        <span>{done}/{target}</span>
+        <span>{safeDone}/{safeTarget}</span>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: pct + "%" }} />
@@ -202,8 +214,8 @@ function ProgressBar({ done, target, label }: { done: number; target: number; la
 interface AdaptiveSummaryProps {
   athleteType?: string;
   mode?: "weekly" | "monthly";
-  weightKg: number;
-  heightCm: number;
+  weightKg?: number;
+  heightCm?: number;
   weeklyWorkoutsDone?: number;
   weeklyWorkoutsTarget?: number;
   weeklyMealsDone?: number;
@@ -221,8 +233,8 @@ interface AdaptiveSummaryProps {
 export function AdaptiveSummary({
   athleteType = "Lifter",
   mode = "weekly",
-  weightKg,
-  heightCm: _heightCm,
+  weightKg = 70,
+  heightCm: _heightCm = 170,
   weeklyWorkoutsDone = 0,
   weeklyWorkoutsTarget = 4,
   weeklyMealsDone = 0,
@@ -241,26 +253,26 @@ export function AdaptiveSummary({
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
 
-  const workoutsDone = mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone;
-  const workoutsTarget = mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget;
-  const mealsDone = mode === "weekly" ? weeklyMealsDone : monthlyMealsDone;
-  const mealsTarget = mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget;
+  const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
+  const workoutsTarget = safeNum(mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget, 4);
+  const mealsDone = safeNum(mode === "weekly" ? weeklyMealsDone : monthlyMealsDone);
+  const mealsTarget = safeNum(mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget, 10);
   const newPR = mode === "weekly" ? weeklyPR : monthlyPR;
-  const bodyweightTrend = mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend;
+  const bodyweightTrend = (mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend) || [];
 
   const badgeInfo = getBadgeInfo(newPR, workoutsDone, workoutsTarget, mealsDone, mealsTarget);
   const BadgeIcon = badgeInfo.icon;
 
-  const avgWeightChange =
-    bodyweightTrend.length > 0
-      ? bodyweightTrend.slice(-3).reduce((a, b) => a + b, 0) / Math.max(bodyweightTrend.slice(-3).length, 1)
-      : 0;
+  const recentWeights = bodyweightTrend.slice(-3).filter((v) => typeof v === "number" && !isNaN(v));
+  const avgWeightChange = recentWeights.length > 0
+    ? recentWeights.reduce((a, b) => a + b, 0) / recentWeights.length
+    : 0;
 
   const avgLiftChange = newPR ? 1 : 0;
 
   const config = phaseConfig[phase];
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
-  const macros = calculateAdaptiveMacros(weightKg, avgLiftChange, avgWeightChange, phase);
+  const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
 
   const weightTrending = avgWeightChange > 0.1 ? "up" : avgWeightChange < -0.1 ? "down" : "stable";
 
@@ -286,7 +298,7 @@ export function AdaptiveSummary({
                 <TrendingDown className="w-3.5 h-3.5 text-blue-500" />
               )}
               <span className={weightTrending === "up" ? "text-green-500" : "text-blue-500"}>
-                {avgWeightChange > 0 ? "+" : ""}{avgWeightChange.toFixed(1)}kg
+                {avgWeightChange > 0 ? "+" : ""}{safeNum(avgWeightChange).toFixed(1)}kg
               </span>
             </div>
           )}
