@@ -7,13 +7,12 @@ import {
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB-JX_RC7zxR6WopylzqG3B0RFzX32zjic",
-  authDomain: "adaptive-fitness-af8bb.firebaseapp.com",
-  projectId: "adaptive-fitness-af8bb",
-  storageBucket: "adaptive-fitness-af8bb.firebasestorage.app",
-  messagingSenderId: "110047207547",
-  appId: "1:110047207547:web:04c99eb6c034e0f6cc02de",
-  measurementId: "G-LNJVR4L2SL",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 

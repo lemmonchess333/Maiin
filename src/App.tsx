@@ -1,6 +1,7 @@
-import { Component, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ToastProvider } from "@/components/ToastProvider";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
@@ -8,8 +9,8 @@ import Home from "@/pages/Home";
 import Log from "@/pages/Log";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
+import Program from "@/pages/Program";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import Program from "@/pages/Program"; // ✅ NEW IMPORT
 
 /* ================================
    ERROR BOUNDARY
@@ -19,6 +20,8 @@ interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
+
+import { Component } from "react";
 
 class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
   constructor(props: { children: ReactNode }) {
@@ -39,7 +42,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
       return (
         <div className="min-h-screen bg-background flex items-center justify-center px-6">
           <div className="text-center space-y-4 max-w-sm">
-            <p className="text-4xl">⚠️</p>
+            <p className="text-4xl">Warning</p>
             <h1 className="text-lg font-bold text-foreground">Something went wrong</h1>
             <p className="text-sm text-muted-foreground">
               {this.state.error?.message || "An unexpected error occurred."}
@@ -105,8 +108,8 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/log" element={<Log />} />
         <Route path="/history" element={<History />} />
-        <Route path="/program" element={<Program />} /> {/* ✅ NEW ROUTE */}
         <Route path="/settings" element={<Settings />} />
+        <Route path="/program" element={<Program />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -119,13 +122,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter basename="/Maiin/">
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <BrowserRouter basename="/Maiin/">
         <AuthProvider>
+          <ToastProvider />
           <AppRoutes />
         </AuthProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

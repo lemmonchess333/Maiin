@@ -35,8 +35,8 @@ export default function Onboarding() {
   const [name, setName] = useState("");
   const [weightKg, setWeightKg] = useState(70);
   const [heightCm, setHeightCm] = useState(170);
-  const [workoutsTarget, setWorkoutsTarget] = useState(4);
-  const [mealsTarget, setMealsTarget] = useState(10);
+  const [workoutsTarget] = useState(4);
+  const [mealsTarget] = useState(10);
   const [saving, setSaving] = useState(false);
 
   const steps = [

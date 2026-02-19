@@ -4,6 +4,9 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
@@ -21,7 +24,7 @@ import {
 } from "lucide-react";
 
 export default function Log() {
-  const { profile } = useAuth();
+  const { profile, updateProfile } = useAuth();
   const { logs, saveLog } = useDailyLogs();
   const { getWorkoutsForDate, deleteWorkout } = useWorkouts();
 
@@ -36,7 +39,6 @@ export default function Log() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"workout" | "food" | "quick">("workout");
-
 
   const todaysWorkouts = getWorkoutsForDate(selectedDate);
 
@@ -76,8 +78,47 @@ export default function Log() {
       notes,
     });
 
+    // Update streak
+    if (profile) {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const yesterday = format(
+        new Date(Date.now() - 86400000),
+        "yyyy-MM-dd"
+      );
+      let newStreak = profile.currentStreak || 0;
+
+      if (selectedDate === today) {
+        if (
+          profile.lastLogDate === yesterday ||
+          profile.lastLogDate === today
+        ) {
+          if (profile.lastLogDate !== today) {
+            newStreak += 1;
+          }
+        } else {
+          newStreak = 1;
+        }
+        await updateProfile({
+          currentStreak: newStreak,
+          lastLogDate: today,
+        });
+      }
+    }
+
     setSaving(false);
     setSaved(true);
+    toast.success("Log saved!");
+
+    // Confetti on PR
+    if (hasPR) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#7c3aed", "#a78bfa", "#fbbf24", "#f59e0b"],
+      });
+    }
+
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -123,16 +164,14 @@ export default function Log() {
           disabled={isToday}
           className={cn(
             "p-2 rounded-lg transition-colors",
-            isToday
-              ? "opacity-30 cursor-not-allowed"
-              : "hover:bg-muted"
+            isToday ? "opacity-30 cursor-not-allowed" : "hover:bg-muted"
           )}
         >
           <ChevronRight className="w-4 h-4 text-foreground" />
         </button>
       </div>
 
-           {/* Tabs */}
+      {/* Tabs */}
       <div className="flex gap-2 bg-muted rounded-xl p-1">
         <button
           onClick={() => setActiveTab("workout")}
@@ -170,7 +209,6 @@ export default function Log() {
           <NotebookPen className="w-4 h-4" /> Quick
         </button>
       </div>
-
 
       {/* Workout Tab */}
       {activeTab === "workout" && (
@@ -237,26 +275,26 @@ export default function Log() {
       )}
 
       {/* Food Tab */}
-            {activeTab === "food" && (
+      {activeTab === "food" && (
         <div className="space-y-4">
           {todaysMeals.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <p className="text-sm font-medium text-foreground">Daily Totals</p>
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-orange-600">{dailyTotals.calories}</p>
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{dailyTotals.calories}</p>
                   <p className="text-xs text-orange-500">cal</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-blue-600">{dailyTotals.protein}g</p>
+                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{dailyTotals.protein}g</p>
                   <p className="text-xs text-blue-500">protein</p>
                 </div>
-                <div className="bg-amber-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-600">{dailyTotals.carbs}g</p>
+                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{dailyTotals.carbs}g</p>
                   <p className="text-xs text-amber-500">carbs</p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-purple-600">{dailyTotals.fat}g</p>
+                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{dailyTotals.fat}g</p>
                   <p className="text-xs text-purple-500">fat</p>
                 </div>
               </div>
@@ -296,7 +334,6 @@ export default function Log() {
         </div>
       )}
 
-
       {/* Quick Log Tab */}
       {activeTab === "quick" && (
         <div className="space-y-6">
@@ -312,8 +349,9 @@ export default function Log() {
             <div className="flex items-center justify-between">
               <div className="flex gap-2">
                 {[0, 1, 2, 3].map((n) => (
-                  <button
+                  <motion.button
                     key={n}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => setWorkoutCount(n)}
                     className={cn(
                       "w-10 h-10 rounded-lg font-medium text-sm transition-all",
@@ -323,7 +361,7 @@ export default function Log() {
                     )}
                   >
                     {n}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
 
@@ -344,8 +382,9 @@ export default function Log() {
 
             <div className="flex gap-2">
               {[0, 1, 2, 3, 4, 5].map((n) => (
-                <button
+                <motion.button
                   key={n}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setMeals(n)}
                   className={cn(
                     "w-10 h-10 rounded-lg font-medium text-sm transition-all",
@@ -355,7 +394,7 @@ export default function Log() {
                   )}
                 >
                   {n}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -430,7 +469,8 @@ export default function Log() {
           </div>
 
           {/* Save Button */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={handleSave}
             disabled={saving}
             className={cn(
@@ -450,7 +490,7 @@ export default function Log() {
             ) : (
               "Save Log"
             )}
-          </button>
+          </motion.button>
         </div>
       )}
     </div>

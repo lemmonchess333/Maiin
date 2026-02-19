@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { generateWeek, adjustForPerformance } from "./programEngine";
-import { WeeklyPrescription } from "./programTypes";
+import type { WeeklyPrescription } from "./programTypes";
 
 export function useProgram({
   currentWeek,
@@ -11,7 +11,6 @@ export function useProgram({
   primaryTrend: number;
   fatigueScore: number;
 }): WeeklyPrescription {
-
   return useMemo(() => {
     const base = generateWeek(currentWeek);
     return adjustForPerformance(base, primaryTrend, fatigueScore);

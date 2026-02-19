@@ -3,18 +3,18 @@ export const variationBank = {
     "Low Bar Squat",
     "Paused Squat",
     "Tempo Squat",
-    "Heel Elevated Zercher"
+    "Heel Elevated Zercher",
   ],
   hinge: [
     "Conventional Deadlift",
     "Paused Deadlift",
     "Deficit Deadlift",
-    "Romanian Deadlift"
+    "Romanian Deadlift",
   ],
   horizontal_push: [
     "Competition Bench",
     "Paused Bench",
     "Larsen Press",
-    "Close Grip Bench"
+    "Close Grip Bench",
   ],
 };

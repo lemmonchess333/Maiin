@@ -1,7 +1,5 @@
-import {
-  WeeklyPrescription,
-  LiftPerformance,
-} from "./programTypes";
+import type { WeeklyPrescription } from "./programTypes";
+import { variationBank } from "./variationBank";
 
 export function calculateE1RM(weight: number, reps: number) {
   return weight * (1 + reps / 30);
@@ -50,4 +48,9 @@ export function adjustForPerformance(
     intensityMultiplier: intensity,
     volumeModifier: volume,
   };
+}
+
+export function rotateVariation(pattern: keyof typeof variationBank) {
+  const options = variationBank[pattern];
+  return options[Math.floor(Math.random() * options.length)];
 }

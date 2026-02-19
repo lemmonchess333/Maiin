@@ -10,6 +10,7 @@ import {
   Lock,
   ChevronDown,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
 
 /* ================================
@@ -186,6 +187,29 @@ function getBadgeInfo(
 }
 
 /* ================================
+   PERCENTILE
+================================ */
+
+function calculatePercentile(
+  workoutsDone: number,
+  workoutsTarget: number,
+  mealsDone: number,
+  mealsTarget: number,
+  newPR: boolean
+) {
+  const workoutScore = Math.min(workoutsDone / Math.max(workoutsTarget, 1), 1) * 50;
+  const mealScore = Math.min(mealsDone / Math.max(mealsTarget, 1), 1) * 30;
+  const PRScore = newPR ? 20 : 0;
+  const performanceScore = workoutScore + mealScore + PRScore;
+
+  if (performanceScore >= 95) return 5;
+  if (performanceScore >= 85) return 10;
+  if (performanceScore >= 70) return 25;
+  if (performanceScore >= 50) return 50;
+  return 75;
+}
+
+/* ================================
    PROGRESS BAR
 ================================ */
 
@@ -201,7 +225,12 @@ function ProgressBar({ done, target, label }: { done: number; target: number; la
         <span>{safeDone}/{safeTarget}</span>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: pct + "%" }} />
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="h-full bg-primary rounded-full"
+        />
       </div>
     </div>
   );
@@ -234,7 +263,6 @@ export function AdaptiveSummary({
   athleteType = "Lifter",
   mode = "weekly",
   weightKg = 70,
-  heightCm: _heightCm = 170,
   weeklyWorkoutsDone = 0,
   weeklyWorkoutsTarget = 4,
   weeklyMealsDone = 0,
@@ -248,8 +276,7 @@ export function AdaptiveSummary({
   monthlyPR = false,
   monthlyBodyweightTrend = [],
 }: AdaptiveSummaryProps) {
-  const { tier } = useSubscription();
-  const isPro = tier === "pro";
+  const { isPro } = useSubscription();
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
 
@@ -262,6 +289,7 @@ export function AdaptiveSummary({
 
   const badgeInfo = getBadgeInfo(newPR, workoutsDone, workoutsTarget, mealsDone, mealsTarget);
   const BadgeIcon = badgeInfo.icon;
+  const percentile = calculatePercentile(workoutsDone, workoutsTarget, mealsDone, mealsTarget, newPR);
 
   const recentWeights = bodyweightTrend.slice(-3).filter((v) => typeof v === "number" && !isNaN(v));
   const avgWeightChange = recentWeights.length > 0
@@ -276,8 +304,18 @@ export function AdaptiveSummary({
 
   const weightTrending = avgWeightChange > 0.1 ? "up" : avgWeightChange < -0.1 ? "down" : "stable";
 
+  let athleteLabel = athleteType;
+  if (badgeInfo.badge === "PR Crusher") athleteLabel += " PR Crushers";
+  else if (badgeInfo.badge === "Consistency Champ") athleteLabel += " Champions";
+  else if (badgeInfo.badge === "Protein Hero") athleteLabel += " Nutrition Heroes";
+  else athleteLabel += " Warriors";
+
   return (
-    <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card rounded-2xl border border-border/50 overflow-hidden"
+    >
       {/* Header */}
       <div className="bg-muted/30 px-5 py-4 border-b border-border/30">
         <div className="flex items-center gap-3">
@@ -306,13 +344,21 @@ export function AdaptiveSummary({
       </div>
 
       <div className="p-5 space-y-5">
-        {/* FREE: Progress Bars */}
+        {/* Progress Bars */}
         <div className="space-y-3">
-          <ProgressBar done={workoutsDone} target={workoutsTarget} label="Workouts" />
-          <ProgressBar done={mealsDone} target={mealsTarget} label="Protein meals" />
+          <ProgressBar
+            done={workoutsDone}
+            target={workoutsTarget}
+            label="Workouts"
+          />
+          <ProgressBar
+            done={mealsDone}
+            target={mealsTarget}
+            label="Protein meals"
+          />
         </div>
 
-        {/* FREE: Badge/Motivation */}
+        {/* Badge/Motivation */}
         <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
           <p className="text-xs text-muted-foreground">{badgeInfo.motivational}</p>
         </div>
@@ -355,10 +401,10 @@ export function AdaptiveSummary({
             {/* Plateau Insight */}
             <div className={cn(
               "p-4 rounded-xl border",
-              plateau.status === "progressing" ? "bg-green-50 border-green-200" :
-              plateau.status === "stalling" ? "bg-amber-50 border-amber-200" :
-              plateau.status === "regressing" ? "bg-red-50 border-red-200" :
-              "bg-blue-50 border-blue-200"
+              plateau.status === "progressing" ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" :
+              plateau.status === "stalling" ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" :
+              plateau.status === "regressing" ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" :
+              "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
             )}>
               <p className="text-sm font-medium text-foreground">Performance Insight</p>
               <p className="text-xs text-muted-foreground mt-1">{plateau.message}</p>
@@ -371,27 +417,36 @@ export function AdaptiveSummary({
             <div>
               <p className="text-sm font-medium text-foreground mb-3">AI Macro Targets</p>
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 rounded-lg p-3">
-                  <p className="text-lg font-bold text-orange-600">{macros.calories}</p>
+                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{macros.calories}</p>
                   <p className="text-xs text-orange-500">cal</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <p className="text-lg font-bold text-blue-600">{macros.protein}g</p>
+                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{macros.protein}g</p>
                   <p className="text-xs text-blue-500">protein</p>
                 </div>
-                <div className="bg-amber-50 rounded-lg p-3">
-                  <p className="text-lg font-bold text-amber-600">{macros.carbs}g</p>
+                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{macros.carbs}g</p>
                   <p className="text-xs text-amber-500">carbs</p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-3">
-                  <p className="text-lg font-bold text-purple-600">{macros.fat}g</p>
+                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-3">
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{macros.fat}g</p>
                   <p className="text-xs text-purple-500">fat</p>
                 </div>
               </div>
             </div>
           </>
         )}
+
+        {/* Percentile */}
+        <div className="text-center pt-2">
+          <p className="text-xs text-muted-foreground">
+            You're in the top{" "}
+            <span className="font-semibold text-foreground">{percentile}%</span>{" "}
+            of {athleteLabel} this {mode}
+          </p>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

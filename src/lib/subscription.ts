@@ -1,10 +1,15 @@
+import type { UserProfile } from "./auth";
+import { useMemo } from "react";
 import { useAuth } from "./auth";
 
-export type Tier = "free" | "pro";
+/* ================================
+   PRICING & FEATURE ACCESS (from main)
+================================ */
 
 export const pricing = {
   monthly: 2.99,
   yearly: 29.99,
+  lifetime: 99,
   currency: "GBP",
 };
 
@@ -29,13 +34,59 @@ export const featureAccess = {
   },
 };
 
-export function useSubscription(): { tier: Tier; features: typeof featureAccess.free } {
-  const { profile } = useAuth();
-  
-  const tier: Tier = profile?.subscriptionTier || "free";
+/* ================================
+   TRIAL + SUBSCRIPTION INFO (from feature branch)
+================================ */
 
-  return {
-    tier,
-    features: featureAccess[tier],
-  };
+export type Tier = "free" | "pro";
+
+export interface SubscriptionInfo {
+  tier: Tier;
+  isInTrial: boolean;
+  trialDaysLeft: number;
+  isPro: boolean;
+  features: typeof featureAccess.free;
+}
+
+export function getSubscriptionInfo(
+  profile: UserProfile | null
+): SubscriptionInfo {
+  if (!profile) {
+    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
+  }
+
+  // Dev override or Stripe webhook: subscriptionTier manually set to "pro"
+  if (profile.subscriptionTier === "pro") {
+    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true, features: featureAccess.pro };
+  }
+
+  // Check trial
+  if (profile.trialExpiresAt) {
+    const expiresAt = new Date(profile.trialExpiresAt);
+    const now = new Date();
+    const diffMs = expiresAt.getTime() - now.getTime();
+    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+    if (daysLeft > 0) {
+      return {
+        tier: "free",
+        isInTrial: true,
+        trialDaysLeft: daysLeft,
+        isPro: true, // During trial, user has full Pro access
+        features: featureAccess.pro,
+      };
+    }
+  }
+
+  // No trial, no pro subscription
+  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
+}
+
+/* ================================
+   HOOK
+================================ */
+
+export function useSubscription(): SubscriptionInfo {
+  const { profile } = useAuth();
+  return useMemo(() => getSubscriptionInfo(profile), [profile]);
 }

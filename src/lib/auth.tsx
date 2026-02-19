@@ -17,6 +17,10 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
+/* ================================
+   USER PROFILE TYPE
+================================ */
+
 export interface UserProfile {
   uid: string;
   displayName: string;
@@ -30,15 +34,43 @@ export interface UserProfile {
   preferredHeightUnit: "cm" | "ft";
   darkMode: boolean;
   onboardingComplete: boolean;
+  // Trial & subscription
+  trialExpiresAt: string | null;
   subscriptionTier: "free" | "pro";
-
-  // ✅ Program Engine
-  program: {
-    currentWeek: number;
-    mesoLength: number;
-    startDate: number;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  // Streak
+  currentStreak: number;
+  lastLogDate: string | null;
+  // Goal-based program engine
+  program?: {
+    goal: "cut" | "lean bulk" | "recomp";
+    startWeight: number;
+    currentPhase: string;
   };
 }
+
+/* ================================
+   HELPERS
+================================ */
+
+function getTrialExpiresAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString();
+}
+
+function syncDarkMode(dark: boolean) {
+  if (dark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}
+
+/* ================================
+   AUTH CONTEXT
+================================ */
 
 interface AuthContextType {
   user: User | null;
@@ -58,15 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 DARK MODE SYNC
+  // Dark mode sync
   useEffect(() => {
-    if (profile?.darkMode !== undefined) {
-      if (profile.darkMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
+    syncDarkMode(profile?.darkMode ?? false);
   }, [profile?.darkMode]);
 
   useEffect(() => {
@@ -78,8 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileDoc.exists()) {
           const data = profileDoc.data();
-
-          // ✅ SAFE PROFILE ASSIGNMENT (prevents undefined crashes)
+          // Safe profile construction with fallback defaults
           const safeProfile: UserProfile = {
             uid: firebaseUser.uid,
             displayName: data.displayName ?? "",
@@ -93,21 +118,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             preferredHeightUnit: data.preferredHeightUnit ?? "cm",
             darkMode: data.darkMode ?? false,
             onboardingComplete: data.onboardingComplete ?? false,
+            trialExpiresAt: data.trialExpiresAt ?? null,
             subscriptionTier: data.subscriptionTier ?? "free",
+            stripeCustomerId: data.stripeCustomerId,
+            stripeSubscriptionId: data.stripeSubscriptionId,
+            currentStreak: data.currentStreak ?? 0,
+            lastLogDate: data.lastLogDate ?? null,
             program: {
-              currentWeek: data.program?.currentWeek ?? 1,
-              mesoLength: data.program?.mesoLength ?? 4,
-              startDate: data.program?.startDate ?? Date.now(),
+              goal: data.program?.goal ?? "recomp",
+              startWeight: data.program?.startWeight ?? 0,
+              currentPhase: data.program?.currentPhase ?? "base",
             },
           };
-
           setProfile(safeProfile);
+          syncDarkMode(safeProfile.darkMode);
         } else {
           setProfile(null);
         }
       } else {
         setProfile(null);
-        document.documentElement.classList.remove("dark");
+        syncDarkMode(false);
       }
 
       setLoading(false);
@@ -136,11 +166,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: false,
+      trialExpiresAt: getTrialExpiresAt(),
       subscriptionTier: "free",
+      currentStreak: 0,
+      lastLogDate: null,
       program: {
-        currentWeek: 1,
-        mesoLength: 4,
-        startDate: Date.now(),
+        goal: "recomp",
+        startWeight: 70,
+        currentPhase: "base",
       },
     };
 
@@ -148,7 +181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...newProfile,
       createdAt: serverTimestamp(),
     });
-
     setProfile(newProfile);
   };
 
@@ -171,11 +203,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: false,
+        trialExpiresAt: getTrialExpiresAt(),
         subscriptionTier: "free",
+        currentStreak: 0,
+        lastLogDate: null,
         program: {
-          currentWeek: 1,
-          mesoLength: 4,
-          startDate: Date.now(),
+          goal: "recomp",
+          startWeight: 70,
+          currentPhase: "base",
         },
       };
 
@@ -183,33 +218,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...newProfile,
         createdAt: serverTimestamp(),
       });
-
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
-
-      setProfile({
+      const safeProfile: UserProfile = {
         uid: cred.user.uid,
-        ...data,
+        displayName: data.displayName ?? cred.user.displayName ?? "",
+        email: data.email ?? cred.user.email ?? "",
+        athleteType: data.athleteType ?? "Lifter",
+        weightKg: data.weightKg ?? 70,
+        heightCm: data.heightCm ?? 170,
+        weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
+        weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
+        preferredWeightUnit: data.preferredWeightUnit ?? "kg",
+        preferredHeightUnit: data.preferredHeightUnit ?? "cm",
+        darkMode: data.darkMode ?? false,
+        onboardingComplete: data.onboardingComplete ?? false,
+        trialExpiresAt: data.trialExpiresAt ?? null,
+        subscriptionTier: data.subscriptionTier ?? "free",
+        stripeCustomerId: data.stripeCustomerId,
+        stripeSubscriptionId: data.stripeSubscriptionId,
+        currentStreak: data.currentStreak ?? 0,
+        lastLogDate: data.lastLogDate ?? null,
         program: {
-          currentWeek: data.program?.currentWeek ?? 1,
-          mesoLength: data.program?.mesoLength ?? 4,
-          startDate: data.program?.startDate ?? Date.now(),
+          goal: data.program?.goal ?? "recomp",
+          startWeight: data.program?.startWeight ?? 0,
+          currentPhase: data.program?.currentPhase ?? "base",
         },
-      } as UserProfile);
+      };
+      setProfile(safeProfile);
     }
   };
 
   const signOutUser = async () => {
     await firebaseSignOut(auth);
     setProfile(null);
-    document.documentElement.classList.remove("dark");
+    syncDarkMode(false);
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
     await setDoc(doc(db, "users", user.uid), data, { merge: true });
-    setProfile((prev) => (prev ? { ...prev, ...data } : null));
+    setProfile((prev) => {
+      const updated = prev ? { ...prev, ...data } : null;
+      if (updated && "darkMode" in data) {
+        syncDarkMode(updated.darkMode);
+      }
+      return updated;
+    });
   };
 
   return (
