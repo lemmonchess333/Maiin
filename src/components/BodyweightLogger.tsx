@@ -37,11 +37,17 @@ export default function BodyweightLogger() {
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
-          const logs = snapshot.docs.map((d) => ({
-            id: d.id,
-            date: d.data().date,
-            weight: d.data().weight,
-          }));
+          const logs: WeightLog[] = [];
+          snapshot.docs.forEach((d) => {
+            const data = d.data();
+            if (typeof data.weight === "number" && data.date) {
+              logs.push({
+                id: d.id,
+                date: data.date,
+                weight: data.weight,
+              });
+            }
+          });
           setRecentLogs(logs);
         },
         (error) => {
@@ -78,8 +84,10 @@ export default function BodyweightLogger() {
   }
 
   const unit = profile?.preferredWeightUnit || "kg";
-  const displayWeight = (w: number) =>
-    unit === "lbs" ? (w * 2.20462).toFixed(1) : w.toFixed(1);
+  const displayWeight = (w: number | undefined | null) => {
+    const val = typeof w === "number" && !isNaN(w) ? w : 0;
+    return unit === "lbs" ? (val * 2.20462).toFixed(1) : val.toFixed(1);
+  };
 
   const trend =
     recentLogs.length >= 2
@@ -91,7 +99,7 @@ export default function BodyweightLogger() {
       <div className="flex items-center gap-2">
         <Scale className="w-4 h-4 text-primary" />
         <p className="text-sm font-medium text-foreground">Bodyweight Check-in</p>
-        {trend !== null && (
+        {trend !== null && !isNaN(trend) && (
           <div className="flex items-center gap-1 ml-auto text-xs">
             {trend > 0 ? (
               <TrendingUp className="w-3.5 h-3.5 text-green-500" />
@@ -111,7 +119,7 @@ export default function BodyweightLogger() {
           type="number"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
-          placeholder={`${displayWeight(profile?.weightKg || 70)} ${unit}`}
+          placeholder={`${displayWeight(profile?.weightKg ?? 70)} ${unit}`}
           step="0.1"
           className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
