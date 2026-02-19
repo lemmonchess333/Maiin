@@ -18,7 +18,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 export interface UserProfile {
-  uid: string; // added
+  uid: string;
   displayName: string;
   email: string;
   athleteType: string;
@@ -30,6 +30,7 @@ export interface UserProfile {
   preferredHeightUnit: "cm" | "ft";
   darkMode: boolean;
   onboardingComplete: boolean;
+  subscriptionTier: "free" | "pro";   // ← ADDED
 }
 
 interface AuthContextType {
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       preferredHeightUnit: "cm",
       darkMode: false,
       onboardingComplete: false,
+      subscriptionTier: "free",   // ← ADDED
     };
     await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
     setProfile(newProfile);
@@ -110,9 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         preferredHeightUnit: "cm",
         darkMode: false,
         onboardingComplete: false,
+        subscriptionTier: "free",   // ← ADDED
       };
       await setDoc(doc(db, "users", cred.user.uid), { ...newProfile, createdAt: serverTimestamp() });
       setProfile(newProfile);
+    } else {
+      setProfile({ uid: cred.user.uid, ...profileDoc.data() } as UserProfile);
     }
   };
 
