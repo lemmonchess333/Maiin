@@ -9,6 +9,7 @@ import Log from "@/pages/Log";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import Program from "@/pages/Program"; // ✅ NEW IMPORT
 
 /* ================================
    ERROR BOUNDARY
@@ -104,6 +105,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/log" element={<Log />} />
         <Route path="/history" element={<History />} />
+        <Route path="/program" element={<Program />} /> {/* ✅ NEW ROUTE */}
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
