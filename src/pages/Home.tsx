@@ -4,6 +4,7 @@ import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import BodyweightLogger from "@/components/BodyweightLogger";
+import { useProgram } from "@/features/program/useProgram"; // Added import here
 
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -28,6 +29,13 @@ export default function Home() {
     protein: 0,
     carbs: 0,
     fat: 0,
+  });
+
+  const fatigueScore = 15; // temporary static value      // Added constant here
+  const program = useProgram({                           // Added use of program here
+    currentWeek: 2,
+    primaryTrend: avgLiftChange,
+    fatigueScore,
   });
 
   useEffect(() => {
