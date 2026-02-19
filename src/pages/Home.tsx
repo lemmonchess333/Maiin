@@ -126,22 +126,22 @@ export default function Home() {
 
       {/* Adaptive Summary */}
       <AdaptiveSummary
-        athleteType={profile.athleteType}
+        athleteType={profile.athleteType || "Lifter"}
         mode={mode}
-        weightKg={profile.weightKg}
-        heightCm={profile.heightCm}
-        weeklyWorkoutsDone={weeklyStats.workoutsDone}
-        weeklyWorkoutsTarget={weeklyStats.workoutsTarget}
-        weeklyMealsDone={weeklyStats.mealsDone}
-        weeklyMealsTarget={weeklyStats.mealsTarget}
-        weeklyPR={weeklyStats.hasPR}
-        weeklyBodyweightTrend={bodyweightTrend.weekly}
-        monthlyWorkoutsDone={monthlyStats.workoutsDone}
-        monthlyWorkoutsTarget={monthlyStats.workoutsTarget}
-        monthlyMealsDone={monthlyStats.mealsDone}
-        monthlyMealsTarget={monthlyStats.mealsTarget}
-        monthlyPR={monthlyStats.hasPR}
-        monthlyBodyweightTrend={bodyweightTrend.monthly}
+        weightKg={profile.weightKg ?? 70}
+        heightCm={profile.heightCm ?? 170}
+        weeklyWorkoutsDone={weeklyStats.workoutsDone ?? 0}
+        weeklyWorkoutsTarget={weeklyStats.workoutsTarget ?? 4}
+        weeklyMealsDone={weeklyStats.mealsDone ?? 0}
+        weeklyMealsTarget={weeklyStats.mealsTarget ?? 10}
+        weeklyPR={weeklyStats.hasPR ?? false}
+        weeklyBodyweightTrend={bodyweightTrend.weekly ?? []}
+        monthlyWorkoutsDone={monthlyStats.workoutsDone ?? 0}
+        monthlyWorkoutsTarget={monthlyStats.workoutsTarget ?? 16}
+        monthlyMealsDone={monthlyStats.mealsDone ?? 0}
+        monthlyMealsTarget={monthlyStats.mealsTarget ?? 40}
+        monthlyPR={monthlyStats.hasPR ?? false}
+        monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
       />
 
       {/* Bodyweight Logger */}
