@@ -3,6 +3,9 @@ import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -15,7 +18,7 @@ import {
 } from "lucide-react";
 
 export default function Log() {
-  const { profile } = useAuth();
+  const { profile, updateProfile } = useAuth();
   const { logs, saveLog } = useDailyLogs();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
@@ -57,8 +60,48 @@ export default function Log() {
       weightKg,
       notes,
     });
+
+    // Update streak
+    if (profile) {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const yesterday = format(
+        new Date(Date.now() - 86400000),
+        "yyyy-MM-dd"
+      );
+      let newStreak = profile.currentStreak || 0;
+
+      if (selectedDate === today) {
+        if (
+          profile.lastLogDate === yesterday ||
+          profile.lastLogDate === today
+        ) {
+          if (profile.lastLogDate !== today) {
+            newStreak += 1;
+          }
+        } else {
+          newStreak = 1;
+        }
+        await updateProfile({
+          currentStreak: newStreak,
+          lastLogDate: today,
+        });
+      }
+    }
+
     setSaving(false);
     setSaved(true);
+    toast.success("Log saved!");
+
+    // Confetti on PR
+    if (hasPR) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#7c3aed", "#a78bfa", "#fbbf24", "#f59e0b"],
+      });
+    }
+
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -100,9 +143,7 @@ export default function Log() {
           disabled={isToday}
           className={cn(
             "p-2 rounded-lg transition-colors",
-            isToday
-              ? "opacity-30 cursor-not-allowed"
-              : "hover:bg-muted"
+            isToday ? "opacity-30 cursor-not-allowed" : "hover:bg-muted"
           )}
         >
           <ChevronRight className="w-4 h-4 text-foreground" />
@@ -118,8 +159,9 @@ export default function Log() {
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {[0, 1, 2, 3].map((n) => (
-              <button
+              <motion.button
                 key={n}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setWorkouts(n)}
                 className={cn(
                   "w-10 h-10 rounded-lg font-medium text-sm transition-all",
@@ -129,7 +171,7 @@ export default function Log() {
                 )}
               >
                 {n}
-              </button>
+              </motion.button>
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -147,8 +189,9 @@ export default function Log() {
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {[0, 1, 2, 3, 4, 5].map((n) => (
-              <button
+              <motion.button
                 key={n}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setMeals(n)}
                 className={cn(
                   "w-10 h-10 rounded-lg font-medium text-sm transition-all",
@@ -158,7 +201,7 @@ export default function Log() {
                 )}
               >
                 {n}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -227,7 +270,8 @@ export default function Log() {
       </div>
 
       {/* Save button */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.97 }}
         onClick={handleSave}
         disabled={saving}
         className={cn(
@@ -247,7 +291,7 @@ export default function Log() {
         ) : (
           "Save Log"
         )}
-      </button>
+      </motion.button>
     </div>
   );
 }

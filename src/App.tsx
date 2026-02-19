@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/components/ToastProvider";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
@@ -57,11 +59,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter basename="/Maiin/">
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter basename="/Maiin/">
+        <AuthProvider>
+          <ToastProvider />
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

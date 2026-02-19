@@ -29,6 +29,20 @@ export interface UserProfile {
   preferredHeightUnit: "cm" | "ft";
   darkMode: boolean;
   onboardingComplete: boolean;
+  // Trial & subscription
+  trialExpiresAt: string | null;
+  subscriptionTier: "free" | "pro";
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  // Streak
+  currentStreak: number;
+  lastLogDate: string | null;
+}
+
+function getTrialExpiresAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString();
 }
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -43,6 +57,10 @@ const DEFAULT_PROFILE: UserProfile = {
   preferredHeightUnit: "cm",
   darkMode: false,
   onboardingComplete: false,
+  trialExpiresAt: null,
+  subscriptionTier: "free",
+  currentStreak: 0,
+  lastLogDate: null,
 };
 
 interface AuthContextType {
@@ -58,10 +76,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function syncDarkMode(dark: boolean) {
+  if (dark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    syncDarkMode(profile?.darkMode ?? false);
+  }, [profile?.darkMode]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -69,12 +99,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (profileDoc.exists()) {
-          setProfile(profileDoc.data() as UserProfile);
+          const data = profileDoc.data() as UserProfile;
+          setProfile(data);
+          syncDarkMode(data.darkMode ?? false);
         } else {
           setProfile(null);
         }
       } else {
         setProfile(null);
+        syncDarkMode(false);
       }
       setLoading(false);
     });
@@ -89,7 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, "users", cred.user.uid), {
       ...DEFAULT_PROFILE,
-      email: cred.user.email,
+      email: cred.user.email || email,
+      trialExpiresAt: getTrialExpiresAt(),
       createdAt: serverTimestamp(),
     });
   };
@@ -102,7 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setDoc(doc(db, "users", cred.user.uid), {
         ...DEFAULT_PROFILE,
         displayName: cred.user.displayName || "",
-        email: cred.user.email,
+        email: cred.user.email || "",
+        trialExpiresAt: getTrialExpiresAt(),
         createdAt: serverTimestamp(),
       });
     }
@@ -111,12 +146,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOutUser = async () => {
     await firebaseSignOut(auth);
     setProfile(null);
+    syncDarkMode(false);
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
     await setDoc(doc(db, "users", user.uid), data, { merge: true });
-    setProfile((prev) => (prev ? { ...prev, ...data } : null));
+    setProfile((prev) => {
+      const updated = prev ? { ...prev, ...data } : null;
+      if (updated && "darkMode" in data) {
+        syncDarkMode(updated.darkMode);
+      }
+      return updated;
+    });
   };
 
   return (

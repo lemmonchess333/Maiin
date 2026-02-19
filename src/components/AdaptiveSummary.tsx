@@ -1,6 +1,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, Target, Flame, Zap } from "lucide-react";
+import { Trophy, Target, Flame, Zap, Lock, TrendingUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import { useSubscription } from "@/lib/subscription";
+import type { DailyLog } from "@/hooks/useFirestore";
 
 interface AdaptiveSummaryProps {
   athleteType?: string;
@@ -20,9 +32,9 @@ interface AdaptiveSummaryProps {
   monthlyPR?: boolean;
   onWeightUnitChange?: (unit: "kg" | "lbs") => void;
   onHeightUnitChange?: (unit: "cm" | "ft") => void;
+  historyData?: DailyLog[];
 }
 
-// Unit conversion helpers
 function convertWeight(weightKg: number, unit: "kg" | "lbs"): number {
   if (unit === "lbs") return Math.round(weightKg * 2.20462);
   return weightKg;
@@ -38,8 +50,15 @@ function convertHeight(heightCm: number, unit: "cm" | "ft"): string {
   return `${heightCm}`;
 }
 
-// Progress bar component
-function ProgressBar({ done, target, label }: { done: number; target: number; label: string }) {
+function ProgressBar({
+  done,
+  target,
+  label,
+}: {
+  done: number;
+  target: number;
+  label: string;
+}) {
   const ratio = Math.min(done / target, 1);
   const percentage = Math.round(ratio * 100);
 
@@ -47,20 +66,29 @@ function ProgressBar({ done, target, label }: { done: number; target: number; la
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{label}</span>
-        <span>{done}/{target}</span>
+        <span>
+          {done}/{target}
+        </span>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${percentage}%` }}
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="h-full bg-primary rounded-full"
         />
       </div>
     </div>
   );
 }
 
-// Badge determination
-function getBadgeInfo(newPR: boolean, workoutsDone: number, workoutsTarget: number, mealsDone: number, mealsTarget: number) {
+function getBadgeInfo(
+  newPR: boolean,
+  workoutsDone: number,
+  workoutsTarget: number,
+  mealsDone: number,
+  mealsTarget: number
+) {
   if (newPR) {
     return {
       badge: "PR Crusher",
@@ -101,8 +129,13 @@ function getBadgeInfo(newPR: boolean, workoutsDone: number, workoutsTarget: numb
   };
 }
 
-// Percentile calculation
-function calculatePercentile(workoutsDone: number, workoutsTarget: number, mealsDone: number, mealsTarget: number, newPR: boolean) {
+function calculatePercentile(
+  workoutsDone: number,
+  workoutsTarget: number,
+  mealsDone: number,
+  mealsTarget: number,
+  newPR: boolean
+) {
   const workoutScore = Math.min(workoutsDone / workoutsTarget, 1) * 50;
   const mealScore = Math.min(mealsDone / mealsTarget, 1) * 30;
   const PRScore = newPR ? 20 : 0;
@@ -114,6 +147,8 @@ function calculatePercentile(workoutsDone: number, workoutsTarget: number, meals
   if (performanceScore >= 50) return 50;
   return 75;
 }
+
+const PHASES = ["Building", "Peaking", "Deload", "Maintenance"] as const;
 
 export function AdaptiveSummary({
   athleteType = "Lifter",
@@ -133,9 +168,13 @@ export function AdaptiveSummary({
   monthlyPR = false,
   onWeightUnitChange,
   onHeightUnitChange,
+  historyData = [],
 }: AdaptiveSummaryProps) {
   const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
   const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
+  const [activePhase, setActivePhase] =
+    useState<(typeof PHASES)[number]>("Building");
+  const { isPro } = useSubscription();
 
   const handleWeightUnitChange = (unit: "kg" | "lbs") => {
     setWeightUnit(unit);
@@ -147,59 +186,90 @@ export function AdaptiveSummary({
     onHeightUnitChange?.(unit);
   };
 
-  // Select mode data
-  const workoutsDone = mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone;
-  const workoutsTarget = mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget;
+  const workoutsDone =
+    mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone;
+  const workoutsTarget =
+    mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget;
   const mealsDone = mode === "weekly" ? weeklyMealsDone : monthlyMealsDone;
-  const mealsTarget = mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget;
+  const mealsTarget =
+    mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget;
   const newPR = mode === "weekly" ? weeklyPR : monthlyPR;
 
-  // Get badge info
-  const badgeInfo = getBadgeInfo(newPR, workoutsDone, workoutsTarget, mealsDone, mealsTarget);
+  const badgeInfo = getBadgeInfo(
+    newPR,
+    workoutsDone,
+    workoutsTarget,
+    mealsDone,
+    mealsTarget
+  );
   const BadgeIcon = badgeInfo.icon;
+  const percentile = calculatePercentile(
+    workoutsDone,
+    workoutsTarget,
+    mealsDone,
+    mealsTarget,
+    newPR
+  );
 
-  // Calculate percentile
-  const percentile = calculatePercentile(workoutsDone, workoutsTarget, mealsDone, mealsTarget, newPR);
-
-  // Unit displays
   const displayWeight = convertWeight(weightKg, weightUnit);
   const displayHeight = convertHeight(heightCm, heightUnit);
   const weightLabel = weightUnit === "lbs" ? "lbs" : "kg";
   const heightLabel = heightUnit === "ft" ? "" : "cm";
 
-  // Athlete label for percentile
   let athleteLabel = athleteType;
   if (badgeInfo.badge === "PR Crusher") athleteLabel += " PR Crushers";
-  else if (badgeInfo.badge === "Consistency Champ") athleteLabel += " Champions";
-  else if (badgeInfo.badge === "Protein Hero") athleteLabel += " Nutrition Heroes";
+  else if (badgeInfo.badge === "Consistency Champ")
+    athleteLabel += " Champions";
+  else if (badgeInfo.badge === "Protein Hero")
+    athleteLabel += " Nutrition Heroes";
   else athleteLabel += " Warriors";
+
+  const chartData = historyData.slice(-14).map((log) => ({
+    date: log.date.slice(5),
+    workouts: log.workouts,
+    meals: log.meals,
+  }));
 
   if (compactMode) {
     return (
-      <div className="bg-card rounded-xl border border-border/50 p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-xl border border-border/50 p-4"
+      >
         <div className="flex items-center justify-between gap-3">
-          {/* Badge */}
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <BadgeIcon className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">{badgeInfo.badge}</p>
-              <p className="text-xs text-muted-foreground">Top {percentile}%</p>
+              <p className="text-sm font-medium text-foreground">
+                {badgeInfo.badge}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Top {percentile}%
+              </p>
             </div>
           </div>
-          {/* Quick stats */}
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <span>{workoutsDone}/{workoutsTarget} workouts</span>
-            <span>{mealsDone}/{mealsTarget} meals</span>
+            <span>
+              {workoutsDone}/{workoutsTarget} workouts
+            </span>
+            <span>
+              {mealsDone}/{mealsTarget} meals
+            </span>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card rounded-2xl border border-border/50 overflow-hidden"
+    >
       {/* Header */}
       <div className="bg-muted/30 px-5 py-4 border-b border-border/30">
         <div className="flex items-center gap-3">
@@ -208,7 +278,8 @@ export function AdaptiveSummary({
           </div>
           <div>
             <h3 className="font-display font-semibold text-foreground">
-              {athleteType} {mode.charAt(0).toUpperCase() + mode.slice(1)} Summary
+              {athleteType} {mode.charAt(0).toUpperCase() + mode.slice(1)}{" "}
+              Summary
             </h3>
             <p className="text-sm text-muted-foreground">{badgeInfo.badge}</p>
           </div>
@@ -218,11 +289,13 @@ export function AdaptiveSummary({
       <div className="p-5 space-y-5">
         {/* Profile with unit pickers */}
         <div className="flex gap-4">
-          {/* Weight */}
           <div className="flex-1 space-y-2">
             <p className="text-xs text-muted-foreground">Weight</p>
             <p className="text-lg font-semibold text-foreground">
-              {displayWeight}<span className="text-sm font-normal text-muted-foreground">{weightLabel}</span>
+              {displayWeight}
+              <span className="text-sm font-normal text-muted-foreground">
+                {weightLabel}
+              </span>
             </p>
             <div className="flex gap-1">
               {(["kg", "lbs"] as const).map((unit) => (
@@ -242,11 +315,13 @@ export function AdaptiveSummary({
             </div>
           </div>
 
-          {/* Height */}
           <div className="flex-1 space-y-2">
             <p className="text-xs text-muted-foreground">Height</p>
             <p className="text-lg font-semibold text-foreground">
-              {displayHeight}<span className="text-sm font-normal text-muted-foreground">{heightLabel}</span>
+              {displayHeight}
+              <span className="text-sm font-normal text-muted-foreground">
+                {heightLabel}
+              </span>
             </p>
             <div className="flex gap-1">
               {(["cm", "ft"] as const).map((unit) => (
@@ -269,23 +344,165 @@ export function AdaptiveSummary({
 
         {/* Progress bars */}
         <div className="space-y-3">
-          <ProgressBar done={workoutsDone} target={workoutsTarget} label="Workouts" />
-          <ProgressBar done={mealsDone} target={mealsTarget} label="Protein meals" />
+          <ProgressBar
+            done={workoutsDone}
+            target={workoutsTarget}
+            label="Workouts"
+          />
+          <ProgressBar
+            done={mealsDone}
+            target={mealsTarget}
+            label="Protein meals"
+          />
         </div>
 
+        {/* Mini progress chart */}
+        {chartData.length > 2 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-primary" />
+              <p className="text-xs font-medium text-muted-foreground">
+                Recent Activity
+              </p>
+            </div>
+            <div className="h-32">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{
+                      fontSize: 9,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{
+                      fontSize: 9,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                    allowDecimals={false}
+                    width={20}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "0.5rem",
+                      fontSize: "11px",
+                    }}
+                  />
+                  <defs>
+                    <linearGradient
+                      id="summaryGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="hsl(var(--primary))"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="hsl(var(--primary))"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="workouts"
+                    stroke="hsl(var(--primary))"
+                    fill="url(#summaryGradient)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
         {/* Achievement */}
-        <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <p className="text-sm font-medium text-foreground">{badgeInfo.achievement}</p>
-          <p className="text-xs text-muted-foreground mt-1">{badgeInfo.motivational}</p>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={badgeInfo.achievement}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="p-3 rounded-xl bg-primary/5 border border-primary/10"
+          >
+            <p className="text-sm font-medium text-foreground">
+              {badgeInfo.achievement}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {badgeInfo.motivational}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Performance Engine (Pro only) */}
+        {isPro ? (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Performance Engine
+            </p>
+            <div className="flex gap-1">
+              {PHASES.map((phase) => (
+                <button
+                  key={phase}
+                  onClick={() => setActivePhase(phase)}
+                  className={cn(
+                    "flex-1 px-2 py-1.5 text-xs rounded-lg transition-colors",
+                    activePhase === phase
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {phase}
+                </button>
+              ))}
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 border border-border/30">
+              <p className="text-xs text-muted-foreground">
+                {activePhase === "Building" &&
+                  "Progressive overload phase — increase volume 5-10% weekly."}
+                {activePhase === "Peaking" &&
+                  "Intensity phase — reduce volume, increase intensity to peak."}
+                {activePhase === "Deload" &&
+                  "Recovery phase — reduce volume & intensity by 40-50%."}
+                {activePhase === "Maintenance" &&
+                  "Holding phase — maintain current strength & conditioning."}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-xl bg-muted/30 border border-border/50 text-center space-y-2">
+            <Lock className="w-5 h-5 text-muted-foreground mx-auto" />
+            <p className="text-sm font-medium text-foreground">
+              Performance Engine
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Unlock phases, plateau detection & AI macros with Pro
+            </p>
+          </div>
+        )}
 
         {/* Percentile */}
         <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground">
-            You're in the top <span className="font-semibold text-foreground">{percentile}%</span> of {athleteLabel} this {mode}
+            You're in the top{" "}
+            <span className="font-semibold text-foreground">{percentile}%</span>{" "}
+            of {athleteLabel} this {mode}
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
