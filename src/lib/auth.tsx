@@ -32,8 +32,8 @@ export interface UserProfile {
   onboardingComplete: boolean;
   subscriptionTier: "free" | "pro";
 
-  // ✅ NEW: Program Engine Data
-  program?: {
+  // ✅ Program Engine
+  program: {
     currentWeek: number;
     mesoLength: number;
     startDate: number;
@@ -72,10 +72,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
         if (profileDoc.exists()) {
-          setProfile({ uid: firebaseUser.uid, ...profileDoc.data() } as UserProfile);
+          const data = profileDoc.data();
+
+          // ✅ SAFE PROFILE ASSIGNMENT (prevents undefined crashes)
+          const safeProfile: UserProfile = {
+            uid: firebaseUser.uid,
+            displayName: data.displayName ?? "",
+            email: data.email ?? firebaseUser.email ?? "",
+            athleteType: data.athleteType ?? "Lifter",
+            weightKg: data.weightKg ?? 70,
+            heightCm: data.heightCm ?? 170,
+            weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
+            weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
+            preferredWeightUnit: data.preferredWeightUnit ?? "kg",
+            preferredHeightUnit: data.preferredHeightUnit ?? "cm",
+            darkMode: data.darkMode ?? false,
+            onboardingComplete: data.onboardingComplete ?? false,
+            subscriptionTier: data.subscriptionTier ?? "free",
+            program: {
+              currentWeek: data.program?.currentWeek ?? 1,
+              mesoLength: data.program?.mesoLength ?? 4,
+              startDate: data.program?.startDate ?? Date.now(),
+            },
+          };
+
+          setProfile(safeProfile);
         } else {
           setProfile(null);
         }
@@ -83,8 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         document.documentElement.classList.remove("dark");
       }
+
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
@@ -109,8 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       darkMode: false,
       onboardingComplete: false,
       subscriptionTier: "free",
-
-      // ✅ NEW: Default Program Data
       program: {
         currentWeek: 1,
         mesoLength: 4,
@@ -146,8 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         darkMode: false,
         onboardingComplete: false,
         subscriptionTier: "free",
-
-        // ✅ NEW: Default Program Data
         program: {
           currentWeek: 1,
           mesoLength: 4,
@@ -162,7 +186,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(newProfile);
     } else {
-      setProfile({ uid: cred.user.uid, ...profileDoc.data() } as UserProfile);
+      const data = profileDoc.data();
+
+      setProfile({
+        uid: cred.user.uid,
+        ...data,
+        program: {
+          currentWeek: data.program?.currentWeek ?? 1,
+          mesoLength: data.program?.mesoLength ?? 4,
+          startDate: data.program?.startDate ?? Date.now(),
+        },
+      } as UserProfile);
     }
   };
 
