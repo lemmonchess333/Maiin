@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   Dumbbell,
   Bike,
@@ -18,34 +20,57 @@ const ATHLETE_TYPES = [
   { id: "Cyclist", label: "Cyclist", icon: Bike, desc: "Cycling & spinning" },
 ];
 
+const GOALS = [
+  { id: "cut", label: "Cut" },
+  { id: "lean bulk", label: "Lean Bulk" },
+  { id: "recomp", label: "Recomp" },
+];
+
 export default function Onboarding() {
-  const { updateProfile } = useAuth();
+  const { user } = useAuth();
+
   const [step, setStep] = useState(0);
   const [athleteType, setAthleteType] = useState("Lifter");
+  const [selectedGoal, setSelectedGoal] = useState<"cut" | "lean bulk" | "recomp">("recomp");
   const [name, setName] = useState("");
   const [weightKg, setWeightKg] = useState(70);
   const [heightCm, setHeightCm] = useState(170);
-  const [workoutsTarget, setWorkoutsTarget] = useState(4);
-  const [mealsTarget, setMealsTarget] = useState(10);
+  const [workoutsTarget] = useState(4);
+  const [mealsTarget] = useState(10);
   const [saving, setSaving] = useState(false);
 
   const steps = [
     { title: "What's your sport?", subtitle: "Choose your primary activity" },
     { title: "About you", subtitle: "We'll personalize your experience" },
-    { title: "Set your goals", subtitle: "Weekly targets to keep you on track" },
+    { title: "Set your goals", subtitle: "Define your training focus" },
   ];
 
   const handleFinish = async () => {
+    if (!user) return;
+
     setSaving(true);
-    await updateProfile({
-      displayName: name,
-      athleteType,
-      weightKg,
-      heightCm,
-      weeklyWorkoutsTarget: workoutsTarget,
-      weeklyMealsTarget: mealsTarget,
-      onboardingComplete: true,
-    });
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        displayName: name,
+        athleteType,
+        weightKg,
+        heightCm,
+        weeklyWorkoutsTarget: workoutsTarget,
+        weeklyMealsTarget: mealsTarget,
+        onboardingComplete: true,
+
+        // ✅ NEW PROGRAM STRUCTURE
+        program: {
+          goal: selectedGoal,
+          startWeight: Number(weightKg),
+          currentPhase: "base",
+        },
+      },
+      { merge: true }
+    );
+
     setSaving(false);
   };
 
@@ -71,7 +96,7 @@ export default function Onboarding() {
           <p className="text-sm text-muted-foreground">{steps[step].subtitle}</p>
         </div>
 
-        {/* Step 0: Sport selection */}
+        {/* Step 0 */}
         {step === 0 && (
           <div className="space-y-3">
             {ATHLETE_TYPES.map((type) => {
@@ -87,21 +112,7 @@ export default function Onboarding() {
                       : "border-border/50 bg-card hover:border-border"
                   )}
                 >
-                  <div
-                    className={cn(
-                      "p-2.5 rounded-xl",
-                      athleteType === type.id ? "bg-primary/10" : "bg-muted"
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "w-5 h-5",
-                        athleteType === type.id
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      )}
-                    />
-                  </div>
+                  <Icon className="w-5 h-5" />
                   <div className="text-left flex-1">
                     <p className="font-medium text-foreground">{type.label}</p>
                     <p className="text-xs text-muted-foreground">{type.desc}</p>
@@ -115,102 +126,55 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 1: About you */}
+        {/* Step 1 */}
         {step === 1 && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50"
+            />
 
             <div className="flex gap-3">
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(Number(e.target.value))}
-                  min={30}
-                  max={300}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Height (cm)
-                </label>
-                <input
-                  type="number"
-                  value={heightCm}
-                  onChange={(e) => setHeightCm(Number(e.target.value))}
-                  min={100}
-                  max={250}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+              <input
+                type="number"
+                value={weightKg}
+                onChange={(e) => setWeightKg(Number(e.target.value))}
+                className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50"
+              />
+              <input
+                type="number"
+                value={heightCm}
+                onChange={(e) => setHeightCm(Number(e.target.value))}
+                className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50"
+              />
             </div>
           </div>
         )}
 
-        {/* Step 2: Goals */}
+        {/* Step 2 */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Weekly workouts target
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min={1}
-                  max={7}
-                  value={workoutsTarget}
-                  onChange={(e) => setWorkoutsTarget(Number(e.target.value))}
-                  className="flex-1 accent-primary"
-                />
-                <span className="text-lg font-bold text-foreground w-8 text-center">
-                  {workoutsTarget}
-                </span>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Select Goal</p>
+              <div className="flex gap-2">
+                {GOALS.map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => setSelectedGoal(g.id as any)}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg border",
+                      selectedGoal === g.id
+                        ? "bg-primary text-white"
+                        : "bg-muted"
+                    )}
+                  >
+                    {g.label}
+                  </button>
+                ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {workoutsTarget <= 2
-                  ? "Easy start"
-                  : workoutsTarget <= 4
-                  ? "Solid routine"
-                  : workoutsTarget <= 5
-                  ? "Dedicated athlete"
-                  : "Beast mode!"}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Daily protein meals target
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min={1}
-                  max={6}
-                  value={Math.round(mealsTarget / 7)}
-                  onChange={(e) => setMealsTarget(Number(e.target.value) * 7)}
-                  className="flex-1 accent-primary"
-                />
-                <span className="text-lg font-bold text-foreground w-8 text-center">
-                  {Math.round(mealsTarget / 7)}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {mealsTarget / 7} meals/day = {mealsTarget} meals/week
-              </p>
             </div>
           </div>
         )}
@@ -220,26 +184,24 @@ export default function Onboarding() {
           {step > 0 && (
             <button
               onClick={() => setStep(step - 1)}
-              className="flex-1 py-3 rounded-xl font-medium bg-muted text-foreground border border-border/50 hover:bg-muted/80 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-muted"
             >
-              <ChevronLeft className="w-4 h-4" /> Back
+              <ChevronLeft className="w-4 h-4 inline" /> Back
             </button>
           )}
+
           {step < 2 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex-1 py-3 rounded-xl font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-primary text-white"
             >
-              Next <ChevronRight className="w-4 h-4" />
+              Next <ChevronRight className="w-4 h-4 inline" />
             </button>
           ) : (
             <button
               onClick={handleFinish}
               disabled={saving}
-              className={cn(
-                "flex-1 py-3 rounded-xl font-medium bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center justify-center gap-2",
-                saving && "opacity-50 cursor-not-allowed"
-              )}
+              className="flex-1 py-3 rounded-xl bg-primary text-white"
             >
               {saving ? "Saving..." : "Let's Go!"}
             </button>

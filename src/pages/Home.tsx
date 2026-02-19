@@ -6,6 +6,7 @@ import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import { StreakCounter } from "@/components/StreakCounter";
 import BodyweightLogger from "@/components/BodyweightLogger";
 import { useSubscription } from "@/lib/subscription";
+import { useProgram } from "@/features/program/useProgram";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Sparkles } from "lucide-react";
@@ -57,6 +58,19 @@ export default function Home() {
   });
 
   const quote = useMemo(() => getDailyQuote(), []);
+
+  // Program engine integration
+  const fatigueScore = 15; // temporary static value
+  const avgLiftChange = (weeklyStats.hasPR ?? false) ? 1 : 0;
+  const program = useProgram({
+    currentWeek: 2,
+    primaryTrend: avgLiftChange,
+    fatigueScore,
+  });
+  // Expose program data for debugging and future UI integration
+  if (import.meta.env.DEV) {
+    console.debug("Program prescription:", program);
+  }
 
   // Fetch today's meal totals
   useEffect(() => {

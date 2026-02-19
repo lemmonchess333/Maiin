@@ -98,8 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
         if (profileDoc.exists()) {
           const data = profileDoc.data();
           // Safe profile construction with fallback defaults
@@ -137,8 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         syncDarkMode(false);
       }
+
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
