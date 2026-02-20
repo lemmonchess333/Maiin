@@ -9,9 +9,13 @@ import {
   TrendingDown,
   Lock,
   ChevronDown,
+  Beef,
+  Wheat,
+  Droplet,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
+import { toast } from "sonner";
 
 /* ================================
    PHASE MODE CONFIG
@@ -279,6 +283,7 @@ export function AdaptiveSummary({
   const { isPro } = useSubscription();
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
+  const [calorieBoost, setCalorieBoost] = useState(0); // Applied suggestion boost
 
   const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
   const workoutsTarget = safeNum(mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget, 4);
@@ -302,6 +307,12 @@ export function AdaptiveSummary({
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
   const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
 
+  // Display macros with applied boost (from "Apply Suggestion" button)
+  const displayMacros = {
+    ...macros,
+    calories: macros.calories + calorieBoost,
+  };
+
   const weightTrending = avgWeightChange > 0.1 ? "up" : avgWeightChange < -0.1 ? "down" : "stable";
 
   let athleteLabel = athleteType;
@@ -309,6 +320,8 @@ export function AdaptiveSummary({
   else if (badgeInfo.badge === "Consistency Champ") athleteLabel += " Champions";
   else if (badgeInfo.badge === "Protein Hero") athleteLabel += " Nutrition Heroes";
   else athleteLabel += " Warriors";
+
+  const showApplyButton = isPro && plateau.calorieAdjust !== 0;
 
   return (
     <motion.div
@@ -398,7 +411,7 @@ export function AdaptiveSummary({
               </div>
             </div>
 
-            {/* Plateau Insight */}
+            {/* Plateau Insight + Apply Button */}
             <div className={cn(
               "p-4 rounded-xl border",
               plateau.status === "progressing" ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" :
@@ -411,27 +424,60 @@ export function AdaptiveSummary({
               {plateau.macroNote !== "No changes needed." && (
                 <p className="text-xs text-muted-foreground mt-1 italic">{plateau.macroNote}</p>
               )}
+
+              {showApplyButton && (
+                <button
+                  onClick={() => {
+                    setCalorieBoost((prev) => prev + plateau.calorieAdjust);
+                    toast.success(
+                      `Suggestion applied! +${plateau.calorieAdjust} cal added to targets. ${plateau.macroNote}`
+                    );
+                  }}
+                  className="mt-3 w-full py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 active:bg-primary/95 transition-all shadow-sm"
+                >
+                  Apply Suggestion (+{plateau.calorieAdjust} cal)
+                </button>
+              )}
             </div>
 
-            {/* AI Macro Targets */}
+            {/* AI Macro Targets - Unified beautiful style (matches Today's Intake) */}
             <div>
               <p className="text-sm font-medium text-foreground mb-3">AI Macro Targets</p>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{macros.calories}</p>
-                  <p className="text-xs text-orange-500">cal</p>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                {/* Calories */}
+                <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
+                  <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    {displayMacros.calories}
+                  </p>
+                  <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{macros.protein}g</p>
-                  <p className="text-xs text-blue-500">protein</p>
+
+                {/* Protein */}
+                <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
+                  <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {displayMacros.protein}g
+                  </p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
                 </div>
-                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{macros.carbs}g</p>
-                  <p className="text-xs text-amber-500">carbs</p>
+
+                {/* Carbs */}
+                <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
+                  <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    {displayMacros.carbs}g
+                  </p>
+                  <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-3">
-                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{macros.fat}g</p>
-                  <p className="text-xs text-purple-500">fat</p>
+
+                {/* Fat */}
+                <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
+                  <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {displayMacros.fat}g
+                  </p>
+                  <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
                 </div>
               </div>
             </div>
