@@ -6,7 +6,17 @@ interface StreakCounterProps {
 }
 
 export function StreakCounter({ streak }: StreakCounterProps) {
-  if (streak <= 0) return null;
+  if (streak <= 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border/50">
+        <Flame className="w-5 h-5 text-muted-foreground" />
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">No streak yet</p>
+          <p className="text-xs text-muted-foreground">Log a workout to start!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div

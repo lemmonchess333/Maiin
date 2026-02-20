@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
+import { useWorkouts } from "@/hooks/useWorkouts";
 import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import { StreakCounter } from "@/components/StreakCounter";
 import BodyweightLogger from "@/components/BodyweightLogger";
 import { useSubscription } from "@/lib/subscription";
-import { useProgram } from "@/features/program/useProgram";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Sparkles } from "lucide-react";
-
+import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -40,11 +40,38 @@ function getDailyQuote(): string {
   return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
 }
 
+function computeStreak(workoutDates: string[]): number {
+  if (workoutDates.length === 0) return 0;
+
+  const uniqueDates = [...new Set(workoutDates)].sort().reverse();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+
+  // Streak must start from today or yesterday
+  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prev = new Date(uniqueDates[i - 1]);
+    const curr = new Date(uniqueDates[i]);
+    const diffDays = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (diffDays === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
 export default function Home() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const weeklyStats = useWeeklyStats();
   const monthlyStats = useMonthlyStats();
   const bodyweightTrend = useBodyweightTrend();
+  const { workouts } = useWorkouts();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
@@ -59,18 +86,18 @@ export default function Home() {
 
   const quote = useMemo(() => getDailyQuote(), []);
 
-  // Program engine integration
-  const fatigueScore = 15; // temporary static value
-  const avgLiftChange = (weeklyStats.hasPR ?? false) ? 1 : 0;
-  const program = useProgram({
-    currentWeek: 2,
-    primaryTrend: avgLiftChange,
-    fatigueScore,
-  });
-  // Expose program data for debugging and future UI integration
-  if (import.meta.env.DEV) {
-    console.debug("Program prescription:", program);
-  }
+  // Compute streak from workout history
+  const computedStreak = useMemo(() => {
+    const dates = workouts.map((w) => w.date);
+    return computeStreak(dates);
+  }, [workouts]);
+
+  // Sync computed streak to Firestore profile
+  useEffect(() => {
+    if (profile && computedStreak !== profile.currentStreak) {
+      updateProfile({ currentStreak: computedStreak });
+    }
+  }, [computedStreak, profile, updateProfile]);
 
   // Fetch today's meal totals
   useEffect(() => {
@@ -163,8 +190,8 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Streak counter */}
-      <StreakCounter streak={profile.currentStreak || 0} />
+      {/* Streak counter — always visible */}
+      <StreakCounter streak={computedStreak} />
 
       {/* Mode Toggle */}
       <div className="flex gap-1 bg-muted rounded-lg p-1">
