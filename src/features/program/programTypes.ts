@@ -1,46 +1,61 @@
-export type MovementPattern =
-  | "squat"
-  | "hinge"
+/* ================================
+   PROGRAM ENGINE TYPES
+================================ */
+
+export type MovementCategory =
   | "horizontal_push"
   | "vertical_push"
   | "horizontal_pull"
   | "vertical_pull"
-  | "isolation"
+  | "knee_dominant"
+  | "hip_dominant"
+  | "arms_biceps"
+  | "arms_triceps"
   | "core";
 
-export type MovementCategory =
-  | "primary"
-  | "secondary"
-  | "accessory";
+export type SplitType = "upper_lower" | "ppl";
 
-export type ExerciseMeta = {
-  id: string;
+export type Goal = "cut" | "lean bulk" | "recomp";
+
+export type ProgressionType = "double" | "linear";
+
+export interface ProgramExercise {
   name: string;
-  pattern: MovementPattern;
-  category: MovementCategory;
-  fatigueScore: number;
-};
-
-export type LiftPerformance = {
   exerciseId: string;
-  currentE1RM: number;
-  bestE1RM: number;
-  trend: number;
-};
+  movementCategory: MovementCategory;
+  sets: number;
+  reps: number;
+  weight: number;
+  progressionType: ProgressionType;
+  lastPerformance: {
+    sets: number;
+    reps: number;
+    weight: number;
+    completed: boolean;
+  } | null;
+  plateauCount: number;
+}
 
-export type WeeklyPrescription = {
+export interface WorkoutDay {
+  dayName: string;
+  dayType: string;
+  exercises: ProgramExercise[];
+  completed: boolean;
+}
+
+export interface ProgramState {
+  goal: Goal;
+  currentPhase: string;
+  weekNumber: number;
+  splitType: SplitType;
+  workouts: WorkoutDay[];
+  fatigueScore: number;
+  updatedAt: number;
+}
+
+export interface WeeklyPrescription {
   week: number;
   intensityMultiplier: number;
   volumeModifier: number;
   deload: boolean;
-};
-
-export type Mesocycle = {
-  id: string;
-  startDate: number;
-  currentWeek: number;
-  totalWeeks: number;
-  deloadWeek: number;
-  primaryLifts: string[];
-  secondaryLifts: string[];
-};
+}
