@@ -1,10 +1,11 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, PlusCircle, BarChart3, Settings } from "lucide-react";
+import { Home, PlusCircle, BarChart3, Settings, Dumbbell } from "lucide-react";
 
 const tabs = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/log", icon: PlusCircle, label: "Log" },
+  { to: "/program", icon: Dumbbell, label: "Program" },
   { to: "/history", icon: BarChart3, label: "History" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];

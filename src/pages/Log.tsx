@@ -310,7 +310,7 @@ export default function Log() {
               {todaysMeals.map((m) => (
                 <div key={m.id} className="bg-card rounded-xl border border-border/50 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-foreground">{m.foodName}</p>
+                    <p className="text-sm font-medium text-foreground">{m.foodName || "Meal"}</p>
                     <div className="flex items-center gap-3">
                       <p className="text-xs text-orange-500 font-medium">{m.totalCalories} cal</p>
                       <button onClick={() => deleteMeal(m.id)} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500">
@@ -323,7 +323,7 @@ export default function Log() {
                     <span>C: {m.totalCarbs}g</span>
                     <span>F: {m.totalFat}g</span>
                   </div>
-                  {m.items.length > 1 && (
+                  {m.items && m.items.length > 1 && (
                     <div className="mt-2 space-y-1">
                       {m.items.map((item, i) => (
                         <p key={i} className="text-xs text-muted-foreground">{item.name} ({item.portionSize}) - {item.calories} cal</p>
