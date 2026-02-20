@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import WorkoutLogger from "@/components/WorkoutLogger";
+import { ManualFoodLogger } from "@/components/ManualFoodLogger";
 import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
 import {
@@ -66,6 +67,28 @@ export default function Log() {
     setSaved(false);
   }, [selectedDate, logs]);
 
+  // Update streak helper
+  const updateStreak = async () => {
+    if (!profile) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    let newStreak = profile.currentStreak || 0;
+
+    if (selectedDate === today) {
+      if (profile.lastLogDate === yesterday || profile.lastLogDate === today) {
+        if (profile.lastLogDate !== today) {
+          newStreak += 1;
+        }
+      } else {
+        newStreak = 1;
+      }
+      await updateProfile({
+        currentStreak: newStreak,
+        lastLogDate: today,
+      });
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
 
@@ -78,32 +101,7 @@ export default function Log() {
       notes,
     });
 
-    // Update streak
-    if (profile) {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const yesterday = format(
-        new Date(Date.now() - 86400000),
-        "yyyy-MM-dd"
-      );
-      let newStreak = profile.currentStreak || 0;
-
-      if (selectedDate === today) {
-        if (
-          profile.lastLogDate === yesterday ||
-          profile.lastLogDate === today
-        ) {
-          if (profile.lastLogDate !== today) {
-            newStreak += 1;
-          }
-        } else {
-          newStreak = 1;
-        }
-        await updateProfile({
-          currentStreak: newStreak,
-          lastLogDate: today,
-        });
-      }
-    }
+    await updateStreak();
 
     setSaving(false);
     setSaved(true);
@@ -120,6 +118,12 @@ export default function Log() {
     }
 
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  // Called when WorkoutLogger saves a workout
+  const handleWorkoutSaved = async () => {
+    await updateStreak();
+    toast.success("Workout logged!");
   };
 
   const changeDate = (delta: number) => {
@@ -270,7 +274,7 @@ export default function Log() {
             </div>
           )}
 
-          <WorkoutLogger date={selectedDate} />
+          <WorkoutLogger date={selectedDate} onSaved={handleWorkoutSaved} />
         </div>
       )}
 
@@ -330,6 +334,11 @@ export default function Log() {
               ))}
             </div>
           )}
+
+          {/* Manual Food Logger — always available (Free feature) */}
+          <ManualFoodLogger />
+
+          {/* AI Food Analyzer */}
           <FoodAnalyzer date={selectedDate} />
         </div>
       )}
