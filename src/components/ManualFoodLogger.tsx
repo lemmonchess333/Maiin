@@ -42,8 +42,14 @@ export function ManualFoodLogger() {
       const today = format(new Date(), "yyyy-MM-dd");
       const id = `${today}_${Date.now()}`;
       await setDoc(doc(db, "users", user.uid, "meals", id), {
-        ...entry,
         date: today,
+        foodName: entry.name,
+        items: [{ name: entry.name, portionSize: "1 serving", calories: entry.calories, protein: entry.protein, carbs: entry.carbs, fat: entry.fat }],
+        totalCalories: entry.calories,
+        totalProtein: entry.protein,
+        totalCarbs: entry.carbs,
+        totalFat: entry.fat,
+        confidence: "manual",
         createdAt: Timestamp.now(),
       });
 
