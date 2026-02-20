@@ -9,7 +9,7 @@ import BodyweightLogger from "@/components/BodyweightLogger";
 import { useSubscription } from "@/lib/subscription";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Flame, Beef, Wheat, Droplet } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -98,6 +98,12 @@ export default function Home() {
       updateProfile({ currentStreak: computedStreak });
     }
   }, [computedStreak, profile, updateProfile]);
+
+  // Safe number helper (for perfect consistency with Log page)
+  const safeNum = (value: any): number => {
+    const num = Number(value);
+    return isNaN(num) || value == null ? 0 : num;
+  };
 
   // Fetch today's meal totals
   useEffect(() => {
@@ -210,25 +216,44 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Today's Intake */}
-      <div className="bg-card rounded-xl border border-border/50 p-4">
-        <p className="text-sm font-medium text-foreground mb-3">Today's Intake</p>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{dailyTotals.calories}</p>
-            <p className="text-xs text-orange-500">cal</p>
+      {/* Today's Intake - Updated with beautiful gradients + icons (unified style) */}
+      <div className="bg-card rounded-2xl border border-border/50 p-5">
+        <p className="text-sm font-medium text-foreground mb-4">Today's Intake</p>
+        <div className="grid grid-cols-4 gap-3 text-center">
+          {/* Calories */}
+          <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
+            <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
+            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {safeNum(dailyTotals.calories)}
+            </p>
+            <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{dailyTotals.protein}g</p>
-            <p className="text-xs text-blue-500">protein</p>
+
+          {/* Protein */}
+          <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
+            <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {safeNum(dailyTotals.protein)}g
+            </p>
+            <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{dailyTotals.carbs}g</p>
-            <p className="text-xs text-amber-500">carbs</p>
+
+          {/* Carbs */}
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
+            <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {safeNum(dailyTotals.carbs)}g
+            </p>
+            <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
           </div>
-          <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{dailyTotals.fat}g</p>
-            <p className="text-xs text-purple-500">fat</p>
+
+          {/* Fat */}
+          <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
+            <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {safeNum(dailyTotals.fat)}g
+            </p>
+            <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
           </div>
         </div>
       </div>
