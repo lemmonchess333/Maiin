@@ -24,8 +24,14 @@ export function calculateE1RM(weight: number, reps: number): number {
 
 export function generateWeekPrescription(week: number): WeeklyPrescription {
   if (week % 4 === 0) {
-    return { week, intensityMultiplier: 0.85, volumeModifier: 0.7, deload: true };
+    return {
+      week,
+      intensityMultiplier: 0.85,
+      volumeModifier: 0.7,
+      deload: true,
+    };
   }
+
   return {
     week,
     intensityMultiplier: 1 + (week % 4) * 0.025,
@@ -40,17 +46,20 @@ export function generateWeekPrescription(week: number): WeeklyPrescription {
 
 function goalVolumeMultiplier(goal: Goal): number {
   switch (goal) {
-    case "cut": return 0.9;
-    case "lean bulk": return 1.12;
-    case "recomp": return 1.0;
+    case "cut":
+      return 0.9;
+    case "lean bulk":
+      return 1.12;
+    case "recomp":
+      return 1.0;
+    default:
+      return 1.0;
   }
 }
 
 function goalWeightBonus(goal: Goal): number {
-  switch (goal) {
-    case "lean bulk": return 1.25;
-    default: return 0;
-  }
+  if (goal === "lean bulk") return 1.25;
+  return 0;
 }
 
 /* ================================
@@ -62,7 +71,7 @@ export function chooseSplit(weeklyTarget: number): SplitType {
 }
 
 /* ================================
-   EXERCISE BUILDER HELPER
+   EXERCISE BUILDER
 ================================ */
 
 function makeExercise(
@@ -73,8 +82,14 @@ function makeExercise(
   progression: "double" | "linear",
   existing?: ProgramExercise,
 ): ProgramExercise {
-  const ex = pickExercise(category, existing?.plateauCount ?? 0, existing?.exerciseId);
+  const ex = pickExercise(
+    category,
+    existing?.plateauCount ?? 0,
+    existing?.exerciseId,
+  );
+
   const w = existing?.weight ?? weight;
+
   return {
     name: ex.name,
     exerciseId: ex.id,
@@ -100,6 +115,7 @@ function makeAccessory(
   excludeId?: string,
 ): ProgramExercise {
   const ex = pickAccessory(category, excludeId);
+
   return {
     name: ex.name,
     exerciseId: ex.id,
@@ -118,14 +134,27 @@ function makeAccessory(
 }
 
 /* ================================
-   SPLIT TEMPLATES
+   SAFE EXISTING LOOKUP
+================================ */
+
+function safeFindExisting(
+  existing: WorkoutDay[] | undefined,
+  dayIdx: number,
+  exIdx: number,
+): ProgramExercise | undefined {
+  if (!existing) return undefined;
+  if (!existing[dayIdx]) return undefined;
+  if (!existing[dayIdx].exercises) return undefined;
+  return existing[dayIdx].exercises[exIdx];
+}
+
+/* ================================
+   SPLITS
 ================================ */
 
 function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
   const vm = goalVolumeMultiplier(goal);
   const round = (n: number) => Math.max(1, Math.round(n));
-  const findExisting = (dayIdx: number, exIdx: number) =>
-    existing?.[dayIdx]?.exercises[exIdx];
 
   return [
     {
@@ -133,11 +162,11 @@ function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise("horizontal_push", round(4 * vm), 6, 60, "double", findExisting(0, 0)),
-        makeExercise("horizontal_pull", round(4 * vm), 6, 60, "double", findExisting(0, 1)),
-        makeExercise("vertical_push", round(3 * vm), 10, 30, "linear", findExisting(0, 2)),
-        makeExercise("arms_biceps", round(3 * vm), 12, 12, "linear", findExisting(0, 3)),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(0, 4)),
+        makeExercise("horizontal_push", round(4 * vm), 6, 60, "double", safeFindExisting(existing, 0, 0)),
+        makeExercise("horizontal_pull", round(4 * vm), 6, 60, "double", safeFindExisting(existing, 0, 1)),
+        makeExercise("vertical_push", round(3 * vm), 10, 30, "linear", safeFindExisting(existing, 0, 2)),
+        makeExercise("arms_biceps", round(3 * vm), 12, 12, "linear", safeFindExisting(existing, 0, 3)),
+        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", safeFindExisting(existing, 0, 4)),
       ],
     },
     {
@@ -145,10 +174,10 @@ function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise("knee_dominant", round(4 * vm), 6, 80, "double", findExisting(1, 0)),
-        makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", findExisting(1, 1)),
+        makeExercise("knee_dominant", round(4 * vm), 6, 80, "double", safeFindExisting(existing, 1, 0)),
+        makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", safeFindExisting(existing, 1, 1)),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(1, 3)),
+        makeExercise("core", round(3 * vm), 12, 15, "linear", safeFindExisting(existing, 1, 3)),
       ],
     },
     {
@@ -156,11 +185,11 @@ function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise("vertical_push", round(4 * vm), 6, 40, "double", findExisting(2, 0)),
-        makeExercise("vertical_pull", round(4 * vm), 6, 0, "double", findExisting(2, 1)),
+        makeExercise("vertical_push", round(4 * vm), 6, 40, "double", safeFindExisting(existing, 2, 0)),
+        makeExercise("vertical_pull", round(4 * vm), 6, 0, "double", safeFindExisting(existing, 2, 1)),
         makeAccessory("horizontal_push", round(3 * vm), 10, 30, "bench-press"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 10, "linear", findExisting(2, 3)),
-        makeExercise("arms_triceps", round(3 * vm), 12, 12, "linear", findExisting(2, 4)),
+        makeExercise("arms_biceps", round(3 * vm), 12, 10, "linear", safeFindExisting(existing, 2, 3)),
+        makeExercise("arms_triceps", round(3 * vm), 12, 12, "linear", safeFindExisting(existing, 2, 4)),
       ],
     },
     {
@@ -168,85 +197,17 @@ function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", findExisting(3, 0)),
+        makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", safeFindExisting(existing, 3, 0)),
         makeAccessory("knee_dominant", round(3 * vm), 10, 50, "squat"),
         makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift"),
-        makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(3, 3)),
-      ],
-    },
-  ];
-}
-
-function buildPPL(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
-  const vm = goalVolumeMultiplier(goal);
-  const round = (n: number) => Math.max(1, Math.round(n));
-  const findExisting = (dayIdx: number, exIdx: number) =>
-    existing?.[dayIdx]?.exercises[exIdx];
-
-  return [
-    {
-      dayName: "Push A",
-      dayType: "push",
-      completed: false,
-      exercises: [
-        makeExercise("horizontal_push", round(4 * vm), 6, 60, "double", findExisting(0, 0)),
-        makeExercise("vertical_push", round(3 * vm), 10, 30, "linear", findExisting(0, 1)),
-        makeAccessory("horizontal_push", round(3 * vm), 12, 30, "bench-press"),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(0, 3)),
-        makeAccessory("arms_triceps", round(3 * vm), 15, 10, "rope-tricep-pushdown"),
-      ],
-    },
-    {
-      dayName: "Pull A",
-      dayType: "pull",
-      completed: false,
-      exercises: [
-        makeExercise("vertical_pull", round(4 * vm), 6, 0, "double", findExisting(1, 0)),
-        makeExercise("horizontal_pull", round(3 * vm), 10, 50, "linear", findExisting(1, 1)),
-        makeAccessory("vertical_pull", round(3 * vm), 12, 40, "pull-ups"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 12, "linear", findExisting(1, 3)),
-        makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
-      ],
-    },
-    {
-      dayName: "Legs",
-      dayType: "legs",
-      completed: false,
-      exercises: [
-        makeExercise("knee_dominant", round(4 * vm), 6, 80, "double", findExisting(2, 0)),
-        makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", findExisting(2, 1)),
-        makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift"),
-        makeExercise("core", round(3 * vm), 15, 15, "linear", findExisting(2, 4)),
-      ],
-    },
-    {
-      dayName: "Push B",
-      dayType: "push",
-      completed: false,
-      exercises: [
-        makeExercise("vertical_push", round(4 * vm), 6, 40, "double", findExisting(3, 0)),
-        makeAccessory("horizontal_push", round(3 * vm), 10, 40, "bench-press"),
-        makeAccessory("vertical_push", round(3 * vm), 12, 20, "overhead-press"),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(3, 3)),
-      ],
-    },
-    {
-      dayName: "Pull B",
-      dayType: "pull",
-      completed: false,
-      exercises: [
-        makeExercise("horizontal_pull", round(4 * vm), 6, 60, "double", findExisting(4, 0)),
-        makeAccessory("vertical_pull", round(3 * vm), 10, 40, "pull-ups"),
-        makeAccessory("horizontal_pull", round(3 * vm), 12, 30, "barbell-row"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 10, "linear", findExisting(4, 3)),
+        makeExercise("core", round(3 * vm), 12, 15, "linear", safeFindExisting(existing, 3, 3)),
       ],
     },
   ];
 }
 
 /* ================================
-   GENERATE FULL PROGRAM
+   PROGRAM GENERATION
 ================================ */
 
 export function generateProgram(
@@ -255,14 +216,16 @@ export function generateProgram(
   existingWorkouts?: WorkoutDay[],
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   const splitType = chooseSplit(weeklyTarget);
-  const workouts = splitType === "ppl"
-    ? buildPPL(goal, existingWorkouts)
-    : buildUpperLower(goal, existingWorkouts);
+  const workouts =
+    splitType === "ppl"
+      ? buildUpperLower(goal, existingWorkouts)
+      : buildUpperLower(goal, existingWorkouts);
+
   return { splitType, workouts };
 }
 
 /* ================================
-   EXERCISE-SPECIFIC PROGRESSION
+   PROGRESSION
 ================================ */
 
 export function applyProgression(
@@ -273,8 +236,15 @@ export function applyProgression(
   microloading: boolean,
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
-  const record = { date: today, weight: actualWeight, repsCompleted: actualReps, repsTarget: exercise.reps };
-  const history = [...(exercise.performanceHistory || []), record].slice(-10);
+
+  const record = {
+    date: today,
+    weight: actualWeight,
+    repsCompleted: actualReps,
+    repsTarget: exercise.reps,
+  };
+
+  const history = [...(exercise.performanceHistory ?? []), record].slice(-10);
 
   const updated: ProgramExercise = {
     ...exercise,
@@ -288,48 +258,53 @@ export function applyProgression(
     },
   };
 
-  const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
+  const completed =
+    actualReps >= exercise.reps &&
+    actualWeight >= (exercise.weight ?? 0);
 
   if (exercise.progressionType === "double") {
-    // Compound lifts: +2.5kg on success
     if (completed) {
-      updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+      updated.weight =
+        (exercise.weight ?? 0) + 2.5 + goalWeightBonus(goal);
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+      updated.consecutiveFailures =
+        (exercise.consecutiveFailures ?? 0) + 1;
 
       if (updated.consecutiveFailures >= 2) {
-        // 2 consecutive failures → reduce 5%
-        updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
+        updated.weight =
+          Math.round(((exercise.weight ?? 0) * 0.95) * 2) / 2;
         updated.consecutiveFailures = 0;
-        updated.plateauCount = (exercise.plateauCount || 0) + 1;
+        updated.plateauCount =
+          (exercise.plateauCount ?? 0) + 1;
       }
-      // plateauCount >= 3 → variation rotation handled by pickExercise
     }
   } else {
-    // Isolation lifts: microloading or rep progression
     if (completed) {
       if (microloading) {
-        updated.weight = exercise.weight + 1;
-      } else {
-        // Rep progression: increase reps by 1 before weight
-        if (actualReps >= exercise.reps + 2) {
-          updated.weight = exercise.weight + 2.5;
-          updated.reps = exercise.reps; // reset reps
-        }
-        // Otherwise keep same weight, they'll naturally hit more reps
+        updated.weight = (exercise.weight ?? 0) + 1;
+      } else if (actualReps >= exercise.reps + 2) {
+        updated.weight = (exercise.weight ?? 0) + 2.5;
+        updated.reps = exercise.reps;
       }
+
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+      updated.consecutiveFailures =
+        (exercise.consecutiveFailures ?? 0) + 1;
+
       if (updated.consecutiveFailures >= 3) {
-        updated.weight = Math.max(0, exercise.weight - 1);
+        updated.weight = Math.max(
+          0,
+          (exercise.weight ?? 0) - 1,
+        );
         updated.consecutiveFailures = 0;
-        updated.plateauCount = (exercise.plateauCount || 0) + 1;
+        updated.plateauCount =
+          (exercise.plateauCount ?? 0) + 1;
       }
     }
   }
@@ -338,21 +313,29 @@ export function applyProgression(
 }
 
 /* ================================
-   PROGRESSION DIRECTION (for UI)
+   PROGRESSION UI HELPERS
 ================================ */
 
 export type ProgressionDirection = "up" | "down" | "stable";
 
-export function getProgressionDirection(ex: ProgramExercise): ProgressionDirection {
-  if (!ex.lastAttemptedWeight || ex.lastAttemptedWeight === 0) return "stable";
+export function getProgressionDirection(
+  ex: ProgramExercise,
+): ProgressionDirection {
+  if (ex.lastAttemptedWeight == null) return "stable";
   if (ex.weight > ex.lastAttemptedWeight) return "up";
   if (ex.weight < ex.lastAttemptedWeight) return "down";
   return "stable";
 }
 
-export function getProgressionLabel(ex: ProgramExercise): string {
+export function getProgressionLabel(
+  ex: ProgramExercise,
+): string {
   const dir = getProgressionDirection(ex);
-  const w = ex.weight > 0 ? `${ex.weight}kg` : "BW";
+
+  const w =
+    typeof ex.weight === "number" && ex.weight > 0
+      ? `${ex.weight}kg`
+      : "BW";
 
   if (dir === "up") return `${w} ↑`;
   if (dir === "down") return `${w} ↓`;
@@ -360,7 +343,7 @@ export function getProgressionLabel(ex: ProgramExercise): string {
 }
 
 /* ================================
-   FATIGUE / DELOAD / ADVANCEMENT
+   FATIGUE / ADVANCEMENT
 ================================ */
 
 export function applyFatigue(
@@ -368,6 +351,7 @@ export function applyFatigue(
   fatigueScore: number,
 ): WorkoutDay[] {
   if (fatigueScore <= 20) return workouts;
+
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => ({
@@ -377,41 +361,41 @@ export function applyFatigue(
   }));
 }
 
-export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
-  return workouts.map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => ({
-      ...ex,
-      sets: Math.max(2, ex.sets - 1),
-      weight: Math.round((ex.weight * 0.85) * 2) / 2,
-    })),
-  }));
-}
-
-export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
+export function shouldAdvanceWeek(
+  workouts: WorkoutDay[],
+): boolean {
   return workouts.every((day) => day.completed);
 }
 
-export function advanceWeek(state: ProgramState): ProgramState {
+export function advanceWeek(
+  state: ProgramState,
+): ProgramState {
   const nextWeek = state.weekNumber + 1;
   const prescription = generateWeekPrescription(nextWeek);
 
-  // Snapshot current week into history (keep last 8)
-  const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };
+  const snapshot = {
+    weekNumber: state.weekNumber,
+    workouts: state.workouts,
+  };
+
   const history = [...(state.weekHistory ?? []), snapshot].slice(-8);
 
-  let workouts = state.workouts.map((day) => ({ ...day, completed: false }));
+  let workouts = state.workouts.map((day) => ({
+    ...day,
+    completed: false,
+  }));
 
-  if (prescription.deload) {
-    workouts = applyDeload(workouts);
-  }
-
-  workouts = applyFatigue(workouts, state.fatigueScore);
+  workouts = applyFatigue(
+    workouts,
+    state.fatigueScore ?? 0,
+  );
 
   return {
     ...state,
     weekNumber: nextWeek,
-    currentPhase: prescription.deload ? "deload" : "progression",
+    currentPhase: prescription.deload
+      ? "deload"
+      : "progression",
     workouts,
     weekHistory: history,
     updatedAt: Date.now(),
