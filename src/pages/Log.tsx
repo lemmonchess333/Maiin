@@ -47,6 +47,12 @@ export default function Log() {
   const todaysMeals = getMealsForDate(selectedDate);
   const dailyTotals = getDailyTotals(selectedDate);
 
+  // Safe number helper - prevents NaN/NaNg display
+  const safeNum = (value: any): number => {
+    const num = Number(value);
+    return isNaN(num) || value == null ? 0 : num;
+  };
+
   useEffect(() => {
     const existing = logs.find((l) => l.date === selectedDate);
 
@@ -281,29 +287,37 @@ export default function Log() {
       {/* Food Tab */}
       {activeTab === "food" && (
         <div className="space-y-4">
-          {todaysMeals.length > 0 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-              <p className="text-sm font-medium text-foreground">Daily Totals</p>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{dailyTotals.calories}</p>
-                  <p className="text-xs text-orange-500">cal</p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{dailyTotals.protein}g</p>
-                  <p className="text-xs text-blue-500">protein</p>
-                </div>
-                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{dailyTotals.carbs}g</p>
-                  <p className="text-xs text-amber-500">carbs</p>
-                </div>
-                <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
-                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{dailyTotals.fat}g</p>
-                  <p className="text-xs text-purple-500">fat</p>
-                </div>
+          {/* Daily Totals - always visible (with safe numbers) */}
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <p className="text-sm font-medium text-foreground">Daily Totals</p>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
+                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                  {safeNum(dailyTotals.calories)}
+                </p>
+                <p className="text-xs text-orange-500">cal</p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
+                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  {safeNum(dailyTotals.protein)}g
+                </p>
+                <p className="text-xs text-blue-500">protein</p>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
+                <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                  {safeNum(dailyTotals.carbs)}g
+                </p>
+                <p className="text-xs text-amber-500">carbs</p>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  {safeNum(dailyTotals.fat)}g
+                </p>
+                <p className="text-xs text-purple-500">fat</p>
               </div>
             </div>
-          )}
+          </div>
+
           {todaysMeals.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Saved Meals</p>
@@ -312,16 +326,18 @@ export default function Log() {
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-foreground">{m.foodName || "Meal"}</p>
                     <div className="flex items-center gap-3">
-                      <p className="text-xs text-orange-500 font-medium">{m.totalCalories} cal</p>
+                      <p className="text-xs text-orange-500 font-medium">
+                        {safeNum(m.totalCalories)} cal
+                      </p>
                       <button onClick={() => deleteMeal(m.id)} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   <div className="flex gap-3 text-xs text-muted-foreground">
-                    <span>P: {m.totalProtein}g</span>
-                    <span>C: {m.totalCarbs}g</span>
-                    <span>F: {m.totalFat}g</span>
+                    <span>P: {safeNum(m.totalProtein)}g</span>
+                    <span>C: {safeNum(m.totalCarbs)}g</span>
+                    <span>F: {safeNum(m.totalFat)}g</span>
                   </div>
                   {m.items && m.items.length > 1 && (
                     <div className="mt-2 space-y-1">

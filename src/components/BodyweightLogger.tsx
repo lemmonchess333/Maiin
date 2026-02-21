@@ -10,9 +10,16 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { Scale, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { 
+  Scale, 
+  Check, 
+  TrendingUp, 
+  TrendingDown 
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
 
 interface WeightLog {
   id: string;
@@ -76,7 +83,16 @@ export default function BodyweightLogger() {
 
       setWeight("");
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+
+      // Light confetti on successful log
+      confetti({
+        particleCount: 60,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ["#f59e0b", "#fbbf24"],
+      });
+
+      setTimeout(() => setSaved(false), 1800);
     } catch (error) {
       console.error("Error saving weight:", error);
     }
@@ -95,66 +111,90 @@ export default function BodyweightLogger() {
       : null;
 
   return (
-    <div className="bg-card rounded-xl border border-border/50 p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <Scale className="w-4 h-4 text-primary" />
-        <p className="text-sm font-medium text-foreground">Bodyweight Check-in</p>
+    <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Scale className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Bodyweight Check-in</p>
+            <p className="text-xs text-muted-foreground">Track your progress</p>
+          </div>
+        </div>
+
+        {/* Trend Indicator */}
         {trend !== null && !isNaN(trend) && (
-          <div className="flex items-center gap-1 ml-auto text-xs">
+          <div className="flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full bg-muted">
             {trend > 0 ? (
               <TrendingUp className="w-3.5 h-3.5 text-green-500" />
             ) : trend < 0 ? (
               <TrendingDown className="w-3.5 h-3.5 text-blue-500" />
             ) : null}
-            <span className={trend > 0 ? "text-green-500" : trend < 0 ? "text-blue-500" : "text-muted-foreground"}>
+            <span className={trend > 0 ? "text-green-500" : "text-blue-500"}>
               {trend > 0 ? "+" : ""}{displayWeight(trend)} {unit}
             </span>
           </div>
         )}
       </div>
 
-      {/* Input Row */}
-      <div className="flex gap-2">
+      {/* Input + Log Button */}
+      <div className="flex gap-3">
         <input
           type="number"
+          step="0.1"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder={`${displayWeight(profile?.weightKg ?? 70)} ${unit}`}
-          step="0.1"
-          className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="flex-1 px-5 py-3.5 rounded-2xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
         />
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={handleSubmit}
           disabled={saving || !weight}
           className={cn(
-            "px-5 py-3 rounded-xl font-medium text-sm transition-all",
+            "px-8 py-3.5 rounded-2xl font-medium text-sm transition-all flex items-center justify-center min-w-[72px]",
             saved
               ? "bg-green-500 text-white"
-              : "bg-primary text-primary-foreground hover:opacity-90",
+              : "bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.985]",
             (saving || !weight) && "opacity-50 cursor-not-allowed"
           )}
         >
-          {saved ? <Check className="w-4 h-4" /> : saving ? "..." : "Log"}
-        </button>
+          {saved ? <Check className="w-5 h-5" /> : saving ? "..." : "Log"}
+        </motion.button>
       </div>
 
       {/* Recent Logs */}
       {recentLogs.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {recentLogs.map((log) => (
-            <div
-              key={log.id}
-              className="flex-shrink-0 bg-muted rounded-lg px-3 py-2 text-center min-w-[60px]"
-            >
-              <p className="text-xs text-muted-foreground">
-                {format(new Date(log.date), "dd/MM")}
-              </p>
-              <p className="text-sm font-semibold text-foreground">
-                {displayWeight(log.weight)}
-              </p>
-            </div>
-          ))}
+        <div>
+          <p className="text-xs text-muted-foreground mb-2">Last 7 days</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {recentLogs.map((log, index) => (
+              <motion.div
+                key={log.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="flex-shrink-0 bg-muted/70 border border-border/50 rounded-2xl px-4 py-3 text-center min-w-[68px]"
+              >
+                <p className="text-[10px] text-muted-foreground font-medium">
+                  {format(new Date(log.date), "dd/MM")}
+                </p>
+                <p className="text-lg font-semibold text-foreground tracking-tight">
+                  {displayWeight(log.weight)}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* Empty state hint */}
+      {recentLogs.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-2">
+          No recent logs • Your first check-in will appear here
+        </p>
       )}
     </div>
   );
