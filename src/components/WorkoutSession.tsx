@@ -1,0 +1,406 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import type { ProgramExercise } from "@/features/program/programTypes";
+import { cn } from "@/lib/utils";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Check,
+  ChevronRight,
+  X,
+  Dumbbell,
+  Timer,
+  Trophy,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface WorkoutDay {
+  dayName: string;
+  dayType: string;
+  exercises: ProgramExercise[];
+  completed: boolean;
+}
+
+interface SetLog {
+  reps: number;
+  weight: number;
+  completed: boolean;
+}
+
+interface Props {
+  day: WorkoutDay;
+  dayIndex: number;
+  onLogExercise: (dayIndex: number, exIndex: number, reps: number, weight: number) => Promise<void>;
+  onCompleteDay: (dayIndex: number) => Promise<void>;
+  onClose: () => void;
+}
+
+export default function WorkoutSession({ day, dayIndex, onLogExercise, onCompleteDay, onClose }: Props) {
+  const [currentExIndex, setCurrentExIndex] = useState(0);
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [setLogs, setSetLogs] = useState<SetLog[][]>(() =>
+    day.exercises.map((ex) =>
+      Array.from({ length: ex.sets }, () => ({
+        reps: ex.reps,
+        weight: ex.weight,
+        completed: false,
+      }))
+    )
+  );
+
+  // Rest timer
+  const [restSeconds, setRestSeconds] = useState(0);
+  const [restTarget, setRestTarget] = useState(90);
+  const [isResting, setIsResting] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Session state
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [completing, setCompleting] = useState(false);
+
+  const currentExercise = day.exercises[currentExIndex];
+  const currentSets = setLogs[currentExIndex] ?? [];
+  const completedSetsInExercise = currentSets.filter((s) => s.completed).length;
+  const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
+  const totalSetsTotal = setLogs.flat().length;
+
+  // Timer logic
+  const startRest = useCallback(() => {
+    setRestSeconds(0);
+    setIsResting(true);
+  }, []);
+
+  const stopRest = useCallback(() => {
+    setIsResting(false);
+    setRestSeconds(0);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isResting) {
+      timerRef.current = setInterval(() => {
+        setRestSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isResting]);
+
+  // Auto-stop timer when it reaches target
+  useEffect(() => {
+    if (isResting && restSeconds >= restTarget) {
+      // Play a subtle vibration if available
+      if (navigator.vibrate) navigator.vibrate(200);
+    }
+  }, [isResting, restSeconds, restTarget]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const updateSetLog = (exIdx: number, setIdx: number, field: "reps" | "weight", value: number) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[exIdx][setIdx][field] = value;
+      return updated;
+    });
+  };
+
+  const completeSet = async () => {
+    const set = currentSets[currentSetIndex];
+    if (!set) return;
+
+    // Mark set complete
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[currentExIndex][currentSetIndex].completed = true;
+      return updated;
+    });
+
+    const isLastSet = currentSetIndex >= currentSets.length - 1;
+    const isLastExercise = currentExIndex >= day.exercises.length - 1;
+
+    if (isLastSet) {
+      // Log exercise performance (use last set's reps/weight)
+      await onLogExercise(dayIndex, currentExIndex, set.reps, set.weight);
+
+      if (isLastExercise) {
+        setSessionComplete(true);
+      } else {
+        // Move to next exercise
+        setCurrentExIndex((prev) => prev + 1);
+        setCurrentSetIndex(0);
+        startRest();
+      }
+    } else {
+      // Move to next set, start rest timer
+      setCurrentSetIndex((prev) => prev + 1);
+      startRest();
+    }
+  };
+
+  const handleFinish = async () => {
+    setCompleting(true);
+    await onCompleteDay(dayIndex);
+    setCompleting(false);
+    onClose();
+  };
+
+  // Session complete screen
+  if (sessionComplete) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 text-center safe-area-pb"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", delay: 0.2 }}
+        >
+          <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+        </motion.div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Workout Complete!</h2>
+        <p className="text-muted-foreground mb-1">{day.dayName}</p>
+        <p className="text-sm text-muted-foreground mb-8">
+          {totalSetsCompleted} sets logged across {day.exercises.length} exercises
+        </p>
+        <button
+          onClick={handleFinish}
+          disabled={completing}
+          className="w-full max-w-xs py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+        >
+          {completing ? "Saving..." : "Mark Day Complete"}
+        </button>
+        <button
+          onClick={onClose}
+          className="mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Close without marking complete
+        </button>
+      </motion.div>
+    );
+  }
+
+  const restProgress = restTarget > 0 ? Math.min(restSeconds / restTarget, 1) : 0;
+  const restOver = restSeconds >= restTarget;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {totalSetsCompleted}/{totalSetsTotal} sets
+          </p>
+        </div>
+        <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <X className="w-5 h-5 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1 bg-muted">
+        <div
+          className="h-full bg-primary transition-all duration-300"
+          style={{ width: `${totalSetsTotal > 0 ? (totalSetsCompleted / totalSetsTotal) * 100 : 0}%` }}
+        />
+      </div>
+
+      {/* Exercise navigation pills */}
+      <div className="flex gap-1.5 px-4 py-3 overflow-x-auto">
+        {day.exercises.map((ex, i) => {
+          const setsForEx = setLogs[i] ?? [];
+          const done = setsForEx.every((s) => s.completed);
+          const active = i === currentExIndex;
+          return (
+            <button
+              key={i}
+              onClick={() => {
+                setCurrentExIndex(i);
+                const nextIncomplete = setsForEx.findIndex((s) => !s.completed);
+                setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors shrink-0",
+                done
+                  ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                  : active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+              )}
+            >
+              {ex.name.length > 15 ? ex.name.slice(0, 15) + "…" : ex.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+        {/* Current exercise header */}
+        <div className="text-center pt-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <Dumbbell className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-foreground">{currentExercise?.name}</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
+          </p>
+        </div>
+
+        {/* Rest Timer */}
+        <AnimatePresence>
+          {isResting && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={cn(
+                "rounded-xl p-4 text-center border",
+                restOver
+                  ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                  : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
+              )}
+            >
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Timer className="w-4 h-4" />
+                <p className="text-sm font-medium text-foreground">
+                  {restOver ? "Rest complete — go!" : "Rest Timer"}
+                </p>
+              </div>
+              <p className={cn(
+                "text-3xl font-bold tabular-nums",
+                restOver ? "text-green-600 dark:text-green-400" : "text-foreground",
+              )}>
+                {formatTime(restSeconds)}
+              </p>
+              {/* Progress ring visual */}
+              <div className="w-full h-1.5 bg-muted rounded-full mt-3 overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-1000",
+                    restOver ? "bg-green-500" : "bg-blue-500",
+                  )}
+                  style={{ width: `${restProgress * 100}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-center gap-3 mt-3">
+                <button
+                  onClick={stopRest}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80"
+                >
+                  <RotateCcw className="w-3 h-3" /> Skip
+                </button>
+                <div className="flex gap-1">
+                  {[60, 90, 120, 180].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setRestTarget(t)}
+                      className={cn(
+                        "px-2 py-1 rounded text-[10px] font-medium transition-colors",
+                        restTarget === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {t}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Set logging grid */}
+        <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="col-span-2">Set</div>
+            <div className="col-span-4">Weight (kg)</div>
+            <div className="col-span-4">Reps</div>
+            <div className="col-span-2 text-center">Done</div>
+          </div>
+          {currentSets.map((set, setIdx) => (
+            <div
+              key={setIdx}
+              className={cn(
+                "grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-t border-border/30",
+                setIdx === currentSetIndex && !set.completed && "bg-primary/5",
+                set.completed && "opacity-60",
+              )}
+            >
+              <div className="col-span-2 text-sm font-medium text-muted-foreground text-center">
+                {setIdx + 1}
+              </div>
+              <div className="col-span-4">
+                <input
+                  type="number"
+                  value={set.weight || ""}
+                  onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
+                  disabled={set.completed}
+                  className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                />
+              </div>
+              <div className="col-span-4">
+                <input
+                  type="number"
+                  value={set.reps || ""}
+                  onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
+                  disabled={set.completed}
+                  className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                />
+              </div>
+              <div className="col-span-2 flex justify-center">
+                {set.completed ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-border" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Prescription hint */}
+        {currentExercise && (
+          <p className="text-xs text-muted-foreground text-center">
+            Target: {currentExercise.sets}&times;{currentExercise.reps} @{" "}
+            {currentExercise.weight > 0 ? `${currentExercise.weight}kg` : "bodyweight"}
+          </p>
+        )}
+      </div>
+
+      {/* Bottom action bar */}
+      <div className="px-4 py-3 border-t border-border/50 bg-background">
+        {isResting ? (
+          <button
+            onClick={stopRest}
+            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+          >
+            <Play className="w-4 h-4" /> Ready — Start Next Set
+          </button>
+        ) : (
+          <button
+            onClick={completeSet}
+            disabled={!currentSets[currentSetIndex] || currentSets[currentSetIndex]?.completed}
+            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            <Check className="w-4 h-4" />
+            {currentSetIndex >= currentSets.length - 1 && currentExIndex >= day.exercises.length - 1
+              ? "Finish Last Set"
+              : currentSetIndex >= currentSets.length - 1
+                ? "Complete Exercise"
+                : `Complete Set ${currentSetIndex + 1}`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

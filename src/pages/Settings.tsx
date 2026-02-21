@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { calculateTDEE, ACTIVITY_LABELS } from "@/lib/tdee";
+import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -21,6 +23,9 @@ import {
   Crown,
   Sparkles,
   Zap,
+  Calculator,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 const PLANS = [
@@ -62,6 +67,14 @@ export default function Settings() {
   );
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showTDEE, setShowTDEE] = useState(false);
+  const [age, setAge] = useState(25);
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
+
+  const tdee = useMemo(() => {
+    const goal = (profile?.program?.goal ?? "recomp") as FitnessGoal;
+    return calculateTDEE(weightKg, heightCm, age, activityLevel, goal);
+  }, [weightKg, heightCm, age, activityLevel, profile?.program?.goal]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -328,6 +341,100 @@ export default function Settings() {
             className="w-full accent-primary"
           />
         </div>
+      </div>
+
+      {/* TDEE Calculator */}
+      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+        <button
+          onClick={() => setShowTDEE(!showTDEE)}
+          className="w-full flex items-center justify-between p-4"
+        >
+          <div className="flex items-center gap-3">
+            <Calculator className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-foreground">TDEE Calculator</p>
+              <p className="text-xs text-muted-foreground">
+                {tdee.targetCalories} cal/day target
+              </p>
+            </div>
+          </div>
+          {showTDEE ? (
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
+
+        {showTDEE && (
+          <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">
+            <div>
+              <label className="text-sm text-muted-foreground">Age</label>
+              <input
+                type="number"
+                value={age}
+                onChange={(e) => setAge(Number(e.target.value) || 25)}
+                className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-muted-foreground">Activity Level</label>
+              <div className="mt-1 space-y-1">
+                {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setActivityLevel(key)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
+                      activityLevel === key
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "bg-muted text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TDEE Results */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-foreground">{tdee.bmr}</p>
+                <p className="text-[10px] text-muted-foreground">BMR</p>
+              </div>
+              <div className="bg-muted rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-foreground">{tdee.tdee}</p>
+                <p className="text-[10px] text-muted-foreground">TDEE</p>
+              </div>
+            </div>
+
+            <div className="bg-primary/5 rounded-xl p-4 space-y-2">
+              <p className="text-xs font-medium text-foreground">
+                Daily Target: <span className="text-primary">{tdee.targetCalories} cal</span>
+                {tdee.deficit !== 0 && (
+                  <span className="text-muted-foreground">
+                    {" "}({tdee.deficit > 0 ? "+" : ""}{tdee.deficit})
+                  </span>
+                )}
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
+                  <p className="text-[10px] text-muted-foreground">Protein</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
+                  <p className="text-[10px] text-muted-foreground">Carbs</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
+                  <p className="text-[10px] text-muted-foreground">Fat</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Save */}

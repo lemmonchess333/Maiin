@@ -8,8 +8,11 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import { ManualFoodLogger } from "@/components/ManualFoodLogger";
+import FoodSearch from "@/components/FoodSearch";
 import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -19,10 +22,11 @@ import {
   Flame,
   Trash2,
   CalendarDays,
+  Search,
 } from "lucide-react";
 
 export default function Log() {
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const { logs, saveLog } = useDailyLogs();
   const { getWorkoutsForDate, deleteWorkout } = useWorkouts();
 
@@ -31,6 +35,7 @@ export default function Log() {
   );
   const [hasPR, setHasPR] = useState(false);
   const [activeTab, setActiveTab] = useState<"workout" | "food">("workout");
+  const [showFoodSearch, setShowFoodSearch] = useState(false);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -114,6 +119,23 @@ export default function Log() {
       });
       toast.success("New PR! 🏆");
     }
+  };
+
+  const handleFoodSearchSelect = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string }) => {
+    if (!user) return;
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: food.name,
+      items: [{ name: food.name, portionSize: food.servingSize, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat }],
+      totalCalories: food.calories,
+      totalProtein: food.protein,
+      totalCarbs: food.carbs,
+      totalFat: food.fat,
+      confidence: "database",
+      createdAt: Timestamp.now(),
+    });
+    setShowFoodSearch(false);
+    toast.success(`${food.name} added!`);
   };
 
   return (
@@ -358,6 +380,21 @@ export default function Log() {
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Food Search */}
+          {showFoodSearch ? (
+            <FoodSearch
+              onSelect={handleFoodSearchSelect}
+              onClose={() => setShowFoodSearch(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowFoodSearch(true)}
+              className="w-full py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+            >
+              <Search className="w-4 h-4" /> Search Food Database
+            </button>
           )}
 
           {/* Manual Food Logger */}

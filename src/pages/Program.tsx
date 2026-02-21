@@ -4,6 +4,7 @@ import { useSubscription } from "@/lib/subscription";
 import { getProgressionLabel, getProgressionDirection } from "@/features/program/programEngine";
 import type { ProgramExercise, Goal } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
+import WorkoutSession from "@/components/WorkoutSession";
 import {
   Lock,
   ChevronDown,
@@ -21,6 +22,7 @@ import {
   Minus,
   Plus,
   FastForward,
+  Play,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,6 +67,7 @@ export default function Program() {
   const [regenerating, setRegenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [advancing, setAdvancing] = useState(false);
+  const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
 
   // Exercise drawer state
   const [drawerExercise, setDrawerExercise] = useState<{
@@ -337,13 +340,23 @@ export default function Program() {
                       </button>
                     ))}
 
+                    {/* Start Workout Session */}
+                    {!day.completed && !isViewingHistory && (
+                      <button
+                        onClick={() => setSessionDayIndex(dayIndex)}
+                        className="w-full py-2.5 mt-1 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                      >
+                        <Play className="w-4 h-4" /> Start Workout
+                      </button>
+                    )}
+
                     {/* Complete Day button */}
                     {!day.completed && !isViewingHistory && (
                       <button
                         onClick={() => completeWorkoutDay(dayIndex)}
-                        className="w-full py-2.5 mt-1 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                        className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
                       >
-                        Mark Complete
+                        Mark Complete (skip session)
                       </button>
                     )}
                   </div>
@@ -620,6 +633,17 @@ export default function Program() {
           </>
         )}
       </AnimatePresence>
+
+      {/* In-Session Workout Screen */}
+      {sessionDayIndex !== null && programState.workouts[sessionDayIndex] && (
+        <WorkoutSession
+          day={programState.workouts[sessionDayIndex]}
+          dayIndex={sessionDayIndex}
+          onLogExercise={logExercise}
+          onCompleteDay={completeWorkoutDay}
+          onClose={() => setSessionDayIndex(null)}
+        />
+      )}
     </div>
   );
 }
