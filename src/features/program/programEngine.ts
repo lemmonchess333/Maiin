@@ -291,7 +291,6 @@ export function applyProgression(
   const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
   if (exercise.progressionType === "double") {
-    // Compound lifts: +2.5kg on success
     if (completed) {
       updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
       updated.lastSuccessfulWeight = actualWeight;
@@ -301,25 +300,20 @@ export function applyProgression(
       updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
 
       if (updated.consecutiveFailures >= 2) {
-        // 2 consecutive failures → reduce 5%
         updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
       }
-      // plateauCount >= 3 → variation rotation handled by pickExercise
     }
   } else {
-    // Isolation lifts: microloading or rep progression
     if (completed) {
       if (microloading) {
         updated.weight = exercise.weight + 1;
       } else {
-        // Rep progression: increase reps by 1 before weight
         if (actualReps >= exercise.reps + 2) {
           updated.weight = exercise.weight + 2.5;
-          updated.reps = exercise.reps; // reset reps
+          updated.reps = exercise.reps;
         }
-        // Otherwise keep same weight, they'll naturally hit more reps
       }
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
@@ -396,7 +390,6 @@ export function advanceWeek(state: ProgramState): ProgramState {
   const nextWeek = state.weekNumber + 1;
   const prescription = generateWeekPrescription(nextWeek);
 
-  // Snapshot current week into history (keep last 8)
   const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };
   const history = [...(state.weekHistory ?? []), snapshot].slice(-8);
 
