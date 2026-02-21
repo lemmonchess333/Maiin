@@ -7,9 +7,12 @@ import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import { StreakCounter } from "@/components/StreakCounter";
 import BodyweightLogger from "@/components/BodyweightLogger";
 import { useSubscription } from "@/lib/subscription";
+import { useProgram } from "@/features/program/useProgram";
+import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Dumbbell } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -47,7 +50,6 @@ function computeStreak(workoutDates: string[]): number {
   const today = format(new Date(), "yyyy-MM-dd");
   const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
 
-  // Streak must start from today or yesterday
   if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
 
   let streak = 1;
@@ -73,6 +75,7 @@ export default function Home() {
   const bodyweightTrend = useBodyweightTrend();
   const { workouts } = useWorkouts();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
+  const { programState } = useProgram();
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
   const [confettiFired, setConfettiFired] = useState(false);
@@ -86,20 +89,17 @@ export default function Home() {
 
   const quote = useMemo(() => getDailyQuote(), []);
 
-  // Compute streak from workout history
   const computedStreak = useMemo(() => {
     const dates = workouts.map((w) => w.date);
     return computeStreak(dates);
   }, [workouts]);
 
-  // Sync computed streak to Firestore profile
   useEffect(() => {
     if (profile && computedStreak !== profile.currentStreak) {
       updateProfile({ currentStreak: computedStreak });
     }
   }, [computedStreak, profile, updateProfile]);
 
-  // Fetch today's meal totals
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -134,7 +134,6 @@ export default function Home() {
     })();
   }, [user]);
 
-  // Fire confetti on PR
   useEffect(() => {
     if ((weeklyStats.hasPR || monthlyStats.hasPR) && !confettiFired) {
       setConfettiFired(true);
@@ -155,8 +154,10 @@ export default function Home() {
     );
   }
 
+  const nextWorkout = programState?.workouts.find((d) => !d.completed);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -165,9 +166,7 @@ export default function Home() {
         <h1 className="text-xl font-bold text-foreground">
           Hey, {profile.displayName || "Athlete"}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Here's your {mode} summary
-        </p>
+        <p className="text-xs text-muted-foreground">Let's put in work today.</p>
       </motion.div>
 
       {/* Trial banner */}
@@ -180,60 +179,91 @@ export default function Home() {
           <Sparkles className="w-5 h-5 text-primary shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">
-              Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""}{" "}
-              left
+              Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
             </p>
             <p className="text-xs text-muted-foreground">
-              Full access to all features. Upgrade to keep it!
+              Full access to all features.
             </p>
           </div>
         </motion.div>
       )}
 
-      {/* Streak counter — always visible */}
+      {/* Streak */}
       <StreakCounter streak={computedStreak} />
 
-      {/* Mode Toggle */}
+      {/* Next Workout — strength-first */}
+      {nextWorkout && (
+        <Link to="/program">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-xl border border-border/50 p-4 space-y-2"
+          >
+            <div className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
+              <span className="ml-auto text-[10px] text-muted-foreground capitalize">
+                {nextWorkout.dayType}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground"
+                >
+                  {ex.name}
+                </span>
+              ))}
+              {nextWorkout.exercises.length > 4 && (
+                <span className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                  +{nextWorkout.exercises.length - 4} more
+                </span>
+              )}
+            </div>
+          </motion.div>
+        </Link>
+      )}
+
+      {/* Bodyweight Logger */}
+      <BodyweightLogger />
+
+      {/* Today's Intake — compact */}
+      <div className="bg-card rounded-xl border border-border/50 p-3">
+        <p className="text-xs font-medium text-muted-foreground mb-2">Today's Intake</p>
+        <div className="grid grid-cols-4 gap-1.5 text-center">
+          {[
+            { val: dailyTotals.calories, unit: "cal", color: "text-orange-500" },
+            { val: `${dailyTotals.protein}g`, unit: "protein", color: "text-blue-500" },
+            { val: `${dailyTotals.carbs}g`, unit: "carbs", color: "text-amber-500" },
+            { val: `${dailyTotals.fat}g`, unit: "fat", color: "text-purple-500" },
+          ].map((item) => (
+            <div key={item.unit}>
+              <p className={cn("text-sm font-bold", item.color)}>{item.val}</p>
+              <p className="text-[9px] text-muted-foreground">{item.unit}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mode Toggle + Adaptive Summary */}
       <div className="flex gap-1 bg-muted rounded-lg p-1">
         {(["weekly", "monthly"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            className={cn(
+              "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
               mode === m
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
             {m.charAt(0).toUpperCase() + m.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Today's Intake */}
-      <div className="bg-card rounded-xl border border-border/50 p-4">
-        <p className="text-sm font-medium text-foreground mb-3">Today's Intake</p>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-orange-600 dark:text-orange-400">{dailyTotals.calories}</p>
-            <p className="text-xs text-orange-500">cal</p>
-          </div>
-          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{dailyTotals.protein}g</p>
-            <p className="text-xs text-blue-500">protein</p>
-          </div>
-          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{dailyTotals.carbs}g</p>
-            <p className="text-xs text-amber-500">carbs</p>
-          </div>
-          <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
-            <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{dailyTotals.fat}g</p>
-            <p className="text-xs text-purple-500">fat</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Adaptive Summary */}
       <AdaptiveSummary
         athleteType={profile.athleteType || "Lifter"}
         mode={mode}
@@ -252,33 +282,29 @@ export default function Home() {
         monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
       />
 
-      {/* Bodyweight Logger */}
-      <BodyweightLogger />
-
       {/* Motivational quote */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="p-4 rounded-xl bg-primary/5 border border-primary/10"
+        className="p-3 rounded-xl bg-primary/5 border border-primary/10"
       >
-        <p className="text-sm text-foreground font-medium">Daily Motivation</p>
-        <p className="text-xs text-muted-foreground mt-1 italic">"{quote}"</p>
+        <p className="text-xs text-muted-foreground italic">"{quote}"</p>
       </motion.div>
 
-      {/* Pro upsell if not pro */}
+      {/* Pro upsell */}
       {!isPro && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2"
+          className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
         >
           <p className="text-sm font-medium text-foreground">
             Unlock AI Photo Logging & Performance Engine
           </p>
           <p className="text-xs text-muted-foreground">
-            Upgrade to Pro for full access — from just £2.99/mo
+            Upgrade to Pro — from just £2.99/mo
           </p>
         </motion.div>
       )}

@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import type { ProgramState, WorkoutDay } from "./programTypes";
+import type { ProgramState, ProgramSettings, ProgramExercise } from "./programTypes";
+import { normalizeProgramState } from "./programTypes";
 import {
   generateProgram,
   advanceWeek,
   shouldAdvanceWeek,
   generateWeekPrescription,
+  applyProgression,
 } from "./programEngine";
 import { toast } from "sonner";
 
@@ -17,8 +19,9 @@ export function useProgram() {
   const { user, profile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(null);
 
-  // Load program from Firestore
+  // Load program from Firestore (with backward-compat normalize)
   useEffect(() => {
     if (!user || !profile) {
       setProgramState(null);
@@ -31,9 +34,9 @@ export function useProgram() {
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
-        setProgramState(snap.data() as ProgramState);
+        const raw = snap.data() as ProgramState;
+        setProgramState(normalizeProgramState(raw));
       } else {
-        // Generate initial program based on profile
         const goal = profile.program?.goal ?? "recomp";
         const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
         const { splitType, workouts } = generateProgram(goal, weeklyTarget);
@@ -46,6 +49,8 @@ export function useProgram() {
           workouts,
           fatigueScore: 0,
           updatedAt: Date.now(),
+          settings: { autoProgression: true, microloading: true },
+          weekHistory: [],
         };
 
         await setDoc(ref, initial);
@@ -84,7 +89,6 @@ export function useProgram() {
         ),
       };
 
-      // Check if all workouts completed → advance week
       if (shouldAdvanceWeek(updated.workouts)) {
         const advanced = advanceWeek(updated);
         await saveProgram(advanced);
@@ -93,7 +97,7 @@ export function useProgram() {
         if (prescription.deload) {
           toast.info("Deload week — reduce intensity and recover");
         } else {
-          toast.success(`Week ${advanced.weekNumber} — push forward!`);
+          toast.success(`Week ${advanced.weekNumber} started`);
         }
       } else {
         await saveProgram(updated);
@@ -102,10 +106,45 @@ export function useProgram() {
     [programState, user, saveProgram],
   );
 
-  // Update a specific exercise's performance after logging
-  const updateExercisePerformance = useCallback(
-    async (dayIndex: number, exerciseIndex: number, updatedExercise: WorkoutDay["exercises"][number]) => {
+  // Log exercise performance with auto-progression
+  const logExercise = useCallback(
+    async (
+      dayIndex: number,
+      exerciseIndex: number,
+      actualReps: number,
+      actualWeight: number,
+    ) => {
       if (!programState) return;
+
+      const settings = programState.settings ?? { autoProgression: true, microloading: true };
+      const exercise = programState.workouts[dayIndex]?.exercises[exerciseIndex];
+      if (!exercise) return;
+
+      let updatedExercise: ProgramExercise;
+      if (settings.autoProgression) {
+        updatedExercise = applyProgression(
+          exercise,
+          actualReps,
+          actualWeight,
+          programState.goal,
+          settings.microloading,
+        );
+      } else {
+        updatedExercise = {
+          ...exercise,
+          lastAttemptedWeight: actualWeight,
+          lastPerformance: {
+            sets: exercise.sets,
+            reps: actualReps,
+            weight: actualWeight,
+            completed: actualReps >= exercise.reps,
+          },
+        };
+      }
+
+      if (updatedExercise.plateauCount > 0 && updatedExercise.plateauCount !== exercise.plateauCount) {
+        toast("Plateau detected — variation may rotate", { icon: "⚠️" });
+      }
 
       const updatedWorkouts = programState.workouts.map((day, di) => {
         if (di !== dayIndex) return day;
@@ -122,13 +161,44 @@ export function useProgram() {
     [programState, saveProgram],
   );
 
-  // Regenerate program (e.g. when goal changes)
+  // Update exercise manually (weight override)
+  const updateExercise = useCallback(
+    async (dayIndex: number, exerciseIndex: number, updates: Partial<ProgramExercise>) => {
+      if (!programState) return;
+
+      const updatedWorkouts = programState.workouts.map((day, di) => {
+        if (di !== dayIndex) return day;
+        return {
+          ...day,
+          exercises: day.exercises.map((ex, ei) =>
+            ei === exerciseIndex ? { ...ex, ...updates } : ex,
+          ),
+        };
+      });
+
+      await saveProgram({ ...programState, workouts: updatedWorkouts });
+    },
+    [programState, saveProgram],
+  );
+
+  // Update settings
+  const updateSettings = useCallback(
+    async (updates: Partial<ProgramSettings>) => {
+      if (!programState) return;
+      const current = programState.settings ?? { autoProgression: true, microloading: true };
+      const newSettings = { ...current, ...updates };
+      await saveProgram({ ...programState, settings: newSettings });
+    },
+    [programState, saveProgram],
+  );
+
+  // Regenerate program (goal or split change)
   const regenerateProgram = useCallback(
-    async () => {
+    async (goalOverride?: string, weeklyTargetOverride?: number) => {
       if (!profile) return;
 
-      const goal = profile.program?.goal ?? "recomp";
-      const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
+      const goal = (goalOverride ?? programState?.goal ?? profile.program?.goal ?? "recomp") as ProgramState["goal"];
+      const weeklyTarget = weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
       const { splitType, workouts } = generateProgram(
         goal,
         weeklyTarget,
@@ -143,13 +213,29 @@ export function useProgram() {
         workouts,
         fatigueScore: programState?.fatigueScore ?? 0,
         updatedAt: Date.now(),
+        settings: programState?.settings ?? { autoProgression: true, microloading: true },
+        weekHistory: [],
       };
 
       await saveProgram(newState);
+      setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
     [profile, programState, saveProgram],
   );
+
+  // Week navigation
+  const viewWeek = useCallback((historyIndex: number | null) => {
+    setViewingHistoryIndex(historyIndex);
+  }, []);
+
+  const viewedWorkouts = viewingHistoryIndex !== null
+    ? programState?.weekHistory?.[viewingHistoryIndex]?.workouts ?? null
+    : null;
+
+  const viewedWeekNumber = viewingHistoryIndex !== null
+    ? programState?.weekHistory?.[viewingHistoryIndex]?.weekNumber ?? null
+    : null;
 
   const prescription = programState
     ? generateWeekPrescription(programState.weekNumber)
@@ -160,8 +246,14 @@ export function useProgram() {
     prescription,
     loading,
     completeWorkoutDay,
-    updateExercisePerformance,
+    logExercise,
+    updateExercise,
+    updateSettings,
     regenerateProgram,
     saveProgram,
+    viewWeek,
+    viewingHistoryIndex,
+    viewedWorkouts,
+    viewedWeekNumber,
   };
 }

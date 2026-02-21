@@ -8,6 +8,7 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
+import { format } from "date-fns";
 
 /* ================================
    E1RM CALCULATION
@@ -73,16 +74,21 @@ function makeExercise(
   existing?: ProgramExercise,
 ): ProgramExercise {
   const ex = pickExercise(category, existing?.plateauCount ?? 0, existing?.exerciseId);
+  const w = existing?.weight ?? weight;
   return {
     name: ex.name,
     exerciseId: ex.id,
     movementCategory: category,
     sets,
     reps,
-    weight: existing?.weight ?? weight,
+    weight: w,
     progressionType: progression,
-    lastPerformance: existing?.lastPerformance ?? null,
+    lastSuccessfulWeight: existing?.lastSuccessfulWeight ?? w,
+    lastAttemptedWeight: existing?.lastAttemptedWeight ?? w,
+    consecutiveFailures: existing?.consecutiveFailures ?? 0,
     plateauCount: existing?.plateauCount ?? 0,
+    performanceHistory: existing?.performanceHistory ?? [],
+    lastPerformance: existing?.lastPerformance ?? null,
   };
 }
 
@@ -102,8 +108,12 @@ function makeAccessory(
     reps,
     weight,
     progressionType: "linear",
-    lastPerformance: null,
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
+    consecutiveFailures: 0,
     plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
   };
 }
 
@@ -252,7 +262,7 @@ export function generateProgram(
 }
 
 /* ================================
-   PROGRESSION ENGINE
+   EXERCISE-SPECIFIC PROGRESSION
 ================================ */
 
 export function applyProgression(
@@ -260,32 +270,67 @@ export function applyProgression(
   actualReps: number,
   actualWeight: number,
   goal: Goal,
+  microloading: boolean,
 ): ProgramExercise {
-  const updated = { ...exercise };
+  const today = format(new Date(), "yyyy-MM-dd");
+  const record = { date: today, weight: actualWeight, repsCompleted: actualReps, repsTarget: exercise.reps };
+  const history = [...(exercise.performanceHistory || []), record].slice(-10);
 
-  updated.lastPerformance = {
-    sets: exercise.sets,
-    reps: actualReps,
-    weight: actualWeight,
-    completed: actualReps >= exercise.reps,
+  const updated: ProgramExercise = {
+    ...exercise,
+    lastAttemptedWeight: actualWeight,
+    performanceHistory: history,
+    lastPerformance: {
+      sets: exercise.sets,
+      reps: actualReps,
+      weight: actualWeight,
+      completed: actualReps >= exercise.reps,
+    },
   };
 
+  const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
+
   if (exercise.progressionType === "double") {
-    if (actualReps >= exercise.reps && actualWeight >= exercise.weight) {
+    // Compound lifts: +2.5kg on success
+    if (completed) {
       updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+      updated.lastSuccessfulWeight = actualWeight;
+      updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.plateauCount = exercise.plateauCount + 1;
-      if (updated.plateauCount >= 2 && updated.plateauCount < 3) {
+      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+
+      if (updated.consecutiveFailures >= 2) {
+        // 2 consecutive failures → reduce 5%
         updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
+        updated.consecutiveFailures = 0;
+        updated.plateauCount = (exercise.plateauCount || 0) + 1;
       }
+      // plateauCount >= 3 → variation rotation handled by pickExercise
     }
   } else {
-    if (actualReps >= exercise.reps) {
-      updated.weight = exercise.weight + 1.25;
+    // Isolation lifts: microloading or rep progression
+    if (completed) {
+      if (microloading) {
+        updated.weight = exercise.weight + 1;
+      } else {
+        // Rep progression: increase reps by 1 before weight
+        if (actualReps >= exercise.reps + 2) {
+          updated.weight = exercise.weight + 2.5;
+          updated.reps = exercise.reps; // reset reps
+        }
+        // Otherwise keep same weight, they'll naturally hit more reps
+      }
+      updated.lastSuccessfulWeight = actualWeight;
+      updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.plateauCount = exercise.plateauCount + 1;
+      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+      if (updated.consecutiveFailures >= 3) {
+        updated.weight = Math.max(0, exercise.weight - 1);
+        updated.consecutiveFailures = 0;
+        updated.plateauCount = (exercise.plateauCount || 0) + 1;
+      }
     }
   }
 
@@ -293,7 +338,29 @@ export function applyProgression(
 }
 
 /* ================================
-   FATIGUE ADJUSTMENT
+   PROGRESSION DIRECTION (for UI)
+================================ */
+
+export type ProgressionDirection = "up" | "down" | "stable";
+
+export function getProgressionDirection(ex: ProgramExercise): ProgressionDirection {
+  if (!ex.lastAttemptedWeight || ex.lastAttemptedWeight === 0) return "stable";
+  if (ex.weight > ex.lastAttemptedWeight) return "up";
+  if (ex.weight < ex.lastAttemptedWeight) return "down";
+  return "stable";
+}
+
+export function getProgressionLabel(ex: ProgramExercise): string {
+  const dir = getProgressionDirection(ex);
+  const w = ex.weight > 0 ? `${ex.weight}kg` : "BW";
+
+  if (dir === "up") return `${w} ↑`;
+  if (dir === "down") return `${w} ↓`;
+  return w;
+}
+
+/* ================================
+   FATIGUE / DELOAD / ADVANCEMENT
 ================================ */
 
 export function applyFatigue(
@@ -310,10 +377,6 @@ export function applyFatigue(
   }));
 }
 
-/* ================================
-   DELOAD ADJUSTMENT
-================================ */
-
 export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
@@ -325,10 +388,6 @@ export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
   }));
 }
 
-/* ================================
-   WEEK ADVANCEMENT
-================================ */
-
 export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
   return workouts.every((day) => day.completed);
 }
@@ -336,6 +395,10 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
 export function advanceWeek(state: ProgramState): ProgramState {
   const nextWeek = state.weekNumber + 1;
   const prescription = generateWeekPrescription(nextWeek);
+
+  // Snapshot current week into history (keep last 8)
+  const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };
+  const history = [...(state.weekHistory ?? []), snapshot].slice(-8);
 
   let workouts = state.workouts.map((day) => ({ ...day, completed: false }));
 
@@ -350,6 +413,7 @@ export function advanceWeek(state: ProgramState): ProgramState {
     weekNumber: nextWeek,
     currentPhase: prescription.deload ? "deload" : "progression",
     workouts,
+    weekHistory: history,
     updatedAt: Date.now(),
   };
 }
