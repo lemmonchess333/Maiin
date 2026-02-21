@@ -1,16 +1,26 @@
-import { type ReactNode } from "react";
+import { type ReactNode, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
-import Home from "@/pages/Home";
-import Log from "@/pages/Log";
-import History from "@/pages/History";
-import Settings from "@/pages/Settings";
-import Program from "@/pages/Program";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+
+// Lazy-loaded pages for code splitting
+const Home = lazy(() => import("@/pages/Home"));
+const Log = lazy(() => import("@/pages/Log"));
+const History = lazy(() => import("@/pages/History"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Program = lazy(() => import("@/pages/Program"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 /* ================================
    ERROR BOUNDARY
@@ -102,17 +112,19 @@ function AppRoutes() {
 
   // Fully authenticated
   return (
-    <Routes>
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/log" element={<Log />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/program" element={<Program />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/log" element={<Log />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/program" element={<Program />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 
