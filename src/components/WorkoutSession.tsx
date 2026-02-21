@@ -3,10 +3,8 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import {
   Play,
-  Pause,
   RotateCcw,
   Check,
-  ChevronRight,
   X,
   Dumbbell,
   Timer,
