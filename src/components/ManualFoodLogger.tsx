@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { useMeals } from "@/hooks/useMeals";
 import { cn } from "@/lib/utils";
-import { 
-  UtensilsCrossed, 
-  Check, 
-  Flame, 
-  Beef, 
-  Wheat, 
-  Droplet 
+import {
+  UtensilsCrossed,
+  Check,
+  Flame,
+  Beef,
+  Wheat,
+  CircleDot,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ interface FoodEntry {
   fat: number;
 }
 
-const QUICK_MEALS = [
+const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 520, pro: 45, carb: 55, fat: 8 },
   { name: "Whey Protein Shake", cal: 120, pro: 25, carb: 4, fat: 2 },
   { name: "Greek Yogurt + Berries", cal: 180, pro: 20, carb: 15, fat: 3 },
@@ -32,8 +33,13 @@ const QUICK_MEALS = [
   { name: "Oats & Banana", cal: 320, pro: 10, carb: 55, fat: 6 },
 ];
 
-export function ManualFoodLogger() {
+interface Props {
+  date?: string;
+}
+
+export function ManualFoodLogger({ date }: Props) {
   const { user } = useAuth();
+  const { meals } = useMeals();
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -42,7 +48,28 @@ export function ManualFoodLogger() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Live preview totals
+  // Dynamic quick meals from user history (top 5 most recent unique meals)
+  const quickMeals = useMemo(() => {
+    const seen = new Set<string>();
+    const fromHistory: typeof DEFAULT_QUICK_MEALS = [];
+
+    for (const meal of meals) {
+      const key = (meal.foodName || "").toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      fromHistory.push({
+        name: meal.foodName,
+        cal: meal.totalCalories || 0,
+        pro: meal.totalProtein || 0,
+        carb: meal.totalCarbs || 0,
+        fat: meal.totalFat || 0,
+      });
+      if (fromHistory.length >= 5) break;
+    }
+
+    return fromHistory.length >= 3 ? fromHistory : DEFAULT_QUICK_MEALS;
+  }, [meals]);
+
   const preview = {
     calories: Number(calories) || 0,
     protein: Number(protein) || 0,
@@ -50,7 +77,7 @@ export function ManualFoodLogger() {
     fat: Number(fat) || 0,
   };
 
-  const handleQuickAdd = (meal: typeof QUICK_MEALS[0]) => {
+  const handleQuickAdd = (meal: typeof DEFAULT_QUICK_MEALS[0]) => {
     setName(meal.name);
     setCalories(meal.cal.toString());
     setProtein(meal.pro.toString());
@@ -72,10 +99,10 @@ export function ManualFoodLogger() {
         fat: Number(fat) || 0,
       };
 
-      const today = format(new Date(), "yyyy-MM-dd");
-      const id = `${today}_${Date.now()}`;
+      const logDate = date || format(new Date(), "yyyy-MM-dd");
+      const id = `${logDate}_${Date.now()}`;
       await setDoc(doc(db, "users", user.uid, "meals", id), {
-        date: today,
+        date: logDate,
         foodName: entry.name,
         items: [{ name: entry.name, portionSize: "1 serving", calories: entry.calories, protein: entry.protein, carbs: entry.carbs, fat: entry.fat }],
         totalCalories: entry.calories,
@@ -87,9 +114,8 @@ export function ManualFoodLogger() {
       });
 
       setSaved(true);
-      toast.success("Meal logged successfully!");
+      toast.success("Meal logged!");
 
-      // Confetti on successful log
       confetti({
         particleCount: 80,
         spread: 70,
@@ -113,7 +139,6 @@ export function ManualFoodLogger() {
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-5">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/10">
@@ -121,7 +146,7 @@ export function ManualFoodLogger() {
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">Log a Meal</p>
-            <p className="text-xs text-muted-foreground">Manual entry • Free forever</p>
+            <p className="text-xs text-muted-foreground">Manual entry</p>
           </div>
         </div>
         <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">
@@ -129,11 +154,10 @@ export function ManualFoodLogger() {
         </span>
       </div>
 
-      {/* Quick Add Buttons */}
       <div>
-        <p className="text-xs text-muted-foreground mb-2">Quick add common meals</p>
+        <p className="text-xs text-muted-foreground mb-2">Quick add</p>
         <div className="flex flex-wrap gap-2">
-          {QUICK_MEALS.map((meal, i) => (
+          {quickMeals.map((meal, i) => (
             <motion.button
               key={i}
               whileTap={{ scale: 0.95 }}
@@ -146,7 +170,6 @@ export function ManualFoodLogger() {
         </div>
       </div>
 
-      {/* Meal Name */}
       <input
         type="text"
         value={name}
@@ -155,7 +178,6 @@ export function ManualFoodLogger() {
         className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
 
-      {/* Macro Inputs */}
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: "Calories", value: calories, set: setCalories, unit: "kcal" },
@@ -180,49 +202,35 @@ export function ManualFoodLogger() {
         ))}
       </div>
 
-      {/* Live Macro Preview */}
       <div className="pt-2">
         <p className="text-xs text-muted-foreground mb-3">Live preview</p>
         <div className="grid grid-cols-4 gap-3 text-center">
-          {/* Calories */}
           <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
             <Flame className="w-5 h-5 mx-auto mb-1 text-orange-500 dark:text-orange-400" />
-            <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-              {preview.calories}
-            </p>
+            <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{preview.calories}</p>
             <p className="text-[10px] text-orange-500 dark:text-orange-400/80">cal</p>
           </div>
 
-          {/* Protein */}
           <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
             <Beef className="w-5 h-5 mx-auto mb-1 text-blue-500 dark:text-blue-400" />
-            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-              {preview.protein}g
-            </p>
+            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{preview.protein}g</p>
             <p className="text-[10px] text-blue-500 dark:text-blue-400/80">protein</p>
           </div>
 
-          {/* Carbs */}
           <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
             <Wheat className="w-5 h-5 mx-auto mb-1 text-amber-500 dark:text-amber-400" />
-            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
-              {preview.carbs}g
-            </p>
+            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{preview.carbs}g</p>
             <p className="text-[10px] text-amber-500 dark:text-amber-400/80">carbs</p>
           </div>
 
-          {/* Fat */}
-          <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-            <Droplet className="w-5 h-5 mx-auto mb-1 text-purple-500 dark:text-purple-400" />
-            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
-              {preview.fat}g
-            </p>
-            <p className="text-[10px] text-purple-500 dark:text-purple-400/80">fat</p>
+          <div className="bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950 dark:to-pink-950/60 rounded-xl p-3 shadow-sm border border-rose-100/60 dark:border-rose-900/40">
+            <CircleDot className="w-5 h-5 mx-auto mb-1 text-rose-500 dark:text-rose-400" />
+            <p className="text-xl font-bold text-rose-600 dark:text-rose-400">{preview.fat}g</p>
+            <p className="text-[10px] text-rose-500 dark:text-rose-400/80">fat</p>
           </div>
         </div>
       </div>
 
-      {/* Log Button */}
       <AnimatePresence mode="wait">
         <motion.button
           key={saved ? "saved" : "save"}

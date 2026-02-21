@@ -2,7 +2,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts";
-
 import { EXERCISE_CATEGORIES, getExercisesByCategory, getExerciseById } from "@/lib/exercises";
 import {
   Dumbbell,
@@ -14,6 +13,7 @@ import {
   Flame,
   X,
   Search,
+  Timer,
 } from "lucide-react";
 
 interface Props {
@@ -35,16 +35,21 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
   const userWeight = profile?.weightKg || 70;
 
+  const isCardio = (category: string) => category === "Cardio";
+
   const addExercise = (exerciseId: string) => {
     const exercise = getExerciseById(exerciseId);
     if (!exercise) return;
+
+    const cardio = isCardio(exercise.category);
 
     const newExercise: WorkoutExercise = {
       exerciseId: exercise.id,
       exerciseName: exercise.name,
       category: exercise.category,
-      sets: [{ setNumber: 1, reps: 10, weightKg: 0 }],
+      sets: cardio ? [] : [{ setNumber: 1, reps: 10, weightKg: 0 }],
       caloriesBurned: 0,
+      ...(cardio ? { durationMinutes: 20, distanceKm: 0 } : {}),
     };
 
     setExercises((prev) => [...prev, newExercise]);
@@ -99,6 +104,23 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
     });
   };
 
+  const updateCardioField = (
+    exerciseIndex: number,
+    field: "durationMinutes" | "distanceKm",
+    value: number
+  ) => {
+    setExercises((prev) => {
+      const updated = [...prev];
+      updated[exerciseIndex] = { ...updated[exerciseIndex], [field]: value };
+      const ex = getExerciseById(updated[exerciseIndex].exerciseId);
+      const duration = updated[exerciseIndex].durationMinutes || 0;
+      updated[exerciseIndex].caloriesBurned = Math.round(
+        (ex?.caloriesPerMinute || 8) * duration * (1 + (userWeight / 100) * 0.3)
+      );
+      return updated;
+    });
+  };
+
   const totalCalories = exercises.reduce((sum, e) => sum + e.caloriesBurned, 0);
 
   const handleSave = async () => {
@@ -106,6 +128,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
     setSaving(true);
 
     const durationEstimate = exercises.reduce((sum, e) => {
+      if (isCardio(e.category)) return sum + (e.durationMinutes || 0);
       return sum + e.sets.length * 2.5;
     }, 0);
 
@@ -166,7 +189,6 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
           key={exIndex}
           className="bg-card rounded-xl border border-border/50 overflow-hidden"
         >
-          {/* Exercise Header */}
           <button
             onClick={() =>
               setExpandedExercise(expandedExercise === exIndex ? null : exIndex)
@@ -178,9 +200,10 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 {exercise.exerciseName}
               </p>
               <p className="text-xs text-muted-foreground">
-                {exercise.sets.length} {exercise.sets.length === 1 ? "set" : "sets"}
-                {exercise.caloriesBurned > 0 &&
-                  ` · ${exercise.caloriesBurned} cal`}
+                {isCardio(exercise.category)
+                  ? `${exercise.durationMinutes || 0} min${exercise.distanceKm ? ` · ${exercise.distanceKm}km` : ""}`
+                  : `${exercise.sets.length} ${exercise.sets.length === 1 ? "set" : "sets"}`}
+                {exercise.caloriesBurned > 0 && ` · ${exercise.caloriesBurned} cal`}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -201,64 +224,91 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             </div>
           </button>
 
-          {/* Sets */}
           {expandedExercise === exIndex && (
             <div className="px-4 pb-4 space-y-3">
-              {/* Set Headers */}
-              <div className="grid grid-cols-12 gap-2 text-xs text-muted-foreground font-medium px-1">
-                <div className="col-span-2">Set</div>
-                <div className="col-span-4">Reps</div>
-                <div className="col-span-4">Weight (kg)</div>
-                <div className="col-span-2"></div>
-              </div>
-
-              {exercise.sets.map((set, setIndex) => (
-                <div
-                  key={setIndex}
-                  className="grid grid-cols-12 gap-2 items-center"
-                >
-                  <div className="col-span-2 text-sm font-medium text-center text-muted-foreground">
-                    {set.setNumber}
-                  </div>
-                  <div className="col-span-4">
+              {isCardio(exercise.category) ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Timer className="w-3 h-3" /> Duration (min)
+                    </label>
                     <input
                       type="number"
-                      value={set.reps}
+                      value={exercise.durationMinutes || ""}
                       onChange={(e) =>
-                        updateSet(exIndex, setIndex, "reps", Number(e.target.value))
+                        updateCardioField(exIndex, "durationMinutes", Number(e.target.value) || 0)
                       }
                       className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
-                  <div className="col-span-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Distance (km)</label>
                     <input
                       type="number"
-                      value={set.weightKg}
+                      step="0.1"
+                      value={exercise.distanceKm || ""}
                       onChange={(e) =>
-                        updateSet(exIndex, setIndex, "weightKg", Number(e.target.value))
+                        updateCardioField(exIndex, "distanceKm", Number(e.target.value) || 0)
                       }
                       className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
-                  </div>
-                  <div className="col-span-2 flex justify-center">
-                    {exercise.sets.length > 1 && (
-                      <button
-                        onClick={() => removeSet(exIndex, setIndex)}
-                        className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
-              ))}
+              ) : (
+                <>
+                  <div className="grid grid-cols-12 gap-2 text-xs text-muted-foreground font-medium px-1">
+                    <div className="col-span-2">Set</div>
+                    <div className="col-span-4">Reps</div>
+                    <div className="col-span-4">Weight (kg)</div>
+                    <div className="col-span-2"></div>
+                  </div>
 
-              <button
-                onClick={() => addSet(exIndex)}
-                className="w-full py-2 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Set
-              </button>
+                  {exercise.sets.map((set, setIndex) => (
+                    <div key={setIndex} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-2 text-sm font-medium text-center text-muted-foreground">
+                        {set.setNumber}
+                      </div>
+                      <div className="col-span-4">
+                        <input
+                          type="number"
+                          value={set.reps}
+                          onChange={(e) =>
+                            updateSet(exIndex, setIndex, "reps", Number(e.target.value))
+                          }
+                          className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div className="col-span-4">
+                        <input
+                          type="number"
+                          value={set.weightKg}
+                          onChange={(e) =>
+                            updateSet(exIndex, setIndex, "weightKg", Number(e.target.value))
+                          }
+                          className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div className="col-span-2 flex justify-center">
+                        {exercise.sets.length > 1 && (
+                          <button
+                            onClick={() => removeSet(exIndex, setIndex)}
+                            className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => addSet(exIndex)}
+                    className="w-full py-2 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Set
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -290,7 +340,6 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             </button>
           </div>
 
-          {/* Search */}
           <div className="p-3 border-b border-border/50">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -304,7 +353,6 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             </div>
           </div>
 
-          {/* Category Tabs */}
           {!searchQuery && (
             <div className="flex overflow-x-auto gap-1 p-2 border-b border-border/50">
               {EXERCISE_CATEGORIES.map((cat) => (
@@ -324,7 +372,6 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             </div>
           )}
 
-          {/* Exercise List */}
           <div className="max-h-64 overflow-y-auto">
             {(allFiltered || filteredExercises).map((exercise) => (
               <button
