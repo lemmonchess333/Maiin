@@ -77,7 +77,7 @@ export function useProgram() {
     [user],
   );
 
-  // Mark a workout day as completed
+  // Mark a workout day as completed (does NOT auto-advance week)
   const completeWorkoutDay = useCallback(
     async (dayIndex: number) => {
       if (!programState || !user) return;
@@ -89,21 +89,33 @@ export function useProgram() {
         ),
       };
 
-      if (shouldAdvanceWeek(updated.workouts)) {
-        const advanced = advanceWeek(updated);
-        await saveProgram(advanced);
+      await saveProgram(updated);
 
-        const prescription = generateWeekPrescription(advanced.weekNumber);
-        if (prescription.deload) {
-          toast.info("Deload week — reduce intensity and recover");
-        } else {
-          toast.success(`Week ${advanced.weekNumber} started`);
-        }
-      } else {
-        await saveProgram(updated);
+      const allDone = updated.workouts.every((d) => d.completed);
+      if (allDone) {
+        toast.success("All workouts complete! Advance to next week when ready.");
       }
     },
     [programState, user, saveProgram],
+  );
+
+  // Manually advance to next week (called from UI)
+  const advanceToNextWeek = useCallback(
+    async () => {
+      if (!programState) return;
+      if (!shouldAdvanceWeek(programState.workouts)) return;
+
+      const advanced = advanceWeek(programState);
+      await saveProgram(advanced);
+
+      const rx = generateWeekPrescription(advanced.weekNumber);
+      if (rx.deload) {
+        toast.info("Deload week — reduce intensity and recover");
+      } else {
+        toast.success(`Week ${advanced.weekNumber} started`);
+      }
+    },
+    [programState, saveProgram],
   );
 
   // Log exercise performance with auto-progression
@@ -246,6 +258,7 @@ export function useProgram() {
     prescription,
     loading,
     completeWorkoutDay,
+    advanceToNextWeek,
     logExercise,
     updateExercise,
     updateSettings,

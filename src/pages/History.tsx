@@ -150,7 +150,7 @@ export default function History() {
           <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">Protein Meals</p>
+              <p className="text-sm font-medium text-foreground">Meals</p>
             </div>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">

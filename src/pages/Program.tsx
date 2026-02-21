@@ -19,6 +19,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Plus,
+  FastForward,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,6 +31,18 @@ function DirectionIcon({ ex }: { ex: ProgramExercise }) {
   return <Minus className="w-3.5 h-3.5 text-muted-foreground" />;
 }
 
+function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
+  const label = getProgressionLabel(ex);
+  const dir = getProgressionDirection(ex);
+  const colorClass =
+    dir === "up"
+      ? "text-green-600 dark:text-green-400"
+      : dir === "down"
+        ? "text-red-500 dark:text-red-400"
+        : "text-foreground";
+  return <span className={cn("font-medium", colorClass)}>{label}</span>;
+}
+
 export default function Program() {
   const { features } = useSubscription();
   const {
@@ -36,6 +50,7 @@ export default function Program() {
     prescription,
     loading,
     completeWorkoutDay,
+    advanceToNextWeek,
     logExercise,
     updateExercise,
     updateSettings,
@@ -49,6 +64,7 @@ export default function Program() {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
 
   // Exercise drawer state
   const [drawerExercise, setDrawerExercise] = useState<{
@@ -88,6 +104,7 @@ export default function Program() {
   const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
   const completedCount = displayWorkouts.filter((d) => d.completed).length;
   const totalDays = displayWorkouts.length;
+  const allComplete = completedCount === totalDays && totalDays > 0;
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
@@ -95,6 +112,12 @@ export default function Program() {
     setRegenerating(true);
     await regenerateProgram();
     setRegenerating(false);
+  };
+
+  const handleAdvanceWeek = async () => {
+    setAdvancing(true);
+    await advanceToNextWeek();
+    setAdvancing(false);
   };
 
   const openDrawer = (dayIndex: number, exIndex: number, exercise: ProgramExercise) => {
@@ -126,6 +149,17 @@ export default function Program() {
     closeDrawer();
   };
 
+  const handleSetsChange = async (delta: number) => {
+    if (!drawerExercise) return;
+    const newSets = Math.max(1, Math.min(10, drawerExercise.exercise.sets + delta));
+    if (newSets === drawerExercise.exercise.sets) return;
+    await updateExercise(drawerExercise.dayIndex, drawerExercise.exIndex, { sets: newSets });
+    setDrawerExercise({
+      ...drawerExercise,
+      exercise: { ...drawerExercise.exercise, sets: newSets },
+    });
+  };
+
   // Week navigation
   const canGoBack = history.length > 0;
   const canGoForward = isViewingHistory;
@@ -146,6 +180,12 @@ export default function Program() {
     } else {
       viewWeek(null);
     }
+  };
+
+  // Goal display name with better visibility
+  const goalLabel = (g: string) => {
+    if (g === "lean bulk") return "Lean Bulk";
+    return g.charAt(0).toUpperCase() + g.slice(1);
   };
 
   return (
@@ -190,8 +230,8 @@ export default function Program() {
             {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
           </p>
           <div className="flex items-center justify-center gap-2 mt-0.5">
-            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium capitalize">
-              {programState.goal}
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium">
+              {goalLabel(programState.goal)}
             </span>
             <span className={cn(
               "px-2 py-0.5 rounded text-[10px] font-medium",
@@ -214,6 +254,18 @@ export default function Program() {
           <ChevronRight className="w-4 h-4 text-foreground" />
         </button>
       </div>
+
+      {/* Advance Week Button — shown when all workouts are complete */}
+      {allComplete && !isViewingHistory && (
+        <button
+          onClick={handleAdvanceWeek}
+          disabled={advancing}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          <FastForward className="w-4 h-4" />
+          {advancing ? "Advancing..." : "Advance to Next Week"}
+        </button>
+      )}
 
       {/* Workout Day Cards */}
       <div className="space-y-2">
@@ -276,9 +328,7 @@ export default function Program() {
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span>{ex.sets}&times;{ex.reps}</span>
                             <span className="text-[10px]">&middot;</span>
-                            <span className="font-medium text-foreground">
-                              {getProgressionLabel(ex)}
-                            </span>
+                            <ProgressionLabel ex={ex} />
                           </div>
                         </div>
                         {ex.lastPerformance && (
@@ -339,11 +389,25 @@ export default function Program() {
                   </button>
                 </div>
 
-                {/* Current prescription */}
+                {/* Current prescription with adjustable sets */}
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-muted rounded-lg p-2">
-                    <p className="text-lg font-bold text-foreground">{drawerExercise.exercise.sets}</p>
-                    <p className="text-[10px] text-muted-foreground">Sets</p>
+                  <div className="bg-muted rounded-lg p-2 relative">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => handleSetsChange(-1)}
+                        className="w-6 h-6 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors"
+                      >
+                        <Minus className="w-3 h-3 text-foreground" />
+                      </button>
+                      <p className="text-lg font-bold text-foreground w-8">{drawerExercise.exercise.sets}</p>
+                      <button
+                        onClick={() => handleSetsChange(1)}
+                        className="w-6 h-6 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors"
+                      >
+                        <Plus className="w-3 h-3 text-foreground" />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Sets</p>
                   </div>
                   <div className="bg-muted rounded-lg p-2">
                     <p className="text-lg font-bold text-foreground">{drawerExercise.exercise.reps}</p>
@@ -467,13 +531,13 @@ export default function Program() {
                         key={g}
                         onClick={() => regenerateProgram(g)}
                         className={cn(
-                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors",
+                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
                           programState.goal === g
                             ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:text-foreground",
+                            : "bg-muted text-foreground hover:bg-muted/80",
                         )}
                       >
-                        {g}
+                        {goalLabel(g)}
                       </button>
                     ))}
                   </div>
@@ -494,7 +558,7 @@ export default function Program() {
                           "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
                           s.split === programState.splitType
                             ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:text-foreground",
+                            : "bg-muted text-foreground hover:bg-muted/80",
                         )}
                       >
                         {s.label}

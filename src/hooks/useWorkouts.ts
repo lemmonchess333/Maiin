@@ -25,6 +25,9 @@ export interface WorkoutExercise {
   category: string;
   sets: WorkoutSet[];
   caloriesBurned: number;
+  // Cardio-specific (optional)
+  durationMinutes?: number;
+  distanceKm?: number;
 }
 
 export interface Workout {
