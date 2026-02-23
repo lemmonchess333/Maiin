@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Dumbbell, Flame, Beef, Wheat, Droplet } from "lucide-react";
+import { Sparkles, Dumbbell, Flame, Beef, Wheat, Avocado } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -162,6 +162,13 @@ export default function Home() {
 
   const nextWorkout = programState?.workouts.find((d) => !d.completed);
 
+  const macroColors = {
+    calories: "#f97316",
+    protein: "#3b82f6",
+    carbs: "#f59e0b",
+    fat: "#a855f6",
+  };
+
   return (
     <div className="space-y-5">
       {/* Greeting */}
@@ -239,39 +246,63 @@ export default function Home() {
         <p className="text-sm font-medium text-foreground mb-4">Today's Intake</p>
         <div className="grid grid-cols-4 gap-3 text-center">
           {/* Calories */}
-          <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
-            <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{
+              backgroundColor: tint(macroColors.calories),
+              color: macroColors.calories,
+            }}
+          >
+            <Flame className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold">
               {safeNum(dailyTotals.calories)}
             </p>
-            <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
+            <p className="text-xs">cal</p>
           </div>
 
           {/* Protein */}
-          <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
-            <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{
+              backgroundColor: tint(macroColors.protein),
+              color: macroColors.protein,
+            }}
+          >
+            <Beef className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold">
               {safeNum(dailyTotals.protein)}g
             </p>
-            <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
+            <p className="text-xs">protein</p>
           </div>
 
           {/* Carbs */}
-          <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
-            <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{
+              backgroundColor: tint(macroColors.carbs),
+              color: macroColors.carbs,
+            }}
+          >
+            <Wheat className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold">
               {safeNum(dailyTotals.carbs)}g
             </p>
-            <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
+            <p className="text-xs">carbs</p>
           </div>
 
           {/* Fat */}
-          <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-            <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{
+              backgroundColor: tint(macroColors.fat),
+              color: macroColors.fat,
+            }}
+          >
+            <Avocado size={22} className="mx-auto mb-2" />
+            <p className="text-2xl font-bold">
               {safeNum(dailyTotals.fat)}g
             </p>
-            <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
+            <p className="text-xs">fat</p>
           </div>
         </div>
       </div>
