@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Dumbbell, Flame, Beef, Wheat, Egg } from "lucide-react";
+import { Sparkles, Dumbbell, Flame, Beef, Wheat, Droplet } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -100,6 +100,7 @@ export default function Home() {
     }
   }, [computedStreak, profile, updateProfile]);
 
+  // Safe number helper (for perfect consistency with Log page)
   const safeNum = (value: any): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
@@ -162,17 +163,41 @@ export default function Home() {
   const nextWorkout = programState?.workouts.find((d) => !d.completed);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Greeting */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-xl font-bold text-foreground">
           Hey, {profile.displayName || "Athlete"}
         </h1>
         <p className="text-xs text-muted-foreground">Let's put in work today.</p>
       </motion.div>
 
+      {/* Trial banner */}
+      {isInTrial && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10"
+        >
+          <Sparkles className="w-5 h-5 text-primary shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Full access to all features.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Streak */}
       <StreakCounter streak={computedStreak} />
 
+      {/* Next Workout — strength-first */}
       {nextWorkout && (
         <Link to="/program">
           <motion.div
@@ -182,52 +207,91 @@ export default function Home() {
           >
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">
-                Next: {nextWorkout.dayName}
-              </p>
+              <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
+              <span className="ml-auto text-[10px] text-muted-foreground capitalize">
+                {nextWorkout.dayType}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground"
+                >
+                  {ex.name}
+                </span>
+              ))}
+              {nextWorkout.exercises.length > 4 && (
+                <span className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                  +{nextWorkout.exercises.length - 4} more
+                </span>
+              )}
             </div>
           </motion.div>
         </Link>
       )}
 
+      {/* Bodyweight Logger */}
       <BodyweightLogger />
 
-      {/* Today's Intake — Clean Tinted Cards */}
+      {/* Today's Intake - gradient cards with icons */}
       <div className="bg-card rounded-2xl border border-border/50 p-5">
         <p className="text-sm font-medium text-foreground mb-4">Today's Intake</p>
         <div className="grid grid-cols-4 gap-3 text-center">
-          <div className="rounded-xl p-3 shadow-sm" style={{ backgroundColor: "rgba(249,115,22,0.12)" }}>
-            <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500" />
-            <p className="text-2xl font-bold text-orange-600">
+          {/* Calories */}
+          <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
+            <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
+            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
               {safeNum(dailyTotals.calories)}
             </p>
-            <p className="text-xs text-orange-500">cal</p>
+            <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
           </div>
 
-          <div className="rounded-xl p-3 shadow-sm" style={{ backgroundColor: "rgba(59,130,246,0.12)" }}>
-            <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-            <p className="text-2xl font-bold text-blue-600">
+          {/* Protein */}
+          <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
+            <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {safeNum(dailyTotals.protein)}g
             </p>
-            <p className="text-xs text-blue-500">protein</p>
+            <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
           </div>
 
-          <div className="rounded-xl p-3 shadow-sm" style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
-            <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500" />
-            <p className="text-2xl font-bold text-amber-600">
+          {/* Carbs */}
+          <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
+            <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
+            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
               {safeNum(dailyTotals.carbs)}g
             </p>
-            <p className="text-xs text-amber-500">carbs</p>
+            <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
           </div>
 
-          <div className="rounded-xl p-3 shadow-sm" style={{ backgroundColor: "rgba(168,85,247,0.12)" }}>
-            <Egg className="w-6 h-6 mx-auto mb-2 text-purple-500" />
-            <p className="text-2xl font-bold text-purple-600">
+          {/* Fat */}
+          <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
+            <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
+            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               {safeNum(dailyTotals.fat)}g
             </p>
-            <p className="text-xs text-purple-500">fat</p>
+            <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
           </div>
         </div>
+      </div>
+
+      {/* Mode Toggle + Adaptive Summary */}
+      <div className="flex gap-1 bg-muted rounded-lg p-1">
+        {(["weekly", "monthly"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={cn(
+              "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              mode === m
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {m.charAt(0).toUpperCase() + m.slice(1)}
+          </button>
+        ))}
       </div>
 
       <AdaptiveSummary
@@ -248,6 +312,7 @@ export default function Home() {
         monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
       />
 
+      {/* Motivational quote */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -256,6 +321,23 @@ export default function Home() {
       >
         <p className="text-xs text-muted-foreground italic">"{quote}"</p>
       </motion.div>
+
+      {/* Pro upsell */}
+      {!isPro && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
+        >
+          <p className="text-sm font-medium text-foreground">
+            Unlock AI Photo Logging & Performance Engine
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Upgrade to Pro — from just £2.99/mo
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
