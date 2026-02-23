@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Dumbbell, Flame, Beef, Wheat, Avocado } from "lucide-react";
+import { Sparkles, Dumbbell, Flame, Beef, Wheat, Cookie } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -66,6 +66,20 @@ function computeStreak(workoutDates: string[]): number {
   }
 
   return streak;
+}
+
+// Simple tint helper (lightens the hex color)
+function tint(hex: string, factor: number = 0.85): string {
+  if (!hex || !hex.startsWith("#")) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+  return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
 }
 
 export default function Home() {
@@ -298,7 +312,7 @@ export default function Home() {
               color: macroColors.fat,
             }}
           >
-            <Avocado size={22} className="mx-auto mb-2" />
+            <Cookie size={22} className="mx-auto mb-2" />
             <p className="text-2xl font-bold">
               {safeNum(dailyTotals.fat)}g
             </p>
