@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import {
   Trophy,
   Target,
@@ -241,7 +240,7 @@ function ProgressBar({ done, target, label }: { done: number; target: number; la
 }
 
 /* ================================
-   TINT HELPER (for clean tinted backgrounds)
+   TINT HELPER
 ================================ */
 
 function tint(hex: string, factor: number = 0.85): string {
@@ -300,7 +299,7 @@ export function AdaptiveSummary({
   const { isPro } = useSubscription();
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
-  const [calorieBoost, setCalorieBoost] = useState(0); // Applied suggestion boost
+  const [calorieBoost, setCalorieBoost] = useState(0);
 
   const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
   const workoutsTarget = safeNum(mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget, 4);
@@ -324,7 +323,6 @@ export function AdaptiveSummary({
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
   const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
 
-  // Display macros with applied boost (from "Apply Suggestion" button)
   const displayMacros = {
     ...macros,
     calories: macros.calories + calorieBoost,
@@ -340,7 +338,6 @@ export function AdaptiveSummary({
 
   const showApplyButton = isPro && plateau.calorieAdjust !== 0;
 
-  // Light pastel macro colors (exact match to Today's Intake)
   const macroColors = {
     calories: "#f97316",
     protein: "#3b82f6",
@@ -354,7 +351,7 @@ export function AdaptiveSummary({
       animate={{ opacity: 1, y: 0 }}
       className="bg-card rounded-2xl border border-border/50 overflow-hidden"
     >
-      {/* Header - Lifter Weekly Summary now pure white (no purple tint) */}
+      {/* Header - pure white */}
       <div className="px-5 py-4 border-b border-border/30 bg-white">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
@@ -384,16 +381,8 @@ export function AdaptiveSummary({
       <div className="p-5 space-y-5">
         {/* Progress Bars */}
         <div className="space-y-3">
-          <ProgressBar
-            done={workoutsDone}
-            target={workoutsTarget}
-            label="Workouts"
-          />
-          <ProgressBar
-            done={mealsDone}
-            target={mealsTarget}
-            label="Protein meals"
-          />
+          <ProgressBar done={workoutsDone} target={workoutsTarget} label="Workouts" />
+          <ProgressBar done={mealsDone} target={mealsTarget} label="Protein meals" />
         </div>
 
         {/* Badge/Motivation */}
@@ -410,7 +399,7 @@ export function AdaptiveSummary({
               AI macro adjustments, plateau detection, phase modes, and performance insights.
             </p>
             <p className="text-xs font-semibold text-foreground">
-              {"\u00A3"}{pricing.monthly}/month or {"\u00A3"}{pricing.yearly}/year
+              £{pricing.monthly}/month or £{pricing.yearly}/year
             </p>
           </div>
         )}
@@ -436,7 +425,7 @@ export function AdaptiveSummary({
               </div>
             </div>
 
-            {/* Performance Insight - now pure white (no colored backgrounds) */}
+            {/* Performance Insight - pure white */}
             <div className="bg-white rounded-3xl p-6 border border-border/50 shadow-sm">
               <p className="text-sm font-medium text-foreground">Performance Insight</p>
               <p className="text-xs text-muted-foreground mt-1">{plateau.message}</p>
@@ -459,67 +448,31 @@ export function AdaptiveSummary({
               )}
             </div>
 
-            {/* AI Macro Targets - exact same light pastel style as Today's Intake */}
+            {/* AI Macro Targets - exact match to Today's Intake */}
             <div>
               <p className="text-sm font-medium text-foreground mb-4">AI Macro Targets</p>
               <div className="grid grid-cols-4 gap-3 text-center">
-                {/* Calories */}
-                <div
-                  className="rounded-xl p-4 shadow-sm"
-                  style={{
-                    backgroundColor: tint(macroColors.calories),
-                    color: macroColors.calories,
-                  }}
-                >
+                <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}>
                   <Flame className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">
-                    {displayMacros.calories}
-                  </p>
+                  <p className="text-2xl font-bold">{displayMacros.calories}</p>
                   <p className="text-xs">cal</p>
                 </div>
 
-                {/* Protein */}
-                <div
-                  className="rounded-xl p-4 shadow-sm"
-                  style={{
-                    backgroundColor: tint(macroColors.protein),
-                    color: macroColors.protein,
-                  }}
-                >
+                <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}>
                   <Beef className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">
-                    {displayMacros.protein}g
-                  </p>
+                  <p className="text-2xl font-bold">{displayMacros.protein}g</p>
                   <p className="text-xs">protein</p>
                 </div>
 
-                {/* Carbs */}
-                <div
-                  className="rounded-xl p-4 shadow-sm"
-                  style={{
-                    backgroundColor: tint(macroColors.carbs),
-                    color: macroColors.carbs,
-                  }}
-                >
+                <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}>
                   <Wheat className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">
-                    {displayMacros.carbs}g
-                  </p>
+                  <p className="text-2xl font-bold">{displayMacros.carbs}g</p>
                   <p className="text-xs">carbs</p>
                 </div>
 
-                {/* Fat */}
-                <div
-                  className="rounded-xl p-4 shadow-sm"
-                  style={{
-                    backgroundColor: tint(macroColors.fat),
-                    color: macroColors.fat,
-                  }}
-                >
+                <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}>
                   <Cookie className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">
-                    {displayMacros.fat}g
-                  </p>
+                  <p className="text-2xl font-bold">{displayMacros.fat}g</p>
                   <p className="text-xs">fat</p>
                 </div>
               </div>
@@ -530,9 +483,7 @@ export function AdaptiveSummary({
         {/* Percentile */}
         <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground">
-            You're in the top{" "}
-            <span className="font-semibold text-foreground">{percentile}%</span>{" "}
-            of {athleteLabel} this {mode}
+            You're in the top <span className="font-semibold text-foreground">{percentile}%</span> of {athleteLabel} this {mode}
           </p>
         </div>
       </div>
