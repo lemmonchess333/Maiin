@@ -184,7 +184,7 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-6 px-4 pb-6">
       {/* Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
