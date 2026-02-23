@@ -11,7 +11,7 @@ import {
   ChevronDown,
   Beef,
   Wheat,
-  Droplet,
+  Cookie,          // ← changed from Droplet
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
@@ -241,6 +241,23 @@ function ProgressBar({ done, target, label }: { done: number; target: number; la
 }
 
 /* ================================
+   TINT HELPER (for clean tinted backgrounds)
+================================ */
+
+function tint(hex: string, factor: number = 0.85): string {
+  if (!hex || !hex.startsWith("#")) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+  return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+}
+
+/* ================================
    MAIN COMPONENT
 ================================ */
 
@@ -327,10 +344,15 @@ export function AdaptiveSummary({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl border border-border/50 overflow-hidden"
+      className="bg-card rounded-2xl border border-transparent overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-muted/30 px-5 py-4 border-b border-border/30">
+      <div
+        className="px-5 py-4 border-b border-border/30"
+        style={{
+          backgroundColor: tint("#8b5cf6", 0.08),
+        }}
+      >
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <BadgeIcon className="w-5 h-5 text-primary" />
@@ -471,9 +493,9 @@ export function AdaptiveSummary({
                   <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
                 </div>
 
-                {/* Fat */}
+                {/* Fat - now using Cookie to match Home.tsx */}
                 <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-                  <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
+                  <Cookie className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
                   <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {displayMacros.fat}g
                   </p>
