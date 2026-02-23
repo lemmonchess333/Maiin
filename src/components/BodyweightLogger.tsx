@@ -147,7 +147,7 @@ export default function BodyweightLogger() {
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder={`${displayWeight(profile?.weightKg ?? 70)} ${unit}`}
-          className="flex-1 px-5 py-3.5 rounded-2xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
+          className="flex-1 px-5 py-3.5 rounded-2xl bg-white border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
         />
         <motion.button
           whileTap={{ scale: 0.97 }}
