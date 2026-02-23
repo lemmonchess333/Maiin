@@ -23,6 +23,9 @@ import {
   Trash2,
   CalendarDays,
   Search,
+  Beef,
+  Wheat,
+  Cookie,
 } from "lucide-react";
 
 export default function Log() {
@@ -48,6 +51,27 @@ export default function Log() {
   const safeNum = (value: any): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
+  };
+
+  // Light pastel macro style (exact match to Today's Intake on Home)
+  const macroColors = {
+    calories: "#f97316",
+    protein: "#3b82f6",
+    carbs: "#f59e0b",
+    fat: "#a855f6",
+  };
+
+  const tint = (hex: string, factor: number = 0.85): string => {
+    if (!hex || !hex.startsWith("#")) return hex;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+    const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+    const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+    return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
   };
 
   // Load existing PR state for selected date
@@ -317,33 +341,68 @@ export default function Log() {
       {/* Food Tab */}
       {activeTab === "food" && (
         <div className="space-y-4">
-          {/* Daily Totals */}
-          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-            <p className="text-sm font-medium text-foreground">Daily Totals</p>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+          {/* Daily Totals - now exact same look as Today's Intake on Home */}
+          <div className="bg-card rounded-2xl border border-border/50 p-5">
+            <p className="text-sm font-medium text-foreground mb-4">Daily Totals</p>
+            <div className="grid grid-cols-4 gap-3 text-center">
+              {/* Calories */}
+              <div
+                className="rounded-xl p-4 shadow-sm"
+                style={{
+                  backgroundColor: tint(macroColors.calories),
+                  color: macroColors.calories,
+                }}
+              >
+                <Flame className="w-6 h-6 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
                   {safeNum(dailyTotals.calories)}
                 </p>
-                <p className="text-xs text-orange-500">cal</p>
+                <p className="text-xs">cal</p>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+
+              {/* Protein */}
+              <div
+                className="rounded-xl p-4 shadow-sm"
+                style={{
+                  backgroundColor: tint(macroColors.protein),
+                  color: macroColors.protein,
+                }}
+              >
+                <Beef className="w-6 h-6 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
                   {safeNum(dailyTotals.protein)}g
                 </p>
-                <p className="text-xs text-blue-500">protein</p>
+                <p className="text-xs">protein</p>
               </div>
-              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+
+              {/* Carbs */}
+              <div
+                className="rounded-xl p-4 shadow-sm"
+                style={{
+                  backgroundColor: tint(macroColors.carbs),
+                  color: macroColors.carbs,
+                }}
+              >
+                <Wheat className="w-6 h-6 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
                   {safeNum(dailyTotals.carbs)}g
                 </p>
-                <p className="text-xs text-amber-500">carbs</p>
+                <p className="text-xs">carbs</p>
               </div>
-              <div className="bg-rose-50 dark:bg-rose-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
+
+              {/* Fat */}
+              <div
+                className="rounded-xl p-4 shadow-sm"
+                style={{
+                  backgroundColor: tint(macroColors.fat),
+                  color: macroColors.fat,
+                }}
+              >
+                <Cookie className="w-6 h-6 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
                   {safeNum(dailyTotals.fat)}g
                 </p>
-                <p className="text-xs text-rose-500">fat</p>
+                <p className="text-xs">fat</p>
               </div>
             </div>
           </div>
