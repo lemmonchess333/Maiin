@@ -11,7 +11,7 @@ import {
   ChevronDown,
   Beef,
   Wheat,
-  Cookie,          // ← changed from Droplet
+  Cookie,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
@@ -340,19 +340,22 @@ export function AdaptiveSummary({
 
   const showApplyButton = isPro && plateau.calorieAdjust !== 0;
 
+  // Light pastel macro colors (exact match to Today's Intake)
+  const macroColors = {
+    calories: "#f97316",
+    protein: "#3b82f6",
+    carbs: "#f59e0b",
+    fat: "#a855f6",
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl border border-transparent overflow-hidden"
+      className="bg-card rounded-2xl border border-border/50 overflow-hidden"
     >
-      {/* Header */}
-      <div
-        className="px-5 py-4 border-b border-border/30"
-        style={{
-          backgroundColor: tint("#8b5cf6", 0.08),
-        }}
-      >
+      {/* Header - Lifter Weekly Summary now pure white (no purple tint) */}
+      <div className="px-5 py-4 border-b border-border/30 bg-white">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <BadgeIcon className="w-5 h-5 text-primary" />
@@ -433,14 +436,8 @@ export function AdaptiveSummary({
               </div>
             </div>
 
-            {/* Plateau Insight + Apply Button */}
-            <div className={cn(
-              "p-4 rounded-xl border",
-              plateau.status === "progressing" ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" :
-              plateau.status === "stalling" ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" :
-              plateau.status === "regressing" ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" :
-              "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-            )}>
+            {/* Performance Insight - now pure white (no colored backgrounds) */}
+            <div className="bg-white rounded-3xl p-6 border border-border/50 shadow-sm">
               <p className="text-sm font-medium text-foreground">Performance Insight</p>
               <p className="text-xs text-muted-foreground mt-1">{plateau.message}</p>
               {plateau.macroNote !== "No changes needed." && (
@@ -462,44 +459,68 @@ export function AdaptiveSummary({
               )}
             </div>
 
-            {/* AI Macro Targets - Unified beautiful style (matches Today's Intake) */}
+            {/* AI Macro Targets - exact same light pastel style as Today's Intake */}
             <div>
-              <p className="text-sm font-medium text-foreground mb-3">AI Macro Targets</p>
+              <p className="text-sm font-medium text-foreground mb-4">AI Macro Targets</p>
               <div className="grid grid-cols-4 gap-3 text-center">
                 {/* Calories */}
-                <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
-                  <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
-                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.calories),
+                    color: macroColors.calories,
+                  }}
+                >
+                  <Flame className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
                     {displayMacros.calories}
                   </p>
-                  <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
+                  <p className="text-xs">cal</p>
                 </div>
 
                 {/* Protein */}
-                <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
-                  <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.protein),
+                    color: macroColors.protein,
+                  }}
+                >
+                  <Beef className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
                     {displayMacros.protein}g
                   </p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
+                  <p className="text-xs">protein</p>
                 </div>
 
                 {/* Carbs */}
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
-                  <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.carbs),
+                    color: macroColors.carbs,
+                  }}
+                >
+                  <Wheat className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
                     {displayMacros.carbs}g
                   </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
+                  <p className="text-xs">carbs</p>
                 </div>
 
-                {/* Fat - now using Cookie to match Home.tsx */}
-                <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-                  <Cookie className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {/* Fat */}
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.fat),
+                    color: macroColors.fat,
+                  }}
+                >
+                  <Cookie className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold">
                     {displayMacros.fat}g
                   </p>
-                  <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
+                  <p className="text-xs">fat</p>
                 </div>
               </div>
             </div>
