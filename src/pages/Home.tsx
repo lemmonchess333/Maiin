@@ -1,4 +1,3 @@
-// Home.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
@@ -124,10 +123,10 @@ export default function Home() {
     }
   }, [computedStreak, profile, updateProfile]);
 
-  // Safe number helper (for perfect consistency with Log page)
-  const safeNum = (value: any): number => {
+  // Safe number helper (NOW supports fallback)
+  const safeNum = (value: any, fallback: number = 0): number => {
     const num = Number(value);
-    return isNaN(num) || value == null ? 0 : num;
+    return isNaN(num) || value == null ? fallback : num;
   };
 
   useEffect(() => {
@@ -217,8 +216,6 @@ export default function Home() {
       {/* Streak */}
       <div className="space-y-2">
         <StreakCounter streak={computedStreak} />
-
-        {/* Today status line */}
         <div className="text-[11px] text-muted-foreground">
           {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
           <span className="px-1">•</span>{" "}
@@ -241,7 +238,6 @@ export default function Home() {
               <Dumbbell className="w-4 h-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
 
-              {/* Right side: dayType + subtle affordance */}
               <div className="ml-auto flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
                 <span className="text-[10px] text-muted-foreground">Open</span>
@@ -399,3 +395,5 @@ export default function Home() {
     </div>
   );
 }
+
+That change alone will remove the TS2554 error.
