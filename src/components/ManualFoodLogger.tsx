@@ -202,34 +202,99 @@ export function ManualFoodLogger({ date }: Props) {
         ))}
       </div>
 
-      <div className="pt-2">
-        <p className="text-xs text-muted-foreground mb-3">Live preview</p>
-        <div className="grid grid-cols-4 gap-3 text-center">
-          <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
-            <Flame className="w-5 h-5 mx-auto mb-1 text-orange-500 dark:text-orange-400" />
-            <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{preview.calories}</p>
-            <p className="text-[10px] text-orange-500 dark:text-orange-400/80">cal</p>
-          </div>
+     <div className="pt-2">
+  <p className="text-xs text-muted-foreground mb-3">Live preview</p>
 
-          <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
-            <Beef className="w-5 h-5 mx-auto mb-1 text-blue-500 dark:text-blue-400" />
-            <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{preview.protein}g</p>
-            <p className="text-[10px] text-blue-500 dark:text-blue-400/80">protein</p>
-          </div>
+  {(() => {
+    // Keep these local so you don't have to refactor imports everywhere.
+    const macroColors = {
+      calories: "#f97316",
+      protein: "#3b82f6",
+      carbs: "#f59e0b",
+      fat: "#a855f6",
+    };
 
-          <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
-            <Wheat className="w-5 h-5 mx-auto mb-1 text-amber-500 dark:text-amber-400" />
-            <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{preview.carbs}g</p>
-            <p className="text-[10px] text-amber-500 dark:text-amber-400/80">carbs</p>
-          </div>
+    const tint = (hex: string, factor: number = 0.85): string => {
+      if (!hex || !hex.startsWith("#")) return hex;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
 
-          <div className="bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950 dark:to-pink-950/60 rounded-xl p-3 shadow-sm border border-rose-100/60 dark:border-rose-900/40">
-            <CircleDot className="w-5 h-5 mx-auto mb-1 text-rose-500 dark:text-rose-400" />
-            <p className="text-xl font-bold text-rose-600 dark:text-rose-400">{preview.fat}g</p>
-            <p className="text-[10px] text-rose-500 dark:text-rose-400/80">fat</p>
-          </div>
+      const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+      const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+      const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+      return `#${newR.toString(16).padStart(2, "0")}${newG
+        .toString(16)
+        .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+    };
+
+    return (
+      <div className="grid grid-cols-4 gap-3 text-center">
+        {/* Calories */}
+        <div
+          className="rounded-xl p-4 shadow-sm"
+          style={{
+            backgroundColor: tint(macroColors.calories),
+            color: macroColors.calories,
+          }}
+        >
+          <Flame className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
+            {preview.calories}
+          </p>
+          <p className="text-xs mt-1">cal</p>
+        </div>
+
+        {/* Protein */}
+        <div
+          className="rounded-xl p-4 shadow-sm"
+          style={{
+            backgroundColor: tint(macroColors.protein),
+            color: macroColors.protein,
+          }}
+        >
+          <Beef className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
+            {preview.protein}g
+          </p>
+          <p className="text-xs mt-1">protein</p>
+        </div>
+
+        {/* Carbs */}
+        <div
+          className="rounded-xl p-4 shadow-sm"
+          style={{
+            backgroundColor: tint(macroColors.carbs),
+            color: macroColors.carbs,
+          }}
+        >
+          <Wheat className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
+            {preview.carbs}g
+          </p>
+          <p className="text-xs mt-1">carbs</p>
+        </div>
+
+        {/* Fat */}
+        <div
+          className="rounded-xl p-4 shadow-sm"
+          style={{
+            backgroundColor: tint(macroColors.fat),
+            color: macroColors.fat,
+          }}
+        >
+          {/* CircleDot looks “off-brand” vs Cookie used everywhere else */}
+          <Cookie className="w-6 h-6 mx-auto mb-2" />
+          <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
+            {preview.fat}g
+          </p>
+          <p className="text-xs mt-1">fat</p>
         </div>
       </div>
+    );
+  })()}
+</div>
 
       <AnimatePresence mode="wait">
         <motion.button
