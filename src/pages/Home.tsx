@@ -12,7 +12,15 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Dumbbell, Flame, Beef, Wheat, Cookie } from "lucide-react";
+import {
+  Sparkles,
+  Dumbbell,
+  Flame,
+  Beef,
+  Wheat,
+  Cookie,
+  ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -79,7 +87,9 @@ function tint(hex: string, factor: number = 0.85): string {
   const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
   const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
 
-  return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+  return `#${newR.toString(16).padStart(2, "0")}${newG
+    .toString(16)
+    .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
 }
 
 export default function Home() {
@@ -130,10 +140,7 @@ export default function Home() {
         todayStart.setHours(0, 0, 0, 0);
 
         const mealsRef = collection(db, "users", uid, "meals");
-        const q = query(
-          mealsRef,
-          where("createdAt", ">=", Timestamp.fromDate(todayStart))
-        );
+        const q = query(mealsRef, where("createdAt", ">=", Timestamp.fromDate(todayStart)));
 
         const snapshot = await getDocs(q);
 
@@ -167,11 +174,7 @@ export default function Home() {
   }, [weeklyStats.hasPR, monthlyStats.hasPR, confettiFired]);
 
   if (!profile) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Loading your profile...
-      </div>
-    );
+    return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
   }
 
   const nextWorkout = programState?.workouts.find((d) => !d.completed);
@@ -186,10 +189,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-6 px-4 pb-6">
       {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-xl font-bold text-foreground">
           Hey, {profile.displayName || "Athlete"}
         </h1>
@@ -208,9 +208,7 @@ export default function Home() {
             <p className="text-sm font-medium text-foreground">
               Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
             </p>
-            <p className="text-xs text-muted-foreground">
-              Full access to all features.
-            </p>
+            <p className="text-xs text-muted-foreground">Full access to all features.</p>
           </div>
         </motion.div>
       )}
@@ -218,7 +216,7 @@ export default function Home() {
       {/* Streak */}
       <StreakCounter streak={computedStreak} />
 
-      {/* Next Workout — strength-first */}
+      {/* Next Workout */}
       {nextWorkout && (
         <Link to="/program">
           <motion.div
@@ -228,11 +226,20 @@ export default function Home() {
           >
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
-              <span className="ml-auto text-[10px] text-muted-foreground capitalize">
-                {nextWorkout.dayType}
-              </span>
+              <p className="text-sm font-semibold text-foreground">
+                Next: {nextWorkout.dayName}
+              </p>
+
+              {/* Right side: dayType + subtle affordance */}
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground capitalize">
+                  {nextWorkout.dayType}
+                </span>
+                <span className="text-[10px] text-muted-foreground">Open</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
+
             <div className="flex flex-wrap gap-1.5">
               {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
                 <span
@@ -255,11 +262,14 @@ export default function Home() {
       {/* Bodyweight Logger */}
       <BodyweightLogger />
 
-      {/* Today's Intake - gradient cards with icons */}
+      {/* Today's Intake */}
       <div className="bg-card rounded-2xl border border-border/50 p-5">
-        <p className="text-sm font-medium text-foreground mb-4">Today's Intake</p>
+        <div className="mb-4">
+          <p className="text-sm font-medium text-foreground">Today's Intake</p>
+          <p className="text-[11px] text-muted-foreground mt-1">From meals logged today</p>
+        </div>
+
         <div className="grid grid-cols-4 gap-3 text-center">
-          {/* Calories */}
           <div
             className="rounded-xl p-4 shadow-sm"
             style={{
@@ -268,13 +278,12 @@ export default function Home() {
             }}
           >
             <Flame className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.calories)}
             </p>
-            <p className="text-xs">cal</p>
+            <p className="text-xs mt-1">cal</p>
           </div>
 
-          {/* Protein */}
           <div
             className="rounded-xl p-4 shadow-sm"
             style={{
@@ -283,13 +292,12 @@ export default function Home() {
             }}
           >
             <Beef className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.protein)}g
             </p>
-            <p className="text-xs">protein</p>
+            <p className="text-xs mt-1">protein</p>
           </div>
 
-          {/* Carbs */}
           <div
             className="rounded-xl p-4 shadow-sm"
             style={{
@@ -298,13 +306,12 @@ export default function Home() {
             }}
           >
             <Wheat className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.carbs)}g
             </p>
-            <p className="text-xs">carbs</p>
+            <p className="text-xs mt-1">carbs</p>
           </div>
 
-          {/* Fat */}
           <div
             className="rounded-xl p-4 shadow-sm"
             style={{
@@ -313,10 +320,10 @@ export default function Home() {
             }}
           >
             <Cookie size={22} className="mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.fat)}g
             </p>
-            <p className="text-xs">fat</p>
+            <p className="text-xs mt-1">fat</p>
           </div>
         </div>
       </div>
@@ -331,7 +338,7 @@ export default function Home() {
               "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
               mode === m
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -378,9 +385,7 @@ export default function Home() {
           <p className="text-sm font-medium text-foreground">
             Unlock AI Photo Logging & Performance Engine
           </p>
-          <p className="text-xs text-muted-foreground">
-            Upgrade to Pro — from just £2.99/mo
-          </p>
+          <p className="text-xs text-muted-foreground">Upgrade to Pro — from just £2.99/mo</p>
         </motion.div>
       )}
     </div>
