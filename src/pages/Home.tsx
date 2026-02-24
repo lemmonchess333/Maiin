@@ -1,3 +1,4 @@
+// Home.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
@@ -66,11 +67,8 @@ function computeStreak(workoutDates: string[]): number {
     const curr = new Date(uniqueDates[i]);
     const diffDays = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
+    if (diffDays === 1) streak++;
+    else break;
   }
 
   return streak;
@@ -110,6 +108,8 @@ export default function Home() {
     carbs: 0,
     fat: 0,
   });
+
+  const [todayMealsCount, setTodayMealsCount] = useState(0);
 
   const quote = useMemo(() => getDailyQuote(), []);
 
@@ -155,6 +155,7 @@ export default function Home() {
         });
 
         setDailyTotals(totals);
+        setTodayMealsCount(snapshot.size);
       } catch (error) {
         console.error("Error fetching today's meals:", error);
       }
@@ -214,7 +215,16 @@ export default function Home() {
       )}
 
       {/* Streak */}
-      <StreakCounter streak={computedStreak} />
+      <div className="space-y-2">
+        <StreakCounter streak={computedStreak} />
+
+        {/* Today status line */}
+        <div className="text-[11px] text-muted-foreground">
+          {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
+          <span className="px-1">•</span>{" "}
+          {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
+        </div>
+      </div>
 
       {/* Next Workout */}
       {nextWorkout && (
@@ -222,19 +232,18 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card rounded-xl border border-border/50 p-4 space-y-2"
+            className={cn(
+              "bg-card rounded-xl border border-border/50 p-4 space-y-2",
+              "transition-transform active:scale-[0.99]"
+            )}
           >
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">
-                Next: {nextWorkout.dayName}
-              </p>
+              <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
 
               {/* Right side: dayType + subtle affordance */}
               <div className="ml-auto flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground capitalize">
-                  {nextWorkout.dayType}
-                </span>
+                <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
                 <span className="text-[10px] text-muted-foreground">Open</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -244,13 +253,25 @@ export default function Home() {
               {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground"
+                  className="px-2 py-0.5 rounded border text-[10px]"
+                  style={{
+                    backgroundColor: tint("#7c3aed", 0.92),
+                    borderColor: tint("#7c3aed", 0.75),
+                    color: "#4c1d95",
+                  }}
                 >
                   {ex.name}
                 </span>
               ))}
               {nextWorkout.exercises.length > 4 && (
-                <span className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                <span
+                  className="px-2 py-0.5 rounded border text-[10px]"
+                  style={{
+                    backgroundColor: tint("#7c3aed", 0.92),
+                    borderColor: tint("#7c3aed", 0.75),
+                    color: "#4c1d95",
+                  }}
+                >
                   +{nextWorkout.exercises.length - 4} more
                 </span>
               )}
@@ -272,10 +293,7 @@ export default function Home() {
         <div className="grid grid-cols-4 gap-3 text-center">
           <div
             className="rounded-xl p-4 shadow-sm"
-            style={{
-              backgroundColor: tint(macroColors.calories),
-              color: macroColors.calories,
-            }}
+            style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
           >
             <Flame className="w-6 h-6 mx-auto mb-2" />
             <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
@@ -286,10 +304,7 @@ export default function Home() {
 
           <div
             className="rounded-xl p-4 shadow-sm"
-            style={{
-              backgroundColor: tint(macroColors.protein),
-              color: macroColors.protein,
-            }}
+            style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
           >
             <Beef className="w-6 h-6 mx-auto mb-2" />
             <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
@@ -300,10 +315,7 @@ export default function Home() {
 
           <div
             className="rounded-xl p-4 shadow-sm"
-            style={{
-              backgroundColor: tint(macroColors.carbs),
-              color: macroColors.carbs,
-            }}
+            style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
           >
             <Wheat className="w-6 h-6 mx-auto mb-2" />
             <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
@@ -314,10 +326,7 @@ export default function Home() {
 
           <div
             className="rounded-xl p-4 shadow-sm"
-            style={{
-              backgroundColor: tint(macroColors.fat),
-              color: macroColors.fat,
-            }}
+            style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
           >
             <Cookie size={22} className="mx-auto mb-2" />
             <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
@@ -336,9 +345,8 @@ export default function Home() {
             onClick={() => setMode(m)}
             className={cn(
               "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              mode === m
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              "active:scale-[0.99] transition-transform",
+              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {m.charAt(0).toUpperCase() + m.slice(1)}
