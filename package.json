@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.7.0",
+    "@zxing/browser": "^0.1.5",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -23,7 +24,6 @@
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
-    "@zxing/browser": "^0.1.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
