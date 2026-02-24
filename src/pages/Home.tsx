@@ -395,5 +395,3 @@ export default function Home() {
     </div>
   );
 }
-
-That change alone will remove the TS2554 error.
