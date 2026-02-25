@@ -6,7 +6,7 @@ import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import FoodCameraModal from "@/components/FoodCameraModal";
+import FoodCameraModal from "./FoodCameraModal";
 
 interface Props {
   date: string;
