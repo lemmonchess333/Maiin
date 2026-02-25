@@ -1,371 +1,377 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { X, Images, Camera, Barcode, List } from "lucide-react";
-import { toast } from "sonner";
+import { X, Image as ImageIcon } from "lucide-react";
 
-// We keep this generic: parent provides handlers
-export type FoodCameraMode = "food" | "barcode" | "label";
+type Mode = "food" | "barcode";
 
 type Props = {
   open: boolean;
+  initialMode?: Mode;
   onClose: () => void;
 
-  // Called when user captures a frame (Food/Label)
-  onCaptureBase64: (base64: string, mode: "food" | "label") => Promise<void>;
+  // Called when user captures a photo (base64 WITHOUT the data URL prefix)
+  onFoodPhoto: (base64: string, previewDataUrl: string) => Promise<void> | void;
 
-  // Called when barcode detected
-  onBarcodeDetected: (barcode: string) => Promise<void>;
+  // Called when a barcode is detected (digits/string)
+  onBarcode: (code: string) => Promise<void> | void;
 
-  // Optional: show loading state from parent (AI or barcode lookup)
-  loading?: boolean;
-
-  // Optional: allow parent to reset UI when something saved
-  resetKey?: string | number;
+  // Optional: show an error toast upstream
+  onError?: (message: string) => void;
 };
 
 function dataUrlToBase64(dataUrl: string) {
-  return dataUrl.split(",")[1] || "";
+  const parts = dataUrl.split(",");
+  return parts.length > 1 ? parts[1] : "";
+}
+
+async function startStream(
+  videoEl: HTMLVideoElement,
+  facingMode: "environment" | "user"
+) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode },
+    audio: false,
+  });
+  videoEl.srcObject = stream;
+  await videoEl.play();
+  return stream;
+}
+
+function stopStream(stream: MediaStream | null) {
+  if (!stream) return;
+  stream.getTracks().forEach((t) => t.stop());
 }
 
 export default function FoodCameraModal({
   open,
+  initialMode = "food",
   onClose,
-  onCaptureBase64,
-  onBarcodeDetected,
-  loading,
-  resetKey,
+  onFoodPhoto,
+  onBarcode,
+  onError,
 }: Props) {
-  const [mode, setMode] = useState<FoodCameraMode>("food");
-  const [cameraReady, setCameraReady] = useState(false);
-
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [facing, setFacing] = useState<"environment" | "user">("environment");
+  const [busy, setBusy] = useState(false);
+  const [barcodeStatus, setBarcodeStatus] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Barcode scanning
-  const stopBarcodeRef = useRef<null | (() => void)>(null);
-  const barcodeRunning = useRef(false);
+  // ZXing controls stopper
+  const stopZXingRef = useRef<null | (() => void)>(null);
 
   const canUseCamera = useMemo(() => {
-    return typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   }, []);
 
-  const stopCamera = () => {
-    // stop barcode if running
-    try {
-      stopBarcodeRef.current?.();
-    } catch {
-      // ignore
-    }
-    stopBarcodeRef.current = null;
-    barcodeRunning.current = false;
+  useEffect(() => {
+    if (!open) return;
 
-    // stop stream tracks
-    const s = streamRef.current;
-    if (s) {
-      s.getTracks().forEach((t) => t.stop());
-    }
-    streamRef.current = null;
-    setCameraReady(false);
-  };
+    // reset each open
+    setMode(initialMode);
+    setFacing("environment");
+    setBusy(false);
+    setBarcodeStatus(null);
 
-  const startCamera = async () => {
-    if (!canUseCamera) {
-      toast.error("Camera not available in this browser.");
+    const run = async () => {
+      try {
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
+        if (!canUseCamera) {
+          onError?.("Camera not available in this browser.");
+          return;
+        }
+        streamRef.current = await startStream(videoEl, "environment");
+      } catch (e: any) {
+        onError?.(
+          e?.message ||
+            "Couldn’t access camera. Check permissions and try again."
+        );
+      }
+    };
+
+    void run();
+
+    return () => {
+      // stop barcode scanning
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+
+      // stop stream
+      stopStream(streamRef.current);
+      streamRef.current = null;
+    };
+  }, [open, initialMode, canUseCamera, onError]);
+
+  // Restart stream when flipping camera
+  useEffect(() => {
+    if (!open) return;
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    const restart = async () => {
+      try {
+        // stop zxing if switching
+        stopZXingRef.current?.();
+        stopZXingRef.current = null;
+        setBarcodeStatus(null);
+
+        stopStream(streamRef.current);
+        streamRef.current = await startStream(videoEl, facing);
+      } catch (e: any) {
+        onError?.(
+          e?.message ||
+            "Couldn’t switch camera. Check permissions and try again."
+        );
+      }
+    };
+
+    void restart();
+  }, [facing, open, onError]);
+
+  // Start/stop ZXing based on mode
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== "barcode") {
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+      setBarcodeStatus(null);
       return;
     }
 
-    stopCamera();
+    const startZXing = async () => {
+      try {
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      });
+        setBarcodeStatus("Scanning…");
 
-      streamRef.current = stream;
+        const mod = await import("@zxing/browser");
+        const { BrowserMultiFormatReader } = mod as any;
 
-      const video = videoRef.current;
-      if (!video) return;
+        const reader = new BrowserMultiFormatReader();
+        const controls = await reader.decodeFromVideoElement(
+          videoEl,
+          async (result: any, err: any) => {
+            // ignore noisy errors while scanning
+            if (err) void err;
+            if (!result) return;
 
-      video.srcObject = stream;
-      // iOS needs these
-      video.muted = true;
-      video.playsInline = true;
+            const text = String(
+              result.getText?.() ?? result.text ?? ""
+            ).trim();
+            if (!text) return;
 
-      await video.play();
-      setCameraReady(true);
-    } catch (e) {
-      console.error(e);
-      toast.error("Couldn’t access the camera. Check permissions.");
-      stopCamera();
-    }
-  };
-
-  const captureFrame = async (captureMode: "food" | "label") => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const w = video.videoWidth || 1280;
-    const h = video.videoHeight || 720;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0, w, h);
-
-    // JPEG is smaller than PNG
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-    const base64 = dataUrlToBase64(dataUrl);
-
-    await onCaptureBase64(base64, captureMode);
-  };
-
-  const startBarcode = async () => {
-    // Ensure camera is running first
-    if (!cameraReady) await startCamera();
-    const video = videoRef.current;
-    if (!video) return;
-
-    // already running
-    if (barcodeRunning.current) return;
-    barcodeRunning.current = true;
-
-    try {
-      const mod = await import("@zxing/browser");
-      const { BrowserMultiFormatReader } = mod as any;
-
-      const reader = new BrowserMultiFormatReader();
-
-      // decodeFromVideoElementContinuously exists in zxing/browser
-      const controls = await reader.decodeFromVideoDevice(
-        undefined,
-        video,
-        async (result: any, err: any) => {
-          // ignore noisy errors
-          if (err) void err;
-
-          if (!result) return;
-
-          const text = String(result.getText?.() ?? result.text ?? "").trim();
-          if (!text) return;
-
-          // stop scanning immediately after a hit
-          try {
-            controls.stop();
-          } catch {
-            // ignore
-          }
-
-          stopBarcodeRef.current = () => {
+            // stop scanning once found
             try {
               controls.stop();
             } catch {
               // ignore
             }
-          };
-          barcodeRunning.current = false;
+            stopZXingRef.current = null;
+            setBarcodeStatus("Found!");
 
-          await onBarcodeDetected(text);
-        }
-      );
+            await onBarcode(text);
+          }
+        );
 
-      stopBarcodeRef.current = () => {
-        try {
-          controls.stop();
-        } catch {
-          // ignore
-        }
-      };
-    } catch (e) {
-      console.error(e);
-      barcodeRunning.current = false;
-      toast.error("Barcode scanner failed to start.");
+        stopZXingRef.current = () => {
+          try {
+            controls.stop();
+          } catch {
+            // ignore
+          }
+        };
+      } catch (e: any) {
+        onError?.(
+          e?.message ||
+            "Couldn’t start barcode scanner. Try again or use manual entry."
+        );
+      }
+    };
+
+    void startZXing();
+
+    return () => {
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+    };
+  }, [mode, open, onBarcode, onError]);
+
+  const takePhoto = async () => {
+    if (busy) return;
+    try {
+      setBusy(true);
+
+      const videoEl = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!videoEl || !canvas) return;
+
+      const w = videoEl.videoWidth || 1280;
+      const h = videoEl.videoHeight || 720;
+
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.drawImage(videoEl, 0, 0, w, h);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const base64 = dataUrlToBase64(dataUrl);
+
+      await onFoodPhoto(base64, dataUrl);
+    } catch (e: any) {
+      onError?.(e?.message || "Couldn’t capture photo. Try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
-  // When opening, start camera; when closing, stop camera
-  useEffect(() => {
-    if (!open) {
-      stopCamera();
-      return;
+  const pickFromLibrary = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow picking same image again
+    if (!file) return;
+
+    try {
+      setBusy(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = String(reader.result || "");
+        const base64 = dataUrlToBase64(dataUrl);
+        await onFoodPhoto(base64, dataUrl);
+        setBusy(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setBusy(false);
+      onError?.(err?.message || "Couldn’t read photo. Try again.");
     }
-
-    // default start camera
-    void startCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, resetKey]);
-
-  // Switch behavior per tab
-  useEffect(() => {
-    if (!open) return;
-
-    // Stop barcode when leaving barcode tab
-    if (mode !== "barcode") {
-      try {
-        stopBarcodeRef.current?.();
-      } catch {
-        // ignore
-      }
-      stopBarcodeRef.current = null;
-      barcodeRunning.current = false;
-    }
-
-    // Start barcode scanner when entering barcode tab
-    if (mode === "barcode") {
-      void startBarcode();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, open, cameraReady]);
+  };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black">
-      {/* Top bar */}
+    <div className="fixed inset-0 z-[60] bg-black">
+      {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center"
+          className="h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center"
           aria-label="Close"
         >
-          <X className="w-5 h-5 text-white" />
+          <X className="w-5 h-5" />
         </button>
-
-        <div className="text-white text-sm font-medium">
-          {mode === "food" ? "Scan Food" : mode === "barcode" ? "Barcode" : "Food Label"}
-        </div>
 
         <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center"
-          aria-label="Open gallery"
+          onClick={() => setFacing((p) => (p === "environment" ? "user" : "environment"))}
+          className="h-10 px-4 rounded-full bg-black/50 text-white text-sm"
+          aria-label="Flip camera"
         >
-          <Images className="w-5 h-5 text-white" />
+          Flip
         </button>
-
-        {/* Gallery input (only invoked when user taps gallery icon) */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-              const dataUrl = String(ev.target?.result || "");
-              const base64 = dataUrlToBase64(dataUrl);
-
-              // For gallery pick: treat as current mode (food or label)
-              const m = mode === "label" ? "label" : "food";
-              await onCaptureBase64(base64, m);
-            };
-            reader.readAsDataURL(file);
-
-            // allow selecting same image again later
-            e.currentTarget.value = "";
-          }}
-        />
       </div>
 
-      {/* Camera */}
-      <div className="absolute inset-0">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          muted
-          playsInline
-          autoPlay
-        />
+      {/* video */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        muted
+        playsInline
+        autoPlay
+      />
 
-        {/* Overlay frame (simple, lightweight) */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div
-            className={cn(
-              "border border-white/40 rounded-2xl",
-              mode === "barcode" ? "w-[78%] h-[26%]" : "w-[78%] h-[55%]"
-            )}
-          />
-        </div>
-
-        {/* Loading overlay */}
-        {loading && (
-          <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-            <div className="text-white text-sm font-medium">Working...</div>
-          </div>
-        )}
+      {/* overlay frame */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[78%] max-w-[360px] aspect-[4/2.3] rounded-2xl border-2 border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
       </div>
 
-      {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-8 bg-gradient-to-t from-black/70 to-transparent">
-        {/* Tabs */}
-        <div className="mx-auto max-w-sm bg-black/40 rounded-2xl p-1 flex">
-          <button
-            onClick={() => setMode("food")}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-2",
-              mode === "food" ? "bg-white text-black" : "text-white"
-            )}
-          >
-            <Camera className="w-4 h-4" />
-            Food
-          </button>
-          <button
-            onClick={() => setMode("barcode")}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-2",
-              mode === "barcode" ? "bg-white text-black" : "text-white"
-            )}
-          >
-            <Barcode className="w-4 h-4" />
-            Barcode
-          </button>
-          <button
-            onClick={() => setMode("label")}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-2",
-              mode === "label" ? "bg-white text-black" : "text-white"
-            )}
-          >
-            <List className="w-4 h-4" />
-            Label
-          </button>
-        </div>
-
-        {/* Shutter (only for food/label) */}
-        {mode !== "barcode" && (
-          <div className="mt-5 flex items-center justify-center">
+      {/* bottom controls */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
+        <div className="mx-auto max-w-[520px] space-y-3">
+          {/* mode pills */}
+          <div className="flex gap-2 justify-center">
             <button
-              disabled={loading}
-              onClick={() => captureFrame(mode === "label" ? "label" : "food")}
+              onClick={() => setMode("food")}
               className={cn(
-                "w-16 h-16 rounded-full bg-white/95 active:scale-95 transition",
-                loading && "opacity-60"
+                "px-4 py-2 rounded-full text-sm font-medium",
+                mode === "food"
+                  ? "bg-white text-black"
+                  : "bg-black/40 text-white"
+              )}
+            >
+              Scan Food
+            </button>
+            <button
+              onClick={() => setMode("barcode")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium",
+                mode === "barcode"
+                  ? "bg-white text-black"
+                  : "bg-black/40 text-white"
+              )}
+            >
+              Barcode
+            </button>
+          </div>
+
+          {/* status */}
+          {mode === "barcode" && (
+            <p className="text-center text-xs text-white/80">
+              {barcodeStatus || "Align the barcode inside the frame"}
+            </p>
+          )}
+
+          {/* capture row */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={pickFromLibrary}
+              className="h-12 w-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+              aria-label="Photo library"
+            >
+              <ImageIcon className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={mode === "food" ? takePhoto : undefined}
+              disabled={busy || mode !== "food"}
+              className={cn(
+                "h-16 w-16 rounded-full border-4 border-white bg-white/10",
+                (busy || mode !== "food") && "opacity-50"
               )}
               aria-label="Capture"
             />
-          </div>
-        )}
 
-        {/* Barcode hint */}
-        {mode === "barcode" && (
-          <div className="mt-5 text-center text-white/90 text-xs">
-            Align barcode in the frame — it will auto-detect.
+            <div className="h-12 w-12" />
           </div>
-        )}
+
+          <p className="text-center text-xs text-white/70">
+            {mode === "food"
+              ? "Tap the shutter to capture food"
+              : "Auto-detects barcode (no shutter needed)"}
+          </p>
+        </div>
       </div>
+
+      {/* hidden file input (photo library only) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={onFileChange}
+        className="hidden"
+      />
+
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
