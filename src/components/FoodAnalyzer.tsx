@@ -51,10 +51,6 @@ function safeNum(val: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
-
 /**
  * OpenFoodFacts helpers:
  * - Prefer kcal per 100g if available
@@ -101,12 +97,10 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const carb100 = safeNum(nutr["carbohydrates_100g"]);
   const fat100 = safeNum(nutr["fat_100g"]);
 
-  // Default portion grams:
   const servingSize: string = (p.serving_size || "").trim();
   const servingGrams = parseServingGrams(servingSize);
   const portionGrams = servingGrams ?? 100;
 
-  // Convert per 100g -> per portion
   const factor = portionGrams / 100;
 
   const calories = Math.round(kcal100 * factor);
@@ -141,8 +135,13 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   const { user } = useAuth();
 
   // Photo AI hook
-  const { analyzeFood, loading: aiLoading, error: aiError, result: aiResult, reset: resetAI } =
-    useFoodAnalysis();
+  const {
+    analyzeFood,
+    loading: aiLoading,
+    error: aiError,
+    result: aiResult,
+    reset: resetAI,
+  } = useFoodAnalysis();
 
   // UI
   const [sheet, setSheet] = useState<SheetMode>("closed");
@@ -151,12 +150,10 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   // Shared display/result
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
   const activeResult: MealResult | null = useMemo(() => {
-    // aiResult may not match MealResult type exactly, but it contains these fields in your usage.
-    // We cast safely to keep this file drop-in without changing your hook types.
     return (aiResult as any) || barcodeResult;
   }, [aiResult, barcodeResult]);
 
-  // Preview image (photo) OR OFF image
+  // Preview image (photo OR OFF image)
   const [preview, setPreview] = useState<string | null>(null);
 
   // Save state
@@ -198,7 +195,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   };
 
   const handleFile = async (file: File) => {
-    // switching to photo mode clears barcode state
     setBarcodeResult(null);
     setBarcodeError(null);
     setMode("photo");
@@ -250,7 +246,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
   const handleSave = async () => {
     if (!activeResult) return;
-    // activeResult from AI hook might be typed differently; map defensively
     const meal: MealResult = {
       foodName: (activeResult as any).foodName ?? "Meal",
       items: (activeResult as any).items ?? [],
@@ -278,7 +273,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     setBarcodeError(null);
 
     try {
-      // Dynamic import so bundling is cleaner and failures are clearer
       const mod = await import("@zxing/browser");
       const { BrowserMultiFormatReader } = mod as any;
 
@@ -288,21 +282,20 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       const videoEl = videoRef.current;
       if (!videoEl) throw new Error("Camera element not ready.");
 
-      // decodeFromVideoDevice attaches camera stream to <video> internally
       const controls = await reader.decodeFromVideoDevice(
         undefined,
         videoEl,
-        async (result: any, err: any) => {
-          // err is spammy during scanning; ignore unless no result
+        async (result: any, _err: any) => {
+          // _err can be noisy while scanning; ignore unless no result
           if (!result) return;
 
           const text = String(result.getText?.() ?? result.text ?? "").trim();
           if (!text) return;
 
-          // stop scanning immediately once we have a code
           try {
             controls.stop();
           } catch {}
+
           stopScannerRef.current = () => {
             try {
               controls.stop();
@@ -349,13 +342,13 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   const submitManualBarcode = async () => {
     const code = manualBarcode.trim();
     if (!code) return;
-    // stop live scanner if it’s running
+
     stopScannerRef.current?.();
     stopScannerRef.current = null;
+
     await handleBarcodeFound(code);
   };
 
-  // Clean up scanner on unmount
   useEffect(() => {
     return () => {
       stopScannerRef.current?.();
@@ -501,7 +494,8 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
               disabled={!manualBarcode.trim() || barcodeLoading}
               className={cn(
                 "px-4 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 transition",
-                (!manualBarcode.trim() || barcodeLoading) && "opacity-50 cursor-not-allowed"
+                (!manualBarcode.trim() || barcodeLoading) &&
+                  "opacity-50 cursor-not-allowed"
               )}
             >
               Lookup
@@ -571,7 +565,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
                 )}
               </div>
 
-              {/* confidence pill */}
               <span
                 className={cn(
                   "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
@@ -615,22 +608,27 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
               </div>
             </div>
 
-            {Array.isArray((activeResult as any).items) && (activeResult as any).items.length > 1 && (
-              <div className="space-y-1 pt-1">
-                <p className="text-xs font-medium text-muted-foreground">Breakdown</p>
-                {(activeResult as any).items.map((item: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between text-xs text-muted-foreground"
-                  >
-                    <span className="truncate">
-                      {item.name} ({item.portionSize})
-                    </span>
-                    <span className="tabular-nums">{safeNum(item.calories)} cal</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {Array.isArray((activeResult as any).items) &&
+              (activeResult as any).items.length > 1 && (
+                <div className="space-y-1 pt-1">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Breakdown
+                  </p>
+                  {(activeResult as any).items.map((item: any, i: number) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between text-xs text-muted-foreground"
+                    >
+                      <span className="truncate">
+                        {item.name} ({item.portionSize})
+                      </span>
+                      <span className="tabular-nums">
+                        {safeNum(item.calories)} cal
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
 
           <div className="flex gap-2">
