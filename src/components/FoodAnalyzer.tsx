@@ -89,9 +89,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 
   const nutr = p.nutriments || {};
   const kcal100 =
-    safeNum(nutr["energy-kcal_100g"]) ||
-    safeNum(nutr["energy-kcal"]) ||
-    0;
+    safeNum(nutr["energy-kcal_100g"]) || safeNum(nutr["energy-kcal"]) || 0;
 
   const pro100 = safeNum(nutr["proteins_100g"]);
   const carb100 = safeNum(nutr["carbohydrates_100g"]);
@@ -166,7 +164,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
   // Barcode scanner refs/state
   const videoRef = useRef<HTMLVideoElement>(null);
-  const codeReaderRef = useRef<any>(null);
   const stopScannerRef = useRef<(() => void) | null>(null);
 
   const [barcodeLoading, setBarcodeLoading] = useState(false);
@@ -277,7 +274,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       const { BrowserMultiFormatReader } = mod as any;
 
       const reader = new BrowserMultiFormatReader();
-      codeReaderRef.current = reader;
 
       const videoEl = videoRef.current;
       if (!videoEl) throw new Error("Camera element not ready.");
@@ -285,8 +281,10 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       const controls = await reader.decodeFromVideoDevice(
         undefined,
         videoEl,
-        async (result: any, _err: any) => {
-          // _err can be noisy while scanning; ignore unless no result
+        async (result: any, err: any) => {
+          // IMPORTANT: keep TS happy + ignore noisy scan errors
+          if (err) void err;
+
           if (!result) return;
 
           const text = String(result.getText?.() ?? result.text ?? "").trim();
@@ -294,12 +292,16 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
           try {
             controls.stop();
-          } catch {}
+          } catch {
+            // ignore
+          }
 
           stopScannerRef.current = () => {
             try {
               controls.stop();
-            } catch {}
+            } catch {
+              // ignore
+            }
           };
 
           await handleBarcodeFound(text);
@@ -309,7 +311,9 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       stopScannerRef.current = () => {
         try {
           controls.stop();
-        } catch {}
+        } catch {
+          // ignore
+        }
       };
     } catch (e: any) {
       console.error(e);
@@ -404,7 +408,9 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
           />
           <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border/60 rounded-t-2xl p-4 space-y-2">
             <div className="flex items-center justify-between pb-1">
-              <p className="text-sm font-semibold text-foreground">Scan options</p>
+              <p className="text-sm font-semibold text-foreground">
+                Scan options
+              </p>
               <button
                 onClick={() => setSheet("closed")}
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -453,7 +459,9 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
         <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-foreground">Scan barcode</p>
+              <p className="text-sm font-semibold text-foreground">
+                Scan barcode
+              </p>
               <p className="text-xs text-muted-foreground">
                 Hold steady. We’ll auto-detect and fetch nutrition.
               </p>
