@@ -3,7 +3,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { cn } from "@/lib/utils";
 import {
   Camera,
-  Image,
+  Image as ImageIcon,
   Loader2,
   RotateCcw,
   Save,
@@ -43,8 +43,7 @@ type MealResult = {
   brand?: string;
 };
 
-type SheetMode = "closed" | "open";
-type ScannerMode = "none" | "barcode" | "photo";
+type ScannerTab = "food" | "barcode" | "label";
 
 function safeNum(val: unknown): number {
   const n = Number(val);
@@ -141,9 +140,9 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     reset: resetAI,
   } = useFoodAnalysis();
 
-  // UI
-  const [sheet, setSheet] = useState<SheetMode>("closed");
-  const [mode, setMode] = useState<ScannerMode>("none");
+  // Scanner modal (one entry point)
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [tab, setTab] = useState<ScannerTab>("food");
 
   // Shared display/result
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
@@ -151,24 +150,64 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     return (aiResult as any) || barcodeResult;
   }, [aiResult, barcodeResult]);
 
-  // Preview image (photo OR OFF image)
+  // Preview image (captured photo OR OFF image)
   const [preview, setPreview] = useState<string | null>(null);
 
   // Save state
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Inputs
+  // File input (gallery)
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Barcode scanner refs/state
+  // Camera (WebRTC)
   const videoRef = useRef<HTMLVideoElement>(null);
-  const stopScannerRef = useRef<(() => void) | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
+  // Barcode scanning
+  const stopScannerRef = useRef<(() => void) | null>(null);
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   const [manualBarcode, setManualBarcode] = useState("");
+
+  const showLoading = aiLoading || barcodeLoading;
+  const showError = aiError || barcodeError;
+  const confidence = (activeResult as any)?.confidence;
+
+  const stopAllCamera = () => {
+    // stop barcode scanner controls
+    stopScannerRef.current?.();
+    stopScannerRef.current = null;
+
+    // stop camera stream
+    if (streamRef.current) {
+      for (const t of streamRef.current.getTracks()) t.stop();
+      streamRef.current = null;
+    }
+
+    // detach video srcObject
+    if (videoRef.current) {
+      try {
+        (videoRef.current as any).srcObject = null;
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const openScanner = (nextTab: ScannerTab) => {
+    setTab(nextTab);
+    setScannerOpen(true);
+    setBarcodeError(null);
+    setManualBarcode("");
+    setBarcodeResult(null);
+    // keep aiResult until they capture; but we’ll clear when new capture happens
+  };
+
+  const closeScanner = () => {
+    stopAllCamera();
+    setScannerOpen(false);
+  };
 
   const handleResetAll = () => {
     setPreview(null);
@@ -176,25 +215,23 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     setBarcodeError(null);
     setBarcodeLoading(false);
     setManualBarcode("");
-    setMode("none");
-    setSheet("closed");
 
-    // stop scanner if running
-    stopScannerRef.current?.();
-    stopScannerRef.current = null;
+    stopAllCamera();
+    setScannerOpen(false);
 
-    // reset AI
     resetAI();
 
-    // reset inputs
     if (fileInputRef.current) fileInputRef.current.value = "";
-    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
+  // =============================
+  // Gallery upload
+  // =============================
   const handleFile = async (file: File) => {
+    // new scan -> clear old results
     setBarcodeResult(null);
     setBarcodeError(null);
-    setMode("photo");
+    resetAI();
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -208,9 +245,12 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    if (file) void handleFile(file);
   };
 
+  // =============================
+  // Save
+  // =============================
   const saveMeal = async (meal: MealResult) => {
     if (!user) return;
     setSaving(true);
@@ -259,34 +299,122 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   };
 
   // =============================
-  // Barcode scanning
+  // Camera start (WebRTC)
   // =============================
+  const ensureCameraStream = async () => {
+    if (streamRef.current) return;
 
-  const startBarcodeScanner = async () => {
-    setMode("barcode");
-    setSheet("closed");
-    setPreview(null);
+    const videoEl = videoRef.current;
+    if (!videoEl) throw new Error("Camera element not ready.");
+
+    const constraints: MediaStreamConstraints = {
+      video: {
+        facingMode: { ideal: "environment" },
+      },
+      audio: false,
+    };
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    streamRef.current = stream;
+
+    try {
+      (videoEl as any).srcObject = stream;
+    } catch {
+      // fallback for older browsers
+      // @ts-expect-error legacy
+      videoEl.src = URL.createObjectURL(stream);
+    }
+    await videoEl.play();
+  };
+
+  const captureFrameToDataUrl = async (): Promise<string> => {
+    const videoEl = videoRef.current;
+    if (!videoEl) throw new Error("Camera not ready.");
+
+    const w = videoEl.videoWidth || 1280;
+    const h = videoEl.videoHeight || 720;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable.");
+
+    ctx.drawImage(videoEl, 0, 0, w, h);
+    // JPEG to keep payload reasonable
+    return canvas.toDataURL("image/jpeg", 0.85);
+  };
+
+  const takePhotoAndAnalyze = async () => {
     setBarcodeResult(null);
     setBarcodeError(null);
+    resetAI();
+
+    try {
+      const dataUrl = await captureFrameToDataUrl();
+      setPreview(dataUrl);
+      closeScanner();
+
+      const base64 = dataUrl.split(",")[1];
+      await analyzeFood(base64);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Couldn’t capture photo. Try again.");
+    }
+  };
+
+  // =============================
+  // Barcode scanning (ZXing)
+  // =============================
+  const handleBarcodeFound = async (code: string) => {
+    const cleaned = code.replace(/\s+/g, "");
+    setManualBarcode(cleaned);
+    setBarcodeLoading(true);
+    setBarcodeError(null);
+
+    try {
+      const meal = await fetchOpenFoodFacts(cleaned);
+      setBarcodeResult(meal);
+      if (meal.imageUrl) setPreview(meal.imageUrl);
+      toast.success("Barcode found!");
+      closeScanner();
+    } catch (e: any) {
+      setBarcodeResult(null);
+      setBarcodeError(e?.message || "Barcode lookup failed.");
+      toast.error(e?.message || "Barcode lookup failed.");
+    } finally {
+      setBarcodeLoading(false);
+    }
+  };
+
+  const startBarcodeScanner = async () => {
+    setBarcodeError(null);
+    setBarcodeResult(null);
+    setBarcodeLoading(false);
+
+    await ensureCameraStream();
+
+    // Stop any previous scanner
+    stopScannerRef.current?.();
+    stopScannerRef.current = null;
 
     try {
       const mod = await import("@zxing/browser");
       const { BrowserMultiFormatReader } = mod as any;
 
       const reader = new BrowserMultiFormatReader();
-
       const videoEl = videoRef.current;
       if (!videoEl) throw new Error("Camera element not ready.");
 
       const controls = await reader.decodeFromVideoDevice(
         undefined,
         videoEl,
-        async (result: any, err: any) => {
-          // IMPORTANT: keep TS happy + ignore noisy scan errors
-          if (err) void err;
+        async (result: any, _err: any) => {
+          // _err is noisy while scanning; ignore to keep console clean
+          if (_err) void _err;
 
           if (!result) return;
-
           const text = String(result.getText?.() ?? result.text ?? "").trim();
           if (!text) return;
 
@@ -323,26 +451,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     }
   };
 
-  const handleBarcodeFound = async (code: string) => {
-    const cleaned = code.replace(/\s+/g, "");
-    setManualBarcode(cleaned);
-    setBarcodeLoading(true);
-    setBarcodeError(null);
-
-    try {
-      const meal = await fetchOpenFoodFacts(cleaned);
-      setBarcodeResult(meal);
-      if (meal.imageUrl) setPreview(meal.imageUrl);
-      toast.success("Barcode found!");
-    } catch (e: any) {
-      setBarcodeResult(null);
-      setBarcodeError(e?.message || "Barcode lookup failed.");
-      toast.error(e?.message || "Barcode lookup failed.");
-    } finally {
-      setBarcodeLoading(false);
-    }
-  };
-
   const submitManualBarcode = async () => {
     const code = manualBarcode.trim();
     if (!code) return;
@@ -353,24 +461,40 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     await handleBarcodeFound(code);
   };
 
+  // =============================
+  // Scanner modal lifecycle
+  // =============================
   useEffect(() => {
+    if (!scannerOpen) return;
+
+    // Start camera ASAP
+    (async () => {
+      try {
+        await ensureCameraStream();
+        if (tab === "barcode") {
+          await startBarcodeScanner();
+        }
+        if (tab === "label") {
+          toast.message("Tip: fill the frame with the nutrition label.");
+        }
+      } catch (e: any) {
+        console.error(e);
+        toast.error("Camera blocked. Enable permissions or use Gallery.");
+      }
+    })();
+
     return () => {
-      stopScannerRef.current?.();
-      stopScannerRef.current = null;
+      stopAllCamera();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scannerOpen, tab]);
 
   // =============================
   // Render
   // =============================
-
-  const showLoading = aiLoading || barcodeLoading;
-  const showError = aiError || barcodeError;
-  const confidence = (activeResult as any)?.confidence;
-
   return (
     <div className="space-y-4">
-      {/* Hidden inputs for photo */}
+      {/* Hidden input for Gallery (iOS will show a sheet; that’s normal) */}
       <input
         ref={fileInputRef}
         type="file"
@@ -378,19 +502,11 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
         onChange={handleInputChange}
         className="hidden"
       />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleInputChange}
-        className="hidden"
-      />
 
       {/* PRIMARY: Single button */}
-      {!preview && !activeResult && mode === "none" && (
+      {!preview && !activeResult && (
         <button
-          onClick={() => setSheet("open")}
+          onClick={() => openScanner("food")}
           className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
         >
           <Camera className="w-5 h-5" />
@@ -398,130 +514,148 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
         </button>
       )}
 
-      {/* ACTION SHEET */}
-      {sheet === "open" && (
-        <div className="fixed inset-0 z-50">
-          <button
-            aria-label="Close"
-            onClick={() => setSheet("closed")}
-            className="absolute inset-0 bg-black/30"
-          />
-          <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border/60 rounded-t-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between pb-1">
-              <p className="text-sm font-semibold text-foreground">
-                Scan options
-              </p>
-              <button
-                onClick={() => setSheet("closed")}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-
+      {/* UNIFIED SCANNER MODAL */}
+      {scannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black">
+          {/* Top bar */}
+          <div className="absolute top-0 left-0 right-0 z-10 p-4 flex items-center justify-between">
             <button
-              onClick={startBarcodeScanner}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.99] transition"
-            >
-              <Barcode className="w-5 h-5" />
-              Scan Barcode
-            </button>
-
-            <button
-              onClick={() => {
-                setSheet("closed");
-                setMode("photo");
-                cameraInputRef.current?.click();
-              }}
-              className="w-full py-3 rounded-xl border border-border text-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 active:scale-[0.99] transition"
-            >
-              <Camera className="w-5 h-5" />
-              Take Photo
-            </button>
-
-            <button
-              onClick={() => {
-                setSheet("closed");
-                setMode("photo");
-                fileInputRef.current?.click();
-              }}
-              className="w-full py-3 rounded-xl border border-border text-foreground font-medium text-sm flex items-center justify-center gap-2 hover:bg-muted/50 active:scale-[0.99] transition"
-            >
-              <Image className="w-5 h-5" />
-              Upload Photo
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* BARCODE SCANNER VIEW */}
-      {mode === "barcode" && !barcodeResult && (
-        <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                Scan barcode
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Hold steady. We’ll auto-detect and fetch nutrition.
-              </p>
-            </div>
-            <button
-              onClick={handleResetAll}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              onClick={closeScanner}
+              className="p-2 rounded-full bg-black/40 text-white"
               aria-label="Close"
             >
-              <X className="w-5 h-5 text-muted-foreground" />
+              <X className="w-5 h-5" />
             </button>
-          </div>
 
-          <div className="rounded-xl overflow-hidden border border-border/60 bg-black">
-            <video
-              ref={videoRef}
-              className="w-full h-48 object-cover"
-              muted
-              playsInline
-              autoPlay
-            />
-          </div>
-
-          {/* Manual entry fallback */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Keyboard className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={manualBarcode}
-                onChange={(e) => setManualBarcode(e.target.value)}
-                inputMode="numeric"
-                placeholder="Enter barcode"
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTab("food")}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  tab === "food"
+                    ? "bg-white text-black"
+                    : "bg-black/40 text-white"
+                )}
+              >
+                Food
+              </button>
+              <button
+                onClick={() => setTab("barcode")}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  tab === "barcode"
+                    ? "bg-white text-black"
+                    : "bg-black/40 text-white"
+                )}
+              >
+                Barcode
+              </button>
+              <button
+                onClick={() => setTab("label")}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition",
+                  tab === "label"
+                    ? "bg-white text-black"
+                    : "bg-black/40 text-white"
+                )}
+              >
+                Label
+              </button>
             </div>
-            <button
-              onClick={submitManualBarcode}
-              disabled={!manualBarcode.trim() || barcodeLoading}
-              className={cn(
-                "px-4 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:opacity-95 transition",
-                (!manualBarcode.trim() || barcodeLoading) &&
-                  "opacity-50 cursor-not-allowed"
+          </div>
+
+          {/* Video */}
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            muted
+            playsInline
+            autoPlay
+          />
+
+          {/* Frame overlay (simple) */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute left-6 right-6 top-[22%] bottom-[22%] border-2 border-white/70 rounded-2xl" />
+          </div>
+
+          {/* Bottom controls */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-4 pb-6 bg-gradient-to-t from-black/70 to-transparent">
+            {/* Barcode manual bar */}
+            {tab === "barcode" && (
+              <div className="mb-3 bg-white/90 rounded-2xl p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-black">
+                    Scan a barcode
+                  </p>
+                  {barcodeLoading && (
+                    <span className="text-xs text-black/70">Looking up…</span>
+                  )}
+                </div>
+
+                <div className="mt-2 flex gap-2">
+                  <div className="flex-1 relative">
+                    <Keyboard className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-black/50" />
+                    <input
+                      value={manualBarcode}
+                      onChange={(e) => setManualBarcode(e.target.value)}
+                      inputMode="numeric"
+                      placeholder="Enter barcode"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-black/10 text-black text-sm placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </div>
+                  <button
+                    onClick={submitManualBarcode}
+                    disabled={!manualBarcode.trim() || barcodeLoading}
+                    className={cn(
+                      "px-4 rounded-xl text-sm font-medium bg-black text-white",
+                      (!manualBarcode.trim() || barcodeLoading) &&
+                        "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    Lookup
+                  </button>
+                </div>
+
+                {barcodeError && (
+                  <p className="mt-2 text-xs text-red-600">{barcodeError}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3">
+              {/* Gallery */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-3 rounded-2xl bg-white/20 text-white text-sm font-medium flex items-center gap-2"
+              >
+                <ImageIcon className="w-5 h-5" />
+                Gallery
+              </button>
+
+              {/* Main action */}
+              {tab === "barcode" ? (
+                <button
+                  onClick={startBarcodeScanner}
+                  className="flex-1 py-3 rounded-2xl bg-white text-black text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <Barcode className="w-5 h-5" />
+                  Scan
+                </button>
+              ) : (
+                <button
+                  onClick={takePhotoAndAnalyze}
+                  className="flex-1 py-3 rounded-2xl bg-white text-black text-sm font-semibold flex items-center justify-center gap-2"
+                >
+                  <Camera className="w-5 h-5" />
+                  {tab === "label" ? "Capture label" : "Capture food"}
+                </button>
               )}
-            >
-              Lookup
-            </button>
-          </div>
-
-          {barcodeError && (
-            <div className="bg-red-50 rounded-xl p-3">
-              <p className="text-sm text-red-600">{barcodeError}</p>
-              <p className="text-xs text-red-500 mt-1">
-                Try manual entry or switch to photo scan.
-              </p>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Preview Image (photo OR product image) */}
+      {/* Preview Image (captured photo OR product image) */}
       {preview && (
         <div className="relative rounded-xl overflow-hidden">
           <img src={preview} alt="Food" className="w-full h-48 object-cover" />
