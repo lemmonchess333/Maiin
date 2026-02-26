@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
@@ -44,13 +44,66 @@ export default function Log() {
 
   const todaysWorkouts = getWorkoutsForDate(selectedDate);
 
-  const { getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
+  const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
   const dailyTotals = getDailyTotals(selectedDate);
 
   const safeNum = (value: any): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
+  };
+
+  // Common meals: ranked by frequency, toggle to add/remove
+  const commonMeals = useMemo(() => {
+    const freq = new Map<string, { count: number; meal: typeof meals[0] }>();
+    for (const m of meals) {
+      const key = m.foodName?.trim().toLowerCase();
+      if (!key) continue;
+      const existing = freq.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        freq.set(key, { count: 1, meal: m });
+      }
+    }
+    return Array.from(freq.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map((v) => v.meal);
+  }, [meals]);
+
+  const [selectedCommonIds, setSelectedCommonIds] = useState<Set<string>>(new Set());
+
+  const toggleCommonMeal = async (meal: typeof meals[0]) => {
+    const key = meal.foodName?.trim().toLowerCase() ?? "";
+    if (selectedCommonIds.has(key)) {
+      // Remove: find the meal we added and delete it
+      const added = todaysMeals.find(
+        (m) => m.foodName?.trim().toLowerCase() === key
+      );
+      if (added) await deleteMeal(added.id);
+      setSelectedCommonIds((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    } else {
+      // Add
+      if (!user) return;
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: meal.foodName,
+        items: meal.items ?? [],
+        totalCalories: meal.totalCalories ?? 0,
+        totalProtein: meal.totalProtein ?? 0,
+        totalCarbs: meal.totalCarbs ?? 0,
+        totalFat: meal.totalFat ?? 0,
+        confidence: "database",
+        createdAt: Timestamp.now(),
+      });
+      setSelectedCommonIds((prev) => new Set(prev).add(key));
+      toast.success(`${meal.foodName} added`);
+    }
   };
 
   // Light pastel macro style (exact match to Today's Intake on Home)
@@ -245,7 +298,7 @@ export default function Log() {
       {activeTab === "workout" && (
         <div className="space-y-4">
           {/* PR Toggle */}
-          <div className="bg-card rounded-xl border border-border/50 p-4">
+          <div className="bg-card rounded-2xl border border-border/50 p-5">
             <button
               onClick={togglePR}
               className="w-full flex items-center justify-between"
@@ -285,7 +338,7 @@ export default function Log() {
               {todaysWorkouts.map((w, idx) => (
                 <div
                   key={w.id}
-                  className="bg-card rounded-xl border border-border/50 p-4"
+                  className="bg-card rounded-2xl border border-border/50 p-5"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -407,12 +460,39 @@ export default function Log() {
             </div>
           </div>
 
+          {/* Common Meals */}
+          {commonMeals.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Common Meals</p>
+              <div className="flex flex-wrap gap-2">
+                {commonMeals.map((cm, i) => {
+                  const key = cm.foodName?.trim().toLowerCase() ?? "";
+                  const isActive = selectedCommonIds.has(key);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleCommonMeal(cm)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted text-foreground border-border/50 hover:border-primary/50"
+                      )}
+                    >
+                      {cm.foodName} · {safeNum(cm.totalCalories)} cal
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Saved Meals */}
           {todaysMeals.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Meals</p>
               {todaysMeals.map((m) => (
-                <div key={m.id} className="bg-card rounded-xl border border-border/50 p-4">
+                <div key={m.id} className="bg-card rounded-2xl border border-border/50 p-5">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-foreground">{m.foodName || "Meal"}</p>
                     <div className="flex items-center gap-3">

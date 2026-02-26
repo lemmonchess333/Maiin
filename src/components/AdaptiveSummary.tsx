@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Trophy,
   Target,
@@ -15,6 +15,15 @@ import {
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
 import { toast } from "sonner";
+import {
+  generateInsight,
+  momentumDirection,
+  fourWeekChange,
+  detectFatigue,
+  type Phase,
+  type StrengthPoint,
+  strengthSlope,
+} from "@/lib/analytics";
 
 /* ================================
    PHASE MODE CONFIG
@@ -366,6 +375,40 @@ export function AdaptiveSummary({
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
   const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
 
+  // Quantitative phase-aware insight
+  const strengthPoints: StrengthPoint[] = useMemo(() => {
+    // Derive synthetic points from weight trend + PR state
+    const points: StrengthPoint[] = [];
+    if (bodyweightTrend.length > 0) {
+      bodyweightTrend.forEach((_, i) => {
+        points.push({ date: `w${i}`, e1rm: 100 + avgLiftChange * (i + 1) });
+      });
+    }
+    return points;
+  }, [bodyweightTrend, avgLiftChange]);
+
+  const slope = strengthSlope(strengthPoints);
+  const momentum = momentumDirection(slope);
+  const fourWk = fourWeekChange(strengthPoints);
+
+  const phaseInsight = useMemo(
+    () =>
+      generateInsight({
+        phase: phase as Phase,
+        momentumDir: momentum,
+        fourWeekPct: fourWk,
+        weeklyAdherence: Math.round(
+          (Math.min(mealsDone / Math.max(mealsTarget, 1), 1)) * 100
+        ),
+        avgCalorieDiff: avgWeightChange > 0 ? 200 : avgWeightChange < 0 ? -200 : 0,
+        bodyweightTrend: avgWeightChange,
+        volumeWoW: null,
+      }),
+    [phase, momentum, fourWk, mealsDone, mealsTarget, avgWeightChange]
+  );
+
+  const fatigueSignal = detectFatigue(null, momentum);
+
   const displayMacros = {
     ...macros,
     calories: macros.calories + calorieBoost,
@@ -491,7 +534,7 @@ export function AdaptiveSummary({
               </div>
             </div>
 
-            {/* Performance Insight */}
+            {/* Performance Insight (phase-aware, quantitative) */}
             <div
               className="rounded-3xl p-6 border border-border/50 shadow-sm bg-white"
               style={{
@@ -517,10 +560,47 @@ export function AdaptiveSummary({
                 </span>
               </div>
 
-              <p className="text-xs text-muted-foreground mt-2">{plateau.message}</p>
+              {/* Quantitative metrics row */}
+              <div className="flex gap-3 mt-3">
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-muted-foreground">Momentum:</span>
+                  <span
+                    className={
+                      momentum === "up"
+                        ? "text-green-500 font-medium"
+                        : momentum === "down"
+                        ? "text-red-500 font-medium"
+                        : "text-foreground font-medium"
+                    }
+                  >
+                    {momentum === "up" ? "Rising" : momentum === "down" ? "Declining" : "Stable"}
+                  </span>
+                </div>
+                {fourWk !== null && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="text-muted-foreground">4wk:</span>
+                    <span
+                      className={
+                        fourWk > 0
+                          ? "text-green-500 font-medium"
+                          : fourWk < 0
+                          ? "text-red-500 font-medium"
+                          : "text-foreground font-medium"
+                      }
+                    >
+                      {fourWk > 0 ? "+" : ""}
+                      {fourWk}%
+                    </span>
+                  </div>
+                )}
+              </div>
 
-              {plateau.macroNote !== "No changes needed." && (
-                <p className="text-xs text-muted-foreground mt-1 italic">{plateau.macroNote}</p>
+              <p className="text-xs text-muted-foreground mt-2">{phaseInsight}</p>
+
+              {fatigueSignal.triggered && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  {fatigueSignal.message}
+                </p>
               )}
 
               {showApplyButton && (

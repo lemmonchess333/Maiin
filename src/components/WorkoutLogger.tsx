@@ -227,31 +227,61 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
           {expandedExercise === exIndex && (
             <div className="px-4 pb-4 space-y-3">
               {isCardio(exercise.category) ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Timer className="w-3 h-3" /> Duration (min)
-                    </label>
-                    <input
-                      type="number"
-                      value={exercise.durationMinutes || ""}
-                      onChange={(e) =>
-                        updateCardioField(exIndex, "durationMinutes", Number(e.target.value) || 0)
-                      }
-                      className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Timer className="w-3 h-3" /> Duration (min)
+                      </label>
+                      <input
+                        type="number"
+                        value={exercise.durationMinutes || ""}
+                        onChange={(e) =>
+                          updateCardioField(exIndex, "durationMinutes", Number(e.target.value) || 0)
+                        }
+                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Distance (km)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={exercise.distanceKm || ""}
+                        onChange={(e) =>
+                          updateCardioField(exIndex, "distanceKm", Number(e.target.value) || 0)
+                        }
+                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Distance (km)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={exercise.distanceKm || ""}
-                      onChange={(e) =>
-                        updateCardioField(exIndex, "distanceKm", Number(e.target.value) || 0)
-                      }
-                      className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
+                    <label className="text-xs text-muted-foreground">Intensity (optional)</label>
+                    <div className="flex gap-2">
+                      {(["low", "moderate", "high"] as const).map((level) => (
+                        <button
+                          key={level}
+                          onClick={() => {
+                            setExercises((prev) => {
+                              const updated = [...prev];
+                              updated[exIndex] = {
+                                ...updated[exIndex],
+                                intensity: updated[exIndex].intensity === level ? undefined : level,
+                              };
+                              return updated;
+                            });
+                          }}
+                          className={cn(
+                            "flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                            exercise.intensity === level
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border/50 hover:text-foreground"
+                          )}
+                        >
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (

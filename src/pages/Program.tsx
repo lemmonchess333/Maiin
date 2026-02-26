@@ -106,6 +106,10 @@ function ProgramInner() {
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
 
+  // Save feedback states
+  const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
+  const [weightFlash, setWeightFlash] = useState<"up" | "down" | null>(null);
+
   if (loading || !programState || !prescription) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -150,20 +154,29 @@ function ProgramInner() {
   };
 
   const handleLogExercise = async () => {
-    if (!drawerExercise) return;
+    if (!drawerExercise || savingState !== "idle") return;
+    setSavingState("saving");
     await logExercise(
       drawerExercise.dayIndex,
       drawerExercise.exIndex,
       Number(logReps) || 0,
       Number(logWeight) || 0
     );
-    closeDrawer();
+    setSavingState("saved");
+    setTimeout(() => {
+      setSavingState("idle");
+      closeDrawer();
+    }, 800);
   };
 
   const handleWeightOverride = async (newWeight: number) => {
     if (!drawerExercise) return;
     await updateExercise(drawerExercise.dayIndex, drawerExercise.exIndex, { weight: newWeight });
-    closeDrawer();
+    // Update drawer state to show new weight without closing
+    setDrawerExercise({
+      ...drawerExercise,
+      exercise: { ...drawerExercise.exercise, weight: newWeight },
+    });
   };
 
   const handleSetsChange = async (delta: number) => {
@@ -297,28 +310,49 @@ function ProgramInner() {
         {displayWorkouts.map((day, dayIndex) => (
           <div key={dayIndex} className="bg-card rounded-xl border border-border/50 overflow-hidden">
             {/* Day Header */}
-            <button
-              onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
-              className="w-full flex items-center justify-between p-3"
-            >
-              <div className="flex items-center gap-3">
-                {day.completed ? (
+            <div className="flex items-center p-3 gap-2">
+              {/* Left: Completion circle (separate tap target) */}
+              {!isViewingHistory && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!day.completed) completeWorkoutDay(dayIndex);
+                  }}
+                  className="shrink-0 p-0.5"
+                  aria-label={day.completed ? "Completed" : "Mark complete"}
+                >
+                  {day.completed ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+                  )}
+                </button>
+              )}
+              {isViewingHistory && (
+                day.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
                 ) : (
                   <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
-                )}
-                <div className="text-left">
-                  <p className="text-sm font-medium text-foreground">{day.dayName}</p>
+                )
+              )}
+
+              {/* Center: Day name & meta (expand/collapse on click) */}
+              <button
+                onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
+                className="flex-1 flex items-center justify-between min-w-0"
+              >
+                <div className="text-left min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{day.dayName}</p>
                   <p className="text-[11px] text-muted-foreground">{day.exercises.length} exercises</p>
                 </div>
-              </div>
 
-              {expandedDay === dayIndex ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              )}
-            </button>
+                {expandedDay === dayIndex ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                )}
+              </button>
+            </div>
 
             {/* Expanded Exercise List */}
             <AnimatePresence>
@@ -449,13 +483,45 @@ function ProgramInner() {
                   </div>
                 </div>
 
-                {/* Last 3 performances */}
-                {drawerExercise.exercise.performanceHistory.length > 0 && (
+                {/* Previous session (last logged) */}
+                {drawerExercise.exercise.performanceHistory.length > 0 && (() => {
+                  const last = drawerExercise.exercise.performanceHistory[
+                    drawerExercise.exercise.performanceHistory.length - 1
+                  ];
+                  const passed = last.repsCompleted >= last.repsTarget;
+                  return (
+                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">Previous Session</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{last.date}</span>
+                        <span
+                          className={cn(
+                            "text-xs font-medium px-2 py-0.5 rounded-full",
+                            passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                          )}
+                        >
+                          {passed ? "Pass" : "Fail"}
+                        </span>
+                      </div>
+                      <div className="flex gap-4 text-sm">
+                        <span className="text-foreground font-medium">
+                          {last.weight > 0 ? `${last.weight}kg` : "BW"}
+                        </span>
+                        <span className="text-foreground">
+                          {last.repsCompleted}/{last.repsTarget} reps
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Older performances */}
+                {drawerExercise.exercise.performanceHistory.length > 1 && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Recent</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">History</p>
                     <div className="space-y-1">
                       {drawerExercise.exercise.performanceHistory
-                        .slice(-3)
+                        .slice(-4, -1)
                         .reverse()
                         .map((rec, i) => (
                           <div
@@ -504,22 +570,51 @@ function ProgramInner() {
 
                 <button
                   onClick={handleLogExercise}
-                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+                  disabled={savingState !== "idle"}
+                  className={cn(
+                    "w-full py-2.5 rounded-xl text-sm font-medium transition-all",
+                    savingState === "saved"
+                      ? "bg-green-500 text-white"
+                      : "bg-primary text-primary-foreground hover:opacity-90",
+                    savingState === "saving" && "opacity-50 cursor-not-allowed"
+                  )}
                 >
-                  Save Performance
+                  {savingState === "saving"
+                    ? "Saving..."
+                    : savingState === "saved"
+                    ? "Saved!"
+                    : "Save Performance"}
                 </button>
 
                 {/* Manual weight override */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleWeightOverride(Math.max(0, drawerExercise.exercise.weight - 2.5))}
-                    className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
+                    onClick={() => {
+                      setWeightFlash("down");
+                      handleWeightOverride(Math.max(0, drawerExercise.exercise.weight - 2.5));
+                      setTimeout(() => setWeightFlash(null), 600);
+                    }}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                      weightFlash === "down"
+                        ? "bg-red-100 text-red-600 border border-red-200"
+                        : "bg-muted text-foreground hover:bg-muted/80"
+                    )}
                   >
                     -2.5kg
                   </button>
                   <button
-                    onClick={() => handleWeightOverride(drawerExercise.exercise.weight + 2.5)}
-                    className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
+                    onClick={() => {
+                      setWeightFlash("up");
+                      handleWeightOverride(drawerExercise.exercise.weight + 2.5);
+                      setTimeout(() => setWeightFlash(null), 600);
+                    }}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                      weightFlash === "up"
+                        ? "bg-green-100 text-green-600 border border-green-200"
+                        : "bg-muted text-foreground hover:bg-muted/80"
+                    )}
                   >
                     +2.5kg
                   </button>
