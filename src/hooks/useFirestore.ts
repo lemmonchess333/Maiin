@@ -188,6 +188,57 @@ export function useMonthlyStats() {
   return stats;
 }
 
+export function useWeeklyDayMap() {
+  const { user } = useAuth();
+  const [dayMap, setDayMap] = useState<
+    Map<string, { workouts: number; meals: number; caloriesHit: boolean }>
+  >(new Map());
+
+  useEffect(() => {
+    if (!user) {
+      setDayMap(new Map());
+      return;
+    }
+
+    const now = new Date();
+    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+
+    const logsRef = collection(db, "users", user.uid, "logs");
+    const q = query(
+      logsRef,
+      where("date", ">=", weekStart),
+      where("date", "<=", weekEnd)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const map = new Map<
+          string,
+          { workouts: number; meals: number; caloriesHit: boolean }
+        >();
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          map.set(data.date, {
+            workouts: data.workouts || 0,
+            meals: data.meals || 0,
+            caloriesHit: data.caloriesHit ?? (data.meals > 0),
+          });
+        });
+        setDayMap(map);
+      },
+      (error) => {
+        console.error("useWeeklyDayMap error:", error);
+      }
+    );
+
+    return unsubscribe;
+  }, [user]);
+
+  return dayMap;
+}
+
 export function useHistoryData(days: number = 30) {
   const { user } = useAuth();
   const [data, setData] = useState<DailyLog[]>([]);

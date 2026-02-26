@@ -28,6 +28,7 @@ export interface WorkoutExercise {
   // Cardio-specific (optional)
   durationMinutes?: number;
   distanceKm?: number;
+  intensity?: "low" | "moderate" | "high";
 }
 
 export interface Workout {

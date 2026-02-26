@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
-import { useWeeklyStats, useMonthlyStats } from "@/hooks/useFirestore";
+import { useWeeklyStats, useMonthlyStats, useWeeklyDayMap } from "@/hooks/useFirestore";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { AdaptiveSummary } from "@/components/AdaptiveSummary";
 import { StreakCounter } from "@/components/StreakCounter";
 import BodyweightLogger from "@/components/BodyweightLogger";
+import { WeeklyDayFill } from "@/components/WeeklyDayFill";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { cn } from "@/lib/utils";
@@ -97,6 +98,7 @@ export default function Home() {
   const { workouts } = useWorkouts();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState } = useProgram();
+  const weeklyDayMap = useWeeklyDayMap();
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
   const [confettiFired, setConfettiFired] = useState(false);
@@ -214,13 +216,19 @@ export default function Home() {
       )}
 
       {/* Streak */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <StreakCounter streak={computedStreak} />
         <div className="text-[11px] text-muted-foreground">
           {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
           <span className="px-1">•</span>{" "}
           {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
         </div>
+      </div>
+
+      {/* Weekly Day Fill Summary */}
+      <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-3">
+        <p className="text-sm font-medium text-foreground">This Week</p>
+        <WeeklyDayFill dayMap={weeklyDayMap} />
       </div>
 
       {/* Next Workout */}
@@ -230,7 +238,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className={cn(
-              "bg-card rounded-xl border border-border/50 p-4 space-y-2",
+              "bg-card rounded-2xl border border-border/50 p-5 space-y-2",
               "transition-transform active:scale-[0.99]"
             )}
           >
