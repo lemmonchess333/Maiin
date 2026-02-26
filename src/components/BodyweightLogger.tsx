@@ -140,21 +140,21 @@ export default function BodyweightLogger() {
       </div>
 
       {/* Input + Log Button */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 overflow-hidden">
         <input
           type="number"
           step="0.1"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder={`${displayWeight(profile?.weightKg ?? 70)} ${unit}`}
-          className="flex-1 px-5 py-3.5 rounded-2xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
+          className="flex-1 min-w-0 px-5 py-3.5 rounded-2xl bg-white border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
         />
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSubmit}
           disabled={saving || !weight}
           className={cn(
-            "px-8 py-3.5 rounded-2xl font-medium text-sm transition-all flex items-center justify-center min-w-[72px]",
+            "px-6 py-3.5 rounded-2xl font-medium text-sm transition-all flex items-center justify-center min-w-[68px] flex-shrink-0",
             saved
               ? "bg-green-500 text-white"
               : "bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.985]",
@@ -190,11 +190,13 @@ export default function BodyweightLogger() {
         </div>
       )}
 
-      {/* Empty state hint */}
+      {/* Empty state hint – with overflow fix */}
       {recentLogs.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          No recent logs • Your first check-in will appear here
-        </p>
+        <div className="px-3 py-2">
+          <p className="text-xs text-muted-foreground text-center break-words whitespace-pre-wrap leading-relaxed">
+            No recent logs • Your first check-in will appear here
+          </p>
+        </div>
       )}
     </div>
   );

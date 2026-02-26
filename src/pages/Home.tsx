@@ -12,7 +12,15 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Sparkles, Dumbbell, Flame, Beef, Wheat, Droplet } from "lucide-react";
+import {
+  Sparkles,
+  Dumbbell,
+  Flame,
+  Beef,
+  Wheat,
+  Cookie,
+  ChevronRight,
+} from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -58,14 +66,27 @@ function computeStreak(workoutDates: string[]): number {
     const curr = new Date(uniqueDates[i]);
     const diffDays = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
 
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
+    if (diffDays === 1) streak++;
+    else break;
   }
 
   return streak;
+}
+
+// Simple tint helper (lightens the hex color)
+function tint(hex: string, factor: number = 0.85): string {
+  if (!hex || !hex.startsWith("#")) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+  return `#${newR.toString(16).padStart(2, "0")}${newG
+    .toString(16)
+    .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
 }
 
 export default function Home() {
@@ -87,6 +108,8 @@ export default function Home() {
     fat: 0,
   });
 
+  const [todayMealsCount, setTodayMealsCount] = useState(0);
+
   const quote = useMemo(() => getDailyQuote(), []);
 
   const computedStreak = useMemo(() => {
@@ -100,10 +123,10 @@ export default function Home() {
     }
   }, [computedStreak, profile, updateProfile]);
 
-  // Safe number helper (for perfect consistency with Log page)
-  const safeNum = (value: any): number => {
+  // Safe number helper (NOW supports fallback)
+  const safeNum = (value: any, fallback: number = 0): number => {
     const num = Number(value);
-    return isNaN(num) || value == null ? 0 : num;
+    return isNaN(num) || value == null ? fallback : num;
   };
 
   useEffect(() => {
@@ -116,10 +139,7 @@ export default function Home() {
         todayStart.setHours(0, 0, 0, 0);
 
         const mealsRef = collection(db, "users", uid, "meals");
-        const q = query(
-          mealsRef,
-          where("createdAt", ">=", Timestamp.fromDate(todayStart))
-        );
+        const q = query(mealsRef, where("createdAt", ">=", Timestamp.fromDate(todayStart)));
 
         const snapshot = await getDocs(q);
 
@@ -134,6 +154,7 @@ export default function Home() {
         });
 
         setDailyTotals(totals);
+        setTodayMealsCount(snapshot.size);
       } catch (error) {
         console.error("Error fetching today's meals:", error);
       }
@@ -153,22 +174,22 @@ export default function Home() {
   }, [weeklyStats.hasPR, monthlyStats.hasPR, confettiFired]);
 
   if (!profile) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Loading your profile...
-      </div>
-    );
+    return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
   }
 
   const nextWorkout = programState?.workouts.find((d) => !d.completed);
 
+  const macroColors = {
+    calories: "#f97316",
+    protein: "#3b82f6",
+    carbs: "#f59e0b",
+    fat: "#a855f6",
+  };
+
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-6 px-4 pb-6">
       {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-xl font-bold text-foreground">
           Hey, {profile.displayName || "Athlete"}
         </h1>
@@ -187,42 +208,66 @@ export default function Home() {
             <p className="text-sm font-medium text-foreground">
               Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
             </p>
-            <p className="text-xs text-muted-foreground">
-              Full access to all features.
-            </p>
+            <p className="text-xs text-muted-foreground">Full access to all features.</p>
           </div>
         </motion.div>
       )}
 
       {/* Streak */}
-      <StreakCounter streak={computedStreak} />
+      <div className="space-y-2">
+        <StreakCounter streak={computedStreak} />
+        <div className="text-[11px] text-muted-foreground">
+          {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
+          <span className="px-1">•</span>{" "}
+          {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
+        </div>
+      </div>
 
-      {/* Next Workout — strength-first */}
+      {/* Next Workout */}
       {nextWorkout && (
         <Link to="/program">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card rounded-xl border border-border/50 p-4 space-y-2"
+            className={cn(
+              "bg-card rounded-xl border border-border/50 p-4 space-y-2",
+              "transition-transform active:scale-[0.99]"
+            )}
           >
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
-              <span className="ml-auto text-[10px] text-muted-foreground capitalize">
-                {nextWorkout.dayType}
-              </span>
+
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
+                <span className="text-[10px] text-muted-foreground">Open</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
+
             <div className="flex flex-wrap gap-1.5">
               {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
                 <span
                   key={i}
-                  className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground"
+                  className="px-2 py-0.5 rounded border text-[10px]"
+                  style={{
+                    backgroundColor: tint("#7c3aed", 0.92),
+                    borderColor: tint("#7c3aed", 0.75),
+                    color: "#4c1d95",
+                  }}
                 >
                   {ex.name}
                 </span>
               ))}
               {nextWorkout.exercises.length > 4 && (
-                <span className="px-2 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                <span
+                  className="px-2 py-0.5 rounded border text-[10px]"
+                  style={{
+                    backgroundColor: tint("#7c3aed", 0.92),
+                    borderColor: tint("#7c3aed", 0.75),
+                    color: "#4c1d95",
+                  }}
+                >
                   +{nextWorkout.exercises.length - 4} more
                 </span>
               )}
@@ -234,44 +279,56 @@ export default function Home() {
       {/* Bodyweight Logger */}
       <BodyweightLogger />
 
-      {/* Today's Intake - gradient cards with icons */}
+      {/* Today's Intake */}
       <div className="bg-card rounded-2xl border border-border/50 p-5">
-        <p className="text-sm font-medium text-foreground mb-4">Today's Intake</p>
+        <div className="mb-4">
+          <p className="text-sm font-medium text-foreground">Today's Intake</p>
+          <p className="text-[11px] text-muted-foreground mt-1">From meals logged today</p>
+        </div>
+
         <div className="grid grid-cols-4 gap-3 text-center">
-          {/* Calories */}
-          <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
-            <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
+          >
+            <Flame className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.calories)}
             </p>
-            <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
+            <p className="text-xs mt-1">cal</p>
           </div>
 
-          {/* Protein */}
-          <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
-            <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
+          >
+            <Beef className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.protein)}g
             </p>
-            <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
+            <p className="text-xs mt-1">protein</p>
           </div>
 
-          {/* Carbs */}
-          <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
-            <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
+          >
+            <Wheat className="w-6 h-6 mx-auto mb-2" />
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.carbs)}g
             </p>
-            <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
+            <p className="text-xs mt-1">carbs</p>
           </div>
 
-          {/* Fat */}
-          <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-            <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <div
+            className="rounded-xl p-4 shadow-sm"
+            style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
+          >
+            <Cookie size={22} className="mx-auto mb-2" />
+            <p className="text-2xl font-bold tabular-nums leading-none whitespace-nowrap">
               {safeNum(dailyTotals.fat)}g
             </p>
-            <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
+            <p className="text-xs mt-1">fat</p>
           </div>
         </div>
       </div>
@@ -284,9 +341,8 @@ export default function Home() {
             onClick={() => setMode(m)}
             className={cn(
               "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              mode === m
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
+              "active:scale-[0.99] transition-transform",
+              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -333,9 +389,7 @@ export default function Home() {
           <p className="text-sm font-medium text-foreground">
             Unlock AI Photo Logging & Performance Engine
           </p>
-          <p className="text-xs text-muted-foreground">
-            Upgrade to Pro — from just £2.99/mo
-          </p>
+          <p className="text-xs text-muted-foreground">Upgrade to Pro — from just £2.99/mo</p>
         </motion.div>
       )}
     </div>

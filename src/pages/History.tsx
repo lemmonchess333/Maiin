@@ -173,20 +173,23 @@ export default function History() {
         ))}
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* Stats grid - lighter backgrounds exactly like AI Macro Targets / Today's Intake (no icons) */}
+      <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Workouts", value: totalWorkouts, color: "text-primary" },
-          { label: "Meals", value: totalMeals, color: "text-blue-500" },
-          { label: "PRs", value: prDays, color: "text-yellow-500" },
-          { label: "Active", value: activeDays, color: "text-green-500" },
+          { label: "Workouts", value: totalWorkouts, bgColor: "#f3e8ff", textColor: "#7c3aed" },
+          { label: "Meals", value: totalMeals, bgColor: "#dbeafe", textColor: "#3b82f6" },
+          { label: "PRs", value: prDays, bgColor: "#fef3c7", textColor: "#d97706" },
+          { label: "Active", value: activeDays, bgColor: "#d1fae5", textColor: "#10b981" },
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-card rounded-xl border border-border/50 p-3 text-center"
+            className="rounded-2xl p-4 shadow-sm text-center"
+            style={{ backgroundColor: stat.bgColor }}
           >
-            <p className={cn("text-xl font-bold", stat.color)}>{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+            <p className="text-2xl font-bold" style={{ color: stat.textColor }}>
+              {stat.value}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
           </div>
         ))}
       </div>

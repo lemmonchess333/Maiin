@@ -1,166 +1,260 @@
-import { useState, useRef } from "react";
-import { useFoodAnalysis, type FoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useMemo, useState } from "react";
+import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { cn } from "@/lib/utils";
-import { Camera, Image, Loader2, RotateCcw, Save, Check, X } from "lucide-react";
+import { Loader2, RotateCcw, Save, Check } from "lucide-react";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 import FoodCameraModal from "./FoodCameraModal";
-import type { BarcodeNutrition } from "./FoodCameraModal";
 
 interface Props {
   date: string;
   onSaved?: () => void;
 }
 
+type MealResult = {
+  foodName: string;
+  items: Array<{
+    name: string;
+    portionSize: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }>;
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  confidence: "high" | "medium" | "low" | "barcode" | "database" | "manual";
+  imageUrl?: string;
+  barcode?: string;
+  brand?: string;
+};
+
+function safeNum(val: unknown): number {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parseServingGrams(servingSize?: string): number | null {
+  if (!servingSize) return null;
+  const m = servingSize.match(/(\d+(\.\d+)?)\s*g/i);
+  if (!m) return null;
+  const grams = Number(m[1]);
+  return Number.isFinite(grams) && grams > 0 ? grams : null;
+}
+
+function round1(n: number) {
+  return Math.round(n * 10) / 10;
+}
+
+async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
+  const url =
+    `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
+    `?fields=product_name,brands,nutriments,serving_size,image_url`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("OpenFoodFacts request failed.");
+  const data = await res.json();
+
+  if (!data || data.status !== 1 || !data.product) {
+    throw new Error("Product not found for this barcode.");
+  }
+
+  const p = data.product;
+  const name: string = (p.product_name || "").trim() || "Barcode item";
+  const brand: string = (p.brands || "").trim();
+
+  const nutr = p.nutriments || {};
+  const kcal100 =
+    safeNum(nutr["energy-kcal_100g"]) || safeNum(nutr["energy-kcal"]) || 0;
+
+  const pro100 = safeNum(nutr["proteins_100g"]);
+  const carb100 = safeNum(nutr["carbohydrates_100g"]);
+  const fat100 = safeNum(nutr["fat_100g"]);
+
+  const servingSize: string = (p.serving_size || "").trim();
+  const servingGrams = parseServingGrams(servingSize);
+  const portionGrams = servingGrams ?? 100;
+
+  const factor = portionGrams / 100;
+
+  const calories = Math.round(kcal100 * factor);
+  const protein = round1(pro100 * factor);
+  const carbs = round1(carb100 * factor);
+  const fat = round1(fat100 * factor);
+
+  return {
+    foodName: name,
+    brand,
+    barcode,
+    imageUrl: p.image_url || undefined,
+    items: [
+      {
+        name: brand ? `${name} (${brand})` : name,
+        portionSize: servingGrams ? servingSize : `${portionGrams}g`,
+        calories,
+        protein,
+        carbs,
+        fat,
+      },
+    ],
+    totalCalories: calories,
+    totalProtein: protein,
+    totalCarbs: carbs,
+    totalFat: fat,
+    confidence: "barcode",
+  };
+}
+
 export default function FoodAnalyzer({ date, onSaved }: Props) {
   const { user } = useAuth();
-  const { analyzeFood, loading, error, result, reset } = useFoodAnalysis();
-  const [preview, setPreview] = useState<string | null>(null);
+
+  const {
+    analyzeFood,
+    loading: aiLoading,
+    error: aiError,
+    result: aiResult,
+    reset: resetAI,
+  } = useFoodAnalysis();
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+
+  const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [barcodeResult, setBarcodeResult] = useState<FoodAnalysis | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeResult = barcodeResult || result;
+  const activeResult: MealResult | null = useMemo(() => {
+    return (aiResult as any) || barcodeResult;
+  }, [aiResult, barcodeResult]);
 
-  const handleFile = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target?.result as string;
-      setPreview(dataUrl);
-      const base64 = dataUrl.split(",")[1];
-      await analyzeFood(base64);
-    };
-    reader.readAsDataURL(file);
-  };
+  const showLoading = aiLoading || barcodeLoading;
+  const showError = aiError || barcodeError;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
-  };
-
-  // Called when user captures a photo from the camera modal
-  const handlePhotoCapture = async (base64: string) => {
-    setPreview(`data:image/jpeg;base64,${base64}`);
+  const handleResetAll = () => {
     setBarcodeResult(null);
-    await analyzeFood(base64);
+    setBarcodeError(null);
+    setBarcodeLoading(false);
+    resetAI();
   };
 
-  // Called when barcode is scanned and looked up via OpenFoodFacts
-  const handleBarcodeResult = (nutrition: BarcodeNutrition) => {
-    setBarcodeResult({
-      foodName: nutrition.name,
-      items: [
-        {
-          name: nutrition.name,
-          portionSize: nutrition.servingSize,
-          calories: nutrition.calories,
-          protein: nutrition.protein,
-          carbs: nutrition.carbs,
-          fat: nutrition.fat,
-        },
-      ],
-      totalCalories: nutrition.calories,
-      totalProtein: nutrition.protein,
-      totalCarbs: nutrition.carbs,
-      totalFat: nutrition.fat,
-      confidence: "database",
-    });
-    setPreview(null);
-  };
-
-  const handleSave = async () => {
-    if (!user || !activeResult) return;
+  const saveMeal = async (meal: MealResult) => {
+    if (!user) return;
     setSaving(true);
+
     const mealRef = doc(collection(db, "users", user.uid, "meals"));
     await setDoc(mealRef, {
       date,
-      foodName: activeResult.foodName,
-      items: activeResult.items,
-      totalCalories: activeResult.totalCalories,
-      totalProtein: activeResult.totalProtein,
-      totalCarbs: activeResult.totalCarbs,
-      totalFat: activeResult.totalFat,
-      confidence: activeResult.confidence,
+      foodName: meal.foodName,
+      items: meal.items,
+      totalCalories: meal.totalCalories,
+      totalProtein: meal.totalProtein,
+      totalCarbs: meal.totalCarbs,
+      totalFat: meal.totalFat,
+      confidence: meal.confidence,
+      barcode: meal.barcode || null,
+      brand: meal.brand || null,
+      imageUrl: meal.imageUrl || null,
       createdAt: Timestamp.now(),
     });
+
     setSaving(false);
     setSaved(true);
+
     setTimeout(() => {
       setSaved(false);
-      handleReset();
+      handleResetAll();
+      setCameraOpen(false);
       onSaved?.();
-    }, 1500);
+    }, 1200);
   };
 
-  const handleReset = () => {
-    setPreview(null);
+  const handleSave = async () => {
+    if (!activeResult) return;
+
+    const meal: MealResult = {
+      foodName: (activeResult as any).foodName ?? "Meal",
+      items: (activeResult as any).items ?? [],
+      totalCalories: safeNum((activeResult as any).totalCalories),
+      totalProtein: safeNum((activeResult as any).totalProtein),
+      totalCarbs: safeNum((activeResult as any).totalCarbs),
+      totalFat: safeNum((activeResult as any).totalFat),
+      confidence: ((activeResult as any).confidence ?? "low") as any,
+      barcode: (activeResult as any).barcode,
+      brand: (activeResult as any).brand,
+      imageUrl: (activeResult as any).imageUrl,
+    };
+
+    await saveMeal(meal);
+  };
+
+  // Matches FoodCameraModal: (base64, mode)
+  const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
     setBarcodeResult(null);
-    reset();
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setBarcodeError(null);
+
+    try {
+      await analyzeFood(base64);
+      toast.success(mode === "label" ? "Label captured!" : "Food captured!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Food analysis failed.");
+    }
+  };
+
+  const onBarcodeDetected = async (raw: string) => {
+    const code = raw.replace(/\s+/g, "");
+    setBarcodeLoading(true);
+    setBarcodeError(null);
+    setBarcodeResult(null);
+
+    try {
+      const meal = await fetchOpenFoodFacts(code);
+      setBarcodeResult(meal);
+      toast.success("Barcode found!");
+    } catch (e: any) {
+      setBarcodeError(e?.message || "Barcode lookup failed.");
+      toast.error(e?.message || "Barcode lookup failed.");
+    } finally {
+      setBarcodeLoading(false);
+    }
   };
 
   return (
     <div className="space-y-4">
+      {/* Always visible — won't disappear if you cancel camera */}
+      <button
+        onClick={() => setCameraOpen(true)}
+        className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors"
+      >
+        Scan Food
+      </button>
+
       <FoodCameraModal
-        open={showCamera}
-        onClose={() => setShowCamera(false)}
-        onPhotoCapture={handlePhotoCapture}
-        onBarcodeResult={handleBarcodeResult}
+        open={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onCaptureBase64={onCaptureBase64}
+        onBarcodeDetected={onBarcodeDetected}
+        loading={showLoading}
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleInputChange}
-        className="hidden"
-      />
-
-      {!preview && !activeResult && !loading && (
-        <div className="space-y-3">
-          <button
-            onClick={() => setShowCamera(true)}
-            className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
-          >
-            <Camera className="w-5 h-5" /> Scan Food / Barcode
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 rounded-xl border border-border/50 text-muted-foreground font-medium text-sm hover:bg-muted/50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Image className="w-4 h-4" /> Upload from Gallery
-          </button>
+      {showLoading && (
+        <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {barcodeLoading ? "Fetching nutrition..." : "Analyzing..."}
         </div>
       )}
 
-      {preview && (
-        <div className="relative rounded-xl overflow-hidden">
-          <img src={preview} alt="Food" className="w-full h-48 object-cover" />
-          {!loading && !activeResult && (
-            <button
-              onClick={handleReset}
-              className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" /> Analyzing your food...
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      {showError && !activeResult && (
+        <div className="bg-red-50 rounded-xl p-4 space-y-2">
+          <p className="text-sm text-red-600">{String(showError)}</p>
           <button
-            onClick={handleReset}
+            onClick={handleResetAll}
             className="text-sm text-red-500 font-medium flex items-center gap-1"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Try again
@@ -171,79 +265,59 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       {activeResult && (
         <div className="space-y-4">
           <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
-                {activeResult.foodName}
-              </h3>
-              <span
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-full font-medium",
-                  activeResult.confidence === "high" ||
-                    activeResult.confidence === "database"
-                    ? "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400"
-                    : activeResult.confidence === "medium"
-                      ? "bg-yellow-100 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400"
-                      : "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400"
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-foreground truncate">
+                  {(activeResult as any).foodName}
+                </h3>
+                {(activeResult as any).brand && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {(activeResult as any).brand}
+                  </p>
                 )}
-              >
-                {activeResult.confidence}
+              </div>
+
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-foreground">
+                {(activeResult as any).confidence}
               </span>
             </div>
 
             <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                  {activeResult.totalCalories}
+              <div className="bg-orange-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-orange-600 tabular-nums">
+                  {safeNum((activeResult as any).totalCalories)}
                 </p>
                 <p className="text-xs text-orange-500">cal</p>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                  {activeResult.totalProtein}g
+              <div className="bg-blue-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-blue-600 tabular-nums">
+                  {safeNum((activeResult as any).totalProtein)}g
                 </p>
                 <p className="text-xs text-blue-500">protein</p>
               </div>
-              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                  {activeResult.totalCarbs}g
+              <div className="bg-amber-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-amber-600 tabular-nums">
+                  {safeNum((activeResult as any).totalCarbs)}g
                 </p>
                 <p className="text-xs text-amber-500">carbs</p>
               </div>
-              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-2">
-                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                  {activeResult.totalFat}g
+              <div className="bg-purple-50 rounded-lg p-2">
+                <p className="text-lg font-bold text-purple-600 tabular-nums">
+                  {safeNum((activeResult as any).totalFat)}g
                 </p>
                 <p className="text-xs text-purple-500">fat</p>
               </div>
             </div>
-
-            {activeResult.items.length > 1 && (
-              <div className="space-y-1 pt-1">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Breakdown
-                </p>
-                {activeResult.items.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between text-xs text-muted-foreground"
-                  >
-                    <span>
-                      {item.name} ({item.portionSize})
-                    </span>
-                    <span>{item.calories} cal</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex gap-2">
             <button
-              onClick={handleReset}
-              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2"
+              onClick={handleResetAll}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Retake
+              Reset
             </button>
+
             <button
               onClick={handleSave}
               disabled={saving}
@@ -263,7 +337,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
                 "Saving..."
               ) : (
                 <>
-                  <Save className="w-4 h-4" /> Save Meal
+                  <Save className="w-4 h-4" /> Log meal
                 </>
               )}
             </button>

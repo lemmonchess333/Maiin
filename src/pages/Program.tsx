@@ -26,6 +26,14 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/**
+ * IMPORTANT:
+ * React error #310 is very commonly caused by hook order mismatches when gated UI
+ * flips between renders (e.g. subscription/features loading).
+ *
+ * Fix: split into a gate component (subscription only) + inner component (program hook).
+ */
+
 function DirectionIcon({ ex }: { ex: ProgramExercise }) {
   const dir = getProgressionDirection(ex);
   if (dir === "up") return <TrendingUp className="w-3.5 h-3.5 text-green-500" />;
@@ -47,6 +55,26 @@ function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
 
 export default function Program() {
   const { features } = useSubscription();
+
+  // Gate FIRST: do not mount the program engine until the feature flag is allowed.
+  if (!features.phaseModes) {
+    return (
+      <div className="p-6 text-center space-y-4">
+        <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
+        <h1 className="text-xl font-bold text-foreground">Program Engine</h1>
+        <p className="text-sm text-muted-foreground">
+          Unlock the adaptive Program Engine with Pro to get weekly splits, exercise prescriptions,
+          progression tracking, and deload logic.
+        </p>
+        <p className="text-xs font-semibold text-foreground">Upgrade to Pro in Settings</p>
+      </div>
+    );
+  }
+
+  return <ProgramInner />;
+}
+
+function ProgramInner() {
   const {
     programState,
     prescription,
@@ -78,22 +106,6 @@ export default function Program() {
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
 
-  if (!features.phaseModes) {
-    return (
-      <div className="p-6 text-center space-y-4">
-        <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
-        <h1 className="text-xl font-bold text-foreground">Program Engine</h1>
-        <p className="text-sm text-muted-foreground">
-          Unlock the adaptive Program Engine with Pro to get weekly splits,
-          exercise prescriptions, progression tracking, and deload logic.
-        </p>
-        <p className="text-xs font-semibold text-foreground">
-          Upgrade to Pro in Settings
-        </p>
-      </div>
-    );
-  }
-
   if (loading || !programState || !prescription) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -105,9 +117,11 @@ export default function Program() {
   const isViewingHistory = viewingHistoryIndex !== null;
   const displayWorkouts = isViewingHistory ? (viewedWorkouts ?? []) : programState.workouts;
   const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
+
   const completedCount = displayWorkouts.filter((d) => d.completed).length;
   const totalDays = displayWorkouts.length;
   const allComplete = completedCount === totalDays && totalDays > 0;
+
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
@@ -141,7 +155,7 @@ export default function Program() {
       drawerExercise.dayIndex,
       drawerExercise.exIndex,
       Number(logReps) || 0,
-      Number(logWeight) || 0,
+      Number(logWeight) || 0
     );
     closeDrawer();
   };
@@ -156,6 +170,7 @@ export default function Program() {
     if (!drawerExercise) return;
     const newSets = Math.max(1, Math.min(10, drawerExercise.exercise.sets + delta));
     if (newSets === drawerExercise.exercise.sets) return;
+
     await updateExercise(drawerExercise.dayIndex, drawerExercise.exIndex, { sets: newSets });
     setDrawerExercise({
       ...drawerExercise,
@@ -169,7 +184,7 @@ export default function Program() {
 
   const goBack = () => {
     if (isViewingHistory) {
-      const newIdx = viewingHistoryIndex - 1;
+      const newIdx = (viewingHistoryIndex ?? 0) - 1;
       viewWeek(newIdx >= 0 ? newIdx : null);
     } else if (history.length > 0) {
       viewWeek(history.length - 1);
@@ -178,14 +193,15 @@ export default function Program() {
 
   const goForward = () => {
     if (!isViewingHistory) return;
-    if (viewingHistoryIndex < history.length - 1) {
-      viewWeek(viewingHistoryIndex + 1);
+    const idx = viewingHistoryIndex ?? 0;
+    if (idx < history.length - 1) {
+      viewWeek(idx + 1);
     } else {
       viewWeek(null);
     }
   };
 
-  // Goal display name with better visibility
+  // Goal display name
   const goalLabel = (g: string) => {
     if (g === "lean bulk") return "Lean Bulk";
     return g.charAt(0).toUpperCase() + g.slice(1);
@@ -227,6 +243,7 @@ export default function Program() {
         >
           <ChevronLeft className="w-4 h-4 text-foreground" />
         </button>
+
         <div className="text-center">
           <p className="text-sm font-semibold text-foreground">
             Week {displayWeekNumber}
@@ -236,19 +253,24 @@ export default function Program() {
             <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium">
               {goalLabel(programState.goal)}
             </span>
-            <span className={cn(
-              "px-2 py-0.5 rounded text-[10px] font-medium",
-              prescription.deload
-                ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400",
-            )}>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded text-[10px] font-medium",
+                prescription.deload
+                  ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+                  : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+              )}
+            >
               {prescription.deload ? "Deload" : "Progression"}
             </span>
             {!isViewingHistory && (
-              <span className="text-[10px] text-muted-foreground">{completedCount}/{totalDays}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {completedCount}/{totalDays}
+              </span>
             )}
           </div>
         </div>
+
         <button
           onClick={goForward}
           disabled={!canGoForward}
@@ -258,7 +280,7 @@ export default function Program() {
         </button>
       </div>
 
-      {/* Advance Week Button — shown when all workouts are complete */}
+      {/* Advance Week Button */}
       {allComplete && !isViewingHistory && (
         <button
           onClick={handleAdvanceWeek}
@@ -273,10 +295,7 @@ export default function Program() {
       {/* Workout Day Cards */}
       <div className="space-y-2">
         {displayWorkouts.map((day, dayIndex) => (
-          <div
-            key={dayIndex}
-            className="bg-card rounded-xl border border-border/50 overflow-hidden"
-          >
+          <div key={dayIndex} className="bg-card rounded-xl border border-border/50 overflow-hidden">
             {/* Day Header */}
             <button
               onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
@@ -290,11 +309,10 @@ export default function Program() {
                 )}
                 <div className="text-left">
                   <p className="text-sm font-medium text-foreground">{day.dayName}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {day.exercises.length} exercises
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">{day.exercises.length} exercises</p>
                 </div>
               </div>
+
               {expandedDay === dayIndex ? (
                 <ChevronUp className="w-4 h-4 text-muted-foreground" />
               ) : (
@@ -316,32 +334,29 @@ export default function Program() {
                     {day.exercises.map((ex, exIndex) => (
                       <button
                         key={exIndex}
-                        onClick={() => !isViewingHistory && openDrawer(dayIndex, exIndex, ex)}
-                        disabled={isViewingHistory}
+                        onClick={() => openDrawer(dayIndex, exIndex, ex)}
                         className={cn(
                           "w-full flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 text-left",
-                          !isViewingHistory && "hover:bg-muted transition-colors",
+                          "hover:bg-muted transition-colors"
                         )}
                       >
                         <Dumbbell className="w-4 h-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {ex.name}
-                          </p>
+                          <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span>{ex.sets}&times;{ex.reps}</span>
+                            <span>
+                              {ex.sets}&times;{ex.reps}
+                            </span>
                             <span className="text-[10px]">&middot;</span>
                             <ProgressionLabel ex={ex} />
                           </div>
                         </div>
-                        {ex.lastPerformance && (
-                          <DirectionIcon ex={ex} />
-                        )}
+                        {ex.lastPerformance && <DirectionIcon ex={ex} />}
                       </button>
                     ))}
 
                     {/* Start Workout Session */}
-                    {!day.completed && !isViewingHistory && (
+                    {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-2.5 mt-1 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
@@ -351,7 +366,7 @@ export default function Program() {
                     )}
 
                     {/* Complete Day button */}
-                    {!day.completed && !isViewingHistory && (
+                    {!day.completed && (
                       <button
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
@@ -386,10 +401,8 @@ export default function Program() {
               className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl border-t border-border/50 max-h-[80vh] overflow-y-auto safe-area-pb"
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
-                {/* Handle */}
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
-                {/* Header */}
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-base font-semibold text-foreground">{drawerExercise.exercise.name}</p>
@@ -422,10 +435,12 @@ export default function Program() {
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-0.5">Sets</p>
                   </div>
+
                   <div className="bg-muted rounded-lg p-2">
                     <p className="text-lg font-bold text-foreground">{drawerExercise.exercise.reps}</p>
                     <p className="text-[10px] text-muted-foreground">Reps</p>
                   </div>
+
                   <div className="bg-muted rounded-lg p-2">
                     <p className="text-lg font-bold text-foreground">
                       {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "BW"}
@@ -439,17 +454,25 @@ export default function Program() {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">Recent</p>
                     <div className="space-y-1">
-                      {drawerExercise.exercise.performanceHistory.slice(-3).reverse().map((rec, i) => (
-                        <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded bg-muted/50 text-xs">
-                          <span className="text-muted-foreground">{rec.date}</span>
-                          <span className="text-foreground font-medium">
-                            {rec.weight > 0 ? `${rec.weight}kg` : "BW"} &times; {rec.repsCompleted}/{rec.repsTarget}
-                          </span>
-                          <span className={rec.repsCompleted >= rec.repsTarget ? "text-green-500" : "text-red-400"}>
-                            {rec.repsCompleted >= rec.repsTarget ? "Pass" : "Miss"}
-                          </span>
-                        </div>
-                      ))}
+                      {drawerExercise.exercise.performanceHistory
+                        .slice(-3)
+                        .reverse()
+                        .map((rec, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between py-1.5 px-2 rounded bg-muted/50 text-xs"
+                          >
+                            <span className="text-muted-foreground">{rec.date}</span>
+                            <span className="text-foreground font-medium">
+                              {rec.weight > 0 ? `${rec.weight}kg` : "BW"} × {rec.repsCompleted}/{rec.repsTarget}
+                            </span>
+                            <span
+                              className={rec.repsCompleted >= rec.repsTarget ? "text-green-500" : "text-red-400"}
+                            >
+                              {rec.repsCompleted >= rec.repsTarget ? "Pass" : "Miss"}
+                            </span>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}
@@ -545,9 +568,7 @@ export default function Program() {
                         onClick={() => regenerateProgram(g)}
                         className={cn(
                           "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                          programState.goal === g
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground hover:bg-muted/80",
+                          programState.goal === g ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
                         )}
                       >
                         {goalLabel(g)}
@@ -569,9 +590,7 @@ export default function Program() {
                         onClick={() => regenerateProgram(undefined, s.value)}
                         className={cn(
                           "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                          s.split === programState.splitType
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground hover:bg-muted/80",
+                          s.split === programState.splitType ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
                         )}
                       >
                         {s.label}
@@ -589,15 +608,9 @@ export default function Program() {
                     </div>
                     <button
                       onClick={() => updateSettings({ autoProgression: !settings.autoProgression })}
-                      className={cn(
-                        "w-10 h-6 rounded-full transition-colors relative",
-                        settings.autoProgression ? "bg-primary" : "bg-muted",
-                      )}
+                      className={cn("w-10 h-6 rounded-full transition-colors relative", settings.autoProgression ? "bg-primary" : "bg-muted")}
                     >
-                      <div className={cn(
-                        "w-4 h-4 rounded-full bg-white absolute top-1 transition-transform",
-                        settings.autoProgression ? "translate-x-5" : "translate-x-1",
-                      )} />
+                      <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.autoProgression ? "translate-x-5" : "translate-x-1")} />
                     </button>
                   </div>
 
@@ -608,20 +621,13 @@ export default function Program() {
                     </div>
                     <button
                       onClick={() => updateSettings({ microloading: !settings.microloading })}
-                      className={cn(
-                        "w-10 h-6 rounded-full transition-colors relative",
-                        settings.microloading ? "bg-primary" : "bg-muted",
-                      )}
+                      className={cn("w-10 h-6 rounded-full transition-colors relative", settings.microloading ? "bg-primary" : "bg-muted")}
                     >
-                      <div className={cn(
-                        "w-4 h-4 rounded-full bg-white absolute top-1 transition-transform",
-                        settings.microloading ? "translate-x-5" : "translate-x-1",
-                      )} />
+                      <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.microloading ? "translate-x-5" : "translate-x-1")} />
                     </button>
                   </div>
                 </div>
 
-                {/* Reset mesocycle */}
                 <button
                   onClick={handleRegenerate}
                   className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"

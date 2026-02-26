@@ -1,308 +1,361 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Camera, ScanLine, FileText, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { X, Image as ImageIcon } from "lucide-react";
 
-type Tab = "food" | "barcode" | "label";
+type CaptureMode = "food" | "label";
+type TabMode = "food" | "barcode" | "label";
 
-export interface BarcodeNutrition {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  servingSize: string;
-}
-
-interface Props {
+type Props = {
   open: boolean;
   onClose: () => void;
-  onPhotoCapture: (base64: string, mode: "food" | "label") => void;
-  onBarcodeResult: (nutrition: BarcodeNutrition) => void;
+  onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
+  onBarcodeDetected: (raw: string) => Promise<void>;
+  loading: boolean;
+};
+
+function dataUrlToBase64(dataUrl: string) {
+  const parts = dataUrl.split(",");
+  return parts.length > 1 ? parts[1] : "";
+}
+
+async function startStream(
+  videoEl: HTMLVideoElement,
+  facingMode: "environment" | "user"
+) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode },
+    audio: false,
+  });
+  videoEl.srcObject = stream;
+  await videoEl.play();
+  return stream;
+}
+
+function stopStream(stream: MediaStream | null) {
+  if (!stream) return;
+  stream.getTracks().forEach((t) => t.stop());
 }
 
 export default function FoodCameraModal({
   open,
   onClose,
-  onPhotoCapture,
-  onBarcodeResult,
+  onCaptureBase64,
+  onBarcodeDetected,
+  loading,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const barcodeControlsRef = useRef<{ stop: () => void } | null>(null);
 
-  // Stable refs for callbacks used in async barcode handler
-  const onBarcodeResultRef = useRef(onBarcodeResult);
-  const onCloseRef = useRef(onClose);
-  onBarcodeResultRef.current = onBarcodeResult;
-  onCloseRef.current = onClose;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const stopZXingRef = useRef<null | (() => void)>(null);
 
-  const [activeTab, setActiveTab] = useState<Tab>("food");
-  const [cameraReady, setCameraReady] = useState(false);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
-  const [barcodeStatus, setBarcodeStatus] = useState<
-    "idle" | "scanning" | "looking_up"
-  >("idle");
+  const [tab, setTab] = useState<TabMode>("food");
+  const [facing, setFacing] = useState<"environment" | "user">("environment");
+  const [busy, setBusy] = useState(false);
+  const [barcodeHint, setBarcodeHint] = useState<string>("Align barcode in frame");
 
-  const lookupBarcode = useCallback(async (code: string) => {
-    setBarcodeStatus("looking_up");
-    try {
-      const res = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${code}.json`
-      );
-      const data = await res.json();
-
-      if (data.status === 1 && data.product) {
-        const p = data.product;
-        const n = p.nutriments || {};
-        onBarcodeResultRef.current({
-          name: p.product_name || "Unknown Product",
-          calories: Math.round(
-            n["energy-kcal_100g"] || n["energy-kcal"] || 0
-          ),
-          protein: Math.round(n.proteins_100g || n.proteins || 0),
-          carbs: Math.round(n.carbohydrates_100g || n.carbohydrates || 0),
-          fat: Math.round(n.fat_100g || n.fat || 0),
-          servingSize: p.serving_size || "100g",
-        });
-        onCloseRef.current();
-      } else {
-        setPermissionError(`Product not found for barcode: ${code}`);
-        setBarcodeStatus("scanning");
-      }
-    } catch {
-      setPermissionError("Failed to look up product.");
-      setBarcodeStatus("scanning");
-    }
-  }, []);
-
-  // Camera + barcode lifecycle
+  // start camera when opened
   useEffect(() => {
     if (!open) return;
 
-    let cancelled = false;
+    setTab("food");
+    setFacing("environment");
+    setBusy(false);
+    setBarcodeHint("Align barcode in frame");
 
-    const setup = async () => {
-      if (activeTab === "barcode") {
-        // Barcode mode — @zxing manages the camera stream
-        try {
-          const { BrowserMultiFormatReader } = await import("@zxing/browser");
-          if (cancelled) return;
+    const run = async () => {
+      try {
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
 
-          const reader = new BrowserMultiFormatReader();
-          setBarcodeStatus("scanning");
-
-          const controls = await reader.decodeFromVideoDevice(
-            undefined,
-            videoRef.current!,
-            (result) => {
-              if (result && !cancelled) {
-                controls.stop();
-                barcodeControlsRef.current = null;
-                lookupBarcode(result.getText());
-              }
-            }
-          );
-
-          if (cancelled) {
-            controls.stop();
-          } else {
-            barcodeControlsRef.current = controls;
-            setCameraReady(true);
-          }
-        } catch {
-          if (!cancelled)
-            setPermissionError(
-              "Barcode scanner failed. Check camera permissions."
-            );
-        }
-      } else {
-        // Photo mode — manual getUserMedia
-        try {
-          setPermissionError(null);
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: "environment",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-            },
-            audio: false,
-          });
-
-          if (cancelled) {
-            stream.getTracks().forEach((t) => t.stop());
-            return;
-          }
-
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            await videoRef.current.play();
-          }
-          setCameraReady(true);
-        } catch {
-          if (!cancelled)
-            setPermissionError(
-              "Camera permission denied. Allow camera access in browser settings."
-            );
-        }
+        streamRef.current = await startStream(videoEl, "environment");
+      } catch (e: any) {
+        // If camera permissions fail, close gracefully
+        console.error(e);
+        onClose();
       }
     };
 
-    setup();
+    void run();
 
     return () => {
-      cancelled = true;
-      if (barcodeControlsRef.current) {
-        barcodeControlsRef.current.stop();
-        barcodeControlsRef.current = null;
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-      }
-      setCameraReady(false);
-      setBarcodeStatus("idle");
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+
+      stopStream(streamRef.current);
+      streamRef.current = null;
     };
-  }, [open, activeTab, lookupBarcode]);
+  }, [open, onClose]);
 
-  // Capture photo from video frame
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
+  // flip camera
+  useEffect(() => {
+    if (!open) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
 
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-    const base64 = dataUrl.split(",")[1];
-    onPhotoCapture(base64, activeTab as "food" | "label");
-    onClose();
+    const restart = async () => {
+      try {
+        stopZXingRef.current?.();
+        stopZXingRef.current = null;
+
+        stopStream(streamRef.current);
+        streamRef.current = await startStream(videoEl, facing);
+      } catch (e: any) {
+        console.error(e);
+      }
+    };
+
+    void restart();
+  }, [facing, open]);
+
+  // barcode scanning
+  useEffect(() => {
+    if (!open) return;
+
+    // only scan when in barcode tab
+    if (tab !== "barcode") {
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+      setBarcodeHint("Align barcode in frame");
+      return;
+    }
+
+    const startZXing = async () => {
+      try {
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
+
+        setBarcodeHint("Scanning…");
+
+        const mod = await import("@zxing/browser");
+        const { BrowserMultiFormatReader } = mod as any;
+
+        const reader = new BrowserMultiFormatReader();
+
+        const controls = await reader.decodeFromVideoElement(
+          videoEl,
+          async (result: any, err: any) => {
+            // ignore noisy errors
+            if (err) void err;
+            if (!result) return;
+
+            const text = String(result.getText?.() ?? result.text ?? "").trim();
+            if (!text) return;
+
+            // stop after first detection
+            try {
+              controls.stop();
+            } catch {
+              // ignore
+            }
+            stopZXingRef.current = null;
+            setBarcodeHint("Found!");
+
+            await onBarcodeDetected(text);
+          }
+        );
+
+        stopZXingRef.current = () => {
+          try {
+            controls.stop();
+          } catch {
+            // ignore
+          }
+        };
+      } catch (e: any) {
+        console.error(e);
+        setBarcodeHint("Scanner failed — try again");
+      }
+    };
+
+    void startZXing();
+
+    return () => {
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+    };
+  }, [tab, open, onBarcodeDetected]);
+
+  const pickFromLibrary = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    try {
+      setBusy(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = String(reader.result || "");
+        const base64 = dataUrlToBase64(dataUrl);
+        await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+        setBusy(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setBusy(false);
+    }
+  };
+
+  const takePhoto = async () => {
+    if (busy || loading) return;
+
+    try {
+      setBusy(true);
+
+      const videoEl = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!videoEl || !canvas) return;
+
+      const w = videoEl.videoWidth || 1280;
+      const h = videoEl.videoHeight || 720;
+
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.drawImage(videoEl, 0, 0, w, h);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      const base64 = dataUrlToBase64(dataUrl);
+
+      await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!open) return null;
 
-  const TABS: { id: Tab; label: string; icon: typeof Camera }[] = [
-    { id: "food", label: "Scan Food", icon: Camera },
-    { id: "barcode", label: "Barcode", icon: ScanLine },
-    { id: "label", label: "Label", icon: FileText },
-  ];
+  const disableShutter = loading || busy || tab === "barcode";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-3">
+    <div className="fixed inset-0 z-[60] bg-black">
+      {/* top bar */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button
           onClick={onClose}
-          className="p-2 rounded-full bg-white/10 text-white"
+          className="h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+          aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex gap-1 bg-white/10 rounded-lg p-1">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setPermissionError(null);
-                  setActiveTab(tab.id);
-                }}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5",
-                  activeTab === tab.id
-                    ? "bg-white text-black"
-                    : "text-white/70"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="w-9" />
+        <button
+          onClick={() => setFacing((p) => (p === "environment" ? "user" : "environment"))}
+          className="h-10 px-4 rounded-full bg-black/50 text-white text-sm"
+          aria-label="Flip camera"
+        >
+          Flip
+        </button>
       </div>
 
-      {/* Camera viewfinder */}
-      <div className="flex-1 relative overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <canvas ref={canvasRef} className="hidden" />
+      {/* camera */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        muted
+        playsInline
+        autoPlay
+      />
 
-        {/* Barcode scanning overlay */}
-        {activeTab === "barcode" && cameraReady && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-40 border-2 border-white/50 rounded-2xl relative">
-              {barcodeStatus === "scanning" && (
-                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-primary animate-pulse" />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Permission / error overlay */}
-        {permissionError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
-            <div className="bg-card rounded-2xl p-6 max-w-sm text-center space-y-3">
-              <p className="text-sm text-foreground">{permissionError}</p>
-              <button
-                onClick={() => setPermissionError(null)}
-                className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Barcode lookup loading */}
-        {barcodeStatus === "looking_up" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <div className="flex items-center gap-2 text-white text-sm">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Looking up product...
-            </div>
-          </div>
-        )}
+      {/* frame overlay */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[78%] max-w-[360px] aspect-[4/2.3] rounded-2xl border-2 border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
       </div>
 
-      {/* Bottom controls */}
-      <div className="relative z-10 py-6 flex flex-col items-center gap-3">
-        {activeTab === "barcode" ? (
-          <p className="text-white/60 text-xs">
-            {barcodeStatus === "scanning"
-              ? "Point at a barcode..."
-              : barcodeStatus === "looking_up"
-                ? "Looking up product..."
-                : "Starting scanner..."}
-          </p>
-        ) : (
-          <>
+      {/* bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
+        <div className="mx-auto max-w-[520px] space-y-3">
+          {/* tabs */}
+          <div className="flex gap-2 justify-center">
             <button
-              onClick={capturePhoto}
-              disabled={!cameraReady}
-              className="w-16 h-16 rounded-full bg-white border-4 border-white/30 active:scale-95 transition-transform disabled:opacity-40"
+              onClick={() => setTab("food")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium",
+                tab === "food" ? "bg-white text-black" : "bg-black/40 text-white"
+              )}
+            >
+              Scan Food
+            </button>
+            <button
+              onClick={() => setTab("barcode")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium",
+                tab === "barcode" ? "bg-white text-black" : "bg-black/40 text-white"
+              )}
+            >
+              Barcode
+            </button>
+            <button
+              onClick={() => setTab("label")}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium",
+                tab === "label" ? "bg-white text-black" : "bg-black/40 text-white"
+              )}
+            >
+              Food label
+            </button>
+          </div>
+
+          {tab === "barcode" && (
+            <p className="text-center text-xs text-white/80">{barcodeHint}</p>
+          )}
+
+          {/* capture row */}
+          <div className="flex items-center justify-between">
+            {/* Photo library */}
+            <button
+              onClick={pickFromLibrary}
+              className="h-12 w-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+              aria-label="Photo library"
+              disabled={loading || busy}
+            >
+              <ImageIcon className="w-5 h-5" />
+            </button>
+
+            {/* Shutter (only for food/label) */}
+            <button
+              onClick={takePhoto}
+              disabled={disableShutter}
+              className={cn(
+                "h-16 w-16 rounded-full border-4 border-white bg-white/10",
+                disableShutter && "opacity-50"
+              )}
+              aria-label="Capture"
             />
-            <p className="text-white/60 text-xs">
-              {activeTab === "food"
-                ? "Take a photo of your food"
-                : "Take a photo of the nutrition label"}
-            </p>
-          </>
-        )}
+
+            <div className="h-12 w-12" />
+          </div>
+
+          <p className="text-center text-xs text-white/70">
+            {tab === "barcode"
+              ? "Auto-detects barcode (no shutter)"
+              : "Tap shutter to capture. Use gallery icon for photo library."}
+          </p>
+        </div>
       </div>
+
+      {/* hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onFileChange}
+      />
+
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import {
   Trophy,
   Target,
@@ -11,7 +10,7 @@ import {
   ChevronDown,
   Beef,
   Wheat,
-  Droplet,
+  Cookie,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
@@ -23,12 +22,15 @@ import { toast } from "sonner";
 
 type PhaseMode = "lean bulk" | "cut" | "recomp" | "strength peak";
 
-const phaseConfig: Record<PhaseMode, {
-  calorieMultiplier: number;
-  proteinRatio: number;
-  fatRatio: number;
-  plateauSensitivity: number;
-}> = {
+const phaseConfig: Record<
+  PhaseMode,
+  {
+    calorieMultiplier: number;
+    proteinRatio: number;
+    fatRatio: number;
+    plateauSensitivity: number;
+  }
+> = {
   "lean bulk": {
     calorieMultiplier: 1.1,
     proteinRatio: 2.2,
@@ -144,12 +146,8 @@ function calculateAdaptiveMacros(
 
   let baseCalories = bw * 33;
 
-  if (avgLiftChange <= 0 && avgWeightChange <= 0) {
-    baseCalories += 150;
-  }
-  if (avgWeightChange > 0.5 && avgLiftChange <= 0) {
-    baseCalories -= 100;
-  }
+  if (avgLiftChange <= 0 && avgWeightChange <= 0) baseCalories += 150;
+  if (avgWeightChange > 0.5 && avgLiftChange <= 0) baseCalories -= 100;
 
   const adjustedCalories = Math.round(baseCalories * config.calorieMultiplier);
   const protein = Math.round(bw * config.proteinRatio);
@@ -176,18 +174,38 @@ function getBadgeInfo(
   mealsTarget: number
 ) {
   if (newPR) {
-    return { badge: "PR Crusher", icon: Trophy, motivational: "New personal best! Small wins, huge gains." };
+    return {
+      badge: "PR Crusher",
+      icon: Trophy,
+      motivational: "New personal best! Small wins, huge gains.",
+    };
   }
   if (workoutsDone >= workoutsTarget && mealsDone >= mealsTarget) {
-    return { badge: "Consistency Champ", icon: Target, motivational: "Consistency compounds faster than motivation!" };
+    return {
+      badge: "Consistency Champ",
+      icon: Target,
+      motivational: "Consistency compounds faster than motivation!",
+    };
   }
   if (workoutsDone >= workoutsTarget) {
-    return { badge: "Iron Regular", icon: Target, motivational: "All workouts done. Keep the nutrition tight!" };
+    return {
+      badge: "Iron Regular",
+      icon: Target,
+      motivational: "All workouts done. Keep the nutrition tight!",
+    };
   }
   if (mealsDone >= mealsTarget) {
-    return { badge: "Protein Hero", icon: Flame, motivational: "Nutrition goals hit. Muscle growth is on track!" };
+    return {
+      badge: "Protein Hero",
+      icon: Flame,
+      motivational: "Nutrition goals hit. Muscle growth is on track!",
+    };
   }
-  return { badge: "Weekly Warrior", icon: Zap, motivational: "Keep going! Progress is built one session at a time." };
+  return {
+    badge: "Weekly Warrior",
+    icon: Zap,
+    motivational: "Keep going! Progress is built one session at a time.",
+  };
 }
 
 /* ================================
@@ -214,21 +232,60 @@ function calculatePercentile(
 }
 
 /* ================================
+   TINT HELPER
+================================ */
+
+function tint(hex: string, factor: number = 0.85): string {
+  if (!hex || !hex.startsWith("#")) return hex;
+
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
+  const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
+  const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+
+  return `#${newR.toString(16).padStart(2, "0")}${newG
+    .toString(16)
+    .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+}
+
+/* ================================
    PROGRESS BAR
 ================================ */
 
-function ProgressBar({ done, target, label }: { done: number; target: number; label: string }) {
+function ProgressBar({
+  done,
+  target,
+  label,
+  tintHex,
+}: {
+  done: number;
+  target: number;
+  label: string;
+  tintHex?: string;
+}) {
   const safeDone = safeNum(done);
   const safeTarget = safeNum(target, 1);
   const ratio = Math.min(safeDone / Math.max(safeTarget, 1), 1);
   const pct = Math.round(ratio * 100);
+
+  const trackBg = tintHex ? tint(tintHex, 0.92) : undefined;
+
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>{label}</span>
-        <span>{safeDone}/{safeTarget}</span>
+        <span>
+          {safeDone}/{safeTarget}
+        </span>
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
+
+      <div
+        className="h-2 rounded-full overflow-hidden bg-muted/50"
+        style={trackBg ? { backgroundColor: trackBg } : undefined}
+      >
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
@@ -283,10 +340,13 @@ export function AdaptiveSummary({
   const { isPro } = useSubscription();
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
-  const [calorieBoost, setCalorieBoost] = useState(0); // Applied suggestion boost
+  const [calorieBoost, setCalorieBoost] = useState(0);
 
   const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
-  const workoutsTarget = safeNum(mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget, 4);
+  const workoutsTarget = safeNum(
+    mode === "weekly" ? weeklyWorkoutsTarget : monthlyWorkoutsTarget,
+    4
+  );
   const mealsDone = safeNum(mode === "weekly" ? weeklyMealsDone : monthlyMealsDone);
   const mealsTarget = safeNum(mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget, 10);
   const newPR = mode === "weekly" ? weeklyPR : monthlyPR;
@@ -297,9 +357,8 @@ export function AdaptiveSummary({
   const percentile = calculatePercentile(workoutsDone, workoutsTarget, mealsDone, mealsTarget, newPR);
 
   const recentWeights = bodyweightTrend.slice(-3).filter((v) => typeof v === "number" && !isNaN(v));
-  const avgWeightChange = recentWeights.length > 0
-    ? recentWeights.reduce((a, b) => a + b, 0) / recentWeights.length
-    : 0;
+  const avgWeightChange =
+    recentWeights.length > 0 ? recentWeights.reduce((a, b) => a + b, 0) / recentWeights.length : 0;
 
   const avgLiftChange = newPR ? 1 : 0;
 
@@ -307,7 +366,6 @@ export function AdaptiveSummary({
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, config.plateauSensitivity);
   const macros = calculateAdaptiveMacros(safeNum(weightKg, 70), avgLiftChange, avgWeightChange, phase);
 
-  // Display macros with applied boost (from "Apply Suggestion" button)
   const displayMacros = {
     ...macros,
     calories: macros.calories + calorieBoost,
@@ -323,6 +381,23 @@ export function AdaptiveSummary({
 
   const showApplyButton = isPro && plateau.calorieAdjust !== 0;
 
+  const macroColors = {
+    calories: "#f97316",
+    protein: "#3b82f6",
+    carbs: "#f59e0b",
+    fat: "#a855f6",
+  };
+
+  // Light tint tracks so the “grey/heavy” feeling disappears
+  const trackTints = {
+    workouts: "#8b5cf6", // premium purple tint
+    meals: macroColors.protein, // blue tint matches your protein card
+  };
+
+  // Optional: phase accent for tiny UI cues (kept subtle)
+  const phaseAccent =
+    phase === "lean bulk" ? "#22c55e" : phase === "cut" ? "#ef4444" : "#a855f7";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -330,17 +405,19 @@ export function AdaptiveSummary({
       className="bg-card rounded-2xl border border-border/50 overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-muted/30 px-5 py-4 border-b border-border/30">
+      <div className="px-5 py-4 border-b border-border/30 bg-white">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <BadgeIcon className="w-5 h-5 text-primary" />
           </div>
+
           <div className="flex-1">
             <h3 className="font-semibold text-foreground">
               {athleteType} {mode.charAt(0).toUpperCase() + mode.slice(1)} Summary
             </h3>
             <p className="text-sm text-muted-foreground">{badgeInfo.badge}</p>
           </div>
+
           {weightTrending !== "stable" && (
             <div className="flex items-center gap-1 text-xs">
               {weightTrending === "up" ? (
@@ -349,7 +426,8 @@ export function AdaptiveSummary({
                 <TrendingDown className="w-3.5 h-3.5 text-blue-500" />
               )}
               <span className={weightTrending === "up" ? "text-green-500" : "text-blue-500"}>
-                {avgWeightChange > 0 ? "+" : ""}{safeNum(avgWeightChange).toFixed(1)}kg
+                {avgWeightChange > 0 ? "+" : ""}
+                {safeNum(avgWeightChange).toFixed(1)}kg
               </span>
             </div>
           )}
@@ -363,11 +441,13 @@ export function AdaptiveSummary({
             done={workoutsDone}
             target={workoutsTarget}
             label="Workouts"
+            tintHex={trackTints.workouts}
           />
           <ProgressBar
             done={mealsDone}
             target={mealsTarget}
-            label="Protein meals"
+            label="Meals"
+            tintHex={trackTints.meals}
           />
         </div>
 
@@ -385,7 +465,7 @@ export function AdaptiveSummary({
               AI macro adjustments, plateau detection, phase modes, and performance insights.
             </p>
             <p className="text-xs font-semibold text-foreground">
-              {"\u00A3"}{pricing.monthly}/month or {"\u00A3"}{pricing.yearly}/year
+              £{pricing.monthly}/month or £{pricing.yearly}/year
             </p>
           </div>
         )}
@@ -411,16 +491,34 @@ export function AdaptiveSummary({
               </div>
             </div>
 
-            {/* Plateau Insight + Apply Button */}
-            <div className={cn(
-              "p-4 rounded-xl border",
-              plateau.status === "progressing" ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800" :
-              plateau.status === "stalling" ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" :
-              plateau.status === "regressing" ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" :
-              "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-            )}>
-              <p className="text-sm font-medium text-foreground">Performance Insight</p>
-              <p className="text-xs text-muted-foreground mt-1">{plateau.message}</p>
+            {/* Performance Insight */}
+            <div
+              className="rounded-3xl p-6 border border-border/50 shadow-sm bg-white"
+              style={{
+                boxShadow: "0 1px 12px rgba(0,0,0,0.04)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">Performance Insight</p>
+                <span
+                  className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: tint(phaseAccent, 0.92),
+                    color: phaseAccent,
+                  }}
+                >
+                  {phase === "lean bulk"
+                    ? "Lean Bulk"
+                    : phase === "cut"
+                    ? "Cut"
+                    : phase === "recomp"
+                    ? "Recomp"
+                    : "Strength Peak"}
+                </span>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-2">{plateau.message}</p>
+
               {plateau.macroNote !== "No changes needed." && (
                 <p className="text-xs text-muted-foreground mt-1 italic">{plateau.macroNote}</p>
               )}
@@ -430,54 +528,69 @@ export function AdaptiveSummary({
                   onClick={() => {
                     setCalorieBoost((prev) => prev + plateau.calorieAdjust);
                     toast.success(
-                      `Suggestion applied! +${plateau.calorieAdjust} cal added to targets. ${plateau.macroNote}`
+                      `Suggestion applied! ${plateau.calorieAdjust > 0 ? "+" : ""}${
+                        plateau.calorieAdjust
+                      } cal. ${plateau.macroNote}`
                     );
                   }}
-                  className="mt-3 w-full py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 active:bg-primary/95 transition-all shadow-sm"
+                  className="mt-4 w-full py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 active:bg-primary/95 transition-all shadow-sm"
                 >
-                  Apply Suggestion (+{plateau.calorieAdjust} cal)
+                  Apply Suggestion ({plateau.calorieAdjust > 0 ? "+" : ""}
+                  {plateau.calorieAdjust} cal)
                 </button>
               )}
             </div>
 
-            {/* AI Macro Targets - Unified beautiful style (matches Today's Intake) */}
+            {/* AI Macro Targets (match Today’s Intake style) */}
             <div>
-              <p className="text-sm font-medium text-foreground mb-3">AI Macro Targets</p>
+              <p className="text-sm font-medium text-foreground mb-4">AI Macro Targets</p>
               <div className="grid grid-cols-4 gap-3 text-center">
-                {/* Calories */}
-                <div className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-950 dark:to-amber-950/60 rounded-xl p-3 shadow-sm border border-orange-100/60 dark:border-orange-900/40">
-                  <Flame className="w-6 h-6 mx-auto mb-2 text-orange-500 dark:text-orange-400" />
-                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    {displayMacros.calories}
-                  </p>
-                  <p className="text-xs text-orange-500 dark:text-orange-400/80">cal</p>
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.calories),
+                    color: macroColors.calories,
+                  }}
+                >
+                  <Flame className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold leading-none">{displayMacros.calories}</p>
+                  <p className="text-xs mt-1">cal</p>
                 </div>
 
-                {/* Protein */}
-                <div className="bg-gradient-to-br from-blue-50 to-sky-100 dark:from-blue-950 dark:to-sky-950/60 rounded-xl p-3 shadow-sm border border-blue-100/60 dark:border-blue-900/40">
-                  <Beef className="w-6 h-6 mx-auto mb-2 text-blue-500 dark:text-blue-400" />
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {displayMacros.protein}g
-                  </p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400/80">protein</p>
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.protein),
+                    color: macroColors.protein,
+                  }}
+                >
+                  <Beef className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold leading-none">{displayMacros.protein}g</p>
+                  <p className="text-xs mt-1">protein</p>
                 </div>
 
-                {/* Carbs */}
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-amber-950 dark:to-yellow-950/60 rounded-xl p-3 shadow-sm border border-amber-100/60 dark:border-amber-900/40">
-                  <Wheat className="w-6 h-6 mx-auto mb-2 text-amber-500 dark:text-amber-400" />
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    {displayMacros.carbs}g
-                  </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-400/80">carbs</p>
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.carbs),
+                    color: macroColors.carbs,
+                  }}
+                >
+                  <Wheat className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold leading-none">{displayMacros.carbs}g</p>
+                  <p className="text-xs mt-1">carbs</p>
                 </div>
 
-                {/* Fat */}
-                <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950 dark:to-violet-950/60 rounded-xl p-3 shadow-sm border border-purple-100/60 dark:border-purple-900/40">
-                  <Droplet className="w-6 h-6 mx-auto mb-2 text-purple-500 dark:text-purple-400" />
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {displayMacros.fat}g
-                  </p>
-                  <p className="text-xs text-purple-500 dark:text-purple-400/80">fat</p>
+                <div
+                  className="rounded-xl p-4 shadow-sm"
+                  style={{
+                    backgroundColor: tint(macroColors.fat),
+                    color: macroColors.fat,
+                  }}
+                >
+                  <Cookie className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-2xl font-bold leading-none">{displayMacros.fat}g</p>
+                  <p className="text-xs mt-1">fat</p>
                 </div>
               </div>
             </div>
@@ -488,8 +601,8 @@ export function AdaptiveSummary({
         <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground">
             You're in the top{" "}
-            <span className="font-semibold text-foreground">{percentile}%</span>{" "}
-            of {athleteLabel} this {mode}
+            <span className="font-semibold text-foreground">{percentile}%</span> of {athleteLabel}{" "}
+            this {mode}
           </p>
         </div>
       </div>
