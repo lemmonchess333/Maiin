@@ -193,7 +193,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     await saveMeal(meal);
   };
 
-  // matches FoodCameraModal signature: (base64, mode)
+  // Matches FoodCameraModal: (base64, mode)
   const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
@@ -227,6 +227,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Always visible — won't disappear if you cancel camera */}
       <button
         onClick={() => setCameraOpen(true)}
         className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors"
