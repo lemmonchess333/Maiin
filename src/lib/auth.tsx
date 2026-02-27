@@ -48,6 +48,15 @@ export interface UserProfile {
     startWeight: number;
     currentPhase: string;
   };
+  // Macro targets
+  targetCalories?: number;
+  targetProtein?: number;
+  targetCarbs?: number;
+  targetFat?: number;
+  goal?: string;
+  // Workout preferences
+  autoRestTimer?: boolean;
+  defaultRestSeconds?: number;
 }
 
 /* ================================

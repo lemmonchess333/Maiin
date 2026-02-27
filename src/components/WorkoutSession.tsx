@@ -19,10 +19,25 @@ interface WorkoutDay {
   completed: boolean;
 }
 
+type SetType = "working" | "warmup" | "dropset" | "failure";
+
+const SET_TYPE_CONFIG: Record<SetType, { label: string; color: string; bg: string }> = {
+  working: { label: "W", color: "text-foreground", bg: "" },
+  warmup: { label: "W", color: "text-yellow-600", bg: "bg-yellow-50 dark:bg-yellow-950/30" },
+  dropset: { label: "D", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/30" },
+  failure: { label: "F", color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30" },
+};
+
+const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
+
+const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+
 interface SetLog {
   reps: number;
   weight: number;
   completed: boolean;
+  type: SetType;
+  rpe?: number;
 }
 
 interface Props {
@@ -42,9 +57,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         reps: ex.reps,
         weight: ex.weight,
         completed: false,
+        type: "working" as SetType,
       }))
     )
   );
+  const [showRPE, setShowRPE] = useState(false);
 
   // Rest timer
   const [restSeconds, setRestSeconds] = useState(0);
@@ -100,6 +117,38 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const cycleSetType = (exIdx: number, setIdx: number) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      const current = updated[exIdx][setIdx].type;
+      const currentIndex = SET_TYPE_ORDER.indexOf(current);
+      updated[exIdx][setIdx].type = SET_TYPE_ORDER[(currentIndex + 1) % SET_TYPE_ORDER.length];
+      return updated;
+    });
+  };
+
+  const updateSetRPE = (exIdx: number, setIdx: number, rpe: number) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[exIdx][setIdx].rpe = rpe;
+      return updated;
+    });
+  };
+
+  const addSet = (exIdx: number) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      const lastSet = updated[exIdx][updated[exIdx].length - 1];
+      updated[exIdx].push({
+        reps: lastSet?.reps ?? day.exercises[exIdx].reps,
+        weight: lastSet?.weight ?? day.exercises[exIdx].weight,
+        completed: false,
+        type: "working",
+      });
+      return updated;
+    });
   };
 
   const updateSetLog = (exIdx: number, setIdx: number, field: "reps" | "weight", value: number) => {
@@ -325,46 +374,101 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             <div className="col-span-4">Reps</div>
             <div className="col-span-2 text-center">Done</div>
           </div>
-          {currentSets.map((set, setIdx) => (
-            <div
-              key={setIdx}
-              className={cn(
-                "grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-t border-border/30",
-                setIdx === currentSetIndex && !set.completed && "bg-primary/5",
-                set.completed && "opacity-60",
-              )}
-            >
-              <div className="col-span-2 text-sm font-medium text-muted-foreground text-center">
-                {setIdx + 1}
-              </div>
-              <div className="col-span-4">
-                <input
-                  type="number"
-                  value={set.weight || ""}
-                  onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
-                  disabled={set.completed}
-                  className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                />
-              </div>
-              <div className="col-span-4">
-                <input
-                  type="number"
-                  value={set.reps || ""}
-                  onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
-                  disabled={set.completed}
-                  className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                />
-              </div>
-              <div className="col-span-2 flex justify-center">
-                {set.completed ? (
-                  <Check className="w-5 h-5 text-green-500" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-border" />
+          {currentSets.map((set, setIdx) => {
+            const typeConfig = SET_TYPE_CONFIG[set.type];
+            return (
+              <div key={setIdx}>
+                <div
+                  className={cn(
+                    "grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-t border-border/30",
+                    setIdx === currentSetIndex && !set.completed && "bg-primary/5",
+                    set.completed && "opacity-60",
+                    typeConfig.bg,
+                  )}
+                >
+                  <div className="col-span-2 flex justify-center">
+                    <button
+                      onClick={() => cycleSetType(currentExIndex, setIdx)}
+                      disabled={set.completed}
+                      className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
+                        typeConfig.color,
+                        set.type !== "working" ? "border border-current" : "",
+                      )}
+                      title={`Set type: ${set.type}`}
+                    >
+                      {set.type === "working" ? setIdx + 1 : typeConfig.label}
+                    </button>
+                  </div>
+                  <div className="col-span-4">
+                    <input
+                      type="number"
+                      value={set.weight || ""}
+                      onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
+                      disabled={set.completed}
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="col-span-4">
+                    <input
+                      type="number"
+                      value={set.reps || ""}
+                      onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
+                      disabled={set.completed}
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    {set.completed ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-border" />
+                    )}
+                  </div>
+                </div>
+                {/* RPE selector for completed sets */}
+                {showRPE && set.completed && (
+                  <div className="flex gap-1 px-4 py-1.5 border-t border-border/20 bg-muted/30">
+                    <span className="text-[10px] text-muted-foreground mr-1 self-center">RPE:</span>
+                    {RPE_OPTIONS.map((rpe) => (
+                      <button
+                        key={rpe}
+                        onClick={() => updateSetRPE(currentExIndex, setIdx, rpe)}
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded transition-colors",
+                          set.rpe === rpe
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {rpe}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
+
+          {/* Add Set button */}
+          <button
+            onClick={() => addSet(currentExIndex)}
+            className="w-full py-2.5 border-t border-dashed border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            + Add Set
+          </button>
         </div>
+
+        {/* RPE toggle */}
+        <button
+          onClick={() => setShowRPE(!showRPE)}
+          className={cn(
+            "text-xs px-3 py-1.5 rounded-lg transition-colors mx-auto block",
+            showRPE ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {showRPE ? "Hide RPE" : "Show RPE"}
+        </button>
 
         {/* Prescription hint */}
         {currentExercise && (
