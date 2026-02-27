@@ -247,50 +247,53 @@ function ProgramInner() {
         </div>
       </div>
 
-      {/* Week Navigation */}
-      <div className="flex items-center justify-between bg-card rounded-xl border border-border/50 px-4 py-2.5">
-        <button
-          onClick={goBack}
-          disabled={!canGoBack}
-          className={cn("p-1 rounded transition-colors", canGoBack ? "hover:bg-muted" : "opacity-30")}
-        >
-          <ChevronLeft className="w-4 h-4 text-foreground" />
-        </button>
+      {/* Phase + Week Header */}
+      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button
+            onClick={goBack}
+            disabled={!canGoBack}
+            className={cn("p-1 rounded transition-colors", canGoBack ? "hover:bg-muted" : "opacity-30")}
+          >
+            <ChevronLeft className="w-4 h-4 text-foreground" />
+          </button>
 
-        <div className="text-center">
-          <p className="text-sm font-semibold text-foreground">
-            Week {displayWeekNumber}
-            {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-0.5">
-            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-medium">
-              {goalLabel(programState.goal)}
-            </span>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded text-[10px] font-medium",
-                prescription.deload
-                  ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                  : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
-              )}
-            >
-              {prescription.deload ? "Deload" : "Progression"}
-            </span>
-            {!isViewingHistory && (
-              <span className="text-[10px] text-muted-foreground">
-                {completedCount}/{totalDays}
-              </span>
-            )}
+          <div className="text-center">
+            <p className="text-sm font-semibold text-foreground">
+              Week {displayWeekNumber}
+              {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
+            </p>
           </div>
+
+          <button
+            onClick={goForward}
+            disabled={!canGoForward}
+            className={cn("p-1 rounded transition-colors", canGoForward ? "hover:bg-muted" : "opacity-30")}
+          >
+            <ChevronRight className="w-4 h-4 text-foreground" />
+          </button>
         </div>
 
-        <button
-          onClick={goForward}
-          disabled={!canGoForward}
-          className={cn("p-1 rounded transition-colors", canGoForward ? "hover:bg-muted" : "opacity-30")}
-        >
-          <ChevronRight className="w-4 h-4 text-foreground" />
-        </button>
+        <div className="flex items-center justify-center gap-2 px-4 pb-3">
+          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+            {goalLabel(programState.goal)}
+          </span>
+          <span
+            className={cn(
+              "px-2.5 py-0.5 rounded-full text-[10px] font-medium",
+              prescription.deload
+                ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+                : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+            )}
+          >
+            {prescription.deload ? "Deload" : "Progression"}
+          </span>
+          {!isViewingHistory && (
+            <span className="px-2.5 py-0.5 rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+              {completedCount}/{totalDays} done
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Advance Week Button */}
@@ -308,51 +311,59 @@ function ProgramInner() {
       {/* Workout Day Cards */}
       <div className="space-y-2">
         {displayWorkouts.map((day, dayIndex) => (
-          <div key={dayIndex} className="bg-card rounded-xl border border-border/50 overflow-hidden">
+          <div
+            key={dayIndex}
+            className={cn(
+              "bg-card rounded-xl border overflow-hidden transition-colors",
+              day.completed
+                ? "border-l-[3px] border-l-green-500 border-border/50"
+                : "border-border/50"
+            )}
+          >
             {/* Day Header */}
-            <div className="flex items-center p-3 gap-2">
-              {/* Left: Completion circle (separate tap target) */}
-              {!isViewingHistory && (
+            <button
+              onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
+              className="w-full flex items-center p-3 gap-3"
+            >
+              {/* Completion indicator */}
+              <div className="shrink-0">
+                {day.completed ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                )}
+              </div>
+
+              {/* Day label + type */}
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  Day {dayIndex + 1}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {day.dayName} &middot; {day.exercises.length} exercises
+                </p>
+              </div>
+
+              {/* Mark complete button (separate tap) */}
+              {!isViewingHistory && !day.completed && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!day.completed) completeWorkoutDay(dayIndex);
+                    completeWorkoutDay(dayIndex);
                   }}
-                  className="shrink-0 p-0.5"
-                  aria-label={day.completed ? "Completed" : "Mark complete"}
+                  className="shrink-0 p-1 rounded-lg hover:bg-muted transition-colors"
+                  aria-label="Mark complete"
                 >
-                  {day.completed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
-                  )}
+                  <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
                 </button>
               )}
-              {isViewingHistory && (
-                day.completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                ) : (
-                  <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
-                )
+
+              {expandedDay === dayIndex ? (
+                <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               )}
-
-              {/* Center: Day name & meta (expand/collapse on click) */}
-              <button
-                onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
-                className="flex-1 flex items-center justify-between min-w-0"
-              >
-                <div className="text-left min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{day.dayName}</p>
-                  <p className="text-[11px] text-muted-foreground">{day.exercises.length} exercises</p>
-                </div>
-
-                {expandedDay === dayIndex ? (
-                  <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                )}
-              </button>
-            </div>
+            </button>
 
             {/* Expanded Exercise List */}
             <AnimatePresence>

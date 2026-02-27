@@ -397,65 +397,65 @@ export default function Log() {
           {/* Daily Totals - now exact same look as Today's Intake on Home */}
           <div className="bg-card rounded-2xl border border-border/50 p-5">
             <p className="text-sm font-medium text-foreground mb-4">Daily Totals</p>
-            <div className="grid grid-cols-4 gap-3 text-center">
+            <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
               <div
-                className="rounded-xl p-4 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
                   backgroundColor: tint(macroColors.calories),
                   color: macroColors.calories,
                 }}
               >
-                <Flame className="w-6 h-6 mx-auto mb-2" />
-                <p className="text-2xl font-bold">
+                <Flame className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
                   {safeNum(dailyTotals.calories)}
                 </p>
-                <p className="text-xs">cal</p>
+                <p className="text-[10px] mt-1">cal</p>
               </div>
 
               {/* Protein */}
               <div
-                className="rounded-xl p-4 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
                   backgroundColor: tint(macroColors.protein),
                   color: macroColors.protein,
                 }}
               >
-                <Beef className="w-6 h-6 mx-auto mb-2" />
-                <p className="text-2xl font-bold">
+                <Beef className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
                   {safeNum(dailyTotals.protein)}g
                 </p>
-                <p className="text-xs">protein</p>
+                <p className="text-[10px] mt-1">protein</p>
               </div>
 
               {/* Carbs */}
               <div
-                className="rounded-xl p-4 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
                   backgroundColor: tint(macroColors.carbs),
                   color: macroColors.carbs,
                 }}
               >
-                <Wheat className="w-6 h-6 mx-auto mb-2" />
-                <p className="text-2xl font-bold">
+                <Wheat className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
                   {safeNum(dailyTotals.carbs)}g
                 </p>
-                <p className="text-xs">carbs</p>
+                <p className="text-[10px] mt-1">carbs</p>
               </div>
 
               {/* Fat */}
               <div
-                className="rounded-xl p-4 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
                   backgroundColor: tint(macroColors.fat),
                   color: macroColors.fat,
                 }}
               >
-                <Cookie className="w-6 h-6 mx-auto mb-2" />
-                <p className="text-2xl font-bold">
+                <Cookie className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
                   {safeNum(dailyTotals.fat)}g
                 </p>
-                <p className="text-xs">fat</p>
+                <p className="text-[10px] mt-1">fat</p>
               </div>
             </div>
           </div>
