@@ -13,6 +13,8 @@ import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { RecipeBuilder } from "@/components/RecipeBuilder";
+import { parseFoodText } from "@/lib/nlFoodParser";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -26,6 +28,8 @@ import {
   Beef,
   Wheat,
   Cookie,
+  MessageSquare,
+  BookOpen,
 } from "lucide-react";
 
 export default function Log() {
@@ -39,6 +43,9 @@ export default function Log() {
   const [hasPR, setHasPR] = useState(false);
   const [activeTab, setActiveTab] = useState<"workout" | "food">("workout");
   const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [nlInput, setNlInput] = useState("");
+  const [nlParsing, setNlParsing] = useState(false);
+  const [showRecipeBuilder, setShowRecipeBuilder] = useState(false);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,6 +203,72 @@ export default function Log() {
       });
       toast.success("New PR! 🏆");
     }
+  };
+
+  const handleNLParse = async () => {
+    if (!nlInput.trim() || !user) return;
+    setNlParsing(true);
+    const items = parseFoodText(nlInput);
+    if (items.length === 0) {
+      toast.error("Could not parse any foods. Try a different description.");
+      setNlParsing(false);
+      return;
+    }
+    const totalCalories = items.reduce((s, i) => s + i.calories, 0);
+    const totalProtein = items.reduce((s, i) => s + i.protein, 0);
+    const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
+    const totalFat = items.reduce((s, i) => s + i.fat, 0);
+
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: items.map((i) => i.name).join(", "),
+      items: items.map((i) => ({
+        name: i.name,
+        portionSize: "1 serving",
+        calories: i.calories,
+        protein: i.protein,
+        carbs: i.carbs,
+        fat: i.fat,
+      })),
+      totalCalories,
+      totalProtein,
+      totalCarbs,
+      totalFat,
+      confidence: "nl-parse",
+      createdAt: Timestamp.now(),
+    });
+    setNlInput("");
+    setNlParsing(false);
+    toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
+  };
+
+  const handleRecipeSave = async (recipe: { name: string; servings: number; ingredients: Array<{ name: string; amount: number; unit: string; calories: number; protein: number; carbs: number; fat: number }> }) => {
+    if (!user) return;
+    const totalCalories = recipe.ingredients.reduce((s, i) => s + i.calories, 0) / recipe.servings;
+    const totalProtein = recipe.ingredients.reduce((s, i) => s + i.protein, 0) / recipe.servings;
+    const totalCarbs = recipe.ingredients.reduce((s, i) => s + i.carbs, 0) / recipe.servings;
+    const totalFat = recipe.ingredients.reduce((s, i) => s + i.fat, 0) / recipe.servings;
+
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: recipe.name,
+      items: recipe.ingredients.map((ing) => ({
+        name: ing.name,
+        portionSize: `${ing.amount}${ing.unit}`,
+        calories: Math.round(ing.calories / recipe.servings),
+        protein: Math.round(ing.protein / recipe.servings),
+        carbs: Math.round(ing.carbs / recipe.servings),
+        fat: Math.round(ing.fat / recipe.servings),
+      })),
+      totalCalories: Math.round(totalCalories),
+      totalProtein: Math.round(totalProtein),
+      totalCarbs: Math.round(totalCarbs),
+      totalFat: Math.round(totalFat),
+      confidence: "recipe",
+      createdAt: Timestamp.now(),
+    });
+    setShowRecipeBuilder(false);
+    toast.success(`${recipe.name} logged (1 serving)!`);
   };
 
   const handleFoodSearchSelect = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string }) => {
@@ -521,6 +594,36 @@ export default function Log() {
             </div>
           )}
 
+          {/* Quick Text Input (NL Food Logging) */}
+          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">Quick Add</p>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Describe what you ate — e.g. "2 eggs, toast with butter, protein shake"
+            </p>
+            <textarea
+              value={nlInput}
+              onChange={(e) => setNlInput(e.target.value)}
+              placeholder="Type your meal..."
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <button
+              onClick={handleNLParse}
+              disabled={!nlInput.trim() || nlParsing}
+              className={cn(
+                "w-full py-2.5 rounded-xl text-sm font-medium transition-all",
+                nlInput.trim()
+                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              {nlParsing ? "Parsing..." : "Log Meal"}
+            </button>
+          </div>
+
           {/* Food Search */}
           {showFoodSearch ? (
             <FoodSearch
@@ -533,6 +636,21 @@ export default function Log() {
               className="w-full py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
             >
               <Search className="w-4 h-4" /> Search Food Database
+            </button>
+          )}
+
+          {/* Recipe Builder */}
+          {showRecipeBuilder ? (
+            <RecipeBuilder
+              onSave={handleRecipeSave}
+              onClose={() => setShowRecipeBuilder(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowRecipeBuilder(true)}
+              className="w-full py-3 rounded-xl border-2 border-dashed border-purple-400/30 text-purple-500 font-medium text-sm hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-colors flex items-center justify-center gap-2"
+            >
+              <BookOpen className="w-4 h-4" /> Build a Recipe
             </button>
           )}
 

@@ -23,6 +23,7 @@ import {
   Bar,
   LineChart,
   Line,
+  ComposedChart,
   XAxis,
   YAxis,
   Tooltip,
@@ -230,6 +231,61 @@ export default function History() {
     const band = score >= 80 ? "green" : score >= 50 ? "yellow" : "red";
     return { score, band, daysTracked: dailyScores.length };
   }, [meals, range]);
+
+  // Training-Nutrition Correlation: weekly calories vs training volume
+  const correlationData = useMemo(() => {
+    const startDate = format(subDays(new Date(), range), "yyyy-MM-dd");
+
+    // Build weekly calorie sums
+    const weekCals = new Map<string, number>();
+    meals
+      .filter((m) => m.date >= startDate)
+      .forEach((m) => {
+        const weekLabel = format(new Date(m.date + "T12:00:00"), "'W'ww");
+        weekCals.set(weekLabel, (weekCals.get(weekLabel) || 0) + (m.totalCalories || 0));
+      });
+
+    // Build weekly set volume
+    const weekVol = new Map<string, number>();
+    workouts
+      .filter((w) => w.date >= startDate)
+      .forEach((w) => {
+        const weekLabel = format(new Date(w.date + "T12:00:00"), "'W'ww");
+        const sets = w.exercises.reduce((sum: number, ex: any) => sum + (ex.sets?.length || 0), 0);
+        weekVol.set(weekLabel, (weekVol.get(weekLabel) || 0) + sets);
+      });
+
+    const allWeeks = new Set([...weekCals.keys(), ...weekVol.keys()]);
+    return Array.from(allWeeks)
+      .sort()
+      .map((week) => ({
+        week,
+        calories: Math.round(weekCals.get(week) || 0),
+        volume: weekVol.get(week) || 0,
+      }));
+  }, [meals, workouts, range]);
+
+  // Correlation insights
+  const correlationInsights = useMemo(() => {
+    if (correlationData.length < 2) return [];
+    const insights: string[] = [];
+    const avgCals = correlationData.reduce((s, d) => s + d.calories, 0) / correlationData.length;
+    const avgVol = correlationData.reduce((s, d) => s + d.volume, 0) / correlationData.length;
+    const last = correlationData[correlationData.length - 1];
+
+    if (last.calories > avgCals * 1.1 && last.volume > avgVol) {
+      insights.push("High fuel + high volume — great training week!");
+    } else if (last.calories < avgCals * 0.9 && last.volume > avgVol) {
+      insights.push("Training hard on low calories — recovery may be limited.");
+    } else if (last.calories > avgCals * 1.1 && last.volume < avgVol * 0.8) {
+      insights.push("High intake but lower training volume — consider adjusting.");
+    }
+
+    if (avgVol > 0 && avgCals > 0) {
+      insights.push(`Avg weekly: ${Math.round(avgCals)} cal, ${Math.round(avgVol)} sets`);
+    }
+    return insights;
+  }, [correlationData]);
 
   const LIFT_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444"];
   const MUSCLE_COLORS: Record<string, string> = {
@@ -548,7 +604,40 @@ export default function History() {
             );
           })()}
 
-          {/* 7. Workouts chart */}
+          {/* 7. Training-Nutrition Correlation */}
+          {correlationData.length > 1 && (
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-teal-500" />
+                <p className="text-sm font-medium text-foreground">Training vs Nutrition</p>
+              </div>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={correlationData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="week" tick={AXIS_TICK} />
+                    <YAxis yAxisId="cal" orientation="left" tick={AXIS_TICK} />
+                    <YAxis yAxisId="vol" orientation="right" tick={AXIS_TICK} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Legend wrapperStyle={{ fontSize: "10px" }} />
+                    <Bar yAxisId="cal" dataKey="calories" fill="#f97316" opacity={0.7} radius={[4, 4, 0, 0]} name="Calories" />
+                    <Line yAxisId="vol" type="monotone" dataKey="volume" stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1" }} name="Sets (volume)" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+              {correlationInsights.length > 0 && (
+                <div className="space-y-1.5">
+                  {correlationInsights.map((insight, i) => (
+                    <p key={i} className="text-[11px] text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                      {insight}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 8. Workouts chart */}
           <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-primary" />

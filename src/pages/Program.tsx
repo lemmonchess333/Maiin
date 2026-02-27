@@ -5,6 +5,7 @@ import { getProgressionLabel, getProgressionDirection } from "@/features/program
 import type { ProgramExercise, Goal } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
+import { PlateCalculator } from "@/components/PlateCalculator";
 import {
   Lock,
   ChevronDown,
@@ -23,6 +24,7 @@ import {
   Plus,
   FastForward,
   Play,
+  Calculator,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -109,6 +111,7 @@ function ProgramInner() {
   // Save feedback states
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
   const [weightFlash, setWeightFlash] = useState<"up" | "down" | null>(null);
+  const [showPlateCalc, setShowPlateCalc] = useState(false);
 
   if (loading || !programState || !prescription) {
     return (
@@ -141,10 +144,36 @@ function ProgramInner() {
     setAdvancing(false);
   };
 
+  // Progression increment based on exercise type
+  const getProgressionIncrement = (ex: ProgramExercise): number => {
+    const lowerCompound = ["knee_dominant", "hip_dominant"];
+    const upperCompound = ["horizontal_push", "vertical_push", "horizontal_pull", "vertical_pull"];
+    if (lowerCompound.includes(ex.movementCategory)) return 2.5;
+    if (upperCompound.includes(ex.movementCategory)) return 1.25;
+    return 0.5; // isolation
+  };
+
   const openDrawer = (dayIndex: number, exIndex: number, exercise: ProgramExercise) => {
     setDrawerExercise({ dayIndex, exIndex, exercise });
-    setLogReps(exercise.reps.toString());
-    setLogWeight(exercise.weight.toString());
+
+    // Auto-fill from previous session with progressive overload
+    const lastPerf = exercise.performanceHistory[exercise.performanceHistory.length - 1];
+    if (lastPerf) {
+      const passed = lastPerf.repsCompleted >= lastPerf.repsTarget;
+      if (passed) {
+        // Passed last session — apply progressive overload
+        const increment = getProgressionIncrement(exercise);
+        setLogWeight((lastPerf.weight + increment).toString());
+      } else {
+        // Failed — repeat same weight
+        setLogWeight(lastPerf.weight.toString());
+      }
+      setLogReps(exercise.reps.toString());
+    } else {
+      // No history — use prescription defaults
+      setLogReps(exercise.reps.toString());
+      setLogWeight(exercise.weight.toString());
+    }
   };
 
   const closeDrawer = () => {
@@ -554,9 +583,32 @@ function ProgramInner() {
                   </div>
                 )}
 
-                {/* Log form */}
+                {/* Log form with auto-fill indicator */}
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Log Performance</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-xs font-medium text-muted-foreground">Log Performance</p>
+                    {(() => {
+                      const lastPerf = drawerExercise.exercise.performanceHistory[
+                        drawerExercise.exercise.performanceHistory.length - 1
+                      ];
+                      if (lastPerf && lastPerf.repsCompleted >= lastPerf.repsTarget) {
+                        const inc = getProgressionIncrement(drawerExercise.exercise);
+                        return (
+                          <span className="text-[10px] font-medium text-green-500 bg-green-50 px-1.5 py-0.5 rounded-full">
+                            +{inc}kg auto-fill
+                          </span>
+                        );
+                      }
+                      if (lastPerf) {
+                        return (
+                          <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                            repeat weight
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <label className="text-[10px] text-muted-foreground">Weight (kg)</label>
@@ -577,7 +629,28 @@ function ProgramInner() {
                       />
                     </div>
                   </div>
+                  {/* Estimated 1RM */}
+                  {Number(logWeight) > 0 && Number(logReps) > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      Est. 1RM: <span className="font-semibold text-foreground">
+                        {Math.round(Number(logWeight) * (1 + Number(logReps) / 30))}kg
+                      </span>
+                    </p>
+                  )}
+
+                  {/* Plate Calculator Toggle */}
+                  <button
+                    onClick={() => setShowPlateCalc(!showPlateCalc)}
+                    className="flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-1"
+                  >
+                    <Calculator className="w-3.5 h-3.5" />
+                    {showPlateCalc ? "Hide" : "Plate"} Calculator
+                  </button>
                 </div>
+
+                {showPlateCalc && (
+                  <PlateCalculator weight={Number(logWeight) || drawerExercise.exercise.weight || 20} onClose={() => setShowPlateCalc(false)} />
+                )}
 
                 <button
                   onClick={handleLogExercise}

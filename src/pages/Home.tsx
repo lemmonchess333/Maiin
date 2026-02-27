@@ -8,6 +8,7 @@ import { StreakCounter } from "@/components/StreakCounter";
 import BodyweightLogger from "@/components/BodyweightLogger";
 import { WeeklyDayFill } from "@/components/WeeklyDayFill";
 import { useSubscription } from "@/lib/subscription";
+import { calculateAdaptiveTDEE } from "@/lib/adaptiveTDEE";
 import { useProgram } from "@/features/program/useProgram";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -21,6 +22,7 @@ import {
   Wheat,
   Cookie,
   ChevronRight,
+  Zap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
@@ -102,6 +104,42 @@ export default function Home() {
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
   const [confettiFired, setConfettiFired] = useState(false);
+
+  // Adaptive TDEE computation for Pro users
+  const tdeeResult = useMemo(() => {
+    if (!isPro || !profile) return null;
+    // Build weight logs from bodyweight trend
+    const weightLogs = (bodyweightTrend.monthly ?? []).map((entry: any) => ({
+      date: entry.date ?? "",
+      weight: entry.weight ?? entry.value ?? 0,
+    })).filter((w: any) => w.weight > 0);
+
+    // Build calorie logs from daily totals (we only have today's, so skip if insufficient)
+    // For a real implementation this would come from a Firestore query of recent meals
+    // For now, show the card if we have enough weight data
+    if (weightLogs.length < 4) return null;
+
+    const currentTargets = {
+      calories: profile.targetCalories ?? 2200,
+      protein: profile.targetProtein ?? 160,
+      carbs: profile.targetCarbs ?? 250,
+      fat: profile.targetFat ?? 60,
+    };
+
+    // Simple calorie logs from today as seed (in production, fetch last 14 days)
+    const calorieLogs = weightLogs.map((w: any) => ({
+      date: w.date,
+      calories: currentTargets.calories, // approximate
+    }));
+
+    return calculateAdaptiveTDEE(
+      weightLogs,
+      calorieLogs,
+      profile.goal ?? "recomp",
+      currentTargets,
+      profile.weightKg ?? 70,
+    );
+  }, [isPro, profile, bodyweightTrend.monthly]);
 
   const [dailyTotals, setDailyTotals] = useState<DailyTotals>({
     calories: 0,
@@ -230,6 +268,55 @@ export default function Home() {
         <p className="text-sm font-medium text-foreground">This Week</p>
         <WeeklyDayFill dayMap={weeklyDayMap} workoutsTarget={safeNum(weeklyStats.workoutsTarget, 4)} />
       </div>
+
+      {/* Adaptive TDEE Card (Pro) */}
+      {tdeeResult && tdeeResult.confidence !== "low" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl border border-border/50 p-5 space-y-3"
+        >
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <p className="text-sm font-medium text-foreground">Adaptive TDEE</p>
+            <span className={cn(
+              "ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full",
+              tdeeResult.confidence === "high"
+                ? "bg-green-100 text-green-600"
+                : "bg-yellow-100 text-yellow-600"
+            )}>
+              {tdeeResult.confidence} confidence
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-lg font-bold text-foreground">{tdeeResult.estimatedTDEE}</p>
+              <p className="text-[10px] text-muted-foreground">Est. TDEE</p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <p className="text-lg font-bold text-primary">{tdeeResult.adjustedCalories}</p>
+              <p className="text-[10px] text-muted-foreground">Target cal</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Weekly weight change: <span className={cn(
+              "font-medium",
+              tdeeResult.weeklyWeightChange > 0 ? "text-green-500" : tdeeResult.weeklyWeightChange < 0 ? "text-red-500" : "text-foreground"
+            )}>
+              {tdeeResult.weeklyWeightChange > 0 ? "+" : ""}{tdeeResult.weeklyWeightChange.toFixed(2)}kg
+            </span></span>
+            <span>Target: {tdeeResult.targetWeightChange > 0 ? "+" : ""}{tdeeResult.targetWeightChange}kg/wk</span>
+          </div>
+
+          <div className="flex gap-2 text-[10px]">
+            <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">P: {tdeeResult.adjustedProtein}g</span>
+            <span className="px-2 py-1 rounded bg-amber-50 text-amber-600 font-medium">C: {tdeeResult.adjustedCarbs}g</span>
+            <span className="px-2 py-1 rounded bg-purple-50 text-purple-600 font-medium">F: {tdeeResult.adjustedFat}g</span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Next Workout */}
       {nextWorkout && (

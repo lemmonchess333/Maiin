@@ -26,7 +26,10 @@ import {
   Calculator,
   ChevronDown,
   ChevronUp,
+  Download,
+  Timer,
 } from "lucide-react";
+import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 
 const PLANS = [
   {
@@ -53,7 +56,7 @@ const PLANS = [
 ];
 
 export default function Settings() {
-  const { profile, updateProfile, signOut } = useAuth();
+  const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
   const [name, setName] = useState(profile?.displayName || "");
@@ -68,6 +71,9 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showTDEE, setShowTDEE] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [autoRestTimer, setAutoRestTimer] = useState(profile?.autoRestTimer ?? true);
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState(profile?.defaultRestSeconds ?? 120);
   const [age, setAge] = useState(25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
 
@@ -458,6 +464,90 @@ export default function Settings() {
           </>
         )}
       </motion.button>
+
+      {/* Workout Preferences */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Timer className="w-5 h-5" />
+          Workout Preferences
+        </h2>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div>
+            <p className="text-sm text-foreground">Auto-start rest timer</p>
+            <p className="text-[10px] text-muted-foreground">Timer starts after completing a set</p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !autoRestTimer;
+              setAutoRestTimer(next);
+              await updateProfile({ autoRestTimer: next });
+            }}
+            className={cn("w-10 h-6 rounded-full transition-colors relative", autoRestTimer ? "bg-primary" : "bg-muted border border-border")}
+          >
+            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoRestTimer ? "translate-x-5" : "translate-x-1")} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <span className="text-sm text-foreground">Default rest time</span>
+          <select
+            value={defaultRestSeconds}
+            onChange={async (e) => {
+              const val = Number(e.target.value);
+              setDefaultRestSeconds(val);
+              await updateProfile({ defaultRestSeconds: val });
+            }}
+            className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+          >
+            <option value={60}>1:00</option>
+            <option value={90}>1:30</option>
+            <option value={120}>2:00</option>
+            <option value={150}>2:30</option>
+            <option value={180}>3:00</option>
+            <option value={240}>4:00</option>
+            <option value={300}>5:00</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Export Data */}
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Download className="w-5 h-5" />
+          Export Data
+        </h2>
+
+        {[
+          { label: "Export Workouts (CSV)", key: "workouts" },
+          { label: "Export Meals (CSV)", key: "meals" },
+          { label: "Export Bodyweight (CSV)", key: "bodyweight" },
+        ].map(({ label, key }) => (
+          <button
+            key={key}
+            disabled={exporting !== null}
+            onClick={async () => {
+              if (!user) return;
+              setExporting(key);
+              try {
+                let csv: string;
+                if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
+                else if (key === "meals") csv = await exportMealsCSV(user.uid);
+                else csv = await exportBodyweightCSV(user.uid);
+                downloadCSV(csv, `maiin-${key}-${new Date().toISOString().split("T")[0]}.csv`);
+                toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
+              } catch (err) {
+                toast.error("Export failed");
+                console.error(err);
+              }
+              setExporting(null);
+            }}
+            className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            {exporting === key ? "Exporting..." : label}
+          </button>
+        ))}
+      </div>
 
       {/* Preferences */}
       <div className="space-y-2">
