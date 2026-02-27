@@ -1,85 +1,90 @@
 import { useMemo } from "react";
-import { startOfWeek, addDays, format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
-const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-
-interface DayData {
-  date: string;
-  hit: boolean;
-}
-
-interface RowProps {
+interface ProgressBarProps {
   label: string;
-  days: DayData[];
+  done: number;
+  total: number;
   color: string;
+  bgColor: string;
 }
 
-function DayFillRow({ label, days, color }: RowProps) {
+function ProgressBar({ label, done, total, color, bgColor }: ProgressBarProps) {
+  const safeDone = Math.max(0, done);
+  const safeTotal = Math.max(1, total);
+  const pct = Math.min(Math.round((safeDone / safeTotal) * 100), 100);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] text-muted-foreground w-24 shrink-0 truncate">
-        {label}
-      </span>
-      <div className="flex gap-1.5 flex-1">
-        {days.map((d, i) => (
-          <div
-            key={i}
-            className={cn(
-              "w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-medium transition-colors",
-            )}
-            style={
-              d.hit
-                ? { backgroundColor: color, color: "#fff" }
-                : { backgroundColor: "hsl(var(--muted))" }
-            }
-          >
-            {DAY_LABELS[i]}
-          </div>
-        ))}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-foreground">{label}</span>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {safeDone}/{safeTotal}
+        </span>
       </div>
-      <span className="text-[11px] font-medium text-foreground tabular-nums w-8 text-right">
-        {days.filter((d) => d.hit).length}/7
-      </span>
+      <div
+        className="h-2.5 rounded-full overflow-hidden"
+        style={{ backgroundColor: bgColor }}
+      >
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
+        />
+      </div>
     </div>
   );
 }
 
 interface Props {
-  /** Map of date string (YYYY-MM-DD) → { workouts, meals, caloriesHit } */
+  /** Map of date string (YYYY-MM-DD) -> { workouts, meals, caloriesHit } */
   dayMap: Map<
     string,
     { workouts: number; meals: number; caloriesHit: boolean }
   >;
-  calorieTarget?: number;
+  workoutsTarget?: number;
 }
 
-export function WeeklyDayFill({ dayMap }: Props) {
-  const weekDates = useMemo(() => {
-    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-    return Array.from({ length: 7 }, (_, i) =>
-      format(addDays(monday, i), "yyyy-MM-dd")
-    );
-  }, []);
+export function WeeklyDayFill({ dayMap, workoutsTarget = 4 }: Props) {
+  const stats = useMemo(() => {
+    let workoutDays = 0;
+    let caloriesDaysMet = 0;
+    let mealDays = 0;
 
-  const calorieDays: DayData[] = weekDates.map((d) => ({
-    date: d,
-    hit: dayMap.get(d)?.caloriesHit ?? false,
-  }));
-  const workoutDays: DayData[] = weekDates.map((d) => ({
-    date: d,
-    hit: (dayMap.get(d)?.workouts ?? 0) > 0,
-  }));
-  const mealDays: DayData[] = weekDates.map((d) => ({
-    date: d,
-    hit: (dayMap.get(d)?.meals ?? 0) > 0,
-  }));
+    for (const [, val] of dayMap) {
+      if (val.workouts > 0) workoutDays++;
+      if (val.caloriesHit) caloriesDaysMet++;
+      if (val.meals > 0) mealDays++;
+    }
+
+    return { workoutDays, caloriesDaysMet, mealDays };
+  }, [dayMap]);
 
   return (
-    <div className="space-y-2">
-      <DayFillRow label="Calories Goal" days={calorieDays} color="#22c55e" />
-      <DayFillRow label="Workouts" days={workoutDays} color="#7c3aed" />
-      <DayFillRow label="Meals Logged" days={mealDays} color="#3b82f6" />
+    <div className="space-y-3">
+      <ProgressBar
+        label="Workouts"
+        done={stats.workoutDays}
+        total={workoutsTarget}
+        color="#22c55e"
+        bgColor="#dcfce7"
+      />
+      <ProgressBar
+        label="Calories Met"
+        done={stats.caloriesDaysMet}
+        total={7}
+        color="#f97316"
+        bgColor="#ffedd5"
+      />
+      <ProgressBar
+        label="Meals Logged"
+        done={stats.mealDays}
+        total={7}
+        color="#3b82f6"
+        bgColor="#dbeafe"
+      />
     </div>
   );
 }

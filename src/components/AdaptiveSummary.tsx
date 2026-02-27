@@ -624,53 +624,53 @@ export function AdaptiveSummary({
             {/* AI Macro Targets (match Today’s Intake style) */}
             <div>
               <p className="text-sm font-medium text-foreground mb-4">AI Macro Targets</p>
-              <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
                 <div
-                  className="rounded-xl p-4 shadow-sm"
+                  className="min-w-0 rounded-xl p-3 shadow-sm"
                   style={{
                     backgroundColor: tint(macroColors.calories),
                     color: macroColors.calories,
                   }}
                 >
-                  <Flame className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold leading-none">{displayMacros.calories}</p>
-                  <p className="text-xs mt-1">cal</p>
+                  <Flame className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.calories}</p>
+                  <p className="text-[10px] mt-1">cal</p>
                 </div>
 
                 <div
-                  className="rounded-xl p-4 shadow-sm"
+                  className="min-w-0 rounded-xl p-3 shadow-sm"
                   style={{
                     backgroundColor: tint(macroColors.protein),
                     color: macroColors.protein,
                   }}
                 >
-                  <Beef className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold leading-none">{displayMacros.protein}g</p>
-                  <p className="text-xs mt-1">protein</p>
+                  <Beef className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.protein}g</p>
+                  <p className="text-[10px] mt-1">protein</p>
                 </div>
 
                 <div
-                  className="rounded-xl p-4 shadow-sm"
+                  className="min-w-0 rounded-xl p-3 shadow-sm"
                   style={{
                     backgroundColor: tint(macroColors.carbs),
                     color: macroColors.carbs,
                   }}
                 >
-                  <Wheat className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold leading-none">{displayMacros.carbs}g</p>
-                  <p className="text-xs mt-1">carbs</p>
+                  <Wheat className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.carbs}g</p>
+                  <p className="text-[10px] mt-1">carbs</p>
                 </div>
 
                 <div
-                  className="rounded-xl p-4 shadow-sm"
+                  className="min-w-0 rounded-xl p-3 shadow-sm"
                   style={{
                     backgroundColor: tint(macroColors.fat),
                     color: macroColors.fat,
                   }}
                 >
-                  <Cookie className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-2xl font-bold leading-none">{displayMacros.fat}g</p>
-                  <p className="text-xs mt-1">fat</p>
+                  <Cookie className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.fat}g</p>
+                  <p className="text-[10px] mt-1">fat</p>
                 </div>
               </div>
             </div>

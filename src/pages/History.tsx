@@ -29,6 +29,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import { format, subDays } from "date-fns";
 
@@ -300,8 +301,8 @@ export default function History() {
         ))}
       </div>
 
-      {/* Stats grid - lighter backgrounds exactly like AI Macro Targets / Today's Intake (no icons) */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Stats grid */}
+      <div className="grid grid-cols-4 gap-2 overflow-hidden">
         {[
           { label: "Workouts", value: totalWorkouts, bgColor: "#f3e8ff", textColor: "#7c3aed" },
           { label: "Meals", value: totalMeals, bgColor: "#dbeafe", textColor: "#3b82f6" },
@@ -310,13 +311,13 @@ export default function History() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="rounded-2xl p-4 shadow-sm text-center"
+            className="min-w-0 rounded-2xl p-3 shadow-sm text-center"
             style={{ backgroundColor: stat.bgColor }}
           >
-            <p className="text-2xl font-bold" style={{ color: stat.textColor }}>
+            <p className="text-xl font-bold tabular-nums truncate" style={{ color: stat.textColor }}>
               {stat.value}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -335,82 +336,12 @@ export default function History() {
         </div>
       ) : (
         <>
-          {/* Workouts chart */}
-          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">Workouts</p>
-            </div>
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
-                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar dataKey="workouts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Macro Trend chart */}
-          {macroData.length > 1 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-orange-500" />
-                <p className="text-sm font-medium text-foreground">Macro Trends</p>
-              </div>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={macroData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
-                    <YAxis tick={AXIS_TICK} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Legend wrapperStyle={{ fontSize: "10px" }} />
-                    <Line type="monotone" dataKey="protein" stroke="#3b82f6" strokeWidth={2} dot={false} name="Protein (g)" />
-                    <Line type="monotone" dataKey="carbs" stroke="#f59e0b" strokeWidth={2} dot={false} name="Carbs (g)" />
-                    <Line type="monotone" dataKey="fat" stroke="#ec4899" strokeWidth={2} dot={false} name="Fat (g)" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {/* Calorie Trend */}
-          {macroData.length > 1 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-orange-500" />
-                <p className="text-sm font-medium text-foreground">Calorie Trend</p>
-              </div>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={macroData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
-                    <YAxis tick={AXIS_TICK} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <defs>
-                      <linearGradient id="calGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="calories" stroke="#f97316" fill="url(#calGradient)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {/* Strength Progression */}
+          {/* 1. Strength Progression (E1RM) */}
           {strengthData.length > 1 && strengthKeys.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Dumbbell className="w-4 h-4 text-indigo-500" />
-                <p className="text-sm font-medium text-foreground">Strength (E1RM)</p>
+                <p className="text-sm font-medium text-foreground">Strength Progress (E1RM)</p>
               </div>
               <div className="h-52">
                 <ResponsiveContainer width="100%" height="100%">
@@ -427,7 +358,7 @@ export default function History() {
                         dataKey={key}
                         stroke={LIFT_COLORS[i % LIFT_COLORS.length]}
                         strokeWidth={2}
-                        dot={{ r: 3 }}
+                        dot={{ r: 3, fill: LIFT_COLORS[i % LIFT_COLORS.length] }}
                         name={key}
                       />
                     ))}
@@ -437,37 +368,7 @@ export default function History() {
             </div>
           )}
 
-          {/* Weekly Volume by Muscle Group */}
-          {volumeData.length > 0 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-purple-500" />
-                <p className="text-sm font-medium text-foreground">Weekly Volume (sets)</p>
-              </div>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="week" tick={AXIS_TICK} />
-                    <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Legend wrapperStyle={{ fontSize: "10px" }} />
-                    {MUSCLE_GROUPS.map((g) => (
-                      <Bar
-                        key={g}
-                        dataKey={g}
-                        stackId="vol"
-                        fill={MUSCLE_COLORS[g]}
-                        name={g.charAt(0).toUpperCase() + g.slice(1)}
-                      />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-
-          {/* Strength Trends Summary */}
+          {/* 2. Strength Trends Summary */}
           {strengthTrends.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
@@ -501,7 +402,7 @@ export default function History() {
                         </span>
                       )}
                       <span className="text-muted-foreground">
-                        E1RM: {t.points[t.points.length - 1]?.e1rm ?? "—"}kg
+                        E1RM: {t.points[t.points.length - 1]?.e1rm ?? "\u2014"}kg
                       </span>
                     </div>
                   </div>
@@ -510,47 +411,163 @@ export default function History() {
             </div>
           )}
 
-          {/* Macro Adherence Score */}
-          {adherenceData.daysTracked > 0 && (
+          {/* 3. Weekly Volume by Muscle Group */}
+          {volumeData.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-purple-500" />
+                <p className="text-sm font-medium text-foreground">Weekly Volume (sets)</p>
+              </div>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={volumeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="week" tick={AXIS_TICK} />
+                    <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Legend wrapperStyle={{ fontSize: "10px" }} />
+                    {MUSCLE_GROUPS.map((g) => (
+                      <Bar
+                        key={g}
+                        dataKey={g}
+                        stackId="vol"
+                        fill={MUSCLE_COLORS[g]}
+                        name={g.charAt(0).toUpperCase() + g.slice(1)}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Calorie Trend */}
+          {macroData.length > 1 && (
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-orange-500" />
+                <p className="text-sm font-medium text-foreground">Calorie Trend</p>
+              </div>
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={macroData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
+                    <YAxis tick={AXIS_TICK} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <defs>
+                      <linearGradient id="calGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="calories" stroke="#f97316" fill="url(#calGradient)" strokeWidth={2} dot={{ r: 2, fill: "#f97316" }} />
+                    <ReferenceLine y={2200} stroke="#94a3b8" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: "Target", position: "right", fill: "#94a3b8", fontSize: 10 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Macro Trends */}
+          {macroData.length > 1 && (
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-orange-500" />
+                <p className="text-sm font-medium text-foreground">Macro Trends</p>
+              </div>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={macroData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
+                    <YAxis tick={AXIS_TICK} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Legend wrapperStyle={{ fontSize: "10px" }} />
+                    <Line type="monotone" dataKey="protein" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2.5, fill: "#3b82f6" }} name="Protein (g)" />
+                    <Line type="monotone" dataKey="carbs" stroke="#f59e0b" strokeWidth={2} dot={{ r: 2.5, fill: "#f59e0b" }} name="Carbs (g)" />
+                    <Line type="monotone" dataKey="fat" stroke="#ec4899" strokeWidth={2} dot={{ r: 2.5, fill: "#ec4899" }} name="Fat (g)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 6. Macro Adherence Ring */}
+          {adherenceData.daysTracked > 0 && (() => {
+            const radius = 44;
+            const strokeW = 8;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (adherenceData.score / 100) * circumference;
+            const ringColor =
+              adherenceData.band === "green"
+                ? "#22c55e"
+                : adherenceData.band === "yellow"
+                ? "#eab308"
+                : "#ef4444";
+            return (
+              <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-green-500" />
                   <p className="text-sm font-medium text-foreground">Macro Adherence</p>
                 </div>
-                <span
-                  className={cn(
-                    "text-xs font-medium px-2 py-0.5 rounded-full",
-                    adherenceData.band === "green"
-                      ? "bg-green-100 text-green-600"
-                      : adherenceData.band === "yellow"
-                      ? "bg-yellow-100 text-yellow-600"
-                      : "bg-red-100 text-red-500"
-                  )}
-                >
-                  {adherenceData.score}/100
-                </span>
+                <div className="flex items-center justify-center">
+                  <div className="relative w-28 h-28">
+                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        fill="none"
+                        stroke="hsl(var(--muted))"
+                        strokeWidth={strokeW}
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={radius}
+                        fill="none"
+                        stroke={ringColor}
+                        strokeWidth={strokeW}
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        className="transition-all duration-700 ease-out"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold text-foreground">{adherenceData.score}</span>
+                      <span className="text-[10px] text-muted-foreground">/ 100</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Based on {adherenceData.daysTracked} days tracked
+                </p>
               </div>
-              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    adherenceData.band === "green"
-                      ? "bg-green-500"
-                      : adherenceData.band === "yellow"
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
-                  )}
-                  style={{ width: `${adherenceData.score}%` }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Based on {adherenceData.daysTracked} days tracked (±5% cal, ±10g protein)
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
-          {/* Bodyweight vs Performance Overlay */}
+          {/* 7. Workouts chart */}
+          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">Workouts</p>
+            </div>
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
+                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Bar dataKey="workouts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 8. Bodyweight vs Performance Overlay */}
           {weightData.length > 1 && strengthData.length > 1 && strengthKeys.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
@@ -597,7 +614,7 @@ export default function History() {
             </div>
           )}
 
-          {/* Weight trend */}
+          {/* 9. Weight trend */}
           {weightData.length > 1 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
