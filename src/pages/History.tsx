@@ -3,6 +3,13 @@ import { useHistoryData } from "@/hooks/useFirestore";
 import { useMeals } from "@/hooks/useMeals";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import RunningHistorySection from "@/components/run/RunningHistorySection";
+import TimeRangePills from "@/components/analytics/TimeRangePills";
+import WeeklyOverview from "@/components/analytics/WeeklyOverview";
+import StatCard from "@/components/analytics/StatCard";
+import VolumeChart from "@/components/analytics/VolumeChart";
+import MuscleHeatMap from "@/components/analytics/MuscleHeatMap";
+import PRCard from "@/components/analytics/PRCard";
+import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Calendar, TrendingUp, Dumbbell, Download, BarChart3, Activity } from "lucide-react";
 import {
@@ -325,15 +332,68 @@ export default function History() {
     URL.revokeObjectURL(url);
   };
 
+  // Muscle group set aggregation for heat map
+  const muscleSetData = useMemo(() => {
+    const startDate = format(subDays(new Date(), range), "yyyy-MM-dd");
+    const data: Record<string, number> = {};
+    workouts
+      .filter((w) => w.date >= startDate)
+      .forEach((w) => {
+        w.exercises.forEach((ex: any) => {
+          const group = ex.category || exerciseToMuscleGroup(ex.category) || 'Other';
+          data[group] = (data[group] || 0) + (ex.sets?.length || 0);
+        });
+      });
+    return data;
+  }, [workouts, range]);
+
+  // Weekly volume data for VolumeChart
+  const weeklyVolumeForChart = useMemo(() => {
+    const startDate = format(subDays(new Date(), range), "yyyy-MM-dd");
+    const byWeek = new Map<string, number>();
+    workouts
+      .filter((w) => w.date >= startDate)
+      .forEach((w) => {
+        const weekLabel = format(new Date(w.date + "T12:00:00"), "yyyy-'W'ww");
+        const vol = w.exercises.reduce((sum: number, ex: any) =>
+          sum + ex.sets.reduce((s: number, set: any) => s + (set.weightKg || 0) * (set.reps || 0), 0), 0);
+        byWeek.set(weekLabel, (byWeek.get(weekLabel) || 0) + vol);
+      });
+    return Array.from(byWeek.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, volume]) => ({ week, volume: Math.round(volume) }));
+  }, [workouts, range]);
+
+  // Lifting PRs
+  const liftingPRs = useMemo(() => {
+    const prMap = new Map<string, { value: number; date: string }>();
+    workouts.forEach((w) => {
+      w.exercises.forEach((ex: any) => {
+        ex.sets.forEach((s: any) => {
+          const e1rm = Math.round(s.weightKg * (1 + s.reps / 30));
+          const existing = prMap.get(ex.exerciseName);
+          if (!existing || e1rm > existing.value) {
+            prMap.set(ex.exerciseName, { value: e1rm, date: w.date });
+          }
+        });
+      });
+    });
+    return Array.from(prMap.entries())
+      .sort((a, b) => b[1].value - a[1].value)
+      .slice(0, 5)
+      .map(([label, { value, date }]) => ({
+        label,
+        value: `${value} kg`,
+        date: format(new Date(date + "T12:00:00"), "d MMM"),
+        isNew: new Date(date) > subDays(new Date(), 14),
+      }));
+  }, [workouts]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">History</h1>
-          <p className="text-sm text-muted-foreground">
-            Track your progress over time
-          </p>
-        </div>
+        <h1 className="text-lg font-bold text-foreground">Analytics</h1>
         <button
           onClick={handleExport}
           className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -343,45 +403,113 @@ export default function History() {
         </button>
       </div>
 
-      {/* Range selector */}
-      <div className="flex gap-1 bg-muted rounded-lg p-1">
-        {([7, 30, 90] as const).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
+      {/* Filter pills with sport-specific colours */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {(['all', 'running', 'lifting', 'nutrition'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)}
             className={cn(
-              "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              range === r
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {r}d
-          </button>
-        ))}
-      </div>
-
-      {/* Category filter */}
-      <div className="flex gap-1 bg-muted rounded-lg p-1">
-        {(["all", "lifting", "running", "nutrition"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "flex-1 px-2 py-1.5 text-[11px] font-medium rounded-md transition-colors",
+              'shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all',
               filter === f
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+                ? f === 'running' ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
+                  : f === 'lifting' ? 'bg-[#6C7CFF]/15 text-[#6C7CFF]'
+                  : f === 'nutrition' ? 'bg-emerald-500/15 text-emerald-500'
+                  : 'bg-primary/10 text-primary'
+                : 'bg-muted text-muted-foreground'
+            )}>
+            {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Running History Section */}
-      {(filter === "all" || filter === "running") && (
-        <RunningHistorySection />
+      {/* Time range */}
+      <TimeRangePills
+        options={['7d', '30d', '90d']}
+        selected={`${range}d`}
+        onChange={(v) => setRange(parseInt(v) as 7 | 30 | 90)}
+      />
+
+      {/* Weekly Overview (All tab) */}
+      {filter === 'all' && (
+        <WeeklyOverview
+          runCount={0}
+          runDistance={0}
+          liftCount={data.filter(d => d.workouts > 0).length}
+          liftVolume={weeklyVolumeForChart.length > 0 ? weeklyVolumeForChart[weeklyVolumeForChart.length - 1]?.volume || 0 : 0}
+          caloriesBurned={0}
+          nutritionAdherence={adherenceData.score}
+        />
+      )}
+
+      {/* RUNNING SECTION */}
+      {(filter === 'all' || filter === 'running') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: THEME.running }}>Running</p>
+          )}
+          <RunningHistorySection />
+        </>
+      )}
+
+      {/* LIFTING SECTION — StatCards + PRs */}
+      {(filter === 'all' || filter === 'lifting') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: THEME.lifting }}>Lifting</p>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              label="Sessions"
+              value={String(totalWorkouts)}
+              unit={`/ ${range}d`}
+              accentColor={THEME.lifting}
+            />
+            <StatCard
+              label="PRs"
+              value={String(prDays)}
+              unit="days"
+              accentColor={THEME.warning}
+            />
+          </div>
+
+          {weeklyVolumeForChart.length > 0 && (
+            <VolumeChart data={weeklyVolumeForChart} accentColor={THEME.lifting} />
+          )}
+
+          {Object.keys(muscleSetData).length > 0 && (
+            <MuscleHeatMap data={muscleSetData} accentColor={THEME.lifting} />
+          )}
+
+          {liftingPRs.length > 0 && (
+            <PRCard title="Lifting PRs" prs={liftingPRs} accentColor={THEME.lifting} />
+          )}
+        </>
+      )}
+
+      {/* NUTRITION SECTION — StatCards */}
+      {(filter === 'all' || filter === 'nutrition') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: THEME.success }}>Nutrition</p>
+          )}
+          {macroData.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              <StatCard
+                label="Avg Calories"
+                value={String(Math.round(macroData.reduce((s, d) => s + d.calories, 0) / macroData.length))}
+                unit="/day"
+                sparklineData={macroData.slice(-8).map(d => d.calories)}
+                accentColor={THEME.success}
+              />
+              <StatCard
+                label="Avg Protein"
+                value={String(Math.round(macroData.reduce((s, d) => s + d.protein, 0) / macroData.length))}
+                unit="g/day"
+                sparklineData={macroData.slice(-8).map(d => d.protein)}
+                accentColor={THEME.success}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Stats grid */}

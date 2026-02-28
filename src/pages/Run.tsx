@@ -1,26 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { calculatePace, calculateSplits, totalElevationGain, estimateRunCalories } from '../lib/gps';
+import { calculatePace, calculateSplits, totalElevationGain } from '../lib/gps';
+import { THEME } from '../lib/theme';
 import RunMap from '../components/run/RunMap';
+import RunBottomSheet from '../components/run/RunBottomSheet';
 
 type RunPhase = 'waiting' | 'countdown' | 'active' | 'paused' | 'finished';
 
 export default function Run() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const gps = useGPS();
   const timer = useRunTimer();
   const wakeLock = useWakeLock();
   const [phase, setPhase] = useState<RunPhase>('waiting');
   const [locked, setLocked] = useState(false);
-  const [showMap, setShowMap] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const lastAnnouncedKm = useRef(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const speak = useCallback((text: string) => {
     if ('speechSynthesis' in window) {
@@ -105,26 +107,20 @@ export default function Run() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950 text-white flex flex-col">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${
-            gps.gpsAccuracy && gps.gpsAccuracy < 10 ? 'bg-green-400' :
-            gps.gpsAccuracy && gps.gpsAccuracy < 20 ? 'bg-yellow-400' : 'bg-red-400'
-          }`} />
-          <span className="text-xs text-white/40">
-            GPS {gps.gpsAccuracy ? `±${Math.round(gps.gpsAccuracy)}m` : '...'}
-          </span>
-        </div>
-        {(phase === 'active' || phase === 'paused') && (
-          <button onClick={() => setLocked(true)} className="p-2 text-white/40 text-lg">🔒</button>
-        )}
-      </div>
-
+    <div className="fixed inset-0 z-50" style={{ backgroundColor: THEME.bg }}>
       {/* WAITING */}
       {phase === 'waiting' && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="h-full flex flex-col items-center justify-center px-6 text-white">
+          <div className="absolute top-3 left-4 flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              gps.gpsAccuracy && gps.gpsAccuracy < 10 ? 'bg-green-400' :
+              gps.gpsAccuracy && gps.gpsAccuracy < 20 ? 'bg-yellow-400' : 'bg-red-400'
+            }`} />
+            <span className="text-xs text-white/40">
+              GPS {gps.gpsAccuracy ? `±${Math.round(gps.gpsAccuracy)}m` : '...'}
+            </span>
+          </div>
+
           <p className="text-2xl font-bold mb-2">Ready to Run?</p>
           <p className="text-white/40 text-sm mb-8">Keep your screen on during the run</p>
           {!wakeLock.isSupported && (
@@ -142,97 +138,54 @@ export default function Run() {
 
       {/* COUNTDOWN */}
       {phase === 'countdown' && (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="h-full flex items-center justify-center text-white">
           <span className="text-9xl font-bold animate-pulse">{countdown || 'GO!'}</span>
         </div>
       )}
 
-      {/* ACTIVE / PAUSED */}
+      {/* ACTIVE / PAUSED — Full-screen map + bottom sheet */}
       {(phase === 'active' || phase === 'paused') && (
         <>
-          <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
-            <div className="text-center">
-              <p className="text-[10px] text-white/30 uppercase tracking-widest">Time</p>
-              <p className="text-6xl font-mono tabular-nums font-bold leading-none">
-                {timer.formatTime(timer.elapsed)}
-              </p>
-            </div>
-
-            <div className="flex items-start justify-center gap-14">
-              <div className="text-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest">Distance</p>
-                <p className="text-4xl font-mono tabular-nums font-bold leading-none">
-                  {(gps.distance / 1000).toFixed(2)}
-                </p>
-                <p className="text-[10px] text-white/20 mt-0.5">km</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest">Pace</p>
-                <p className="text-4xl font-mono tabular-nums font-bold leading-none">
-                  {calculatePace(gps.distance, timer.elapsed)}
-                </p>
-                <p className="text-[10px] text-white/20 mt-0.5">/km</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-8 text-white/40">
-              <div className="text-center">
-                <p className="text-[10px]">Calories</p>
-                <p className="text-base font-mono tabular-nums">{estimateRunCalories(gps.distance, 70)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px]">Elevation</p>
-                <p className="text-base font-mono tabular-nums">{totalElevationGain(gps.points)}m</p>
-              </div>
-            </div>
-
-            <button onClick={() => setShowMap(!showMap)} className="text-xs text-purple-400">
-              {showMap ? 'Hide Map' : 'Show Map'}
-            </button>
-            {showMap && (
-              <div className="w-full border border-white/10 rounded-xl overflow-hidden">
-                <RunMap points={gps.points} currentPoint={gps.currentPoint} height="h-40" />
-              </div>
-            )}
+          {/* GPS indicator — top left */}
+          <div className="absolute top-3 left-4 z-50 flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              gps.gpsAccuracy && gps.gpsAccuracy < 10 ? 'bg-green-400' :
+              gps.gpsAccuracy && gps.gpsAccuracy < 20 ? 'bg-yellow-400' : 'bg-red-400'
+            }`} />
+            <span className="text-xs text-white/40">
+              GPS {gps.gpsAccuracy ? `±${Math.round(gps.gpsAccuracy)}m` : '...'} · {gps.points.length} pts
+            </span>
           </div>
 
+          {/* Full-screen map background */}
+          <RunMap
+            points={gps.points}
+            currentPoint={gps.currentPoint}
+            interactive={false}
+            height="h-full"
+            className="absolute inset-0"
+          />
+
+          {/* Auto-pause banner */}
           {autoPaused && (
-            <div className="text-center py-2 bg-yellow-500/10">
+            <div className="absolute top-12 left-4 right-4 z-50 text-center py-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
               <p className="text-xs text-yellow-400/80">Auto-paused · start moving to resume</p>
             </div>
           )}
 
-          <div className="px-6 py-8 pb-10">
-            {phase === 'active' ? (
-              <div className="flex justify-center">
-                <button onClick={handlePause}
-                  className="w-20 h-20 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center active:scale-95">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-7 bg-white rounded-sm" />
-                    <div className="w-2.5 h-7 bg-white rounded-sm" />
-                  </div>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-10">
-                <button
-                  onTouchStart={() => { stopTimer.current = setTimeout(handleStop, 2000); }}
-                  onTouchEnd={() => { if (stopTimer.current) clearTimeout(stopTimer.current); }}
-                  onMouseDown={() => { stopTimer.current = setTimeout(handleStop, 2000); }}
-                  onMouseUp={() => { if (stopTimer.current) clearTimeout(stopTimer.current); }}
-                  className="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500/60 flex items-center justify-center">
-                  <div className="w-6 h-6 bg-red-500 rounded-sm" />
-                </button>
-                <button onClick={handleResume}
-                  className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center active:scale-95 shadow-lg shadow-green-500/20">
-                  <div className="w-0 h-0 border-l-[16px] border-l-white border-y-[10px] border-y-transparent ml-1.5" />
-                </button>
-              </div>
-            )}
-            {phase === 'paused' && (
-              <p className="text-center text-[10px] text-white/20 mt-4">Hold stop for 2 seconds to end</p>
-            )}
-          </div>
+          {/* Bottom sheet with stats + controls */}
+          <RunBottomSheet
+            elapsed={timer.elapsed}
+            distance={gps.distance}
+            points={gps.points}
+            formatTime={timer.formatTime}
+            onPause={handlePause}
+            onLock={() => setLocked(true)}
+            isPaused={phase === 'paused'}
+            onResume={handleResume}
+            onStop={handleStop}
+            weightKg={profile?.weightKg || 70}
+          />
         </>
       )}
     </div>

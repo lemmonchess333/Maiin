@@ -6,6 +6,10 @@ import { calculatePace, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
 import RunMap from '../components/run/RunMap';
+import PaceLegend from '../components/run/PaceLegend';
+import SplitsBarChart from '../components/analytics/SplitsBarChart';
+import ElevationProfile from '../components/analytics/ElevationProfile';
+import { THEME } from '../lib/theme';
 
 interface RunData {
   points: GPSPoint[];
@@ -44,7 +48,6 @@ export default function RunSummary() {
     };
     await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
-    // Auto-post to social feed
     if (profile?.autoPostRuns !== false) {
       await postActivity({
         authorId: user.uid,
@@ -91,84 +94,81 @@ export default function RunSummary() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="text-center pt-8 pb-4 px-6">
-        <p className="text-3xl mb-1">🏃</p>
-        <h1 className="text-xl font-bold">Great run!</h1>
+        <h1 className="text-xl font-bold text-foreground">Great run!</h1>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric'
         })}</p>
       </div>
 
+      {/* Pace-coloured route map */}
       {points.length > 1 && (
-        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border">
-          <RunMap points={points} currentPoint={null} interactive={true} height="h-56" />
+        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border/50">
+          <RunMap
+            points={points}
+            currentPoint={null}
+            interactive={true}
+            height="h-56"
+            paceColored={true}
+            avgPaceSecPerKm={avgPaceSeconds}
+          />
+          <PaceLegend />
         </div>
       )}
 
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums text-orange-500">
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
             {(distance / 1000).toFixed(2)}
           </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">km</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums">{formatTime(elapsed)}</p>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">time</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums text-purple-500">{avgPace}</p>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">/km pace</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border text-center">
-          <p className="text-lg font-bold font-mono tabular-nums text-green-500">{calories}</p>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-lg font-bold font-mono tabular-nums text-emerald-500">{calories}</p>
           <p className="text-[10px] text-muted-foreground">calories</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border text-center">
-          <p className="text-lg font-bold font-mono tabular-nums">{elevationGain}m</p>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
           <p className="text-[10px] text-muted-foreground">elevation gain</p>
         </div>
       </div>
 
+      {/* Splits bar chart */}
       {splits.length > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border">
-          <h3 className="text-sm font-semibold mb-3">Splits</h3>
-          <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground mb-2 px-1">
-            <span>KM</span><span className="text-center">PACE</span><span className="text-right">TIME</span>
-          </div>
-          {splits.map(split => {
-            const isFaster = split.paceSeconds < avgPaceSeconds;
-            const isSlower = split.paceSeconds > avgPaceSeconds * 1.05;
-            return (
-              <div key={split.km} className={`grid grid-cols-3 gap-2 py-2 px-1 rounded-lg text-sm ${
-                isFaster ? 'bg-green-50 dark:bg-green-950/20' :
-                isSlower ? 'bg-red-50 dark:bg-red-950/20' : ''
-              }`}>
-                <span className="font-medium">{split.km}</span>
-                <span className={`text-center font-mono tabular-nums ${
-                  isFaster ? 'text-green-600' : isSlower ? 'text-red-500' : ''
-                }`}>{split.pace}</span>
-                <span className="text-right font-mono tabular-nums text-muted-foreground">
-                  {formatTime(Math.round(split.time))}
-                </span>
-              </div>
-            );
-          })}
+        <div className="px-4 mb-4">
+          <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
         </div>
       )}
 
+      {/* Elevation profile */}
+      {points.length > 0 && (
+        <div className="px-4 mb-4">
+          <ElevationProfile points={points} accentColor={THEME.running} />
+        </div>
+      )}
+
+      {/* Actions */}
       <div className="px-4 space-y-2">
         <button onClick={handleSave}
-          className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium text-sm">
+          className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
           Save Run
         </button>
         <div className="flex gap-2">
           <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card border border-border text-sm font-medium">
+            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
             Export GPX
           </button>
-          <button className="flex-1 py-3 rounded-xl bg-card border border-border text-sm font-medium">
+          <button className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
             Share
           </button>
         </div>

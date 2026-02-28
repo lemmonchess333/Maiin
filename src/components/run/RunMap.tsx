@@ -1,63 +1,201 @@
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useRef, useEffect } from 'react';
+import maplibregl from 'maplibre-gl';
 import type { GPSPoint } from '../../lib/gps';
+import { THEME } from '../../lib/theme';
 
 interface RunMapProps {
   points: GPSPoint[];
   currentPoint: GPSPoint | null;
   interactive?: boolean;
   height?: string;
+  paceColored?: boolean;
+  avgPaceSecPerKm?: number;
+  className?: string;
 }
 
-export default function RunMap({ points, currentPoint, interactive = false, height = 'h-48' }: RunMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const polylineRef = useRef<L.Polyline | null>(null);
-  const markerRef = useRef<L.CircleMarker | null>(null);
+export default function RunMap({
+  points, currentPoint, interactive = false,
+  height = 'h-full', paceColored = false, avgPaceSecPerKm,
+  className = '',
+}: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const startMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const endMarkerRef = useRef<maplibregl.Marker | null>(null);
 
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+
     const initialCenter: [number, number] = currentPoint
-      ? [currentPoint.lat, currentPoint.lon]
-      : points.length > 0 ? [points[0].lat, points[0].lon] : [51.505, -0.09];
+      ? [currentPoint.lon, currentPoint.lat]
+      : points.length > 0
+        ? [points[0].lon, points[0].lat]
+        : [-0.09, 51.505];
 
-    mapRef.current = L.map(containerRef.current, {
-      zoomControl: interactive, attributionControl: false,
-      dragging: interactive, scrollWheelZoom: interactive,
-      touchZoom: interactive, doubleClickZoom: false,
-    }).setView(initialCenter, 15);
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      center: initialCenter,
+      zoom: 15,
+      attributionControl: false,
+      interactive: interactive,
+      dragRotate: false,
+      pitchWithRotate: false,
+    });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
-      .addTo(mapRef.current);
+    map.on('load', () => {
+      map.addSource('route', {
+        type: 'geojson',
+        data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] }, properties: {} },
+      });
 
-    polylineRef.current = L.polyline([], {
-      color: '#8b5cf6', weight: 4, opacity: 0.9, smoothFactor: 1,
-    }).addTo(mapRef.current);
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': THEME.teal,
+          'line-width': 5,
+          'line-opacity': 0.9,
+        },
+      });
 
-    return () => { mapRef.current?.remove(); mapRef.current = null; };
-  }, [interactive]);
-
-  useEffect(() => {
-    if (!mapRef.current || !polylineRef.current || points.length === 0) return;
-    const latLngs = points.map(p => [p.lat, p.lon] as [number, number]);
-    polylineRef.current.setLatLngs(latLngs);
-
-    if (currentPoint) {
-      if (!markerRef.current) {
-        markerRef.current = L.circleMarker([currentPoint.lat, currentPoint.lon], {
-          radius: 8, color: '#8b5cf6', fillColor: '#a78bfa', fillOpacity: 1, weight: 3,
-        }).addTo(mapRef.current);
-      } else {
-        markerRef.current.setLatLng([currentPoint.lat, currentPoint.lon]);
+      if (paceColored) {
+        map.addSource('pace-segments', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        });
+        map.addLayer({
+          id: 'pace-segments-line',
+          type: 'line',
+          source: 'pace-segments',
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': 5,
+            'line-opacity': 0.9,
+          },
+        });
+        map.setLayoutProperty('route-line', 'visibility', 'none');
       }
-      mapRef.current.panTo([currentPoint.lat, currentPoint.lon], { animate: true });
-    }
+    });
 
-    if (!currentPoint && points.length > 1) {
-      mapRef.current.fitBounds(polylineRef.current.getBounds(), { padding: [20, 20] });
-    }
-  }, [points, currentPoint]);
+    mapRef.current = map;
 
-  return <div ref={containerRef} className={`w-full ${height} rounded-xl overflow-hidden`} />;
+    return () => { map.remove(); mapRef.current = null; };
+  }, [interactive, paceColored]);
+
+  // Update route
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || points.length === 0) return;
+
+    const updateRoute = () => {
+      const coords = points.map(p => [p.lon, p.lat]);
+
+      const routeSource = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
+      if (routeSource) {
+        routeSource.setData({
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: coords },
+          properties: {},
+        });
+      }
+
+      if (paceColored && avgPaceSecPerKm && points.length > 1) {
+        const features: any[] = [];
+        for (let i = 1; i < points.length; i++) {
+          const dist = haversineQuick(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
+          const timeDiff = (points[i].timestamp - points[i-1].timestamp) / 1000;
+          const segPace = timeDiff > 0 && dist > 0 ? (timeDiff / dist) * 1000 : avgPaceSecPerKm;
+          const ratio = segPace / avgPaceSecPerKm;
+
+          let color: string;
+          if (ratio < 0.92) color = THEME.paceFast;
+          else if (ratio < 1.03) color = THEME.paceOnTarget;
+          else if (ratio < 1.1) color = THEME.warning;
+          else color = THEME.paceSlow;
+
+          features.push({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'LineString' as const,
+              coordinates: [[points[i-1].lon, points[i-1].lat], [points[i].lon, points[i].lat]],
+            },
+            properties: { color },
+          });
+        }
+
+        const paceSource = map.getSource('pace-segments') as maplibregl.GeoJSONSource | undefined;
+        if (paceSource) {
+          paceSource.setData({ type: 'FeatureCollection', features });
+        }
+      }
+
+      // Current position marker (live tracking)
+      if (currentPoint) {
+        if (!markerRef.current) {
+          const el = document.createElement('div');
+          el.innerHTML = `
+            <div style="width:24px;height:24px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;">
+              <div style="width:12px;height:12px;border-radius:50%;background:${THEME.teal};border:2px solid white;"></div>
+            </div>
+          `;
+          markerRef.current = new maplibregl.Marker({ element: el })
+            .setLngLat([currentPoint.lon, currentPoint.lat])
+            .addTo(map);
+        } else {
+          markerRef.current.setLngLat([currentPoint.lon, currentPoint.lat]);
+        }
+        map.easeTo({ center: [currentPoint.lon, currentPoint.lat], duration: 500 });
+      }
+
+      // Fit bounds for post-run static view
+      if (!currentPoint && points.length > 1) {
+        const lngs = points.map(p => p.lon);
+        const lats = points.map(p => p.lat);
+        map.fitBounds(
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          { padding: 40, duration: 0 }
+        );
+      }
+
+      // Start marker (green dot)
+      if (points.length > 0 && !startMarkerRef.current) {
+        const el = document.createElement('div');
+        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.success};border:2px solid white;`;
+        startMarkerRef.current = new maplibregl.Marker({ element: el })
+          .setLngLat([points[0].lon, points[0].lat])
+          .addTo(map);
+      }
+
+      // End marker (for post-run)
+      if (!currentPoint && points.length > 1 && !endMarkerRef.current) {
+        const el = document.createElement('div');
+        el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.danger};border:2px solid white;`;
+        endMarkerRef.current = new maplibregl.Marker({ element: el })
+          .setLngLat([points[points.length - 1].lon, points[points.length - 1].lat])
+          .addTo(map);
+      }
+    };
+
+    if (map.loaded()) {
+      updateRoute();
+    } else {
+      map.on('load', updateRoute);
+    }
+  }, [points, currentPoint, paceColored, avgPaceSecPerKm]);
+
+  return <div ref={containerRef} className={`w-full ${height} ${className}`} />;
+}
+
+function haversineQuick(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }

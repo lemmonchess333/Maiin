@@ -17,6 +17,7 @@ const Run = lazy(() => import("@/pages/Run"));
 const RunSummary = lazy(() => import("@/pages/RunSummary"));
 const Social = lazy(() => import("@/pages/Social"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const RunDetail = lazy(() => import("@/pages/RunDetail"));
 
 function PageLoader() {
   return (
@@ -142,6 +143,7 @@ function AppRoutes() {
           <Route path="/program" element={<Program />} />
           <Route path="/social" element={<Social />} />
           <Route path="/user/:uid" element={<UserProfile />} />
+          <Route path="/run/:runId" element={<RunDetail />} />
         </Route>
         <Route path="/run" element={<Run />} />
         <Route path="/run-summary" element={<RunSummary />} />
