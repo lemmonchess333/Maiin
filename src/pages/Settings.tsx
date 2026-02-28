@@ -28,6 +28,7 @@ import {
   ChevronUp,
   Download,
   Timer,
+  Users,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 
@@ -74,6 +75,10 @@ export default function Settings() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [autoRestTimer, setAutoRestTimer] = useState(profile?.autoRestTimer ?? true);
   const [defaultRestSeconds, setDefaultRestSeconds] = useState(profile?.defaultRestSeconds ?? 120);
+  const [defaultVisibility, setDefaultVisibility] = useState<"public" | "followers" | "private">(profile?.defaultVisibility ?? "public");
+  const [autoPostRuns, setAutoPostRuns] = useState(profile?.autoPostRuns ?? true);
+  const [autoPostWorkouts, setAutoPostWorkouts] = useState(profile?.autoPostWorkouts ?? false);
+  const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
   const [age, setAge] = useState(25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
 
@@ -508,6 +513,85 @@ export default function Settings() {
             <option value={240}>4:00</option>
             <option value={300}>5:00</option>
           </select>
+        </div>
+      </div>
+
+      {/* Social & Privacy */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Social & Privacy
+        </h2>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div>
+            <p className="text-sm text-foreground">Default visibility</p>
+            <p className="text-[10px] text-muted-foreground">Who can see your posts</p>
+          </div>
+          <select
+            value={defaultVisibility}
+            onChange={async (e) => {
+              const val = e.target.value as "public" | "followers" | "private";
+              setDefaultVisibility(val);
+              await updateProfile({ defaultVisibility: val });
+            }}
+            className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+          >
+            <option value="public">Public</option>
+            <option value="followers">Followers</option>
+            <option value="private">Private</option>
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div>
+            <p className="text-sm text-foreground">Auto-post runs</p>
+            <p className="text-[10px] text-muted-foreground">Share runs to feed automatically</p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !autoPostRuns;
+              setAutoPostRuns(next);
+              await updateProfile({ autoPostRuns: next });
+            }}
+            className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostRuns ? "bg-primary" : "bg-muted border border-border")}
+          >
+            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoPostRuns ? "translate-x-5" : "translate-x-1")} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div>
+            <p className="text-sm text-foreground">Auto-post workouts</p>
+            <p className="text-[10px] text-muted-foreground">Share workouts to feed automatically</p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !autoPostWorkouts;
+              setAutoPostWorkouts(next);
+              await updateProfile({ autoPostWorkouts: next });
+            }}
+            className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostWorkouts ? "bg-primary" : "bg-muted border border-border")}
+          >
+            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoPostWorkouts ? "translate-x-5" : "translate-x-1")} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div>
+            <p className="text-sm text-foreground">Audio cues</p>
+            <p className="text-[10px] text-muted-foreground">Voice announcements during runs</p>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !audioCues;
+              setAudioCues(next);
+              await updateProfile({ audioCues: next });
+            }}
+            className={cn("w-10 h-6 rounded-full transition-colors relative", audioCues ? "bg-primary" : "bg-muted border border-border")}
+          >
+            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", audioCues ? "translate-x-5" : "translate-x-1")} />
+          </button>
         </div>
       </div>
 

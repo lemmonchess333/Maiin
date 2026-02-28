@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
+import { collection as fbCollection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import WorkoutLogger from "@/components/WorkoutLogger";
@@ -41,7 +43,8 @@ export default function Log() {
     format(new Date(), "yyyy-MM-dd")
   );
   const [hasPR, setHasPR] = useState(false);
-  const [activeTab, setActiveTab] = useState<"workout" | "food">("workout");
+  const [activeTab, setActiveTab] = useState<"workout" | "food" | "run">("workout");
+  const navigate = useNavigate();
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
@@ -340,31 +343,26 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Tabs — Workout / Food only (Quick removed) */}
-      <div className="flex gap-2 bg-muted rounded-xl p-1">
-        <button
-          onClick={() => setActiveTab("workout")}
-          className={cn(
-            "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
-            activeTab === "workout"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground"
-          )}
-        >
-          <Dumbbell className="w-4 h-4" /> Workout
-        </button>
-
-        <button
-          onClick={() => setActiveTab("food")}
-          className={cn(
-            "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2",
-            activeTab === "food"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground"
-          )}
-        >
-          <UtensilsCrossed className="w-4 h-4" /> Food
-        </button>
+      {/* Tabs — Workout / Food / Run */}
+      <div className="flex gap-1 bg-muted rounded-xl p-1">
+        {([
+          { key: "workout" as const, label: "Workout", Icon: Dumbbell },
+          { key: "food" as const, label: "Food", Icon: UtensilsCrossed },
+          { key: "run" as const, label: "Run", Icon: Flame },
+        ]).map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={cn(
+              "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+              activeTab === key
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground"
+            )}
+          >
+            <Icon className="w-4 h-4" /> {label}
+          </button>
+        ))}
       </div>
 
       {/* Workout Tab */}
@@ -661,6 +659,72 @@ export default function Log() {
           <FoodAnalyzer date={selectedDate} />
         </div>
       )}
+
+      {/* Run Tab */}
+      {activeTab === "run" && (
+        <div className="space-y-6">
+          <div className="text-center py-8 space-y-4">
+            <p className="text-5xl">🏃</p>
+            <h2 className="text-lg font-bold">Ready to run?</h2>
+            <p className="text-sm text-muted-foreground px-6">
+              GPS tracking with live pace, distance, splits, and route mapping
+            </p>
+            <button onClick={() => navigate('/run')}
+              className="px-10 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-base shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform">
+              Start Run
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg">📍</p>
+              <p className="text-[10px] text-muted-foreground mt-1">GPS Tracking</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg">🗣️</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Audio Cues</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg">📊</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Split Analysis</p>
+            </div>
+          </div>
+
+          <RecentRunsList />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecentRunsList() {
+  const { user } = useAuth();
+  const [runs, setRuns] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(fbCollection(db, 'users', user.uid, 'runs'), orderBy('completedAt', 'desc'), limit(3));
+    getDocs(q).then(snap => setRuns(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  }, [user]);
+
+  if (runs.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold">Recent Runs</h3>
+      {runs.map((run: any) => (
+        <div key={run.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border">
+          <div>
+            <p className="text-sm font-medium">{((run.distance || 0) / 1000).toFixed(2)} km</p>
+            <p className="text-[10px] text-muted-foreground">
+              {run.completedAt?.toDate?.()?.toLocaleDateString() || ''}
+            </p>
+          </div>
+          <p className="text-sm font-mono tabular-nums text-muted-foreground">
+            {run.avgPace ? `${Math.floor(run.avgPace / 60)}:${(Math.floor(run.avgPace) % 60).toString().padStart(2, '0')}/km` : ''}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

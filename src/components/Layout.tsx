@@ -1,18 +1,18 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, PlusCircle, BarChart3, Settings, Dumbbell } from "lucide-react";
+import { Home, PlusCircle, BarChart3, Dumbbell, Users } from "lucide-react";
 
 const tabs = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/log", icon: PlusCircle, label: "Log" },
   { to: "/program", icon: Dumbbell, label: "Program" },
+  { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "History" },
-  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function Layout() {
-  // Dark mode is now synced to <html> via auth.tsx syncDarkMode()
-  // so we no longer need the wrapper div with cn(dark && "dark")
+  const location = useLocation();
+  const hideNav = location.pathname === '/run';
 
   return (
     <div className="min-h-screen bg-background transition-colors pb-20">
@@ -21,6 +21,7 @@ export default function Layout() {
       </div>
 
       {/* Bottom tab bar */}
+      {!hideNav && (
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 safe-area-pb">
         <div className="max-w-md mx-auto flex">
           {tabs.map((tab) => {
@@ -46,6 +47,7 @@ export default function Layout() {
           })}
         </div>
       </nav>
+      )}
     </div>
   );
 }

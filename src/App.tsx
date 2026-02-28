@@ -13,6 +13,10 @@ const Log = lazy(() => import("@/pages/Log"));
 const History = lazy(() => import("@/pages/History"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Program = lazy(() => import("@/pages/Program"));
+const Run = lazy(() => import("@/pages/Run"));
+const RunSummary = lazy(() => import("@/pages/RunSummary"));
+const Social = lazy(() => import("@/pages/Social"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
 function PageLoader() {
   return (
@@ -136,7 +140,11 @@ function AppRoutes() {
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/program" element={<Program />} />
+          <Route path="/social" element={<Social />} />
+          <Route path="/user/:uid" element={<UserProfile />} />
         </Route>
+        <Route path="/run" element={<Run />} />
+        <Route path="/run-summary" element={<RunSummary />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

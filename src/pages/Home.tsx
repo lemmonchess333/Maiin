@@ -10,6 +10,7 @@ import { WeeklyDayFill } from "@/components/WeeklyDayFill";
 import { useSubscription } from "@/lib/subscription";
 import { calculateAdaptiveTDEE } from "@/lib/adaptiveTDEE";
 import { useProgram } from "@/features/program/useProgram";
+import RunDashboard from "@/components/run/RunDashboard";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -23,6 +24,7 @@ import {
   Cookie,
   ChevronRight,
   Zap,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
@@ -103,6 +105,7 @@ export default function Home() {
   const weeklyDayMap = useWeeklyDayMap();
 
   const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
+  const [homeMode, setHomeMode] = useState<"lift" | "run">("lift");
   const [confettiFired, setConfettiFired] = useState(false);
 
   // Adaptive TDEE computation for Pro users
@@ -228,12 +231,36 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-6">
-      {/* Greeting */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-xl font-bold text-foreground">
-          Hey, {profile.displayName || "Athlete"}
-        </h1>
-        <p className="text-xs text-muted-foreground">Let's put in work today.</p>
+      {/* Header with Settings gear + Lift/Run toggle */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              Hey, {profile.displayName || "Athlete"}
+            </h1>
+            <p className="text-xs text-muted-foreground">Let's put in work today.</p>
+          </div>
+          <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        </div>
+
+        {/* Lift / Run segmented control */}
+        <div className="flex gap-1 bg-muted rounded-lg p-1">
+          {(["lift", "run"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setHomeMode(m)}
+              className={cn(
+                "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                "active:scale-[0.99] transition-transform",
+                homeMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {m === "lift" ? "Lift" : "Run"}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Trial banner */}
@@ -253,239 +280,247 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Streak */}
-      <div className="space-y-3">
-        <StreakCounter streak={computedStreak} />
-        <div className="text-[11px] text-muted-foreground">
-          {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
-          <span className="px-1">•</span>{" "}
-          {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
-        </div>
-      </div>
+      {/* Run mode dashboard */}
+      {homeMode === "run" && <RunDashboard />}
 
-      {/* Weekly Day Fill Summary */}
-      <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-3">
-        <p className="text-sm font-medium text-foreground">This Week</p>
-        <WeeklyDayFill dayMap={weeklyDayMap} workoutsTarget={safeNum(weeklyStats.workoutsTarget, 4)} />
-      </div>
-
-      {/* Adaptive TDEE Card (Pro) */}
-      {tdeeResult && tdeeResult.confidence !== "low" && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl border border-border/50 p-5 space-y-3"
-        >
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <p className="text-sm font-medium text-foreground">Adaptive TDEE</p>
-            <span className={cn(
-              "ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full",
-              tdeeResult.confidence === "high"
-                ? "bg-green-100 text-green-600"
-                : "bg-yellow-100 text-yellow-600"
-            )}>
-              {tdeeResult.confidence} confidence
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
-              <p className="text-lg font-bold text-foreground">{tdeeResult.estimatedTDEE}</p>
-              <p className="text-[10px] text-muted-foreground">Est. TDEE</p>
-            </div>
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
-              <p className="text-lg font-bold text-primary">{tdeeResult.adjustedCalories}</p>
-              <p className="text-[10px] text-muted-foreground">Target cal</p>
+      {/* Lift mode dashboard */}
+      {homeMode === "lift" && (
+        <>
+          {/* Streak */}
+          <div className="space-y-3">
+            <StreakCounter streak={computedStreak} />
+            <div className="text-[11px] text-muted-foreground">
+              {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
+              <span className="px-1">•</span>{" "}
+              {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Weekly weight change: <span className={cn(
-              "font-medium",
-              tdeeResult.weeklyWeightChange > 0 ? "text-green-500" : tdeeResult.weeklyWeightChange < 0 ? "text-red-500" : "text-foreground"
-            )}>
-              {tdeeResult.weeklyWeightChange > 0 ? "+" : ""}{tdeeResult.weeklyWeightChange.toFixed(2)}kg
-            </span></span>
-            <span>Target: {tdeeResult.targetWeightChange > 0 ? "+" : ""}{tdeeResult.targetWeightChange}kg/wk</span>
+          {/* Weekly Day Fill Summary */}
+          <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-3">
+            <p className="text-sm font-medium text-foreground">This Week</p>
+            <WeeklyDayFill dayMap={weeklyDayMap} workoutsTarget={safeNum(weeklyStats.workoutsTarget, 4)} />
           </div>
 
-          <div className="flex gap-2 text-[10px]">
-            <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">P: {tdeeResult.adjustedProtein}g</span>
-            <span className="px-2 py-1 rounded bg-amber-50 text-amber-600 font-medium">C: {tdeeResult.adjustedCarbs}g</span>
-            <span className="px-2 py-1 rounded bg-purple-50 text-purple-600 font-medium">F: {tdeeResult.adjustedFat}g</span>
-          </div>
-        </motion.div>
-      )}
+          {/* Adaptive TDEE Card (Pro) */}
+          {tdeeResult && tdeeResult.confidence !== "low" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-2xl border border-border/50 p-5 space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500" />
+                <p className="text-sm font-medium text-foreground">Adaptive TDEE</p>
+                <span className={cn(
+                  "ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full",
+                  tdeeResult.confidence === "high"
+                    ? "bg-green-100 text-green-600"
+                    : "bg-yellow-100 text-yellow-600"
+                )}>
+                  {tdeeResult.confidence} confidence
+                </span>
+              </div>
 
-      {/* Next Workout */}
-      {nextWorkout && (
-        <Link to="/program">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={cn(
-              "bg-card rounded-2xl border border-border/50 p-5 space-y-2",
-              "transition-transform active:scale-[0.99]"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-lg p-3 text-center">
+                  <p className="text-lg font-bold text-foreground">{tdeeResult.estimatedTDEE}</p>
+                  <p className="text-[10px] text-muted-foreground">Est. TDEE</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3 text-center">
+                  <p className="text-lg font-bold text-primary">{tdeeResult.adjustedCalories}</p>
+                  <p className="text-[10px] text-muted-foreground">Target cal</p>
+                </div>
+              </div>
 
-              <div className="ml-auto flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
-                <span className="text-[10px] text-muted-foreground">Open</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Weekly weight change: <span className={cn(
+                  "font-medium",
+                  tdeeResult.weeklyWeightChange > 0 ? "text-green-500" : tdeeResult.weeklyWeightChange < 0 ? "text-red-500" : "text-foreground"
+                )}>
+                  {tdeeResult.weeklyWeightChange > 0 ? "+" : ""}{tdeeResult.weeklyWeightChange.toFixed(2)}kg
+                </span></span>
+                <span>Target: {tdeeResult.targetWeightChange > 0 ? "+" : ""}{tdeeResult.targetWeightChange}kg/wk</span>
+              </div>
+
+              <div className="flex gap-2 text-[10px]">
+                <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">P: {tdeeResult.adjustedProtein}g</span>
+                <span className="px-2 py-1 rounded bg-amber-50 text-amber-600 font-medium">C: {tdeeResult.adjustedCarbs}g</span>
+                <span className="px-2 py-1 rounded bg-purple-50 text-purple-600 font-medium">F: {tdeeResult.adjustedFat}g</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Next Workout */}
+          {nextWorkout && (
+            <Link to="/program">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  "bg-card rounded-2xl border border-border/50 p-5 space-y-2",
+                  "transition-transform active:scale-[0.99]"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Dumbbell className="w-4 h-4 text-primary" />
+                  <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
+
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
+                    <span className="text-[10px] text-muted-foreground">Open</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 rounded border text-[10px]"
+                      style={{
+                        backgroundColor: tint("#7c3aed", 0.92),
+                        borderColor: tint("#7c3aed", 0.75),
+                        color: "#4c1d95",
+                      }}
+                    >
+                      {ex.name}
+                    </span>
+                  ))}
+                  {nextWorkout.exercises.length > 4 && (
+                    <span
+                      className="px-2 py-0.5 rounded border text-[10px]"
+                      style={{
+                        backgroundColor: tint("#7c3aed", 0.92),
+                        borderColor: tint("#7c3aed", 0.75),
+                        color: "#4c1d95",
+                      }}
+                    >
+                      +{nextWorkout.exercises.length - 4} more
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            </Link>
+          )}
+
+          {/* Bodyweight Logger */}
+          <BodyweightLogger />
+
+          {/* Today's Intake */}
+          <div className="bg-card rounded-2xl border border-border/50 p-5">
+            <div className="mb-4">
+              <p className="text-sm font-medium text-foreground">Today's Intake</p>
+              <p className="text-[11px] text-muted-foreground mt-1">From meals logged today</p>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
+              <div
+                className="min-w-0 rounded-xl p-3 shadow-sm"
+                style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
+              >
+                <Flame className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                  {safeNum(dailyTotals.calories)}
+                </p>
+                <p className="text-[10px] mt-1">cal</p>
+              </div>
+
+              <div
+                className="min-w-0 rounded-xl p-3 shadow-sm"
+                style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
+              >
+                <Beef className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                  {safeNum(dailyTotals.protein)}g
+                </p>
+                <p className="text-[10px] mt-1">protein</p>
+              </div>
+
+              <div
+                className="min-w-0 rounded-xl p-3 shadow-sm"
+                style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
+              >
+                <Wheat className="w-5 h-5 mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                  {safeNum(dailyTotals.carbs)}g
+                </p>
+                <p className="text-[10px] mt-1">carbs</p>
+              </div>
+
+              <div
+                className="min-w-0 rounded-xl p-3 shadow-sm"
+                style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
+              >
+                <Cookie size={20} className="mx-auto mb-1.5" />
+                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                  {safeNum(dailyTotals.fat)}g
+                </p>
+                <p className="text-[10px] mt-1">fat</p>
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
-                <span
-                  key={i}
-                  className="px-2 py-0.5 rounded border text-[10px]"
-                  style={{
-                    backgroundColor: tint("#7c3aed", 0.92),
-                    borderColor: tint("#7c3aed", 0.75),
-                    color: "#4c1d95",
-                  }}
-                >
-                  {ex.name}
-                </span>
-              ))}
-              {nextWorkout.exercises.length > 4 && (
-                <span
-                  className="px-2 py-0.5 rounded border text-[10px]"
-                  style={{
-                    backgroundColor: tint("#7c3aed", 0.92),
-                    borderColor: tint("#7c3aed", 0.75),
-                    color: "#4c1d95",
-                  }}
-                >
-                  +{nextWorkout.exercises.length - 4} more
-                </span>
-              )}
-            </div>
+          {/* Mode Toggle + Adaptive Summary */}
+          <div className="flex gap-1 bg-muted rounded-lg p-1">
+            {(["weekly", "monthly"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                  "active:scale-[0.99] transition-transform",
+                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <AdaptiveSummary
+            athleteType={profile.athleteType || "Lifter"}
+            mode={mode}
+            weightKg={profile.weightKg ?? 70}
+            weeklyWorkoutsDone={weeklyStats.workoutsDone ?? 0}
+            weeklyWorkoutsTarget={weeklyStats.workoutsTarget ?? 4}
+            weeklyMealsDone={weeklyStats.mealsDone ?? 0}
+            weeklyMealsTarget={weeklyStats.mealsTarget ?? 10}
+            weeklyPR={weeklyStats.hasPR ?? false}
+            weeklyBodyweightTrend={bodyweightTrend.weekly ?? []}
+            monthlyWorkoutsDone={monthlyStats.workoutsDone ?? 0}
+            monthlyWorkoutsTarget={monthlyStats.workoutsTarget ?? 16}
+            monthlyMealsDone={monthlyStats.mealsDone ?? 0}
+            monthlyMealsTarget={monthlyStats.mealsTarget ?? 40}
+            monthlyPR={monthlyStats.hasPR ?? false}
+            monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
+          />
+
+          {/* Motivational quote */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="p-3 rounded-xl bg-primary/5 border border-primary/10"
+          >
+            <p className="text-xs text-muted-foreground italic">"{quote}"</p>
           </motion.div>
-        </Link>
-      )}
 
-      {/* Bodyweight Logger */}
-      <BodyweightLogger />
-
-      {/* Today's Intake */}
-      <div className="bg-card rounded-2xl border border-border/50 p-5">
-        <div className="mb-4">
-          <p className="text-sm font-medium text-foreground">Today's Intake</p>
-          <p className="text-[11px] text-muted-foreground mt-1">From meals logged today</p>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
-          <div
-            className="min-w-0 rounded-xl p-3 shadow-sm"
-            style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
-          >
-            <Flame className="w-5 h-5 mx-auto mb-1.5" />
-            <p className="text-xl font-bold tabular-nums leading-none truncate">
-              {safeNum(dailyTotals.calories)}
-            </p>
-            <p className="text-[10px] mt-1">cal</p>
-          </div>
-
-          <div
-            className="min-w-0 rounded-xl p-3 shadow-sm"
-            style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
-          >
-            <Beef className="w-5 h-5 mx-auto mb-1.5" />
-            <p className="text-xl font-bold tabular-nums leading-none truncate">
-              {safeNum(dailyTotals.protein)}g
-            </p>
-            <p className="text-[10px] mt-1">protein</p>
-          </div>
-
-          <div
-            className="min-w-0 rounded-xl p-3 shadow-sm"
-            style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
-          >
-            <Wheat className="w-5 h-5 mx-auto mb-1.5" />
-            <p className="text-xl font-bold tabular-nums leading-none truncate">
-              {safeNum(dailyTotals.carbs)}g
-            </p>
-            <p className="text-[10px] mt-1">carbs</p>
-          </div>
-
-          <div
-            className="min-w-0 rounded-xl p-3 shadow-sm"
-            style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
-          >
-            <Cookie size={20} className="mx-auto mb-1.5" />
-            <p className="text-xl font-bold tabular-nums leading-none truncate">
-              {safeNum(dailyTotals.fat)}g
-            </p>
-            <p className="text-[10px] mt-1">fat</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Mode Toggle + Adaptive Summary */}
-      <div className="flex gap-1 bg-muted rounded-lg p-1">
-        {(["weekly", "monthly"] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={cn(
-              "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              "active:scale-[0.99] transition-transform",
-              mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {m.charAt(0).toUpperCase() + m.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <AdaptiveSummary
-        athleteType={profile.athleteType || "Lifter"}
-        mode={mode}
-        weightKg={profile.weightKg ?? 70}
-        weeklyWorkoutsDone={weeklyStats.workoutsDone ?? 0}
-        weeklyWorkoutsTarget={weeklyStats.workoutsTarget ?? 4}
-        weeklyMealsDone={weeklyStats.mealsDone ?? 0}
-        weeklyMealsTarget={weeklyStats.mealsTarget ?? 10}
-        weeklyPR={weeklyStats.hasPR ?? false}
-        weeklyBodyweightTrend={bodyweightTrend.weekly ?? []}
-        monthlyWorkoutsDone={monthlyStats.workoutsDone ?? 0}
-        monthlyWorkoutsTarget={monthlyStats.workoutsTarget ?? 16}
-        monthlyMealsDone={monthlyStats.mealsDone ?? 0}
-        monthlyMealsTarget={monthlyStats.mealsTarget ?? 40}
-        monthlyPR={monthlyStats.hasPR ?? false}
-        monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
-      />
-
-      {/* Motivational quote */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="p-3 rounded-xl bg-primary/5 border border-primary/10"
-      >
-        <p className="text-xs text-muted-foreground italic">"{quote}"</p>
-      </motion.div>
-
-      {/* Pro upsell */}
-      {!isPro && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
-        >
-          <p className="text-sm font-medium text-foreground">
-            Unlock AI Photo Logging & Performance Engine
-          </p>
-          <p className="text-xs text-muted-foreground">Upgrade to Pro — from just £2.99/mo</p>
-        </motion.div>
+          {/* Pro upsell */}
+          {!isPro && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
+            >
+              <p className="text-sm font-medium text-foreground">
+                Unlock AI Photo Logging & Performance Engine
+              </p>
+              <p className="text-xs text-muted-foreground">Upgrade to Pro — from just £2.99/mo</p>
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );

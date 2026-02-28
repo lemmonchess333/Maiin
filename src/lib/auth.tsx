@@ -57,6 +57,11 @@ export interface UserProfile {
   // Workout preferences
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
+  // Social & privacy
+  defaultVisibility?: "public" | "followers" | "private";
+  autoPostRuns?: boolean;
+  autoPostWorkouts?: boolean;
+  audioCues?: boolean;
 }
 
 /* ================================
