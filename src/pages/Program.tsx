@@ -311,8 +311,8 @@ function ProgramInner() {
             className={cn(
               "px-2.5 py-0.5 rounded-full text-[10px] font-medium",
               prescription.deload
-                ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                ? "bg-blue-100 text-blue-600"
+                : "bg-green-100 text-green-600"
             )}
           >
             {prescription.deload ? "Deload" : "Progression"}
