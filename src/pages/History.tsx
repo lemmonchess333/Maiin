@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useHistoryData } from "@/hooks/useFirestore";
 import { useMeals } from "@/hooks/useMeals";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import RunningHistorySection from "@/components/run/RunningHistorySection";
 import { cn } from "@/lib/utils";
 import { Calendar, TrendingUp, Dumbbell, Download, BarChart3, Activity } from "lucide-react";
 import {
@@ -43,8 +44,11 @@ const TOOLTIP_STYLE = {
 
 const AXIS_TICK = { fontSize: 10, fill: "hsl(var(--muted-foreground))" };
 
+type HistoryFilter = "all" | "lifting" | "running" | "nutrition";
+
 export default function History() {
   const [range, setRange] = useState<7 | 30 | 90>(30);
+  const [filter, setFilter] = useState<HistoryFilter>("all");
   const { data, loading } = useHistoryData(range);
   const { meals } = useMeals();
   const { workouts } = useWorkouts();
@@ -357,8 +361,31 @@ export default function History() {
         ))}
       </div>
 
+      {/* Category filter */}
+      <div className="flex gap-1 bg-muted rounded-lg p-1">
+        {(["all", "lifting", "running", "nutrition"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={cn(
+              "flex-1 px-2 py-1.5 text-[11px] font-medium rounded-md transition-colors",
+              filter === f
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Running History Section */}
+      {(filter === "all" || filter === "running") && (
+        <RunningHistorySection />
+      )}
+
       {/* Stats grid */}
-      <div className="grid grid-cols-4 gap-2 overflow-hidden">
+      <div className={cn("grid grid-cols-4 gap-2 overflow-hidden", filter === "running" && "hidden")}>
         {[
           { label: "Workouts", value: totalWorkouts, bgColor: "#f3e8ff", textColor: "#7c3aed" },
           { label: "Meals", value: totalMeals, bgColor: "#dbeafe", textColor: "#3b82f6" },
@@ -393,7 +420,7 @@ export default function History() {
       ) : (
         <>
           {/* 1. Strength Progression (E1RM) */}
-          {strengthData.length > 1 && strengthKeys.length > 0 && (
+          {(filter === "all" || filter === "lifting") && strengthData.length > 1 && strengthKeys.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Dumbbell className="w-4 h-4 text-indigo-500" />
@@ -425,7 +452,7 @@ export default function History() {
           )}
 
           {/* 2. Strength Trends Summary */}
-          {strengthTrends.length > 0 && (
+          {(filter === "all" || filter === "lifting") && strengthTrends.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-500" />
@@ -468,7 +495,7 @@ export default function History() {
           )}
 
           {/* 3. Weekly Volume by Muscle Group */}
-          {volumeData.length > 0 && (
+          {(filter === "all" || filter === "lifting") && volumeData.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-purple-500" />
@@ -498,7 +525,7 @@ export default function History() {
           )}
 
           {/* 4. Calorie Trend */}
-          {macroData.length > 1 && (
+          {(filter === "all" || filter === "nutrition") && macroData.length > 1 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-orange-500" />
@@ -526,7 +553,7 @@ export default function History() {
           )}
 
           {/* 5. Macro Trends */}
-          {macroData.length > 1 && (
+          {(filter === "all" || filter === "nutrition") && macroData.length > 1 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-orange-500" />
@@ -550,7 +577,7 @@ export default function History() {
           )}
 
           {/* 6. Macro Adherence Ring */}
-          {adherenceData.daysTracked > 0 && (() => {
+          {(filter === "all" || filter === "nutrition") && adherenceData.daysTracked > 0 && (() => {
             const radius = 44;
             const strokeW = 8;
             const circumference = 2 * Math.PI * radius;
@@ -605,7 +632,7 @@ export default function History() {
           })()}
 
           {/* 7. Training-Nutrition Correlation */}
-          {correlationData.length > 1 && (
+          {filter === "all" && correlationData.length > 1 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-teal-500" />
@@ -638,26 +665,28 @@ export default function History() {
           )}
 
           {/* 8. Workouts chart */}
-          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">Workouts</p>
+          {(filter === "all" || filter === "lifting") && (
+            <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Dumbbell className="w-4 h-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">Workouts</p>
+              </div>
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
+                    <YAxis tick={AXIS_TICK} allowDecimals={false} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Bar dataKey="workouts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" tick={AXIS_TICK} interval="preserveStartEnd" />
-                  <YAxis tick={AXIS_TICK} allowDecimals={false} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar dataKey="workouts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          )}
 
           {/* 8. Bodyweight vs Performance Overlay */}
-          {weightData.length > 1 && strengthData.length > 1 && strengthKeys.length > 0 && (
+          {(filter === "all" || filter === "lifting") && weightData.length > 1 && strengthData.length > 1 && strengthKeys.length > 0 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-teal-500" />
@@ -704,7 +733,7 @@ export default function History() {
           )}
 
           {/* 9. Weight trend */}
-          {weightData.length > 1 && (
+          {filter !== "running" && weightData.length > 1 && (
             <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-green-500" />
