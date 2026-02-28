@@ -15,6 +15,7 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const Program = lazy(() => import("@/pages/Program"));
 const Run = lazy(() => import("@/pages/Run"));
 const RunSummary = lazy(() => import("@/pages/RunSummary"));
+const RunDetail = lazy(() => import("@/pages/RunDetail"));
 const Social = lazy(() => import("@/pages/Social"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 
@@ -145,6 +146,7 @@ function AppRoutes() {
         </Route>
         <Route path="/run" element={<Run />} />
         <Route path="/run-summary" element={<RunSummary />} />
+        <Route path="/run/:runId" element={<RunDetail />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
