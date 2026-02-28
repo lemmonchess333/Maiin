@@ -1,12 +1,8 @@
-// ============================================
-// Haversine distance (returns meters)
-// ============================================
 export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -14,9 +10,6 @@ function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
 
-// ============================================
-// Simplified 2D Kalman filter for GPS smoothing
-// ============================================
 export class KalmanFilter {
   private lat = 0;
   private lon = 0;
@@ -32,17 +25,16 @@ export class KalmanFilter {
       const k = this.variance / (this.variance + accuracy * accuracy);
       this.lat += k * (lat - this.lat);
       this.lon += k * (lon - this.lon);
-      this.variance *= (1 - k);
+      this.variance *= 1 - k;
     }
     return { lat: this.lat, lon: this.lon };
   }
 
-  reset() { this.variance = -1; }
+  reset() {
+    this.variance = -1;
+  }
 }
 
-// ============================================
-// Types
-// ============================================
 export interface GPSPoint {
   lat: number;
   lon: number;
@@ -63,24 +55,21 @@ export interface Split {
   elevationLoss: number;
 }
 
-// ============================================
-// Validation — should we accept this reading?
-// ============================================
-export function isValidReading(coords: GeolocationCoordinates, lastPoint: GPSPoint | null): boolean {
-  if (coords.accuracy > 30) return false;
+export function isValidReading(coords: GeolocationCoordinates, lastPoint: GPSPoint | null, elapsedSeconds?: number): boolean {
+  const maxAccuracy = elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
+  if (coords.accuracy > maxAccuracy) return false;
+
   if (lastPoint) {
     const dist = haversine(lastPoint.lat, lastPoint.lon, coords.latitude, coords.longitude);
     const timeDiff = (Date.now() - lastPoint.timestamp) / 1000;
-    const impliedSpeed = timeDiff > 0 ? dist / timeDiff : 0;
-    if (impliedSpeed > 8.33) return false; // >30 km/h = teleportation
-    if (dist < 2) return false; // GPS jitter
+    if (timeDiff <= 0) return false;
+    const impliedSpeed = dist / timeDiff;
+    if (impliedSpeed > 12) return false;
+    if (dist < 1) return false;
   }
   return true;
 }
 
-// ============================================
-// Pace calculation
-// ============================================
 export function calculatePace(distanceMeters: number, timeSeconds: number): string {
   if (distanceMeters < 10) return '--:--';
   const paceSecsPerKm = (timeSeconds / distanceMeters) * 1000;
@@ -94,9 +83,6 @@ export function paceAsNumber(distanceMeters: number, timeSeconds: number): numbe
   return (timeSeconds / distanceMeters) * 1000;
 }
 
-// ============================================
-// Split calculation (per km)
-// ============================================
 export function calculateSplits(points: GPSPoint[]): Split[] {
   if (points.length < 2) return [];
   const splits: Split[] = [];
@@ -109,7 +95,8 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
     accDistance += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
     if (accDistance >= currentKm * 1000) {
       const splitTime = (points[i].timestamp - splitStartTime) / 1000;
-      let elevGain = 0, elevLoss = 0;
+      let elevGain = 0;
+      let elevLoss = 0;
       for (let j = splitStartIdx + 1; j <= i; j++) {
         if (points[j].altitude != null && points[j - 1].altitude != null) {
           const diff = points[j].altitude! - points[j - 1].altitude!;
@@ -130,12 +117,10 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
       currentKm++;
     }
   }
+
   return splits;
 }
 
-// ============================================
-// Totals
-// ============================================
 export function totalElevationGain(points: GPSPoint[]): number {
   let gain = 0;
   for (let i = 1; i < points.length; i++) {
@@ -155,15 +140,49 @@ export function totalDistance(points: GPSPoint[]): number {
   return dist;
 }
 
-// ============================================
-// GPX export (for Strava import)
-// ============================================
+export function detectBestEfforts(points: GPSPoint[], totalDistance: number): { distance: number; time: number; label: string }[] {
+  const efforts = [
+    { target: 1000, label: '1K' },
+    { target: 5000, label: '5K' },
+    { target: 10000, label: '10K' },
+  ];
+  const results: { distance: number; time: number; label: string }[] = [];
+
+  for (const effort of efforts) {
+    if (totalDistance < effort.target) continue;
+    let bestTime = Infinity;
+    let startIdx = 0;
+    let accDist = 0;
+
+    for (let endIdx = 1; endIdx < points.length; endIdx++) {
+      accDist += haversine(points[endIdx - 1].lat, points[endIdx - 1].lon, points[endIdx].lat, points[endIdx].lon);
+      while (startIdx < endIdx) {
+        const frontDist = haversine(points[startIdx].lat, points[startIdx].lon, points[startIdx + 1].lat, points[startIdx + 1].lon);
+        if (accDist - frontDist >= effort.target) {
+          accDist -= frontDist;
+          startIdx++;
+        } else break;
+      }
+      if (accDist >= effort.target) {
+        const segTime = (points[endIdx].timestamp - points[startIdx].timestamp) / 1000;
+        if (segTime < bestTime) bestTime = segTime;
+      }
+    }
+
+    if (bestTime < Infinity) results.push({ distance: effort.target, time: bestTime, label: effort.label });
+  }
+
+  return results;
+}
+
 export function toGPX(points: GPSPoint[], name: string): string {
-  const trkpts = points.map(p => {
-    const time = new Date(p.timestamp).toISOString();
-    const ele = p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : '';
-    return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
-  }).join('\n');
+  const trkpts = points
+    .map((p) => {
+      const time = new Date(p.timestamp).toISOString();
+      const ele = p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : '';
+      return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
+    })
+    .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Maiin">
   <trk><name>${name}</name><trkseg>
@@ -172,7 +191,6 @@ ${trkpts}
 </gpx>`;
 }
 
-// Estimate calories burned running (~1 cal per kg per km)
 export function estimateRunCalories(distanceMeters: number, weightKg: number): number {
   return Math.round((distanceMeters / 1000) * weightKg * 1.036);
 }
