@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain, estimateRunCalories } from '../lib/gps';
+import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
 import RunMap from '../components/run/RunMap';
 import RunSetupModal, { type RunConfig } from '../components/run/RunSetupModal';
 import { useAudioCues } from '../hooks/useAudioCues';
@@ -11,7 +11,9 @@ import { useIntervalWorkout } from '../hooks/useIntervalWorkout';
 import IntervalDisplay from '../components/run/IntervalDisplay';
 import TreadmillMode from '../components/run/TreadmillMode';
 import PaceZoneBar from '../components/run/PaceZoneBar';
+import RunBottomSheet from '../components/run/RunBottomSheet';
 import { useAuth } from '../lib/auth';
+import { THEME } from '../lib/theme';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
 
@@ -58,13 +60,11 @@ export default function Run() {
   const { profile } = useAuth();
   const [phase, setPhase] = useState<RunPhase>('waiting');
   const [locked, setLocked] = useState(false);
-  const [showMap, setShowMap] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km');
   const intervals = useIntervalWorkout(runConfig?.activityType === 'intervals' ? runConfig.intervals : undefined);
@@ -171,6 +171,7 @@ export default function Run() {
     if (runConfig?.activityType !== 'treadmill') gps.stop();
     setPhase('paused');
   };
+
   const handleResume = () => {
     haptic('medium');
     if (runConfig?.activityType !== 'treadmill') gps.start();
@@ -192,16 +193,7 @@ export default function Run() {
   const currentDistance = runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance;
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950 text-white flex flex-col">
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <GPSIndicator accuracy={gps.gpsAccuracy} isTracking={gps.isTracking} pointCount={gps.points.length} />
-        {(phase === 'active' || phase === 'paused') && (
-          <button onClick={() => setLocked(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/20">
-            <span className="text-[10px] text-white/60 font-medium">Lock</span>
-          </button>
-        )}
-      </div>
-
+    <div className="fixed inset-0 z-50 text-white flex flex-col" style={{ backgroundColor: THEME.bg }}>
       {phase === 'waiting' && (
         <RunSetupModal
           onStart={handleStart}
@@ -242,92 +234,46 @@ export default function Run() {
       )}
 
       {(phase === 'active' || phase === 'paused') && runConfig?.activityType !== 'treadmill' && (
-        <>
-          <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
-            <div className="text-center">
-              <p className="text-[10px] text-white/30 uppercase tracking-widest">Time</p>
-              <p className="text-6xl font-mono tabular-nums font-bold leading-none">{timer.formatTime(timer.elapsed)}</p>
-            </div>
+        <div className="fixed inset-0 z-50" style={{ backgroundColor: THEME.bg }}>
+          <div className="absolute top-3 left-4 z-50">
+            <GPSIndicator accuracy={gps.gpsAccuracy} isTracking={gps.isTracking} pointCount={gps.points.length} />
+          </div>
 
-            <div className="flex items-start justify-center gap-14">
-              <div className="text-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest">Distance</p>
-                <p className="text-4xl font-mono tabular-nums font-bold leading-none">{(currentDistance / 1000).toFixed(2)}</p>
-                <p className="text-[10px] text-white/20 mt-0.5">km</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest">Pace</p>
-                <p className="text-4xl font-mono tabular-nums font-bold leading-none">{calculatePace(currentDistance, timer.elapsed)}</p>
-                <p className="text-[10px] text-white/20 mt-0.5">/km</p>
-              </div>
-            </div>
-
-            {runConfig?.activityType === 'intervals' && <IntervalDisplay state={intervals.state} />}
-            {(runConfig?.activityType === 'tempo' || runConfig?.activityType === 'intervals') && (
+          {(runConfig?.activityType === 'tempo' || runConfig?.activityType === 'intervals') && (
+            <div className="absolute top-10 left-4 right-4 z-50">
               <PaceZoneBar
                 currentPace={paceAsNumber(currentDistance, timer.elapsed)}
                 targetPace={runConfig.intervals?.workPace || runConfig.target.value || 300}
                 tolerance={15}
               />
-            )}
-
-            <div className="flex items-center gap-8 text-white/40">
-              <div className="text-center">
-                <p className="text-[10px]">Calories</p>
-                <p className="text-base font-mono tabular-nums">{estimateRunCalories(currentDistance, 70)}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px]">Elevation</p>
-                <p className="text-base font-mono tabular-nums">{totalElevationGain(gps.points)}m</p>
-              </div>
             </div>
+          )}
 
-            <button onClick={() => setShowMap(!showMap)} className="text-xs text-purple-400">{showMap ? 'Hide Map' : 'Show Map'}</button>
-            {showMap && (
-              <div className="w-full border border-white/10 rounded-xl overflow-hidden">
-                <RunMap points={gps.points} currentPoint={gps.currentPoint} height="h-52" />
-              </div>
-            )}
-          </div>
+          <RunMap points={gps.points} currentPoint={gps.currentPoint} interactive={false} height="h-full" className="absolute inset-0" />
 
-          {autoPaused && <div className="text-center py-2 bg-yellow-500/10"><p className="text-xs text-yellow-400/80">Auto-paused · start moving to resume</p></div>}
+          {autoPaused && (
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
+              <p className="text-xs text-yellow-300">Auto-paused · start moving to resume</p>
+            </div>
+          )}
 
-          <div className="px-6 py-8 pb-10">
-            {phase === 'active' ? (
-              <div className="flex flex-col items-center">
-                <button onClick={handlePause} className="w-20 h-20 rounded-full bg-white/15 backdrop-blur border-2 border-white/30 flex items-center justify-center active:scale-90 transition-transform">
-                  <div className="flex gap-2"><div className="w-3 h-8 bg-white rounded-sm" /><div className="w-3 h-8 bg-white rounded-sm" /></div>
-                </button>
-                <p className="text-[10px] text-white/20 mt-3">Tap to pause</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <div className="flex items-center gap-12">
-                  <div className="flex flex-col items-center">
-                    <button
-                      onTouchStart={() => { stopTimer.current = setTimeout(() => { haptic('success'); finishRun(); }, 2000); }}
-                      onTouchEnd={() => { if (stopTimer.current) clearTimeout(stopTimer.current); }}
-                      onMouseDown={() => { stopTimer.current = setTimeout(() => { haptic('success'); finishRun(); }, 2000); }}
-                      onMouseUp={() => { if (stopTimer.current) clearTimeout(stopTimer.current); }}
-                      className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center"
-                    >
-                      <div className="w-7 h-7 bg-red-500 rounded-md" />
-                    </button>
-                    <p className="text-[10px] text-red-400/60 mt-2">Hold to stop</p>
-                  </div>
-
-                  <div className="flex flex-col items-center">
-                    <button onClick={handleResume} className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center active:scale-90 transition-transform shadow-lg shadow-green-500/30">
-                      <div className="w-0 h-0 ml-1.5 border-l-[18px] border-l-white border-y-[12px] border-y-transparent" />
-                    </button>
-                    <p className="text-[10px] text-green-400/60 mt-2">Resume</p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-white/15 mt-6">Hold stop for 2 seconds to end run</p>
-              </div>
-            )}
-          </div>
-        </>
+          <RunBottomSheet
+            elapsed={timer.elapsed}
+            distance={currentDistance}
+            points={gps.points}
+            formatTime={timer.formatTime}
+            onPause={handlePause}
+            onLock={() => setLocked(true)}
+            isPaused={phase === 'paused'}
+            onResume={handleResume}
+            onStop={() => {
+              haptic('success');
+              finishRun();
+            }}
+            intervalDisplay={runConfig?.activityType === 'intervals' ? <IntervalDisplay state={intervals.state} /> : undefined}
+            weightKg={profile?.weightKg || 70}
+          />
+        </div>
       )}
     </div>
   );

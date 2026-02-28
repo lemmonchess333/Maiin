@@ -7,6 +7,8 @@ import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMap';
+import PaceLegend from '../components/run/PaceLegend';
+import { THEME } from '../lib/theme';
 
 interface RunData {
   points: GPSPoint[];
@@ -101,20 +103,23 @@ export default function RunSummary() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: THEME.bg, color: THEME.textPrimary }}>
       <div className="text-center pt-8 pb-4 px-6">
         <p className="text-3xl mb-1">🏃</p>
         <h1 className="text-xl font-bold">Great run!</h1>
       </div>
 
       {points.length > 1 && (
-        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border">
-          <RunMap points={points} currentPoint={null} interactive={true} height="h-56" />
-          <div className="flex items-center justify-center gap-4 mt-2 pb-2">
-            <div className="flex items-center gap-1"><div className="w-3 h-1.5 rounded-full bg-green-500" /><span className="text-[10px] text-muted-foreground">Faster</span></div>
-            <div className="flex items-center gap-1"><div className="w-3 h-1.5 rounded-full bg-purple-400" /><span className="text-[10px] text-muted-foreground">On pace</span></div>
-            <div className="flex items-center gap-1"><div className="w-3 h-1.5 rounded-full bg-red-500" /><span className="text-[10px] text-muted-foreground">Slower</span></div>
-          </div>
+        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-white/10">
+          <RunMap
+            points={points}
+            currentPoint={null}
+            interactive={true}
+            height="h-56"
+            paceColored={true}
+            avgPaceSecPerKm={avgPaceSeconds}
+          />
+          <PaceLegend />
         </div>
       )}
 
