@@ -10,20 +10,22 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-export default function StatCard({ label, value, unit, delta, sparklineData, accentColor = '#8b5cf6', onClick }: StatCardProps) {
+export default function StatCard({
+  label, value, unit, delta, sparklineData, accentColor = '#8b5cf6', onClick,
+}: StatCardProps) {
+  const gradientId = `spark-${label.replace(/\s/g, '-')}`;
+
   return (
-    <button
-      onClick={onClick}
-      className="p-4 rounded-2xl bg-[#1C1C24] border border-white/5 text-left w-full transition-colors hover:bg-[#222230]"
-    >
-      <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">{label}</p>
+    <button onClick={onClick}
+      className="p-4 rounded-2xl bg-card border border-border/50 text-left w-full transition-colors hover:bg-muted/50">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
       <div className="flex items-end justify-between">
         <div>
-          <span className="text-2xl font-bold font-mono tabular-nums text-white">{value}</span>
-          {unit && <span className="text-sm text-white/30 ml-1">{unit}</span>}
+          <span className="text-2xl font-bold font-mono tabular-nums text-foreground">{value}</span>
+          {unit && <span className="text-sm text-muted-foreground ml-1">{unit}</span>}
           {delta && (
-            <p className={`text-[10px] mt-0.5 font-medium ${delta.positive ? 'text-emerald-400' : 'text-red-400'}`}>
-              {delta.positive ? '↑' : '↓'} {delta.value} vs last period
+            <p className={`text-[10px] mt-0.5 font-medium ${delta.positive ? 'text-emerald-500' : 'text-red-500'}`}>
+              {delta.positive ? '\u2191' : '\u2193'} {delta.value} vs last period
             </p>
           )}
         </div>
@@ -32,12 +34,13 @@ export default function StatCard({ label, value, unit, delta, sparklineData, acc
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={sparklineData.map((v, i) => ({ v, i }))}>
                 <defs>
-                  <linearGradient id={`spark-${label}`} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={accentColor} stopOpacity={0.3} />
                     <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="v" stroke={accentColor} strokeWidth={1.5} fill={`url(#spark-${label})`} dot={false} />
+                <Area type="monotone" dataKey="v" stroke={accentColor} strokeWidth={1.5}
+                  fill={`url(#${gradientId})`} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

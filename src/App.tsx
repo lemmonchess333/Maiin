@@ -143,6 +143,7 @@ function AppRoutes() {
           <Route path="/program" element={<Program />} />
           <Route path="/social" element={<Social />} />
           <Route path="/user/:uid" element={<UserProfile />} />
+          <Route path="/run/:runId" element={<RunDetail />} />
         </Route>
         <Route path="/run" element={<Run />} />
         <Route path="/run-summary" element={<RunSummary />} />

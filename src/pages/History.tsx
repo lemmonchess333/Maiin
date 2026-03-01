@@ -69,103 +69,101 @@ export default function History() {
   }, [meals, rangeDays]);
 
   return (
-    <div className="min-h-screen pb-24 px-4 pt-6" style={{ backgroundColor: THEME.bg }}>
-      <h1 className="text-lg font-bold text-white mb-4">Analytics</h1>
+    <div className="space-y-4">
+      <h1 className="text-lg font-bold text-foreground">Analytics</h1>
 
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
+      {/* Filter pills with sport-specific colours */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {(['all', 'running', 'lifting', 'nutrition'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
+          <button key={f} onClick={() => setFilter(f)}
             className={`shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all ${
               filter === f
-                ? f === 'running'
-                  ? 'bg-[#FF6B6B]/20 text-[#FF6B6B]'
-                  : f === 'lifting'
-                    ? 'bg-[#6C7CFF]/20 text-[#6C7CFF]'
-                    : f === 'nutrition'
-                      ? 'bg-[#34D399]/20 text-[#34D399]'
-                      : 'bg-white/10 text-white'
-                : 'bg-[#1C1C24] text-white/30'
-            }`}
-          >
-            {f === 'all' ? 'All' : f === 'running' ? '🏃 Running' : f === 'lifting' ? '🏋️ Lifting' : '🍽️ Nutrition'}
+                ? f === 'running' ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
+                  : f === 'lifting' ? 'bg-[#6C7CFF]/15 text-[#6C7CFF]'
+                  : f === 'nutrition' ? 'bg-emerald-500/15 text-emerald-500'
+                  : 'bg-primary/10 text-primary'
+                : 'bg-muted text-muted-foreground'
+            }`}>
+            {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
       </div>
 
-      <div className="mb-4">
-        <TimeRangePills selected={timeRange} onChange={setTimeRange} />
-      </div>
+      <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
       {filter === 'all' && (
-        <div className="mb-4">
-          <WeeklyOverview
-            runCount={runningTotals.runCount}
-            runDistance={runningTotals.runDistance}
-            liftCount={liftingData.liftCount}
-            liftVolume={liftingData.liftVolume}
-            caloriesBurned={Math.round(runningTotals.runDistance * 65 + liftingData.liftCount * 200)}
-            nutritionAdherence={nutrition.adherence}
-          />
-        </div>
+        <WeeklyOverview
+          runCount={runningTotals.runCount}
+          runDistance={runningTotals.runDistance}
+          liftCount={liftingData.liftCount}
+          liftVolume={liftingData.liftVolume}
+          caloriesBurned={Math.round(runningTotals.runDistance * 65 + liftingData.liftCount * 200)}
+          nutritionAdherence={nutrition.adherence}
+        />
       )}
 
-      <div className="space-y-4">
-        {(filter === 'all' || filter === 'running') && (
-          <>
-            {filter === 'all' && <p className="text-xs font-semibold text-[#FF6B6B] uppercase tracking-wider mt-2">Running</p>}
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard
-                label="Weekly Distance"
-                value={runningTotals.runDistance.toFixed(1)}
-                unit="km"
-                sparklineData={weeklyData.map((w) => w.totalDistance).slice(-6)}
-                accentColor="#FF6B6B"
-              />
-              <StatCard
-                label="Avg Pace"
-                value={runningTotals.avgPace ? `${Math.floor(runningTotals.avgPace / 60)}:${(runningTotals.avgPace % 60).toString().padStart(2, '0')}` : '--:--'}
-                unit="/km"
-                sparklineData={weeklyData.map((w) => w.avgPace || 0).slice(-6)}
-                accentColor="#FF6B6B"
-              />
-            </div>
-            <PRCard
-              title="Running PRs"
-              prs={[
-                { label: 'Fastest 1K', value: '4:12', date: '24 Feb', isNew: false },
-                { label: 'Fastest 5K', value: '24:32', date: '20 Feb', isNew: true },
-                { label: 'Longest Run', value: `${Math.max(...weeklyData.map((w) => w.totalDistance), 0).toFixed(1)} km`, date: 'Recent', isNew: false },
-              ]}
-              accentColor="#FF6B6B"
+      {/* RUNNING SECTION */}
+      {(filter === 'all' || filter === 'running') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: THEME.running }}>Running</p>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              label="Weekly Distance"
+              value={runningTotals.runDistance.toFixed(1)}
+              unit="km"
+              sparklineData={weeklyData.map((w) => w.totalDistance).slice(-6)}
+              accentColor={THEME.running}
             />
-            <RunningHistorySection />
-          </>
-        )}
+            <StatCard
+              label="Avg Pace"
+              value={runningTotals.avgPace ? `${Math.floor(runningTotals.avgPace / 60)}:${(runningTotals.avgPace % 60).toString().padStart(2, '0')}` : '--:--'}
+              unit="/km"
+              sparklineData={weeklyData.map((w) => w.avgPace || 0).slice(-6)}
+              accentColor={THEME.running}
+            />
+          </div>
+          <PRCard
+            title="Running PRs"
+            prs={[
+              { label: 'Fastest 1K', value: '4:12', date: '24 Feb', isNew: false },
+              { label: 'Fastest 5K', value: '24:32', date: '20 Feb', isNew: true },
+              { label: 'Longest Run', value: `${Math.max(...weeklyData.map((w) => w.totalDistance), 0).toFixed(1)} km`, date: 'Recent', isNew: false },
+            ]}
+            accentColor={THEME.running}
+          />
+          <RunningHistorySection />
+        </>
+      )}
 
-        {(filter === 'all' || filter === 'lifting') && (
-          <>
-            {filter === 'all' && <p className="text-xs font-semibold text-[#6C7CFF] uppercase tracking-wider mt-4">Lifting</p>}
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard label="Weekly Volume" value={(liftingData.liftVolume / 1000).toFixed(1)} unit="t" accentColor="#6C7CFF" />
-              <StatCard label="Sessions" value={String(liftingData.liftCount)} unit="/period" accentColor="#6C7CFF" />
-            </div>
-            <VolumeChart data={liftingData.weeklyVolume} accentColor="#6C7CFF" />
-            <MuscleHeatMap data={liftingData.muscleData} accentColor="#6C7CFF" />
-          </>
-        )}
+      {/* LIFTING SECTION */}
+      {(filter === 'all' || filter === 'lifting') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider mt-4" style={{ color: THEME.lifting }}>Lifting</p>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Weekly Volume" value={(liftingData.liftVolume / 1000).toFixed(1)} unit="t" accentColor={THEME.lifting} />
+            <StatCard label="Sessions" value={String(liftingData.liftCount)} unit="/period" accentColor={THEME.lifting} />
+          </div>
+          <VolumeChart data={liftingData.weeklyVolume} accentColor={THEME.lifting} />
+          <MuscleHeatMap data={liftingData.muscleData} accentColor={THEME.lifting} />
+        </>
+      )}
 
-        {(filter === 'all' || filter === 'nutrition') && (
-          <>
-            {filter === 'all' && <p className="text-xs font-semibold text-[#34D399] uppercase tracking-wider mt-4">Nutrition</p>}
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard label="Avg Calories" value={nutrition.avgCalories.toLocaleString()} unit="/day" accentColor="#34D399" />
-              <StatCard label="Protein" value={nutrition.avgProtein.toString()} unit="g/day" accentColor="#34D399" />
-            </div>
-          </>
-        )}
-      </div>
+      {/* NUTRITION SECTION */}
+      {(filter === 'all' || filter === 'nutrition') && (
+        <>
+          {filter === 'all' && (
+            <p className="text-xs font-semibold uppercase tracking-wider mt-4" style={{ color: THEME.success }}>Nutrition</p>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Avg Calories" value={nutrition.avgCalories.toLocaleString()} unit="/day" accentColor={THEME.success} />
+            <StatCard label="Protein" value={nutrition.avgProtein.toString()} unit="g/day" accentColor={THEME.success} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

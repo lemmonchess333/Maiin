@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -12,7 +13,6 @@ import IntervalDisplay from '../components/run/IntervalDisplay';
 import TreadmillMode from '../components/run/TreadmillMode';
 import PaceZoneBar from '../components/run/PaceZoneBar';
 import RunBottomSheet from '../components/run/RunBottomSheet';
-import { useAuth } from '../lib/auth';
 import { THEME } from '../lib/theme';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
@@ -47,7 +47,7 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
         <div className={`w-1 h-2 rounded-sm ${quality === 'strong' || quality === 'good' ? color : 'bg-white/20'}`} />
         <div className={`w-1 h-3 rounded-sm ${quality === 'strong' ? color : 'bg-white/20'}`} />
       </div>
-      <span className={`text-xs ${text}`}>{accuracy ? `±${Math.round(accuracy)}m` : ''}</span>
+      <span className={`text-xs ${text}`}>{accuracy ? `\u00B1${Math.round(accuracy)}m` : ''}</span>
     </div>
   );
 }
@@ -182,7 +182,7 @@ export default function Run() {
   if (locked && (phase === 'active' || phase === 'paused')) {
     return (
       <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center" onDoubleClick={() => setLocked(false)}>
-        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">🔒</div>
+        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">&#128274;</div>
         <p className="text-5xl font-mono tabular-nums text-white/15 font-bold">{timer.formatTime(timer.elapsed)}</p>
         <p className="text-2xl font-mono tabular-nums text-white/10 mt-2">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
         <p className="text-white/20 text-xs mt-10 animate-pulse">Double-tap to unlock</p>
@@ -207,13 +207,13 @@ export default function Run() {
           <div className="w-16 h-16 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin mb-6" />
           <p className="text-lg font-semibold mb-1">Acquiring GPS Signal...</p>
           <p className="text-sm text-white/40 text-center">Stand still outdoors for best results</p>
-          <p className="text-xs text-white/20 mt-4">{gps.gpsAccuracy ? `Accuracy: ±${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
+          <p className="text-xs text-white/20 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
           <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-8 text-sm text-white/30">Cancel</button>
         </div>
       )}
 
       {phase === 'countdown' && (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="h-full flex items-center justify-center text-white">
           <span className="text-9xl font-bold animate-pulse">{countdown || 'GO!'}</span>
         </div>
       )}

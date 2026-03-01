@@ -20,55 +20,47 @@ const MUSCLE_REGIONS: { id: string; label: string; path: string }[] = [
   { id: 'calves_r', label: 'Calves', path: 'M 108,220 Q 110,218 116,220 L 116,255 Q 110,258 108,255 Z' },
 ];
 
+const MUSCLE_MAPPING: Record<string, string[]> = {
+  'Chest': ['chest'], 'Pectorals': ['chest'],
+  'Shoulders': ['shoulders', 'shoulders_r'], 'Deltoids': ['shoulders', 'shoulders_r'],
+  'Biceps': ['biceps', 'biceps_r'], 'Arms': ['biceps', 'biceps_r'], 'Triceps': ['biceps', 'biceps_r'],
+  'Abs': ['abs'], 'Core': ['abs'],
+  'Quadriceps': ['quads', 'quads_r'], 'Quads': ['quads', 'quads_r'],
+  'Legs': ['quads', 'quads_r', 'calves', 'calves_r'],
+  'Hamstrings': ['quads', 'quads_r'],
+  'Calves': ['calves', 'calves_r'],
+  'Glutes': ['quads', 'quads_r'],
+};
+
 export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleHeatMapProps) {
   const maxSets = Math.max(...Object.values(data), 1);
 
   const getOpacity = (muscleId: string): number => {
-    const mapping: Record<string, string[]> = {
-      Chest: ['chest'],
-      Pectorals: ['chest'],
-      Shoulders: ['shoulders', 'shoulders_r'],
-      Deltoids: ['shoulders', 'shoulders_r'],
-      Biceps: ['biceps', 'biceps_r'],
-      Arms: ['biceps', 'biceps_r'],
-      Triceps: ['biceps', 'biceps_r'],
-      Abs: ['abs'],
-      Core: ['abs'],
-      Quadriceps: ['quads', 'quads_r'],
-      Quads: ['quads', 'quads_r'],
-      Legs: ['quads', 'quads_r', 'calves', 'calves_r'],
-      Hamstrings: ['quads', 'quads_r'],
-      Calves: ['calves', 'calves_r'],
-      Glutes: ['quads', 'quads_r'],
-    };
-
     let sets = 0;
     for (const [group, count] of Object.entries(data)) {
-      const regions = mapping[group] || [];
+      const regions = MUSCLE_MAPPING[group] || [];
       if (regions.includes(muscleId)) sets += count;
     }
     return sets > 0 ? Math.max(0.15, sets / maxSets) : 0.05;
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-[#1C1C24] border border-white/5">
-      <h3 className="text-sm font-semibold text-white mb-3">Muscle Groups Trained</h3>
+    <div className="p-4 rounded-2xl bg-card border border-border/50">
+      <h3 className="text-sm font-semibold text-foreground mb-3">Muscle Groups Trained</h3>
       <div className="flex items-center justify-center">
         <svg viewBox="55 65 90 200" className="w-40 h-64">
-          <ellipse cx="100" cy="78" rx="15" ry="12" fill="rgba(255,255,255,0.08)" />
-          <rect x="85" y="88" width="30" height="5" rx="2" fill="rgba(255,255,255,0.05)" />
+          <ellipse cx="100" cy="78" rx="15" ry="12" fill="currentColor" opacity={0.08} />
+          <rect x="85" y="88" width="30" height="5" rx="2" fill="currentColor" opacity={0.05} />
           {MUSCLE_REGIONS.map((region) => (
-            <path
-              key={region.id}
-              d={region.path}
+            <path key={region.id} d={region.path}
               fill={accentColor}
               fillOpacity={getOpacity(region.id)}
-              stroke="rgba(255,255,255,0.1)"
+              stroke="currentColor"
+              strokeOpacity={0.1}
               strokeWidth="0.5"
             />
           ))}
         </svg>
-
         <div className="ml-4 space-y-1.5">
           {Object.entries(data)
             .sort((a, b) => b[1] - a[1])
@@ -76,8 +68,8 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
             .map(([group, sets]) => (
               <div key={group} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ background: accentColor, opacity: sets / maxSets }} />
-                <span className="text-[10px] text-white/40">{group}</span>
-                <span className="text-[10px] text-white/20 ml-auto">{sets}s</span>
+                <span className="text-[10px] text-muted-foreground">{group}</span>
+                <span className="text-[10px] text-muted-foreground/50 ml-auto">{sets}s</span>
               </div>
             ))}
         </div>

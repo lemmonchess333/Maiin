@@ -105,7 +105,7 @@ export default function RunBottomSheet({
           {!isPaused ? (
             <>
               <button onClick={onLock} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 border border-white/15">
-                <span className="text-[10px] text-white/40 font-medium">🔒 Lock</span>
+                <span className="text-[10px] text-white/40 font-medium">Lock</span>
               </button>
               <button onClick={onPause} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur border-2 border-white/25 flex items-center justify-center active:scale-90 transition-transform">
                 <div className="flex gap-1.5"><div className="w-2.5 h-7 bg-white rounded-sm" /><div className="w-2.5 h-7 bg-white rounded-sm" /></div>

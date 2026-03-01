@@ -8,6 +8,8 @@ import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMap';
 import PaceLegend from '../components/run/PaceLegend';
+import SplitsBarChart from '../components/analytics/SplitsBarChart';
+import ElevationProfile from '../components/analytics/ElevationProfile';
 import { THEME } from '../lib/theme';
 
 interface RunData {
@@ -105,12 +107,15 @@ export default function RunSummary() {
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: THEME.bg, color: THEME.textPrimary }}>
       <div className="text-center pt-8 pb-4 px-6">
-        <p className="text-3xl mb-1">🏃</p>
-        <h1 className="text-xl font-bold">Great run!</h1>
+        <h1 className="text-xl font-bold text-foreground">Great run!</h1>
+        <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric'
+        })}</p>
       </div>
 
+      {/* Pace-coloured route map */}
       {points.length > 1 && (
-        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-white/10">
+        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border/50">
           <RunMap
             points={points}
             currentPoint={null}
@@ -123,15 +128,38 @@ export default function RunSummary() {
         </div>
       )}
 
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border text-center"><p className="text-2xl font-bold font-mono tabular-nums text-orange-500">{(distance / 1000).toFixed(2)}</p><p className="text-[10px] text-muted-foreground mt-0.5">km</p></div>
-        <div className="p-3 rounded-xl bg-card border border-border text-center"><p className="text-2xl font-bold font-mono tabular-nums">{formatTime(elapsed)}</p><p className="text-[10px] text-muted-foreground mt-0.5">time</p></div>
-        <div className="p-3 rounded-xl bg-card border border-border text-center"><p className="text-2xl font-bold font-mono tabular-nums text-purple-500">{avgPace}</p><p className="text-[10px] text-muted-foreground mt-0.5">/km pace</p></div>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
+            {(distance / 1000).toFixed(2)}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">km</p>
+        </div>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">time</p>
+        </div>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">/km pace</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 px-4 mb-4">
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-lg font-bold font-mono tabular-nums text-emerald-500">{calories}</p>
+          <p className="text-[10px] text-muted-foreground">calories</p>
+        </div>
+        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+          <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
+          <p className="text-[10px] text-muted-foreground">elevation gain</p>
+        </div>
       </div>
 
+      {/* Best Efforts */}
       {bestEfforts.length > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">⚡ Best Efforts</h3>
+        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border/50">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">Best Efforts</h3>
           <div className="grid grid-cols-3 gap-2">
             {bestEfforts.map((effort) => (
               <div key={effort.label} className="text-center p-2 rounded-lg bg-muted/50">
@@ -143,11 +171,34 @@ export default function RunSummary() {
         </div>
       )}
 
+      {/* Splits bar chart */}
+      {splits.length > 0 && (
+        <div className="px-4 mb-4">
+          <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
+        </div>
+      )}
+
+      {/* Elevation profile */}
+      {points.length > 0 && (
+        <div className="px-4 mb-4">
+          <ElevationProfile points={points} accentColor={THEME.running} />
+        </div>
+      )}
+
+      {/* Actions */}
       <div className="px-4 space-y-2">
-        <button onClick={handleSave} className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium text-sm">Save Run</button>
+        <button onClick={handleSave}
+          className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
+          Save Run
+        </button>
         <div className="flex gap-2">
-          <button onClick={handleExportGPX} className="flex-1 py-3 rounded-xl bg-card border border-border text-sm font-medium">Export GPX</button>
-          <button className="flex-1 py-3 rounded-xl bg-card border border-border text-sm font-medium">Share</button>
+          <button onClick={handleExportGPX}
+            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
+            Export GPX
+          </button>
+          <button className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
+            Share
+          </button>
         </div>
         <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
       </div>

@@ -10,15 +10,14 @@ export default function TimeRangePills({
   onChange,
 }: TimeRangePillsProps) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-[#1C1C24]">
+    <div className="flex items-center gap-1 p-1 rounded-xl bg-muted">
       {options.map((opt) => (
-        <button
-          key={opt}
-          onClick={() => onChange(opt)}
+        <button key={opt} onClick={() => onChange(opt)}
           className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            selected === opt ? 'bg-[#2A2A35] text-white shadow-sm' : 'text-white/30 hover:text-white/50'
-          }`}
-        >
+            selected === opt
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}>
           {opt}
         </button>
       ))}

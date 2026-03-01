@@ -18,10 +18,12 @@ export default function ElevationProfile({ points, accentColor = '#FF6B6B' }: El
   const maxAlt = Math.max(...data.map((d) => d.alt));
 
   return (
-    <div className="p-4 rounded-2xl bg-[#1C1C24] border border-white/5">
+    <div className="p-4 rounded-2xl bg-card border border-border/50">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Elevation</h3>
-        <p className="text-[10px] text-white/30">{minAlt}m – {maxAlt}m</p>
+        <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
+        <p className="text-[10px] text-muted-foreground">
+          {minAlt}m – {maxAlt}m
+        </p>
       </div>
 
       <ResponsiveContainer width="100%" height={100}>
@@ -32,10 +34,11 @@ export default function ElevationProfile({ points, accentColor = '#FF6B6B' }: El
               <stop offset="100%" stopColor={accentColor} stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <YAxis hide domain={[minAlt - 5, maxAlt + 5]} />
           <XAxis hide />
-          <Area type="monotone" dataKey="alt" stroke={accentColor} strokeWidth={2} fill="url(#elevGrad)" dot={false} />
+          <Area type="monotone" dataKey="alt" stroke={accentColor} strokeWidth={2}
+            fill="url(#elevGrad)" dot={false} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

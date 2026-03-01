@@ -13,6 +13,7 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
   const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
   const data = splits.map((s) => ({
     km: `${s.km}`,
+    pace: s.paceSeconds,
     invertedPace: maxPace - s.paceSeconds + 60,
     paceLabel: s.pace,
     isFast: s.paceSeconds < avgPaceSeconds * 0.97,
@@ -20,18 +21,22 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
   }));
 
   return (
-    <div className="p-4 rounded-2xl bg-[#1C1C24] border border-white/5">
+    <div className="p-4 rounded-2xl bg-card border border-border/50">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Splits</h3>
+        <h3 className="text-sm font-semibold text-foreground">Splits</h3>
+        <p className="text-[10px] text-muted-foreground">
+          avg {Math.floor(avgPaceSeconds / 60)}:{(Math.floor(avgPaceSeconds) % 60).toString().padStart(2, '0')}/km
+        </p>
       </div>
 
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} barCategoryGap="20%">
-          <XAxis dataKey="km" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)' }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="km" tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.3 }} axisLine={false} tickLine={false} />
           <YAxis hide />
           <Bar dataKey="invertedPace" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={accentColor} fillOpacity={entry.isFast ? 1 : entry.isSlow ? 0.35 : 0.65} />
+              <Cell key={i} fill={accentColor}
+                fillOpacity={entry.isFast ? 1 : entry.isSlow ? 0.35 : 0.65} />
             ))}
           </Bar>
         </BarChart>
@@ -39,7 +44,9 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
 
       <div className="flex justify-around mt-1">
         {data.map((d, i) => (
-          <p key={i} className={`text-[10px] font-mono tabular-nums ${d.isFast ? 'text-emerald-400' : d.isSlow ? 'text-red-400' : 'text-white/40'}`}>
+          <p key={i} className={`text-[10px] font-mono tabular-nums ${
+            d.isFast ? 'text-emerald-500' : d.isSlow ? 'text-red-500' : 'text-muted-foreground'
+          }`}>
             {d.paceLabel}
           </p>
         ))}
