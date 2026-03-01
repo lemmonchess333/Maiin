@@ -1,0 +1,113 @@
+/* =============================================================
+   MAIIN DESIGN SYSTEM — BASE COMPONENTS
+   Reusable component styles
+============================================================= */
+
+/* ─── STAT TILES (Macro cards) ──────────────────────────────── */
+.stat-tile__value {
+  font-size: clamp(1.125rem, 4.5vw, 1.625rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ─── BOTTOM NAV — FROSTED GLASS ────────────────────────────── */
+.bottom-nav-frost {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dark .bottom-nav-frost {
+  background: rgba(15, 15, 20, 0.82);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */
+.feature-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--ds-purple-200);
+  background: var(--ds-purple-50);
+  color: var(--ds-purple-600);
+  font-size: var(--ds-text-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--ds-transition-fast);
+}
+.feature-btn:hover {
+  background: var(--ds-purple-100);
+  border-color: var(--ds-purple-400);
+}
+.feature-btn:active { transform: scale(0.98); }
+
+.dark .feature-btn {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+  color: var(--ds-purple-400);
+}
+
+/* ─── PRESSABLE (tap feedback) ──────────────────────────────── */
+.pressable {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.pressable:active { transform: scale(0.97); }
+
+/* ─── QUOTE CARD — Gradient version ─────────────────────────── */
+.quote-card {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+  color: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+.quote-card::before {
+  content: "\201C";
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  font-size: 5rem;
+  line-height: 1;
+  opacity: 0.15;
+  font-family: Georgia, serif;
+}
+
+/* ─── PR TOGGLE — Celebratory State ─────────────────────────── */
+.pr-toggle-active {
+  background: var(--ds-warning-bg);
+  border-color: #fcd34d;
+}
+.pr-toggle-active .pr-toggle-icon {
+  color: var(--ds-warning);
+}
+
+/* ─── PROGRESS RING ─────────────────────────────────────────── */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+.progress-ring__bg {
+  fill: none;
+  stroke: hsl(var(--muted));
+  stroke-width: 6;
+}
+.progress-ring__fill {
+  fill: none;
+  stroke: var(--ds-orange-500);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 213.6;
+  stroke-dashoffset: calc(213.6 * (1 - var(--pct, 0)));
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}

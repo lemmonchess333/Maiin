@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
+import { format } from 'date-fns';
 
 export default function RunDashboard() {
   const navigate = useNavigate();
@@ -42,44 +43,63 @@ export default function RunDashboard() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const weeklyKm = weeklyDistance / 1000;
+  const goalKm = 20;
+  const pct = Math.min(weeklyKm / goalKm, 1);
+
   return (
     <div className="space-y-4">
-      <div className="p-4 rounded-2xl bg-card border border-border">
-        <p className="text-xs text-muted-foreground mb-2">This Week</p>
-        <div className="flex items-end gap-6">
-          <div>
-            <p className="text-3xl font-bold font-mono tabular-nums text-orange-500">
-              {(weeklyDistance / 1000).toFixed(1)}
-            </p>
-            <p className="text-xs text-muted-foreground">km total</p>
+      {/* Weekly distance with progress ring */}
+      <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm">
+        <p className="text-[11px] text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
+        <div className="flex items-center gap-5">
+          <div className="relative inline-flex items-center justify-center shrink-0">
+            <svg className="progress-ring" viewBox="0 0 80 80" width="80" height="80">
+              <circle className="progress-ring__bg" cx="40" cy="40" r="34" />
+              <circle className="progress-ring__fill" cx="40" cy="40" r="34"
+                style={{ '--pct': pct } as React.CSSProperties} />
+            </svg>
+            <span className="absolute text-lg font-extrabold tracking-tight text-foreground">
+              {weeklyKm.toFixed(1)}
+            </span>
           </div>
-          <div>
-            <p className="text-xl font-bold font-mono tabular-nums">{weeklyRunCount}</p>
-            <p className="text-xs text-muted-foreground">runs</p>
+          <div className="flex-1 space-y-1">
+            <p className="text-xs text-muted-foreground">km this week</p>
+            <div className="flex items-end gap-4">
+              <div>
+                <p className="text-2xl font-extrabold tabular-nums text-foreground">{weeklyRunCount}</p>
+                <p className="text-[10px] text-muted-foreground">runs</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40">
-        <p className="text-xs text-orange-700 dark:text-orange-300">
-          Head to the <strong>Log</strong> tab → <strong>Run</strong> to start your next run 🏃
+      {/* Info banner */}
+      <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30">
+        <span className="text-lg shrink-0">🏃</span>
+        <p className="text-xs text-gray-700 dark:text-purple-200">
+          Head to the <strong className="text-purple-600 dark:text-purple-300">Log</strong> tab → <strong className="text-purple-600 dark:text-purple-300">Run</strong> to start your next run
         </p>
       </div>
 
       {recentRuns.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Recent Runs</h3>
-          {recentRuns.map(run => (
-            <div key={run.id} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
-              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center text-lg">
+          <h3 className="text-sm font-semibold text-foreground">Recent Runs</h3>
+          {recentRuns.map((run, i) => (
+            <div key={run.id}
+              className="ds-fade-up flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 pressable"
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-lg shrink-0">
                 🏃
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">
+                <p className="text-sm font-semibold text-foreground">
                   {((run.distance || 0) / 1000).toFixed(2)} km
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {run.completedAt?.toDate?.()?.toLocaleDateString() || ''} · {formatPace(run.avgPace)}/km
+                  {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace)}/km
                 </p>
               </div>
               <p className="text-sm font-mono tabular-nums text-muted-foreground">
@@ -91,19 +111,20 @@ export default function RunDashboard() {
       )}
 
       {recentRuns.length === 0 && (
-        <div className="text-center py-12 space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
+        <div className="text-center py-12 space-y-3 ds-fade-up">
+          <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
             <span className="text-4xl">🏃</span>
           </div>
-          <p className="text-sm font-semibold">No runs yet</p>
-          <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+          <p className="text-sm font-bold text-foreground">No runs yet</p>
+          <p className="text-xs text-muted-foreground max-w-[220px] mx-auto">
             Track your runs with GPS, pace splits, and route mapping
           </p>
           <button
             onClick={() => navigate('/log')}
-            className="text-xs px-4 py-2 rounded-lg bg-orange-500 text-white font-medium mt-2"
+            className="text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform mt-2"
           >
-            Go to Log Tab
+            Go to Log Tab →
           </button>
         </div>
       )}

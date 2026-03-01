@@ -416,47 +416,47 @@ export default function Home() {
 
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-2.5 shadow-sm"
                 style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
               >
-                <Flame className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <Flame className="w-4 h-4 mx-auto mb-1" />
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.calories)}
                 </p>
-                <p className="text-[10px] mt-1">cal</p>
+                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">cal</p>
               </div>
 
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-2.5 shadow-sm"
                 style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
               >
-                <Beef className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <Beef className="w-4 h-4 mx-auto mb-1" />
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.protein)}g
                 </p>
-                <p className="text-[10px] mt-1">protein</p>
+                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">protein</p>
               </div>
 
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-2.5 shadow-sm"
                 style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
               >
-                <Wheat className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <Wheat className="w-4 h-4 mx-auto mb-1" />
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.carbs)}g
                 </p>
-                <p className="text-[10px] mt-1">carbs</p>
+                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">carbs</p>
               </div>
 
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-2.5 shadow-sm"
                 style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
               >
-                <Cookie size={20} className="mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <Cookie size={16} className="mx-auto mb-1" />
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.fat)}g
                 </p>
-                <p className="text-[10px] mt-1">fat</p>
+                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">fat</p>
               </div>
             </div>
           </div>
@@ -501,9 +501,9 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="p-3 rounded-xl bg-primary/5 border border-primary/10"
+            className="quote-card"
           >
-            <p className="text-xs text-muted-foreground italic">"{quote}"</p>
+            <p className="text-sm font-medium italic leading-relaxed relative z-10">"{quote}"</p>
           </motion.div>
 
           {/* Pro upsell */}

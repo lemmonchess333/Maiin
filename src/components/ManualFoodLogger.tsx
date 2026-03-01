@@ -304,10 +304,10 @@ export function ManualFoodLogger({ date }: Props) {
           onClick={handleSave}
           disabled={saving || !name.trim()}
           className={cn(
-            "w-full py-3.5 rounded-2xl font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-sm",
+            "w-full py-3.5 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-2",
             saved
-              ? "bg-green-500 text-white"
-              : "bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.985]",
+              ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
+              : "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-[var(--ds-shadow-purple-glow)] active:scale-95",
             (saving || !name.trim()) && !saved && "opacity-50 cursor-not-allowed"
           )}
         >

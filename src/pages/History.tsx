@@ -74,19 +74,21 @@ export default function History() {
 
       {/* Filter pills with sport-specific colours */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {(['all', 'running', 'lifting', 'nutrition'] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all ${
-              filter === f
-                ? f === 'running' ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]'
-                  : f === 'lifting' ? 'bg-[#6C7CFF]/15 text-[#6C7CFF]'
-                  : f === 'nutrition' ? 'bg-emerald-500/15 text-emerald-500'
-                  : 'bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground'
-            }`}>
-            {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+        {(['all', 'running', 'lifting', 'nutrition'] as const).map((f) => {
+          const active = filter === f;
+          const activeStyle = f === 'running' ? 'bg-[#FF6B6B] text-white shadow-[0_2px_12px_rgba(255,107,107,0.35)]'
+            : f === 'lifting' ? 'bg-[#6C7CFF] text-white shadow-[0_2px_12px_rgba(108,124,255,0.35)]'
+            : f === 'nutrition' ? 'bg-emerald-500 text-white shadow-[0_2px_12px_rgba(52,211,153,0.35)]'
+            : 'bg-purple-500 text-white shadow-[var(--ds-shadow-purple-glow)]';
+          return (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all ${
+                active ? activeStyle : 'bg-muted text-muted-foreground'
+              }`}>
+              {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          );
+        })}
       </div>
 
       <TimeRangePills selected={timeRange} onChange={setTimeRange} />

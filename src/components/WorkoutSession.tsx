@@ -222,7 +222,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         <button
           onClick={handleFinish}
           disabled={completing}
-          className="w-full max-w-xs py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+          className="w-full max-w-xs py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform"
         >
           {completing ? "Saving..." : "Mark Day Complete"}
         </button>
@@ -325,7 +325,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 </p>
               </div>
               <p className={cn(
-                "text-3xl font-bold tabular-nums",
+                "text-4xl font-extrabold tabular-nums tracking-tight",
                 restOver ? "text-green-600 dark:text-green-400" : "text-foreground",
               )}>
                 {formatTime(restSeconds)}

@@ -56,21 +56,22 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
 
   return (
     <div className="flex-1 flex flex-col px-6 py-4 overflow-y-auto">
-      <h2 className="text-lg font-bold mb-3">Choose your run</h2>
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      <h2 className="text-xl font-extrabold tracking-tight mb-1">Choose your run</h2>
+      <p className="text-sm text-muted-foreground mb-4">Select workout type</p>
+      <div className="grid grid-cols-2 gap-2.5 mb-6">
         {ACTIVITY_TYPES.map((at) => (
           <button
             key={at.type}
             onClick={() => updateConfig({ activityType: at.type })}
-            className={`p-3 rounded-xl border-2 text-left transition-all ${
+            className={`p-3.5 rounded-xl border-2 text-left transition-all pressable ${
               config.activityType === at.type
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
-                : 'border-border bg-card'
+                ? 'border-purple-500 bg-purple-50 dark:bg-[#1e1b4b] shadow-[0_0_0_2px_rgba(139,92,246,0.3)]'
+                : 'border-border bg-card hover:border-border/80'
             }`}
           >
-            <span className="text-lg">{at.icon}</span>
-            <p className="text-sm font-semibold mt-1">{at.label}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">{at.description}</p>
+            <span className="text-xl">{at.icon}</span>
+            <p className="text-sm font-bold mt-1.5">{at.label}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{at.description}</p>
           </button>
         ))}
       </div>
@@ -192,7 +193,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
       <div className="mt-auto space-y-2 pb-4">
         <button
           onClick={() => onStart(config)}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-lg shadow-lg active:scale-[0.98] transition-transform"
+          className="btn-start-run-pulse w-full py-4 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-95 transition-transform"
         >
           {config.activityType === 'treadmill' ? '🏋️ Start Treadmill' : '🏃 Start Run'}
         </button>
