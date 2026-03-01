@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
+import { ArrowRight, Timer } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 import { format } from 'date-fns';
@@ -102,9 +103,15 @@ export default function RunDashboard() {
                   {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace)}/km
                 </p>
               </div>
-              <p className="text-sm font-mono tabular-nums text-muted-foreground">
-                {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
-              </p>
+              <div className="text-right">
+                <p className="text-sm font-mono tabular-nums text-muted-foreground">
+                  {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
+                </p>
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Timer className="w-3 h-3" />
+                  <span>duration</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -122,9 +129,10 @@ export default function RunDashboard() {
           </p>
           <button
             onClick={() => navigate('/log')}
-            className="text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform mt-2"
+            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform mt-2"
           >
-            Go to Log Tab →
+            Go to Log Tab
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
