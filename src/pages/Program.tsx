@@ -315,18 +315,18 @@ function ProgramInner() {
       </div>
 
       {/* Phase + Week Header */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl border border-purple-100 dark:border-purple-900/30 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={goBack}
             disabled={!canGoBack}
-            className={cn("p-1 rounded transition-colors", canGoBack ? "hover:bg-muted" : "opacity-30")}
+            className={cn("p-1 rounded transition-colors", canGoBack ? "hover:bg-white/50 dark:hover:bg-white/10" : "opacity-30")}
           >
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
 
           <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-bold text-foreground tracking-tight">
               Week {displayWeekNumber}
               {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
             </p>
@@ -335,7 +335,7 @@ function ProgramInner() {
           <button
             onClick={goForward}
             disabled={!canGoForward}
-            className={cn("p-1 rounded transition-colors", canGoForward ? "hover:bg-muted" : "opacity-30")}
+            className={cn("p-1 rounded transition-colors", canGoForward ? "hover:bg-white/50 dark:hover:bg-white/10" : "opacity-30")}
           >
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
@@ -377,14 +377,21 @@ function ProgramInner() {
 
       {/* Workout Day Cards */}
       <div className="space-y-2">
-        {displayWorkouts.map((day, dayIndex) => (
+        {displayWorkouts.map((day, dayIndex) => {
+          const dayType = day.dayName?.toLowerCase() ?? '';
+          const isUpper = dayType.includes('upper') || dayType.includes('push') || dayType.includes('pull');
+          const accentColor = day.completed
+            ? 'border-l-green-500'
+            : isUpper
+              ? 'border-l-purple-500'
+              : 'border-l-orange-400';
+          return (
           <div
             key={dayIndex}
             className={cn(
-              "bg-card rounded-xl border overflow-hidden transition-colors",
-              day.completed
-                ? "border-l-[3px] border-l-green-500 border-border/50"
-                : "border-border/50"
+              "bg-card rounded-xl border border-l-[3px] overflow-hidden transition-colors pressable",
+              accentColor,
+              "border-border/50"
             )}
           >
             {/* Day Header */}
@@ -471,7 +478,7 @@ function ProgramInner() {
                     {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
-                        className="w-full py-2.5 mt-1 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        className="w-full py-2.5 mt-1 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform flex items-center justify-center gap-2"
                       >
                         <Play className="w-4 h-4" /> Start Workout
                       </button>
@@ -491,7 +498,8 @@ function ProgramInner() {
               )}
             </AnimatePresence>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Exercise Detail Drawer */}

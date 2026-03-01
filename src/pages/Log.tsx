@@ -369,7 +369,12 @@ export default function Log() {
       {activeTab === "workout" && (
         <div className="space-y-4">
           {/* PR Toggle */}
-          <div className="bg-card rounded-2xl border border-border/50 p-5">
+          <div className={cn(
+            "rounded-2xl border p-5 transition-all",
+            hasPR
+              ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/30"
+              : "bg-card border-border/50"
+          )}>
             <button
               onClick={togglePR}
               className="w-full flex items-center justify-between"
@@ -378,10 +383,13 @@ export default function Log() {
                 <Trophy
                   className={cn(
                     "w-4 h-4",
-                    hasPR ? "text-yellow-500" : "text-muted-foreground"
+                    hasPR ? "text-amber-500" : "text-muted-foreground"
                   )}
                 />
-                <p className="text-sm font-medium text-foreground">
+                <p className={cn(
+                  "text-sm font-medium",
+                  hasPR ? "text-amber-700 dark:text-amber-300" : "text-foreground"
+                )}>
                   New Personal Record?
                 </p>
               </div>
@@ -478,7 +486,7 @@ export default function Log() {
                 }}
               >
                 <Flame className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.calories)}
                 </p>
                 <p className="text-[10px] mt-1">cal</p>
@@ -493,7 +501,7 @@ export default function Log() {
                 }}
               >
                 <Beef className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.protein)}g
                 </p>
                 <p className="text-[10px] mt-1">protein</p>
@@ -508,7 +516,7 @@ export default function Log() {
                 }}
               >
                 <Wheat className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.carbs)}g
                 </p>
                 <p className="text-[10px] mt-1">carbs</p>
@@ -523,7 +531,7 @@ export default function Log() {
                 }}
               >
                 <Cookie className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-xl font-bold tabular-nums leading-none truncate">
+                <p className="stat-tile__value tabular-nums">
                   {safeNum(dailyTotals.fat)}g
                 </p>
                 <p className="text-[10px] mt-1">fat</p>
@@ -612,9 +620,9 @@ export default function Log() {
               onClick={handleNLParse}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-2.5 rounded-xl text-sm font-medium transition-all",
+                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
                 nlInput.trim()
-                  ? "bg-primary text-primary-foreground hover:opacity-90"
+                  ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             >
@@ -631,7 +639,7 @@ export default function Log() {
           ) : (
             <button
               onClick={() => setShowFoodSearch(true)}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+              className="feature-btn"
             >
               <Search className="w-4 h-4" /> Search Food Database
             </button>
@@ -646,7 +654,7 @@ export default function Log() {
           ) : (
             <button
               onClick={() => setShowRecipeBuilder(true)}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-purple-400/30 text-purple-500 font-medium text-sm hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-colors flex items-center justify-center gap-2"
+              className="feature-btn"
             >
               <BookOpen className="w-4 h-4" /> Build a Recipe
             </button>
@@ -670,7 +678,7 @@ export default function Log() {
               GPS tracking with live pace, distance, splits, and route mapping
             </p>
             <button onClick={() => navigate('/run')}
-              className="px-10 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-base shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform">
+              className="btn-start-run-pulse px-10 py-3.5 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-95 transition-transform">
               Start Run
             </button>
           </div>
@@ -713,11 +721,11 @@ function RecentRunsList() {
     <div className="space-y-2">
       <h3 className="text-sm font-semibold">Recent Runs</h3>
       {runs.map((run: any) => (
-        <div key={run.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border">
+        <div key={run.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50 pressable">
           <div>
-            <p className="text-sm font-medium">{((run.distance || 0) / 1000).toFixed(2)} km</p>
+            <p className="text-sm font-semibold text-foreground">{((run.distance || 0) / 1000).toFixed(2)} km</p>
             <p className="text-[10px] text-muted-foreground">
-              {run.completedAt?.toDate?.()?.toLocaleDateString() || ''}
+              {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''}
             </p>
           </div>
           <p className="text-sm font-mono tabular-nums text-muted-foreground">

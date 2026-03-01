@@ -88,12 +88,12 @@ export default function TrainingCalendar() {
   return (
     <div className="pb-24 px-4 pt-2 space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={prevWeek} className="p-2 rounded-lg bg-muted text-sm">←</button>
-        <h2 className="text-sm font-semibold">
+        <button onClick={prevWeek} className="p-2 rounded-lg bg-muted text-sm pressable">←</button>
+        <h2 className="text-sm font-bold tracking-tight">
           {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
           {new Date(currentWeekStart.getTime() + 6 * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </h2>
-        <button onClick={nextWeek} className="p-2 rounded-lg bg-muted text-sm">→</button>
+        <button onClick={nextWeek} className="p-2 rounded-lg bg-muted text-sm pressable">→</button>
       </div>
 
       <WeekView
@@ -124,7 +124,7 @@ export default function TrainingCalendar() {
                 <button
                   key={t.id}
                   onClick={() => addSession(selectedDay, 'run', t)}
-                  className="p-3 rounded-xl border border-border bg-card text-left"
+                  className="p-3 rounded-xl border border-border bg-card text-left pressable"
                 >
                   <span className="text-lg">{t.icon}</span>
                   <p className="text-xs font-semibold mt-1">{t.name}</p>
@@ -139,7 +139,7 @@ export default function TrainingCalendar() {
                 <button
                   key={day}
                   onClick={() => addSession(selectedDay, 'lift', undefined, day)}
-                  className="p-3 rounded-xl border border-border bg-card text-left"
+                  className="p-3 rounded-xl border border-border bg-card text-left pressable"
                 >
                   <span className="text-lg">🏋️</span>
                   <p className="text-xs font-semibold mt-1">{day}</p>

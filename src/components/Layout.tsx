@@ -22,7 +22,7 @@ export default function Layout() {
 
       {/* Bottom tab bar */}
       {!hideNav && (
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30">
         <div className="max-w-md mx-auto flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -40,8 +40,12 @@ export default function Layout() {
                   )
                 }
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{tab.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <Icon className={cn("w-5 h-5", isActive && "ds-tab-active-icon")} />
+                    <span className="text-[10px] font-medium tracking-wide">{tab.label}</span>
+                  </>
+                )}
               </NavLink>
             );
           })}
