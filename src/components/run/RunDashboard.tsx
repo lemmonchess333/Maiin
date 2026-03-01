@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 
 export default function RunDashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [recentRuns, setRecentRuns] = useState<any[]>([]);
   const [weeklyDistance, setWeeklyDistance] = useState(0);
@@ -58,9 +60,9 @@ export default function RunDashboard() {
         </div>
       </div>
 
-      <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
-        <p className="text-xs text-purple-700 dark:text-purple-300">
-          This week: <strong>{weeklyRunCount} runs</strong> ({(weeklyDistance / 1000).toFixed(1)} km) — check the Log tab to start your next one
+      <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40">
+        <p className="text-xs text-orange-700 dark:text-orange-300">
+          Head to the <strong>Log</strong> tab → <strong>Run</strong> to start your next run 🏃
         </p>
       </div>
 
@@ -89,10 +91,20 @@ export default function RunDashboard() {
       )}
 
       {recentRuns.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-3xl mb-2">🏃</p>
-          <p className="text-sm text-muted-foreground">No runs yet</p>
-          <p className="text-xs text-muted-foreground mt-1">Go to the Log tab and tap Run to get started</p>
+        <div className="text-center py-12 space-y-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
+            <span className="text-4xl">🏃</span>
+          </div>
+          <p className="text-sm font-semibold">No runs yet</p>
+          <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+            Track your runs with GPS, pace splits, and route mapping
+          </p>
+          <button
+            onClick={() => navigate('/log')}
+            className="text-xs px-4 py-2 rounded-lg bg-orange-500 text-white font-medium mt-2"
+          >
+            Go to Log Tab
+          </button>
         </div>
       )}
     </div>

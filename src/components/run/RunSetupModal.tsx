@@ -1,0 +1,205 @@
+import { useState } from 'react';
+
+export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun';
+
+export interface RunConfig {
+  activityType: ActivityType;
+  autoPause: boolean;
+  audioCues: boolean;
+  audioCueFrequency: 'every_km' | 'every_500m' | 'every_5min' | 'off';
+  displayStats: ('pace' | 'distance' | 'time' | 'calories' | 'elevation' | 'heartRate' | 'avgPace' | 'cadence')[];
+  target: {
+    type: 'none' | 'distance' | 'time' | 'pace';
+    value?: number;
+  };
+  intervals?: {
+    reps: number;
+    workDistance?: number;
+    workDuration?: number;
+    workPace?: number;
+    restDuration: number;
+    warmupDuration?: number;
+    cooldownDuration?: number;
+  };
+}
+
+const DEFAULT_CONFIG: RunConfig = {
+  activityType: 'freerun',
+  autoPause: true,
+  audioCues: true,
+  audioCueFrequency: 'every_km',
+  displayStats: ['pace', 'distance', 'time', 'calories'],
+  target: { type: 'none' },
+};
+
+const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: string; description: string }[] = [
+  { type: 'freerun', label: 'Free Run', icon: '🏃', description: 'Run at your own pace' },
+  { type: 'easy', label: 'Easy Run', icon: '🚶', description: 'Recovery pace, conversational' },
+  { type: 'tempo', label: 'Tempo Run', icon: '⚡', description: 'Comfortably hard, sustained effort' },
+  { type: 'intervals', label: 'Intervals', icon: '🔄', description: 'High-intensity repeats with rest' },
+  { type: 'long', label: 'Long Run', icon: '🛤️', description: 'Distance-focused, steady pace' },
+  { type: 'race', label: 'Race', icon: '🏁', description: 'All-out effort, distance goal' },
+  { type: 'treadmill', label: 'Treadmill', icon: '🏋️', description: 'Indoor, no GPS needed' },
+];
+
+interface RunSetupModalProps {
+  onStart: (config: RunConfig) => void;
+  onCancel: () => void;
+  savedPreferences?: Partial<RunConfig>;
+}
+
+export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
+  const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
+
+  const updateConfig = (partial: Partial<RunConfig>) => setConfig((prev) => ({ ...prev, ...partial }));
+  const intervalConfig = config.intervals ?? { reps: 5, workDistance: 1000, restDuration: 90 };
+
+  return (
+    <div className="flex-1 flex flex-col px-6 py-4 overflow-y-auto">
+      <h2 className="text-lg font-bold mb-3">Choose your run</h2>
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        {ACTIVITY_TYPES.map((at) => (
+          <button
+            key={at.type}
+            onClick={() => updateConfig({ activityType: at.type })}
+            className={`p-3 rounded-xl border-2 text-left transition-all ${
+              config.activityType === at.type
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
+                : 'border-border bg-card'
+            }`}
+          >
+            <span className="text-lg">{at.icon}</span>
+            <p className="text-sm font-semibold mt-1">{at.label}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">{at.description}</p>
+          </button>
+        ))}
+      </div>
+
+      {config.activityType === 'intervals' && (
+        <div className="mb-6 p-4 rounded-xl bg-card border border-border space-y-3">
+          <h3 className="text-sm font-semibold">Interval Setup</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground">Repeats</label>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={intervalConfig.reps}
+                onChange={(e) => updateConfig({ intervals: { ...intervalConfig, reps: Number(e.target.value) } })}
+                className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Work Distance (m)</label>
+              <input
+                type="number"
+                min={100}
+                step={100}
+                value={intervalConfig.workDistance ?? 1000}
+                onChange={(e) =>
+                  updateConfig({ intervals: { ...intervalConfig, workDistance: Number(e.target.value) } })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Rest (seconds)</label>
+              <input
+                type="number"
+                min={10}
+                step={10}
+                value={intervalConfig.restDuration}
+                onChange={(e) =>
+                  updateConfig({ intervals: { ...intervalConfig, restDuration: Number(e.target.value) } })
+                }
+                className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Target Pace (/km)</label>
+              <input
+                type="text"
+                placeholder="4:30"
+                className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                onChange={(e) => {
+                  const [m, s] = e.target.value.split(':').map(Number);
+                  if (Number.isFinite(m) && Number.isFinite(s)) {
+                    updateConfig({ intervals: { ...intervalConfig, workPace: m * 60 + s } });
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {config.activityType !== 'intervals' && config.activityType !== 'treadmill' && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold mb-2">Set a target (optional)</h3>
+          <div className="flex gap-2">
+            {(['none', 'distance', 'time', 'pace'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() =>
+                  updateConfig({
+                    target: {
+                      type: t,
+                      value: t === 'distance' ? 5 : t === 'time' ? 1800 : t === 'pace' ? 330 : undefined,
+                    },
+                  })
+                }
+                className={`flex-1 py-2 rounded-lg text-xs font-medium ${
+                  config.target.type === t ? 'bg-purple-500 text-white' : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {t === 'none' ? 'None' : t === 'distance' ? 'Distance' : t === 'time' ? 'Time' : 'Pace'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2 mb-6">
+        <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border">
+          <span className="text-sm">Auto-pause</span>
+          <button
+            onClick={() => updateConfig({ autoPause: !config.autoPause })}
+            className={`w-11 h-6 rounded-full transition-colors ${config.autoPause ? 'bg-purple-500' : 'bg-muted'}`}
+          >
+            <div
+              className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                config.autoPause ? 'translate-x-5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+        <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border">
+          <span className="text-sm">Audio cues</span>
+          <button
+            onClick={() => updateConfig({ audioCues: !config.audioCues })}
+            className={`w-11 h-6 rounded-full transition-colors ${config.audioCues ? 'bg-purple-500' : 'bg-muted'}`}
+          >
+            <div
+              className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                config.audioCues ? 'translate-x-5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-auto space-y-2 pb-4">
+        <button
+          onClick={() => onStart(config)}
+          className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-lg shadow-lg active:scale-[0.98] transition-transform"
+        >
+          {config.activityType === 'treadmill' ? '🏋️ Start Treadmill' : '🏃 Start Run'}
+        </button>
+        <button onClick={onCancel} className="w-full py-2 text-sm text-muted-foreground">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}

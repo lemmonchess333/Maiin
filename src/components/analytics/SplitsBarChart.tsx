@@ -10,8 +10,8 @@ interface SplitsBarChartProps {
 export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '#00D4AA' }: SplitsBarChartProps) {
   if (splits.length === 0) return null;
 
-  const maxPace = Math.max(...splits.map(s => s.paceSeconds));
-  const data = splits.map(s => ({
+  const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
+  const data = splits.map((s) => ({
     km: `${s.km}`,
     pace: s.paceSeconds,
     invertedPace: maxPace - s.paceSeconds + 60,

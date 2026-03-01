@@ -17,7 +17,7 @@ export default function RunDetail() {
 
   useEffect(() => {
     if (!user || !runId) return;
-    getDoc(doc(db, 'users', user.uid, 'runs', runId)).then(snap => {
+    getDoc(doc(db, 'users', user.uid, 'runs', runId)).then((snap) => {
       if (snap.exists()) setRun({ id: snap.id, ...snap.data() });
     });
   }, [user, runId]);
@@ -113,13 +113,6 @@ export default function RunDetail() {
         {run.points && run.points.length > 0 && (
           <ElevationProfile points={run.points} accentColor={THEME.running} />
         )}
-
-        {/* Nutrition callout */}
-        <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <p className="text-xs text-primary">
-            You burned ~{run.calories} cal on this run. Your daily target adjustment has been applied.
-          </p>
-        </div>
       </div>
     </div>
   );

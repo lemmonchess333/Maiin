@@ -71,3 +71,46 @@ export default defineConfig([
   },
 ])
 ```
+
+## Codespaces: exact commands to enable the `work` branch flow
+
+Open the **Terminal** tab in your GitHub Codespace and run these commands line by line.
+
+```bash
+git checkout work
+git remote add origin git@github.com:<YOUR_GITHUB_USERNAME_OR_ORG>/<YOUR_REPO>.git
+git push -u origin work
+```
+
+After that first setup, your normal loop is:
+
+```bash
+git add .
+git commit -m "your message"
+git push
+```
+
+Then open a PR in GitHub from `work` → `main` and merge there.
+
+> Note: In markdown code blocks, `bash` is only a syntax label for highlighting. Do not type the word `bash` itself.
+
+## If you use both my branch and Claude's branch
+
+Changes do **not** override each other just because they came from different assistants. What matters is the Git branch and merge order:
+
+1. If edits are on different branches and touch different files/lines, both merge cleanly.
+2. If both branches edit the same lines, Git raises a merge conflict and you choose which version (or combine them).
+3. The branch you merge later can change code merged earlier, but only where its commit differences apply.
+
+Safe pattern:
+
+1. Keep one branch per task (`codex/feature-x`, `claude/feature-y`).
+2. Merge each via PR into `main`.
+3. Before new work, sync from `main`:
+
+```bash
+git checkout <your-branch>
+git fetch origin
+git rebase origin/main
+git push --force-with-lease
+```

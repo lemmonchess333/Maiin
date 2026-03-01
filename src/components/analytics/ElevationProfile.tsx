@@ -8,21 +8,21 @@ interface ElevationProfileProps {
 
 export default function ElevationProfile({ points, accentColor = '#FF6B6B' }: ElevationProfileProps) {
   const data = points
-    .filter(p => p.altitude != null)
+    .filter((p) => p.altitude != null)
     .filter((_, i) => i % Math.max(1, Math.ceil(points.length / 200)) === 0)
     .map((p, i) => ({ i, alt: Math.round(p.altitude!) }));
 
   if (data.length < 3) return null;
 
-  const minAlt = Math.min(...data.map(d => d.alt));
-  const maxAlt = Math.max(...data.map(d => d.alt));
+  const minAlt = Math.min(...data.map((d) => d.alt));
+  const maxAlt = Math.max(...data.map((d) => d.alt));
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
         <p className="text-[10px] text-muted-foreground">
-          {minAlt}m \u2013 {maxAlt}m
+          {minAlt}m – {maxAlt}m
         </p>
       </div>
 

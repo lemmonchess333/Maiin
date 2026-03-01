@@ -1,5 +1,3 @@
-import { cn } from '@/lib/utils';
-
 interface TimeRangePillsProps {
   options?: string[];
   selected: string;
@@ -13,14 +11,13 @@ export default function TimeRangePills({
 }: TimeRangePillsProps) {
   return (
     <div className="flex items-center gap-1 p-1 rounded-xl bg-muted">
-      {options.map(opt => (
+      {options.map((opt) => (
         <button key={opt} onClick={() => onChange(opt)}
-          className={cn(
-            'flex-1 py-1.5 rounded-lg text-xs font-medium transition-all',
+          className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
             selected === opt
               ? 'bg-card text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
-          )}>
+          }`}>
           {opt}
         </button>
       ))}

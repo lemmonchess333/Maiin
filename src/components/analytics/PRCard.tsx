@@ -20,7 +20,7 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
         {title}
       </h3>
       <div className="space-y-2">
-        {prs.map(pr => (
+        {prs.map((pr) => (
           <div key={pr.label} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
             <div className="flex items-center gap-2">
               {pr.isNew && (

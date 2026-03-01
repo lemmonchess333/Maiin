@@ -51,7 +51,7 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
         <svg viewBox="55 65 90 200" className="w-40 h-64">
           <ellipse cx="100" cy="78" rx="15" ry="12" fill="currentColor" opacity={0.08} />
           <rect x="85" y="88" width="30" height="5" rx="2" fill="currentColor" opacity={0.05} />
-          {MUSCLE_REGIONS.map(region => (
+          {MUSCLE_REGIONS.map((region) => (
             <path key={region.id} d={region.path}
               fill={accentColor}
               fillOpacity={getOpacity(region.id)}

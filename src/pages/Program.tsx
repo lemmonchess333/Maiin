@@ -27,6 +27,7 @@ import {
   Calculator,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import TrainingCalendar from "./TrainingCalendar";
 
 /**
  * IMPORTANT:
@@ -112,11 +113,34 @@ function ProgramInner() {
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
   const [weightFlash, setWeightFlash] = useState<"up" | "down" | null>(null);
   const [showPlateCalc, setShowPlateCalc] = useState(false);
+  const [programView, setProgramView] = useState<'program' | 'calendar'>('program');
 
   if (loading || !programState || !prescription) {
     return (
       <div className="p-6 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (programView === 'calendar') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center bg-muted rounded-xl p-1 mb-1">
+          <button
+            onClick={() => setProgramView('program')}
+            className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground"
+          >
+            📋 Programme
+          </button>
+          <button
+            onClick={() => setProgramView('calendar')}
+            className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm"
+          >
+            📅 Calendar
+          </button>
+        </div>
+        <TrainingCalendar />
       </div>
     );
   }
@@ -251,6 +275,20 @@ function ProgramInner() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center bg-muted rounded-xl p-1">
+        <button
+          onClick={() => setProgramView('program')}
+          className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm"
+        >
+          📋 Programme
+        </button>
+        <button
+          onClick={() => setProgramView('calendar')}
+          className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground"
+        >
+          📅 Calendar
+        </button>
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -311,8 +349,8 @@ function ProgramInner() {
             className={cn(
               "px-2.5 py-0.5 rounded-full text-[10px] font-medium",
               prescription.deload
-                ? "bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
-                : "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                ? "bg-blue-100 text-blue-600"
+                : "bg-green-100 text-green-600"
             )}
           >
             {prescription.deload ? "Deload" : "Progression"}

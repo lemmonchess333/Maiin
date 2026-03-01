@@ -2,9 +2,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
-import { calculatePace, toGPX, estimateRunCalories } from '../lib/gps';
+import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
+import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMap';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
@@ -17,6 +18,8 @@ interface RunData {
   elapsed: number;
   splits: Split[];
   elevationGain: number;
+  runConfig?: RunConfig | null;
+  intervalData?: RunConfig['intervals'];
 }
 
 export default function RunSummary() {
@@ -24,27 +27,36 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
-  if (!state) { navigate('/'); return null; }
+  if (!state) {
+    navigate('/');
+    return null;
+  }
 
-  const { points, distance, elapsed, splits, elevationGain } = state;
+  const { points, distance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 ? (elapsed / distance) * 1000 : 0;
+  const bestEfforts = detectBestEfforts(points, distance);
 
   const handleSave = async () => {
     if (!user) return;
     const runData = {
-      distance, duration: elapsed, avgPace: avgPaceSeconds,
-      calories, elevationGain,
-      points: points.length > 500
-        ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0)
-        : points,
+      distance,
+      duration: elapsed,
+      avgPace: avgPaceSeconds,
+      calories,
+      elevationGain,
+      points: points.length > 500 ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0) : points,
       splits,
       startedAt: Timestamp.fromDate(new Date(points[0]?.timestamp || Date.now())),
       completedAt: Timestamp.now(),
       notes: '',
       visibility: 'followers' as const,
       type: 'run',
+      activityType: runConfig?.activityType || 'freerun',
+      target: runConfig?.target,
+      intervalData,
+      runConfig,
     };
     await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
@@ -59,9 +71,10 @@ export default function RunSummary() {
         avgPace,
         elevationGain,
         calories,
-        routePreview: points.length > 20
-          ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map(p => ({ lat: p.lat, lon: p.lon }))
-          : points.map(p => ({ lat: p.lat, lon: p.lon })),
+        routePreview:
+          points.length > 20
+            ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
+            : points.map((p) => ({ lat: p.lat, lon: p.lon })),
       });
     }
 
@@ -92,7 +105,7 @@ export default function RunSummary() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: THEME.bg, color: THEME.textPrimary }}>
       <div className="text-center pt-8 pb-4 px-6">
         <h1 className="text-xl font-bold text-foreground">Great run!</h1>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
@@ -143,6 +156,21 @@ export default function RunSummary() {
         </div>
       </div>
 
+      {/* Best Efforts */}
+      {bestEfforts.length > 0 && (
+        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border/50">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">Best Efforts</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {bestEfforts.map((effort) => (
+              <div key={effort.label} className="text-center p-2 rounded-lg bg-muted/50">
+                <p className="text-[10px] text-muted-foreground">{effort.label}</p>
+                <p className="text-sm font-bold font-mono tabular-nums">{Math.floor(effort.time / 60)}:{(Math.floor(effort.time) % 60).toString().padStart(2, '0')}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Splits bar chart */}
       {splits.length > 0 && (
         <div className="px-4 mb-4">
@@ -172,10 +200,7 @@ export default function RunSummary() {
             Share
           </button>
         </div>
-        <button onClick={handleDiscard}
-          className="w-full py-2 text-sm text-red-400">
-          Discard
-        </button>
+        <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
       </div>
     </div>
   );
