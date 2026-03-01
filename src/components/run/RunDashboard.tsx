@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
+import { ArrowRight, Footprints, MapPinned, Route, Timer } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 
@@ -43,26 +44,33 @@ export default function RunDashboard() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="p-4 rounded-2xl bg-card border border-border">
-        <p className="text-xs text-muted-foreground mb-2">This Week</p>
-        <div className="flex items-end gap-6">
+    <div className="space-y-5">
+      <div className="p-5 rounded-2xl bg-card border border-border/50">
+        <div className="flex items-center gap-2 mb-4">
+          <Route className="w-4 h-4 text-primary" />
+          <p className="text-sm font-medium text-foreground">This Week</p>
+        </div>
+
+        <div className="flex items-end gap-8">
           <div>
-            <p className="text-3xl font-bold font-mono tabular-nums text-orange-500">
+            <p className="text-4xl font-bold font-mono tabular-nums text-orange-500 leading-none">
               {(weeklyDistance / 1000).toFixed(1)}
             </p>
-            <p className="text-xs text-muted-foreground">km total</p>
+            <p className="text-sm text-muted-foreground mt-1">km total</p>
           </div>
           <div>
-            <p className="text-xl font-bold font-mono tabular-nums">{weeklyRunCount}</p>
-            <p className="text-xs text-muted-foreground">runs</p>
+            <p className="text-4xl font-bold font-mono tabular-nums leading-none">{weeklyRunCount}</p>
+            <p className="text-sm text-muted-foreground mt-1">runs</p>
           </div>
         </div>
       </div>
 
-      <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40">
-        <p className="text-xs text-orange-700 dark:text-orange-300">
-          Head to the <strong>Log</strong> tab → <strong>Run</strong> to start your next run 🏃
+      <div className="p-4 rounded-2xl bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-800/40">
+        <p className="text-sm text-orange-700 dark:text-orange-300 flex items-center gap-2">
+          <MapPinned className="w-4 h-4 shrink-0" />
+          <span>
+            Head to the <strong>Log</strong> tab → <strong>Run</strong> to start your next run.
+          </span>
         </p>
       </div>
 
@@ -70,9 +78,9 @@ export default function RunDashboard() {
         <div className="space-y-2">
           <h3 className="text-sm font-semibold">Recent Runs</h3>
           {recentRuns.map(run => (
-            <div key={run.id} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
-              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center text-lg">
-                🏃
+            <div key={run.id} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/60">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
+                <Footprints className="w-5 h-5 text-orange-600 dark:text-orange-300" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">
@@ -82,28 +90,35 @@ export default function RunDashboard() {
                   {run.completedAt?.toDate?.()?.toLocaleDateString() || ''} · {formatPace(run.avgPace)}/km
                 </p>
               </div>
-              <p className="text-sm font-mono tabular-nums text-muted-foreground">
-                {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
-              </p>
+              <div className="text-right">
+                <p className="text-sm font-mono tabular-nums text-muted-foreground">
+                  {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
+                </p>
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Timer className="w-3 h-3" />
+                  <span>duration</span>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {recentRuns.length === 0 && (
-        <div className="text-center py-12 space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-full bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center">
-            <span className="text-4xl">🏃</span>
+        <div className="text-center py-10 px-6 rounded-2xl border border-border/50 bg-card space-y-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center">
+            <Footprints className="w-9 h-9 text-muted-foreground" />
           </div>
-          <p className="text-sm font-semibold">No runs yet</p>
-          <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">
+          <p className="text-2xl font-semibold text-foreground">No runs yet</p>
+          <p className="text-sm text-muted-foreground max-w-[260px] mx-auto">
             Track your runs with GPS, pace splits, and route mapping
           </p>
           <button
             onClick={() => navigate('/log')}
-            className="text-xs px-4 py-2 rounded-lg bg-orange-500 text-white font-medium mt-2"
+            className="inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium mt-2"
           >
             Go to Log Tab
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
