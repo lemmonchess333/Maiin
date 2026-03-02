@@ -10,9 +10,10 @@ import VolumeChart from '@/components/analytics/VolumeChart';
 import MuscleHeatMap from '@/components/analytics/MuscleHeatMap';
 import PRCard from '@/components/analytics/PRCard';
 import RunningHistorySection from '@/components/run/RunningHistorySection';
+import PerformanceTab from '@/components/analytics/PerformanceTab';
 
 export default function History() {
-  const [filter, setFilter] = useState<'all' | 'running' | 'lifting' | 'nutrition'>('all');
+  const [filter, setFilter] = useState<'all' | 'running' | 'lifting' | 'nutrition' | 'performance'>('all');
   const [timeRange, setTimeRange] = useState('1M');
   const rangeDays = timeRange === '1W' ? 7 : timeRange === '1M' ? 30 : timeRange === '3M' ? 90 : timeRange === '6M' ? 180 : 365;
 
@@ -74,11 +75,12 @@ export default function History() {
 
       {/* Filter pills with sport-specific colours */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {(['all', 'running', 'lifting', 'nutrition'] as const).map((f) => {
+        {(['all', 'running', 'lifting', 'nutrition', 'performance'] as const).map((f) => {
           const active = filter === f;
           const activeStyle = f === 'running' ? 'bg-[#FF6B6B] text-white shadow-[0_2px_12px_rgba(255,107,107,0.35)]'
             : f === 'lifting' ? 'bg-[#6C7CFF] text-white shadow-[0_2px_12px_rgba(108,124,255,0.35)]'
             : f === 'nutrition' ? 'bg-emerald-500 text-white shadow-[0_2px_12px_rgba(52,211,153,0.35)]'
+            : f === 'performance' ? 'bg-[#8b5cf6] text-white shadow-[0_2px_12px_rgba(139,92,246,0.35)]'
             : 'bg-purple-500 text-white shadow-[var(--ds-shadow-purple-glow)]';
           return (
             <button key={f} onClick={() => setFilter(f)}
@@ -91,6 +93,11 @@ export default function History() {
         })}
       </div>
 
+      {/* Performance tab replaces all other content */}
+      {filter === 'performance' ? (
+        <PerformanceTab />
+      ) : (
+      <>
       <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
       {filter === 'all' && (
@@ -165,6 +172,8 @@ export default function History() {
             <StatCard label="Protein" value={nutrition.avgProtein.toString()} unit="g/day" accentColor={THEME.success} />
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );
