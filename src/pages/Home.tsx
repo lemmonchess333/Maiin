@@ -1,527 +1,552 @@
-import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@/lib/auth";
-import { useWeeklyStats, useMonthlyStats, useWeeklyDayMap } from "@/hooks/useFirestore";
-import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
-import { useWorkouts } from "@/hooks/useWorkouts";
-import { AdaptiveSummary } from "@/components/AdaptiveSummary";
-import { StreakCounter } from "@/components/StreakCounter";
-import BodyweightLogger from "@/components/BodyweightLogger";
-import { WeeklyDayFill } from "@/components/WeeklyDayFill";
-import { useSubscription } from "@/lib/subscription";
-import { calculateAdaptiveTDEE } from "@/lib/adaptiveTDEE";
-import { useProgram } from "@/features/program/useProgram";
-import RunDashboard from "@/components/run/RunDashboard";
-import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import confetti from "canvas-confetti";
+import { useState, useEffect, useMemo } from “react”;
+import { useAuth } from “@/lib/auth”;
+import { useWorkouts } from “@/hooks/useWorkouts”;
+import { usePerformance } from “@/hooks/usePerformance”;
+import { useSubscription } from “@/lib/subscription”;
+import { useProgram } from “@/features/program/useProgram”;
+import { useWeeklyDayMap } from “@/hooks/useFirestore”;
+import BodyweightLogger from “@/components/BodyweightLogger”;
+import { THEME } from “@/lib/theme”;
+import { Link, useNavigate } from “react-router-dom”;
+import { motion } from “framer-motion”;
 import {
-  Sparkles,
-  Dumbbell,
-  Flame,
-  Beef,
-  Wheat,
-  Cookie,
-  ChevronRight,
-  Zap,
-  Settings as SettingsIcon,
-} from "lucide-react";
-import { format } from "date-fns";
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+Dumbbell,
+ChevronRight,
+Sparkles,
+Settings as SettingsIcon,
+Flame,
+Play,
+Footprints,
+ClipboardList,
+} from “lucide-react”;
+import { format } from “date-fns”;
+import { collection, query, where, getDocs, Timestamp } from “firebase/firestore”;
+import { db } from “@/lib/firebase”;
 
-type DailyTotals = {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-};
-
-const MOTIVATIONAL_QUOTES = [
-  "The only bad workout is the one that didn't happen.",
-  "Consistency beats intensity. Show up today.",
-  "You don't have to be extreme, just consistent.",
-  "Small daily improvements lead to stunning results.",
-  "Your body can stand almost anything. It's your mind you have to convince.",
-  "Discipline is choosing between what you want now and what you want most.",
-  "The pain you feel today will be the strength you feel tomorrow.",
-  "Success isn't always about greatness. It's about consistency.",
-];
-
-function getDailyQuote(): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-  return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
-}
+// ── Streak computation (unchanged logic) ─────
 
 function computeStreak(workoutDates: string[]): number {
-  if (workoutDates.length === 0) return 0;
-
-  const uniqueDates = [...new Set(workoutDates)].sort().reverse();
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
-
-  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
-
-  let streak = 1;
-  for (let i = 1; i < uniqueDates.length; i++) {
-    const prev = new Date(uniqueDates[i - 1]);
-    const curr = new Date(uniqueDates[i]);
-    const diffDays = (prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays === 1) streak++;
-    else break;
-  }
-
-  return streak;
+if (workoutDates.length === 0) return 0;
+const uniqueDates = […new Set(workoutDates)].sort().reverse();
+const today = format(new Date(), “yyyy-MM-dd”);
+const yesterday = format(new Date(Date.now() - 86400000), “yyyy-MM-dd”);
+if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
+let streak = 1;
+for (let i = 1; i < uniqueDates.length; i++) {
+const prev = new Date(uniqueDates[i - 1]);
+const curr = new Date(uniqueDates[i]);
+if ((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24) === 1) streak++;
+else break;
+}
+return streak;
 }
 
-// Simple tint helper (lightens the hex color)
-function tint(hex: string, factor: number = 0.85): string {
-  if (!hex || !hex.startsWith("#")) return hex;
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+// ── Week calendar strip (Cal AI-inspired) ────
 
-  const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
-  const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
-  const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
+function WeekStrip({ dayMap }: { dayMap: Map<string, { workouts: number; meals: number; caloriesHit: boolean }> }) {
+const today = new Date();
+const startOfWeek = new Date(today);
+startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday start
 
-  return `#${newR.toString(16).padStart(2, "0")}${newG
-    .toString(16)
-    .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
+const days = Array.from({ length: 7 }, (_, i) => {
+const d = new Date(startOfWeek);
+d.setDate(startOfWeek.getDate() + i);
+const key = format(d, “yyyy-MM-dd”);
+const data = dayMap.get(key);
+const isToday = format(d, “yyyy-MM-dd”) === format(today, “yyyy-MM-dd”);
+const hasActivity = data && (data.workouts > 0 || data.meals > 0);
+return { date: d, key, isToday, hasActivity };
+});
+
+return (
+<div className="flex items-center justify-between px-1">
+{days.map(({ date, key, isToday, hasActivity }) => (
+<div key={key} className="flex flex-col items-center gap-1">
+<span className="text-[10px] text-muted-foreground">
+{format(date, “EEE”).charAt(0)}
+</span>
+<div
+className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${ isToday ? "bg-primary text-primary-foreground" : hasActivity ? "bg-primary/15 text-primary" : "text-muted-foreground" }`}
+>
+{date.getDate()}
+</div>
+{hasActivity && !isToday && (
+<div className="w-1 h-1 rounded-full bg-primary" />
+)}
+{!hasActivity && <div className="w-1 h-1" />}
+</div>
+))}
+</div>
+);
 }
+
+// ── Next Action Card ─────────────────────────
+
+function NextActionCard({
+nextWorkout,
+navigate,
+}: {
+nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
+navigate: (path: string) => void;
+}) {
+// Determine CTA
+const hasWorkout = !!nextWorkout;
+
+if (hasWorkout) {
+return (
+<motion.button
+initial={{ opacity: 0, y: 8 }}
+animate={{ opacity: 1, y: 0 }}
+onClick={() => navigate(”/program”)}
+className=“w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]”
+style={{
+background: `linear-gradient(135deg, ${THEME.lifting}12 0%, ${THEME.surface}00 60%)`,
+borderColor: `${THEME.lifting}30`,
+}}
+>
+<div className="flex items-center gap-3">
+<div
+className=“w-11 h-11 rounded-xl flex items-center justify-center”
+style={{ backgroundColor: `${THEME.lifting}20` }}
+>
+<Dumbbell className=“w-5 h-5” style={{ color: THEME.lifting }} />
+</div>
+<div className="flex-1 min-w-0">
+<p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+Up next
+</p>
+<p className="text-sm font-semibold text-foreground truncate">
+{nextWorkout!.dayName}
+</p>
+<p className="text-[11px] text-muted-foreground capitalize">
+{nextWorkout!.dayType} · {nextWorkout!.exercises.length} exercises
+</p>
+</div>
+<div
+className=“flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold”
+style={{ backgroundColor: THEME.lifting, color: “#fff” }}
+>
+<Play className="w-3.5 h-3.5" />
+Start
+</div>
+</div>
+</motion.button>
+);
+}
+
+// Fallback: generic “Log Activity”
+return (
+<motion.div
+initial={{ opacity: 0, y: 8 }}
+animate={{ opacity: 1, y: 0 }}
+className=“flex gap-2”
+>
+<Link
+to="/program"
+className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
+>
+<div
+className=“w-10 h-10 rounded-xl flex items-center justify-center”
+style={{ backgroundColor: `${THEME.lifting}20` }}
+>
+<Dumbbell className=“w-5 h-5” style={{ color: THEME.lifting }} />
+</div>
+<span className="text-xs font-medium text-foreground">Log Workout</span>
+</Link>
+<Link
+to="/run"
+className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
+>
+<div
+className=“w-10 h-10 rounded-xl flex items-center justify-center”
+style={{ backgroundColor: `${THEME.running}20` }}
+>
+<Footprints className=“w-5 h-5” style={{ color: THEME.running }} />
+</div>
+<span className="text-xs font-medium text-foreground">Start Run</span>
+</Link>
+<Link
+to="/log"
+className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
+>
+<div
+className=“w-10 h-10 rounded-xl flex items-center justify-center”
+style={{ backgroundColor: `${THEME.success}20` }}
+>
+<ClipboardList className=“w-5 h-5” style={{ color: THEME.success }} />
+</div>
+<span className="text-xs font-medium text-foreground">Log Food</span>
+</Link>
+</motion.div>
+);
+}
+
+// ── Weekly Snapshot (compact, NO charts) ──────
+
+function WeeklySnapshotCompact({
+liftSessions,
+runSessions,
+liftTonnage,
+runKm,
+adherenceScore,
+}: {
+liftSessions: number;
+runSessions: number;
+liftTonnage: number;
+runKm: number;
+adherenceScore: number | null;
+}) {
+const stats = [
+{ label: “Sessions”, value: `${liftSessions + runSessions}`, color: THEME.brand },
+{ label: “Tonnage”, value: liftTonnage >= 1000 ? `${(liftTonnage / 1000).toFixed(1)}t` : `${Math.round(liftTonnage)}kg`, color: THEME.lifting },
+{ label: “Distance”, value: `${runKm.toFixed(1)}km`, color: THEME.running },
+{ label: “Adherence”, value: adherenceScore != null ? `${adherenceScore}%` : “—”, color: THEME.success },
+];
+
+return (
+<div className="p-4 rounded-2xl bg-card border border-border/50">
+<p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">
+This Week
+</p>
+<div className="grid grid-cols-4 gap-2">
+{stats.map((s) => (
+<div key={s.label} className="text-center">
+<p
+className=“text-lg font-bold font-mono tabular-nums”
+style={{ color: s.color }}
+>
+{s.value}
+</p>
+<p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
+</div>
+))}
+</div>
+</div>
+);
+}
+
+// ── Insight Strip ─────────────────────────────
+
+function InsightStrip({
+title,
+bullet,
+loadBand,
+}: {
+title: string;
+bullet: string;
+loadBand: string;
+}) {
+const emoji =
+loadBand === “overreach” ? “🔥” : loadBand === “high” ? “⚡” : loadBand === “moderate” ? “💪” : “🌱”;
+
+return (
+<Link to="/history?tab=performance">
+<motion.div
+initial={{ opacity: 0 }}
+animate={{ opacity: 1 }}
+transition={{ delay: 0.15 }}
+className=“p-4 rounded-2xl bg-card border border-border/50 flex items-start gap-3 transition-transform active:scale-[0.99]”
+>
+<span className="text-lg mt-0.5">{emoji}</span>
+<div className="flex-1 min-w-0">
+<p className="text-xs font-semibold text-foreground">{title}</p>
+<p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+{bullet}
+</p>
+</div>
+<div className="flex items-center gap-1 shrink-0 mt-0.5">
+<span className="text-[10px] text-primary font-medium">Details</span>
+<ChevronRight className="w-3.5 h-3.5 text-primary" />
+</div>
+</motion.div>
+</Link>
+);
+}
+
+// ── Today’s Intake (slim: protein + calories only) ──
+
+function TodayIntake({
+calories,
+protein,
+targetCalories,
+targetProtein,
+}: {
+calories: number;
+protein: number;
+targetCalories: number;
+targetProtein: number;
+}) {
+if (targetCalories <= 0 && targetProtein <= 0) return null;
+
+const bars = [
+{
+label: “Calories”,
+current: calories,
+target: targetCalories || 2200,
+color: THEME.warning,
+},
+{
+label: “Protein”,
+current: protein,
+target: targetProtein || 160,
+unit: “g”,
+color: THEME.teal,
+},
+];
+
+return (
+<Link to="/log">
+<div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 transition-transform active:scale-[0.99]">
+<div className="flex items-center justify-between">
+<p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+Today’s Intake
+</p>
+<ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+</div>
+{bars.map((b) => {
+const pct = Math.min((b.current / b.target) * 100, 100);
+return (
+<div key={b.label} className="space-y-1">
+<div className="flex items-center justify-between">
+<span className="text-[11px] text-muted-foreground">{b.label}</span>
+<span className="text-[11px] font-mono tabular-nums text-foreground">
+{b.current}{b.unit || “”} / {b.target}{b.unit || “”}
+</span>
+</div>
+<div className="h-1.5 rounded-full bg-muted overflow-hidden">
+<motion.div
+initial={{ width: 0 }}
+animate={{ width: `${pct}%` }}
+transition={{ duration: 0.6, ease: “easeOut” }}
+className=“h-full rounded-full”
+style={{ backgroundColor: b.color }}
+/>
+</div>
+</div>
+);
+})}
+</div>
+</Link>
+);
+}
+
+// ══════════════════════════════════════════════
+// MAIN HOME COMPONENT
+// ══════════════════════════════════════════════
 
 export default function Home() {
-  const { user, profile, updateProfile } = useAuth();
-  const weeklyStats = useWeeklyStats();
-  const monthlyStats = useMonthlyStats();
-  const bodyweightTrend = useBodyweightTrend();
-  const { workouts } = useWorkouts();
-  const { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  const { programState } = useProgram();
-  const weeklyDayMap = useWeeklyDayMap();
+const { user, profile, updateProfile } = useAuth();
+const { workouts } = useWorkouts();
+const { current: perfDoc, loading: perfLoading } = usePerformance();
+const { isPro, isInTrial, trialDaysLeft } = useSubscription();
+const { programState } = useProgram();
+const weeklyDayMap = useWeeklyDayMap();
+const navigate = useNavigate();
 
-  const [mode, setMode] = useState<"weekly" | "monthly">("weekly");
-  const [homeMode, setHomeMode] = useState<"lift" | "run">("lift");
-  const [confettiFired, setConfettiFired] = useState(false);
+// ── Streak ──
+const computedStreak = useMemo(() => {
+return computeStreak(workouts.map((w) => w.date));
+}, [workouts]);
 
-  // Adaptive TDEE computation for Pro users
-  const tdeeResult = useMemo(() => {
-    if (!isPro || !profile) return null;
-    // Build weight logs from bodyweight trend
-    const weightLogs = (bodyweightTrend.monthly ?? []).map((entry: any) => ({
-      date: entry.date ?? "",
-      weight: entry.weight ?? entry.value ?? 0,
-    })).filter((w: any) => w.weight > 0);
+useEffect(() => {
+if (profile && computedStreak !== profile.currentStreak) {
+updateProfile({ currentStreak: computedStreak });
+}
+}, [computedStreak, profile, updateProfile]);
 
-    // Build calorie logs from daily totals (we only have today's, so skip if insufficient)
-    // For a real implementation this would come from a Firestore query of recent meals
-    // For now, show the card if we have enough weight data
-    if (weightLogs.length < 4) return null;
+// ── Today’s meals ──
+const [dailyCal, setDailyCal] = useState(0);
+const [dailyProt, setDailyProt] = useState(0);
 
-    const currentTargets = {
-      calories: profile.targetCalories ?? 2200,
-      protein: profile.targetProtein ?? 160,
-      carbs: profile.targetCarbs ?? 250,
-      fat: profile.targetFat ?? 60,
-    };
+useEffect(() => {
+if (!user?.uid) return;
+(async () => {
+try {
+const todayStart = new Date();
+todayStart.setHours(0, 0, 0, 0);
+const snap = await getDocs(
+query(
+collection(db, “users”, user.uid, “meals”),
+where(“createdAt”, “>=”, Timestamp.fromDate(todayStart)),
+),
+);
+let cal = 0, prot = 0;
+snap.forEach((d) => {
+const data = d.data();
+cal += data.totalCalories || data.calories || 0;
+prot += data.totalProtein || data.protein || 0;
+});
+setDailyCal(cal);
+setDailyProt(prot);
+} catch (e) {
+console.error(“Error fetching today’s meals:”, e);
+}
+})();
+}, [user]);
 
-    // Simple calorie logs from today as seed (in production, fetch last 14 days)
-    const calorieLogs = weightLogs.map((w: any) => ({
-      date: w.date,
-      calories: currentTargets.calories, // approximate
-    }));
+// ── Derived values ──
+const nextWorkout = programState?.workouts.find((d) => !d.completed) || null;
 
-    return calculateAdaptiveTDEE(
-      weightLogs,
-      calorieLogs,
-      profile.goal ?? "recomp",
-      currentTargets,
-      profile.weightKg ?? 70,
-    );
-  }, [isPro, profile, bodyweightTrend.monthly]);
+const snapshotData = useMemo(() => {
+if (perfDoc) {
+return {
+liftSessions: perfDoc.aggregates.liftSessions,
+runSessions: perfDoc.aggregates.runSessions,
+liftTonnage: perfDoc.aggregates.liftTonnage,
+runKm: perfDoc.aggregates.runKm,
+adherenceScore: perfDoc.adherenceScore,
+};
+}
+// Fallback: compute from raw workout data for current week
+const now = new Date();
+const weekStart = new Date(now);
+weekStart.setDate(now.getDate() - now.getDay());
+weekStart.setHours(0, 0, 0, 0);
 
-  const [dailyTotals, setDailyTotals] = useState<DailyTotals>({
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0,
+```
+const thisWeekWorkouts = workouts.filter((w) => new Date(w.date) >= weekStart);
+let tonnage = 0;
+thisWeekWorkouts.forEach((w) => {
+  w.exercises?.forEach((ex) => {
+    ex.sets?.forEach((s) => {
+      tonnage += (s.weightKg || 0) * (s.reps || 0);
+    });
   });
+});
 
-  const [todayMealsCount, setTodayMealsCount] = useState(0);
+return {
+  liftSessions: thisWeekWorkouts.length,
+  runSessions: 0,
+  liftTonnage: tonnage,
+  runKm: 0,
+  adherenceScore: null,
+};
+```
 
-  const quote = useMemo(() => getDailyQuote(), []);
+}, [perfDoc, workouts]);
 
-  const computedStreak = useMemo(() => {
-    const dates = workouts.map((w) => w.date);
-    return computeStreak(dates);
-  }, [workouts]);
+if (!profile) {
+return (
+<div className="p-8 text-center text-muted-foreground">
+Loading your profile…
+</div>
+);
+}
 
-  useEffect(() => {
-    if (profile && computedStreak !== profile.currentStreak) {
-      updateProfile({ currentStreak: computedStreak });
-    }
-  }, [computedStreak, profile, updateProfile]);
+return (
+<div className="flex flex-col gap-4 pb-6">
+{/* ── 1. Header ── */}
+<motion.div
+initial={{ opacity: 0, y: -8 }}
+animate={{ opacity: 1, y: 0 }}
+className=“flex items-center justify-between”
+>
+<div>
+<h1 className="text-xl font-bold text-foreground">
+Hey, {profile.displayName || “Athlete”}
+</h1>
+<p className="text-xs text-muted-foreground">
+{programState
+? `Week ${programState.weekNumber} · ${programState.currentPhase} phase`
+: “Let’s put in work today.”}
+</p>
+</div>
+<Link
+to="/settings"
+className="p-2 rounded-lg hover:bg-muted transition-colors"
+>
+<SettingsIcon className="w-5 h-5 text-muted-foreground" />
+</Link>
+</motion.div>
 
-  // Safe number helper (NOW supports fallback)
-  const safeNum = (value: any, fallback: number = 0): number => {
-    const num = Number(value);
-    return isNaN(num) || value == null ? fallback : num;
-  };
+```
+  {/* ── Trial banner ── */}
+  {isInTrial && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10"
+    >
+      <Sparkles className="w-5 h-5 text-primary shrink-0" />
+      <div className="flex-1">
+        <p className="text-sm font-medium text-foreground">
+          Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
+        </p>
+        <p className="text-xs text-muted-foreground">Full access to all features.</p>
+      </div>
+    </motion.div>
+  )}
 
-  useEffect(() => {
-    const uid = user?.uid;
-    if (!uid) return;
+  {/* ── Week strip + streak ── */}
+  <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+    <WeekStrip dayMap={weeklyDayMap} />
+    {computedStreak > 0 && (
+      <div className="flex items-center gap-2 pt-2 border-t border-border/30">
+        <Flame className="w-4 h-4 text-orange-500" />
+        <span className="text-xs font-medium text-orange-500">
+          {computedStreak} day streak
+        </span>
+        <span className="text-[10px] text-muted-foreground">
+          {computedStreak >= 14
+            ? "— on fire 🔥"
+            : computedStreak >= 7
+            ? "— crushing it"
+            : "— keep building"}
+        </span>
+      </div>
+    )}
+  </div>
 
-    (async () => {
-      try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+  {/* ── 2. Next Action CTA ── */}
+  <NextActionCard nextWorkout={nextWorkout} navigate={navigate} />
 
-        const mealsRef = collection(db, "users", uid, "meals");
-        const q = query(mealsRef, where("createdAt", ">=", Timestamp.fromDate(todayStart)));
+  {/* ── 3. This Week snapshot ── */}
+  <WeeklySnapshotCompact
+    liftSessions={snapshotData.liftSessions}
+    runSessions={snapshotData.runSessions}
+    liftTonnage={snapshotData.liftTonnage}
+    runKm={snapshotData.runKm}
+    adherenceScore={snapshotData.adherenceScore}
+  />
 
-        const snapshot = await getDocs(q);
+  {/* ── 4. Engine insight ── */}
+  {perfDoc && perfDoc.insight && (
+    <InsightStrip
+      title={perfDoc.insight.title}
+      bullet={perfDoc.insight.bullets[0] || ""}
+      loadBand={perfDoc.loadBand}
+    />
+  )}
 
-        const totals: DailyTotals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  {/* ── 5. Bodyweight logger ── */}
+  <BodyweightLogger />
 
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          totals.calories += data.totalCalories || data.calories || 0;
-          totals.protein += data.totalProtein || data.protein || 0;
-          totals.carbs += data.totalCarbs || data.carbs || 0;
-          totals.fat += data.totalFat || data.fat || 0;
-        });
+  {/* ── 6. Today's intake (slim) ── */}
+  <TodayIntake
+    calories={dailyCal}
+    protein={dailyProt}
+    targetCalories={profile.targetCalories || 0}
+    targetProtein={profile.targetProtein || 0}
+  />
 
-        setDailyTotals(totals);
-        setTodayMealsCount(snapshot.size);
-      } catch (error) {
-        console.error("Error fetching today's meals:", error);
-      }
-    })();
-  }, [user]);
+  {/* ── Pro upsell ── */}
+  {!isPro && (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
+    >
+      <p className="text-sm font-medium text-foreground">
+        Unlock AI Photo Logging & Performance Engine
+      </p>
+      <p className="text-xs text-muted-foreground">
+        Upgrade to Pro — from just £2.99/mo
+      </p>
+    </motion.div>
+  )}
+</div>
+```
 
-  useEffect(() => {
-    if ((weeklyStats.hasPR || monthlyStats.hasPR) && !confettiFired) {
-      setConfettiFired(true);
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ["#7c3aed", "#a78bfa", "#c4b5fd", "#fbbf24"],
-      });
-    }
-  }, [weeklyStats.hasPR, monthlyStats.hasPR, confettiFired]);
-
-  if (!profile) {
-    return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
-  }
-
-  const nextWorkout = programState?.workouts.find((d) => !d.completed);
-
-  const macroColors = {
-    calories: "#f97316",
-    protein: "#3b82f6",
-    carbs: "#f59e0b",
-    fat: "#a855f6",
-  };
-
-  return (
-    <div className="flex flex-col gap-6 px-4 pb-6">
-      {/* Header with Settings gear + Lift/Run toggle */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">
-              Hey, {profile.displayName || "Athlete"}
-            </h1>
-            <p className="text-xs text-muted-foreground">Let's put in work today.</p>
-          </div>
-          <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
-            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
-          </Link>
-        </div>
-
-        {/* Lift / Run segmented control */}
-        <div className="flex gap-1 bg-muted rounded-lg p-1">
-          {(["lift", "run"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setHomeMode(m)}
-              className={cn(
-                "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                "active:scale-[0.99] transition-transform",
-                homeMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {m === "lift" ? "Lift" : "Run"}
-            </button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Trial banner */}
-      {isInTrial && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10"
-        >
-          <Sparkles className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">
-              Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
-            </p>
-            <p className="text-xs text-muted-foreground">Full access to all features.</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Run mode dashboard */}
-      {homeMode === "run" && <RunDashboard />}
-
-      {/* Lift mode dashboard */}
-      {homeMode === "lift" && (
-        <>
-          {/* Streak */}
-          <div className="space-y-3">
-            <StreakCounter streak={computedStreak} />
-            <div className="text-[11px] text-muted-foreground">
-              {safeNum(weeklyStats.workoutsDone)}/{safeNum(weeklyStats.workoutsTarget, 4)} workouts this week{" "}
-              <span className="px-1">•</span>{" "}
-              {todayMealsCount} meal{todayMealsCount === 1 ? "" : "s"} logged today
-            </div>
-          </div>
-
-          {/* Weekly Day Fill Summary */}
-          <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-3">
-            <p className="text-sm font-medium text-foreground">This Week</p>
-            <WeeklyDayFill dayMap={weeklyDayMap} workoutsTarget={safeNum(weeklyStats.workoutsTarget, 4)} />
-          </div>
-
-          {/* Adaptive TDEE Card (Pro) */}
-          {tdeeResult && tdeeResult.confidence !== "low" && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl border border-border/50 p-5 space-y-3"
-            >
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500" />
-                <p className="text-sm font-medium text-foreground">Adaptive TDEE</p>
-                <span className={cn(
-                  "ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full",
-                  tdeeResult.confidence === "high"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-yellow-100 text-yellow-600"
-                )}>
-                  {tdeeResult.confidence} confidence
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-foreground">{tdeeResult.estimatedTDEE}</p>
-                  <p className="text-[10px] text-muted-foreground">Est. TDEE</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold text-primary">{tdeeResult.adjustedCalories}</p>
-                  <p className="text-[10px] text-muted-foreground">Target cal</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Weekly weight change: <span className={cn(
-                  "font-medium",
-                  tdeeResult.weeklyWeightChange > 0 ? "text-green-500" : tdeeResult.weeklyWeightChange < 0 ? "text-red-500" : "text-foreground"
-                )}>
-                  {tdeeResult.weeklyWeightChange > 0 ? "+" : ""}{tdeeResult.weeklyWeightChange.toFixed(2)}kg
-                </span></span>
-                <span>Target: {tdeeResult.targetWeightChange > 0 ? "+" : ""}{tdeeResult.targetWeightChange}kg/wk</span>
-              </div>
-
-              <div className="flex gap-2 text-[10px]">
-                <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">P: {tdeeResult.adjustedProtein}g</span>
-                <span className="px-2 py-1 rounded bg-amber-50 text-amber-600 font-medium">C: {tdeeResult.adjustedCarbs}g</span>
-                <span className="px-2 py-1 rounded bg-purple-50 text-purple-600 font-medium">F: {tdeeResult.adjustedFat}g</span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Next Workout */}
-          {nextWorkout && (
-            <Link to="/program">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  "bg-card rounded-2xl border border-border/50 p-5 space-y-2",
-                  "transition-transform active:scale-[0.99]"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Dumbbell className="w-4 h-4 text-primary" />
-                  <p className="text-sm font-semibold text-foreground">Next: {nextWorkout.dayName}</p>
-
-                  <div className="ml-auto flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType}</span>
-                    <span className="text-[10px] text-muted-foreground">Open</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {nextWorkout.exercises.slice(0, 4).map((ex, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 rounded border text-[10px]"
-                      style={{
-                        backgroundColor: tint("#7c3aed", 0.92),
-                        borderColor: tint("#7c3aed", 0.75),
-                        color: "#4c1d95",
-                      }}
-                    >
-                      {ex.name}
-                    </span>
-                  ))}
-                  {nextWorkout.exercises.length > 4 && (
-                    <span
-                      className="px-2 py-0.5 rounded border text-[10px]"
-                      style={{
-                        backgroundColor: tint("#7c3aed", 0.92),
-                        borderColor: tint("#7c3aed", 0.75),
-                        color: "#4c1d95",
-                      }}
-                    >
-                      +{nextWorkout.exercises.length - 4} more
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            </Link>
-          )}
-
-          {/* Bodyweight Logger */}
-          <BodyweightLogger />
-
-          {/* Today's Intake */}
-          <div className="bg-card rounded-2xl border border-border/50 p-5">
-            <div className="mb-4">
-              <p className="text-sm font-medium text-foreground">Today's Intake</p>
-              <p className="text-[11px] text-muted-foreground mt-1">From meals logged today</p>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
-              <div
-                className="min-w-0 rounded-xl p-2.5 shadow-sm"
-                style={{ backgroundColor: tint(macroColors.calories), color: macroColors.calories }}
-              >
-                <Flame className="w-4 h-4 mx-auto mb-1" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.calories)}
-                </p>
-                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">cal</p>
-              </div>
-
-              <div
-                className="min-w-0 rounded-xl p-2.5 shadow-sm"
-                style={{ backgroundColor: tint(macroColors.protein), color: macroColors.protein }}
-              >
-                <Beef className="w-4 h-4 mx-auto mb-1" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.protein)}g
-                </p>
-                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">protein</p>
-              </div>
-
-              <div
-                className="min-w-0 rounded-xl p-2.5 shadow-sm"
-                style={{ backgroundColor: tint(macroColors.carbs), color: macroColors.carbs }}
-              >
-                <Wheat className="w-4 h-4 mx-auto mb-1" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.carbs)}g
-                </p>
-                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">carbs</p>
-              </div>
-
-              <div
-                className="min-w-0 rounded-xl p-2.5 shadow-sm"
-                style={{ backgroundColor: tint(macroColors.fat), color: macroColors.fat }}
-              >
-                <Cookie size={16} className="mx-auto mb-1" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.fat)}g
-                </p>
-                <p className="text-[10px] mt-1 font-medium tracking-wide uppercase opacity-75">fat</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mode Toggle + Adaptive Summary */}
-          <div className="flex gap-1 bg-muted rounded-lg p-1">
-            {(["weekly", "monthly"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={cn(
-                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                  "active:scale-[0.99] transition-transform",
-                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {m.charAt(0).toUpperCase() + m.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          <AdaptiveSummary
-            athleteType={profile.athleteType || "Lifter"}
-            mode={mode}
-            weightKg={profile.weightKg ?? 70}
-            weeklyWorkoutsDone={weeklyStats.workoutsDone ?? 0}
-            weeklyWorkoutsTarget={weeklyStats.workoutsTarget ?? 4}
-            weeklyMealsDone={weeklyStats.mealsDone ?? 0}
-            weeklyMealsTarget={weeklyStats.mealsTarget ?? 10}
-            weeklyPR={weeklyStats.hasPR ?? false}
-            weeklyBodyweightTrend={bodyweightTrend.weekly ?? []}
-            monthlyWorkoutsDone={monthlyStats.workoutsDone ?? 0}
-            monthlyWorkoutsTarget={monthlyStats.workoutsTarget ?? 16}
-            monthlyMealsDone={monthlyStats.mealsDone ?? 0}
-            monthlyMealsTarget={monthlyStats.mealsTarget ?? 40}
-            monthlyPR={monthlyStats.hasPR ?? false}
-            monthlyBodyweightTrend={bodyweightTrend.monthly ?? []}
-          />
-
-          {/* Motivational quote */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="quote-card"
-          >
-            <p className="text-sm font-medium italic leading-relaxed relative z-10">"{quote}"</p>
-          </motion.div>
-
-          {/* Pro upsell */}
-          {!isPro && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
-            >
-              <p className="text-sm font-medium text-foreground">
-                Unlock AI Photo Logging & Performance Engine
-              </p>
-              <p className="text-xs text-muted-foreground">Upgrade to Pro — from just £2.99/mo</p>
-            </motion.div>
-          )}
-        </>
-      )}
-    </div>
-  );
+);
 }
