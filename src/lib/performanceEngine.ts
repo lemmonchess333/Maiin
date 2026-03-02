@@ -1,16 +1,12 @@
+// src/lib/performanceEngine.ts
 /* ─────────────────────────────────────────────
    Performance Engine — Computation
    Pure functions. No Firebase imports.
    Can be extracted to Cloud Functions as-is.
    ───────────────────────────────────────────── */
 
-import type {
-  WeeklyAggregates,
-  Baseline,
-  PerformanceDoc,
-  PI_WEIGHTS as PIWeightsType,
-} from './performanceTypes';
-import { PI_WEIGHTS } from './performanceTypes';
+import type { WeeklyAggregates, Baseline, PerformanceDoc } from "./performanceTypes";
+import { PI_WEIGHTS } from "./performanceTypes";
 
 // ── Helpers ──────────────────────────────────
 
@@ -18,14 +14,14 @@ import { PI_WEIGHTS } from './performanceTypes';
 export function getWeekKey(date: Date): string {
   const d = new Date(date);
   d.setDate(d.getDate() - d.getDay()); // rewind to Sunday
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split("T")[0];
 }
 
 /** Get the Sunday date N weeks before a given weekKey */
 export function weekKeyMinusN(weekKey: string, n: number): string {
-  const d = new Date(weekKey + 'T00:00:00');
+  const d = new Date(weekKey + "T00:00:00");
   d.setDate(d.getDate() - 7 * n);
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split("T")[0];
 }
 
 /** Clamp 0–100 */
@@ -42,9 +38,7 @@ function safeRatio(current: number, baseline: number): number {
 // ── Baseline ─────────────────────────────────
 
 export function computeBaseline(priorWeeks: WeeklyAggregates[]): Baseline {
-  const valid = priorWeeks.filter(
-    (w) => w.liftSessions > 0 || w.runSessions > 0
-  );
+  const valid = priorWeeks.filter((w) => w.liftSessions > 0 || w.runSessions > 0);
   const n = valid.length || 1;
   return {
     liftTonnage: valid.reduce((s, w) => s + w.liftTonnage, 0) / n,
@@ -124,9 +118,10 @@ export function computeAdherenceScore(
   if (targetCalories && agg.mealDaysLogged >= 3 && agg.avgDailyCalories > 0) {
     const calRatio = agg.avgDailyCalories / targetCalories;
     // 0.85–1.15 = perfect, deductions outside
-    const calScore = calRatio >= 0.85 && calRatio <= 1.15
-      ? 100
-      : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
+    const calScore =
+      calRatio >= 0.85 && calRatio <= 1.15
+        ? 100
+        : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
     score += calScore;
     factors++;
   }
@@ -147,7 +142,7 @@ export function computeAdherenceScore(
 export function computeConfidence(
   agg: WeeklyAggregates,
   bl: Baseline,
-): 'high' | 'medium' | 'low' {
+): "high" | "medium" | "low" {
   let signals = 0;
   if (agg.liftSessions > 0) signals++;
   if (agg.runSessions > 0) signals++;
@@ -155,19 +150,19 @@ export function computeConfidence(
   if (agg.bwCurrent7dAvg != null) signals++;
   if (bl.weeksUsed >= 3) signals++;
 
-  if (signals >= 4) return 'high';
-  if (signals >= 2) return 'medium';
-  return 'low';
+  if (signals >= 4) return "high";
+  if (signals >= 2) return "medium";
+  return "low";
 }
 
 // ── Load band ────────────────────────────────
 
-export function computeLoadBand(pi: number): PerformanceDoc['loadBand'] {
-  if (pi >= 85) return 'overreach';
-  if (pi >= 70) return 'high';
-  if (pi >= 45) return 'moderate';
-  if (pi >= 25) return 'low';
-  return 'deload';
+export function computeLoadBand(pi: number): PerformanceDoc["loadBand"] {
+  if (pi >= 85) return "overreach";
+  if (pi >= 70) return "high";
+  if (pi >= 45) return "moderate";
+  if (pi >= 25) return "low";
+  return "deload";
 }
 
 // ── Deload recommendation ────────────────────
@@ -190,36 +185,56 @@ export function shouldRecommendDeload(
 // ── Insights ─────────────────────────────────
 
 export function generateInsight(
-  doc: Pick<PerformanceDoc, 'performanceIndex' | 'liftLoadScore' | 'runLoadScore' | 'recoveryScore' | 'adherenceScore' | 'deloadRecommended' | 'liftProgression' | 'runVolume' | 'loadBand'>,
-): PerformanceDoc['insight'] {
-  const { performanceIndex: pi, liftLoadScore: lls, runLoadScore: rls, recoveryScore: rs, adherenceScore: as_, deloadRecommended, liftProgression: lp, runVolume: rv } = doc;
+  doc: Pick<
+    PerformanceDoc,
+    | "performanceIndex"
+    | "liftLoadScore"
+    | "runLoadScore"
+    | "recoveryScore"
+    | "adherenceScore"
+    | "deloadRecommended"
+    | "liftProgression"
+    | "runVolume"
+    | "loadBand"
+  >,
+): PerformanceDoc["insight"] {
+  const {
+    performanceIndex: pi,
+    liftLoadScore: lls,
+    runLoadScore: rls,
+    recoveryScore: rs,
+    adherenceScore: as_,
+    deloadRecommended,
+    liftProgression: lp,
+    runVolume: rv,
+  } = doc;
 
   // Title
   let title: string;
-  if (pi >= 75) title = 'Momentum: High';
-  else if (pi >= 45) title = 'Momentum: Stable';
-  else title = 'Momentum: Low';
+  if (pi >= 75) title = "Momentum: High";
+  else if (pi >= 45) title = "Momentum: Stable";
+  else title = "Momentum: Low";
 
   const bullets: string[] = [];
 
   if (deloadRecommended) {
-    bullets.push('Consider a deload week — sustained high load with limited recovery signals.');
+    bullets.push("Consider a deload week — sustained high load with limited recovery signals.");
   }
 
   if (lls >= 70 && rls >= 70) {
-    bullets.push('Both lifting and running loads are strong this week — solid hybrid output.');
+    bullets.push("Both lifting and running loads are strong this week — solid hybrid output.");
   } else if (lls >= 70 && rls < 40) {
-    bullets.push('Lifting is on point but running volume is low. Add an easy run if schedule allows.');
+    bullets.push("Lifting is on point but running volume is low. Add an easy run if schedule allows.");
   } else if (rls >= 70 && lls < 40) {
-    bullets.push('Running volume is great but lifting load dropped. Prioritise your next session.');
+    bullets.push("Running volume is great but lifting load dropped. Prioritise your next session.");
   }
 
   if (rs < 50 && bullets.length < 3) {
-    bullets.push('Recovery signals are low — check sleep, hydration, and nutrition consistency.');
+    bullets.push("Recovery signals are low — check sleep, hydration, and nutrition consistency.");
   }
 
   if (as_ < 50 && bullets.length < 3) {
-    bullets.push('Adherence dipped — focus on showing up consistently over hitting PRs.');
+    bullets.push("Adherence dipped — focus on showing up consistently over hitting PRs.");
   }
 
   if (lp > 1.15 && bullets.length < 3) {
@@ -231,8 +246,8 @@ export function generateInsight(
   }
 
   if (bullets.length === 0) {
-    if (pi >= 45) bullets.push('Consistent week. Keep the rhythm going.');
-    else bullets.push('Light week — a good time to focus on mobility and recovery.');
+    if (pi >= 45) bullets.push("Consistent week. Keep the rhythm going.");
+    else bullets.push("Light week — a good time to focus on mobility and recovery.");
   }
 
   return { title, bullets: bullets.slice(0, 3) };
@@ -241,23 +256,23 @@ export function generateInsight(
 // ── Plan adjustments ─────────────────────────
 
 export function generatePlanAdjustments(
-  doc: Pick<PerformanceDoc, 'loadBand' | 'liftLoadScore' | 'runLoadScore' | 'recoveryScore' | 'deloadRecommended'>,
-): PerformanceDoc['planAdjustments'] {
+  doc: Pick<PerformanceDoc, "loadBand" | "liftLoadScore" | "runLoadScore" | "recoveryScore" | "deloadRecommended">,
+): PerformanceDoc["planAdjustments"] {
   const lift: string[] = [];
   const run: string[] = [];
 
   if (doc.deloadRecommended) {
-    lift.push('Reduce working sets by 30–40% or drop accessory work.');
-    run.push('Cap runs at easy pace. Replace one session with active recovery.');
+    lift.push("Reduce working sets by 30–40% or drop accessory work.");
+    run.push("Cap runs at easy pace. Replace one session with active recovery.");
     return { lift, run };
   }
 
-  if (doc.loadBand === 'overreach') {
-    lift.push('Maintain intensity but consider reducing total volume 10–15%.');
-    run.push('Keep long run but drop one mid-week session if fatigued.');
-  } else if (doc.loadBand === 'low' || doc.loadBand === 'deload') {
-    if (doc.liftLoadScore < 30) lift.push('Focus on progressive overload — small weight jumps or extra set.');
-    if (doc.runLoadScore < 30) run.push('Add one easy 20-min run to rebuild aerobic base.');
+  if (doc.loadBand === "overreach") {
+    lift.push("Maintain intensity but consider reducing total volume 10–15%.");
+    run.push("Keep long run but drop one mid-week session if fatigued.");
+  } else if (doc.loadBand === "low" || doc.loadBand === "deload") {
+    if (doc.liftLoadScore < 30) lift.push("Focus on progressive overload — small weight jumps or extra set.");
+    if (doc.runLoadScore < 30) run.push("Add one easy 20-min run to rebuild aerobic base.");
   }
 
   return { lift, run };
@@ -289,9 +304,7 @@ export function computePerformanceIndex(
 
   const loadScore = PI_WEIGHTS.liftInLoad * liftLoadScore + PI_WEIGHTS.runInLoad * runLoadScore;
   const pi = clamp(
-    PI_WEIGHTS.load * loadScore +
-    PI_WEIGHTS.recovery * recoveryScore +
-    PI_WEIGHTS.adherence * adherenceScore
+    PI_WEIGHTS.load * loadScore + PI_WEIGHTS.recovery * recoveryScore + PI_WEIGHTS.adherence * adherenceScore,
   );
 
   const liftProgression = safeRatio(currentWeek.liftTonnage, bl.liftTonnage);
