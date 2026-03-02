@@ -1,3 +1,4 @@
+// src/components/analytics/PerformanceIndexChart.tsx
 import {
   ResponsiveContainer,
   AreaChart,
@@ -7,9 +8,9 @@ import {
   CartesianGrid,
   ReferenceLine,
   Tooltip,
-} from 'recharts';
-import type { PerformanceDoc } from '@/lib/performanceTypes';
-import { THEME } from '@/lib/theme';
+} from "recharts";
+import type { PerformanceDoc } from "@/lib/performanceTypes";
+import { THEME } from "@/lib/theme";
 
 interface Props {
   docs: PerformanceDoc[];
@@ -30,11 +31,16 @@ export default function PerformanceIndexChart({ docs }: Props) {
 
   const bandColor = (band: string) => {
     switch (band) {
-      case 'overreach': return THEME.danger;
-      case 'high': return THEME.warning;
-      case 'moderate': return THEME.brand;
-      case 'low': return THEME.teal;
-      default: return THEME.textMuted;
+      case "overreach":
+        return THEME.danger;
+      case "high":
+        return THEME.warning;
+      case "moderate":
+        return THEME.brand;
+      case "low":
+        return THEME.teal;
+      default:
+        return THEME.textMuted;
     }
   };
 
@@ -54,11 +60,7 @@ export default function PerformanceIndexChart({ docs }: Props) {
             </linearGradient>
           </defs>
 
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
 
           {/* Zone reference lines */}
           <ReferenceLine y={70} stroke={THEME.warning} strokeDasharray="4 4" strokeOpacity={0.4} />
@@ -66,18 +68,22 @@ export default function PerformanceIndexChart({ docs }: Props) {
 
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 9, fill: 'currentColor', opacity: 0.3 }}
+            tick={{ fontSize: 9, fill: "currentColor", opacity: 0.3 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: string) => {
-              const d = new Date(v + 'T00:00:00');
+            tickFormatter={(v: any) => {
+              // recharts typing can be string | number; we only expect a weekKey string
+              const s = typeof v === "string" ? v : String(v ?? "");
+              const d = new Date(s + "T00:00:00");
+              if (Number.isNaN(d.getTime())) return "";
               return `${d.getDate()}/${d.getMonth() + 1}`;
             }}
           />
+
           <YAxis
             domain={[0, 100]}
             ticks={[0, 25, 50, 75, 100]}
-            tick={{ fontSize: 9, fill: 'currentColor', opacity: 0.2 }}
+            tick={{ fontSize: 9, fill: "currentColor", opacity: 0.2 }}
             axisLine={false}
             tickLine={false}
             width={28}
@@ -86,24 +92,32 @@ export default function PerformanceIndexChart({ docs }: Props) {
           <Tooltip
             contentStyle={{
               background: THEME.chartTooltipBg,
-              border: 'none',
+              border: "none",
               borderRadius: 12,
               fontSize: 11,
               color: THEME.textPrimary,
-              padding: '8px 12px',
+              padding: "8px 12px",
             }}
-            labelFormatter={(v: string) => {
-              const d = new Date(v + 'T00:00:00');
-              return `Week of ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+            // Recharts passes label as ReactNode/unknown; guard it.
+            labelFormatter={(label: any) => {
+              const s = typeof label === "string" ? label : String(label ?? "");
+              const d = new Date(s + "T00:00:00");
+              if (Number.isNaN(d.getTime())) return "";
+              return `Week of ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
             }}
-            formatter={(value: number, name: string) => {
+            // value can be number | undefined; name can be string | number
+            formatter={(value: any, name: any) => {
               const labels: Record<string, string> = {
-                pi: 'PI',
-                liftLoad: 'Lift Load',
-                runLoad: 'Run Load',
-                recovery: 'Recovery',
+                pi: "PI",
+                liftLoad: "Lift Load",
+                runLoad: "Run Load",
+                recovery: "Recovery",
               };
-              return [value, labels[name] || name];
+
+              const n = typeof name === "string" ? name : String(name ?? "");
+              const v = typeof value === "number" ? value : Number(value ?? 0);
+
+              return [v, labels[n] || n] as [number, string];
             }}
           />
 
@@ -135,11 +149,11 @@ export default function PerformanceIndexChart({ docs }: Props) {
       {/* Zone legend */}
       <div className="flex items-center justify-center gap-4 mt-2">
         {[
-          { label: 'Deload', color: THEME.textMuted },
-          { label: 'Low', color: THEME.teal },
-          { label: 'Moderate', color: THEME.brand },
-          { label: 'High', color: THEME.warning },
-          { label: 'Overreach', color: THEME.danger },
+          { label: "Deload", color: THEME.textMuted },
+          { label: "Low", color: THEME.teal },
+          { label: "Moderate", color: THEME.brand },
+          { label: "High", color: THEME.warning },
+          { label: "Overreach", color: THEME.danger },
         ].map((z) => (
           <div key={z.label} className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
