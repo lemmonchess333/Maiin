@@ -81,3 +81,4 @@ export function countByType(schedule: ScheduleDay[]): { lift: number; run: numbe
     { lift: 0, run: 0, rest: 0 }
   );
 }
+
