@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { useMeals } from "@/hooks/useMeals";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
@@ -9,391 +10,261 @@ import BodyweightLogger from "@/components/BodyweightLogger";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Dumbbell,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  Settings as SettingsIcon,
-  Flame,
-  Play,
-  Footprints,
-  ClipboardList,
-} from "lucide-react";
+import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X } from "lucide-react";
 import { format } from "date-fns";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
-function computeStreak(workoutDates: string[]): number {
-  if (workoutDates.length === 0) return 0;
-  const uniqueDates = [...new Set(workoutDates)].sort().reverse();
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
-  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
-  let streak = 1;
-  for (let i = 1; i < uniqueDates.length; i++) {
-    const prev = new Date(uniqueDates[i - 1]);
-    const curr = new Date(uniqueDates[i]);
-    if ((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24) === 1)
-      streak++;
+function computeStreak(wd: string[]): number {
+  if (!wd.length) return 0;
+  var u = [...new Set(wd)].sort().reverse();
+  var t = format(new Date(), "yyyy-MM-dd");
+  var y = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+  if (u[0] !== t && u[0] !== y) return 0;
+  var s = 1;
+  for (var i = 1; i < u.length; i++) {
+    if ((new Date(u[i-1]).getTime() - new Date(u[i]).getTime()) / 86400000 === 1) s++;
     else break;
   }
-  return streak;
+  return s;
 }
 
-function WeekStrip({
-  dayMap,
-  schedule,
-}: {
+function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
   dayMap: Map<string, { workouts: number; meals: number; caloriesHit: boolean }>;
   schedule: ScheduleDay[];
+  selectedDate: string | null;
+  onDayTap: (dk: string) => void;
 }) {
-  const today = new Date();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay());
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    const key = format(d, "yyyy-MM-dd");
-    const data = dayMap.get(key);
-    const isToday = format(d, "yyyy-MM-dd") === format(today, "yyyy-MM-dd");
-    const hasActivity = data && (data.workouts > 0 || data.meals > 0);
-    const scheduledType = schedule.find((s) => s.day === i)?.type || "rest";
-    return { date: d, key, isToday, hasActivity, scheduledType };
+  var today = new Date();
+  var sow = new Date(today);
+  sow.setDate(today.getDate() - today.getDay());
+  var days = Array.from({ length: 7 }, function(_, i) {
+    var d = new Date(sow); d.setDate(sow.getDate() + i);
+    var k = format(d, "yyyy-MM-dd");
+    var data = dayMap.get(k);
+    var isToday = k === format(today, "yyyy-MM-dd");
+    var hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
+    var st = schedule.find(function(s) { return s.day === i; })?.type || "rest";
+    return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
   });
-
-  const typeColor = (type: string) => {
-    if (type === "lift") return THEME.lifting;
-    if (type === "run") return THEME.running;
-    return "transparent";
-  };
-
+  var tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : "transparent"; };
   return (
     <div className="flex items-center justify-between px-1">
-      {days.map(({ date, key, isToday, hasActivity, scheduledType }) => (
-        <div key={key} className="flex flex-col items-center gap-1">
-          <span className="text-[10px] text-muted-foreground">
-            {format(date, "EEE").charAt(0)}
-          </span>
-          <div
-            className={[
-              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-              isToday
-                ? "bg-primary text-primary-foreground"
-                : hasActivity
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground",
-            ].join(" ")}
-          >
-            {date.getDate()}
-          </div>
-          {scheduledType !== "rest" ? (
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{
-                backgroundColor: hasActivity
-                  ? THEME.success
-                  : typeColor(scheduledType),
-              }}
-            />
-          ) : (
-            <div className="w-1.5 h-1.5" />
-          )}
-        </div>
-      ))}
+      {days.map(function(day) {
+        var cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
+        if (day.isSelected && !day.isToday) cls += " ring-2 ring-primary ring-offset-1 ring-offset-card";
+        if (day.isToday) cls += " bg-primary text-primary-foreground";
+        else if (day.hasActivity) cls += " bg-primary/15 text-primary";
+        else cls += " text-muted-foreground";
+        return (
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
+            <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
+            <div className={cls}>{day.date.getDate()}</div>
+            {day.sType !== "rest" ? (
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: day.hasActivity ? THEME.success : tc(day.sType) }} />
+            ) : (
+              <div className="w-1.5 h-1.5" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function CyclingCTACard({
-  nextWorkout,
-  nextRun,
-  todayType,
-  navigate,
-}: {
-  nextWorkout: {
-    dayName: string;
-    dayType: string;
-    exercises: { name: string }[];
-  } | null;
-  nextRun: { type: string; templateId: string } | null;
-  todayType: "lift" | "run" | "rest";
-  navigate: (path: string) => void;
+function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
+  dateKey: string;
+  schedule: ScheduleDay[];
+  workouts: any[];
+  dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
+  onClose: () => void;
 }) {
-  const [cardIndex, setCardIndex] = useState(0);
-
-  const cards = useMemo(() => {
-    const result: { id: string; type: "scheduled" | "actions" }[] = [];
-    if (todayType === "lift" && nextWorkout) {
-      result.push({ id: "workout", type: "scheduled" });
-    } else if (todayType === "run") {
-      result.push({ id: "run", type: "scheduled" });
-    }
-    result.push({ id: "actions", type: "actions" });
-    return result;
-  }, [todayType, nextWorkout]);
-
-  const currentCard = cards[cardIndex % cards.length];
-  const hasMultiple = cards.length > 1;
-
-  const swipe = (dir: number) => {
-    setCardIndex((prev) => {
-      const next = prev + dir;
-      if (next < 0) return cards.length - 1;
-      return next % cards.length;
+  var dow = new Date(dateKey + "T00:00:00").getDay();
+  var st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
+  var dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
+  var typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : "Rest day";
+  var typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : THEME.textMuted;
+  var tonnage = 0;
+  workouts.forEach(function(w: any) {
+    (w.exercises || []).forEach(function(ex: any) {
+      (ex.sets || []).forEach(function(s: any) {
+        tonnage += (s.weightKg || 0) * (s.reps || 0);
+      });
     });
+  });
+  var hasW = workouts.length > 0;
+  var hasM = dailyTotals.mealCount > 0;
+  return (
+    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+      <div className="pt-3 pb-1 px-1">
+        <div className="rounded-xl bg-muted/50 border border-border/30 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
+            </div>
+            <button onClick={onClose} className="p-0.5 rounded hover:bg-muted transition-colors">
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </div>
+          {(hasW || hasM) ? (
+            <div className="flex items-center gap-4 text-[11px]">
+              {hasW && (
+                <div className="flex items-center gap-1.5">
+                  <Dumbbell className="w-3.5 h-3.5" style={{ color: THEME.lifting }} />
+                  <span className="text-foreground">
+                    {workouts.length} session{workouts.length !== 1 ? "s" : ""}
+                    {tonnage > 0 && (
+                      <span className="text-muted-foreground">
+                        {" \u00B7 "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "t" : Math.round(tonnage) + "kg"}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {hasM && (
+                <div className="flex items-center gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5" style={{ color: THEME.success }} />
+                  <span className="text-foreground">{dailyTotals.calories} cal {"\u00B7"} {dailyTotals.protein}g prot</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">No activity logged</p>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function CyclingCTACard({ nextWorkout, todayType, navigate }: {
+  nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
+  todayType: "lift" | "run" | "rest";
+  navigate: (p: string) => void;
+}) {
+  var [ci, setCi] = useState(0);
+  var cards = useMemo(function() {
+    var r: { id: string; type: "scheduled" | "actions" }[] = [];
+    if (todayType === "lift" && nextWorkout) r.push({ id: "workout", type: "scheduled" });
+    else if (todayType === "run") r.push({ id: "run", type: "scheduled" });
+    r.push({ id: "actions", type: "actions" });
+    return r;
+  }, [todayType, nextWorkout]);
+  var cc = cards[ci % cards.length];
+  var hasMulti = cards.length > 1;
+  var swipe = function(d: number) {
+    setCi(function(p) { var n = p + d; return n < 0 ? cards.length - 1 : n % cards.length; });
   };
 
   return (
-    <div className="relative">
+    <div>
       <AnimatePresence mode="wait">
-        {currentCard?.type === "scheduled" &&
-          currentCard.id === "workout" &&
-          nextWorkout && (
-            <motion.button
-              key="workout"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => navigate("/program")}
-              className="w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
-              style={{
-                background:
-                  "linear-gradient(135deg, " +
-                  THEME.lifting +
-                  "12 0%, transparent 60%)",
-                borderColor: THEME.lifting + "30",
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: THEME.lifting + "20" }}
-                >
-                  <Dumbbell
-                    className="w-5 h-5"
-                    style={{ color: THEME.lifting }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                    Today &middot; Lift day
-                  </p>
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {nextWorkout.dayName}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground capitalize">
-                    {nextWorkout.dayType} &middot;{" "}
-                    {nextWorkout.exercises.length} exercises
-                  </p>
-                </div>
-                <div
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
-                  style={{ backgroundColor: THEME.lifting, color: "#fff" }}
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  Start
-                </div>
-              </div>
-            </motion.button>
-          )}
-
-        {currentCard?.type === "scheduled" && currentCard.id === "run" && (
-          <motion.button
-            key="run"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => navigate(nextRun ? "/run?type=" + nextRun.type : "/run")}
-            className="w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
-            style={{
-              background:
-                "linear-gradient(135deg, " +
-                THEME.running +
-                "12 0%, transparent 60%)",
-              borderColor: THEME.running + "30",
-            }}
-          >
+        {cc?.type === "scheduled" && cc.id === "workout" && nextWorkout && (
+          <motion.button key="w" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
+            onClick={function() { navigate("/program"); }}
+            className="w-full p-5 rounded-2xl border border-border/50 text-left active:scale-[0.99]"
+            style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)", borderColor: THEME.lifting + "30" }}>
             <div className="flex items-center gap-3">
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: THEME.running + "20" }}
-              >
-                <Footprints
-                  className="w-5 h-5"
-                  style={{ color: THEME.running }}
-                />
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}>
+                <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                  Today &middot; Run day
-                </p>
-                <p className="text-sm font-semibold text-foreground capitalize">
-                  {nextRun ? nextRun.type + " run" : "Start a run"}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {nextRun ? "Scheduled run" : "Easy run, tempo, or intervals"}
-                </p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
+                <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
+                <p className="text-[11px] text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
               </div>
-              <div
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
-                style={{ backgroundColor: THEME.running, color: "#fff" }}
-              >
-                <Play className="w-3.5 h-3.5" />
-                Go
+              <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.lifting, color: "#fff" }}>
+                <Play className="w-3.5 h-3.5" />Start
               </div>
             </div>
           </motion.button>
         )}
-
-        {currentCard?.type === "actions" && (
-          <motion.div
-            key="actions"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.2 }}
-            className="flex gap-2"
-          >
-            <Link
-              to="/program"
-              className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: THEME.lifting + "20" }}
-              >
-                <Dumbbell
-                  className="w-5 h-5"
-                  style={{ color: THEME.lifting }}
-                />
+        {cc?.type === "scheduled" && cc.id === "run" && (
+          <motion.button key="r" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
+            onClick={function() { navigate("/run"); }}
+            className="w-full p-5 rounded-2xl border border-border/50 text-left active:scale-[0.99]"
+            style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)", borderColor: THEME.running + "30" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}>
+                <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
               </div>
-              <span className="text-xs font-medium text-foreground">
-                Log Workout
-              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
+                <p className="text-sm font-semibold text-foreground">Start a run</p>
+                <p className="text-[11px] text-muted-foreground">Easy run, tempo, or intervals</p>
+              </div>
+              <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
+                <Play className="w-3.5 h-3.5" />Go
+              </div>
+            </div>
+          </motion.button>
+        )}
+        {cc?.type === "actions" && (
+          <motion.div key="a" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }} className="flex gap-2">
+            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
+              <span className="text-xs font-medium text-foreground">Log Workout</span>
             </Link>
-            <Link
-              to="/run"
-              className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: THEME.running + "20" }}
-              >
-                <Footprints
-                  className="w-5 h-5"
-                  style={{ color: THEME.running }}
-                />
-              </div>
-              <span className="text-xs font-medium text-foreground">
-                Start Run
-              </span>
+            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
+              <span className="text-xs font-medium text-foreground">Start Run</span>
             </Link>
-            <Link
-              to="/log"
-              className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: THEME.success + "20" }}
-              >
-                <ClipboardList
-                  className="w-5 h-5"
-                  style={{ color: THEME.success }}
-                />
-              </div>
-              <span className="text-xs font-medium text-foreground">
-                Log Food
-              </span>
+            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
+              <span className="text-xs font-medium text-foreground">Log Food</span>
             </Link>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {hasMultiple && (
+      {hasMulti && (
         <div className="flex items-center justify-center gap-3 mt-2">
-          <button
-            onClick={() => swipe(-1)}
-            className="p-1 rounded-full hover:bg-muted transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <button onClick={function() { swipe(-1); }} className="p-1 rounded-full hover:bg-muted"><ChevronLeft className="w-4 h-4 text-muted-foreground" /></button>
           <div className="flex gap-1.5">
-            {cards.map((_, i) => (
-              <div
-                key={i}
-                className={[
-                  "w-1.5 h-1.5 rounded-full transition-all",
-                  i === cardIndex % cards.length
-                    ? "bg-primary w-3"
-                    : "bg-muted-foreground/30",
-                ].join(" ")}
-              />
-            ))}
+            {cards.map(function(_, i) {
+              return <div key={i} className={"w-1.5 h-1.5 rounded-full transition-all " + (i === ci % cards.length ? "bg-primary w-3" : "bg-muted-foreground/30")} />;
+            })}
           </div>
-          <button
-            onClick={() => swipe(1)}
-            className="p-1 rounded-full hover:bg-muted transition-colors"
-          >
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <button onClick={function() { swipe(1); }} className="p-1 rounded-full hover:bg-muted"><ChevronRight className="w-4 h-4 text-muted-foreground" /></button>
         </div>
       )}
     </div>
   );
 }
 
-function WeeklySnapshotCompact({
-  liftSessions,
-  runSessions,
-  liftTonnage,
-  runKm,
-  adherenceScore,
-}: {
-  liftSessions: number;
-  runSessions: number;
-  liftTonnage: number;
-  runKm: number;
-  adherenceScore: number | null;
+function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, adherenceScore }: {
+  liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
-  const stats = [
+  var stats = [
     { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
     { label: "Tonnage", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "t" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
     { label: "Distance", value: runKm.toFixed(1) + "km", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
-
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">This Week</p>
       <div className="grid grid-cols-4 gap-2">
-        {stats.map((s) => (
-          <div key={s.label} className="text-center">
-            <p className="text-lg font-bold font-mono tabular-nums" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
-          </div>
-        ))}
+        {stats.map(function(s) {
+          return (
+            <div key={s.label} className="text-center">
+              <p className="text-lg font-bold font-mono tabular-nums" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: string; loadBand: string }) {
-  const emoji = loadBand === "overreach" ? "\uD83D\uDD25" : loadBand === "high" ? "\u26A1" : loadBand === "moderate" ? "\uD83D\uDCAA" : "\uD83C\uDF31";
+  var emoji = loadBand === "overreach" ? "\uD83D\uDD25" : loadBand === "high" ? "\u26A1" : loadBand === "moderate" ? "\uD83D\uDCAA" : "\uD83C\uDF31";
   return (
     <Link to="/history?tab=performance">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="p-4 rounded-2xl bg-card border border-border/50 flex items-start gap-3 transition-transform active:scale-[0.99]">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="p-4 rounded-2xl bg-card border border-border/50 flex items-start gap-3 active:scale-[0.99]">
         <span className="text-lg mt-0.5">{emoji}</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground">{title}</p>
@@ -408,25 +279,25 @@ function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: stri
   );
 }
 
-function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein: initProt }: { calories: number; protein: number; targetCalories: number; targetProtein: number }) {
-  let targetCalories = initCal;
-  let targetProtein = initProt;
-  if (targetCalories <= 0 && targetProtein <= 0) { targetCalories = 2200; targetProtein = 160; }
-
-  const bars = [
-    { label: "Calories", current: calories, target: targetCalories || 2200, unit: "", color: THEME.warning },
-    { label: "Protein", current: protein, target: targetProtein || 160, unit: "g", color: THEME.teal },
+function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein: initProt }: {
+  calories: number; protein: number; targetCalories: number; targetProtein: number;
+}) {
+  var tCal = initCal;
+  var tProt = initProt;
+  if (tCal <= 0 && tProt <= 0) { tCal = 2200; tProt = 160; }
+  var bars = [
+    { label: "Calories", current: calories, target: tCal || 2200, unit: "", color: THEME.warning },
+    { label: "Protein", current: protein, target: tProt || 160, unit: "g", color: THEME.teal },
   ];
-
   return (
     <Link to="/log">
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 transition-transform active:scale-[0.99]">
+      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 active:scale-[0.99]">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Today&apos;s Intake</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Today's Intake</p>
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
         </div>
-        {bars.map((b) => {
-          const pct = Math.min((b.current / b.target) * 100, 100);
+        {bars.map(function(b) {
+          var pct = Math.min((b.current / b.target) * 100, 100);
           return (
             <div key={b.label} className="space-y-1">
               <div className="flex items-center justify-between">
@@ -445,77 +316,80 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
 }
 
 export default function Home() {
-  const { user, profile, updateProfile } = useAuth();
-  const { workouts } = useWorkouts();
-  const { currentWeek: perfDoc } = usePerformanceWeeks();
-  const { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  const { programState, loading: programLoading } = useProgram();
-  const weeklyDayMap = useWeeklyDayMap();
-  const navigate = useNavigate();
+  var { user, profile, updateProfile } = useAuth();
+  var { workouts, getWorkoutsForDate } = useWorkouts();
+  var { getDailyTotals } = useMeals();
+  var { currentWeek: perfDoc } = usePerformanceWeeks();
+  var { isPro, isInTrial, trialDaysLeft } = useSubscription();
+  var { programState, loading: programLoading } = useProgram();
+  var weeklyDayMap = useWeeklyDayMap();
+  var navigate = useNavigate();
 
-  const schedule = useMemo<ScheduleDay[]>(() => {
+  var schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
-    const liftDays = profile?.weeklyWorkoutsTarget || 3;
-    const runDays = profile?.weeklyRunsTarget || 2;
-    return generateSchedule(liftDays, runDays);
+    return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
-  const todaySchedule = getTodaySchedule(schedule);
-  const todayType = todaySchedule?.type || "rest";
+  var todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "rest";
 
-  const computedStreak = useMemo(() => computeStreak(workouts.map((w) => w.date)), [workouts]);
+  var streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
 
-  useEffect(() => {
-    if (profile && computedStreak !== profile.currentStreak) updateProfile({ currentStreak: computedStreak });
-  }, [computedStreak, profile, updateProfile]);
+  useEffect(function() {
+    if (profile && streak !== profile.currentStreak) updateProfile({ currentStreak: streak });
+  }, [streak, profile, updateProfile]);
 
-  const [dailyCal, setDailyCal] = useState(0);
-  const [dailyProt, setDailyProt] = useState(0);
+  var [dailyCal, setDailyCal] = useState(0);
+  var [dailyProt, setDailyProt] = useState(0);
 
-  useEffect(() => {
+  useEffect(function() {
     if (!user?.uid) return;
-    (async () => {
+    (async function() {
       try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(todayStart))));
-        let cal = 0; let prot = 0;
-        snap.forEach((d) => { const data = d.data(); cal += data.totalCalories || data.calories || 0; prot += data.totalProtein || data.protein || 0; });
-        setDailyCal(cal);
-        setDailyProt(prot);
-      } catch (e) { console.error("Error fetching today's meals:", e); }
+        var ts = new Date();
+        ts.setHours(0, 0, 0, 0);
+        var snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(ts))));
+        var c = 0;
+        var p = 0;
+        snap.forEach(function(d) { var dd = d.data(); c += dd.totalCalories || dd.calories || 0; p += dd.totalProtein || dd.protein || 0; });
+        setDailyCal(c);
+        setDailyProt(p);
+      } catch (e) { console.error(e); }
     })();
   }, [user]);
 
-  const nextWorkout = programState?.workouts.find((d) => !d.completed) || null;
+  var [peekDate, setPeekDate] = useState<string | null>(null);
+  var handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
+  var peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
+  var peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
 
-  const todayRunDay = useMemo(() => {
-    if (!programState?.runDays) return null;
-    const todayIdx = new Date().getDay(); // 0=Sun, 6=Sat
-    return programState.runDays.find(
-      (rd) => rd.dayIndex === todayIdx && !rd.completed
-    ) || null;
-  }, [programState?.runDays]);
+  var nextWorkout = programState?.workouts.find(function(d) { return !d.completed; }) || null;
 
-  const snapshotData = useMemo(() => {
-    if (perfDoc) return { liftSessions: perfDoc.aggregates.liftSessions, runSessions: perfDoc.aggregates.runSessions, liftTonnage: perfDoc.aggregates.liftTonnage, runKm: perfDoc.aggregates.runKm, adherenceScore: perfDoc.adherenceScore };
-    const now = new Date(); const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
-    const thisWeekWorkouts = workouts.filter((w) => new Date(w.date) >= weekStart);
-    let tonnage = 0;
-    thisWeekWorkouts.forEach((w) => { w.exercises?.forEach((ex) => { ex.sets?.forEach((s) => { tonnage += (s.weightKg || 0) * (s.reps || 0); }); }); });
-    return { liftSessions: thisWeekWorkouts.length, runSessions: 0, liftTonnage: tonnage, runKm: 0, adherenceScore: null };
+  var snapData = useMemo(function() {
+    if (perfDoc) return { ls: perfDoc.aggregates.liftSessions, rs: perfDoc.aggregates.runSessions, lt: perfDoc.aggregates.liftTonnage, rk: perfDoc.aggregates.runKm, ad: perfDoc.adherenceScore };
+    var now = new Date();
+    var ws = new Date(now);
+    ws.setDate(now.getDate() - now.getDay());
+    ws.setHours(0, 0, 0, 0);
+    var ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
+    var t = 0;
+    ww.forEach(function(w) { w.exercises?.forEach(function(ex) { ex.sets?.forEach(function(s) { t += (s.weightKg || 0) * (s.reps || 0); }); }); });
+    return { ls: ww.length, rs: 0, lt: t, rk: 0, ad: null };
   }, [perfDoc, workouts]);
 
-  if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile...</div>;
+  if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile…</div>;
 
   return (
     <div className="flex flex-col gap-4 pb-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Hey, {profile.displayName || "Athlete"}</h1>
-          <p className="text-xs text-muted-foreground">{programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}</p>
+          <p className="text-xs text-muted-foreground">
+            {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
+          </p>
         </div>
-        <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors"><SettingsIcon className="w-5 h-5 text-muted-foreground" /></Link>
+        <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+        </Link>
       </motion.div>
 
       {isInTrial && (
@@ -529,26 +403,37 @@ export default function Home() {
       )}
 
       <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
-        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} />
+        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
         <div className="flex items-center justify-center gap-4 pt-1">
           <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.lifting }} /><span className="text-[9px] text-muted-foreground">Lift</span></div>
           <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.running }} /><span className="text-[9px] text-muted-foreground">Run</span></div>
           <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.success }} /><span className="text-[9px] text-muted-foreground">Done</span></div>
         </div>
-        {computedStreak > 0 && (
+        <AnimatePresence>
+          {peekDate && (
+            <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />
+          )}
+        </AnimatePresence>
+        {streak > 0 && (
           <div className="flex items-center gap-2 pt-2 border-t border-border/30">
             <Flame className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-medium text-orange-500">{computedStreak} day streak</span>
-            <span className="text-[10px] text-muted-foreground">{computedStreak >= 14 ? "\u2014 on fire" : computedStreak >= 7 ? "\u2014 crushing it" : "\u2014 keep building"}</span>
+            <span className="text-xs font-medium text-orange-500">{streak} day streak</span>
+            <span className="text-[10px] text-muted-foreground">{streak >= 14 ? "\u2014 on fire" : streak >= 7 ? "\u2014 crushing it" : "\u2014 keep building"}</span>
           </div>
         )}
       </div>
 
-      {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : <CyclingCTACard nextWorkout={nextWorkout} nextRun={todayRunDay} todayType={todayType} navigate={navigate} />}
+      {programLoading ? (
+        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+      ) : (
+        <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} />
+      )}
 
-      <WeeklySnapshotCompact liftSessions={snapshotData.liftSessions} runSessions={snapshotData.runSessions} liftTonnage={snapshotData.liftTonnage} runKm={snapshotData.runKm} adherenceScore={snapshotData.adherenceScore} />
+      <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
 
-      {perfDoc && perfDoc.insight && <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />}
+      {perfDoc && perfDoc.insight && (
+        <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
+      )}
 
       <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
 
@@ -563,5 +448,3 @@ export default function Home() {
     </div>
   );
 }
-
-

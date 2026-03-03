@@ -35,6 +35,7 @@ import {
   Lock,
   Brain,
   Footprints,
+  Dumbbell,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import { useProgram } from "@/features/program/useProgram";

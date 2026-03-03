@@ -122,7 +122,7 @@ export default function Onboarding() {
   const [runDays, setRunDays] = useState(2);
   const [mealsTarget] = useState(10);
   const [runMode, setRunMode] = useState<"freeform" | "structured" | "race_prep">("freeform");
-  const [weeklyRunDays, setWeeklyRunDays] = useState(3);
+  const [weeklyRunDays] = useState(3);
   const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
   const [raceTargetDate, setRaceTargetDate] = useState("");
   const [saving, setSaving] = useState(false);
