@@ -313,7 +313,7 @@ export default function Settings() {
     profile?.weeklyWorkoutsTarget || 4
   );
   const [mealsTarget, setMealsTarget] = useState(
-    profile?.weeklyMealsTarget || 10
+    Math.min(profile?.weeklyMealsTarget || 10, 20)
   );
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -717,6 +717,28 @@ export default function Settings() {
       </div>
       </AccordionSection>
 
+      {/* Save — always visible */}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+      >
+        {saved ? (
+          <>
+            <Check className="w-4 h-4" />
+            Saved!
+          </>
+        ) : saving ? (
+          "Saving..."
+        ) : (
+          <>
+            <Save className="w-4 h-4" />
+            Save Changes
+          </>
+        )}
+      </motion.button>
+
       {/* Training Setup */}
       <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, phase, AI adjustments, run schedule">
 
@@ -860,7 +882,7 @@ export default function Settings() {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">
-          Changes apply when you tap Save Changes below
+          Tap Save Changes to apply
         </p>
 
         <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
@@ -895,28 +917,6 @@ export default function Settings() {
           )}
         </div>
       </div>
-
-      {/* Save */}
-      <motion.button
-        whileTap={{ scale: 0.98 }}
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
-        {saved ? (
-          <>
-            <Check className="w-4 h-4" />
-            Saved!
-          </>
-        ) : saving ? (
-          "Saving..."
-        ) : (
-          <>
-            <Save className="w-4 h-4" />
-            Save Changes
-          </>
-        )}
-      </motion.button>
 
       {/* AI Adjustments (Pro) */}
       <AIAdjustmentsSection />
