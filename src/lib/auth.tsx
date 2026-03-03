@@ -69,6 +69,9 @@ export interface UserProfile {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
   };
+  // Weekly schedule
+  weekSchedule?: { day: number; type: "lift" | "run" | "rest" }[];
+  weeklyRunsTarget?: number;
   // Macro targets (legacy)
   macroTargets?: {
     calories: number;
@@ -319,3 +322,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+
