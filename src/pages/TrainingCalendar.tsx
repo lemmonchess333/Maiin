@@ -18,7 +18,7 @@ interface TrainingSession {
 }
 
 export default function TrainingCalendar() {
-  var { user } = useAuth();
+  var { user, profile } = useAuth();
   var navigate = useNavigate();
   var [sessions, setSessions] = useState<TrainingSession[]>([]);
   var [currentWeekStart, setCurrentWeekStart] = useState(function() {
@@ -110,9 +110,37 @@ export default function TrainingCalendar() {
       return session;
     });
 
-    // 5. Combine: planned (with auto-completion) + auto-detected that weren't already planned
-    setSessions([...merged, ...autoWorkouts, ...autoRuns]);
-  }, [user, weekStartStr, weekEndStr, currentWeekStart]);
+    // 5. Auto-populate scheduled sessions from weekSchedule
+    var scheduledFromProfile: TrainingSession[] = [];
+    if (profile?.weekSchedule && profile.weekSchedule.length === 7) {
+      for (var di = 0; di < 7; di++) {
+        var dd = new Date(currentWeekStart);
+        dd.setDate(dd.getDate() + di);
+        var dateStr = dd.toISOString().split('T')[0];
+        var dow = dd.getDay();
+        var sched = profile.weekSchedule.find(function(s) { return s.day === dow; });
+        if (sched && sched.type !== 'rest') {
+          var alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === sched!.type; }) ||
+            autoWorkouts.some(function(a) { return a.date === dateStr && a.type === sched!.type; }) ||
+            autoRuns.some(function(a) { return a.date === dateStr && a.type === sched!.type; });
+          if (!alreadyCovered) {
+            scheduledFromProfile.push({
+              id: 'sched-' + sched.type + '-' + dateStr,
+              date: dateStr,
+              dayOfWeek: dow,
+              type: sched.type as 'run' | 'lift',
+              status: 'scheduled',
+              ...(sched.type === 'lift' && { liftProgramDay: 'Scheduled' }),
+              ...(sched.type === 'run' && { runTemplateName: 'Scheduled Run' }),
+            });
+          }
+        }
+      }
+    }
+
+    // 6. Combine: planned (with auto-completion) + auto-detected + schedule-generated
+    setSessions([...merged, ...autoWorkouts, ...autoRuns, ...scheduledFromProfile]);
+  }, [user, weekStartStr, weekEndStr, currentWeekStart, profile?.weekSchedule]);
 
   useEffect(function() {
     loadSessions();
@@ -146,8 +174,8 @@ export default function TrainingCalendar() {
 
   var updateSession = async function(sessionId: string, updates: Partial<TrainingSession>) {
     if (!user) return;
-    // Don't try to update auto-generated sessions in Firestore
-    if (sessionId.startsWith('auto-')) return;
+    // Don't try to update auto-generated or schedule-generated sessions in Firestore
+    if (sessionId.startsWith('auto-') || sessionId.startsWith('sched-')) return;
     var ref = doc(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions', sessionId);
     await updateDoc(ref, updates);
     await loadSessions();

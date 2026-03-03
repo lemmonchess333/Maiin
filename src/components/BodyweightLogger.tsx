@@ -7,6 +7,10 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
+  where,
+  getDocs,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -74,12 +78,25 @@ export default function BodyweightLogger() {
     setSaving(true);
     try {
       const today = format(new Date(), "yyyy-MM-dd");
+      const logsRef = collection(db, "users", user.uid, "bodyweightLogs");
 
-      await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), {
-        date: today,
-        weight: Number(weight),
-        createdAt: serverTimestamp(),
-      });
+      // Check for existing entry today to avoid duplicates
+      const existing = await getDocs(query(logsRef, where("date", "==", today)));
+
+      if (!existing.empty) {
+        // Update existing entry
+        const existingDoc = existing.docs[0];
+        await updateDoc(doc(db, "users", user.uid, "bodyweightLogs", existingDoc.id), {
+          weight: Number(weight),
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        await addDoc(logsRef, {
+          date: today,
+          weight: Number(weight),
+          createdAt: serverTimestamp(),
+        });
+      }
 
       setWeight("");
       setSaved(true);
@@ -105,9 +122,17 @@ export default function BodyweightLogger() {
     return unit === "lbs" ? (val * 2.20462).toFixed(1) : val.toFixed(1);
   };
 
+  // Deduplicate by date for trend calculation (keep latest per date)
+  const uniqueDateLogs = Object.values(
+    recentLogs.reduce((acc, log) => {
+      if (!acc[log.date] || log.id > acc[log.date].id) acc[log.date] = log;
+      return acc;
+    }, {} as Record<string, WeightLog>)
+  ).sort((a, b) => b.date.localeCompare(a.date));
+
   const trend =
-    recentLogs.length >= 2
-      ? recentLogs[0].weight - recentLogs[1].weight
+    uniqueDateLogs.length >= 2
+      ? uniqueDateLogs[0].weight - uniqueDateLogs[1].weight
       : null;
 
   return (
@@ -166,11 +191,21 @@ export default function BodyweightLogger() {
       </div>
 
       {/* Recent Logs */}
-      {recentLogs.length > 0 && (
+      {recentLogs.length > 0 && (() => {
+        // Deduplicate by date (keep latest entry per date)
+        const dedupedLogs = Object.values(
+          recentLogs.reduce((acc, log) => {
+            if (!acc[log.date] || log.id > acc[log.date].id) {
+              acc[log.date] = log;
+            }
+            return acc;
+          }, {} as Record<string, WeightLog>)
+        ).sort((a, b) => b.date.localeCompare(a.date));
+        return (
         <div>
           <p className="text-xs text-muted-foreground mb-2">Last 7 days</p>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {recentLogs.map((log, index) => (
+            {dedupedLogs.map((log, index) => (
               <motion.div
                 key={log.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -188,7 +223,8 @@ export default function BodyweightLogger() {
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Empty state hint – with overflow fix */}
       {recentLogs.length === 0 && (

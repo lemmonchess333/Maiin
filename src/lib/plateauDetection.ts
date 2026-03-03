@@ -110,17 +110,19 @@ export function calculateAdaptiveMacros(
   bodyweight: number,
   avgLiftChange: number,
   avgWeightChange: number,
-  phase: PhaseMode
+  phase: PhaseMode,
+  baseTDEE?: number
 ): MacroTargets {
   const config = phaseConfig[phase];
   const bw = safeNum(bodyweight, 70);
 
-  let baseCalories = bw * 33;
+  let baseCalories = baseTDEE ?? bw * 33;
 
-  if (avgLiftChange <= 0 && avgWeightChange <= 0) baseCalories += 150;
-  if (avgWeightChange > 0.5 && avgLiftChange <= 0) baseCalories -= 100;
+  let adjustment = 0;
+  if (avgLiftChange <= 0 && avgWeightChange <= 0) adjustment += 150;
+  if (avgWeightChange > 0.5 && avgLiftChange <= 0) adjustment -= 100;
 
-  const adjustedCalories = Math.round(baseCalories * config.calorieMultiplier);
+  const adjustedCalories = Math.round((baseCalories + adjustment) * config.calorieMultiplier);
   const protein = Math.round(bw * config.proteinRatio);
   const fats = Math.round((adjustedCalories * config.fatRatio) / 9);
   const carbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);

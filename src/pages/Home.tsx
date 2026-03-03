@@ -237,6 +237,7 @@ function CyclingCTACard({ nextWorkout, todayType, navigate }: {
 function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, adherenceScore }: {
   liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
+  var allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
   var stats = [
     { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
     { label: "Tonnage", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "t" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
@@ -246,16 +247,20 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">This Week</p>
-      <div className="grid grid-cols-4 gap-2">
-        {stats.map(function(s) {
-          return (
-            <div key={s.label} className="text-center">
-              <p className="text-lg font-bold font-mono tabular-nums" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
-            </div>
-          );
-        })}
-      </div>
+      {allZero ? (
+        <p className="text-xs text-muted-foreground text-center py-3">Fresh week — log your first session to start tracking</p>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          {stats.map(function(s) {
+            return (
+              <div key={s.label} className="text-center">
+                <p className="text-lg font-bold font-mono tabular-nums" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -364,17 +369,51 @@ export default function Home() {
 
   var nextWorkout = programState?.workouts.find(function(d) { return !d.completed; }) || null;
 
-  var snapData = useMemo(function() {
-    if (perfDoc) return { ls: perfDoc.aggregates.liftSessions, rs: perfDoc.aggregates.runSessions, lt: perfDoc.aggregates.liftTonnage, rk: perfDoc.aggregates.runKm, ad: perfDoc.adherenceScore };
+  var [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
+
+  useEffect(function() {
+    if (perfDoc) {
+      setSnapData({
+        ls: perfDoc.aggregates.liftSessions,
+        rs: perfDoc.aggregates.runSessions,
+        lt: perfDoc.aggregates.liftTonnage,
+        rk: perfDoc.aggregates.runKm,
+        ad: perfDoc.adherenceScore,
+      });
+      return;
+    }
+
     var now = new Date();
     var ws = new Date(now);
     ws.setDate(now.getDate() - now.getDay());
     ws.setHours(0, 0, 0, 0);
+
     var ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
     var t = 0;
     ww.forEach(function(w) { w.exercises?.forEach(function(ex) { ex.sets?.forEach(function(s) { t += (s.weightKg || 0) * (s.reps || 0); }); }); });
-    return { ls: ww.length, rs: 0, lt: t, rk: 0, ad: null };
-  }, [perfDoc, workouts]);
+
+    if (!user?.uid) {
+      setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null });
+      return;
+    }
+
+    var startTs = Timestamp.fromDate(ws);
+    var endTs = Timestamp.fromDate(new Date(now.getTime() + 86400000));
+    getDocs(query(collection(db, "users", user.uid, "runs"),
+      where("completedAt", ">=", startTs),
+      where("completedAt", "<=", endTs)
+    )).then(function(snap) {
+      var rc = 0;
+      var km = 0;
+      snap.docs.forEach(function(d) {
+        rc++;
+        km += ((d.data().distance || 0) / 1000);
+      });
+      setSnapData({ ls: ww.length, rs: rc, lt: t, rk: Math.round(km * 10) / 10, ad: null });
+    }).catch(function() {
+      setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null });
+    });
+  }, [perfDoc, workouts, user]);
 
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile…</div>;
 

@@ -5,6 +5,7 @@ import { searchUsers } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import FollowButton from '../components/social/FollowButton';
 import LeaderboardCard from '../components/social/LeaderboardCard';
+import { RefreshCw } from 'lucide-react';
 
 export default function Social() {
   const { items, loading, refresh, loadMore, hasMore } = useSocialFeed();
@@ -53,8 +54,8 @@ export default function Social() {
         <>
           <LeaderboardCard challenge="weekly_hybrid" />
 
-          <button onClick={refresh} className="w-full text-xs text-muted-foreground text-center py-1">
-            Pull to refresh
+          <button onClick={refresh} className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
 
           <div className="space-y-3">
@@ -65,7 +66,7 @@ export default function Social() {
 
           {loading && <p className="text-xs text-muted-foreground text-center animate-pulse">Loading...</p>}
 
-          {hasMore && !loading && (
+          {hasMore && !loading && items.length > 0 && (
             <button onClick={loadMore} className="w-full py-2 text-xs text-purple-500 font-medium">
               Load more
             </button>
