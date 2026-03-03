@@ -391,7 +391,7 @@ export default function Home() {
   const { workouts } = useWorkouts();
   const { current: perfDoc } = usePerformance();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  const { programState } = useProgram();
+  const { programState, loading: programLoading } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
 
@@ -549,7 +549,11 @@ export default function Home() {
         )}
       </div>
 
-      <NextActionCard nextWorkout={nextWorkout} navigate={navigate} />
+      {programLoading ? (
+        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+      ) : (
+        <NextActionCard nextWorkout={nextWorkout} navigate={navigate} />
+      )}
 
       <WeeklySnapshotCompact
         liftSessions={snapshotData.liftSessions}
@@ -567,14 +571,14 @@ export default function Home() {
         />
       )}
 
-      <BodyweightLogger />
-
       <TodayIntake
         calories={dailyCal}
         protein={dailyProt}
         targetCalories={profile.targetCalories || 2200}
         targetProtein={profile.targetProtein || 160}
       />
+
+      <BodyweightLogger />
 
       {!isPro && (
         <motion.div
