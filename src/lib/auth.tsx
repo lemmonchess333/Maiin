@@ -49,6 +49,8 @@ export interface UserProfile {
     currentPhase: string;
   };
   // Macro targets
+  tdeeBase?: number;
+  aiCalorieAdjustment?: number;
   targetCalories?: number;
   targetProtein?: number;
   targetCarbs?: number;
