@@ -11,12 +11,18 @@ interface RunMapProps {
   paceColored?: boolean;
   avgPaceSecPerKm?: number;
   className?: string;
+  darkMode?: boolean;
 }
+
+const TILE_STYLES = {
+  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+};
 
 export default function RunMap({
   points, currentPoint, interactive = false,
   height = 'h-full', paceColored = false, avgPaceSecPerKm,
-  className = '',
+  className = '', darkMode = true,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -36,7 +42,7 @@ export default function RunMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
       center: initialCenter,
       zoom: 15,
       attributionControl: false,
@@ -86,7 +92,7 @@ export default function RunMap({
     mapRef.current = map;
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [interactive, paceColored]);
+  }, [interactive, paceColored, darkMode]);
 
   // Update route
   useEffect(() => {
