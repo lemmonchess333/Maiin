@@ -12,7 +12,7 @@ import ElevationProfile from '../components/analytics/ElevationProfile';
 export default function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [run, setRun] = useState<any>(null);
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export default function RunDetail() {
               height="h-full"
               paceColored={true}
               avgPaceSecPerKm={avgPace}
+              darkMode={!!profile?.darkMode}
             />
           </div>
           <PaceLegend />
