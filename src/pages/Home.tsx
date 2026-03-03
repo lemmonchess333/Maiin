@@ -20,10 +20,14 @@ Footprints,
 ClipboardList,
 } from “lucide-react”;
 import { format } from “date-fns”;
-import { collection, query, where, getDocs, Timestamp } from “firebase/firestore”;
+import {
+collection,
+query,
+where,
+getDocs,
+Timestamp,
+} from “firebase/firestore”;
 import { db } from “@/lib/firebase”;
-
-// ── Streak computation (unchanged logic) ─────
 
 function computeStreak(workoutDates: string[]): number {
 if (workoutDates.length === 0) return 0;
@@ -35,18 +39,25 @@ let streak = 1;
 for (let i = 1; i < uniqueDates.length; i++) {
 const prev = new Date(uniqueDates[i - 1]);
 const curr = new Date(uniqueDates[i]);
-if ((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24) === 1) streak++;
+if ((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24) === 1)
+streak++;
 else break;
 }
 return streak;
 }
 
-// ── Week calendar strip (Cal AI-inspired) ────
+function WeekStrip({
+dayMap,
+}: {
+dayMap: Map<
+string,
+{ workouts: number; meals: number; caloriesHit: boolean }
 
-function WeekStrip({ dayMap }: { dayMap: Map<string, { workouts: number; meals: number; caloriesHit: boolean }> }) {
-const today = new Date();
-const startOfWeek = new Date(today);
-startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday start
+> ;
+> }) {
+> const today = new Date();
+> const startOfWeek = new Date(today);
+> startOfWeek.setDate(today.getDate() - today.getDay());
 
 const days = Array.from({ length: 7 }, (_, i) => {
 const d = new Date(startOfWeek);
@@ -66,33 +77,39 @@ return (
 {format(date, “EEE”).charAt(0)}
 </span>
 <div
-className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${ isToday ? "bg-primary text-primary-foreground" : hasActivity ? "bg-primary/15 text-primary" : "text-muted-foreground" }`}
+className={[
+“w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all”,
+isToday
+? “bg-primary text-primary-foreground”
+: hasActivity
+? “bg-primary/15 text-primary”
+: “text-muted-foreground”,
+].join(” “)}
 >
 {date.getDate()}
 </div>
 {hasActivity && !isToday && (
 <div className="w-1 h-1 rounded-full bg-primary" />
 )}
-{!hasActivity && <div className="w-1 h-1" />}
+{(!hasActivity || isToday) && <div className="w-1 h-1" />}
 </div>
 ))}
 </div>
 );
 }
 
-// ── Next Action Card ─────────────────────────
-
 function NextActionCard({
 nextWorkout,
 navigate,
 }: {
-nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
+nextWorkout: {
+dayName: string;
+dayType: string;
+exercises: { name: string }[];
+} | null;
 navigate: (path: string) => void;
 }) {
-// Determine CTA
-const hasWorkout = !!nextWorkout;
-
-if (hasWorkout) {
+if (nextWorkout) {
 return (
 <motion.button
 initial={{ opacity: 0, y: 8 }}
@@ -100,14 +117,17 @@ animate={{ opacity: 1, y: 0 }}
 onClick={() => navigate(”/program”)}
 className=“w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]”
 style={{
-background: `linear-gradient(135deg, ${THEME.lifting}12 0%, ${THEME.surface}00 60%)`,
-borderColor: `${THEME.lifting}30`,
+background:
+“linear-gradient(135deg, “ +
+THEME.lifting +
+“12 0%, transparent 60%)”,
+borderColor: THEME.lifting + “30”,
 }}
 >
 <div className="flex items-center gap-3">
 <div
 className=“w-11 h-11 rounded-xl flex items-center justify-center”
-style={{ backgroundColor: `${THEME.lifting}20` }}
+style={{ backgroundColor: THEME.lifting + “20” }}
 >
 <Dumbbell className=“w-5 h-5” style={{ color: THEME.lifting }} />
 </div>
@@ -116,10 +136,11 @@ style={{ backgroundColor: `${THEME.lifting}20` }}
 Up next
 </p>
 <p className="text-sm font-semibold text-foreground truncate">
-{nextWorkout!.dayName}
+{nextWorkout.dayName}
 </p>
 <p className="text-[11px] text-muted-foreground capitalize">
-{nextWorkout!.dayType} · {nextWorkout!.exercises.length} exercises
+{nextWorkout.dayType} · {nextWorkout.exercises.length}{” “}
+exercises
 </p>
 </div>
 <div
@@ -134,7 +155,6 @@ Start
 );
 }
 
-// Fallback: generic “Log Activity”
 return (
 <motion.div
 initial={{ opacity: 0, y: 8 }}
@@ -147,11 +167,13 @@ className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col 
 >
 <div
 className=“w-10 h-10 rounded-xl flex items-center justify-center”
-style={{ backgroundColor: `${THEME.lifting}20` }}
+style={{ backgroundColor: THEME.lifting + “20” }}
 >
 <Dumbbell className=“w-5 h-5” style={{ color: THEME.lifting }} />
 </div>
-<span className="text-xs font-medium text-foreground">Log Workout</span>
+<span className="text-xs font-medium text-foreground">
+Log Workout
+</span>
 </Link>
 <Link
 to="/run"
@@ -159,7 +181,7 @@ className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col 
 >
 <div
 className=“w-10 h-10 rounded-xl flex items-center justify-center”
-style={{ backgroundColor: `${THEME.running}20` }}
+style={{ backgroundColor: THEME.running + “20” }}
 >
 <Footprints className=“w-5 h-5” style={{ color: THEME.running }} />
 </div>
@@ -171,17 +193,18 @@ className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col 
 >
 <div
 className=“w-10 h-10 rounded-xl flex items-center justify-center”
-style={{ backgroundColor: `${THEME.success}20` }}
+style={{ backgroundColor: THEME.success + “20” }}
 >
-<ClipboardList className=“w-5 h-5” style={{ color: THEME.success }} />
+<ClipboardList
+className=“w-5 h-5”
+style={{ color: THEME.success }}
+/>
 </div>
 <span className="text-xs font-medium text-foreground">Log Food</span>
 </Link>
 </motion.div>
 );
 }
-
-// ── Weekly Snapshot (compact, NO charts) ──────
 
 function WeeklySnapshotCompact({
 liftSessions,
@@ -197,10 +220,29 @@ runKm: number;
 adherenceScore: number | null;
 }) {
 const stats = [
-{ label: “Sessions”, value: `${liftSessions + runSessions}`, color: THEME.brand },
-{ label: “Tonnage”, value: liftTonnage >= 1000 ? `${(liftTonnage / 1000).toFixed(1)}t` : `${Math.round(liftTonnage)}kg`, color: THEME.lifting },
-{ label: “Distance”, value: `${runKm.toFixed(1)}km`, color: THEME.running },
-{ label: “Adherence”, value: adherenceScore != null ? `${adherenceScore}%` : “—”, color: THEME.success },
+{
+label: “Sessions”,
+value: String(liftSessions + runSessions),
+color: THEME.brand,
+},
+{
+label: “Tonnage”,
+value:
+liftTonnage >= 1000
+? (liftTonnage / 1000).toFixed(1) + “t”
+: Math.round(liftTonnage) + “kg”,
+color: THEME.lifting,
+},
+{
+label: “Distance”,
+value: runKm.toFixed(1) + “km”,
+color: THEME.running,
+},
+{
+label: “Adherence”,
+value: adherenceScore != null ? adherenceScore + “%” : “\u2014”,
+color: THEME.success,
+},
 ];
 
 return (
@@ -217,15 +259,15 @@ style={{ color: s.color }}
 >
 {s.value}
 </p>
-<p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
+<p className="text-[9px] text-muted-foreground mt-0.5">
+{s.label}
+</p>
 </div>
 ))}
 </div>
 </div>
 );
 }
-
-// ── Insight Strip ─────────────────────────────
 
 function InsightStrip({
 title,
@@ -237,7 +279,13 @@ bullet: string;
 loadBand: string;
 }) {
 const emoji =
-loadBand === “overreach” ? “🔥” : loadBand === “high” ? “⚡” : loadBand === “moderate” ? “💪” : “🌱”;
+loadBand === “overreach”
+? “\uD83D\uDD25”
+: loadBand === “high”
+? “\u26A1”
+: loadBand === “moderate”
+? “\uD83D\uDCAA”
+: “\uD83C\uDF31”;
 
 return (
 <Link to="/history?tab=performance">
@@ -263,8 +311,6 @@ className=“p-4 rounded-2xl bg-card border border-border/50 flex items-start ga
 );
 }
 
-// ── Today’s Intake (slim: protein + calories only) ──
-
 function TodayIntake({
 calories,
 protein,
@@ -283,6 +329,7 @@ const bars = [
 label: “Calories”,
 current: calories,
 target: targetCalories || 2200,
+unit: “”,
 color: THEME.warning,
 },
 {
@@ -299,7 +346,7 @@ return (
 <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 transition-transform active:scale-[0.99]">
 <div className="flex items-center justify-between">
 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-Today’s Intake
+Today's Intake
 </p>
 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
 </div>
@@ -308,15 +355,19 @@ const pct = Math.min((b.current / b.target) * 100, 100);
 return (
 <div key={b.label} className="space-y-1">
 <div className="flex items-center justify-between">
-<span className="text-[11px] text-muted-foreground">{b.label}</span>
+<span className="text-[11px] text-muted-foreground">
+{b.label}
+</span>
 <span className="text-[11px] font-mono tabular-nums text-foreground">
-{b.current}{b.unit || “”} / {b.target}{b.unit || “”}
+{b.current}
+{b.unit} / {b.target}
+{b.unit}
 </span>
 </div>
 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
 <motion.div
 initial={{ width: 0 }}
-animate={{ width: `${pct}%` }}
+animate={{ width: pct + “%” }}
 transition={{ duration: 0.6, ease: “easeOut” }}
 className=“h-full rounded-full”
 style={{ backgroundColor: b.color }}
@@ -330,20 +381,15 @@ style={{ backgroundColor: b.color }}
 );
 }
 
-// ══════════════════════════════════════════════
-// MAIN HOME COMPONENT
-// ══════════════════════════════════════════════
-
 export default function Home() {
 const { user, profile, updateProfile } = useAuth();
 const { workouts } = useWorkouts();
-const { current: perfDoc, loading: perfLoading } = usePerformance();
+const { current: perfDoc } = usePerformance();
 const { isPro, isInTrial, trialDaysLeft } = useSubscription();
 const { programState } = useProgram();
 const weeklyDayMap = useWeeklyDayMap();
 const navigate = useNavigate();
 
-// ── Streak ──
 const computedStreak = useMemo(() => {
 return computeStreak(workouts.map((w) => w.date));
 }, [workouts]);
@@ -354,7 +400,6 @@ updateProfile({ currentStreak: computedStreak });
 }
 }, [computedStreak, profile, updateProfile]);
 
-// ── Today’s meals ──
 const [dailyCal, setDailyCal] = useState(0);
 const [dailyProt, setDailyProt] = useState(0);
 
@@ -367,10 +412,11 @@ todayStart.setHours(0, 0, 0, 0);
 const snap = await getDocs(
 query(
 collection(db, “users”, user.uid, “meals”),
-where(“createdAt”, “>=”, Timestamp.fromDate(todayStart)),
-),
+where(“createdAt”, “>=”, Timestamp.fromDate(todayStart))
+)
 );
-let cal = 0, prot = 0;
+let cal = 0;
+let prot = 0;
 snap.forEach((d) => {
 const data = d.data();
 cal += data.totalCalories || data.calories || 0;
@@ -384,8 +430,8 @@ console.error(“Error fetching today’s meals:”, e);
 })();
 }, [user]);
 
-// ── Derived values ──
-const nextWorkout = programState?.workouts.find((d) => !d.completed) || null;
+const nextWorkout =
+programState?.workouts.find((d) => !d.completed) || null;
 
 const snapshotData = useMemo(() => {
 if (perfDoc) {
@@ -397,14 +443,15 @@ runKm: perfDoc.aggregates.runKm,
 adherenceScore: perfDoc.adherenceScore,
 };
 }
-// Fallback: compute from raw workout data for current week
 const now = new Date();
 const weekStart = new Date(now);
 weekStart.setDate(now.getDate() - now.getDay());
 weekStart.setHours(0, 0, 0, 0);
 
 ```
-const thisWeekWorkouts = workouts.filter((w) => new Date(w.date) >= weekStart);
+const thisWeekWorkouts = workouts.filter(
+  (w) => new Date(w.date) >= weekStart
+);
 let tonnage = 0;
 thisWeekWorkouts.forEach((w) => {
   w.exercises?.forEach((ex) => {
@@ -435,7 +482,6 @@ Loading your profile…
 
 return (
 <div className="flex flex-col gap-4 pb-6">
-{/* ── 1. Header ── */}
 <motion.div
 initial={{ opacity: 0, y: -8 }}
 animate={{ opacity: 1, y: 0 }}
@@ -447,7 +493,11 @@ Hey, {profile.displayName || “Athlete”}
 </h1>
 <p className="text-xs text-muted-foreground">
 {programState
-? `Week ${programState.weekNumber} · ${programState.currentPhase} phase`
+? “Week “ +
+programState.weekNumber +
+“ \u00B7 “ +
+programState.currentPhase +
+“ phase”
 : “Let’s put in work today.”}
 </p>
 </div>
@@ -460,7 +510,6 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
 </motion.div>
 
 ```
-  {/* ── Trial banner ── */}
   {isInTrial && (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -470,14 +519,16 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
       <Sparkles className="w-5 h-5 text-primary shrink-0" />
       <div className="flex-1">
         <p className="text-sm font-medium text-foreground">
-          Pro Trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left
+          Pro Trial &mdash; {trialDaysLeft} day
+          {trialDaysLeft !== 1 ? "s" : ""} left
         </p>
-        <p className="text-xs text-muted-foreground">Full access to all features.</p>
+        <p className="text-xs text-muted-foreground">
+          Full access to all features.
+        </p>
       </div>
     </motion.div>
   )}
 
-  {/* ── Week strip + streak ── */}
   <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
     <WeekStrip dayMap={weeklyDayMap} />
     {computedStreak > 0 && (
@@ -488,19 +539,17 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
         </span>
         <span className="text-[10px] text-muted-foreground">
           {computedStreak >= 14
-            ? "— on fire 🔥"
+            ? "\u2014 on fire"
             : computedStreak >= 7
-            ? "— crushing it"
-            : "— keep building"}
+              ? "\u2014 crushing it"
+              : "\u2014 keep building"}
         </span>
       </div>
     )}
   </div>
 
-  {/* ── 2. Next Action CTA ── */}
   <NextActionCard nextWorkout={nextWorkout} navigate={navigate} />
 
-  {/* ── 3. This Week snapshot ── */}
   <WeeklySnapshotCompact
     liftSessions={snapshotData.liftSessions}
     runSessions={snapshotData.runSessions}
@@ -509,7 +558,6 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
     adherenceScore={snapshotData.adherenceScore}
   />
 
-  {/* ── 4. Engine insight ── */}
   {perfDoc && perfDoc.insight && (
     <InsightStrip
       title={perfDoc.insight.title}
@@ -518,10 +566,8 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
     />
   )}
 
-  {/* ── 5. Bodyweight logger ── */}
   <BodyweightLogger />
 
-  {/* ── 6. Today's intake (slim) ── */}
   <TodayIntake
     calories={dailyCal}
     protein={dailyProt}
@@ -529,7 +575,6 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
     targetProtein={profile.targetProtein || 0}
   />
 
-  {/* ── Pro upsell ── */}
   {!isPro && (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -538,10 +583,10 @@ className="p-2 rounded-lg hover:bg-muted transition-colors"
       className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1"
     >
       <p className="text-sm font-medium text-foreground">
-        Unlock AI Photo Logging & Performance Engine
+        Unlock AI Photo Logging &amp; Performance Engine
       </p>
       <p className="text-xs text-muted-foreground">
-        Upgrade to Pro — from just £2.99/mo
+        Upgrade to Pro &mdash; from just &pound;2.99/mo
       </p>
     </motion.div>
   )}
