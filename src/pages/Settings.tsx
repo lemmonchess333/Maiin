@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { calculateTDEE, ACTIVITY_LABELS } from "@/lib/tdee";
-import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
+import type { ActivityLevel } from "@/lib/tdee";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
