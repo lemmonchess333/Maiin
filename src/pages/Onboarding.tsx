@@ -5,6 +5,9 @@ import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal } from "@/lib/tdee";
+import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
+import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
+import { THEME } from "@/lib/theme";
 import {
   Dumbbell,
   Bike,
@@ -13,6 +16,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
+  Footprints,
 } from "lucide-react";
 
 const ATHLETE_TYPES = [
@@ -28,6 +32,67 @@ const GOALS = [
   { id: "recomp", label: "Recomp" },
 ];
 
+function SchedulePreview({
+  schedule,
+  onToggle,
+}: {
+  schedule: ScheduleDay[];
+  onToggle: (day: number) => void;
+}) {
+  const typeColor = (type: DayType) => {
+    if (type === "lift") return THEME.lifting;
+    if (type === "run") return THEME.running;
+    return undefined;
+  };
+
+  const typeLabel = (type: DayType) => {
+    if (type === "lift") return "Lift";
+    if (type === "run") return "Run";
+    return "Rest";
+  };
+
+  return (
+    <div className="grid grid-cols-7 gap-1.5">
+      {schedule
+        .slice()
+        .sort((a, b) => a.day - b.day)
+        .map((s) => {
+          const color = typeColor(s.type);
+          return (
+            <button
+              key={s.day}
+              onClick={() => onToggle(s.day)}
+              className={cn(
+                "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all text-center",
+                s.type !== "rest"
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border/50 bg-muted/30"
+              )}
+            >
+              <span className="text-[10px] text-muted-foreground">
+                {DAY_LABELS[s.day].charAt(0)}
+              </span>
+              {color ? (
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
+              ) : (
+                <div className="w-3 h-3 rounded-full bg-muted" />
+              )}
+              <span
+                className="text-[9px] font-medium"
+                style={{ color: color || "var(--muted-foreground)" }}
+              >
+                {typeLabel(s.type)}
+              </span>
+            </button>
+          );
+        })}
+    </div>
+  );
+}
+
 export default function Onboarding() {
   const { user } = useAuth();
 
@@ -38,24 +103,60 @@ export default function Onboarding() {
   const [age, setAge] = useState(25);
   const [weightKg, setWeightKg] = useState(70);
   const [heightCm, setHeightCm] = useState(170);
-  const [workoutsTarget] = useState(4);
+  const [liftDays, setLiftDays] = useState(3);
+  const [runDays, setRunDays] = useState(2);
   const [mealsTarget] = useState(10);
   const [saving, setSaving] = useState(false);
+  const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(null);
 
   const tdee = useMemo(
     () => calculateTDEE(weightKg, heightCm, age, "moderate", selectedGoal as FitnessGoal),
     [weightKg, heightCm, age, selectedGoal]
   );
 
+  const schedule = useMemo(() => {
+    if (customSchedule) return customSchedule;
+    return generateSchedule(liftDays, runDays);
+  }, [liftDays, runDays, customSchedule]);
+
+  // When sliders change, reset custom schedule
+  const handleLiftChange = (val: number) => {
+    setLiftDays(val);
+    setCustomSchedule(null);
+  };
+
+  const handleRunChange = (val: number) => {
+    setRunDays(val);
+    setCustomSchedule(null);
+  };
+
+  // Toggle a day through lift -> run -> rest cycle
+  const handleDayToggle = (day: number) => {
+    const current = schedule.find((s) => s.day === day);
+    if (!current) return;
+    const cycle: DayType[] = ["lift", "run", "rest"];
+    const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
+    const updated = schedule.map((s) =>
+      s.day === day ? { ...s, type: cycle[nextIdx] } : s
+    );
+    setCustomSchedule(updated);
+    // Update slider counts to match
+    setLiftDays(updated.filter((s) => s.type === "lift").length);
+    setRunDays(updated.filter((s) => s.type === "run").length);
+  };
+
   const steps = [
     { title: "What's your sport?", subtitle: "Choose your primary activity" },
     { title: "About you", subtitle: "We'll personalize your experience" },
     { title: "Set your goals", subtitle: "Define your training focus" },
+    { title: "Your week", subtitle: "Plan your training schedule" },
   ];
+
+  const totalSteps = steps.length;
+  const lastStep = totalSteps - 1;
 
   const handleFinish = async () => {
     if (!user) return;
-
     setSaving(true);
 
     await setDoc(
@@ -66,18 +167,15 @@ export default function Onboarding() {
         age,
         weightKg,
         heightCm,
-        weeklyWorkoutsTarget: workoutsTarget,
+        weeklyWorkoutsTarget: liftDays,
+        weeklyRunsTarget: runDays,
         weeklyMealsTarget: mealsTarget,
+        weekSchedule: schedule,
         onboardingComplete: true,
-
-        // Derived macro targets from setup
-        macroTargets: {
-          calories: tdee.targetCalories,
-          protein: tdee.protein,
-          carbs: tdee.carbs,
-          fat: tdee.fat,
-        },
-
+        targetCalories: tdee.targetCalories,
+        targetProtein: tdee.protein,
+        targetCarbs: tdee.carbs,
+        targetFat: tdee.fat,
         program: {
           goal: selectedGoal,
           startWeight: Number(weightKg),
@@ -112,7 +210,7 @@ export default function Onboarding() {
           <p className="text-sm text-muted-foreground">{steps[step].subtitle}</p>
         </div>
 
-        {/* Step 0 */}
+        {/* Step 0: Sport */}
         {step === 0 && (
           <div className="space-y-3">
             {ATHLETE_TYPES.map((type) => {
@@ -142,7 +240,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 1 */}
+        {/* Step 1: About you */}
         {step === 1 && (
           <div className="space-y-4">
             <input
@@ -152,7 +250,6 @@ export default function Onboarding() {
               placeholder="Your name"
               className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground"
             />
-
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Age</label>
               <input
@@ -163,7 +260,6 @@ export default function Onboarding() {
                 className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground"
               />
             </div>
-
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-xs text-muted-foreground mb-1 block">Weight (kg)</label>
@@ -187,7 +283,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 2 */}
+        {/* Step 2: Goals */}
         {step === 2 && (
           <div className="space-y-6">
             <div className="space-y-2">
@@ -210,7 +306,6 @@ export default function Onboarding() {
               </div>
             </div>
 
-            {/* TDEE preview from setup data */}
             <div className="bg-primary/5 rounded-xl p-4 space-y-2 border border-primary/10">
               <p className="text-xs font-medium text-foreground">
                 Your daily target: <span className="text-primary">{tdee.targetCalories} cal</span>
@@ -233,6 +328,65 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* Step 3: Weekly schedule */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                    Lift days
+                  </label>
+                  <span className="text-sm font-bold" style={{ color: THEME.lifting }}>
+                    {liftDays}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={7 - runDays}
+                  value={liftDays}
+                  onChange={(e) => handleLiftChange(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+                    Run days
+                  </label>
+                  <span className="text-sm font-bold" style={{ color: THEME.running }}>
+                    {runDays}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max={7 - liftDays}
+                  value={runDays}
+                  onChange={(e) => handleRunChange(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+              </div>
+
+              <p className="text-[10px] text-muted-foreground text-center">
+                {7 - liftDays - runDays} rest day{7 - liftDays - runDays !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-foreground">Your week</p>
+              <SchedulePreview schedule={schedule} onToggle={handleDayToggle} />
+              <p className="text-[10px] text-muted-foreground text-center">
+                Tap a day to change it
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex gap-3">
           {step > 0 && (
@@ -244,7 +398,7 @@ export default function Onboarding() {
             </button>
           )}
 
-          {step < 2 ? (
+          {step < lastStep ? (
             <button
               onClick={() => setStep(step + 1)}
               className="flex-1 py-3 rounded-xl bg-primary text-white"
