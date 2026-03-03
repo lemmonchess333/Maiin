@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { usePerformance } from "@/hooks/usePerformance";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
@@ -313,15 +313,21 @@ function InsightStrip({
 function TodayIntake({
   calories,
   protein,
-  targetCalories,
-  targetProtein,
+  targetCalories: initialTargetCalories,
+  targetProtein: initialTargetProtein,
 }: {
   calories: number;
   protein: number;
   targetCalories: number;
   targetProtein: number;
 }) {
-  if (targetCalories <= 0 && targetProtein <= 0) return null;
+  let targetCalories = initialTargetCalories;
+  let targetProtein = initialTargetProtein;
+
+  if (targetCalories <= 0 && targetProtein <= 0) {
+    targetCalories = 2200;
+    targetProtein = 160;
+  }
 
   const bars = [
     {
@@ -383,7 +389,7 @@ function TodayIntake({
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts } = useWorkouts();
-  const { currentWeek: perfDoc } = usePerformanceWeeks();
+  const { current: perfDoc } = usePerformance();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -566,8 +572,8 @@ export default function Home() {
       <TodayIntake
         calories={dailyCal}
         protein={dailyProt}
-        targetCalories={profile.targetCalories || 0}
-        targetProtein={profile.targetProtein || 0}
+        targetCalories={profile.targetCalories || 2200}
+        targetProtein={profile.targetProtein || 160}
       />
 
       {!isPro && (
