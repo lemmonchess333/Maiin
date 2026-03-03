@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import type { ProgramState, ProgramSettings, ProgramExercise } from "./programTypes";
+import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
 import { normalizeProgramState } from "./programTypes";
 import {
   generateProgram,
@@ -11,6 +11,11 @@ import {
   generateWeekPrescription,
   applyProgression,
 } from "./programEngine";
+import {
+  scheduleStructuredWeek,
+  generateRacePlan,
+  getCurrentRaceWeek,
+} from "./runScheduler";
 import { toast } from "sonner";
 
 const PROGRAM_DOC = "current";
@@ -35,11 +40,71 @@ export function useProgram() {
 
       if (snap.exists()) {
         const raw = snap.data() as ProgramState;
-        setProgramState(normalizeProgramState(raw));
+        const normalized = normalizeProgramState(raw);
+
+        // Hydrate run days if user has run mode but no runDays yet
+        if (!normalized.runDays && profile.runMode && profile.runMode !== "freeform") {
+          const liftDays = normalized.workouts.length;
+          const runTarget = profile.weeklyRunDaysTarget ?? 3;
+          let runDays: ScheduledRunDay[] = [];
+          let runPlan = normalized.runPlan;
+
+          if (profile.runMode === "race_prep" && profile.raceGoal) {
+            const plan = generateRacePlan(
+              profile.raceGoal.distance,
+              profile.raceGoal.targetDate,
+              liftDays,
+              runTarget,
+            );
+            const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
+            runDays = plan.weeks[weekIdx] ?? [];
+            runPlan = {
+              mode: "race_prep",
+              raceGoal: profile.raceGoal,
+              totalWeeks: plan.totalWeeks,
+              currentWeek: weekIdx,
+            };
+          } else {
+            runDays = scheduleStructuredWeek(liftDays, runTarget, normalized.weekNumber);
+            runPlan = { mode: "structured" };
+          }
+
+          const withRuns = { ...normalized, runDays, runPlan };
+          await setDoc(ref, { ...withRuns, updatedAt: Date.now() }, { merge: true });
+          setProgramState(withRuns);
+        } else {
+          setProgramState(normalized);
+        }
       } else {
         const goal = profile.program?.goal ?? "recomp";
         const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
         const { splitType, workouts } = generateProgram(goal, weeklyTarget);
+
+        // Generate run schedule if applicable
+        let runDays: ScheduledRunDay[] | undefined;
+        let runPlan: ProgramState["runPlan"];
+        if (profile.runMode && profile.runMode !== "freeform") {
+          const runTarget = profile.weeklyRunDaysTarget ?? 3;
+          if (profile.runMode === "race_prep" && profile.raceGoal) {
+            const plan = generateRacePlan(
+              profile.raceGoal.distance,
+              profile.raceGoal.targetDate,
+              workouts.length,
+              runTarget,
+            );
+            const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
+            runDays = plan.weeks[weekIdx] ?? [];
+            runPlan = {
+              mode: "race_prep",
+              raceGoal: profile.raceGoal,
+              totalWeeks: plan.totalWeeks,
+              currentWeek: weekIdx,
+            };
+          } else {
+            runDays = scheduleStructuredWeek(workouts.length, runTarget, 1);
+            runPlan = { mode: "structured" };
+          }
+        }
 
         const initial: ProgramState = {
           goal,
@@ -51,6 +116,8 @@ export function useProgram() {
           updatedAt: Date.now(),
           settings: { autoProgression: true, microloading: true },
           weekHistory: [],
+          runDays,
+          runPlan,
         };
 
         await setDoc(ref, initial);
@@ -106,6 +173,27 @@ export function useProgram() {
       if (!shouldAdvanceWeek(programState.workouts)) return;
 
       const advanced = advanceWeek(programState);
+
+      // Refresh run days for new week
+      if (profile?.runMode && profile.runMode !== "freeform") {
+        const liftDays = advanced.workouts.length;
+        const runTarget = profile.weeklyRunDaysTarget ?? 3;
+
+        if (profile.runMode === "race_prep" && profile.raceGoal && advanced.runPlan?.totalWeeks) {
+          const weekIdx = getCurrentRaceWeek(advanced.runPlan.totalWeeks, profile.raceGoal.targetDate);
+          const plan = generateRacePlan(
+            profile.raceGoal.distance,
+            profile.raceGoal.targetDate,
+            liftDays,
+            runTarget,
+          );
+          advanced.runDays = plan.weeks[weekIdx] ?? [];
+          advanced.runPlan = { ...advanced.runPlan, currentWeek: weekIdx };
+        } else {
+          advanced.runDays = scheduleStructuredWeek(liftDays, runTarget, advanced.weekNumber);
+        }
+      }
+
       await saveProgram(advanced);
 
       const rx = generateWeekPrescription(advanced.weekNumber);
@@ -114,6 +202,49 @@ export function useProgram() {
       } else {
         toast.success(`Week ${advanced.weekNumber} started`);
       }
+    },
+    [programState, profile, saveProgram],
+  );
+
+  // Mark a run day as completed
+  const completeRunDay = useCallback(
+    async (dayIndex: number) => {
+      if (!programState?.runDays || !user) return;
+
+      const updated: ProgramState = {
+        ...programState,
+        runDays: programState.runDays.map((rd) =>
+          rd.dayIndex === dayIndex ? { ...rd, completed: true } : rd,
+        ),
+      };
+
+      await saveProgram(updated);
+
+      const allRunsDone = updated.runDays!.every((rd) => rd.completed);
+      const allLiftsDone = updated.workouts.every((d) => d.completed);
+      if (allRunsDone && allLiftsDone) {
+        toast.success("All workouts & runs complete! Ready for next week.");
+      }
+    },
+    [programState, user, saveProgram],
+  );
+
+  // Override a run day template
+  const overrideRunDay = useCallback(
+    async (dayIndex: number, templateId: string) => {
+      if (!programState?.runDays) return;
+
+      const updated: ProgramState = {
+        ...programState,
+        runDays: programState.runDays.map((rd) =>
+          rd.dayIndex === dayIndex
+            ? { ...rd, templateId, userOverride: templateId }
+            : rd,
+        ),
+      };
+
+      await saveProgram(updated);
+      toast.success("Run day updated");
     },
     [programState, saveProgram],
   );
@@ -217,6 +348,32 @@ export function useProgram() {
         programState?.workouts,
       );
 
+      // Regenerate run schedule
+      let runDays: ScheduledRunDay[] | undefined;
+      let runPlan: ProgramState["runPlan"];
+      if (profile.runMode && profile.runMode !== "freeform") {
+        const runTarget = profile.weeklyRunDaysTarget ?? 3;
+        if (profile.runMode === "race_prep" && profile.raceGoal) {
+          const plan = generateRacePlan(
+            profile.raceGoal.distance,
+            profile.raceGoal.targetDate,
+            workouts.length,
+            runTarget,
+          );
+          const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
+          runDays = plan.weeks[weekIdx] ?? [];
+          runPlan = {
+            mode: "race_prep",
+            raceGoal: profile.raceGoal,
+            totalWeeks: plan.totalWeeks,
+            currentWeek: weekIdx,
+          };
+        } else {
+          runDays = scheduleStructuredWeek(workouts.length, runTarget, 1);
+          runPlan = { mode: "structured" };
+        }
+      }
+
       const newState: ProgramState = {
         goal,
         currentPhase: "base",
@@ -227,6 +384,8 @@ export function useProgram() {
         updatedAt: Date.now(),
         settings: programState?.settings ?? { autoProgression: true, microloading: true },
         weekHistory: [],
+        runDays,
+        runPlan,
       };
 
       await saveProgram(newState);
@@ -264,6 +423,8 @@ export function useProgram() {
     updateSettings,
     regenerateProgram,
     saveProgram,
+    completeRunDay,
+    overrideRunDay,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

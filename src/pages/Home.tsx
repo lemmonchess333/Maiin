@@ -116,6 +116,7 @@ function WeekStrip({
 
 function CyclingCTACard({
   nextWorkout,
+  nextRun,
   todayType,
   navigate,
 }: {
@@ -124,6 +125,7 @@ function CyclingCTACard({
     dayType: string;
     exercises: { name: string }[];
   } | null;
+  nextRun: { type: string; templateId: string } | null;
   todayType: "lift" | "run" | "rest";
   navigate: (path: string) => void;
 }) {
@@ -213,7 +215,7 @@ function CyclingCTACard({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.2 }}
-            onClick={() => navigate("/run")}
+            onClick={() => navigate(nextRun ? "/run?type=" + nextRun.type : "/run")}
             className="w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
             style={{
               background:
@@ -237,11 +239,11 @@ function CyclingCTACard({
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
                   Today &middot; Run day
                 </p>
-                <p className="text-sm font-semibold text-foreground">
-                  Start a run
+                <p className="text-sm font-semibold text-foreground capitalize">
+                  {nextRun ? nextRun.type + " run" : "Start a run"}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Easy run, tempo, or intervals
+                  {nextRun ? "Scheduled run" : "Easy run, tempo, or intervals"}
                 </p>
               </div>
               <div
@@ -487,6 +489,14 @@ export default function Home() {
 
   const nextWorkout = programState?.workouts.find((d) => !d.completed) || null;
 
+  const todayRunDay = useMemo(() => {
+    if (!programState?.runDays) return null;
+    const todayIdx = new Date().getDay(); // 0=Sun, 6=Sat
+    return programState.runDays.find(
+      (rd) => rd.dayIndex === todayIdx && !rd.completed
+    ) || null;
+  }, [programState?.runDays]);
+
   const snapshotData = useMemo(() => {
     if (perfDoc) return { liftSessions: perfDoc.aggregates.liftSessions, runSessions: perfDoc.aggregates.runSessions, liftTonnage: perfDoc.aggregates.liftTonnage, runKm: perfDoc.aggregates.runKm, adherenceScore: perfDoc.adherenceScore };
     const now = new Date(); const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0, 0, 0, 0);
@@ -534,7 +544,7 @@ export default function Home() {
         )}
       </div>
 
-      {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} />}
+      {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : <CyclingCTACard nextWorkout={nextWorkout} nextRun={todayRunDay} todayType={todayType} navigate={navigate} />}
 
       <WeeklySnapshotCompact liftSessions={snapshotData.liftSessions} runSessions={snapshotData.runSessions} liftTonnage={snapshotData.liftTonnage} runKm={snapshotData.runKm} adherenceScore={snapshotData.adherenceScore} />
 

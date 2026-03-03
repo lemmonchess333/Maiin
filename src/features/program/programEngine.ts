@@ -58,7 +58,8 @@ function goalWeightBonus(goal: Goal): number {
 ================================ */
 
 export function chooseSplit(weeklyTarget: number): SplitType {
-  return weeklyTarget >= 5 ? "ppl" : "upper_lower";
+  const clamped = Math.max(1, Math.min(7, weeklyTarget));
+  return clamped >= 5 ? "ppl" : "upper_lower";
 }
 
 /* ================================

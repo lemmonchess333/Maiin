@@ -90,6 +90,21 @@ export interface WeekSnapshot {
    PROGRAM STATE
 ================================ */
 
+export interface ScheduledRunDay {
+  dayIndex: number;
+  templateId: string;
+  type: string;
+  completed: boolean;
+  userOverride?: string;
+}
+
+export interface RunPlan {
+  mode: "structured" | "race_prep";
+  raceGoal?: { distance: string; targetDate: string };
+  totalWeeks?: number;
+  currentWeek?: number;
+}
+
 export interface ProgramState {
   goal: Goal;
   currentPhase: string;
@@ -100,6 +115,8 @@ export interface ProgramState {
   updatedAt: number;
   settings?: ProgramSettings;
   weekHistory?: WeekSnapshot[];
+  runDays?: ScheduledRunDay[];
+  runPlan?: RunPlan;
 }
 
 /* ================================

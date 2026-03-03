@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   Check,
   Footprints,
+  Target,
+  Calendar,
 } from "lucide-react";
 
 const ATHLETE_TYPES = [
@@ -31,6 +33,19 @@ const GOALS = [
   { id: "lean bulk", label: "Lean Bulk" },
   { id: "recomp", label: "Recomp" },
 ];
+
+const RUN_MODES = [
+  { id: "freeform", label: "Freeform", icon: Footprints, desc: "Log runs whenever you want" },
+  { id: "structured", label: "Structured", icon: Calendar, desc: "Auto-scheduled run days each week" },
+  { id: "race_prep", label: "Race Prep", icon: Target, desc: "Periodized plan for a race goal" },
+] as const;
+
+const RACE_DISTANCES = [
+  { id: "5k", label: "5K" },
+  { id: "10k", label: "10K" },
+  { id: "half", label: "Half Marathon" },
+  { id: "marathon", label: "Marathon" },
+] as const;
 
 function SchedulePreview({
   schedule,
@@ -106,6 +121,10 @@ export default function Onboarding() {
   const [liftDays, setLiftDays] = useState(3);
   const [runDays, setRunDays] = useState(2);
   const [mealsTarget] = useState(10);
+  const [runMode, setRunMode] = useState<"freeform" | "structured" | "race_prep">("freeform");
+  const [weeklyRunDays, setWeeklyRunDays] = useState(3);
+  const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
+  const [raceTargetDate, setRaceTargetDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(null);
 
@@ -152,38 +171,49 @@ export default function Onboarding() {
     { title: "Your week", subtitle: "Plan your training schedule" },
   ];
 
-  const totalSteps = steps.length;
-  const lastStep = totalSteps - 1;
+  const lastStep = steps.length - 1;
 
   const handleFinish = async () => {
     if (!user) return;
     setSaving(true);
 
-    await setDoc(
-      doc(db, "users", user.uid),
-      {
-        displayName: name,
-        athleteType,
-        age,
-        weightKg,
-        heightCm,
-        weeklyWorkoutsTarget: liftDays,
-        weeklyRunsTarget: runDays,
-        weeklyMealsTarget: mealsTarget,
-        weekSchedule: schedule,
-        onboardingComplete: true,
-        targetCalories: tdee.targetCalories,
-        targetProtein: tdee.protein,
-        targetCarbs: tdee.carbs,
-        targetFat: tdee.fat,
-        program: {
-          goal: selectedGoal,
-          startWeight: Number(weightKg),
-          currentPhase: "base",
-        },
+    const data: Record<string, unknown> = {
+      displayName: name,
+      athleteType,
+      age,
+      weightKg,
+      heightCm,
+      weeklyWorkoutsTarget: liftDays,
+      weeklyRunsTarget: runDays,
+      weeklyMealsTarget: mealsTarget,
+      weekSchedule: schedule,
+      onboardingComplete: true,
+      runMode,
+      targetCalories: tdee.targetCalories,
+      targetProtein: tdee.protein,
+      targetCarbs: tdee.carbs,
+      targetFat: tdee.fat,
+      macroTargets: {
+        calories: tdee.targetCalories,
+        protein: tdee.protein,
+        carbs: tdee.carbs,
+        fat: tdee.fat,
       },
-      { merge: true }
-    );
+      program: {
+        goal: selectedGoal,
+        startWeight: Number(weightKg),
+        currentPhase: "base",
+      },
+    };
+
+    if (runMode !== "freeform") {
+      data.weeklyRunDaysTarget = weeklyRunDays;
+    }
+    if (runMode === "race_prep" && raceTargetDate) {
+      data.raceGoal = { distance: raceDistance, targetDate: raceTargetDate };
+    }
+
+    await setDoc(doc(db, "users", user.uid), data, { merge: true });
 
     setSaving(false);
   };
@@ -384,6 +414,64 @@ export default function Onboarding() {
                 Tap a day to change it
               </p>
             </div>
+
+            {runDays > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-foreground">Run plan style</p>
+                {RUN_MODES.map((mode) => {
+                  const Icon = mode.icon;
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => setRunMode(mode.id)}
+                      className={cn(
+                        "w-full flex items-center gap-4 p-3 rounded-xl border transition-all",
+                        runMode === mode.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border/50 bg-card hover:border-border"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-medium text-foreground">{mode.label}</p>
+                        <p className="text-[10px] text-muted-foreground">{mode.desc}</p>
+                      </div>
+                      {runMode === mode.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </button>
+                  );
+                })}
+
+                {runMode === "race_prep" && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {RACE_DISTANCES.map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => setRaceDistance(d.id)}
+                          className={cn(
+                            "py-2 rounded-lg border text-sm",
+                            raceDistance === d.id
+                              ? "bg-primary text-white border-primary"
+                              : "bg-muted border-border/50"
+                          )}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="date"
+                      value={raceTargetDate}
+                      onChange={(e) => setRaceTargetDate(e.target.value)}
+                      min={new Date(Date.now() + 21 * 86400000).toISOString().split("T")[0]}
+                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
