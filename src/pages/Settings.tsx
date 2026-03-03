@@ -84,15 +84,19 @@ function AIAdjustmentsSection() {
     : 0;
   const avgWeightChange = 0;
 
+  const tdeeBase = profile?.tdeeBase || profile?.targetCalories || 2200;
+  const currentAdjustment = profile?.aiCalorieAdjustment || 0;
+
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, sensitivity);
-  const currentTDEE = profile?.targetCalories || 2200;
   const macros = calculateAdaptiveMacros(
     profile?.weightKg || 70,
     avgLiftChange,
     avgWeightChange,
     phase,
-    currentTDEE
+    tdeeBase
   );
+
+  const suggestedDelta = macros.calories - tdeeBase;
 
   const statusColors: Record<string, string> = {
     progressing: "text-green-500",
@@ -143,47 +147,86 @@ function AIAdjustmentsSection() {
 
         <p className="text-xs text-muted-foreground leading-relaxed">{plateau.message}</p>
 
-        {plateau.calorieAdjust !== 0 && (
-          <button
-            onClick={async () => {
-              await updateProfile({
-                targetCalories: macros.calories,
-                targetProtein: macros.protein,
-                targetCarbs: macros.carbs,
-                targetFat: macros.fat,
-              });
-              toast.success(
-                `Targets updated to ${macros.calories} cal`,
-                { description: `${macros.protein}g protein \u00B7 ${macros.carbs}g carbs \u00B7 ${macros.fat}g fat` }
-              );
-            }}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
-          >
-            Apply AI Targets
-          </button>
-        )}
-      </div>
-
-      <div className="p-4 rounded-2xl bg-card border border-border/50">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">AI Macro Targets</p>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div>
-            <p className="text-sm font-bold tabular-nums text-orange-500">{macros.calories}</p>
-            <p className="text-[9px] text-muted-foreground">cal</p>
+        {/* Show current state: base → applied */}
+        <div className="p-3 rounded-xl bg-muted/50 space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">TDEE Base</span>
+            <span className="font-medium text-foreground">{tdeeBase} cal</span>
           </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-blue-500">{macros.protein}g</p>
-            <p className="text-[9px] text-muted-foreground">protein</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-amber-500">{macros.carbs}g</p>
-            <p className="text-[9px] text-muted-foreground">carbs</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-purple-500">{macros.fat}g</p>
-            <p className="text-[9px] text-muted-foreground">fat</p>
+          {currentAdjustment !== 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Active AI adjustment</span>
+              <span className={cn("font-medium", currentAdjustment > 0 ? "text-green-500" : "text-amber-500")}>
+                {currentAdjustment > 0 ? "+" : ""}{currentAdjustment} cal
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs border-t border-border/50 pt-1.5">
+            <span className="text-muted-foreground">Current target</span>
+            <span className="font-bold text-foreground">{tdeeBase + currentAdjustment} cal</span>
           </div>
         </div>
+
+        {suggestedDelta !== currentAdjustment && plateau.calorieAdjust !== 0 && (
+          <>
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
+              <p className="text-xs font-medium text-foreground">AI Suggestion</p>
+              <p className="text-sm font-bold text-primary">
+                {tdeeBase} → {macros.calories} cal
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  ({suggestedDelta > 0 ? "+" : ""}{suggestedDelta})
+                </span>
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {macros.protein}g protein · {macros.carbs}g carbs · {macros.fat}g fat
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                await updateProfile({
+                  aiCalorieAdjustment: suggestedDelta,
+                  targetCalories: macros.calories,
+                  targetProtein: macros.protein,
+                  targetCarbs: macros.carbs,
+                  targetFat: macros.fat,
+                });
+                toast.success(
+                  `AI adjustment applied: ${suggestedDelta > 0 ? "+" : ""}${suggestedDelta} cal`,
+                  { description: `New target: ${macros.calories} cal · ${macros.protein}g protein` }
+                );
+              }}
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+            >
+              Apply {suggestedDelta > 0 ? "+" : ""}{suggestedDelta} cal Adjustment
+            </button>
+          </>
+        )}
+
+        {currentAdjustment !== 0 && (
+          <button
+            onClick={async () => {
+              const tdeeGoal = (phase === "strength peak" ? "recomp" : phase) as "cut" | "recomp" | "lean bulk";
+              const baseMacros = calculateTDEE(
+                profile?.weightKg || 70,
+                profile?.heightCm || 170,
+                profile?.age || 25,
+                profile?.activityLevel || "moderate",
+                tdeeGoal,
+              );
+              await updateProfile({
+                aiCalorieAdjustment: 0,
+                targetCalories: tdeeBase,
+                targetProtein: baseMacros.protein,
+                targetCarbs: baseMacros.carbs,
+                targetFat: baseMacros.fat,
+              });
+              toast.success("AI adjustment cleared, back to TDEE base");
+            }}
+            className="w-full py-2 rounded-xl bg-muted text-muted-foreground text-xs font-medium"
+          >
+            Clear AI Adjustment
+          </button>
+        )}
       </div>
     </div>
   );
@@ -384,6 +427,8 @@ export default function Settings() {
         startWeight: profile?.program?.startWeight ?? weightKg,
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
+      tdeeBase: tdee.targetCalories,
+      aiCalorieAdjustment: 0, // Reset AI adjustment when TDEE is recalculated
       targetCalories: tdee.targetCalories,
       targetProtein: tdee.protein,
       targetCarbs: tdee.carbs,
@@ -832,6 +877,16 @@ export default function Settings() {
                 </div>
               </div>
             </div>
+
+            {(profile?.aiCalorieAdjustment ?? 0) !== 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <Brain className="w-4 h-4 text-amber-500 shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  AI adjustment active: {(profile?.aiCalorieAdjustment ?? 0) > 0 ? "+" : ""}{profile?.aiCalorieAdjustment} cal.
+                  Saving will reset to TDEE base.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
