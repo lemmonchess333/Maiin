@@ -81,6 +81,9 @@ export default function Settings() {
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
   const [age, setAge] = useState(25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
+  const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
+    (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
+  );
 
   const tdee = useMemo(() => {
     const goal = (profile?.program?.goal ?? "recomp") as FitnessGoal;
@@ -95,6 +98,11 @@ export default function Settings() {
       heightCm,
       weeklyWorkoutsTarget: workoutsTarget,
       weeklyMealsTarget: mealsTarget,
+      program: {
+        goal: trainingPhase,
+        startWeight: profile?.program?.startWeight ?? weightKg,
+        currentPhase: profile?.program?.currentPhase ?? "base",
+      },
     });
     setSaving(false);
     setSaved(true);
@@ -446,6 +454,56 @@ export default function Settings() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Training Phase */}
+      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <Zap className="w-5 h-5 text-primary" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Training Phase</p>
+            <p className="text-xs text-muted-foreground">
+              Adjusts macro targets and performance insights
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { value: "lean bulk" as const, label: "Lean Bulk", desc: "Muscle gain", color: "#22c55e" },
+            { value: "cut" as const, label: "Cut", desc: "Fat loss", color: "#ef4444" },
+            { value: "recomp" as const, label: "Recomp", desc: "Body recomp", color: "#a855f7" },
+          ]).map((phase) => (
+            <button
+              key={phase.value}
+              onClick={() => setTrainingPhase(phase.value)}
+              className={cn(
+                "p-3 rounded-xl border text-center transition-all",
+                trainingPhase === phase.value
+                  ? "border-primary bg-primary/10"
+                  : "border-border/50 bg-muted/30 hover:border-border"
+              )}
+            >
+              <div
+                className="w-2 h-2 rounded-full mx-auto mb-2"
+                style={{ backgroundColor: phase.color }}
+              />
+              <p className={cn(
+                "text-xs font-medium",
+                trainingPhase === phase.value ? "text-primary" : "text-foreground"
+              )}>
+                {phase.label}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {phase.desc}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        <p className="text-[10px] text-muted-foreground text-center">
+          Changes apply when you tap Save Changes below
+        </p>
       </div>
 
       {/* Save */}
