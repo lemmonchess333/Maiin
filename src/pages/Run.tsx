@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
@@ -54,6 +54,7 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
 
 export default function Run() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
@@ -198,7 +199,11 @@ export default function Run() {
         <RunSetupModal
           onStart={handleStart}
           onCancel={() => navigate(-1)}
-          savedPreferences={{ autoPause: true, audioCues: (profile as any)?.audioCues !== false }}
+          savedPreferences={{
+            autoPause: true,
+            audioCues: (profile as any)?.audioCues !== false,
+            ...(searchParams.get('type') ? { activityType: searchParams.get('type') as RunConfig['activityType'] } : {}),
+          }}
         />
       )}
 

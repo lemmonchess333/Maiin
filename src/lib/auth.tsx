@@ -62,6 +62,20 @@ export interface UserProfile {
   autoPostRuns?: boolean;
   autoPostWorkouts?: boolean;
   audioCues?: boolean;
+  // Run scheduling
+  runMode?: "freeform" | "structured" | "race_prep";
+  weeklyRunDaysTarget?: number;
+  raceGoal?: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
+  // Macro targets (legacy)
+  macroTargets?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
 }
 
 /* ================================

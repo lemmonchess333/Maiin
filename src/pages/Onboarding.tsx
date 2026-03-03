@@ -13,6 +13,9 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
+  Footprints,
+  Target,
+  Calendar,
 } from "lucide-react";
 
 const ATHLETE_TYPES = [
@@ -28,6 +31,19 @@ const GOALS = [
   { id: "recomp", label: "Recomp" },
 ];
 
+const RUN_MODES = [
+  { id: "freeform", label: "Freeform", icon: Footprints, desc: "Log runs whenever you want" },
+  { id: "structured", label: "Structured", icon: Calendar, desc: "Auto-scheduled run days each week" },
+  { id: "race_prep", label: "Race Prep", icon: Target, desc: "Periodized plan for a race goal" },
+] as const;
+
+const RACE_DISTANCES = [
+  { id: "5k", label: "5K" },
+  { id: "10k", label: "10K" },
+  { id: "half", label: "Half Marathon" },
+  { id: "marathon", label: "Marathon" },
+] as const;
+
 export default function Onboarding() {
   const { user } = useAuth();
 
@@ -40,6 +56,10 @@ export default function Onboarding() {
   const [heightCm, setHeightCm] = useState(170);
   const [workoutsTarget] = useState(4);
   const [mealsTarget] = useState(10);
+  const [runMode, setRunMode] = useState<"freeform" | "structured" | "race_prep">("freeform");
+  const [weeklyRunDays, setWeeklyRunDays] = useState(3);
+  const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
+  const [raceTargetDate, setRaceTargetDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   const tdee = useMemo(
@@ -51,41 +71,49 @@ export default function Onboarding() {
     { title: "What's your sport?", subtitle: "Choose your primary activity" },
     { title: "About you", subtitle: "We'll personalize your experience" },
     { title: "Set your goals", subtitle: "Define your training focus" },
+    { title: "Running plan", subtitle: "How do you want to run?" },
   ];
+
+  const lastStep = steps.length - 1;
 
   const handleFinish = async () => {
     if (!user) return;
 
     setSaving(true);
 
-    await setDoc(
-      doc(db, "users", user.uid),
-      {
-        displayName: name,
-        athleteType,
-        age,
-        weightKg,
-        heightCm,
-        weeklyWorkoutsTarget: workoutsTarget,
-        weeklyMealsTarget: mealsTarget,
-        onboardingComplete: true,
+    const data: Record<string, unknown> = {
+      displayName: name,
+      athleteType,
+      age,
+      weightKg,
+      heightCm,
+      weeklyWorkoutsTarget: workoutsTarget,
+      weeklyMealsTarget: mealsTarget,
+      onboardingComplete: true,
+      runMode,
 
-        // Derived macro targets from setup
-        macroTargets: {
-          calories: tdee.targetCalories,
-          protein: tdee.protein,
-          carbs: tdee.carbs,
-          fat: tdee.fat,
-        },
-
-        program: {
-          goal: selectedGoal,
-          startWeight: Number(weightKg),
-          currentPhase: "base",
-        },
+      macroTargets: {
+        calories: tdee.targetCalories,
+        protein: tdee.protein,
+        carbs: tdee.carbs,
+        fat: tdee.fat,
       },
-      { merge: true }
-    );
+
+      program: {
+        goal: selectedGoal,
+        startWeight: Number(weightKg),
+        currentPhase: "base",
+      },
+    };
+
+    if (runMode !== "freeform") {
+      data.weeklyRunDaysTarget = weeklyRunDays;
+    }
+    if (runMode === "race_prep" && raceTargetDate) {
+      data.raceGoal = { distance: raceDistance, targetDate: raceTargetDate };
+    }
+
+    await setDoc(doc(db, "users", user.uid), data, { merge: true });
 
     setSaving(false);
   };
@@ -233,6 +261,99 @@ export default function Onboarding() {
           </div>
         )}
 
+        {/* Step 3: Running plan */}
+        {step === 3 && (
+          <div className="space-y-4">
+            {RUN_MODES.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => setRunMode(mode.id)}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-4 rounded-xl border transition-all",
+                    runMode === mode.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border/50 bg-card hover:border-border"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-foreground">{mode.label}</p>
+                    <p className="text-xs text-muted-foreground">{mode.desc}</p>
+                  </div>
+                  {runMode === mode.id && (
+                    <Check className="w-5 h-5 text-primary" />
+                  )}
+                </button>
+              );
+            })}
+
+            {runMode !== "freeform" && (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Run days per week
+                </label>
+                <div className="flex gap-2">
+                  {[2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setWeeklyRunDays(n)}
+                      className={cn(
+                        "flex-1 py-2 rounded-lg border text-sm",
+                        weeklyRunDays === n
+                          ? "bg-primary text-white border-primary"
+                          : "bg-muted border-border/50"
+                      )}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {runMode === "race_prep" && (
+              <>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Race distance
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {RACE_DISTANCES.map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => setRaceDistance(d.id)}
+                        className={cn(
+                          "py-2 rounded-lg border text-sm",
+                          raceDistance === d.id
+                            ? "bg-primary text-white border-primary"
+                            : "bg-muted border-border/50"
+                        )}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Race date
+                  </label>
+                  <input
+                    type="date"
+                    value={raceTargetDate}
+                    onChange={(e) => setRaceTargetDate(e.target.value)}
+                    min={new Date(Date.now() + 21 * 86400000).toISOString().split("T")[0]}
+                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex gap-3">
           {step > 0 && (
@@ -244,7 +365,7 @@ export default function Onboarding() {
             </button>
           )}
 
-          {step < 2 ? (
+          {step < lastStep ? (
             <button
               onClick={() => setStep(step + 1)}
               className="flex-1 py-3 rounded-xl bg-primary text-white"

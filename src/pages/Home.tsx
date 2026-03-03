@@ -99,6 +99,7 @@ function WeekStrip({
 
 function NextActionCard({
   nextWorkout,
+  nextRun,
   navigate,
 }: {
   nextWorkout: {
@@ -106,51 +107,91 @@ function NextActionCard({
     dayType: string;
     exercises: { name: string }[];
   } | null;
+  nextRun: { type: string; templateId: string } | null;
   navigate: (path: string) => void;
 }) {
   if (nextWorkout) {
     return (
-      <motion.button
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={() => navigate("/program")}
-        className="w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
-        style={{
-          background:
-            "linear-gradient(135deg, " +
-            THEME.lifting +
-            "12 0%, transparent 60%)",
-          borderColor: THEME.lifting + "30",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: THEME.lifting + "20" }}
+      <div className="space-y-2">
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => navigate("/program")}
+          className="w-full p-5 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
+          style={{
+            background:
+              "linear-gradient(135deg, " +
+              THEME.lifting +
+              "12 0%, transparent 60%)",
+            borderColor: THEME.lifting + "30",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: THEME.lifting + "20" }}
+            >
+              <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                Up next
+              </p>
+              <p className="text-sm font-semibold text-foreground truncate">
+                {nextWorkout.dayName}
+              </p>
+              <p className="text-[11px] text-muted-foreground capitalize">
+                {nextWorkout.dayType} &middot; {nextWorkout.exercises.length}{" "}
+                exercises
+              </p>
+            </div>
+            <div
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
+              style={{ backgroundColor: THEME.lifting, color: "#fff" }}
+            >
+              <Play className="w-3.5 h-3.5" />
+              Start
+            </div>
+          </div>
+        </motion.button>
+        {nextRun && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            onClick={() => navigate("/run?type=" + nextRun.type)}
+            className="w-full p-4 rounded-2xl border border-border/50 text-left transition-transform active:scale-[0.99]"
+            style={{
+              background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)",
+              borderColor: THEME.running + "30",
+            }}
           >
-            <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-              Up next
-            </p>
-            <p className="text-sm font-semibold text-foreground truncate">
-              {nextWorkout.dayName}
-            </p>
-            <p className="text-[11px] text-muted-foreground capitalize">
-              {nextWorkout.dayType} &middot; {nextWorkout.exercises.length}{" "}
-              exercises
-            </p>
-          </div>
-          <div
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold"
-            style={{ backgroundColor: THEME.lifting, color: "#fff" }}
-          >
-            <Play className="w-3.5 h-3.5" />
-            Start
-          </div>
-        </div>
-      </motion.button>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: THEME.running + "20" }}
+              >
+                <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                  Scheduled run
+                </p>
+                <p className="text-sm font-semibold text-foreground capitalize">
+                  {nextRun.type} run
+                </p>
+              </div>
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
+                style={{ backgroundColor: THEME.running, color: "#fff" }}
+              >
+                <Play className="w-3.5 h-3.5" />
+                Go
+              </div>
+            </div>
+          </motion.button>
+        )}
+      </div>
     );
   }
 
@@ -175,7 +216,7 @@ function NextActionCard({
         </span>
       </Link>
       <Link
-        to="/run"
+        to={nextRun ? "/run?type=" + nextRun.type : "/run"}
         className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 transition-transform active:scale-[0.98]"
       >
         <div
@@ -184,7 +225,9 @@ function NextActionCard({
         >
           <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
         </div>
-        <span className="text-xs font-medium text-foreground">Start Run</span>
+        <span className="text-xs font-medium text-foreground">
+          {nextRun ? nextRun.type.charAt(0).toUpperCase() + nextRun.type.slice(1) + " Run" : "Start Run"}
+        </span>
       </Link>
       <Link
         to="/log"
@@ -432,6 +475,14 @@ export default function Home() {
   const nextWorkout =
     programState?.workouts.find((d) => !d.completed) || null;
 
+  const todayRunDay = useMemo(() => {
+    if (!programState?.runDays) return null;
+    const todayIdx = new Date().getDay(); // 0=Sun, 6=Sat
+    return programState.runDays.find(
+      (rd) => rd.dayIndex === todayIdx && !rd.completed
+    ) || null;
+  }, [programState?.runDays]);
+
   const snapshotData = useMemo(() => {
     if (perfDoc) {
       return {
@@ -543,7 +594,7 @@ export default function Home() {
         )}
       </div>
 
-      <NextActionCard nextWorkout={nextWorkout} navigate={navigate} />
+      <NextActionCard nextWorkout={nextWorkout} nextRun={todayRunDay} navigate={navigate} />
 
       <WeeklySnapshotCompact
         liftSessions={snapshotData.liftSessions}
