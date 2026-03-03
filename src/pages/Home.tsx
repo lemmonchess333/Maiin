@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { usePerformance } from "@/hooks/usePerformance";
+import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
@@ -138,7 +138,7 @@ function NextActionCard({
               {nextWorkout.dayName}
             </p>
             <p className="text-[11px] text-muted-foreground capitalize">
-              {nextWorkout.dayType} · {nextWorkout.exercises.length}{" "}
+              {nextWorkout.dayType} &middot; {nextWorkout.exercises.length}{" "}
               exercises
             </p>
           </div>
@@ -345,7 +345,7 @@ function TodayIntake({
       <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 transition-transform active:scale-[0.99]">
         <div className="flex items-center justify-between">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Today's Intake
+            Today&apos;s Intake
           </p>
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
         </div>
@@ -383,7 +383,7 @@ function TodayIntake({
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts } = useWorkouts();
-  const { current: perfDoc } = usePerformance();
+  const { currentWeek: perfDoc } = usePerformanceWeeks();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -471,7 +471,7 @@ export default function Home() {
   if (!profile) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Loading your profile&hellip;
+        Loading your profile...
       </div>
     );
   }

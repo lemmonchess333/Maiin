@@ -1,48 +1,52 @@
-import { useState, useEffect } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 
-interface PerformanceDoc {
-  aggregates: {
-    liftSessions: number;
-    runSessions: number;
-    liftTonnage: number;
-    runKm: number;
-  };
-  adherenceScore: number | null;
-  insight?: {
-    title: string;
-    bullets: string[];
-  };
-  loadBand: "overreach" | "high" | "moderate" | "low";
+function sortAsc(a: PerformanceWeekDoc, b: PerformanceWeekDoc) {
+  return a.weekKey.localeCompare(b.weekKey);
 }
 
-export function usePerformance() {
+export function usePerformanceWeeks(maxWeeks: number = 12) {
   const { user } = useAuth();
-  const [current, setCurrent] = useState<PerformanceDoc | null>(null);
+  const [weeks, setWeeks] = useState<PerformanceWeekDoc[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.uid) {
-      setCurrent(null);
+    if (!user) {
+      setWeeks([]);
+      setLoading(false);
       return;
     }
 
-    const ref = doc(db, "users", user.uid, "performance", "current");
+    const ref = collection(db, "users", user.uid, "performance");
+    const q = query(ref, orderBy("weekKey", "desc"), limit(maxWeeks));
+
     const unsub = onSnapshot(
-      ref,
+      q,
       (snap) => {
-        if (snap.exists()) {
-          setCurrent(snap.data() as PerformanceDoc);
-        } else {
-          setCurrent(null);
-        }
+        const docs = snap.docs
+          .map((d) => {
+            const data = d.data() as any;
+            const weekKey: string = data.weekKey || d.id;
+            return { weekKey, ...data } as PerformanceWeekDoc;
+          })
+          .sort(sortAsc);
+
+        setWeeks(docs);
+        setLoading(false);
       },
-      () => setCurrent(null)
+      () => {
+        setWeeks([]);
+        setLoading(false);
+      }
     );
 
     return unsub;
-  }, [user?.uid]);
+  }, [user, maxWeeks]);
 
-  return { current };
+  const currentWeek = useMemo(() => (weeks.length ? weeks[weeks.length - 1] : null), [weeks]);
+
+  return { weeks, currentWeek, loading };
 }
