@@ -31,6 +31,10 @@ import {
   Users,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
+import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
+import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
+import { THEME } from "@/lib/theme";
+import { Dumbbell, Footprints } from "lucide-react";
 
 const PLANS = [
   {
@@ -84,11 +88,42 @@ export default function Settings() {
   const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
     (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
   );
+  const [runsTarget, setRunsTarget] = useState(profile?.weeklyRunsTarget || 2);
+  const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
+    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
+  );
+
+  const schedule = useMemo(() => {
+    if (customSchedule) return customSchedule;
+    return generateSchedule(workoutsTarget, runsTarget);
+  }, [workoutsTarget, runsTarget, customSchedule]);
+
+  const handleWorkoutsChange = (val: number) => {
+    setWorkoutsTarget(val);
+    setCustomSchedule(null);
+  };
+
+  const handleRunsChange = (val: number) => {
+    setRunsTarget(val);
+    setCustomSchedule(null);
+  };
+
+  const handleDayToggle = (day: number) => {
+    const current = schedule.find((s) => s.day === day);
+    if (!current) return;
+    const cycle: DayType[] = ["lift", "run", "rest"];
+    const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
+    const updated = schedule.map((s) =>
+      s.day === day ? { ...s, type: cycle[nextIdx] } : s
+    );
+    setCustomSchedule(updated);
+    setWorkoutsTarget(updated.filter((s) => s.type === "lift").length);
+    setRunsTarget(updated.filter((s) => s.type === "run").length);
+  };
 
   const tdee = useMemo(() => {
-    const goal = (profile?.program?.goal ?? "recomp") as FitnessGoal;
-    return calculateTDEE(weightKg, heightCm, age, activityLevel, goal);
-  }, [weightKg, heightCm, age, activityLevel, profile?.program?.goal]);
+    return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase);
+  }, [weightKg, heightCm, age, activityLevel, trainingPhase]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -97,12 +132,18 @@ export default function Settings() {
       weightKg,
       heightCm,
       weeklyWorkoutsTarget: workoutsTarget,
+      weeklyRunsTarget: runsTarget,
       weeklyMealsTarget: mealsTarget,
+      weekSchedule: schedule,
       program: {
         goal: trainingPhase,
         startWeight: profile?.program?.startWeight ?? weightKg,
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
+      targetCalories: tdee.targetCalories,
+      targetProtein: tdee.protein,
+      targetCarbs: tdee.carbs,
+      targetFat: tdee.fat,
     });
     setSaving(false);
     setSaved(true);
@@ -332,18 +373,37 @@ export default function Settings() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Target className="w-5 h-5" />
-          Weekly Goals
+          Weekly Schedule
         </h2>
         <div>
-          <label className="text-sm text-muted-foreground">
-            Workouts per week ({workoutsTarget})
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm text-muted-foreground flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+              Lift days ({workoutsTarget})
+            </label>
+          </div>
           <input
             type="range"
             min="0"
-            max="7"
+            max={7 - runsTarget}
             value={workoutsTarget}
-            onChange={(e) => setWorkoutsTarget(Number(e.target.value))}
+            onChange={(e) => handleWorkoutsChange(Number(e.target.value))}
+            className="w-full accent-primary"
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm text-muted-foreground flex items-center gap-2">
+              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+              Run days ({runsTarget})
+            </label>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max={7 - workoutsTarget}
+            value={runsTarget}
+            onChange={(e) => handleRunsChange(Number(e.target.value))}
             className="w-full accent-primary"
           />
         </div>
@@ -359,6 +419,57 @@ export default function Settings() {
             onChange={(e) => setMealsTarget(Number(e.target.value))}
             className="w-full accent-primary"
           />
+        </div>
+
+        {/* Visual schedule editor */}
+        <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+          <p className="text-xs font-medium text-foreground">Your week</p>
+          <div className="grid grid-cols-7 gap-1.5">
+            {schedule
+              .slice()
+              .sort((a, b) => a.day - b.day)
+              .map((s) => {
+                const color =
+                  s.type === "lift"
+                    ? THEME.lifting
+                    : s.type === "run"
+                      ? THEME.running
+                      : undefined;
+                return (
+                  <button
+                    key={s.day}
+                    onClick={() => handleDayToggle(s.day)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all text-center",
+                      s.type !== "rest"
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-border/50 bg-muted/30"
+                    )}
+                  >
+                    <span className="text-[10px] text-muted-foreground">
+                      {DAY_LABELS[s.day].charAt(0)}
+                    </span>
+                    {color ? (
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                    ) : (
+                      <div className="w-3 h-3 rounded-full bg-muted" />
+                    )}
+                    <span
+                      className="text-[9px] font-medium"
+                      style={{ color: color || "var(--muted-foreground)" }}
+                    >
+                      {s.type === "lift" ? "Lift" : s.type === "run" ? "Run" : "Rest"}
+                    </span>
+                  </button>
+                );
+              })}
+          </div>
+          <p className="text-[10px] text-muted-foreground text-center">
+            Tap a day to change it &middot; {7 - workoutsTarget - runsTarget} rest day{7 - workoutsTarget - runsTarget !== 1 ? "s" : ""}
+          </p>
         </div>
       </div>
 
@@ -504,6 +615,38 @@ export default function Settings() {
         <p className="text-[10px] text-muted-foreground text-center">
           Changes apply when you tap Save Changes below
         </p>
+
+        <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Daily targets for {trainingPhase}
+          </p>
+          <div className="flex items-center justify-between">
+            <div className="text-center flex-1">
+              <p className="text-sm font-bold text-foreground">{tdee.targetCalories}</p>
+              <p className="text-[9px] text-muted-foreground">cal</p>
+            </div>
+            <div className="w-px h-6 bg-border/50" />
+            <div className="text-center flex-1">
+              <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
+              <p className="text-[9px] text-muted-foreground">protein</p>
+            </div>
+            <div className="w-px h-6 bg-border/50" />
+            <div className="text-center flex-1">
+              <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
+              <p className="text-[9px] text-muted-foreground">carbs</p>
+            </div>
+            <div className="w-px h-6 bg-border/50" />
+            <div className="text-center flex-1">
+              <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
+              <p className="text-[9px] text-muted-foreground">fat</p>
+            </div>
+          </div>
+          {tdee.deficit !== 0 && (
+            <p className="text-[10px] text-muted-foreground text-center">
+              {tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal vs maintenance
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Save */}
