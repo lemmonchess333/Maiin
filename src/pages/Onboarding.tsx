@@ -189,6 +189,8 @@ export default function Onboarding() {
       weekSchedule: schedule,
       onboardingComplete: true,
       runMode,
+      tdeeBase: tdee.targetCalories,
+      aiCalorieAdjustment: 0,
       targetCalories: tdee.targetCalories,
       targetProtein: tdee.protein,
       targetCarbs: tdee.carbs,
