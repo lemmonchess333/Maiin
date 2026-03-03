@@ -232,123 +232,12 @@ function AIAdjustmentsSection() {
   );
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function RunScheduleSection() {
-  const { profile, updateProfile } = useAuth();
-  const { programState, overrideRunDay } = useProgram();
-
-  const runMode = profile?.runMode ?? "freeform";
-  const runDays = programState?.runDays ?? [];
-  const runPlan = programState?.runPlan;
-
-  return (
-    <div className="space-y-3">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <Footprints className="w-5 h-5" />
-        Run Schedule
-      </h2>
-
-      {/* Mode selector */}
-      <div className="flex gap-2">
-        {(["freeform", "structured", "race_prep"] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => updateProfile({ runMode: mode })}
-            className={cn(
-              "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-              runMode === mode
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            )}
-          >
-            {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {runMode !== "freeform" && (
-        <>
-          {/* Run days per week */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-            <span className="text-sm text-foreground">Run days / week</span>
-            <select
-              value={profile?.weeklyRunDaysTarget ?? 3}
-              onChange={(e) => updateProfile({ weeklyRunDaysTarget: Number(e.target.value) })}
-              className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
-            >
-              {[2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Race prep details */}
-          {runMode === "race_prep" && runPlan?.raceGoal && (
-            <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
-                <span className="text-sm font-medium text-foreground">
-                  {runPlan.raceGoal.distance.toUpperCase()} &mdash; {runPlan.raceGoal.targetDate}
-                </span>
-              </div>
-              {runPlan.totalWeeks && runPlan.currentWeek != null && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {runPlan.currentWeek + 1} / {runPlan.totalWeeks}
-                      {" \u00B7 "}
-                      {getRacePhaseLabel(runPlan.currentWeek, runPlan.totalWeeks)}
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: ((runPlan.currentWeek + 1) / runPlan.totalWeeks * 100) + "%" }}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Weekly run day view */}
-          {runDays.length > 0 && (
-            <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">This week</p>
-              {runDays.map((rd) => (
-                <div key={rd.dayIndex} className="flex items-center gap-3 py-1.5">
-                  <span className="text-xs font-medium text-foreground w-8">
-                    {DAY_NAMES[rd.dayIndex]}
-                  </span>
-                  <select
-                    value={rd.userOverride || rd.templateId}
-                    onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                    className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
-                  >
-                    {RUN_TEMPLATES.map((t) => (
-                      <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
-                    ))}
-                  </select>
-                  {rd.completed && (
-                    <Check className="w-4 h-4 text-green-500 shrink-0" />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
-  const { refreshRunSchedule } = useProgram();
+  const { refreshRunSchedule, programState, overrideRunDay } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
@@ -759,6 +648,95 @@ export default function Settings() {
             Tap a day to change it &middot; {7 - workoutsTarget - runsTarget} rest day{7 - workoutsTarget - runsTarget !== 1 ? "s" : ""}
           </p>
         </div>
+
+        {/* Run mode — controls how run days get templates */}
+        {runsTarget > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-foreground flex items-center gap-2">
+              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+              Run Mode
+            </p>
+            <div className="flex gap-2">
+              {(["freeform", "structured", "race_prep"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => updateProfile({ runMode: mode })}
+                  className={cn(
+                    "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                    (profile?.runMode ?? "freeform") === mode
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {(profile?.runMode ?? "freeform") === "freeform"
+                ? "Pick any run type when you start"
+                : (profile?.runMode ?? "freeform") === "structured"
+                  ? "Auto-assigns run templates to your run days"
+                  : "Follows a race training plan"}
+            </p>
+
+            {/* Race prep details */}
+            {profile?.runMode === "race_prep" && programState?.runPlan?.raceGoal && (
+              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {programState.runPlan.raceGoal.distance.toUpperCase()} &mdash; {programState.runPlan.raceGoal.targetDate}
+                  </span>
+                </div>
+                {programState.runPlan.totalWeeks && programState.runPlan.currentWeek != null && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {programState.runPlan.currentWeek + 1} / {programState.runPlan.totalWeeks}
+                        {" \u00B7 "}
+                        {getRacePhaseLabel(programState.runPlan.currentWeek, programState.runPlan.totalWeeks)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: ((programState.runPlan.currentWeek + 1) / programState.runPlan.totalWeeks * 100) + "%" }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Template overrides per run day */}
+            {profile?.runMode && profile.runMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
+              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-1.5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
+                {(programState?.runDays ?? []).map((rd) => (
+                  <div key={rd.dayIndex} className="flex items-center gap-3 py-1">
+                    <span className="text-xs font-medium text-foreground w-8">
+                      {DAY_LABELS[rd.dayIndex]}
+                    </span>
+                    <select
+                      value={rd.userOverride || rd.templateId}
+                      onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
+                      className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
+                    >
+                      {RUN_TEMPLATES.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
+                      ))}
+                    </select>
+                    {rd.completed && (
+                      <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       </AccordionSection>
 
@@ -785,7 +763,7 @@ export default function Settings() {
       </motion.button>
 
       {/* Training Setup */}
-      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, phase, AI adjustments, run schedule">
+      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, training phase, AI adjustments">
 
       {/* TDEE Calculator */}
       <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
@@ -976,8 +954,6 @@ export default function Settings() {
       {/* AI Adjustments (Pro) */}
       <AIAdjustmentsSection />
 
-      {/* Run Schedule */}
-      <RunScheduleSection />
       </AccordionSection>
 
       {/* Preferences */}
@@ -1205,5 +1181,3 @@ export default function Settings() {
     </div>
   );
 }
-
-
