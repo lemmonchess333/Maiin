@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { usePerformance } from "@/hooks/usePerformance";
+import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
@@ -383,7 +383,7 @@ function TodayIntake({
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts } = useWorkouts();
-  const { current: perfDoc } = usePerformance();
+  const { currentWeek: perfDoc } = usePerformanceWeeks();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();

@@ -9,22 +9,21 @@ import {
   ReferenceLine,
   Tooltip,
 } from "recharts";
-import type { PerformanceDoc } from "@/lib/performanceTypes";
+import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import { THEME } from "@/lib/theme";
 
 interface Props {
-  docs: PerformanceDoc[];
+  weeks: PerformanceWeekDoc[];
 }
 
-export default function PerformanceIndexChart({ docs }: Props) {
-  // Data oldest→newest for left-to-right chart
-  const data = [...docs].reverse().map((d) => ({
+export default function PerformanceIndexChart({ weeks }: Props) {
+  const data = weeks.map((d) => ({
     week: d.weekKey,
     pi: d.performanceIndex,
-    liftLoad: d.liftLoadScore,
-    runLoad: d.runLoadScore,
-    recovery: d.recoveryScore,
-    band: d.loadBand,
+    liftLoad: d.breakdown.liftLoadScore,
+    runLoad: d.breakdown.runLoadScore,
+    recovery: d.breakdown.recoveryScore,
+    band: d.labels?.loadBand || d.loadBand,
   }));
 
   if (data.length === 0) return null;
@@ -72,7 +71,6 @@ export default function PerformanceIndexChart({ docs }: Props) {
             axisLine={false}
             tickLine={false}
             tickFormatter={(v: any) => {
-              // recharts typing can be string | number; we only expect a weekKey string
               const s = typeof v === "string" ? v : String(v ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
@@ -98,14 +96,12 @@ export default function PerformanceIndexChart({ docs }: Props) {
               color: THEME.textPrimary,
               padding: "8px 12px",
             }}
-            // Recharts passes label as ReactNode/unknown; guard it.
             labelFormatter={(label: any) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
               return `Week of ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
             }}
-            // value can be number | undefined; name can be string | number
             formatter={(value: any, name: any) => {
               const labels: Record<string, string> = {
                 pi: "PI",

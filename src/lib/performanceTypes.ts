@@ -80,6 +80,43 @@ export interface PerformanceDoc {
   baseline: Baseline;
 }
 
+/** Denormalised weekly doc shape used by usePerformanceWeeks hook */
+export interface PerformanceWeekDoc {
+  weekKey: string;
+  performanceIndex: number;
+
+  breakdown: {
+    liftLoadScore: number;
+    runLoadScore: number;
+    recoveryScore: number;
+    adherenceScore: number;
+  };
+
+  multipliers: {
+    liftProgression: number;
+    runVolume: number;
+    runPaceAdjustmentPct: number;
+  };
+
+  aggregates: WeeklyAggregates;
+
+  adherenceScore: number | null;
+  loadBand: string;
+
+  labels?: {
+    loadBand: string;
+  };
+
+  flags?: {
+    deloadRecommended: boolean;
+  };
+
+  insight?: {
+    title: string;
+    bullets: string[];
+  };
+}
+
 /** Weights for PI formula */
 export const PI_WEIGHTS = {
   load: 0.65,
