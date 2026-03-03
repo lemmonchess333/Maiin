@@ -74,10 +74,11 @@ function AIAdjustmentsSection() {
   const { isPro } = useSubscription();
   const { currentWeek } = usePerformanceWeeks();
 
-  const phase = (profile?.program?.currentPhase || "recomp") as PhaseMode;
-  const sensitivity = phaseConfig[phase]?.plateauSensitivity ?? 1;
+  const phase = (profile?.program?.goal || "recomp") as PhaseMode;
+  const config = phaseConfig[phase] || phaseConfig["recomp"];
+  const sensitivity = config.plateauSensitivity;
 
-  const avgLiftChange = currentWeek
+  const avgLiftChange = currentWeek?.breakdown?.liftLoadScore != null
     ? (currentWeek.breakdown.liftLoadScore - 50) / 50
     : 0;
   const avgWeightChange = 0;
