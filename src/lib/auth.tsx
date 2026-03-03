@@ -62,6 +62,9 @@ export interface UserProfile {
   autoPostRuns?: boolean;
   autoPostWorkouts?: boolean;
   audioCues?: boolean;
+  // Weekly schedule
+  weekSchedule?: { day: number; type: "lift" | "run" | "rest" }[];
+  weeklyRunsTarget?: number;
 }
 
 /* ================================
