@@ -65,7 +65,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             onClick={() => updateConfig({ activityType: at.type })}
             className={`p-3.5 rounded-xl border-2 text-left transition-all pressable ${
               config.activityType === at.type
-                ? 'border-purple-500 bg-purple-50 dark:bg-[#1e1b4b] shadow-[0_0_0_2px_rgba(139,92,246,0.3)]'
+                ? 'border-primary bg-primary/10 shadow-[0_0_0_2px_rgba(139,92,246,0.3)]'
                 : 'border-border bg-card hover:border-border/80'
             }`}
           >
@@ -151,7 +151,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   })
                 }
                 className={`flex-1 py-2 rounded-lg text-xs font-medium ${
-                  config.target.type === t ? 'bg-purple-500 text-white' : 'bg-muted text-muted-foreground'
+                  config.target.type === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {t === 'none' ? 'None' : t === 'distance' ? 'Distance' : t === 'time' ? 'Time' : 'Pace'}
@@ -166,7 +166,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <span className="text-sm">Auto-pause</span>
           <button
             onClick={() => updateConfig({ autoPause: !config.autoPause })}
-            className={`w-11 h-6 rounded-full transition-colors ${config.autoPause ? 'bg-purple-500' : 'bg-muted'}`}
+            className={`w-11 h-6 rounded-full transition-colors ${config.autoPause ? 'bg-primary' : 'bg-muted'}`}
           >
             <div
               className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
@@ -179,7 +179,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <span className="text-sm">Audio cues</span>
           <button
             onClick={() => updateConfig({ audioCues: !config.audioCues })}
-            className={`w-11 h-6 rounded-full transition-colors ${config.audioCues ? 'bg-purple-500' : 'bg-muted'}`}
+            className={`w-11 h-6 rounded-full transition-colors ${config.audioCues ? 'bg-primary' : 'bg-muted'}`}
           >
             <div
               className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
