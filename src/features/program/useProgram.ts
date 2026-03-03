@@ -27,7 +27,7 @@ function getLiftDayIndices(weekSchedule?: { day: number; type: string }[]): numb
 }
 
 export function useProgram() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(null);
@@ -403,10 +403,18 @@ export function useProgram() {
       };
 
       await saveProgram(newState);
+      // Sync goal to profile so Settings Training Phase stays in sync
+      await updateProfile({
+        program: {
+          goal,
+          startWeight: profile.program?.startWeight ?? profile.weightKg ?? 70,
+          currentPhase: "base",
+        },
+      });
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram],
+    [profile, programState, saveProgram, updateProfile],
   );
 
   // Refresh run schedule without resetting program (called when weekSchedule changes)
