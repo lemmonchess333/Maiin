@@ -4,6 +4,8 @@ import { collection, getDocs, query, orderBy, where, doc, updateDoc, addDoc, Tim
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { RUN_TEMPLATES, type RunTemplate } from '../lib/workoutTemplates';
+import { generateSchedule } from '../lib/scheduleUtils';
+import { useProgram } from '../features/program/useProgram';
 import WeekView from '../components/calendar/WeekView';
 
 interface TrainingSession {
@@ -19,6 +21,7 @@ interface TrainingSession {
 
 export default function TrainingCalendar() {
   var { user, profile } = useAuth();
+  var { programState } = useProgram();
   var navigate = useNavigate();
   var [sessions, setSessions] = useState<TrainingSession[]>([]);
   var [currentWeekStart, setCurrentWeekStart] = useState(function() {
@@ -110,15 +113,18 @@ export default function TrainingCalendar() {
       return session;
     });
 
-    // 5. Auto-populate scheduled sessions from weekSchedule
+    // 5. Auto-populate scheduled sessions from weekSchedule (or generated fallback)
+    var weekSched = (profile?.weekSchedule && profile.weekSchedule.length === 7)
+      ? profile.weekSchedule
+      : generateSchedule(profile?.weeklyWorkoutsTarget ?? 4, profile?.weeklyRunsTarget ?? 2);
     var scheduledFromProfile: TrainingSession[] = [];
-    if (profile?.weekSchedule && profile.weekSchedule.length === 7) {
+    if (weekSched) {
       for (var di = 0; di < 7; di++) {
         var dd = new Date(currentWeekStart);
         dd.setDate(dd.getDate() + di);
         var dateStr = dd.toISOString().split('T')[0];
         var dow = dd.getDay();
-        var sched = profile.weekSchedule.find(function(s) { return s.day === dow; });
+        var sched = weekSched.find(function(s) { return s.day === dow; });
         if (sched && sched.type !== 'rest') {
           var alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === sched!.type; }) ||
             autoWorkouts.some(function(a) { return a.date === dateStr && a.type === sched!.type; }) ||
@@ -140,7 +146,7 @@ export default function TrainingCalendar() {
 
     // 6. Combine: planned (with auto-completion) + auto-detected + schedule-generated
     setSessions([...merged, ...autoWorkouts, ...autoRuns, ...scheduledFromProfile]);
-  }, [user, weekStartStr, weekEndStr, currentWeekStart, profile?.weekSchedule]);
+  }, [user, weekStartStr, weekEndStr, currentWeekStart, profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
   useEffect(function() {
     loadSessions();
@@ -240,18 +246,22 @@ export default function TrainingCalendar() {
 
             <h4 className="text-sm font-semibold mb-2">{"\uD83C\uDFCB\uFE0F"} Lift Sessions</h4>
             <div className="grid grid-cols-2 gap-2">
-              {['Upper A', 'Lower A', 'Upper B', 'Lower B'].map(function(day) {
+              {(programState?.workouts ?? []).map(function(day) {
                 return (
                   <button
-                    key={day}
-                    onClick={function() { addSession(selectedDay!, 'lift', undefined, day); }}
+                    key={day.dayName}
+                    onClick={function() { addSession(selectedDay!, 'lift', undefined, day.dayName); }}
                     className="p-3 rounded-xl border border-border bg-card text-left pressable"
                   >
                     <span className="text-lg">{"\uD83C\uDFCB\uFE0F"}</span>
-                    <p className="text-xs font-semibold mt-1">{day}</p>
+                    <p className="text-xs font-semibold mt-1">{day.dayName}</p>
+                    <p className="text-[10px] text-muted-foreground">{day.exercises.length} exercises</p>
                   </button>
                 );
               })}
+              {(!programState?.workouts || programState.workouts.length === 0) && (
+                <p className="text-xs text-muted-foreground col-span-2">No programme set up yet</p>
+              )}
             </div>
           </div>
         </div>
