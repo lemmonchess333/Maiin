@@ -20,6 +20,12 @@ import { toast } from "sonner";
 
 const PROGRAM_DOC = "current";
 
+function getLiftDayIndices(weekSchedule?: { day: number; type: string }[]): number[] | undefined {
+  if (!weekSchedule || weekSchedule.length !== 7) return undefined;
+  const indices = weekSchedule.filter(s => s.type === "lift").map(s => s.day);
+  return indices.length > 0 ? indices : undefined;
+}
+
 export function useProgram() {
   const { user, profile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
@@ -44,7 +50,8 @@ export function useProgram() {
 
         // Hydrate run days if user has run mode but no runDays yet
         if (!normalized.runDays && profile.runMode && profile.runMode !== "freeform") {
-          const liftDays = normalized.workouts.length;
+          const liftCount = normalized.workouts.length;
+          const liftIndices = getLiftDayIndices(profile.weekSchedule);
           const runTarget = profile.weeklyRunDaysTarget ?? 3;
           let runDays: ScheduledRunDay[] = [];
           let runPlan = normalized.runPlan;
@@ -53,8 +60,9 @@ export function useProgram() {
             const plan = generateRacePlan(
               profile.raceGoal.distance,
               profile.raceGoal.targetDate,
-              liftDays,
+              liftCount,
               runTarget,
+              liftIndices,
             );
             const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
             runDays = plan.weeks[weekIdx] ?? [];
@@ -65,7 +73,7 @@ export function useProgram() {
               currentWeek: weekIdx,
             };
           } else {
-            runDays = scheduleStructuredWeek(liftDays, runTarget, normalized.weekNumber);
+            runDays = scheduleStructuredWeek(liftCount, runTarget, normalized.weekNumber, liftIndices);
             runPlan = { mode: "structured" };
           }
 
@@ -85,12 +93,14 @@ export function useProgram() {
         let runPlan: ProgramState["runPlan"];
         if (profile.runMode && profile.runMode !== "freeform") {
           const runTarget = profile.weeklyRunDaysTarget ?? 3;
+          const liftIndices = getLiftDayIndices(profile.weekSchedule);
           if (profile.runMode === "race_prep" && profile.raceGoal) {
             const plan = generateRacePlan(
               profile.raceGoal.distance,
               profile.raceGoal.targetDate,
               workouts.length,
               runTarget,
+              liftIndices,
             );
             const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
             runDays = plan.weeks[weekIdx] ?? [];
@@ -101,7 +111,7 @@ export function useProgram() {
               currentWeek: weekIdx,
             };
           } else {
-            runDays = scheduleStructuredWeek(workouts.length, runTarget, 1);
+            runDays = scheduleStructuredWeek(workouts.length, runTarget, 1, liftIndices);
             runPlan = { mode: "structured" };
           }
         }
@@ -176,7 +186,8 @@ export function useProgram() {
 
       // Refresh run days for new week
       if (profile?.runMode && profile.runMode !== "freeform") {
-        const liftDays = advanced.workouts.length;
+        const liftCount = advanced.workouts.length;
+        const liftIndices = getLiftDayIndices(profile.weekSchedule);
         const runTarget = profile.weeklyRunDaysTarget ?? 3;
 
         if (profile.runMode === "race_prep" && profile.raceGoal && advanced.runPlan?.totalWeeks) {
@@ -184,13 +195,14 @@ export function useProgram() {
           const plan = generateRacePlan(
             profile.raceGoal.distance,
             profile.raceGoal.targetDate,
-            liftDays,
+            liftCount,
             runTarget,
+            liftIndices,
           );
           advanced.runDays = plan.weeks[weekIdx] ?? [];
           advanced.runPlan = { ...advanced.runPlan, currentWeek: weekIdx };
         } else {
-          advanced.runDays = scheduleStructuredWeek(liftDays, runTarget, advanced.weekNumber);
+          advanced.runDays = scheduleStructuredWeek(liftCount, runTarget, advanced.weekNumber, liftIndices);
         }
       }
 
@@ -353,12 +365,14 @@ export function useProgram() {
       let runPlan: ProgramState["runPlan"];
       if (profile.runMode && profile.runMode !== "freeform") {
         const runTarget = profile.weeklyRunDaysTarget ?? 3;
+        const liftIndices = getLiftDayIndices(profile.weekSchedule);
         if (profile.runMode === "race_prep" && profile.raceGoal) {
           const plan = generateRacePlan(
             profile.raceGoal.distance,
             profile.raceGoal.targetDate,
             workouts.length,
             runTarget,
+            liftIndices,
           );
           const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
           runDays = plan.weeks[weekIdx] ?? [];
@@ -369,7 +383,7 @@ export function useProgram() {
             currentWeek: weekIdx,
           };
         } else {
-          runDays = scheduleStructuredWeek(workouts.length, runTarget, 1);
+          runDays = scheduleStructuredWeek(workouts.length, runTarget, 1, liftIndices);
           runPlan = { mode: "structured" };
         }
       }
@@ -393,6 +407,44 @@ export function useProgram() {
       toast.success("Program regenerated");
     },
     [profile, programState, saveProgram],
+  );
+
+  // Refresh run schedule without resetting program (called when weekSchedule changes)
+  const refreshRunSchedule = useCallback(
+    async () => {
+      if (!programState || !profile) return;
+      if (!profile.runMode || profile.runMode === "freeform") return;
+
+      const liftIndices = getLiftDayIndices(profile.weekSchedule);
+      const liftCount = liftIndices?.length ?? programState.workouts.length;
+      const runTarget = profile.weeklyRunDaysTarget ?? 3;
+      let runDays: ScheduledRunDay[];
+      let runPlan = programState.runPlan;
+
+      if (profile.runMode === "race_prep" && profile.raceGoal) {
+        const plan = generateRacePlan(
+          profile.raceGoal.distance,
+          profile.raceGoal.targetDate,
+          liftCount,
+          runTarget,
+          liftIndices,
+        );
+        const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
+        runDays = plan.weeks[weekIdx] ?? [];
+        runPlan = {
+          mode: "race_prep",
+          raceGoal: profile.raceGoal,
+          totalWeeks: plan.totalWeeks,
+          currentWeek: weekIdx,
+        };
+      } else {
+        runDays = scheduleStructuredWeek(liftCount, runTarget, programState.weekNumber, liftIndices);
+        runPlan = { mode: "structured" };
+      }
+
+      await saveProgram({ ...programState, runDays, runPlan });
+    },
+    [programState, profile, saveProgram],
   );
 
   // Week navigation
@@ -425,6 +477,7 @@ export function useProgram() {
     saveProgram,
     completeRunDay,
     overrideRunDay,
+    refreshRunSchedule,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

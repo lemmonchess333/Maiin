@@ -44,6 +44,7 @@ import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
 import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { THEME } from "@/lib/theme";
+import AccordionSection from "@/components/AccordionSection";
 
 const PLANS = [
   {
@@ -84,11 +85,13 @@ function AIAdjustmentsSection() {
   const avgWeightChange = 0;
 
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, sensitivity);
+  const currentTDEE = profile?.targetCalories || 2200;
   const macros = calculateAdaptiveMacros(
     profile?.weightKg || 70,
     avgLiftChange,
     avgWeightChange,
-    phase
+    phase,
+    currentTDEE
   );
 
   const statusColors: Record<string, string> = {
@@ -143,17 +146,20 @@ function AIAdjustmentsSection() {
         {plateau.calorieAdjust !== 0 && (
           <button
             onClick={async () => {
-              const current = profile?.targetCalories || profile?.macroTargets?.calories || 2200;
-              const adjusted = current + plateau.calorieAdjust;
-              await updateProfile({ targetCalories: adjusted });
+              await updateProfile({
+                targetCalories: macros.calories,
+                targetProtein: macros.protein,
+                targetCarbs: macros.carbs,
+                targetFat: macros.fat,
+              });
               toast.success(
-                `Calories ${plateau.calorieAdjust > 0 ? "increased" : "decreased"} to ${adjusted}`,
-                { description: plateau.macroNote }
+                `Targets updated to ${macros.calories} cal`,
+                { description: `${macros.protein}g protein \u00B7 ${macros.carbs}g carbs \u00B7 ${macros.fat}g fat` }
               );
             }}
             className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
           >
-            Apply: {plateau.calorieAdjust > 0 ? "+" : ""}{plateau.calorieAdjust} cal
+            Apply AI Targets
           </button>
         )}
       </div>
@@ -299,6 +305,7 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
+  const { refreshRunSchedule } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
@@ -318,8 +325,8 @@ export default function Settings() {
   const [autoPostRuns, setAutoPostRuns] = useState(profile?.autoPostRuns ?? true);
   const [autoPostWorkouts, setAutoPostWorkouts] = useState(profile?.autoPostWorkouts ?? false);
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
-  const [age, setAge] = useState(25);
-  const [activityLevel, setActivityLevel] = useState<ActivityLevel>("moderate");
+  const [age, setAge] = useState(profile?.age ?? 25);
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>((profile?.activityLevel as ActivityLevel) ?? "moderate");
   const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
     (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
   );
@@ -366,6 +373,8 @@ export default function Settings() {
       displayName: name,
       weightKg,
       heightCm,
+      age,
+      activityLevel,
       weeklyWorkoutsTarget: workoutsTarget,
       weeklyRunsTarget: runsTarget,
       weeklyMealsTarget: mealsTarget,
@@ -380,6 +389,10 @@ export default function Settings() {
       targetCarbs: tdee.carbs,
       targetFat: tdee.fat,
     });
+    // Refresh run schedule if user is in structured/race_prep mode
+    if (profile?.runMode && profile.runMode !== "freeform") {
+      await refreshRunSchedule();
+    }
     setSaving(false);
     setSaved(true);
     toast.success("Settings saved!");
@@ -569,12 +582,8 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Profile section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <User className="w-5 h-5" />
-          Profile
-        </h2>
+      {/* Profile & Goals */}
+      <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile & Goals" subtitle="Name, body stats, weekly schedule" defaultOpen>
         <input
           type="text"
           value={name}
@@ -602,14 +611,13 @@ export default function Settings() {
             />
           </div>
         </div>
-      </div>
 
-      {/* Goals */}
+      {/* Weekly Schedule */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Target className="w-5 h-5" />
+        <p className="text-sm font-medium text-foreground flex items-center gap-2">
+          <Target className="w-4 h-4" />
           Weekly Schedule
-        </h2>
+        </p>
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -707,6 +715,10 @@ export default function Settings() {
           </p>
         </div>
       </div>
+      </AccordionSection>
+
+      {/* Training Setup */}
+      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, phase, AI adjustments, run schedule">
 
       {/* TDEE Calculator */}
       <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
@@ -911,13 +923,12 @@ export default function Settings() {
 
       {/* Run Schedule */}
       <RunScheduleSection />
+      </AccordionSection>
 
-      {/* Workout Preferences */}
+      {/* Preferences */}
+      <AccordionSection icon={<Timer className="w-5 h-5 text-primary" />} title="Preferences" subtitle="Rest timer, units, dark mode">
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Timer className="w-5 h-5" />
-          Workout Preferences
-        </h2>
+        <p className="text-sm font-medium text-foreground">Workout Preferences</p>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
@@ -958,13 +969,55 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Social & Privacy */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          Social & Privacy
-        </h2>
+      <p className="text-sm font-medium text-foreground mt-2">Units & Appearance</p>
+      <div className="space-y-2">
+        <button
+          onClick={() => toggleUnit("preferredWeightUnit", profile.preferredWeightUnit)}
+          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Weight className="w-5 h-5" />
+            <span>Weight Unit</span>
+          </div>
+          <span className="font-medium">
+            {profile.preferredWeightUnit.toUpperCase()}
+          </span>
+        </button>
 
+        <button
+          onClick={() => toggleUnit("preferredHeightUnit", profile.preferredHeightUnit)}
+          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Ruler className="w-5 h-5" />
+            <span>Height Unit</span>
+          </div>
+          <span className="font-medium">
+            {profile.preferredHeightUnit.toUpperCase()}
+          </span>
+        </button>
+
+        <button
+          onClick={toggleDark}
+          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            {profile.darkMode ? (
+              <Moon className="w-5 h-5" />
+            ) : (
+              <Sun className="w-5 h-5" />
+            )}
+            <span>Dark Mode</span>
+          </div>
+          <span className="font-medium">
+            {profile.darkMode ? "ON" : "OFF"}
+          </span>
+        </button>
+      </div>
+      </AccordionSection>
+
+      {/* Social & Privacy */}
+      <AccordionSection icon={<Users className="w-5 h-5 text-primary" />} title="Social & Privacy" subtitle="Visibility, auto-post, audio cues">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Default visibility</p>
@@ -1035,94 +1088,42 @@ export default function Settings() {
             <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", audioCues ? "translate-x-5" : "translate-x-1")} />
           </button>
         </div>
-      </div>
+      </AccordionSection>
 
-      {/* Export Data */}
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Download className="w-5 h-5" />
-          Export Data
-        </h2>
+      {/* Data & Account */}
+      <AccordionSection icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, privacy, sign out">
+        <div className="space-y-2">
+          {[
+            { label: "Export Workouts (CSV)", key: "workouts" },
+            { label: "Export Meals (CSV)", key: "meals" },
+            { label: "Export Bodyweight (CSV)", key: "bodyweight" },
+          ].map(({ label, key }) => (
+            <button
+              key={key}
+              disabled={exporting !== null}
+              onClick={async () => {
+                if (!user) return;
+                setExporting(key);
+                try {
+                  let csv: string;
+                  if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
+                  else if (key === "meals") csv = await exportMealsCSV(user.uid);
+                  else csv = await exportBodyweightCSV(user.uid);
+                  downloadCSV(csv, `maiin-${key}-${new Date().toISOString().split("T")[0]}.csv`);
+                  toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
+                } catch (err) {
+                  toast.error("Export failed");
+                  console.error(err);
+                }
+                setExporting(null);
+              }}
+              className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {exporting === key ? "Exporting..." : label}
+            </button>
+          ))}
+        </div>
 
-        {[
-          { label: "Export Workouts (CSV)", key: "workouts" },
-          { label: "Export Meals (CSV)", key: "meals" },
-          { label: "Export Bodyweight (CSV)", key: "bodyweight" },
-        ].map(({ label, key }) => (
-          <button
-            key={key}
-            disabled={exporting !== null}
-            onClick={async () => {
-              if (!user) return;
-              setExporting(key);
-              try {
-                let csv: string;
-                if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
-                else if (key === "meals") csv = await exportMealsCSV(user.uid);
-                else csv = await exportBodyweightCSV(user.uid);
-                downloadCSV(csv, `maiin-${key}-${new Date().toISOString().split("T")[0]}.csv`);
-                toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
-              } catch (err) {
-                toast.error("Export failed");
-                console.error(err);
-              }
-              setExporting(null);
-            }}
-            className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            {exporting === key ? "Exporting..." : label}
-          </button>
-        ))}
-      </div>
-
-      {/* Preferences */}
-      <div className="space-y-2">
-        <button
-          onClick={() => toggleUnit("preferredWeightUnit", profile.preferredWeightUnit)}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Weight className="w-5 h-5" />
-            <span>Weight Unit</span>
-          </div>
-          <span className="font-medium">
-            {profile.preferredWeightUnit.toUpperCase()}
-          </span>
-        </button>
-
-        <button
-          onClick={() => toggleUnit("preferredHeightUnit", profile.preferredHeightUnit)}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Ruler className="w-5 h-5" />
-            <span>Height Unit</span>
-          </div>
-          <span className="font-medium">
-            {profile.preferredHeightUnit.toUpperCase()}
-          </span>
-        </button>
-
-        <button
-          onClick={toggleDark}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            {profile.darkMode ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-            <span>Dark Mode</span>
-          </div>
-          <span className="font-medium">
-            {profile.darkMode ? "ON" : "OFF"}
-          </span>
-        </button>
-      </div>
-
-      {/* Links */}
-      <div className="pt-4 border-t border-border/50">
         <Link
           to="/privacy"
           className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
@@ -1133,16 +1134,15 @@ export default function Settings() {
           </div>
           <ChevronRight className="w-4 h-4" />
         </Link>
-      </div>
 
-      {/* Sign out */}
-      <motion.button
-        whileTap={{ scale: 0.98 }}
-        onClick={signOut}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
-      >
-        <LogOut className="w-4 h-4" /> Sign Out
-      </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={signOut}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+        >
+          <LogOut className="w-4 h-4" /> Sign Out
+        </motion.button>
+      </AccordionSection>
 
       <p className="text-center text-xs text-muted-foreground">
         Adaptive Fitness v1.1.0

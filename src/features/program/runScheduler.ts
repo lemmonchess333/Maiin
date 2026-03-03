@@ -45,13 +45,18 @@ function templateByType(type: string): string {
 export function scheduleStructuredWeek(
   liftDayCount: number,
   runDaysTarget: number,
-  weekNumber: number
+  weekNumber: number,
+  liftDayIndices?: number[]
 ): ScheduledRunDay[] {
   if (runDaysTarget <= 0) return [];
 
   const clampedLift = Math.max(0, Math.min(6, liftDayCount));
   const clampedRun = Math.max(1, Math.min(7 - clampedLift, runDaysTarget));
-  const liftDays = new Set(defaultLiftDays(clampedLift));
+  const liftDays = new Set(
+    liftDayIndices && liftDayIndices.length > 0
+      ? liftDayIndices
+      : defaultLiftDays(clampedLift)
+  );
   const available: number[] = [];
   // Prefer: Sun(0), Sat(6), Wed(3), Mon(1), Tue(2), Thu(4), Fri(5)
   for (const d of [0, 6, 3, 1, 2, 4, 5]) {
@@ -135,7 +140,8 @@ export function generateRacePlan(
   distance: "5k" | "10k" | "half" | "marathon",
   targetDate: string,
   liftDayCount: number,
-  runDaysPerWeek: number = 3
+  runDaysPerWeek: number = 3,
+  liftDayIndices?: number[]
 ): { totalWeeks: number; weeks: ScheduledRunDay[][] } {
   const config = RACE_CONFIGS[distance];
   const clampedLift = Math.max(0, Math.min(6, liftDayCount));
@@ -145,7 +151,11 @@ export function generateRacePlan(
   const diffMs = target.getTime() - now.getTime();
   const totalWeeks = Math.max(config.minWeeks, Math.ceil(diffMs / (7 * 86400000)));
 
-  const liftDays = new Set(defaultLiftDays(clampedLift));
+  const liftDays = new Set(
+    liftDayIndices && liftDayIndices.length > 0
+      ? liftDayIndices
+      : defaultLiftDays(clampedLift)
+  );
   const available: number[] = [];
   for (const d of [0, 6, 3, 1, 2, 4, 5]) {
     if (!liftDays.has(d)) available.push(d);

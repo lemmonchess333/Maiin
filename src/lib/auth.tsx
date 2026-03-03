@@ -72,6 +72,9 @@ export interface UserProfile {
   // Weekly schedule
   weekSchedule?: { day: number; type: "lift" | "run" | "rest" }[];
   weeklyRunsTarget?: number;
+  // TDEE computation persistence
+  age?: number;
+  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
   // Macro targets (legacy)
   macroTargets?: {
     calories: number;
