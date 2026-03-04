@@ -89,6 +89,10 @@ export function WeeklyEnergyChart() {
         </span>
       </div>
 
+      {totals.consumed === 0 && (
+        <p className="text-[11px] text-muted-foreground text-center">Log meals to see your energy balance</p>
+      )}
+
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barGap={2}>
@@ -106,11 +110,14 @@ export function WeeklyEnergyChart() {
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
             />
             <Tooltip
+              cursor={false}
+              offset={10}
               contentStyle={{
                 background: "var(--card)",
                 border: "1px solid var(--border)",
                 borderRadius: 12,
                 fontSize: 11,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
               formatter={(value: unknown, name?: string) => [
                 Number(value).toLocaleString() + " cal",

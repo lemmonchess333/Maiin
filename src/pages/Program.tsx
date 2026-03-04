@@ -389,7 +389,7 @@ function ProgramInner() {
           <div
             key={dayIndex}
             className={cn(
-              "bg-card rounded-xl border border-l-[3px] overflow-hidden transition-colors pressable",
+              "bg-card rounded-2xl border border-l-[3px] overflow-hidden transition-colors pressable",
               accentColor,
               "border-border/50"
             )}
@@ -425,10 +425,10 @@ function ProgramInner() {
                     e.stopPropagation();
                     completeWorkoutDay(dayIndex);
                   }}
-                  className="shrink-0 p-1 rounded-lg hover:bg-muted transition-colors"
-                  aria-label="Mark complete"
+                  className="shrink-0 p-1.5 rounded-full border-2 border-muted-foreground/30 hover:border-primary/40 hover:bg-primary/10 transition-colors"
+                  aria-label="Mark day as complete"
                 >
-                  <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                  <Circle className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary" />
                 </button>
               )}
 

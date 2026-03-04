@@ -145,7 +145,9 @@ function AIAdjustmentsSection() {
           </span>
         </div>
 
-        <p className="text-xs text-muted-foreground leading-relaxed">{plateau.message}</p>
+        <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-3 rounded-r-lg">
+          <p className="text-xs text-muted-foreground leading-relaxed">{plateau.message}</p>
+        </div>
 
         {/* Show current state: base → applied */}
         <div className="p-3 rounded-xl bg-muted/50 space-y-1.5">
@@ -404,7 +406,7 @@ export default function Settings() {
       )}
 
       {/* Current plan & trial banner */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+      <div className="bg-card rounded-2xl border border-border/50 border-l-4 border-purple-500 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Crown className="w-4 h-4 text-primary" />
           <p className="text-sm font-medium text-foreground">Your Plan</p>
@@ -446,7 +448,7 @@ export default function Settings() {
           </p>
 
           {/* Free vs Pro comparison */}
-          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="space-y-2">
                 <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -599,7 +601,7 @@ export default function Settings() {
         </div>
 
         {/* Visual schedule editor */}
-        <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+        <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
           <p className="text-xs font-medium text-foreground">Your week</p>
           <div className="grid grid-cols-7 gap-1.5">
             {schedule
@@ -766,7 +768,7 @@ export default function Settings() {
       <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, training phase, AI adjustments">
 
       {/* TDEE Calculator */}
-      <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
         <button
           onClick={() => setShowTDEE(!showTDEE)}
           className="w-full flex items-center justify-between p-4"
@@ -870,7 +872,7 @@ export default function Settings() {
       </div>
 
       {/* Training Phase */}
-      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+      <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
         <div className="flex items-center gap-3">
           <Zap className="w-5 h-5 text-primary" />
           <div>
@@ -914,7 +916,7 @@ export default function Settings() {
           ))}
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">
+        <p className="text-xs text-primary/60 italic text-center">
           Tap Save Changes to apply
         </p>
 

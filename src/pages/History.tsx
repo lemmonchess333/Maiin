@@ -115,17 +115,19 @@ export default function History() {
     const filtered = meals.filter(
       (m) => new Date(m.date + "T00:00:00") >= since
     );
-    const avgCalories = filtered.length
-      ? Math.round(
-          filtered.reduce((sum, m) => sum + (m.totalCalories || 0), 0) /
-            filtered.length
-        )
+    // Group by date so we average per day, not per meal
+    const byDate: Record<string, { cal: number; prot: number }> = {};
+    for (const m of filtered) {
+      if (!byDate[m.date]) byDate[m.date] = { cal: 0, prot: 0 };
+      byDate[m.date].cal += m.totalCalories || 0;
+      byDate[m.date].prot += m.totalProtein || 0;
+    }
+    const days = Object.values(byDate);
+    const avgCalories = days.length
+      ? Math.round(days.reduce((sum, d) => sum + d.cal, 0) / days.length)
       : 0;
-    const avgProtein = filtered.length
-      ? Math.round(
-          filtered.reduce((sum, m) => sum + (m.totalProtein || 0), 0) /
-            filtered.length
-        )
+    const avgProtein = days.length
+      ? Math.round(days.reduce((sum, d) => sum + d.prot, 0) / days.length)
       : 0;
     return { avgCalories, avgProtein, adherence: filtered.length ? 78 : 0 };
   }, [meals, rangeDays]);

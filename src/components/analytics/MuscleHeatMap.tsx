@@ -47,8 +47,8 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50">
       <h3 className="text-sm font-semibold text-foreground mb-3">Muscle Groups Trained</h3>
-      <div className="flex items-center justify-center">
-        <svg viewBox="55 65 90 200" className="w-40 h-64">
+      <div className="flex flex-col items-center">
+        <svg viewBox="55 65 90 200" className="w-32 h-52">
           <ellipse cx="100" cy="78" rx="15" ry="12" fill="currentColor" opacity={0.08} />
           <rect x="85" y="88" width="30" height="5" rx="2" fill="currentColor" opacity={0.05} />
           {MUSCLE_REGIONS.map((region) => (
@@ -61,15 +61,15 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
             />
           ))}
         </svg>
-        <div className="ml-4 space-y-1.5">
+        <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1.5">
           {Object.entries(data)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 6)
             .map(([group, sets]) => (
-              <div key={group} className="flex items-center gap-2">
+              <div key={group} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ background: accentColor, opacity: sets / maxSets }} />
                 <span className="text-[10px] text-muted-foreground">{group}</span>
-                <span className="text-[10px] text-muted-foreground/50 ml-auto">{sets}s</span>
+                <span className="text-[10px] text-muted-foreground/50">{sets} sets</span>
               </div>
             ))}
         </div>

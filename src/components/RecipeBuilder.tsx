@@ -298,7 +298,7 @@ export function RecipeBuilder({ onSave, onClose }: Props) {
       ) : (
         <button
           onClick={() => setShowSearch(true)}
-          className="w-full py-3 border-2 border-dashed border-border rounded-xl text-sm text-primary font-medium hover:border-primary/50 transition-colors"
+          className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-sm text-primary font-medium active:scale-[0.98] transition-all"
         >
           + Add Ingredient
         </button>

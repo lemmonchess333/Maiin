@@ -51,6 +51,35 @@ export function TrendWeight() {
     [entries]
   );
 
+  const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
+  const convert = (v: number) => {
+    if (!Number.isFinite(v)) return 0;
+    return unit === "lbs" ? Math.round(v * 2.205 * 10) / 10 : v;
+  };
+
+  // Single entry: show simple display instead of chart
+  if (data.length === 1) {
+    const entry = entries[0];
+    const d = new Date(entry.date);
+    return (
+      <div className="p-4 rounded-2xl bg-card border border-border/50 text-center py-6 space-y-2">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Weight Trend
+        </p>
+        <p className="text-lg font-bold text-foreground">
+          {convert(entry.weight)} {unit}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          on {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          Log daily for better trend tracking
+        </p>
+      </div>
+    );
+  }
+
+  // Less than 3 entries: show message
   if (data.length < 3) {
     return (
       <div className="p-4 rounded-2xl bg-card border border-border/50 text-center py-8">
@@ -71,9 +100,11 @@ export function TrendWeight() {
         : profile.program.startWeight
     : undefined;
 
-  const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
-  const convert = (v: number) =>
-    unit === "lbs" ? Math.round(v * 2.205 * 10) / 10 : v;
+  const trendDisplay = Number.isFinite(currentTrend) ? convert(currentTrend) : null;
+  const goalDisplay = goalWeight && Number.isFinite(goalWeight) ? convert(goalWeight) : null;
+  const goalDiff = goalWeight && Number.isFinite(currentTrend) && Number.isFinite(goalWeight)
+    ? convert(Math.abs(currentTrend - goalWeight))
+    : null;
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
@@ -82,15 +113,21 @@ export function TrendWeight() {
           Weight Trend
         </p>
         <p className="text-xs text-foreground font-medium">
-          Trending at{" "}
-          <span className="text-primary font-bold">
-            {convert(currentTrend)} {unit}
-          </span>
-          {goalWeight && (
-            <span className="text-muted-foreground">
-              {" "}
-              — {convert(Math.abs(currentTrend - goalWeight))} {unit} to goal
-            </span>
+          {trendDisplay != null ? (
+            <>
+              Trending at{" "}
+              <span className="text-primary font-bold">
+                {trendDisplay} {unit}
+              </span>
+              {goalDiff != null && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  — {goalDiff} {unit} to goal
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-muted-foreground">Log more to see trend</span>
           )}
         </p>
       </div>
@@ -130,13 +167,13 @@ export function TrendWeight() {
               labelFormatter={(label) => new Date(label).toLocaleDateString()}
             />
 
-            {goalWeight && (
+            {goalDisplay != null && (
               <ReferenceLine
-                y={goalWeight}
+                y={goalWeight!}
                 stroke={THEME.success}
                 strokeDasharray="4 4"
                 label={{
-                  value: `Goal: ${convert(goalWeight)}`,
+                  value: `Goal: ${goalDisplay}`,
                   position: "right",
                   fontSize: 10,
                   fill: THEME.success,

@@ -79,6 +79,9 @@ export default function BodyweightLogger() {
     try {
       const today = format(new Date(), "yyyy-MM-dd");
       const logsRef = collection(db, "users", user.uid, "bodyweightLogs");
+      // Always store weight in kg for consistency
+      const rawValue = Number(weight);
+      const storeWeight = unit === "lbs" ? rawValue / 2.20462 : rawValue;
 
       // Check for existing entry today to avoid duplicates
       const existing = await getDocs(query(logsRef, where("date", "==", today)));
@@ -87,13 +90,13 @@ export default function BodyweightLogger() {
         // Update existing entry
         const existingDoc = existing.docs[0];
         await updateDoc(doc(db, "users", user.uid, "bodyweightLogs", existingDoc.id), {
-          weight: Number(weight),
+          weight: storeWeight,
           createdAt: serverTimestamp(),
         });
       } else {
         await addDoc(logsRef, {
           date: today,
-          weight: Number(weight),
+          weight: storeWeight,
           createdAt: serverTimestamp(),
         });
       }
@@ -201,9 +204,60 @@ export default function BodyweightLogger() {
             return acc;
           }, {} as Record<string, WeightLog>)
         ).sort((a, b) => b.date.localeCompare(a.date));
+
+        // Single entry: simple line display
+        if (dedupedLogs.length === 1) {
+          const log = dedupedLogs[0];
+          const d = new Date(log.date + "T12:00:00");
+          return (
+            <div className="flex items-center justify-between px-1 py-2">
+              <p className="text-xs text-muted-foreground">Last logged</p>
+              <p className="text-sm font-semibold text-foreground">
+                {displayWeight(log.weight)} {unit}
+                <span className="text-xs text-muted-foreground font-normal ml-1.5">
+                  on {format(d, "MMM d")}
+                </span>
+              </p>
+            </div>
+          );
+        }
+
+        // 2+ entries: chips + sparkline when 4+
+        const sparklineData = dedupedLogs.length >= 4
+          ? [...dedupedLogs].reverse().map((l) => l.weight)
+          : null;
+
         return (
         <div>
-          <p className="text-xs text-muted-foreground mb-2">Last 7 days</p>
+          <p className="text-xs text-muted-foreground mb-2">Last {dedupedLogs.length} days</p>
+          {sparklineData && (() => {
+            const vals = sparklineData.map((w) => Number(displayWeight(w)));
+            const min = Math.min(...vals);
+            const max = Math.max(...vals);
+            const range = max - min || 1;
+            const h = 32;
+            const w2 = 100;
+            const points = vals.map((v, i) => {
+              const x = (i / (vals.length - 1)) * w2;
+              const y = h - ((v - min) / range) * (h - 4) - 2;
+              return `${x},${y}`;
+            }).join(" ");
+            return (
+              <div className="mb-2 px-1">
+                <svg viewBox={`0 0 ${w2} ${h}`} className="w-full h-8" preserveAspectRatio="none">
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-primary/40"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            );
+          })()}
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {dedupedLogs.map((log, index) => (
               <motion.div
@@ -214,7 +268,7 @@ export default function BodyweightLogger() {
                 className="flex-shrink-0 bg-muted/70 border border-border/50 rounded-2xl px-4 py-3 text-center min-w-[68px]"
               >
                 <p className="text-[10px] text-muted-foreground font-medium">
-                  {format(new Date(log.date), "dd/MM")}
+                  {format(new Date(log.date + "T12:00:00"), "dd/MM")}
                 </p>
                 <p className="text-lg font-semibold text-foreground tracking-tight">
                   {displayWeight(log.weight)}

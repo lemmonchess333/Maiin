@@ -208,16 +208,16 @@ function CyclingCTACard({ nextWorkout, todayType, navigate }: {
         )}
         {cc?.type === "actions" && (
           <motion.div key="a" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }} className="flex gap-2">
-            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
+            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.lifting }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
               <span className="text-xs font-medium text-foreground">Log Workout</span>
             </Link>
-            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
+            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.running }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
               <span className="text-xs font-medium text-foreground">Start Run</span>
             </Link>
-            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.98]">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
+            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.success }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
               <span className="text-xs font-medium text-foreground">Log Food</span>
             </Link>
           </motion.div>
@@ -252,7 +252,11 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
     <div className="p-4 rounded-2xl bg-card border border-border/50">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">This Week</p>
       {allZero ? (
-        <p className="text-xs text-muted-foreground text-center py-3">Fresh week — log your first session to start tracking</p>
+        <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
+          <p className="text-lg">🎯</p>
+          <p className="text-sm font-semibold text-foreground">Fresh week</p>
+          <p className="text-[11px] text-muted-foreground">Log a workout or run to see your weekly stats</p>
+        </div>
       ) : (
         <div className="grid grid-cols-4 gap-2">
           {stats.map(function(s) {
@@ -306,15 +310,17 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
         </div>
         {bars.map(function(b) {
-          var pct = Math.min((b.current / b.target) * 100, 100);
+          var rawPct = b.target > 0 ? (b.current / b.target) * 100 : 0;
+          var pct = Math.min(rawPct, 100);
+          var barColor = rawPct > 120 ? "#f59e0b" : rawPct > 100 ? "#22c55e" : b.color;
           return (
             <div key={b.label} className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">{b.label}</span>
                 <span className="text-[11px] font-mono tabular-nums text-foreground">{b.current}{b.unit} / {b.target}{b.unit}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: pct + "%" }} transition={{ duration: 0.6, ease: "easeOut" }} className="h-full rounded-full" style={{ backgroundColor: b.color }} />
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: (rawPct > 100 ? 100 : Math.max(pct, b.current > 0 ? 2 : 0)) + "%" }} transition={{ duration: 0.6, ease: "easeOut" }} className="h-full rounded-full" style={{ backgroundColor: barColor, minWidth: b.current > 0 ? 4 : 0 }} />
               </div>
             </div>
           );
@@ -423,8 +429,13 @@ export default function Home() {
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile…</div>;
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+    <motion.div
+      className="flex flex-col gap-4 pb-6"
+      initial="hidden"
+      animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+    >
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Hey, {profile.displayName || "Athlete"}</h1>
           <p className="text-xs text-muted-foreground">
@@ -437,7 +448,7 @@ export default function Home() {
       </motion.div>
 
       {isInTrial && (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+        <motion.div variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } } }} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
           <Sparkles className="w-5 h-5 text-primary shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">Pro Trial &mdash; {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left</p>
@@ -446,7 +457,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
         <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
         <div className="flex items-center justify-center gap-4 pt-1">
           <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.lifting }} /><span className="text-[9px] text-muted-foreground">Lift</span></div>
@@ -465,36 +476,48 @@ export default function Home() {
             <span className="text-[10px] text-muted-foreground">{streak >= 14 ? "\u2014 on fire" : streak >= 7 ? "\u2014 crushing it" : "\u2014 keep building"}</span>
           </div>
         )}
-      </div>
+      </motion.div>
 
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
       {programLoading ? (
         <div className="h-20 rounded-2xl bg-muted animate-pulse" />
       ) : (
         <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} />
       )}
+      </motion.div>
 
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
       <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
+      </motion.div>
 
       {perfDoc && perfDoc.insight && (
         <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
       )}
 
-      <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
+      </motion.div>
 
-      <HealthScoreCard />
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <HealthScoreCard />
+      </motion.div>
 
-      <WaterTracker />
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <WaterTracker />
+      </motion.div>
 
-      <BodyweightLogger />
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <BodyweightLogger />
+      </motion.div>
 
       {!isPro && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="p-3 rounded-xl bg-card border border-border/50 text-center space-y-1">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card border border-border/50 text-center space-y-1">
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
           <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
         </motion.div>
       )}
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
-    </div>
+    </motion.div>
   );
 }
