@@ -6,17 +6,16 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
-import BodyweightLogger from "@/components/BodyweightLogger";
-import { WaterTracker } from "@/components/nutrition/WaterTracker";
-import { HealthScoreCard } from "@/components/nutrition/HealthScoreCard";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X } from "lucide-react";
+import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus } from "lucide-react";
+import { useWaterLog } from "@/hooks/useWaterLog";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp, orderBy, limit as fbLimit, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
@@ -144,33 +143,48 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function CyclingCTACard({ nextWorkout, todayType, navigate }: {
+function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "rest";
   navigate: (p: string) => void;
+  waterGlasses: number;
+  waterTarget: number;
+  onAddWater: () => void;
+  lastWeight: string | null;
+  lastWeightDate: string | null;
+  weightUnit: string;
+  onLogWeight: () => void;
 }) {
   var [ci, setCi] = useState(0);
+  var touchStartX = 0;
   var cards = useMemo(function() {
-    var r: { id: string; type: "scheduled" | "actions" }[] = [];
+    var r: { id: string; type: "scheduled" | "actions" | "quicktrack" }[] = [];
     if (todayType === "lift" && nextWorkout) r.push({ id: "workout", type: "scheduled" });
     else if (todayType === "run") r.push({ id: "run", type: "scheduled" });
     r.push({ id: "actions", type: "actions" });
+    r.push({ id: "quicktrack", type: "quicktrack" });
     return r;
   }, [todayType, nextWorkout]);
   var cc = cards[ci % cards.length];
-  var hasMulti = cards.length > 1;
   var swipe = function(d: number) {
     setCi(function(p) { var n = p + d; return n < 0 ? cards.length - 1 : n % cards.length; });
   };
 
+  var handleTouchStart = function(e: React.TouchEvent) { touchStartX = e.touches[0].clientX; };
+  var handleTouchEnd = function(e: React.TouchEvent) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (dx < -50) swipe(1);
+    else if (dx > 50) swipe(-1);
+  };
+
   return (
-    <div>
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <AnimatePresence mode="wait">
         {cc?.type === "scheduled" && cc.id === "workout" && nextWorkout && (
           <motion.button key="w" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
             onClick={function() { navigate("/program"); }}
-            className="w-full p-5 rounded-2xl border border-border/50 text-left active:scale-[0.99]"
-            style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)", borderColor: THEME.lifting + "30" }}>
+            className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
+            style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}>
                 <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
@@ -189,8 +203,8 @@ function CyclingCTACard({ nextWorkout, todayType, navigate }: {
         {cc?.type === "scheduled" && cc.id === "run" && (
           <motion.button key="r" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
             onClick={function() { navigate("/run"); }}
-            className="w-full p-5 rounded-2xl border border-border/50 text-left active:scale-[0.99]"
-            style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)", borderColor: THEME.running + "30" }}>
+            className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
+            style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}>
                 <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
@@ -208,32 +222,73 @@ function CyclingCTACard({ nextWorkout, todayType, navigate }: {
         )}
         {cc?.type === "actions" && (
           <motion.div key="a" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }} className="flex gap-2">
-            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.lifting }}>
+            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
               <span className="text-xs font-medium text-foreground">Log Workout</span>
             </Link>
-            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.running }}>
+            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
               <span className="text-xs font-medium text-foreground">Start Run</span>
             </Link>
-            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ borderLeftWidth: 4, borderLeftColor: THEME.success }}>
+            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
               <span className="text-xs font-medium text-foreground">Log Food</span>
             </Link>
           </motion.div>
         )}
+        {cc?.type === "quicktrack" && (
+          <motion.div key="qt" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
+            className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+            <div className="flex gap-3">
+              <Link to="/history?tab=health" className="flex-1 flex items-center gap-3 p-3 bg-pink-50 dark:bg-pink-950/20 rounded-xl">
+                <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-pink-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Health</p>
+                  <p className="text-sm font-bold text-foreground">Score</p>
+                </div>
+              </Link>
+              <div className="flex-1 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <Droplets className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
+                  <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
+                </div>
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="ml-auto w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform">
+                  <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
+              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                <Scale className="w-5 h-5 text-purple-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight</p>
+                <p className="text-sm text-muted-foreground">
+                  {lastWeight ? "Last: " + lastWeight + " " + weightUnit : "No logs yet"}
+                  {lastWeightDate && <span className="text-muted-foreground"> {"\u00B7"} {lastWeightDate}</span>}
+                </p>
+              </div>
+              <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="px-3 py-1.5 bg-purple-500 text-white text-sm font-medium rounded-lg active:scale-95 transition-transform">
+                Log
+              </button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
-      {hasMulti && (
-        <div className="flex items-center justify-center gap-3 mt-2">
-          <button onClick={function() { swipe(-1); }} className="p-1 rounded-full hover:bg-muted"><ChevronLeft className="w-4 h-4 text-muted-foreground" /></button>
-          <div className="flex gap-1.5">
-            {cards.map(function(_, i) {
-              return <div key={i} className={"w-1.5 h-1.5 rounded-full transition-all " + (i === ci % cards.length ? "bg-primary w-3" : "bg-muted-foreground/30")} />;
-            })}
-          </div>
-          <button onClick={function() { swipe(1); }} className="p-1 rounded-full hover:bg-muted"><ChevronRight className="w-4 h-4 text-muted-foreground" /></button>
+      <div className="flex items-center justify-center gap-3 mt-2">
+        <button onClick={function() { swipe(-1); }} className="p-1 rounded-full hover:bg-muted"><ChevronLeft className="w-4 h-4 text-muted-foreground" /></button>
+        <div className="flex gap-1.5">
+          {cards.map(function(_, i) {
+            return <div key={i} className={"w-1.5 h-1.5 rounded-full transition-all " + (i === ci % cards.length ? "bg-primary w-3" : "bg-muted-foreground/30")} />;
+          })}
         </div>
-      )}
+        <button onClick={function() { swipe(1); }} className="p-1 rounded-full hover:bg-muted"><ChevronRight className="w-4 h-4 text-muted-foreground" /></button>
+      </div>
     </div>
   );
 }
@@ -299,8 +354,8 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
   var tProt = initProt;
   if (tCal <= 0 && tProt <= 0) { tCal = 2200; tProt = 160; }
   var bars = [
-    { label: "Calories", current: calories, target: tCal || 2200, unit: "", color: THEME.warning },
-    { label: "Protein", current: protein, target: tProt || 160, unit: "g", color: THEME.teal },
+    { label: "Calories", current: calories, target: tCal || 2200, unit: "", color: "#8b5cf6" },
+    { label: "Protein", current: protein, target: tProt || 160, unit: "g", color: "#3b82f6" },
   ];
   return (
     <Link to="/log">
@@ -340,6 +395,11 @@ export default function Home() {
   var weeklyDayMap = useWeeklyDayMap();
   var navigate = useNavigate();
   var { newBadge, dismissNewBadge } = useStreaks();
+  var { glasses: waterGlasses, target: waterTarget, logWater } = useWaterLog();
+  var [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
+  var [showWeightSheet, setShowWeightSheet] = useState(false);
+  var [weightInput, setWeightInput] = useState("");
+  var [weightSaving, setWeightSaving] = useState(false);
 
   var schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
@@ -372,6 +432,37 @@ export default function Home() {
       } catch (e) { console.error(e); }
     })();
   }, [user]);
+
+  var weightUnit = profile?.preferredWeightUnit || "kg";
+
+  // Fetch last bodyweight entry
+  useEffect(function() {
+    if (!user?.uid) return;
+    getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(1))).then(function(snap) {
+      if (snap.empty) return;
+      var d = snap.docs[0].data();
+      if (typeof d.weight === "number") {
+        var w = weightUnit === "lbs" ? (d.weight * 2.20462).toFixed(1) : d.weight.toFixed(1);
+        setLastWeightInfo({ weight: w, date: format(new Date(d.date + "T12:00:00"), "MMM d") });
+      }
+    }).catch(function() {});
+  }, [user, weightUnit]);
+
+  var handleLogWeight = async function() {
+    if (!weightInput || !user) return;
+    setWeightSaving(true);
+    try {
+      var raw = Number(weightInput);
+      var storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
+      var today = format(new Date(), "yyyy-MM-dd");
+      await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), { date: today, weight: storeW, createdAt: serverTimestamp() });
+      var disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
+      setLastWeightInfo({ weight: disp, date: format(new Date(), "MMM d") });
+      setWeightInput("");
+      setShowWeightSheet(false);
+    } catch (e) { console.error(e); }
+    setWeightSaving(false);
+  };
 
   var [peekDate, setPeekDate] = useState<string | null>(null);
   var handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
@@ -442,9 +533,23 @@ export default function Home() {
             {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
           </p>
         </div>
-        <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
-          <SettingsIcon className="w-5 h-5 text-muted-foreground" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <motion.div
+            key={streak}
+            initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}
+          >
+            <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+            <span className={cn("text-sm font-bold", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
+              {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
+            </span>
+          </motion.div>
+          <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        </div>
       </motion.div>
 
       {isInTrial && (
@@ -469,20 +574,13 @@ export default function Home() {
             <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />
           )}
         </AnimatePresence>
-        {streak > 0 && (
-          <div className="flex items-center gap-2 pt-2 border-t border-border/30">
-            <Flame className="w-4 h-4 text-orange-500" />
-            <span className="text-xs font-medium text-orange-500">{streak} day streak</span>
-            <span className="text-[10px] text-muted-foreground">{streak >= 14 ? "\u2014 on fire" : streak >= 7 ? "\u2014 crushing it" : "\u2014 keep building"}</span>
-          </div>
-        )}
       </motion.div>
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
       {programLoading ? (
         <div className="h-20 rounded-2xl bg-muted animate-pulse" />
       ) : (
-        <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} />
+        <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null} weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} />
       )}
       </motion.div>
 
@@ -498,24 +596,36 @@ export default function Home() {
         <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
       </motion.div>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <HealthScoreCard />
-      </motion.div>
-
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <WaterTracker />
-      </motion.div>
-
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <BodyweightLogger />
-      </motion.div>
-
       {!isPro && (
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card border border-border/50 text-center space-y-1">
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
           <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
         </motion.div>
       )}
+
+      {/* Weight Log Bottom Sheet */}
+      <AnimatePresence>
+        {showWeightSheet && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={function() { setShowWeightSheet(false); }} className="fixed inset-0 bg-black/40 z-40" />
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl border-t border-border/50 safe-area-pb">
+              <div className="max-w-md mx-auto p-5 space-y-4">
+                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-foreground">Log Weight</p>
+                  <button onClick={function() { setShowWeightSheet(false); }} className="p-1 rounded hover:bg-muted"><X className="w-4 h-4 text-muted-foreground" /></button>
+                </div>
+                <div className="flex gap-3">
+                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
+                    {weightSaving ? "..." : "Log"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
     </motion.div>

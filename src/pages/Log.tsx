@@ -43,7 +43,7 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 export default function Log() {
   const { user, profile, updateProfile } = useAuth();
   const { logs, saveLog } = useDailyLogs();
-  const { getWorkoutsForDate, deleteWorkout } = useWorkouts();
+  const { getWorkoutsForDate } = useWorkouts();
 
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
@@ -459,62 +459,16 @@ export default function Log() {
             </button>
           </div>
 
-          {/* Saved Workouts */}
+          {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">
-                Saved Workouts
-              </p>
-
-              {todaysWorkouts.map((w, idx) => (
-                <div
-                  key={w.id}
-                  className="bg-card rounded-2xl border border-border/50 p-5"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Dumbbell className="w-4 h-4 text-primary" />
-                      <p className="text-sm font-medium text-foreground">
-                        Workout {idx + 1}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-xs text-orange-500 font-medium">
-                        <Flame className="w-3.5 h-3.5" />
-                        {w.totalCalories} cal
-                      </div>
-
-                      <button
-                        onClick={() => deleteWorkout(w.id)}
-                        className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    {w.exercises.map((ex, i) => (
-                      <p
-                        key={i}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {ex.exerciseName} — {ex.category === "Cardio"
-                          ? `${ex.durationMinutes || 0} min`
-                          : `${ex.sets.length} sets`
-                        } · {ex.caloriesBurned} cal
-                      </p>
-                    ))}
-                  </div>
-
-                  {w.notes && (
-                    <p className="text-xs text-muted-foreground mt-2 italic">
-                      {w.notes}
-                    </p>
-                  )}
-                </div>
-              ))}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
+              <Dumbbell className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {todaysWorkouts.length} workout{todaysWorkouts.length !== 1 ? "s" : ""} logged today
+              </span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                {todaysWorkouts.reduce((s, w) => s + w.totalCalories, 0)} cal
+              </span>
             </div>
           )}
 
@@ -685,55 +639,63 @@ export default function Log() {
             </button>
           </div>
 
-          {/* Food Search */}
-          {showFoodSearch ? (
+          {/* Quick action icon row */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFoodSearch(true)}
+              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
+            >
+              <Search className="w-5 h-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">Search</span>
+            </button>
+            <button
+              onClick={() => setShowBarcodeScanner(true)}
+              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
+            >
+              <ScanLine className="w-5 h-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">Barcode</span>
+            </button>
+            <button
+              onClick={() => setShowVoiceLogger(true)}
+              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
+            >
+              <Mic className="w-5 h-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">Voice</span>
+            </button>
+            <button
+              onClick={() => setShowRecipeBuilder(true)}
+              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
+            >
+              <BookOpen className="w-5 h-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">Recipe</span>
+            </button>
+          </div>
+
+          {/* Expanded panels */}
+          {showFoodSearch && (
             <FoodSearch
               onSelect={handleFoodSearchSelect}
               onClose={() => setShowFoodSearch(false)}
             />
-          ) : (
-            <button
-              onClick={() => setShowFoodSearch(true)}
-              className="feature-btn"
-            >
-              <Search className="w-4 h-4" /> Search Food Database
-            </button>
           )}
 
-          {/* Recipe Builder */}
-          {showRecipeBuilder ? (
+          {showRecipeBuilder && (
             <RecipeBuilder
               onSave={handleRecipeSave}
               onClose={() => setShowRecipeBuilder(false)}
             />
-          ) : (
-            <button
-              onClick={() => setShowRecipeBuilder(true)}
-              className="feature-btn"
-            >
-              <BookOpen className="w-4 h-4" /> Build a Recipe
-            </button>
           )}
 
-          {/* Barcode Scanner */}
-          {showBarcodeScanner ? (
+          {showBarcodeScanner && (
             <div className="bg-card rounded-2xl border border-border/50 p-4">
               <BarcodeScanner
                 onLog={handleBarcodeLog}
                 onClose={() => setShowBarcodeScanner(false)}
               />
             </div>
-          ) : (
-            <button
-              onClick={() => setShowBarcodeScanner(true)}
-              className="feature-btn"
-            >
-              <ScanLine className="w-4 h-4" /> Scan Barcode
-            </button>
           )}
 
-          {/* Voice Logger */}
-          {showVoiceLogger ? (
+          {showVoiceLogger && (
             <div className="bg-card rounded-2xl border border-border/50 p-4">
               <VoiceLogger
                 onResult={(text) => {
@@ -743,13 +705,6 @@ export default function Log() {
                 onClose={() => setShowVoiceLogger(false)}
               />
             </div>
-          ) : (
-            <button
-              onClick={() => setShowVoiceLogger(true)}
-              className="feature-btn"
-            >
-              <Mic className="w-4 h-4" /> Voice Log
-            </button>
           )}
 
           {/* Manual Food Logger */}
