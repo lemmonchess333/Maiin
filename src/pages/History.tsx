@@ -12,14 +12,18 @@ import MuscleHeatMap from "@/components/analytics/MuscleHeatMap";
 import PRCard from "@/components/analytics/PRCard";
 import RunningHistorySection from "@/components/run/RunningHistorySection";
 import PerformanceTab from "@/components/analytics/PerformanceTab";
+import { BadgeGrid } from "@/features/streaks/BadgeGrid";
+import { TrendWeight } from "@/components/progress/TrendWeight";
+import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
 
-type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance";
+type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
 
 const VALID_TABS: FilterTab[] = [
   "all",
   "running",
   "lifting",
   "nutrition",
+  "badges",
   "performance",
 ];
 
@@ -161,7 +165,9 @@ export default function History() {
         })}
       </div>
 
-      {filter === "performance" ? (
+      {filter === "badges" ? (
+        <BadgeGrid />
+      ) : filter === "performance" ? (
         <PerformanceTab />
       ) : (
         <>
@@ -309,6 +315,9 @@ export default function History() {
                   accentColor={THEME.success}
                 />
               </div>
+
+              <TrendWeight />
+              <WeeklyEnergyChart />
             </>
           )}
         </>

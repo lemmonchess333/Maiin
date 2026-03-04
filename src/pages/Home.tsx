@@ -7,6 +7,10 @@ import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import BodyweightLogger from "@/components/BodyweightLogger";
+import { WaterTracker } from "@/components/nutrition/WaterTracker";
+import { HealthScoreCard } from "@/components/nutrition/HealthScoreCard";
+import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
+import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -329,6 +333,7 @@ export default function Home() {
   var { programState, loading: programLoading } = useProgram();
   var weeklyDayMap = useWeeklyDayMap();
   var navigate = useNavigate();
+  var { newBadge, dismissNewBadge } = useStreaks();
 
   var schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
@@ -476,6 +481,10 @@ export default function Home() {
 
       <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
 
+      <HealthScoreCard />
+
+      <WaterTracker />
+
       <BodyweightLogger />
 
       {!isPro && (
@@ -484,6 +493,8 @@ export default function Home() {
           <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
         </motion.div>
       )}
+
+      <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
     </div>
   );
 }

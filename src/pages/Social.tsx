@@ -5,11 +5,13 @@ import { searchUsers } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import FollowButton from '../components/social/FollowButton';
 import LeaderboardCard from '../components/social/LeaderboardCard';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Trophy } from 'lucide-react';
+import { ChallengeList } from '../features/challenges/ChallengeList';
 
 export default function Social() {
   const { items, loading, refresh, loadMore, hasMore } = useSocialFeed();
   const { user } = useAuth();
+  const [activeSection, setActiveSection] = useState<'feed' | 'challenges'>('feed');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearch, setShowSearch] = useState(false);
@@ -29,6 +31,24 @@ export default function Social() {
           {showSearch ? 'Feed' : '🔍 Find People'}
         </button>
       </div>
+
+      {/* Feed / Challenges toggle */}
+      {!showSearch && (
+        <div className="flex gap-1 bg-muted rounded-xl p-1">
+          <button
+            onClick={() => setActiveSection('feed')}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeSection === 'feed' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+          >
+            Feed
+          </button>
+          <button
+            onClick={() => setActiveSection('challenges')}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${activeSection === 'challenges' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+          >
+            <Trophy className="w-3.5 h-3.5" /> Challenges
+          </button>
+        </div>
+      )}
 
       {showSearch ? (
         <div className="space-y-3">
@@ -50,6 +70,8 @@ export default function Social() {
             </div>
           ))}
         </div>
+      ) : activeSection === 'challenges' ? (
+        <ChallengeList />
       ) : (
         <>
           <LeaderboardCard challenge="weekly_hybrid" />

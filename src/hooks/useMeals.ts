@@ -10,6 +10,9 @@ export interface MealItem {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
 }
 
 export interface Meal {
@@ -21,6 +24,9 @@ export interface Meal {
   totalProtein: number;
   totalCarbs: number;
   totalFat: number;
+  totalFiber?: number;
+  totalSugar?: number;
+  totalSodium?: number;
   confidence: string;
   createdAt: any;
 }
@@ -75,6 +81,9 @@ export function useMeals() {
         protein: dateMeals.reduce((sum, m) => sum + m.totalProtein, 0),
         carbs: dateMeals.reduce((sum, m) => sum + m.totalCarbs, 0),
         fat: dateMeals.reduce((sum, m) => sum + m.totalFat, 0),
+        fiber: dateMeals.reduce((sum, m) => sum + (m.totalFiber || 0), 0),
+        sugar: dateMeals.reduce((sum, m) => sum + (m.totalSugar || 0), 0),
+        sodium: dateMeals.reduce((sum, m) => sum + (m.totalSodium || 0), 0),
         mealCount: dateMeals.length,
       };
     },
