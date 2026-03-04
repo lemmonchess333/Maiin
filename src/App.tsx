@@ -147,7 +147,6 @@ function AppRoutes() {
         </Route>
         <Route path="/run" element={<Run />} />
         <Route path="/run-summary" element={<RunSummary />} />
-        <Route path="/run/:runId" element={<RunDetail />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
