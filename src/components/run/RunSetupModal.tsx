@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun';
 
@@ -56,6 +57,10 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
 
   return (
     <div className="flex-1 flex flex-col px-6 py-4 overflow-y-auto">
+      <button onClick={onCancel} className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3 self-start active:scale-95 transition-transform">
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </button>
       <h2 className="text-xl font-extrabold tracking-tight mb-1">Choose your run</h2>
       <p className="text-sm text-muted-foreground mb-4">Select workout type</p>
       <div className="grid grid-cols-2 gap-2.5 mb-6">

@@ -56,17 +56,20 @@ export interface Split {
 }
 
 export function isValidReading(coords: GeolocationCoordinates, lastPoint: GPSPoint | null, elapsedSeconds?: number): boolean {
+  // First point (no lastPoint): accept up to 150m accuracy to avoid stuck acquiring phase
+  if (!lastPoint) {
+    return coords.accuracy <= 150;
+  }
+
   const maxAccuracy = elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
   if (coords.accuracy > maxAccuracy) return false;
 
-  if (lastPoint) {
-    const dist = haversine(lastPoint.lat, lastPoint.lon, coords.latitude, coords.longitude);
-    const timeDiff = (Date.now() - lastPoint.timestamp) / 1000;
-    if (timeDiff <= 0) return false;
-    const impliedSpeed = dist / timeDiff;
-    if (impliedSpeed > 12) return false;
-    if (dist < 1) return false;
-  }
+  const dist = haversine(lastPoint.lat, lastPoint.lon, coords.latitude, coords.longitude);
+  const timeDiff = (Date.now() - lastPoint.timestamp) / 1000;
+  if (timeDiff <= 0) return false;
+  const impliedSpeed = dist / timeDiff;
+  if (impliedSpeed > 12) return false;
+  if (dist < 1) return false;
   return true;
 }
 

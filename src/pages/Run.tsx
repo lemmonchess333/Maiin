@@ -65,6 +65,7 @@ export default function Run() {
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km');
@@ -85,12 +86,28 @@ export default function Run() {
     gps.start();
   };
 
+  // Count seconds spent in acquiring phase
+  useEffect(() => {
+    if (phase !== 'acquiring') { setAcquiringSeconds(0); return; }
+    const t = setInterval(() => setAcquiringSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  // Transition from acquiring to countdown when we get a GPS point
   useEffect(() => {
     if (phase === 'acquiring' && gps.points.length > 0) {
       setPhase('countdown');
       setCountdown(3);
     }
   }, [phase, gps.points.length]);
+
+  // Force-start after 20s if GPS still hasn't locked
+  useEffect(() => {
+    if (phase === 'acquiring' && acquiringSeconds >= 20 && gps.points.length === 0) {
+      setPhase('countdown');
+      setCountdown(3);
+    }
+  }, [phase, acquiringSeconds, gps.points.length]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -215,7 +232,16 @@ export default function Run() {
           <p className="text-lg font-semibold mb-1">Acquiring GPS Signal...</p>
           <p className="text-sm text-muted-foreground text-center">Stand still outdoors for best results</p>
           <p className="text-xs text-muted-foreground/60 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
-          <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-8 text-sm text-muted-foreground">Cancel</button>
+          {gps.error && <p className="text-xs text-red-400 mt-2">{gps.error}</p>}
+          {acquiringSeconds >= 8 && (
+            <button
+              onClick={() => { setPhase('countdown'); setCountdown(3); }}
+              className="mt-6 px-6 py-2.5 rounded-full bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
+            >
+              Start without GPS
+            </button>
+          )}
+          <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-4 text-sm text-muted-foreground">Cancel</button>
         </div>
       )}
 
