@@ -1,7 +1,84 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { THEME } from '../../lib/theme';
 import { calculatePace, totalElevationGain, estimateRunCalories } from '../../lib/gps';
 import type { GPSPoint } from '../../lib/gps';
+
+function haptic(pattern: 'light' | 'medium' | 'heavy' | 'success') {
+  if (!navigator.vibrate) return;
+  if (pattern === 'light') navigator.vibrate(10);
+  if (pattern === 'medium') navigator.vibrate(30);
+  if (pattern === 'heavy') navigator.vibrate(50);
+  if (pattern === 'success') navigator.vibrate([30, 50, 30]);
+}
+
+/** Hold-to-stop button with circular progress ring */
+function HoldToStopButton({ onStop }: { onStop: () => void }) {
+  const [holding, setHolding] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startRef = useRef(0);
+  const HOLD_DURATION = 2000;
+
+  const startHold = useCallback(() => {
+    haptic('medium');
+    setHolding(true);
+    startRef.current = Date.now();
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startRef.current;
+      const pct = Math.min(elapsed / HOLD_DURATION, 1);
+      setProgress(pct);
+      if (pct >= 1) {
+        haptic('success');
+        onStop();
+        clearInterval(timerRef.current!);
+      }
+    }, 16);
+  }, [onStop]);
+
+  const cancelHold = useCallback(() => {
+    setHolding(false);
+    setProgress(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  const circumference = 2 * Math.PI * 30;
+  const dashOffset = circumference * (1 - progress);
+
+  return (
+    <div className="relative flex flex-col items-center">
+      {/* SVG progress ring */}
+      <svg className="absolute -inset-1 w-[72px] h-[72px]" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(239,68,68,0.15)" strokeWidth="3" />
+        <circle
+          cx="36" cy="36" r="30" fill="none"
+          stroke={THEME.danger}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          className="transition-[stroke-dashoffset] duration-[16ms] linear"
+          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+        />
+      </svg>
+      <button
+        onTouchStart={startHold}
+        onTouchEnd={cancelHold}
+        onTouchCancel={cancelHold}
+        onMouseDown={startHold}
+        onMouseUp={cancelHold}
+        onMouseLeave={cancelHold}
+        className={`w-16 h-16 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center transition-all ${
+          holding ? 'scale-95 border-red-500/60 bg-red-500/10' : 'active:scale-95'
+        }`}
+      >
+        <div className="w-5 h-5 bg-red-400 rounded-sm" />
+      </button>
+      <span className="text-[9px] text-white/30 mt-1.5">Stop</span>
+    </div>
+  );
+}
 
 interface RunBottomSheetProps {
   elapsed: number;
@@ -104,32 +181,44 @@ export default function RunBottomSheet({
         <div className="flex items-center justify-center gap-8 pt-4">
           {!isPaused ? (
             <>
-              <button onClick={onLock} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 border border-white/15">
-                <span className="text-[10px] text-white/40 font-medium">Lock</span>
-              </button>
-              <button onClick={onPause} className="w-16 h-16 rounded-full bg-white/15 backdrop-blur border-2 border-white/25 flex items-center justify-center active:scale-90 transition-transform">
-                <div className="flex gap-1.5"><div className="w-2.5 h-7 bg-white rounded-sm" /><div className="w-2.5 h-7 bg-white rounded-sm" /></div>
-              </button>
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => { haptic('light'); onLock(); }}
+                  className="w-12 h-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </button>
+                <span className="text-[9px] text-white/30 mt-1.5">Lock</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => { haptic('medium'); onPause(); }}
+                  className="w-16 h-16 rounded-full bg-white/15 backdrop-blur border-2 border-white/25 flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <div className="flex gap-1.5"><div className="w-2.5 h-7 bg-white rounded-sm" /><div className="w-2.5 h-7 bg-white rounded-sm" /></div>
+                </button>
+                <span className="text-[9px] text-white/30 mt-1.5">Pause</span>
+              </div>
             </>
           ) : (
             <>
-              <button
-                onTouchStart={() => {
-                  const t = setTimeout(onStop, 2000);
-                  (window as Window & { __stopT?: ReturnType<typeof setTimeout> }).__stopT = t;
-                }}
-                onTouchEnd={() => clearTimeout((window as Window & { __stopT?: ReturnType<typeof setTimeout> }).__stopT)}
-                className="w-16 h-16 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center"
-              >
-                <div className="w-6 h-6 bg-red-500 rounded-md" />
-              </button>
-              <button onClick={onResume} className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center active:scale-90 transition-transform shadow-lg shadow-green-500/20">
-                <div className="w-0 h-0 ml-1 border-l-[14px] border-l-white border-y-[9px] border-y-transparent" />
-              </button>
+              <HoldToStopButton onStop={onStop} />
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => { haptic('medium'); onResume(); }}
+                  className="w-16 h-16 rounded-full bg-white/15 backdrop-blur border-2 border-white/25 flex items-center justify-center active:scale-90 transition-transform"
+                >
+                  <div className="w-0 h-0 ml-1 border-l-[14px] border-l-white border-y-[9px] border-y-transparent" />
+                </button>
+                <span className="text-[9px] text-white/30 mt-1.5">Resume</span>
+              </div>
             </>
           )}
         </div>
-        {isPaused && <p className="text-center text-[9px] text-white/15 mt-3">Hold stop for 2 seconds to end</p>}
+        {isPaused && <p className="text-center text-[9px] text-white/20 mt-3">Hold stop to end run</p>}
       </div>
     </div>
   );
