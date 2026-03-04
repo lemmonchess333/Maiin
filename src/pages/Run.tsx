@@ -211,46 +211,48 @@ export default function Run() {
   const currentDistance = runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance;
 
   return (
-    <div className="fixed inset-0 z-50 text-white flex flex-col" style={{ backgroundColor: THEME.bg }}>
+    <div className="fixed inset-0 z-50 flex flex-col">
       {phase === 'waiting' && (
-        <RunSetupModal
-          onStart={handleStart}
-          onCancel={() => navigate(-1)}
-          savedPreferences={{
-            autoPause: true,
-            audioCues: (profile as any)?.audioCues !== false,
-            ...(searchParams.get('type') ? { activityType: searchParams.get('type') as RunConfig['activityType'] } : {}),
-          }}
-        />
+        <div className="flex-1 flex flex-col bg-background text-foreground">
+          <RunSetupModal
+            onStart={handleStart}
+            onCancel={() => navigate(-1)}
+            savedPreferences={{
+              autoPause: true,
+              audioCues: (profile as any)?.audioCues !== false,
+              ...(searchParams.get('type') ? { activityType: searchParams.get('type') as RunConfig['activityType'] } : {}),
+            }}
+          />
+        </div>
       )}
 
       {phase === 'acquiring' && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="w-16 h-16 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin mb-6" />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 bg-background text-foreground">
+          <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-6" />
           <p className="text-lg font-semibold mb-1">Acquiring GPS Signal...</p>
-          <p className="text-sm text-white/40 text-center">Stand still outdoors for best results</p>
-          <p className="text-xs text-white/20 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
+          <p className="text-sm text-muted-foreground text-center">Stand still outdoors for best results</p>
+          <p className="text-xs text-muted-foreground/60 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
           {gps.error && <p className="text-xs text-red-400 mt-2">{gps.error}</p>}
           {acquiringSeconds >= 8 && (
             <button
               onClick={() => { setPhase('countdown'); setCountdown(3); }}
-              className="mt-6 px-6 py-2.5 rounded-full bg-white/10 text-sm font-medium text-white active:scale-95 transition-transform"
+              className="mt-6 px-6 py-2.5 rounded-full bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
             >
               Start without GPS
             </button>
           )}
-          <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-4 text-sm text-white/30">Cancel</button>
+          <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-4 text-sm text-muted-foreground">Cancel</button>
         </div>
       )}
 
       {phase === 'countdown' && (
-        <div className="h-full flex items-center justify-center text-white">
+        <div className="h-full flex items-center justify-center text-white" style={{ backgroundColor: THEME.bg }}>
           <span className="text-9xl font-bold animate-pulse">{countdown || 'GO!'}</span>
         </div>
       )}
 
       {(phase === 'active' || phase === 'paused') && runConfig?.activityType === 'treadmill' && (
-        <div className="flex-1 flex items-center">
+        <div className="flex-1 flex items-center text-white" style={{ backgroundColor: THEME.bg }}>
           <TreadmillMode
             elapsed={timer.elapsed}
             formatTime={timer.formatTime}
@@ -265,7 +267,7 @@ export default function Run() {
       )}
 
       {(phase === 'active' || phase === 'paused') && runConfig?.activityType !== 'treadmill' && (
-        <div className="fixed inset-0 z-50" style={{ backgroundColor: THEME.bg }}>
+        <div className="fixed inset-0 z-50 text-white" style={{ backgroundColor: THEME.bg }}>
           <div className="absolute top-3 left-4 z-50">
             <GPSIndicator accuracy={gps.gpsAccuracy} isTracking={gps.isTracking} pointCount={gps.points.length} />
           </div>

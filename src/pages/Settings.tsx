@@ -75,23 +75,28 @@ function AIAdjustmentsSection() {
   const { isPro } = useSubscription();
   const { currentWeek } = usePerformanceWeeks();
 
-  const phase = (profile?.program?.currentPhase || "recomp") as PhaseMode;
-  const sensitivity = phaseConfig[phase]?.plateauSensitivity ?? 1;
+  const phase = (profile?.program?.goal || "recomp") as PhaseMode;
+  const config = phaseConfig[phase] || phaseConfig["recomp"];
+  const sensitivity = config.plateauSensitivity;
 
-  const avgLiftChange = currentWeek
+  const avgLiftChange = currentWeek?.breakdown?.liftLoadScore != null
     ? (currentWeek.breakdown.liftLoadScore - 50) / 50
     : 0;
   const avgWeightChange = 0;
 
+  const tdeeBase = profile?.tdeeBase || profile?.targetCalories || 2200;
+  const currentAdjustment = profile?.aiCalorieAdjustment || 0;
+
   const plateau = detectPlateau(avgLiftChange, avgWeightChange, sensitivity);
-  const currentTDEE = profile?.targetCalories || 2200;
   const macros = calculateAdaptiveMacros(
     profile?.weightKg || 70,
     avgLiftChange,
     avgWeightChange,
     phase,
-    currentTDEE
+    tdeeBase
   );
+
+  const suggestedDelta = macros.calories - tdeeBase;
 
   const statusColors: Record<string, string> = {
     progressing: "text-green-500",
@@ -142,169 +147,97 @@ function AIAdjustmentsSection() {
 
         <p className="text-xs text-muted-foreground leading-relaxed">{plateau.message}</p>
 
-        {plateau.calorieAdjust !== 0 && (
+        {/* Show current state: base → applied */}
+        <div className="p-3 rounded-xl bg-muted/50 space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">TDEE Base</span>
+            <span className="font-medium text-foreground">{tdeeBase} cal</span>
+          </div>
+          {currentAdjustment !== 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Active AI adjustment</span>
+              <span className={cn("font-medium", currentAdjustment > 0 ? "text-green-500" : "text-amber-500")}>
+                {currentAdjustment > 0 ? "+" : ""}{currentAdjustment} cal
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs border-t border-border/50 pt-1.5">
+            <span className="text-muted-foreground">Current target</span>
+            <span className="font-bold text-foreground">{tdeeBase + currentAdjustment} cal</span>
+          </div>
+        </div>
+
+        {suggestedDelta !== currentAdjustment && plateau.calorieAdjust !== 0 && (
+          <>
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
+              <p className="text-xs font-medium text-foreground">AI Suggestion</p>
+              <p className="text-sm font-bold text-primary">
+                {tdeeBase} → {macros.calories} cal
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  ({suggestedDelta > 0 ? "+" : ""}{suggestedDelta})
+                </span>
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {macros.protein}g protein · {macros.carbs}g carbs · {macros.fat}g fat
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                await updateProfile({
+                  aiCalorieAdjustment: suggestedDelta,
+                  targetCalories: macros.calories,
+                  targetProtein: macros.protein,
+                  targetCarbs: macros.carbs,
+                  targetFat: macros.fat,
+                });
+                toast.success(
+                  `AI adjustment applied: ${suggestedDelta > 0 ? "+" : ""}${suggestedDelta} cal`,
+                  { description: `New target: ${macros.calories} cal · ${macros.protein}g protein` }
+                );
+              }}
+              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+            >
+              Apply {suggestedDelta > 0 ? "+" : ""}{suggestedDelta} cal Adjustment
+            </button>
+          </>
+        )}
+
+        {currentAdjustment !== 0 && (
           <button
             onClick={async () => {
-              await updateProfile({
-                targetCalories: macros.calories,
-                targetProtein: macros.protein,
-                targetCarbs: macros.carbs,
-                targetFat: macros.fat,
-              });
-              toast.success(
-                `Targets updated to ${macros.calories} cal`,
-                { description: `${macros.protein}g protein \u00B7 ${macros.carbs}g carbs \u00B7 ${macros.fat}g fat` }
+              const tdeeGoal = (phase === "strength peak" ? "recomp" : phase) as "cut" | "recomp" | "lean bulk";
+              const baseMacros = calculateTDEE(
+                profile?.weightKg || 70,
+                profile?.heightCm || 170,
+                profile?.age || 25,
+                profile?.activityLevel || "moderate",
+                tdeeGoal,
               );
+              await updateProfile({
+                aiCalorieAdjustment: 0,
+                targetCalories: tdeeBase,
+                targetProtein: baseMacros.protein,
+                targetCarbs: baseMacros.carbs,
+                targetFat: baseMacros.fat,
+              });
+              toast.success("AI adjustment cleared, back to TDEE base");
             }}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+            className="w-full py-2 rounded-xl bg-muted text-muted-foreground text-xs font-medium"
           >
-            Apply AI Targets
+            Clear AI Adjustment
           </button>
         )}
       </div>
-
-      <div className="p-4 rounded-2xl bg-card border border-border/50">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">AI Macro Targets</p>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div>
-            <p className="text-sm font-bold tabular-nums text-orange-500">{macros.calories}</p>
-            <p className="text-[9px] text-muted-foreground">cal</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-blue-500">{macros.protein}g</p>
-            <p className="text-[9px] text-muted-foreground">protein</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-amber-500">{macros.carbs}g</p>
-            <p className="text-[9px] text-muted-foreground">carbs</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold tabular-nums text-purple-500">{macros.fat}g</p>
-            <p className="text-[9px] text-muted-foreground">fat</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function RunScheduleSection() {
-  const { profile, updateProfile } = useAuth();
-  const { programState, overrideRunDay } = useProgram();
-
-  const runMode = profile?.runMode ?? "freeform";
-  const runDays = programState?.runDays ?? [];
-  const runPlan = programState?.runPlan;
-
-  return (
-    <div className="space-y-3">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <Footprints className="w-5 h-5" />
-        Run Schedule
-      </h2>
-
-      {/* Mode selector */}
-      <div className="flex gap-2">
-        {(["freeform", "structured", "race_prep"] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => updateProfile({ runMode: mode })}
-            className={cn(
-              "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-              runMode === mode
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            )}
-          >
-            {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {runMode !== "freeform" && (
-        <>
-          {/* Run days per week */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-            <span className="text-sm text-foreground">Run days / week</span>
-            <select
-              value={profile?.weeklyRunDaysTarget ?? 3}
-              onChange={(e) => updateProfile({ weeklyRunDaysTarget: Number(e.target.value) })}
-              className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
-            >
-              {[2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Race prep details */}
-          {runMode === "race_prep" && runPlan?.raceGoal && (
-            <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
-                <span className="text-sm font-medium text-foreground">
-                  {runPlan.raceGoal.distance.toUpperCase()} &mdash; {runPlan.raceGoal.targetDate}
-                </span>
-              </div>
-              {runPlan.totalWeeks && runPlan.currentWeek != null && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {runPlan.currentWeek + 1} / {runPlan.totalWeeks}
-                      {" \u00B7 "}
-                      {getRacePhaseLabel(runPlan.currentWeek, runPlan.totalWeeks)}
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: ((runPlan.currentWeek + 1) / runPlan.totalWeeks * 100) + "%" }}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Weekly run day view */}
-          {runDays.length > 0 && (
-            <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">This week</p>
-              {runDays.map((rd) => (
-                <div key={rd.dayIndex} className="flex items-center gap-3 py-1.5">
-                  <span className="text-xs font-medium text-foreground w-8">
-                    {DAY_NAMES[rd.dayIndex]}
-                  </span>
-                  <select
-                    value={rd.userOverride || rd.templateId}
-                    onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                    className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
-                  >
-                    {RUN_TEMPLATES.map((t) => (
-                      <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
-                    ))}
-                  </select>
-                  {rd.completed && (
-                    <Check className="w-4 h-4 text-green-500 shrink-0" />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
-  const { refreshRunSchedule } = useProgram();
+  const { refreshRunSchedule, programState, overrideRunDay } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
@@ -312,7 +245,7 @@ export default function Settings() {
     profile?.weeklyWorkoutsTarget || 4
   );
   const [mealsTarget, setMealsTarget] = useState(
-    profile?.weeklyMealsTarget || 10
+    Math.min(profile?.weeklyMealsTarget || 10, 20)
   );
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -383,6 +316,8 @@ export default function Settings() {
         startWeight: profile?.program?.startWeight ?? weightKg,
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
+      tdeeBase: tdee.targetCalories,
+      aiCalorieAdjustment: 0, // Reset AI adjustment when TDEE is recalculated
       targetCalories: tdee.targetCalories,
       targetProtein: tdee.protein,
       targetCarbs: tdee.carbs,
@@ -713,11 +648,122 @@ export default function Settings() {
             Tap a day to change it &middot; {7 - workoutsTarget - runsTarget} rest day{7 - workoutsTarget - runsTarget !== 1 ? "s" : ""}
           </p>
         </div>
+
+        {/* Run mode — controls how run days get templates */}
+        {runsTarget > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-foreground flex items-center gap-2">
+              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+              Run Mode
+            </p>
+            <div className="flex gap-2">
+              {(["freeform", "structured", "race_prep"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => updateProfile({ runMode: mode })}
+                  className={cn(
+                    "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                    (profile?.runMode ?? "freeform") === mode
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {(profile?.runMode ?? "freeform") === "freeform"
+                ? "Pick any run type when you start"
+                : (profile?.runMode ?? "freeform") === "structured"
+                  ? "Auto-assigns run templates to your run days"
+                  : "Follows a race training plan"}
+            </p>
+
+            {/* Race prep details */}
+            {profile?.runMode === "race_prep" && programState?.runPlan?.raceGoal && (
+              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {programState.runPlan.raceGoal.distance.toUpperCase()} &mdash; {programState.runPlan.raceGoal.targetDate}
+                  </span>
+                </div>
+                {programState.runPlan.totalWeeks && programState.runPlan.currentWeek != null && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {programState.runPlan.currentWeek + 1} / {programState.runPlan.totalWeeks}
+                        {" \u00B7 "}
+                        {getRacePhaseLabel(programState.runPlan.currentWeek, programState.runPlan.totalWeeks)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: ((programState.runPlan.currentWeek + 1) / programState.runPlan.totalWeeks * 100) + "%" }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Template overrides per run day */}
+            {profile?.runMode && profile.runMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
+              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-1.5">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
+                {(programState?.runDays ?? []).map((rd) => (
+                  <div key={rd.dayIndex} className="flex items-center gap-3 py-1">
+                    <span className="text-xs font-medium text-foreground w-8">
+                      {DAY_LABELS[rd.dayIndex]}
+                    </span>
+                    <select
+                      value={rd.userOverride || rd.templateId}
+                      onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
+                      className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
+                    >
+                      {RUN_TEMPLATES.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
+                      ))}
+                    </select>
+                    {rd.completed && (
+                      <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       </AccordionSection>
 
+      {/* Save — always visible */}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+      >
+        {saved ? (
+          <>
+            <Check className="w-4 h-4" />
+            Saved!
+          </>
+        ) : saving ? (
+          "Saving..."
+        ) : (
+          <>
+            <Save className="w-4 h-4" />
+            Save Changes
+          </>
+        )}
+      </motion.button>
+
       {/* Training Setup */}
-      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, phase, AI adjustments, run schedule">
+      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, training phase, AI adjustments">
 
       {/* TDEE Calculator */}
       <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
@@ -809,6 +855,16 @@ export default function Settings() {
                 </div>
               </div>
             </div>
+
+            {(profile?.aiCalorieAdjustment ?? 0) !== 0 && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <Brain className="w-4 h-4 text-amber-500 shrink-0" />
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  AI adjustment active: {(profile?.aiCalorieAdjustment ?? 0) > 0 ? "+" : ""}{profile?.aiCalorieAdjustment} cal.
+                  Saving will reset to TDEE base.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -859,7 +915,7 @@ export default function Settings() {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center">
-          Changes apply when you tap Save Changes below
+          Tap Save Changes to apply
         </p>
 
         <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
@@ -895,33 +951,9 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Save */}
-      <motion.button
-        whileTap={{ scale: 0.98 }}
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
-        {saved ? (
-          <>
-            <Check className="w-4 h-4" />
-            Saved!
-          </>
-        ) : saving ? (
-          "Saving..."
-        ) : (
-          <>
-            <Save className="w-4 h-4" />
-            Save Changes
-          </>
-        )}
-      </motion.button>
-
       {/* AI Adjustments (Pro) */}
       <AIAdjustmentsSection />
 
-      {/* Run Schedule */}
-      <RunScheduleSection />
       </AccordionSection>
 
       {/* Preferences */}

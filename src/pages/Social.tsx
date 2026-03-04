@@ -54,9 +54,11 @@ export default function Social() {
         <>
           <LeaderboardCard challenge="weekly_hybrid" />
 
-          <button onClick={refresh} className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
+          {items.length > 0 && (
+            <button onClick={refresh} className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           <div className="space-y-3">
             {items.map(item => (

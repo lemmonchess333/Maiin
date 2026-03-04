@@ -105,7 +105,7 @@ export default function RunSummary() {
   };
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: THEME.bg, color: THEME.textPrimary }}>
+    <div className="min-h-screen pb-24 bg-background text-foreground">
       <div className="text-center pt-8 pb-4 px-6">
         <h1 className="text-xl font-bold text-foreground">Great run!</h1>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
@@ -123,6 +123,7 @@ export default function RunSummary() {
             height="h-56"
             paceColored={true}
             avgPaceSecPerKm={avgPaceSeconds}
+            darkMode={!!profile?.darkMode}
           />
           <PaceLegend />
         </div>
