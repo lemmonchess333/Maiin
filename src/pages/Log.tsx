@@ -32,7 +32,13 @@ import {
   Cookie,
   MessageSquare,
   BookOpen,
+  ScanLine,
+  Mic,
 } from "lucide-react";
+import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
+import { QuickRelog } from "@/components/nutrition/QuickRelog";
+import { VoiceLogger } from "@/components/nutrition/VoiceLogger";
+import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
 export default function Log() {
   const { user, profile, updateProfile } = useAuth();
@@ -49,6 +55,9 @@ export default function Log() {
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const [showRecipeBuilder, setShowRecipeBuilder] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showVoiceLogger, setShowVoiceLogger] = useState(false);
+  const { addFavourite } = useFoodFavourites();
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -288,7 +297,50 @@ export default function Log() {
       createdAt: Timestamp.now(),
     });
     setShowFoodSearch(false);
+    await addFavourite({ ...food, source: "search" });
     toast.success(`${food.name} added!`);
+  };
+
+  const handleBarcodeLog = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string; barcode: string; servings: number }) => {
+    if (!user) return;
+    const s = food.servings;
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: food.name,
+      items: [{ name: food.name, portionSize: `${s}x ${food.servingSize}`, calories: Math.round(food.calories * s), protein: Math.round(food.protein * s), carbs: Math.round(food.carbs * s), fat: Math.round(food.fat * s), fiber: food.fiber != null ? Math.round(food.fiber * s) : undefined, sugar: food.sugar != null ? Math.round(food.sugar * s) : undefined, sodium: food.sodium != null ? Math.round(food.sodium * s) : undefined }],
+      totalCalories: Math.round(food.calories * s),
+      totalProtein: Math.round(food.protein * s),
+      totalCarbs: Math.round(food.carbs * s),
+      totalFat: Math.round(food.fat * s),
+      totalFiber: food.fiber != null ? Math.round(food.fiber * s) : undefined,
+      totalSugar: food.sugar != null ? Math.round(food.sugar * s) : undefined,
+      totalSodium: food.sodium != null ? Math.round(food.sodium * s) : undefined,
+      confidence: "barcode",
+      createdAt: Timestamp.now(),
+    });
+    setShowBarcodeScanner(false);
+    await addFavourite({ name: food.name, calories: Math.round(food.calories * s), protein: Math.round(food.protein * s), carbs: Math.round(food.carbs * s), fat: Math.round(food.fat * s), fiber: food.fiber != null ? Math.round(food.fiber * s) : undefined, sugar: food.sugar != null ? Math.round(food.sugar * s) : undefined, sodium: food.sodium != null ? Math.round(food.sodium * s) : undefined, servingSize: food.servingSize, source: "barcode" });
+    toast.success(`${food.name} logged!`);
+  };
+
+  const handleQuickRelog = async (fav: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string }) => {
+    if (!user) return;
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: fav.name,
+      items: [{ name: fav.name, portionSize: fav.servingSize, calories: fav.calories, protein: fav.protein, carbs: fav.carbs, fat: fav.fat, fiber: fav.fiber, sugar: fav.sugar, sodium: fav.sodium }],
+      totalCalories: fav.calories,
+      totalProtein: fav.protein,
+      totalCarbs: fav.carbs,
+      totalFat: fav.fat,
+      totalFiber: fav.fiber || undefined,
+      totalSugar: fav.sugar || undefined,
+      totalSodium: fav.sodium || undefined,
+      confidence: "favourite",
+      createdAt: Timestamp.now(),
+    });
+    await addFavourite({ ...fav, source: "manual" });
+    toast.success(`${fav.name} added!`);
   };
 
   return (
@@ -539,7 +591,10 @@ export default function Log() {
             </div>
           </div>
 
-          {/* Common Meals */}
+          {/* Quick Relog Favourites */}
+          <QuickRelog onSelect={handleQuickRelog} />
+
+          {/* Common Meals (fallback if no favourites) */}
           {commonMeals.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Common Meals</p>
@@ -657,6 +712,43 @@ export default function Log() {
               className="feature-btn"
             >
               <BookOpen className="w-4 h-4" /> Build a Recipe
+            </button>
+          )}
+
+          {/* Barcode Scanner */}
+          {showBarcodeScanner ? (
+            <div className="bg-card rounded-2xl border border-border/50 p-4">
+              <BarcodeScanner
+                onLog={handleBarcodeLog}
+                onClose={() => setShowBarcodeScanner(false)}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowBarcodeScanner(true)}
+              className="feature-btn"
+            >
+              <ScanLine className="w-4 h-4" /> Scan Barcode
+            </button>
+          )}
+
+          {/* Voice Logger */}
+          {showVoiceLogger ? (
+            <div className="bg-card rounded-2xl border border-border/50 p-4">
+              <VoiceLogger
+                onResult={(text) => {
+                  setShowVoiceLogger(false);
+                  setNlInput(text);
+                }}
+                onClose={() => setShowVoiceLogger(false)}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowVoiceLogger(true)}
+              className="feature-btn"
+            >
+              <Mic className="w-4 h-4" /> Voice Log
             </button>
           )}
 

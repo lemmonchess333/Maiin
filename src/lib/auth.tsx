@@ -84,6 +84,16 @@ export interface UserProfile {
     carbs: number;
     fat: number;
   };
+  // Micronutrient targets
+  targetFiber?: number;
+  targetSugar?: number;
+  targetSodium?: number;
+  // Water tracking
+  targetWaterGlasses?: number;
+  // Rollover calories (Pro)
+  enableRolloverCalories?: boolean;
+  // Auto-post social
+  autoPostBadges?: boolean;
 }
 
 /* ================================

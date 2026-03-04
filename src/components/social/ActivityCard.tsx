@@ -91,14 +91,33 @@ export default function ActivityCard({ feedItem }: { feedItem: FeedItem }) {
       )}
 
       <div className="flex items-center gap-4 pt-2 border-t border-border/50">
-        <button onClick={handleKudos} className="flex items-center gap-1.5">
-          <span className={liked ? 'text-orange-500' : 'text-muted-foreground'}>{liked ? '🧡' : '🤍'}</span>
+        <button onClick={handleKudos} className="flex items-center gap-1.5 active:scale-90 transition-transform">
+          <span className={liked ? 'text-lg' : 'text-muted-foreground'}>{liked ? '💪' : '🤍'}</span>
           {kudosCount > 0 && <span className="text-xs text-muted-foreground">{kudosCount}</span>}
         </button>
         <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-1.5 text-muted-foreground">
           💬 {(activity?.commentCount || 0) > 0 && <span className="text-xs">{activity.commentCount}</span>}
         </button>
       </div>
+
+      {/* Quick reply chips */}
+      {showComments && (
+        <div className="flex gap-1.5 mt-2 overflow-x-auto pb-1">
+          {(isRun ? ['Nice run! 🏃', 'Great pace! ⚡', 'Keep it up! 💪'] : ['Great lift! 🏋️', 'Beast mode! 💪', 'Strong work! 🔥']).map((chip) => (
+            <button
+              key={chip}
+              onClick={() => {
+                // Quick reply chip imports handled by CommentSection
+                const input = document.querySelector<HTMLInputElement>(`[data-comment-input="${feedItem.activityId}"]`);
+                if (input) { input.value = chip; input.dispatchEvent(new Event('input', { bubbles: true })); }
+              }}
+              className="shrink-0 px-2.5 py-1 rounded-full bg-primary/10 text-[10px] font-medium text-primary hover:bg-primary/20 transition-colors"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      )}
 
       {showComments && <CommentSection activityId={feedItem.activityId} />}
     </div>
