@@ -11,8 +11,9 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
-  Circle,
   Dumbbell,
+  ClipboardList,
+  CalendarDays,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
@@ -129,15 +130,15 @@ function ProgramInner() {
         <div className="flex items-center bg-muted rounded-xl p-1 mb-1">
           <button
             onClick={() => setProgramView('program')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground"
+            className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5"
           >
-            📋 Programme
+            <ClipboardList className="w-4 h-4" /> Programme
           </button>
           <button
             onClick={() => setProgramView('calendar')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm"
+            className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm flex items-center justify-center gap-1.5"
           >
-            📅 Calendar
+            <CalendarDays className="w-4 h-4" /> Calendar
           </button>
         </div>
         <TrainingCalendar />
@@ -278,15 +279,15 @@ function ProgramInner() {
       <div className="flex items-center bg-muted rounded-xl p-1">
         <button
           onClick={() => setProgramView('program')}
-          className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm"
+          className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm flex items-center justify-center gap-1.5"
         >
-          📋 Programme
+          <ClipboardList className="w-4 h-4" /> Programme
         </button>
         <button
           onClick={() => setProgramView('calendar')}
-          className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground"
+          className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5"
         >
-          📅 Calendar
+          <CalendarDays className="w-4 h-4" /> Calendar
         </button>
       </div>
       {/* Header */}
@@ -315,18 +316,18 @@ function ProgramInner() {
       </div>
 
       {/* Phase + Week Header */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl border border-purple-100 dark:border-purple-900/30 overflow-hidden">
+      <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 dark:from-purple-500/15 dark:to-purple-500/5 rounded-2xl border border-purple-100 dark:border-purple-800/30 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={goBack}
             disabled={!canGoBack}
-            className={cn("p-1 rounded transition-colors", canGoBack ? "hover:bg-white/50 dark:hover:bg-white/10" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-purple-100 dark:hover:bg-purple-900/30 active:scale-90" : "opacity-30")}
           >
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
 
           <div className="text-center">
-            <p className="text-sm font-bold text-foreground tracking-tight">
+            <p className="text-lg font-bold text-foreground tracking-tight">
               Week {displayWeekNumber}
               {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
             </p>
@@ -335,7 +336,7 @@ function ProgramInner() {
           <button
             onClick={goForward}
             disabled={!canGoForward}
-            className={cn("p-1 rounded transition-colors", canGoForward ? "hover:bg-white/50 dark:hover:bg-white/10" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-purple-100 dark:hover:bg-purple-900/30 active:scale-90" : "opacity-30")}
           >
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
@@ -417,20 +418,6 @@ function ProgramInner() {
                   {day.dayName} &middot; {day.exercises.length} exercises
                 </p>
               </div>
-
-              {/* Mark complete button (separate tap) */}
-              {!isViewingHistory && !day.completed && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    completeWorkoutDay(dayIndex);
-                  }}
-                  className="shrink-0 p-1.5 rounded-full border-2 border-muted-foreground/30 hover:border-primary/40 hover:bg-primary/10 transition-colors"
-                  aria-label="Mark day as complete"
-                >
-                  <Circle className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary" />
-                </button>
-              )}
 
               {expandedDay === dayIndex ? (
                 <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
