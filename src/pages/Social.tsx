@@ -5,16 +5,17 @@ import { searchUsers } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import FollowButton from '../components/social/FollowButton';
 import LeaderboardCard from '../components/social/LeaderboardCard';
-import { RefreshCw, Trophy } from 'lucide-react';
-import { ChallengeList } from '../features/challenges/ChallengeList';
+import ProgressPhotos from '../components/social/ProgressPhotos';
+import { RefreshCw } from 'lucide-react';
+
+type SocialTab = 'feed' | 'photos' | 'find';
 
 export default function Social() {
   const { items, loading, refresh, loadMore, hasMore } = useSocialFeed();
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<'feed' | 'challenges'>('feed');
+  const [tab, setTab] = useState<SocialTab>('feed');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showSearch, setShowSearch] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -26,31 +27,24 @@ export default function Social() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold">Activity</h1>
-        <button onClick={() => setShowSearch(!showSearch)}
-          className="text-sm px-3 py-1.5 rounded-lg bg-muted">
-          {showSearch ? 'Feed' : '🔍 Find People'}
-        </button>
       </div>
 
-      {/* Feed / Challenges toggle */}
-      {!showSearch && (
-        <div className="flex gap-1 bg-muted rounded-xl p-1">
+      {/* Tab bar */}
+      <div className="flex gap-1 p-1 rounded-xl bg-muted">
+        {(['feed', 'photos', 'find'] as SocialTab[]).map(t => (
           <button
-            onClick={() => setActiveSection('feed')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeSection === 'feed' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+            }`}
           >
-            Feed
+            {t === 'feed' ? 'Feed' : t === 'photos' ? '📸 Progress' : '🔍 Find'}
           </button>
-          <button
-            onClick={() => setActiveSection('challenges')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${activeSection === 'challenges' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
-          >
-            <Trophy className="w-3.5 h-3.5" /> Challenges
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {showSearch ? (
+      {tab === 'find' && (
         <div className="space-y-3">
           <div className="flex gap-2">
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -69,34 +63,12 @@ export default function Social() {
               <FollowButton targetUid={u.uid} />
             </div>
           ))}
-
-          {searchResults.length === 0 && !searchQuery && (
-            <div className="text-center py-12 space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
-                <p className="text-2xl">🤝</p>
-              </div>
-              <p className="text-sm font-semibold text-foreground">Invite friends to Maiin</p>
-              <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
-                Share your profile link to connect with training partners
-              </p>
-              <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: "Join me on Maiin", text: "Track workouts, runs, and nutrition together!", url: window.location.origin });
-                  } else {
-                    navigator.clipboard.writeText(window.location.origin);
-                  }
-                }}
-                className="mt-2 text-xs px-5 py-2.5 rounded-full bg-purple-500 text-white font-medium shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform"
-              >
-                Share Invite
-              </button>
-            </div>
-          )}
         </div>
-      ) : activeSection === 'challenges' ? (
-        <ChallengeList />
-      ) : (
+      )}
+
+      {tab === 'photos' && <ProgressPhotos />}
+
+      {tab === 'feed' && (
         <>
           <LeaderboardCard challenge="weekly_hybrid" />
 
@@ -127,7 +99,7 @@ export default function Social() {
               </div>
               <p className="text-sm font-bold text-foreground">No activity yet</p>
               <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">Follow people to see their workouts and runs here</p>
-              <button onClick={() => setShowSearch(true)}
+              <button onClick={() => setTab('find')}
                 className="mt-2 text-xs px-5 py-2.5 rounded-full bg-purple-500 text-white font-medium shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform">
                 Find People
               </button>
