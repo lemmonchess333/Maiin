@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
@@ -155,18 +155,61 @@ export function useProgram() {
   );
 
   // Mark a workout day as completed (does NOT auto-advance week)
+  // Also writes to workouts collection so Home stats can see it
   const completeWorkoutDay = useCallback(
     async (dayIndex: number) => {
       if (!programState || !user) return;
 
+      const day = programState.workouts[dayIndex];
+      if (!day) return;
+
       const updated: ProgramState = {
         ...programState,
-        workouts: programState.workouts.map((day, i) =>
-          i === dayIndex ? { ...day, completed: true } : day,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, completed: true } : d,
         ),
       };
 
       await saveProgram(updated);
+
+      // Write to workouts collection so Home/performance engine picks it up
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const workoutId = `${today}-prog-${Date.now()}`;
+        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+
+        const exercises = day.exercises.map((ex) => {
+          const weight = ex.lastAttemptedWeight || ex.weight;
+          return {
+            exerciseId: ex.exerciseId,
+            exerciseName: ex.name,
+            category: ex.movementCategory,
+            sets: Array.from({ length: ex.sets }, (_, i) => ({
+              setNumber: i + 1,
+              reps: ex.lastPerformance?.reps ?? ex.reps,
+              weightKg: weight,
+            })),
+            caloriesBurned: 0,
+          };
+        });
+
+        const tonnage = exercises.reduce(
+          (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+          0,
+        );
+
+        await setDoc(workoutRef, {
+          date: today,
+          exercises,
+          totalCalories: Math.round(tonnage * 0.05),
+          durationMinutes: day.exercises.length * 5,
+          notes: `${day.dayName} — Programme Week ${programState.currentWeek}`,
+          createdAt: Timestamp.now(),
+          source: "programme",
+        });
+      } catch (err) {
+        console.warn("Failed to sync programme day to workouts:", err);
+      }
 
       const allDone = updated.workouts.every((d) => d.completed);
       if (allDone) {
