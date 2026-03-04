@@ -79,11 +79,23 @@ export function useChallenges() {
 
   useEffect(() => {
     const ref = collection(db, "challenges");
-    const unsub = onSnapshot(ref, (snap) => {
-      setChallenges(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Challenge)));
-      setLoading(false);
-    });
-    return unsub;
+    // Timeout fallback: if Firestore doesn't respond in 3s, stop loading
+    const timeout = setTimeout(() => setLoading(false), 3000);
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        clearTimeout(timeout);
+        setChallenges(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Challenge)));
+        setLoading(false);
+      },
+      () => {
+        // On error (e.g. collection doesn't exist), gracefully resolve
+        clearTimeout(timeout);
+        setChallenges([]);
+        setLoading(false);
+      }
+    );
+    return () => { clearTimeout(timeout); unsub(); };
   }, []);
 
   // Load user's progress

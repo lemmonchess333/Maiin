@@ -208,6 +208,7 @@ export default function TrainingCalendar() {
       <WeekView
         weekDays={weekDays}
         sessions={sessions}
+        weekSchedule={(profile?.weekSchedule && profile.weekSchedule.length === 7) ? profile.weekSchedule : generateSchedule(profile?.weeklyWorkoutsTarget ?? 4, profile?.weeklyRunsTarget ?? 2)}
         onAdd={function(date) {
           setSelectedDay(date);
           setShowAddModal(true);

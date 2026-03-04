@@ -69,6 +69,30 @@ export default function Social() {
               <FollowButton targetUid={u.uid} />
             </div>
           ))}
+
+          {searchResults.length === 0 && !searchQuery && (
+            <div className="text-center py-12 space-y-3">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
+                <p className="text-2xl">🤝</p>
+              </div>
+              <p className="text-sm font-semibold text-foreground">Invite friends to Maiin</p>
+              <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
+                Share your profile link to connect with training partners
+              </p>
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: "Join me on Maiin", text: "Track workouts, runs, and nutrition together!", url: window.location.origin });
+                  } else {
+                    navigator.clipboard.writeText(window.location.origin);
+                  }
+                }}
+                className="mt-2 text-xs px-5 py-2.5 rounded-full bg-purple-500 text-white font-medium shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform"
+              >
+                Share Invite
+              </button>
+            </div>
+          )}
         </div>
       ) : activeSection === 'challenges' ? (
         <ChallengeList />

@@ -230,7 +230,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       {/* Always visible — won't disappear if you cancel camera */}
       <button
         onClick={() => setCameraOpen(true)}
-        className="w-full py-4 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors"
+        className="w-full py-4 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm active:scale-[0.98] transition-all"
       >
         Scan Food
       </button>
@@ -264,7 +264,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
       {activeResult && (
         <div className="space-y-4">
-          <div className="bg-card rounded-xl border border-border/50 p-4 space-y-3">
+          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-foreground truncate">

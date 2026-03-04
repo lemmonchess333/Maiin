@@ -187,7 +187,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       {exercises.map((exercise, exIndex) => (
         <div
           key={exIndex}
-          className="bg-card rounded-xl border border-border/50 overflow-hidden"
+          className="bg-card rounded-2xl border border-border/50 overflow-hidden"
         >
           <button
             onClick={() =>
@@ -333,7 +333,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
                   <button
                     onClick={() => addSet(exIndex)}
-                    className="w-full py-2 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-1"
+                    className="w-full py-2 rounded-lg bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Set
                   </button>
@@ -348,7 +348,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       {!showPicker && (
         <button
           onClick={() => setShowPicker(true)}
-          className="w-full py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary font-medium text-sm hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" /> Add Exercise
         </button>
@@ -428,7 +428,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
       {/* Notes */}
       {exercises.length > 0 && (
-        <div className="bg-card rounded-xl border border-border/50 p-4 space-y-2">
+        <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-2">
           <p className="text-sm font-medium text-foreground">Workout Notes</p>
           <textarea
             value={notes}

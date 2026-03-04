@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import { CATEGORY_LABELS, type BadgeDef } from "./badges";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
@@ -45,15 +46,15 @@ export function BadgeGrid() {
                     "p-3 rounded-xl border text-center transition-all",
                     badge.earnedAt
                       ? "bg-card border-primary/30"
-                      : "bg-muted/50 border-border/30 opacity-50"
+                      : "bg-muted/30 border-border/20 opacity-40"
                   )}
                 >
-                  <p className="text-2xl mb-1">
-                    {badge.earnedAt ? badge.icon : "🔒"}
-                  </p>
+                  <div className="flex items-center justify-center text-2xl mb-1">
+                    {badge.earnedAt ? badge.icon : <Lock className="w-5 h-5 text-muted-foreground/50" />}
+                  </div>
                   <p className={cn(
                     "text-[10px] font-medium leading-tight",
-                    badge.earnedAt ? "text-foreground" : "text-muted-foreground"
+                    badge.earnedAt ? "text-foreground" : "text-muted-foreground/70"
                   )}>
                     {badge.name}
                   </p>
