@@ -1,15 +1,18 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
+import { generateAndShare } from '../lib/shareCardGenerator';
 import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMap';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
+import ShareCard from '../components/social/ShareCard';
 import { THEME } from '../lib/theme';
 
 interface RunData {
@@ -27,6 +30,9 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
+
   if (!state) {
     navigate('/');
     return null;
@@ -37,6 +43,16 @@ export default function RunSummary() {
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(points, distance);
+
+  const handleShare = async () => {
+    if (!shareCardRef.current) return;
+    setSharing(true);
+    try {
+      await generateAndShare(shareCardRef.current, 'run');
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -197,12 +213,29 @@ export default function RunSummary() {
             className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
             Export GPX
           </button>
-          <button className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
-            Share
+          <button
+            onClick={handleShare}
+            disabled={sharing}
+            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground disabled:opacity-50">
+            {sharing ? 'Generating...' : 'Share'}
           </button>
         </div>
         <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
       </div>
+
+      {/* Hidden share card rendered off-screen for image generation */}
+      <ShareCard
+        ref={shareCardRef}
+        data={{
+          type: 'run',
+          userName: profile?.displayName || 'Athlete',
+          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+          distance,
+          duration: elapsed,
+          pace: avgPace,
+          elevationGain,
+        }}
+      />
     </div>
   );
 }
