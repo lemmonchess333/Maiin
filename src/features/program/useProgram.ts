@@ -203,8 +203,7 @@ export function useProgram() {
           exercises,
           totalCalories: Math.round(tonnage * 0.05),
           durationMinutes: day.exercises.length * 5,
-          notes: `${day.dayName} — Programme Week ${programState.weekNumber}
-
+          notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
           createdAt: Timestamp.now(),
           source: "programme",
         });
@@ -536,4 +535,3 @@ export function useProgram() {
     viewedWeekNumber,
   };
 }
-
