@@ -86,6 +86,14 @@ export default function Run() {
     gps.start();
   };
 
+  // Auto-start without GPS if permission denied or geolocation unavailable
+  useEffect(() => {
+    if (phase === 'acquiring' && gps.error) {
+      setPhase('countdown');
+      setCountdown(3);
+    }
+  }, [phase, gps.error]);
+
   // Count seconds spent in acquiring phase
   useEffect(() => {
     if (phase !== 'acquiring') { setAcquiringSeconds(0); return; }
@@ -101,9 +109,9 @@ export default function Run() {
     }
   }, [phase, gps.points.length]);
 
-  // Force-start after 20s if GPS still hasn't locked
+  // Force-start after 10s if GPS still hasn't locked
   useEffect(() => {
-    if (phase === 'acquiring' && acquiringSeconds >= 20 && gps.points.length === 0) {
+    if (phase === 'acquiring' && acquiringSeconds >= 10 && gps.points.length === 0) {
       setPhase('countdown');
       setCountdown(3);
     }
@@ -199,11 +207,25 @@ export default function Run() {
 
   if (locked && (phase === 'active' || phase === 'paused')) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center" onDoubleClick={() => setLocked(false)}>
-        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">&#128274;</div>
-        <p className="text-5xl font-mono tabular-nums text-white/15 font-bold">{timer.formatTime(timer.elapsed)}</p>
-        <p className="text-2xl font-mono tabular-nums text-white/10 mt-2">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
-        <p className="text-white/20 text-xs mt-10 animate-pulse">Double-tap to unlock</p>
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+        style={{ backgroundColor: THEME.bg }}
+        onDoubleClick={() => { setLocked(false); haptic('light'); }}
+      >
+        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-8">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <p className="text-5xl font-mono tabular-nums text-white/20 font-bold">{timer.formatTime(timer.elapsed)}</p>
+        <p className="text-2xl font-mono tabular-nums text-white/12 mt-3">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
+        <div className="mt-12 flex flex-col items-center gap-2">
+          <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M4 12h16M12 4v16" /></svg>
+          </div>
+          <p className="text-white/20 text-xs animate-pulse">Double-tap to unlock</p>
+        </div>
       </div>
     );
   }
