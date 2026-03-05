@@ -12,15 +12,10 @@ function pctSigned(x: number) {
 function PIGauge({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score));
   const RADIUS = 70;
-  const STROKE = 12;
   const CX = 90;
   const CY = 90;
-  // Arc spans 180° (π radians), from left (180°) to right (0°)
-  const startAngle = Math.PI; // left
-  const endAngle = 0;         // right
   const arcLength = Math.PI * RADIUS;
   const progress = clamped / 100;
-  const dashArray = arcLength;
   const dashOffset = arcLength * (1 - progress);
 
   const color =
@@ -57,7 +52,7 @@ function PIGauge({ score }: { score: number }) {
           d={arcPath(RADIUS, Math.PI, 0)}
           fill="none"
           stroke="rgba(255,255,255,0.06)"
-          strokeWidth={STROKE}
+          strokeWidth={12}
           strokeLinecap="round"
         />
         {/* Progress arc */}
@@ -65,9 +60,9 @@ function PIGauge({ score }: { score: number }) {
           d={arcPath(RADIUS, Math.PI, 0)}
           fill="none"
           stroke={color}
-          strokeWidth={STROKE}
+          strokeWidth={12}
           strokeLinecap="round"
-          strokeDasharray={dashArray}
+          strokeDasharray={arcLength}
           strokeDashoffset={dashOffset}
           style={{ transition: "stroke-dashoffset 0.8s ease, stroke 0.4s" }}
         />
@@ -200,12 +195,12 @@ export default function PerformanceTab() {
             <span className="text-foreground font-medium">{pctSigned(m.liftProgression - 1)}</span>
           </li>
           <li>
-            Run progression:{" "}
-            <span className="text-foreground font-medium">{pctSigned(m.runProgression - 1)}</span>
+            Run volume:{" "}
+            <span className="text-foreground font-medium">{pctSigned(m.runVolume - 1)}</span>
           </li>
           <li>
-            TDEE adjustment:{" "}
-            <span className="text-foreground font-medium">{pctSigned(m.tdeeAdjustment - 1)}</span>
+            Run pace adjustment:{" "}
+            <span className="text-foreground font-medium">{pctSigned(m.runPaceAdjustmentPct)}</span>
           </li>
         </ul>
       </div>
