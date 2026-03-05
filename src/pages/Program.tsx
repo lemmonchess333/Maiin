@@ -6,6 +6,7 @@ import type { ProgramExercise, Goal } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import { PlateCalculator } from "@/components/PlateCalculator";
+import { THEME } from "@/lib/theme";
 import {
   Lock,
   ChevronDown,
@@ -381,20 +382,37 @@ function ProgramInner() {
         {displayWorkouts.map((day, dayIndex) => {
           const dayType = day.dayName?.toLowerCase() ?? '';
           const isUpper = dayType.includes('upper') || dayType.includes('push') || dayType.includes('pull');
-          const accentColor = day.completed
-            ? 'border-l-green-500'
-            : isUpper
-              ? 'border-l-purple-500'
-              : 'border-l-orange-400';
+          // Find the first incomplete day — that's the "current" one
+          const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
+          const isCurrent = !day.completed && dayIndex === firstIncompleteIndex;
+          const sportColor = isUpper ? THEME.lifting : THEME.running;
+          const borderAccent = day.completed ? '#22c55e' : isCurrent ? sportColor : 'transparent';
+
           return (
           <div
             key={dayIndex}
             className={cn(
-              "bg-card rounded-2xl border border-l-[3px] overflow-hidden transition-colors pressable",
-              accentColor,
-              "border-border/50"
+              "rounded-2xl border overflow-hidden transition-all",
+              day.completed ? "opacity-70" : ""
             )}
+            style={{
+              background: isCurrent
+                ? `linear-gradient(135deg, ${sportColor}10 0%, transparent 60%)`
+                : 'var(--card)',
+              borderColor: isCurrent ? `${sportColor}40` : day.completed ? '#22c55e30' : 'hsl(var(--border) / 0.5)',
+              borderLeftWidth: 3,
+              borderLeftColor: borderAccent,
+            }}
           >
+            {/* Current day label */}
+            {isCurrent && (
+              <div className="px-3 pt-2 pb-0">
+                <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: sportColor }}>
+                  Up next
+                </span>
+              </div>
+            )}
+
             {/* Day Header */}
             <button
               onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
@@ -404,14 +422,19 @@ function ProgramInner() {
               <div className="shrink-0">
                 {day.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : isCurrent ? (
+                  <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                    style={{ borderColor: sportColor }}>
+                    <div className="w-2 h-2 rounded-full" style={{ background: sportColor }} />
+                  </div>
                 ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                  <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/20" />
                 )}
               </div>
 
               {/* Day label + type */}
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-semibold text-foreground">
+                <p className={cn("text-sm font-semibold", day.completed ? "text-muted-foreground line-through" : "text-foreground")}>
                   Day {dayIndex + 1}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
@@ -419,6 +442,9 @@ function ProgramInner() {
                 </p>
               </div>
 
+              {day.completed && (
+                <span className="text-[9px] font-medium text-green-500 mr-1">Done</span>
+              )}
               {expandedDay === dayIndex ? (
                 <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
               ) : (
@@ -442,17 +468,21 @@ function ProgramInner() {
                         key={exIndex}
                         onClick={() => openDrawer(dayIndex, exIndex, ex)}
                         className={cn(
-                          "w-full flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 text-left",
-                          "hover:bg-muted transition-colors"
+                          "w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors",
+                          day.completed ? "bg-muted/30 opacity-60" : "bg-muted/50 hover:bg-muted"
                         )}
                       >
                         <Dumbbell className="w-4 h-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span>
-                              {ex.sets}&times;{ex.reps}
-                            </span>
+                            <span>{ex.sets}&times;{ex.reps}</span>
+                            {ex.weight > 0 && (
+                              <>
+                                <span className="text-[10px]">&middot;</span>
+                                <span className="font-mono">{ex.weight}kg</span>
+                              </>
+                            )}
                             <span className="text-[10px]">&middot;</span>
                             <ProgressionLabel ex={ex} />
                           </div>
@@ -465,7 +495,8 @@ function ProgramInner() {
                     {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
-                        className="w-full py-2.5 mt-1 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform flex items-center justify-center gap-2"
+                        className="w-full py-2.5 mt-1 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform flex items-center justify-center gap-2"
+                        style={{ background: `linear-gradient(135deg, ${sportColor}, ${sportColor}cc)` }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
                       </button>
@@ -477,7 +508,7 @@ function ProgramInner() {
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
                       >
-                        Mark Complete (skip session)
+                        Mark complete (skip session)
                       </button>
                     )}
                   </div>
