@@ -111,7 +111,7 @@ export default function History() {
     const prMap: Record<string, { weight: number; reps: number; date: string }> = {};
     allTime.forEach((w) => {
       w.exercises?.forEach((ex) => {
-        const name = ex.name;
+        const name = ex.exerciseName;
         ex.sets?.forEach((set) => {
           const e1rm = set.weightKg * (1 + set.reps / 30); // Epley formula
           if (!prMap[name] || e1rm > prMap[name].weight * (1 + prMap[name].reps / 30)) {
