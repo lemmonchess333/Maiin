@@ -133,3 +133,4 @@ export function useGPS(elapsedSeconds = 0) {
   const getPoints = useCallback(() => pointsRef.current, []);
 
   return { ...state, preWarm, start, stop, getPoints };
+}
