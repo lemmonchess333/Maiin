@@ -38,7 +38,6 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
   const quality = accuracy && accuracy < 10 ? 'strong' : accuracy && accuracy < 20 ? 'good' : accuracy && accuracy < 30 ? 'fair' : 'weak';
   const color = quality === 'strong' || quality === 'good' ? 'bg-green-400' : quality === 'fair' ? 'bg-yellow-400' : 'bg-red-400';
   const text = quality === 'weak' ? 'text-red-400/80' : quality === 'fair' ? 'text-yellow-400/80' : 'text-green-400/80';
-
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-end gap-0.5 h-3">
@@ -65,8 +64,8 @@ export default function Run() {
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const acquiringTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km');
   const intervals = useIntervalWorkout(runConfig?.activityType === 'intervals' ? runConfig.intervals : undefined);
@@ -87,9 +86,24 @@ export default function Run() {
     gps.start();
   };
 
+  // Auto-start without GPS if permission denied or geolocation unavailable
+  useEffect(() => {
+    if (phase === 'acquiring' && gps.error) {
+      setPhase('countdown');
+      setCountdown(3);
+    }
+  }, [phase, gps.error]);
+
+  // Count seconds spent in acquiring phase
+  useEffect(() => {
+    if (phase !== 'acquiring') { setAcquiringSeconds(0); return; }
+    const t = setInterval(() => setAcquiringSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  // Transition from acquiring to countdown when we get a GPS point
   useEffect(() => {
     if (phase === 'acquiring' && gps.points.length > 0) {
-      if (acquiringTimerRef.current) clearInterval(acquiringTimerRef.current);
       setPhase('countdown');
       setCountdown(3);
     }
@@ -127,9 +141,7 @@ export default function Run() {
       timer.resume();
       setAutoPaused(false);
     }
-    return () => {
-      if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
-    };
+    return () => { if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current); };
   }, [gps.currentPoint, phase, autoPaused, runConfig?.autoPause, runConfig?.activityType, timer]);
 
   useEffect(() => {
@@ -154,7 +166,6 @@ export default function Run() {
     gps.stop();
     wakeLock.release();
     setPhase('finished');
-
     const finalDistance = distanceOverride ?? gps.distance;
     navigate('/run-summary', {
       state: {
@@ -185,11 +196,25 @@ export default function Run() {
 
   if (locked && (phase === 'active' || phase === 'paused')) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center" onDoubleClick={() => setLocked(false)}>
-        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">&#128274;</div>
-        <p className="text-5xl font-mono tabular-nums text-white/15 font-bold">{timer.formatTime(timer.elapsed)}</p>
-        <p className="text-2xl font-mono tabular-nums text-white/10 mt-2">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
-        <p className="text-white/20 text-xs mt-10 animate-pulse">Double-tap to unlock</p>
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+        style={{ backgroundColor: THEME.bg }}
+        onDoubleClick={() => { setLocked(false); haptic('light'); }}
+      >
+        <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-8">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <p className="text-5xl font-mono tabular-nums text-white/20 font-bold">{timer.formatTime(timer.elapsed)}</p>
+        <p className="text-2xl font-mono tabular-nums text-white/12 mt-3">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
+        <div className="mt-12 flex flex-col items-center gap-2">
+          <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M4 12h16M12 4v16" /></svg>
+          </div>
+          <p className="text-white/20 text-xs animate-pulse">Double-tap to unlock</p>
+        </div>
       </div>
     );
   }
@@ -219,12 +244,11 @@ export default function Run() {
         const barColor = quality === 'strong' || quality === 'good' ? '#34D399' : quality === 'fair' ? '#FFB547' : '#EF4444';
         return (
           <div className="flex-1 flex flex-col items-center justify-center px-8" style={{ background: THEME.bg }}>
-            {/* Signal rings animation */}
+            {/* Signal rings */}
             <div className="relative w-28 h-28 flex items-center justify-center mb-8">
               <div className="absolute inset-0 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}30`, animationDuration: '2s' }} />
               <div className="absolute inset-3 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}40`, animationDuration: '2s', animationDelay: '0.4s' }} />
               <div className="absolute inset-6 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}50`, animationDuration: '2s', animationDelay: '0.8s' }} />
-              {/* GPS icon */}
               <div className="w-14 h-14 rounded-full flex items-center justify-center"
                 style={{ background: 'rgba(0,212,170,0.12)', border: `2px solid ${THEME.teal}` }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={THEME.teal} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -233,7 +257,7 @@ export default function Run() {
               </div>
             </div>
 
-            {/* Signal bars */}
+            {/* Signal bars + accuracy */}
             <div className="flex items-end gap-1 mb-4">
               {[1,2,3,4].map(i => (
                 <div key={i} style={{
@@ -243,7 +267,7 @@ export default function Run() {
                 }} />
               ))}
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 8, fontFamily: 'monospace' }}>
-                {acc ? `±${Math.round(acc)}m` : '---'}
+                {acc ? `\u00B1${Math.round(acc)}m` : '---'}
               </p>
             </div>
 
@@ -255,14 +279,21 @@ export default function Run() {
                 ? 'Move to an open area away from buildings'
                 : 'Getting accurate signal...'}
             </p>
+            {gps.error && (
+              <p className="text-xs text-red-400 mt-2 text-center">{gps.error}</p>
+            )}
 
             <div className="mt-8 flex flex-col items-center gap-3 w-full">
+              {acquiringSeconds >= 15 && (
+                <button
+                  onClick={() => { setPhase('countdown'); setCountdown(3); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition-transform"
+                  style={{ background: THEME.teal, color: '#000' }}>
+                  Start without GPS {acc ? `(\u00B1${Math.round(acc)}m)` : ''}
+                </button>
+              )}
               <button
-                onClick={() => {
-                  if (acquiringTimerRef.current) clearInterval(acquiringTimerRef.current);
-                  gps.stop();
-                  setPhase('waiting');
-                }}
+                onClick={() => { gps.stop(); setPhase('waiting'); }}
                 style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
                 Cancel
               </button>
@@ -282,11 +313,7 @@ export default function Run() {
           <TreadmillMode
             elapsed={timer.elapsed}
             formatTime={timer.formatTime}
-            onSave={(distance) => {
-              setTreadmillDistance(distance);
-              haptic('success');
-              finishRun(distance);
-            }}
+            onSave={(distance) => { setTreadmillDistance(distance); haptic('success'); finishRun(distance); }}
             onDiscard={() => navigate('/')}
           />
         </div>
@@ -325,10 +352,7 @@ export default function Run() {
             onLock={() => setLocked(true)}
             isPaused={phase === 'paused'}
             onResume={handleResume}
-            onStop={() => {
-              haptic('success');
-              finishRun();
-            }}
+            onStop={() => { haptic('success'); finishRun(); }}
             intervalDisplay={runConfig?.activityType === 'intervals' ? <IntervalDisplay state={intervals.state} /> : undefined}
             weightKg={profile?.weightKg || 70}
           />
@@ -336,5 +360,3 @@ export default function Run() {
       )}
     </div>
   );
-}
-
