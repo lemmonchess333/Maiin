@@ -1,19 +1,19 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useRef, useState } from 'react';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
-import { generateAndShare } from '../lib/shareCardGenerator';
 import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMap';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
-import ShareCard from '../components/social/ShareCard';
 import { THEME } from '../lib/theme';
+import { Trophy, Share2, Download, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RunData {
   points: GPSPoint[];
@@ -25,92 +25,27 @@ interface RunData {
   intervalData?: RunConfig['intervals'];
 }
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo Run',
+  intervals: 'Intervals', longrun: 'Long Run', race: 'Race', treadmill: 'Treadmill',
+};
+
 export default function RunSummary() {
   const { state } = useLocation() as { state: RunData };
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
-  const shareCardRef = useRef<HTMLDivElement>(null);
-  const [sharing, setSharing] = useState(false);
-
-  if (!state) {
-    navigate('/');
-    return null;
-  }
+  if (!state) { navigate('/'); return null; }
 
   const { points, distance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(points, distance);
-
-  const handleShare = async () => {
-    if (!shareCardRef.current) return;
-    setSharing(true);
-    try {
-      await generateAndShare(shareCardRef.current, 'run');
-    } finally {
-      setSharing(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-    const runData = {
-      distance,
-      duration: elapsed,
-      avgPace: avgPaceSeconds,
-      calories,
-      elevationGain,
-      points: points.length > 500 ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0) : points,
-      splits,
-      startedAt: Timestamp.fromDate(new Date(points[0]?.timestamp || Date.now())),
-      completedAt: Timestamp.now(),
-      notes: '',
-      visibility: 'followers' as const,
-      type: 'run',
-      activityType: runConfig?.activityType || 'freerun',
-      target: runConfig?.target,
-      intervalData,
-      runConfig,
-    };
-    await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
-
-    if (profile?.autoPostRuns !== false) {
-      await postActivity({
-        authorId: user.uid,
-        authorName: profile?.displayName || 'Athlete',
-        type: 'run',
-        visibility: (profile?.defaultVisibility as any) || 'followers',
-        distance,
-        duration: elapsed,
-        avgPace,
-        elevationGain,
-        calories,
-        routePreview:
-          points.length > 20
-            ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
-            : points.map((p) => ({ lat: p.lat, lon: p.lon })),
-      });
-    }
-
-    navigate('/');
-  };
-
-  const handleExportGPX = () => {
-    const gpx = toGPX(points, `Maiin Run ${new Date().toLocaleDateString()}`);
-    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `maiin-run-${Date.now()}.gpx`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDiscard = () => {
-    if (confirm('Discard this run? This cannot be undone.')) navigate('/');
-  };
+  const isPR = bestEfforts.length > 0;
 
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);
@@ -120,122 +55,222 @@ export default function RunSummary() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleSave = async () => {
+    if (!user || saving) return;
+    setSaving(true);
+    try {
+      const runData = {
+        distance, duration: elapsed, avgPace: avgPaceSeconds, calories, elevationGain,
+        points: points.length > 500 ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0) : points,
+        splits,
+        startedAt: Timestamp.fromDate(new Date(points[0]?.timestamp || Date.now())),
+        completedAt: Timestamp.now(),
+        notes: '', visibility: 'followers' as const, type: 'run',
+        activityType: runConfig?.activityType || 'freerun',
+        target: runConfig?.target, intervalData, runConfig,
+      };
+      await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
+      if (profile?.autoPostRuns !== false) {
+        await postActivity({
+          authorId: user.uid, authorName: profile?.displayName || 'Athlete',
+          type: 'run', visibility: (profile?.defaultVisibility as any) || 'followers',
+          distance, duration: elapsed, avgPace, elevationGain, calories,
+          routePreview: points.length > 20
+            ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map(p => ({ lat: p.lat, lon: p.lon }))
+            : points.map(p => ({ lat: p.lat, lon: p.lon })),
+        });
+      }
+      setSaved(true);
+      setTimeout(() => navigate('/'), 800);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExportGPX = () => {
+    const gpx = toGPX(points, `Maiin Run ${new Date().toLocaleDateString()}`);
+    const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `maiin-run-${Date.now()}.gpx`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDiscard = () => {
+    if (confirm('Discard this run? This cannot be undone.')) navigate('/');
+  };
+
+  const dateStr = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
   return (
-    <div className="min-h-screen pb-24 bg-background text-foreground">
-      <div className="text-center pt-8 pb-4 px-6">
-        <h1 className="text-xl font-bold text-foreground">Great run!</h1>
-        <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
-          weekday: 'long', month: 'long', day: 'numeric'
-        })}</p>
-      </div>
+    <div className="min-h-screen pb-32" style={{ background: THEME.bg, color: '#fff' }}>
 
-      {/* Pace-coloured route map */}
-      {points.length > 1 && (
-        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border/50">
-          <RunMap
-            points={points}
-            currentPoint={null}
-            interactive={true}
-            height="h-56"
-            paceColored={true}
-            avgPaceSecPerKm={avgPaceSeconds}
-            darkMode={!!profile?.darkMode}
-          />
-          <PaceLegend />
-        </div>
-      )}
+      {/* PR Banner */}
+      <AnimatePresence>
+        {isPR && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+            className="flex items-center justify-center gap-2 py-3 px-4"
+            style={{ background: `linear-gradient(90deg, ${THEME.warning}22, ${THEME.warning}40, ${THEME.warning}22)` }}
+          >
+            <Trophy className="w-4 h-4" style={{ color: THEME.warning }} />
+            <span className="text-sm font-bold" style={{ color: THEME.warning }}>
+              New best effort — {bestEfforts[0]?.label}!
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
-            {(distance / 1000).toFixed(2)}
-          </p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">km</p>
-        </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">time</p>
-        </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">/km pace</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-lg font-bold font-mono tabular-nums text-emerald-500">{calories}</p>
-          <p className="text-[10px] text-muted-foreground">calories</p>
-        </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
-          <p className="text-[10px] text-muted-foreground">elevation gain</p>
-        </div>
-      </div>
+      {/* Hero section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center pt-10 pb-6 px-6"
+      >
+        <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          {ACTIVITY_LABELS[runConfig?.activityType ?? 'freerun']} · {dateStr}
+        </p>
+        <p
+          className="font-bold font-mono tabular-nums leading-none mb-1"
+          style={{ fontSize: 80, color: THEME.running, letterSpacing: '-3px' }}
+        >
+          {(distance / 1000).toFixed(2)}
+        </p>
+        <p className="text-lg" style={{ color: 'rgba(255,255,255,0.4)' }}>kilometres</p>
+      </motion.div>
 
-      {/* Best Efforts */}
-      {bestEfforts.length > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border/50">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">Best Efforts</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {bestEfforts.map((effort) => (
-              <div key={effort.label} className="text-center p-2 rounded-lg bg-muted/50">
-                <p className="text-[10px] text-muted-foreground">{effort.label}</p>
-                <p className="text-sm font-bold font-mono tabular-nums">{Math.floor(effort.time / 60)}:{(Math.floor(effort.time) % 60).toString().padStart(2, '0')}</p>
-              </div>
-            ))}
+      {/* Stats row */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="flex divide-x mx-4 rounded-2xl overflow-hidden mb-4"
+        style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        {[
+          { label: 'Time', value: formatTime(elapsed), color: '#fff' },
+          { label: '/km Pace', value: avgPace, color: THEME.teal },
+          { label: 'Calories', value: String(calories), color: THEME.warning },
+        ].map(s => (
+          <div key={s.label} className="flex-1 text-center py-4"
+            style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-[9px] uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
           </div>
-        </div>
+        ))}
+      </motion.div>
+
+      {/* Secondary stats */}
+      {(elevationGain > 0 || splits.length > 0) && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex gap-3 mx-4 mb-4"
+        >
+          {elevationGain > 0 && (
+            <div className="flex-1 text-center py-3 rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-lg font-bold font-mono tabular-nums text-white">{elevationGain}m</p>
+              <p className="text-[9px] uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Elevation</p>
+            </div>
+          )}
+          {splits.length > 0 && (
+            <div className="flex-1 text-center py-3 rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-lg font-bold font-mono tabular-nums text-white">{splits.length}</p>
+              <p className="text-[9px] uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Splits</p>
+            </div>
+          )}
+        </motion.div>
       )}
 
-      {/* Splits bar chart */}
-      {splits.length > 0 && (
-        <div className="px-4 mb-4">
-          <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
-        </div>
+      {/* Map */}
+      {points.length > 1 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="mx-4 mb-4 rounded-2xl overflow-hidden"
+          style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          <RunMap points={points} currentPoint={null} interactive={true}
+            height="h-52" paceColored={true} avgPaceSecPerKm={avgPaceSeconds}
+            darkMode={true} />
+          <PaceLegend />
+        </motion.div>
       )}
 
-      {/* Elevation profile */}
-      {points.length > 0 && (
-        <div className="px-4 mb-4">
-          <ElevationProfile points={points} accentColor={THEME.running} />
-        </div>
+      {/* Show more toggle */}
+      {(splits.length > 0 || points.length > 0) && (
+        <button
+          onClick={() => setShowDetails(v => !v)}
+          className="w-full flex items-center justify-center gap-2 py-3 mb-2"
+          style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}
+        >
+          <span>{showDetails ? 'Hide details' : 'Show splits & elevation'}</span>
+          <ChevronDown className="w-4 h-4" style={{ transform: showDetails ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        </button>
       )}
 
-      {/* Actions */}
-      <div className="px-4 space-y-2">
-        <button onClick={handleSave}
-          className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
-          Save Run
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden px-4 space-y-3 mb-4"
+          >
+            {splits.length > 0 && (
+              <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
+            )}
+            {points.length > 0 && (
+              <ElevationProfile points={points} accentColor={THEME.running} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Action buttons */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 space-y-2"
+        style={{ background: `linear-gradient(to top, ${THEME.bg} 80%, transparent)` }}>
+        <button
+          onClick={handleSave}
+          disabled={saving || saved}
+          className="w-full py-4 rounded-2xl font-bold text-sm transition-all active:scale-[0.98]"
+          style={{ background: saved ? THEME.success : THEME.running, color: '#000', opacity: saving ? 0.7 : 1 }}
+        >
+          {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Run'}
         </button>
         <div className="flex gap-2">
-          <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
-            Export GPX
+          <button
+            onClick={handleExportGPX}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium"
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
+          >
+            <Download className="w-4 h-4" /> GPX
           </button>
           <button
-            onClick={handleShare}
-            disabled={sharing}
-            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground disabled:opacity-50">
-            {sharing ? 'Generating...' : 'Share'}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium"
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)' }}
+          >
+            <Share2 className="w-4 h-4" /> Share
+          </button>
+          <button
+            onClick={handleDiscard}
+            className="flex-1 py-3 rounded-2xl text-sm font-medium"
+            style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444' }}
+          >
+            Discard
           </button>
         </div>
-        <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
       </div>
-
-      {/* Hidden share card rendered off-screen for image generation */}
-      <ShareCard
-        ref={shareCardRef}
-        data={{
-          type: 'run',
-          userName: profile?.displayName || 'Athlete',
-          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-          distance,
-          duration: elapsed,
-          pace: avgPace,
-          elevationGain,
-        }}
-      />
     </div>
   );
 }
