@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { X, Sparkles, Check, TrendingUp, Zap, BarChart2, Utensils, Brain, Dumbbell } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { X, Sparkles, TrendingUp, Zap, BarChart2, Utensils, Brain, Dumbbell } from "lucide-react";
+import { motion } from "framer-motion";
 
 const PLANS = [
   { id: "monthly" as const, label: "Monthly", price: "£2.99", period: "/mo" },
