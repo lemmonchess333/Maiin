@@ -528,3 +528,4 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     </div>
   );
 }
+
