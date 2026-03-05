@@ -574,6 +574,20 @@ export default function Home() {
         </motion.div>
       )}
 
+      {/* Streak at-risk nudge — show when streak > 2 and nothing logged today */}
+      {streak >= 3 && !weeklyDayMap.get(format(new Date(), "yyyy-MM-dd"))?.workouts && !weeklyDayMap.get(format(new Date(), "yyyy-MM-dd"))?.meals && dailyCal === 0 && (
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+          className="flex items-center gap-3 p-3 rounded-xl border"
+          style={{ background: "rgba(249,115,22,0.08)", borderColor: "rgba(249,115,22,0.2)" }}>
+          <Flame className="w-5 h-5 text-orange-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-orange-500">{streak}-day streak at risk</p>
+            <p className="text-xs text-muted-foreground">Log a workout, run or meal to keep it alive.</p>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
         <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
         <div className="flex items-center justify-center gap-4 pt-1">
