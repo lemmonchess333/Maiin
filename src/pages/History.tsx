@@ -106,7 +106,26 @@ export default function History() {
       ),
     }));
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume };
+    // Build PR timeline: best set per exercise across all time, with date
+    const allTime = workouts; // use all workouts, not filtered
+    const prMap: Record<string, { weight: number; reps: number; date: string }> = {};
+    allTime.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        const name = ex.name;
+        ex.sets?.forEach((set) => {
+          const e1rm = set.weightKg * (1 + set.reps / 30); // Epley formula
+          if (!prMap[name] || e1rm > prMap[name].weight * (1 + prMap[name].reps / 30)) {
+            prMap[name] = { weight: set.weightKg, reps: set.reps, date: w.date };
+          }
+        });
+      });
+    });
+    const prTimeline = Object.entries(prMap)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 8);
+
+    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -290,6 +309,36 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
+              {liftingData.prTimeline.length > 0 && (
+                <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
+                  style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
+                  <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
+                    <span className="text-base">🏆</span>
+                    <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
+                    <span className="text-[10px] text-muted-foreground">Est. 1RM</span>
+                  </div>
+                  <div className="divide-y divide-border/20">
+                    {liftingData.prTimeline.map((pr) => {
+                      const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
+                      const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+                      return (
+                        <div key={pr.name} className="flex items-center justify-between px-4 py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
+                            <p className="text-[9px] text-muted-foreground mt-0.5">{dateLabel}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 ml-3">
+                            <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
+                              {pr.weight}kg × {pr.reps}
+                            </p>
+                            <p className="text-[9px] text-muted-foreground">~{e1rm}kg 1RM</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
