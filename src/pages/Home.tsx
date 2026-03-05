@@ -293,19 +293,20 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
   );
 }
 
+// ── Improved WeeklySnapshotCompact with tinted stat pills ────────────────────
 function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, adherenceScore }: {
   liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
   var allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
   var stats = [
     { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
-    { label: "Tonnage", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "t" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
+    { label: "Volume", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "t" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
     { label: "Distance", value: runKm.toFixed(1) + "km", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">This Week</p>
+      <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-3">This Week</p>
       {allZero ? (
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <p className="text-lg">🎯</p>
@@ -316,9 +317,9 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
         <div className="grid grid-cols-4 gap-2">
           {stats.map(function(s) {
             return (
-              <div key={s.label} className="text-center">
-                <p className="text-lg font-bold font-mono tabular-nums" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
+              <div key={s.label} className="text-center p-2 rounded-xl" style={{ background: s.color + "10" }}>
+                <p className="text-base font-bold font-mono tabular-nums leading-none" style={{ color: s.color }}>{s.value}</p>
+                <p className="text-[8px] text-muted-foreground mt-1 leading-tight">{s.label}</p>
               </div>
             );
           })}
@@ -347,39 +348,86 @@ function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: stri
   );
 }
 
+// ── Improved TodayIntake with macro rings ────────────────────────────────────
+function MacroRing({ value, target, color, label, unit = "" }: {
+  value: number; target: number; color: string; label: string; unit?: string;
+}) {
+  var size = 68;
+  var r = size / 2 - 6;
+  var circ = 2 * Math.PI * r;
+  var pct = Math.min(value / Math.max(target, 1), 1);
+  var done = pct >= 0.98;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)", position: "absolute", inset: 0 }}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color + "18"} strokeWidth="4.5" />
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={done ? THEME.success : color}
+            strokeWidth="4.5" strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
+            style={{ transition: "stroke-dasharray 0.5s ease" }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
+            {Math.round(value)}{unit}
+          </span>
+          {done && <span className="text-[8px]" style={{ color: THEME.success }}>✓</span>}
+        </div>
+      </div>
+      <div className="text-center">
+        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="text-[8px] text-muted-foreground/50">{target}{unit}</p>
+      </div>
+    </div>
+  );
+}
+
 function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein: initProt }: {
   calories: number; protein: number; targetCalories: number; targetProtein: number;
 }) {
-  var tCal = initCal;
-  var tProt = initProt;
-  if (tCal <= 0 && tProt <= 0) { tCal = 2200; tProt = 160; }
-  var bars = [
-    { label: "Calories", current: calories, target: tCal || 2200, unit: "", color: "#8b5cf6" },
-    { label: "Protein", current: protein, target: tProt || 160, unit: "g", color: "#3b82f6" },
-  ];
+  var tCal = initCal > 0 ? initCal : 2200;
+  var tProt = initProt > 0 ? initProt : 160;
+  var tCarbs = Math.round((tCal * 0.45) / 4);
+  var tFat = Math.round((tCal * 0.28) / 9);
+  // Estimate carbs/fat from remaining calories after protein
+  var proteinCal = protein * 4;
+  var remaining = Math.max(calories - proteinCal, 0);
+  var estimatedCarbs = Math.round((remaining * 0.62) / 4);
+  var estimatedFat = Math.round((remaining * 0.38) / 9);
+  var calPct = Math.min((calories / tCal) * 100, 100);
+  var caloriesLeft = Math.max(tCal - calories, 0);
+
   return (
     <Link to="/log">
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2.5 active:scale-[0.99]">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Today's Intake</p>
-          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+      <div className="rounded-2xl bg-card border border-border/50 overflow-hidden active:scale-[0.99] transition-transform">
+        {/* Calorie header */}
+        <div className="px-4 pt-4 pb-3 border-b border-border/30"
+          style={{ background: "linear-gradient(135deg, " + THEME.warning + "08 0%, transparent 70%)" }}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Today's Intake</p>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+          <div className="flex items-baseline gap-2 mb-2.5">
+            <span className="text-3xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
+              {calories.toLocaleString()}
+            </span>
+            <span className="text-xs text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
+            {caloriesLeft > 0 && (
+              <span className="ml-auto text-[10px] text-muted-foreground">{caloriesLeft} left</span>
+            )}
+          </div>
+          <div className="h-2 rounded-full overflow-hidden bg-muted">
+            <motion.div initial={{ width: 0 }} animate={{ width: calPct + "%" }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="h-full rounded-full"
+              style={{ background: calPct >= 98 ? THEME.success : "linear-gradient(90deg, " + THEME.warning + ", " + THEME.running + ")" }} />
+          </div>
         </div>
-        {bars.map(function(b) {
-          var rawPct = b.target > 0 ? (b.current / b.target) * 100 : 0;
-          var pct = Math.min(rawPct, 100);
-          var barColor = rawPct > 120 ? "#f59e0b" : rawPct > 100 ? "#22c55e" : b.color;
-          return (
-            <div key={b.label} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground">{b.label}</span>
-                <span className="text-[11px] font-mono tabular-nums text-foreground">{b.current}{b.unit} / {b.target}{b.unit}</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <motion.div initial={{ width: 0 }} animate={{ width: (rawPct > 100 ? 100 : Math.max(pct, b.current > 0 ? 2 : 0)) + "%" }} transition={{ duration: 0.6, ease: "easeOut" }} className="h-full rounded-full" style={{ backgroundColor: barColor, minWidth: b.current > 0 ? 4 : 0 }} />
-              </div>
-            </div>
-          );
-        })}
+        {/* Macro rings */}
+        <div className="flex items-center justify-around px-4 py-4">
+          <MacroRing value={protein} target={tProt} color={THEME.teal} label="Protein" unit="g" />
+          <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.brand} label="Carbs" unit="g" />
+          <MacroRing value={estimatedFat} target={tFat} color={THEME.warning} label="Fat" unit="g" />
+        </div>
       </div>
     </Link>
   );
@@ -407,7 +455,6 @@ export default function Home() {
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
   var todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "rest";
-
   var streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
 
   useEffect(function() {
@@ -424,18 +471,15 @@ export default function Home() {
         var ts = new Date();
         ts.setHours(0, 0, 0, 0);
         var snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(ts))));
-        var c = 0;
-        var p = 0;
+        var c = 0; var p = 0;
         snap.forEach(function(d) { var dd = d.data(); c += dd.totalCalories || dd.calories || 0; p += dd.totalProtein || dd.protein || 0; });
-        setDailyCal(c);
-        setDailyProt(p);
+        setDailyCal(c); setDailyProt(p);
       } catch (e) { console.error(e); }
     })();
   }, [user]);
 
   var weightUnit = profile?.preferredWeightUnit || "kg";
 
-  // Fetch last bodyweight entry
   useEffect(function() {
     if (!user?.uid) return;
     getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(1))).then(function(snap) {
@@ -458,8 +502,7 @@ export default function Home() {
       await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), { date: today, weight: storeW, createdAt: serverTimestamp() });
       var disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
       setLastWeightInfo({ weight: disp, date: format(new Date(), "MMM d") });
-      setWeightInput("");
-      setShowWeightSheet(false);
+      setWeightInput(""); setShowWeightSheet(false);
     } catch (e) { console.error(e); }
     setWeightSaving(false);
   };
@@ -468,64 +511,36 @@ export default function Home() {
   var handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
   var peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
   var peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
-
   var nextWorkout = programState?.workouts.find(function(d) { return !d.completed; }) || null;
 
   var [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
 
   useEffect(function() {
     if (perfDoc) {
-      setSnapData({
-        ls: perfDoc.aggregates.liftSessions,
-        rs: perfDoc.aggregates.runSessions,
-        lt: perfDoc.aggregates.liftTonnage,
-        rk: perfDoc.aggregates.runKm,
-        ad: perfDoc.adherenceScore,
-      });
+      setSnapData({ ls: perfDoc.aggregates.liftSessions, rs: perfDoc.aggregates.runSessions, lt: perfDoc.aggregates.liftTonnage, rk: perfDoc.aggregates.runKm, ad: perfDoc.adherenceScore });
       return;
     }
-
     var now = new Date();
-    var ws = new Date(now);
-    ws.setDate(now.getDate() - now.getDay());
-    ws.setHours(0, 0, 0, 0);
-
+    var ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0, 0, 0, 0);
     var ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
     var t = 0;
     ww.forEach(function(w) { w.exercises?.forEach(function(ex) { ex.sets?.forEach(function(s) { t += (s.weightKg || 0) * (s.reps || 0); }); }); });
-
-    if (!user?.uid) {
-      setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null });
-      return;
-    }
-
+    if (!user?.uid) { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); return; }
     var startTs = Timestamp.fromDate(ws);
     var endTs = Timestamp.fromDate(new Date(now.getTime() + 86400000));
-    getDocs(query(collection(db, "users", user.uid, "runs"),
-      where("completedAt", ">=", startTs),
-      where("completedAt", "<=", endTs)
-    )).then(function(snap) {
-      var rc = 0;
-      var km = 0;
-      snap.docs.forEach(function(d) {
-        rc++;
-        km += ((d.data().distance || 0) / 1000);
-      });
+    getDocs(query(collection(db, "users", user.uid, "runs"), where("completedAt", ">=", startTs), where("completedAt", "<=", endTs))).then(function(snap) {
+      var rc = 0; var km = 0;
+      snap.docs.forEach(function(d) { rc++; km += ((d.data().distance || 0) / 1000); });
       setSnapData({ ls: ww.length, rs: rc, lt: t, rk: Math.round(km * 10) / 10, ad: null });
-    }).catch(function() {
-      setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null });
-    });
+    }).catch(function() { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); });
   }, [perfDoc, workouts, user]);
 
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile…</div>;
 
   return (
-    <motion.div
-      className="flex flex-col gap-4 pb-6"
-      initial="hidden"
-      animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
-    >
+    <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">Hey, {profile.displayName || "Athlete"}</h1>
@@ -534,13 +549,10 @@ export default function Home() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <motion.div
-            key={streak}
+          <motion.div key={streak}
             initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}
-          >
+            animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
+            className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
             <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
             <span className={cn("text-sm font-bold", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
               {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
@@ -570,22 +582,21 @@ export default function Home() {
           <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.success }} /><span className="text-[9px] text-muted-foreground">Done</span></div>
         </div>
         <AnimatePresence>
-          {peekDate && (
-            <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />
-          )}
+          {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
         </AnimatePresence>
       </motion.div>
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-      {programLoading ? (
-        <div className="h-20 rounded-2xl bg-muted animate-pulse" />
-      ) : (
-        <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate} waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null} weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} />
-      )}
+        {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
+          <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
+            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }}
+            lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null}
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} />
+        )}
       </motion.div>
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-      <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
+        <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
       </motion.div>
 
       {perfDoc && perfDoc.insight && (
