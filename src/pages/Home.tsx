@@ -143,7 +143,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight }: {
+function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate: _lastWeightDate, weightUnit, onLogWeight }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "rest";
   navigate: (p: string) => void;
