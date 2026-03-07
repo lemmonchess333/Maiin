@@ -19,6 +19,8 @@ import { collection, query, where, getDocs, Timestamp, orderBy, limit as fbLimit
 import { db } from "@/lib/firebase";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import type { ScheduledRunDay } from "@/features/program/runScheduler";
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
@@ -143,7 +145,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate: _lastWeightDate, weightUnit, onLogWeight }: {
+function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate: _lastWeightDate, weightUnit, onLogWeight, todayRun }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -154,6 +156,7 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
   lastWeightDate: string | null;
   weightUnit: string;
   onLogWeight: () => void;
+  todayRun: ScheduledRunDay | null;
 }) {
   var [ci, setCi] = useState(0);
   var touchStartX = 0;
@@ -200,26 +203,33 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
             </div>
           </motion.button>
         )}
-        {cc?.type === "scheduled" && cc.id === "run" && (
+        {cc?.type === "scheduled" && cc.id === "run" && (() => {
+          var tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
+          var runLabel = tmpl ? tmpl.name : "Start a run";
+          var runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
+          var runIcon = tmpl?.icon;
+          var templateParam = tmpl ? "?template=" + tmpl.id : "";
+          return (
           <motion.button key="r" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
-            onClick={function() { navigate("/run"); }}
+            onClick={function() { navigate("/run" + templateParam); }}
             className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
             style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}>
-                <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
+                {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
-                <p className="text-sm font-semibold text-foreground">Start a run</p>
-                <p className="text-[11px] text-muted-foreground">Easy run, tempo, or intervals</p>
+                <p className="text-sm font-semibold text-foreground">{runLabel}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{runDesc}</p>
               </div>
               <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
-                <Play className="w-3.5 h-3.5" />Go
+                <Play className="w-3.5 h-3.5" />{todayRun?.completed ? "Done" : "Go"}
               </div>
             </div>
           </motion.button>
-        )}
+          );
+        })()}
         {cc?.type === "actions" && (
           <motion.div key="a" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }} className="flex gap-2">
             <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
@@ -525,6 +535,14 @@ export default function Home() {
   var peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
   var nextWorkout = programState?.workouts.find(function(d) { return !d.completed; }) || null;
 
+  // Find today's scheduled run (if any)
+  var todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
+  var todayRun = useMemo(function() {
+    if (!programState?.runDays) return null;
+    var rd = programState.runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
+    return rd || null;
+  }, [programState?.runDays, todayDayIndex]);
+
   var [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
 
   useEffect(function() {
@@ -617,7 +635,7 @@ export default function Home() {
           <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }}
             lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} />
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} />
         )}
       </motion.div>
 

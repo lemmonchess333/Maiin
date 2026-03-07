@@ -8,7 +8,7 @@ import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
 import type { DayType } from "@/lib/scheduleUtils";
 import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, Footprints, ChevronRight, Check } from "lucide-react";
+import { Dumbbell, Footprints, ChevronRight, Check, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DAY_TYPE_STYLES: Record<DayType, { label: string; color: string }> = {
@@ -26,6 +26,9 @@ function nextType(t: DayType): DayType {
   return "lift";
 }
 
+type RunMode = "freeform" | "structured" | "race_prep";
+type RaceDistance = "5k" | "10k" | "half" | "marathon";
+
 export default function Onboarding() {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
@@ -39,8 +42,14 @@ export default function Onboarding() {
   const [runDays, setRunDays] = useState(2);
   const defaultSchedule = useMemo(() => generateSchedule(liftDays, runDays), [liftDays, runDays]);
   const [schedule, setSchedule] = useState(defaultSchedule);
+  const [mealsTarget, setMealsTarget] = useState(10);
 
-  // Step 2 — Targets
+  // Step 2 — Run preferences (only shown if runDays > 0)
+  const [runMode, setRunMode] = useState<RunMode>("freeform");
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
+  const [raceDate, setRaceDate] = useState("");
+
+  // Step 3 — Targets
   const [weightKg, setWeightKg] = useState(75);
   const [heightCm, setHeightCm] = useState(175);
   const [age, setAge] = useState(28);
@@ -51,15 +60,20 @@ export default function Onboarding() {
     [weightKg, heightCm, age, selectedGoal]
   );
 
+  // If no run days, skip the run preferences step
+  const showRunStep = runDays > 0;
+
   const STEPS = [
     { title: "What's your name?", subtitle: "You'll see this on your home screen" },
     { title: "Build your week", subtitle: "Tap each day to set your training type" },
+    ...(showRunStep ? [{ title: "Run preferences", subtitle: "How do you want to schedule your runs?" }] : []),
     { title: "Your targets", subtitle: "We'll calculate calories and macros from this" },
   ];
 
   const canAdvance = [
     name.trim().length >= 2,
     true,
+    ...(showRunStep ? [runMode !== "race_prep" || (raceDate !== "")] : []),
     weightKg > 0 && heightCm > 0 && age > 0,
   ];
 
@@ -67,17 +81,17 @@ export default function Onboarding() {
     if (!user) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, "users", user.uid), {
+      const data: Record<string, unknown> = {
         displayName: name.trim(),
         age,
         weightKg,
         heightCm,
         weeklyWorkoutsTarget: liftDays,
         weeklyRunsTarget: runDays,
-        weeklyMealsTarget: 10,
+        weeklyMealsTarget: mealsTarget,
         weekSchedule: schedule,
         onboardingComplete: true,
-        runMode: "freeform",
+        runMode,
         tdeeBase: tdee.targetCalories,
         aiCalorieAdjustment: 0,
         targetCalories: tdee.targetCalories,
@@ -95,11 +109,29 @@ export default function Onboarding() {
           startWeight: weightKg,
           currentPhase: "base",
         },
-      }, { merge: true });
+      };
+
+      if (runMode === "structured") {
+        data.weeklyRunDaysTarget = runDays;
+      }
+
+      if (runMode === "race_prep" && raceDate) {
+        data.raceGoal = {
+          distance: raceDistance,
+          targetDate: raceDate,
+        };
+        data.weeklyRunDaysTarget = runDays;
+      }
+
+      await setDoc(doc(db, "users", user.uid), data, { merge: true });
     } finally {
       setSaving(false);
     }
   };
+
+  // Determine the "real" step index for the run step
+  const runStepIndex = showRunStep ? 2 : -1;
+  const targetsStepIndex = showRunStep ? 3 : 2;
 
   return (
     <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe"
@@ -180,6 +212,26 @@ export default function Onboarding() {
                 ))}
               </div>
 
+              {/* Meals per week stepper */}
+              <div className="rounded-2xl p-4"
+                style={{ background: `${THEME.success}10`, border: `1px solid ${THEME.success}25` }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" style={{ color: THEME.success }} />
+                    <span className="text-xs font-medium">Meals to log / week</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setMealsTarget(v => Math.max(3, v - 1))}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-90 transition-transform"
+                      style={{ background: 'rgba(255,255,255,0.1)' }}>−</button>
+                    <span className="text-lg font-bold font-mono tabular-nums w-6 text-center" style={{ color: THEME.success }}>{mealsTarget}</span>
+                    <button onClick={() => setMealsTarget(v => Math.min(28, v + 1))}
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-90 transition-transform"
+                      style={{ background: 'rgba(255,255,255,0.1)' }}>+</button>
+                  </div>
+                </div>
+              </div>
+
               {/* 7-day visual schedule */}
               <div>
                 <p className="text-[10px] uppercase tracking-wider mb-3"
@@ -219,11 +271,102 @@ export default function Onboarding() {
                   ))}
                 </div>
               </div>
+
+              {/* Validation warning */}
+              {liftDays + runDays > 7 && (
+                <p className="text-xs text-red-400 text-center">
+                  Lift + run days can't exceed 7
+                </p>
+              )}
             </div>
           )}
 
-          {/* ── Step 2: Targets ── */}
-          {step === 2 && (
+          {/* ── Step 2: Run preferences (if runDays > 0) ── */}
+          {step === runStepIndex && (
+            <div className="space-y-5">
+              {/* Run mode selector */}
+              <div className="space-y-2">
+                {([
+                  { id: "freeform" as RunMode, label: "Freeform", desc: "Pick any run type when you start", icon: "🏃" },
+                  { id: "structured" as RunMode, label: "Structured", desc: "Auto-assigns run templates around lift days", icon: "📅" },
+                  { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodized plan for a goal race", icon: "🏁" },
+                ]).map(m => (
+                  <button key={m.id} onClick={() => setRunMode(m.id)}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
+                    style={{
+                      background: runMode === m.id ? `${THEME.running}18` : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${runMode === m.id ? THEME.running + '50' : 'rgba(255,255,255,0.08)'}`,
+                    }}>
+                    <span className="text-xl">{m.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">{m.label}</p>
+                      <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{m.desc}</p>
+                    </div>
+                    {runMode === m.id && (
+                      <Check className="w-4 h-4 flex-shrink-0" style={{ color: THEME.running }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Race prep details */}
+              {runMode === "race_prep" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="space-y-4 overflow-hidden"
+                >
+                  {/* Distance selector */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2"
+                      style={{ color: 'rgba(255,255,255,0.4)' }}>Race distance</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {([
+                        { id: "5k" as RaceDistance, label: "5K" },
+                        { id: "10k" as RaceDistance, label: "10K" },
+                        { id: "half" as RaceDistance, label: "Half" },
+                        { id: "marathon" as RaceDistance, label: "Marathon" },
+                      ]).map(d => (
+                        <button key={d.id} onClick={() => setRaceDistance(d.id)}
+                          className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                          style={{
+                            background: raceDistance === d.id ? THEME.running : 'rgba(255,255,255,0.08)',
+                            color: raceDistance === d.id ? '#fff' : 'rgba(255,255,255,0.5)',
+                          }}>
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Target date */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider mb-2"
+                      style={{ color: 'rgba(255,255,255,0.4)' }}>Race date</p>
+                    <input
+                      type="date"
+                      value={raceDate}
+                      onChange={e => setRaceDate(e.target.value)}
+                      min={new Date(Date.now() + 21 * 86400000).toISOString().split('T')[0]}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                      style={{
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        color: '#fff',
+                        colorScheme: 'dark',
+                      }}
+                    />
+                    {raceDate && new Date(raceDate) < new Date() && (
+                      <p className="text-xs text-red-400 mt-1">Target date is in the past</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {/* ── Final Step: Targets ── */}
+          {step === targetsStepIndex && (
             <div className="space-y-4">
               {/* Body stats */}
               <div className="grid grid-cols-3 gap-3">

@@ -14,6 +14,7 @@ import TreadmillMode from '../components/run/TreadmillMode';
 import PaceZoneBar from '../components/run/PaceZoneBar';
 import RunBottomSheet from '../components/run/RunBottomSheet';
 import { THEME } from '../lib/theme';
+import { RUN_TEMPLATES } from '../lib/workoutTemplates';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
 
@@ -244,11 +245,40 @@ export default function Run() {
           <RunSetupModal
             onStart={handleStart}
             onCancel={() => navigate(-1)}
-            savedPreferences={{
-              autoPause: true,
-              audioCues: (profile as any)?.audioCues !== false,
-              ...(searchParams.get('type') ? { activityType: searchParams.get('type') as RunConfig['activityType'] } : {}),
-            }}
+            savedPreferences={(() => {
+              const prefs: Partial<RunConfig> = {
+                autoPause: true,
+                audioCues: (profile as any)?.audioCues !== false,
+              };
+              // Support ?type=tempo for direct type selection
+              if (searchParams.get('type')) {
+                prefs.activityType = searchParams.get('type') as RunConfig['activityType'];
+              }
+              // Support ?template=5x1k to pre-fill from a RUN_TEMPLATES entry
+              const templateId = searchParams.get('template');
+              if (templateId) {
+                const tmpl = RUN_TEMPLATES.find(t => t.id === templateId);
+                if (tmpl) {
+                  prefs.activityType = tmpl.type as RunConfig['activityType'];
+                  if (tmpl.config.targetDistance) {
+                    prefs.target = { type: 'distance', value: tmpl.config.targetDistance };
+                  } else if (tmpl.config.targetPace) {
+                    prefs.target = { type: 'pace', value: tmpl.config.targetPace };
+                  }
+                  if (tmpl.config.intervals) {
+                    prefs.intervals = {
+                      reps: tmpl.config.intervals.reps,
+                      workDistance: tmpl.config.intervals.workDistance,
+                      workDuration: tmpl.config.intervals.workDuration,
+                      restDuration: tmpl.config.intervals.restDuration,
+                      warmupDuration: tmpl.config.intervals.warmupDuration,
+                      cooldownDuration: tmpl.config.intervals.cooldownDuration,
+                    };
+                  }
+                }
+              }
+              return prefs;
+            })()}
           />
         </div>
       )}
