@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { KalmanFilter, isValidReading, haversine } from '../lib/gps';
 import type { GPSPoint } from '../lib/gps';
 
@@ -9,6 +9,7 @@ interface GPSState {
   isTracking: boolean;
   error: string | null;
   gpsAccuracy: number | null;
+  permissionState: PermissionState | null;
 }
 
 const getGPSOptions = (elapsedSeconds: number): PositionOptions => ({
@@ -25,11 +26,23 @@ export function useGPS(elapsedSeconds = 0) {
     isTracking: false,
     error: null,
     gpsAccuracy: null,
+    permissionState: null,
   });
   const watchIdRef = useRef<number | null>(null);
   const kalmanRef = useRef(new KalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
+
+  // Check geolocation permission on mount
+  useEffect(() => {
+    if (!navigator.permissions) return;
+    navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+      setState((s) => ({ ...s, permissionState: result.state }));
+      result.addEventListener('change', () => {
+        setState((s) => ({ ...s, permissionState: result.state }));
+      });
+    }).catch(() => {});
+  }, []);
 
   const start = useCallback(() => {
     if (!navigator.geolocation) {
@@ -42,6 +55,13 @@ export function useGPS(elapsedSeconds = 0) {
       pointsRef.current = [];
       distanceRef.current = 0;
     }
+
+    // Warm-up call to force faster GPS acquisition
+    navigator.geolocation.getCurrentPosition(
+      () => {},
+      () => {},
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {

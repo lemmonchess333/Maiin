@@ -253,6 +253,7 @@ export default function Run() {
           <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-6" />
           <p className="text-lg font-semibold mb-1">Acquiring GPS Signal...</p>
           <p className="text-sm text-muted-foreground text-center">Stand still outdoors for best results</p>
+          <p className="text-[10px] text-muted-foreground/40 mt-1">For best tracking, keep your screen on during the run</p>
           <p className="text-xs text-muted-foreground/60 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
           {gps.error && <p className="text-xs text-red-400 mt-2">{gps.error}</p>}
           {acquiringSeconds >= 8 && (
