@@ -1,25 +1,57 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { X } from "lucide-react";
 import type { EarnedBadge } from "./badges";
+import { TIER_COLORS } from "./badges";
 
 interface BadgeEarnedModalProps {
   badge: EarnedBadge | null;
   onDismiss: () => void;
 }
 
+function playChime() {
+  try {
+    const ctx = new AudioContext();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.frequency.value = 523; // C5
+    osc2.frequency.value = 659; // E5
+    gain.gain.value = 0.15;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime + 0.15);
+    osc1.stop(ctx.currentTime + 0.6);
+    osc2.stop(ctx.currentTime + 0.8);
+  } catch {
+    // AudioContext may not be available
+  }
+}
+
 export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     if (badge) {
+      const tierColor = TIER_COLORS[badge.tier];
       confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.5 },
-        colors: ["#8b5cf6", "#a78bfa", "#fbbf24", "#34d399"],
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.4 },
+        colors: [tierColor, "#8b5cf6", "#fbbf24", "#34d399"],
       });
+      playChime();
+
+      autoDismissRef.current = setTimeout(onDismiss, 3500);
+      return () => clearTimeout(autoDismissRef.current);
     }
-  }, [badge]);
+  }, [badge, onDismiss]);
 
   return (
     <AnimatePresence>
@@ -28,42 +60,68 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          className="fixed inset-0 z-[60] flex items-center justify-center px-6"
+          style={{ background: "rgba(0,0,0,0.7)" }}
           onClick={onDismiss}
         >
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: "spring", damping: 20 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            transition={{ type: "spring", damping: 15, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xs bg-card rounded-3xl border border-border/50 p-8 text-center space-y-4 shadow-2xl"
+            className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
+            style={{
+              background: "rgba(15, 15, 20, 0.92)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
+            }}
           >
-            <button
-              onClick={onDismiss}
-              className="absolute top-4 right-4 p-1 rounded-lg hover:bg-muted"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
+            {/* Tier glow */}
+            <div
+              className="absolute inset-0 opacity-10 pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at 50% 30%, ${TIER_COLORS[badge.tier]}, transparent 70%)`,
+              }}
+            />
+
+            {/* Auto-dismiss progress bar */}
+            <motion.div
+              initial={{ scaleX: 1 }}
+              animate={{ scaleX: 0 }}
+              transition={{ duration: 3.5, ease: "linear" }}
+              className="absolute top-0 left-0 right-0 h-0.5 origin-left"
+              style={{ backgroundColor: TIER_COLORS[badge.tier] }}
+            />
 
             <motion.p
-              animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 0.6 }}
-              className="text-6xl"
+              animate={{ scale: [0.5, 1.4, 1], rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 0.7, type: "spring" }}
+              className="text-7xl relative z-10"
             >
               {badge.icon}
             </motion.p>
 
-            <div>
-              <p className="text-lg font-bold text-foreground">{badge.name}</p>
-              <p className="text-sm text-muted-foreground mt-1">{badge.description}</p>
+            <div className="relative z-10">
+              <p
+                className="text-xs font-semibold uppercase tracking-widest mb-1"
+                style={{ color: TIER_COLORS[badge.tier] }}
+              >
+                {badge.tier} badge
+              </p>
+              <p className="text-xl font-bold text-white">{badge.name}</p>
+              <p className="text-sm text-white/60 mt-1">{badge.description}</p>
             </div>
-
-            <p className="text-xs text-primary font-medium">Badge Earned!</p>
 
             <button
               onClick={onDismiss}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+              className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: `${TIER_COLORS[badge.tier]}20`,
+                color: TIER_COLORS[badge.tier],
+                border: `1px solid ${TIER_COLORS[badge.tier]}30`,
+              }}
             >
               Awesome!
             </button>

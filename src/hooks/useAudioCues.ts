@@ -2,11 +2,26 @@ import { useCallback, useRef } from 'react';
 
 type CueFrequency = 'every_500m' | 'every_km' | 'every_5min' | 'off';
 
-export function useAudioCues(enabled: boolean, frequency: CueFrequency) {
+export interface AudioCueConfig {
+  paceAlerts: boolean;
+  voiceRate: number;
+}
+
+const DEFAULT_CUE_CONFIG: AudioCueConfig = {
+  paceAlerts: true,
+  voiceRate: 0.9,
+};
+
+export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?: Partial<AudioCueConfig>) {
   const lastDistanceCue = useRef(0);
   const lastTimeCue = useRef(0);
   const splitPaces = useRef<number[]>([]); // sec/km per split for comparison
   const primed = useRef(false);
+  const halfwayAnnounced = useRef(false);
+  const final500Announced = useRef(false);
+  const paceAlertCooldown = useRef(0);
+
+  const cueConfig = { ...DEFAULT_CUE_CONFIG, ...config };
 
   const prime = useCallback(() => {
     if (primed.current || !('speechSynthesis' in window)) return;
@@ -21,13 +36,17 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency) {
       if (!enabled || !('speechSynthesis' in window)) return;
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.88;
+      u.rate = cueConfig.voiceRate;
       u.pitch = 1;
       u.volume = 1;
       u.lang = 'en-GB';
+      // Try to pick a clear English voice
+      const voices = speechSynthesis.getVoices();
+      const preferred = voices.find((v) => v.lang.startsWith('en') && v.name.includes('Google')) || voices.find((v) => v.lang.startsWith('en-GB'));
+      if (preferred) u.voice = preferred;
       speechSynthesis.speak(u);
     },
-    [enabled]
+    [enabled, cueConfig.voiceRate]
   );
 
   const checkDistanceCue = useCallback(
@@ -84,6 +103,56 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency) {
     [enabled, frequency, speak]
   );
 
+  /** Pace zone alert: fires when pace deviates ±15s/km from target for >30s */
+  const checkPaceAlert = useCallback(
+    (currentPaceSeconds: number, targetPaceSeconds: number, elapsed: number) => {
+      if (!enabled || !cueConfig.paceAlerts || !targetPaceSeconds) return;
+      const deviation = currentPaceSeconds - targetPaceSeconds;
+      if (Math.abs(deviation) > 15 && elapsed - paceAlertCooldown.current > 30) {
+        paceAlertCooldown.current = elapsed;
+        if (deviation > 0) {
+          speak('Pick up the pace. You\'re falling behind target.');
+        } else {
+          speak('Ease up. You\'re ahead of target pace.');
+        }
+      }
+    },
+    [enabled, cueConfig.paceAlerts, speak]
+  );
+
+  /** Halfway announcement for distance targets */
+  const checkHalfway = useCallback(
+    (distance: number, targetDistance: number) => {
+      if (!enabled || halfwayAnnounced.current || !targetDistance) return;
+      if (distance >= targetDistance / 2) {
+        halfwayAnnounced.current = true;
+        speak('Halfway there! Keep it up.');
+      }
+    },
+    [enabled, speak]
+  );
+
+  /** Final 500m announcement */
+  const checkFinal500 = useCallback(
+    (distance: number, targetDistance: number) => {
+      if (!enabled || final500Announced.current || !targetDistance) return;
+      if (distance >= targetDistance - 500 && distance < targetDistance) {
+        final500Announced.current = true;
+        speak('Final 500 metres. Bring it home!');
+      }
+    },
+    [enabled, speak]
+  );
+
+  /** PB alert — call when a new personal best is detected */
+  const announcePB = useCallback(
+    (effortLabel: string) => {
+      if (!enabled) return;
+      speak(`New personal best for ${effortLabel}! Amazing!`);
+    },
+    [enabled, speak]
+  );
+
   const announcePhase = useCallback(
     (phase: string, rep?: number, totalReps?: number) => {
       if (!enabled) return;
@@ -100,7 +169,10 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency) {
     lastDistanceCue.current = 0;
     lastTimeCue.current = 0;
     splitPaces.current = [];
+    halfwayAnnounced.current = false;
+    final500Announced.current = false;
+    paceAlertCooldown.current = 0;
   }, []);
 
-  return { prime, speak, checkDistanceCue, checkTimeCue, announcePhase, reset };
+  return { prime, speak, checkDistanceCue, checkTimeCue, checkPaceAlert, checkHalfway, checkFinal500, announcePB, announcePhase, reset };
 }

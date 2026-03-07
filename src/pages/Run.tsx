@@ -67,7 +67,10 @@ export default function Run() {
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km');
+  const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km', {
+    paceAlerts: runConfig?.paceAlerts ?? true,
+    voiceRate: runConfig?.voiceRate ?? 0.9,
+  });
   const intervals = useIntervalWorkout(runConfig?.activityType === 'intervals' ? runConfig.intervals : undefined);
   const intervalPhaseRef = useRef('idle');
 
@@ -127,7 +130,20 @@ export default function Run() {
     const pace = calculatePace(gps.distance, timer.elapsed);
     audioCues.checkDistanceCue(gps.distance, pace);
     audioCues.checkTimeCue(timer.elapsed, gps.distance);
-  }, [gps.distance, timer.elapsed, phase, audioCues]);
+
+    // Pace zone alerts for tempo/interval runs
+    if (runConfig?.target?.type === 'pace' && runConfig.target.value) {
+      const currentPaceSec = gps.distance > 0 ? (timer.elapsed / gps.distance) * 1000 : 0;
+      audioCues.checkPaceAlert(currentPaceSec, runConfig.target.value, timer.elapsed);
+    }
+
+    // Halfway and final 500m for distance targets
+    if (runConfig?.target?.type === 'distance' && runConfig.target.value) {
+      const targetMeters = runConfig.target.value * 1000;
+      audioCues.checkHalfway(gps.distance, targetMeters);
+      audioCues.checkFinal500(gps.distance, targetMeters);
+    }
+  }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
   useEffect(() => {
     if (phase !== 'active' || !runConfig?.autoPause || runConfig.activityType === 'treadmill') return;

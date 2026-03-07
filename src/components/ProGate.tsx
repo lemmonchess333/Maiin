@@ -71,7 +71,8 @@ export function ProGate({ children, feature, preview }: Props) {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-card rounded-t-3xl border-t border-border/50 p-6 space-y-5 max-h-[85vh] overflow-y-auto"
+              className="w-full max-w-md rounded-t-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto"
+              style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

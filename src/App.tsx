@@ -2,6 +2,7 @@ import { Component, type ReactNode, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
+import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
@@ -162,8 +163,10 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter basename="/Maiin/">
         <AuthProvider>
-          <ToastProvider />
-          <AppRoutes />
+          <NotificationBubbleProvider>
+            <ToastProvider />
+            <AppRoutes />
+          </NotificationBubbleProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

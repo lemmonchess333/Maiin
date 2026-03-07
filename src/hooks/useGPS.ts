@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { KalmanFilter, isValidReading, haversine } from '../lib/gps';
 import type { GPSPoint } from '../lib/gps';
 
@@ -11,6 +11,7 @@ interface GPSState {
   isTracking: boolean;
   error: string | null;
   gpsAccuracy: number | null;
+  permissionState: PermissionState | null;
   signalQuality: GPSSignalQuality;
 }
 
@@ -30,6 +31,7 @@ export function useGPS(elapsedSeconds = 0) {
     isTracking: false,
     error: null,
     gpsAccuracy: null,
+    permissionState: null,
     signalQuality: 'searching',
   });
 
@@ -37,6 +39,17 @@ export function useGPS(elapsedSeconds = 0) {
   const kalmanRef = useRef(new KalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
+
+  // Check geolocation permission on mount
+  useEffect(() => {
+    if (!navigator.permissions) return;
+    navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+      setState((s) => ({ ...s, permissionState: result.state }));
+      result.addEventListener('change', () => {
+        setState((s) => ({ ...s, permissionState: result.state }));
+      });
+    }).catch(() => {});
+  }, []);
 
   // Pre-warm: fire a quick getCurrentPosition first so the browser/OS
   // starts warming up the GPS chipset before watchPosition begins.

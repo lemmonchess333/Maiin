@@ -9,6 +9,8 @@ export interface RunConfig {
   autoPause: boolean;
   audioCues: boolean;
   audioCueFrequency: 'every_km' | 'every_500m' | 'every_5min' | 'off';
+  paceAlerts: boolean;
+  voiceRate: number;
   displayStats: ('pace' | 'distance' | 'time' | 'calories' | 'elevation' | 'heartRate' | 'avgPace' | 'cadence')[];
   target: {
     type: 'none' | 'distance' | 'time' | 'pace';
@@ -30,6 +32,8 @@ const DEFAULT_CONFIG: RunConfig = {
   autoPause: true,
   audioCues: true,
   audioCueFrequency: 'every_km',
+  paceAlerts: true,
+  voiceRate: 0.9,
   displayStats: ['pace', 'distance', 'time', 'calories'],
   target: { type: 'none' },
 };
@@ -223,6 +227,36 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   </button>
                 </div>
               ))}
+              {config.audioCues && (
+                <>
+                  <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
+                    <span className="text-sm">Pace alerts</span>
+                    <button
+                      onClick={() => updateConfig({ paceAlerts: !config.paceAlerts })}
+                      className="w-11 h-6 rounded-full transition-colors relative"
+                      style={{ background: config.paceAlerts ? '#8b5cf6' : 'rgba(255,255,255,0.1)' }}
+                    >
+                      <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                        style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />
+                    </button>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/50 bg-card">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm">Voice speed</span>
+                      <span className="text-xs text-muted-foreground">{config.voiceRate.toFixed(1)}×</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.6"
+                      max="1.4"
+                      step="0.1"
+                      value={config.voiceRate}
+                      onChange={(e) => updateConfig({ voiceRate: Number(e.target.value) })}
+                      className="w-full accent-primary"
+                    />
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

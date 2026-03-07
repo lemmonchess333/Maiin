@@ -59,7 +59,21 @@ function goalWeightBonus(goal: Goal): number {
 
 export function chooseSplit(weeklyTarget: number): SplitType {
   const clamped = Math.max(1, Math.min(7, weeklyTarget));
-  return clamped >= 5 ? "ppl" : "upper_lower";
+  if (clamped <= 2) return "full_body";
+  if (clamped === 3) return "ppl";
+  if (clamped === 4) return "upper_lower";
+  if (clamped === 5) return "ppl_ul";
+  return "ppl_x2";
+}
+
+export function splitLabel(split: SplitType): string {
+  switch (split) {
+    case "full_body": return "Full Body";
+    case "upper_lower": return "Upper / Lower";
+    case "ppl": return "Push / Pull / Legs";
+    case "ppl_ul": return "PPL + Upper/Lower";
+    case "ppl_x2": return "PPL ×2";
+  }
 }
 
 /* ================================
@@ -121,6 +135,43 @@ function makeAccessory(
 /* ================================
    SPLIT TEMPLATES
 ================================ */
+
+function buildFullBody(goal: Goal, count: number, existing?: WorkoutDay[]): WorkoutDay[] {
+  const vm = goalVolumeMultiplier(goal);
+  const round = (n: number) => Math.max(1, Math.round(n));
+  const findExisting = (dayIdx: number, exIdx: number) =>
+    existing?.[dayIdx]?.exercises[exIdx];
+
+  const dayA: WorkoutDay = {
+    dayName: "Full Body A",
+    dayType: "full_body",
+    completed: false,
+    exercises: [
+      makeExercise("horizontal_push", round(3 * vm), 6, 60, "double", findExisting(0, 0)),
+      makeExercise("knee_dominant", round(3 * vm), 6, 80, "double", findExisting(0, 1)),
+      makeExercise("vertical_pull", round(3 * vm), 8, 0, "double", findExisting(0, 2)),
+      makeExercise("hip_dominant", round(3 * vm), 8, 60, "linear", findExisting(0, 3)),
+      makeExercise("core", round(2 * vm), 12, 15, "linear", findExisting(0, 4)),
+    ],
+  };
+
+  if (count === 1) return [dayA];
+
+  const dayB: WorkoutDay = {
+    dayName: "Full Body B",
+    dayType: "full_body",
+    completed: false,
+    exercises: [
+      makeExercise("vertical_push", round(3 * vm), 6, 40, "double", findExisting(1, 0)),
+      makeExercise("hip_dominant", round(3 * vm), 6, 80, "double", findExisting(1, 1)),
+      makeExercise("horizontal_pull", round(3 * vm), 8, 50, "double", findExisting(1, 2)),
+      makeExercise("knee_dominant", round(3 * vm), 10, 60, "linear", findExisting(1, 3)),
+      makeExercise("arms_biceps", round(2 * vm), 12, 10, "linear", findExisting(1, 4)),
+    ],
+  };
+
+  return [dayA, dayB];
+}
 
 function buildUpperLower(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
   const vm = goalVolumeMultiplier(goal);
@@ -256,9 +307,34 @@ export function generateProgram(
   existingWorkouts?: WorkoutDay[],
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   const splitType = chooseSplit(weeklyTarget);
-  const workouts = splitType === "ppl"
-    ? buildPPL(goal, existingWorkouts)
-    : buildUpperLower(goal, existingWorkouts);
+  let workouts: WorkoutDay[];
+
+  switch (splitType) {
+    case "full_body":
+      workouts = buildFullBody(goal, Math.min(weeklyTarget, 2), existingWorkouts);
+      break;
+    case "ppl":
+      workouts = buildPPL(goal, existingWorkouts).slice(0, 3);
+      break;
+    case "upper_lower":
+      workouts = buildUpperLower(goal, existingWorkouts);
+      break;
+    case "ppl_ul":
+      workouts = [
+        ...buildPPL(goal, existingWorkouts).slice(0, 3),
+        ...buildUpperLower(goal, existingWorkouts).slice(0, 2),
+      ];
+      break;
+    case "ppl_x2":
+      workouts = buildPPL(goal, existingWorkouts);
+      // Add a second legs day for 6-day PPL
+      const ppl = buildPPL(goal, existingWorkouts);
+      workouts = [...ppl, { ...ppl[2], dayName: "Legs B", completed: false }];
+      break;
+    default:
+      workouts = buildUpperLower(goal, existingWorkouts);
+  }
+
   return { splitType, workouts };
 }
 
