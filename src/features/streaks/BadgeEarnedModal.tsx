@@ -35,7 +35,7 @@ function playChime() {
 }
 
 export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
-  const autoDismissRef = useRef<ReturnType<typeof setTimeout>>();
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (badge) {

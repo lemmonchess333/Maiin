@@ -118,7 +118,8 @@ export function useGPS(elapsedSeconds = 0) {
         }
 
         pointsRef.current.push(point);
-        setState({
+        setState((s) => ({
+          ...s,
           points: [...pointsRef.current],
           currentPoint: point,
           distance: distanceRef.current,
@@ -126,7 +127,7 @@ export function useGPS(elapsedSeconds = 0) {
           error: null,
           gpsAccuracy: accuracy,
           signalQuality: quality,
-        });
+        }));
       },
       (err) => setState((s) => ({ ...s, error: err.message, signalQuality: 'searching' })),
       options

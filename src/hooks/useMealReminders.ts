@@ -23,7 +23,7 @@ export function useMealReminders() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
-  const checkIntervalRef = useRef<ReturnType<typeof setInterval>>();
+  const checkIntervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const lastNotifiedRef = useRef<Record<string, string>>({});
 
   // Load from Firestore
