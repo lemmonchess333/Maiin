@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Drawer } from "vaul";
 import Model from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
-import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Props {
