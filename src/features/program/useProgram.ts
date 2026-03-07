@@ -126,8 +126,8 @@ export function useProgram() {
           updatedAt: Date.now(),
           settings: { autoProgression: true, microloading: true },
           weekHistory: [],
-          runDays,
-          runPlan,
+          ...(runDays !== undefined && { runDays }),
+          ...(runPlan !== undefined && { runPlan }),
         };
 
         await setDoc(ref, initial);
@@ -148,7 +148,11 @@ export function useProgram() {
     async (state: ProgramState) => {
       if (!user) return;
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-      await setDoc(ref, { ...state, updatedAt: Date.now() });
+      // Strip undefined values — Firestore rejects them
+      const clean = Object.fromEntries(
+        Object.entries({ ...state, updatedAt: Date.now() }).filter(([, v]) => v !== undefined),
+      );
+      await setDoc(ref, clean);
       setProgramState(state);
     },
     [user],
@@ -441,8 +445,8 @@ export function useProgram() {
         updatedAt: Date.now(),
         settings: programState?.settings ?? { autoProgression: true, microloading: true },
         weekHistory: [],
-        runDays,
-        runPlan,
+        ...(runDays !== undefined && { runDays }),
+        ...(runPlan !== undefined && { runPlan }),
       };
 
       await saveProgram(newState);
