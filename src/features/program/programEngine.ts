@@ -58,7 +58,8 @@ function goalWeightBonus(goal: Goal): number {
 ================================ */
 
 export function chooseSplit(weeklyTarget: number): SplitType {
-  const clamped = Math.max(1, Math.min(7, weeklyTarget));
+  if (weeklyTarget <= 0) return "full_body"; // run-only athlete — no lift days
+  const clamped = Math.min(7, weeklyTarget);
   if (clamped === 1) return "full_body";
   if (clamped === 2) return "upper_lower";
   if (clamped === 3) return "ppl";
@@ -309,6 +310,11 @@ export function generateProgram(
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
+  // 0 lift days → run-only athlete, return empty workouts
+  if (weeklyTarget <= 0) {
+    return { splitType: "full_body", workouts: [] };
+  }
+
   const splitType = chooseSplit(weeklyTarget);
   let workouts: WorkoutDay[];
 
