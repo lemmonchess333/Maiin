@@ -340,19 +340,25 @@ export default function Settings() {
   const handleConfirmRestructure = async () => {
     if (pendingLiftDays === null) return;
     setRestructuring(true);
-    // Show spinner for 1.5s then restructure
-    await new Promise((r) => setTimeout(r, 1500));
-    await regenerateProgram(undefined, pendingLiftDays);
-    // Also save the updated schedule to Firestore
-    await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
-    if (profile?.runMode && profile.runMode !== "freeform") {
-      await refreshRunSchedule();
+    try {
+      // Show spinner for 1.5s then restructure
+      await new Promise((r) => setTimeout(r, 1500));
+      await regenerateProgram(undefined, pendingLiftDays);
+      // Also save the updated schedule to Firestore
+      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
+      if (profile?.runMode && profile.runMode !== "freeform") {
+        await refreshRunSchedule();
+      }
+      setShowRestructureModal(false);
+      const newSplit = chooseSplit(pendingLiftDays);
+      setPendingLiftDays(null);
+      toast.success(`Program updated to ${splitLabel(newSplit)}`);
+    } catch (error) {
+      console.error("handleConfirmRestructure failed:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setRestructuring(false);
     }
-    setRestructuring(false);
-    setShowRestructureModal(false);
-    const newSplit = chooseSplit(pendingLiftDays);
-    setPendingLiftDays(null);
-    toast.success(`Program updated to ${splitLabel(newSplit)}`);
   };
 
   const tdee = useMemo(() => {
