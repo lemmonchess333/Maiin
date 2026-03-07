@@ -35,7 +35,7 @@ const MUSCLE_REGIONS: { id: string; label: string; path: string }[] = [
   // Biceps
   { id: "biceps_l", label: "Biceps", path: "M 64,102 Q 68,98 74,102 L 72,132 Q 68,136 64,132 Z" },
   { id: "biceps_r", label: "Biceps", path: "M 136,102 Q 132,98 126,102 L 128,132 Q 132,136 136,132 Z" },
-  // Triceps (back of arm, shown slightly offset)
+  // Triceps
   { id: "triceps_l", label: "Triceps", path: "M 62,104 Q 64,100 68,102 L 66,130 Q 63,133 61,130 Z" },
   { id: "triceps_r", label: "Triceps", path: "M 138,104 Q 136,100 132,102 L 134,130 Q 137,133 139,130 Z" },
   // Forearms
@@ -52,7 +52,7 @@ const MUSCLE_REGIONS: { id: string; label: string; path: string }[] = [
   // Quads
   { id: "quads_l", label: "Quads", path: "M 82,174 Q 90,170 98,174 L 96,218 Q 90,222 84,218 Z" },
   { id: "quads_r", label: "Quads", path: "M 118,174 Q 110,170 102,174 L 104,218 Q 110,222 116,218 Z" },
-  // Hamstrings (inner thigh area visible from front)
+  // Hamstrings
   { id: "hamstrings_l", label: "Hamstrings", path: "M 96,180 Q 100,178 100,180 L 100,216 Q 97,218 95,216 Z" },
   { id: "hamstrings_r", label: "Hamstrings", path: "M 104,180 Q 100,178 100,180 L 100,216 Q 103,218 105,216 Z" },
   // Calves
@@ -84,22 +84,29 @@ const MUSCLE_MAPPING: Record<string, string[]> = {
   "Forearms": ["forearms_l", "forearms_r"],
 };
 
-// Dark-base purple colour scheme
-const BASE_COLOR = "#2a2a3a";
-const UNTRAINED_COLOR = "#3d3d52";
-const LOW_COLOR = "#6d5a9e";     // 1–20 sets
-const MID_COLOR = "#8b5cf6";     // 21–60 sets
-const HIGH_COLOR = "#a78bfa";    // 60+ sets
+// White-card purple colour scheme
+const UNTRAINED_COLOR = "#e2e2ee";   // light grey-purple for untrained
+const STROKE_COLOR = "#c4c4d8";      // segment outline
+const HEAD_COLOR = "#d1d1e0";        // neutral head
+const LOW_COLOR = "#c4b5fd";         // 1–30 sets (light purple 60%)
+const MID_COLOR = "#8b5cf6";         // 31–70 sets (brand purple)
+const HIGH_COLOR = "#7c3aed";        // 70+ sets (deep purple)
 
 function getMuscleColor(sets: number): string {
   if (sets <= 0) return UNTRAINED_COLOR;
-  if (sets <= 20) return LOW_COLOR;
-  if (sets <= 60) return MID_COLOR;
+  if (sets <= 30) return LOW_COLOR;
+  if (sets <= 70) return MID_COLOR;
   return HIGH_COLOR;
 }
 
 function shouldGlow(sets: number): boolean {
-  return sets > 60;
+  return sets > 70;
+}
+
+function getLegendDotColor(sets: number): string {
+  if (sets <= 30) return LOW_COLOR;
+  if (sets <= 70) return MID_COLOR;
+  return HIGH_COLOR;
 }
 
 export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
@@ -122,28 +129,55 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
     return sets;
   };
 
+  // Only show trained muscle groups, sorted descending
+  const trainedGroups = useMemo(() => {
+    return Object.entries(normalizedData)
+      .filter(([, sets]) => sets > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [normalizedData]);
+
   return (
-    <div className="p-4 rounded-2xl border border-border/50" style={{ backgroundColor: "#0F0F14" }}>
-      <h3 className="text-sm font-semibold mb-3" style={{ color: "#E8E8ED" }}>Muscle Groups Trained</h3>
+    <div
+      className="p-4 rounded-2xl border border-border/50"
+      style={{ backgroundColor: "#ffffff" }}
+    >
+      <h3 className="text-sm font-semibold mb-3 text-foreground">
+        Muscle Groups Trained
+      </h3>
       <div className="flex flex-col items-center">
-        <svg viewBox="55 70 90 200" className="w-36 h-56">
+        <svg viewBox="50 62 100 215" className="w-44 h-64">
           <defs>
-            <filter id="glow-filter">
-              <feGaussianBlur stdDeviation="2" result="blur" />
+            {/* Glow filter for high-volume segments */}
+            <filter id="muscle-glow">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feFlood floodColor="rgba(139, 92, 246, 0.5)" result="glowColor" />
+              <feComposite in="glowColor" in2="blur" operator="in" result="coloredBlur" />
               <feMerge>
-                <feMergeNode in="blur" />
+                <feMergeNode in="coloredBlur" />
                 <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            {/* Subtle inner shadow for 3D depth on each segment */}
+            <filter id="inner-depth" x="-10%" y="-10%" width="120%" height="120%">
+              <feComponentTransfer in="SourceAlpha">
+                <feFuncA type="table" tableValues="1 0" />
+              </feComponentTransfer>
+              <feGaussianBlur stdDeviation="1.5" />
+              <feOffset dx="0.5" dy="1" result="offsetblur" />
+              <feFlood floodColor="rgba(0,0,0,0.15)" result="color" />
+              <feComposite in2="offsetblur" operator="in" />
+              <feComposite in2="SourceAlpha" operator="in" />
+              <feMerge>
+                <feMergeNode in="SourceGraphic" />
+                <feMergeNode />
               </feMerge>
             </filter>
           </defs>
 
-          {/* Head */}
-          <ellipse cx="100" cy="78" rx="10" ry="11" fill={BASE_COLOR} />
+          {/* Head — neutral grey, never coloured */}
+          <ellipse cx="100" cy="74" rx="10" ry="11" fill={HEAD_COLOR} stroke={STROKE_COLOR} strokeWidth="1" />
           {/* Neck */}
-          <rect x="95" y="87" width="10" height="5" rx="3" fill={BASE_COLOR} />
-
-          {/* Body outline for context */}
-          <line x1="100" y1="89" x2="100" y2="92" stroke={BASE_COLOR} strokeWidth="8" />
+          <rect x="95" y="83" width="10" height="5" rx="3" fill={UNTRAINED_COLOR} stroke={STROKE_COLOR} strokeWidth="0.8" />
 
           {/* Muscle regions */}
           {MUSCLE_REGIONS.map((region) => {
@@ -155,32 +189,40 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
                 key={region.id}
                 d={region.path}
                 fill={color}
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth="0.3"
-                filter={glow ? "url(#glow-filter)" : undefined}
+                stroke={STROKE_COLOR}
+                strokeWidth="1.5"
+                filter={glow ? "url(#muscle-glow)" : "url(#inner-depth)"}
               />
             );
           })}
 
           {/* Knee joints (cosmetic) */}
-          <circle cx="90" cy="221" r="2.5" fill={BASE_COLOR} />
-          <circle cx="110" cy="221" r="2.5" fill={BASE_COLOR} />
+          <circle cx="90" cy="221" r="2.5" fill={UNTRAINED_COLOR} stroke={STROKE_COLOR} strokeWidth="0.8" />
+          <circle cx="110" cy="221" r="2.5" fill={UNTRAINED_COLOR} stroke={STROKE_COLOR} strokeWidth="0.8" />
           {/* Feet */}
-          <ellipse cx="90" cy="265" rx="5" ry="2" fill={BASE_COLOR} />
-          <ellipse cx="110" cy="265" rx="5" ry="2" fill={BASE_COLOR} />
+          <ellipse cx="90" cy="265" rx="5" ry="2" fill={UNTRAINED_COLOR} stroke={STROKE_COLOR} strokeWidth="0.8" />
+          <ellipse cx="110" cy="265" rx="5" ry="2" fill={UNTRAINED_COLOR} stroke={STROKE_COLOR} strokeWidth="0.8" />
         </svg>
-        <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1.5">
-          {Object.entries(normalizedData)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([group, sets]) => (
+
+        {/* Legend: only trained groups, sorted by sets descending */}
+        {trainedGroups.length > 0 && (
+          <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+            {trainedGroups.map(([group, sets]) => (
               <div key={group} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: getMuscleColor(sets) }} />
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.55)" }}>{group}</span>
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>{sets} sets</span>
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: getLegendDotColor(sets) }}
+                />
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {group}
+                </span>
+                <span className="text-[10px]" style={{ color: "#9ca3af" }}>
+                  {sets} sets
+                </span>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

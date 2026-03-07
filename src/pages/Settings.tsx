@@ -284,6 +284,15 @@ export default function Settings() {
   const [pendingLiftDays, setPendingLiftDays] = useState<number | null>(null);
   const [restructuring, setRestructuring] = useState(false);
 
+  // Saved schedule tracking for unsaved-changes detection
+  const [savedSchedule] = useState<ScheduleDay[] | null>(
+    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
+  );
+  const savedLiftDays = useMemo(() => {
+    if (savedSchedule) return savedSchedule.filter((s) => s.type === "lift" || s.type === "both").length;
+    return profile?.weeklyWorkoutsTarget || 4;
+  }, [savedSchedule, profile?.weeklyWorkoutsTarget]);
+
   const schedule = useMemo(() => {
     if (customSchedule) return customSchedule;
     return generateSchedule(workoutsTarget, runsTarget);
@@ -292,7 +301,7 @@ export default function Settings() {
   const handleDayToggle = (day: number) => {
     const current = schedule.find((s) => s.day === day);
     if (!current) return;
-    const cycle: DayType[] = ["lift", "run", "both", "rest"];
+    const cycle: DayType[] = ["rest", "lift", "run", "both"];
     const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
     const updated = schedule.map((s) =>
       s.day === day ? { ...s, type: cycle[nextIdx] } : s
@@ -301,13 +310,31 @@ export default function Settings() {
     const newLiftDays = updated.filter((s) => s.type === "lift" || s.type === "both").length;
     const newRunDays = updated.filter((s) => s.type === "run" || s.type === "both").length;
     setRunsTarget(newRunDays);
-
-    // If lift days changed, trigger program restructure warning
-    if (newLiftDays !== workoutsTarget && newLiftDays > 0) {
-      setPendingLiftDays(newLiftDays);
-      setShowRestructureModal(true);
-    }
     setWorkoutsTarget(newLiftDays);
+    // No modal here — free editing. Modal fires only on "Apply Changes".
+  };
+
+  // Detect unsaved schedule changes
+  const hasUnsavedScheduleChanges = useMemo(() => {
+    if (!customSchedule) return false;
+    if (!savedSchedule) return true; // custom schedule set but no saved one
+    return customSchedule.some((s, i) => s.type !== savedSchedule[i]?.type);
+  }, [customSchedule, savedSchedule]);
+
+  const handleApplyScheduleChanges = async () => {
+    const currentLiftDays = schedule.filter((s) => s.type === "lift" || s.type === "both").length;
+    // If lift days changed, show restructure modal
+    if (currentLiftDays !== savedLiftDays && currentLiftDays > 0) {
+      setPendingLiftDays(currentLiftDays);
+      setShowRestructureModal(true);
+    } else {
+      // No lift day change — save silently
+      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
+      if (profile?.runMode && profile.runMode !== "freeform") {
+        await refreshRunSchedule();
+      }
+      toast.success("Schedule saved");
+    }
   };
 
   const handleConfirmRestructure = async () => {
@@ -316,10 +343,15 @@ export default function Settings() {
     // Show spinner for 1.5s then restructure
     await new Promise((r) => setTimeout(r, 1500));
     await regenerateProgram(undefined, pendingLiftDays);
+    // Also save the updated schedule to Firestore
+    await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
+    if (profile?.runMode && profile.runMode !== "freeform") {
+      await refreshRunSchedule();
+    }
     setRestructuring(false);
     setShowRestructureModal(false);
-    setPendingLiftDays(null);
     const newSplit = chooseSplit(pendingLiftDays);
+    setPendingLiftDays(null);
     toast.success(`Program updated to ${splitLabel(newSplit)}`);
   };
 
@@ -596,7 +628,12 @@ export default function Settings() {
 
         {/* Visual schedule editor */}
         <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
-          <p className="text-xs font-medium text-foreground">Your week</p>
+          <p className="text-xs font-medium text-foreground">
+            Your week
+            {hasUnsavedScheduleChanges && (
+              <span style={{ color: "#d97706", fontWeight: 400 }}> · unsaved changes</span>
+            )}
+          </p>
           <div className="grid grid-cols-7 gap-1.5">
             {schedule
               .slice()
@@ -651,6 +688,25 @@ export default function Settings() {
           <p className="text-[10px] text-muted-foreground text-center">
             Tap any day to cycle between Rest &rarr; Lift &rarr; Run &rarr; Both
           </p>
+          {hasUnsavedScheduleChanges && (
+            <button
+              onClick={handleApplyScheduleChanges}
+              style={{
+                width: "100%",
+                padding: "14px",
+                background: "#8b5cf6",
+                color: "white",
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 15,
+                border: "none",
+                cursor: "pointer",
+                marginTop: 12,
+              }}
+            >
+              Apply Changes
+            </button>
+          )}
         </div>
 
         {/* Run mode — controls how run days get templates */}
@@ -1311,8 +1367,8 @@ export default function Settings() {
           <div
             className="fixed inset-0 bg-black/50 z-[1000]"
             onClick={() => {
+              // Cancel — keep grid in edited state, just close modal
               setShowRestructureModal(false);
-              setPendingLiftDays(null);
             }}
           />
           <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
@@ -1326,8 +1382,8 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
+                  // Cancel — close modal but keep grid in edited (unsaved) state
                   setShowRestructureModal(false);
-                  setPendingLiftDays(null);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
               >
