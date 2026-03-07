@@ -238,44 +238,56 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
         )}
         {cc?.type === "quicktrack" && (
           <motion.div key="qt" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
-            className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
-            <div className="flex gap-3">
-              <Link to="/history?tab=health" className="flex-1 flex items-center gap-3 p-3 bg-pink-50 dark:bg-pink-950/20 rounded-xl">
-                <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-pink-500" />
+            className="p-4 rounded-2xl bg-card border border-border/50">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Health Score */}
+              <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 bg-pink-50 dark:bg-pink-950/20 rounded-xl">
+                <div className="w-9 h-9 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Heart className="w-4 h-4 text-pink-500" />
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Health</p>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Health</p>
                   <p className="text-sm font-bold text-foreground">Score</p>
                 </div>
               </Link>
-              <div className="flex-1 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                  <Droplets className="w-5 h-5 text-blue-500" />
+              {/* Water */}
+              <div className="flex items-center gap-2.5 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
+                <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Droplets className="w-4 h-4 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Water</p>
                   <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
                 </div>
-                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="ml-auto w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform">
-                  <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
+                  <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 </button>
               </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                <Scale className="w-5 h-5 text-purple-500" />
+              {/* Weight */}
+              <div className="flex items-center gap-2.5 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
+                <div className="w-9 h-9 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Scale className="w-4 h-4 text-purple-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Weight</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {lastWeight ? lastWeight + " " + weightUnit : "Log"}
+                  </p>
+                </div>
+                <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
+                  <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                </button>
               </div>
-              <div className="flex-1">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight</p>
-                <p className="text-sm text-muted-foreground">
-                  {lastWeight ? "Last: " + lastWeight + " " + weightUnit : "No logs yet"}
-                  {lastWeightDate && <span className="text-muted-foreground"> {"\u00B7"} {lastWeightDate}</span>}
-                </p>
+              {/* Steps (placeholder) */}
+              <div className="flex items-center gap-2.5 p-3 bg-teal-50 dark:bg-teal-950/20 rounded-xl opacity-60">
+                <div className="w-9 h-9 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Footprints className="w-4 h-4 text-teal-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
+                  <p className="text-xs text-muted-foreground">In app</p>
+                </div>
               </div>
-              <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="px-3 py-1.5 bg-purple-500 text-white text-sm font-medium rounded-lg active:scale-95 transition-transform">
-                Log
-              </button>
             </div>
           </motion.div>
         )}
