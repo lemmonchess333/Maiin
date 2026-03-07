@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 import {
   Play,
   RotateCcw,
   Check,
   X,
   Dumbbell,
-  Timer,
   Trophy,
+  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -79,11 +80,17 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
   const totalSetsTotal = setLogs.flat().length;
 
+  // Haptic feedback helper
+  const haptic = useCallback((pattern: number | number[]) => {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  }, []);
+
   // Timer logic
   const startRest = useCallback(() => {
     setRestSeconds(0);
     setIsResting(true);
-  }, []);
+    haptic(50);
+  }, [haptic]);
 
   const stopRest = useCallback(() => {
     setIsResting(false);
@@ -108,10 +115,9 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Auto-stop timer when it reaches target
   useEffect(() => {
     if (isResting && restSeconds >= restTarget) {
-      // Play a subtle vibration if available
-      if (navigator.vibrate) navigator.vibrate(200);
+      haptic([200, 100, 200]);
     }
-  }, [isResting, restSeconds, restTarget]);
+  }, [isResting, restSeconds, restTarget, haptic]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -169,6 +175,8 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       updated[currentExIndex][currentSetIndex].completed = true;
       return updated;
     });
+
+    haptic(100);
 
     const isLastSet = currentSetIndex >= currentSets.length - 1;
     const isLastExercise = currentExIndex >= day.exercises.length - 1;
@@ -236,8 +244,6 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     );
   }
 
-  const restProgress = restTarget > 0 ? Math.min(restSeconds / restTarget, 1) : 0;
-  const restOver = restSeconds >= restTarget;
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
@@ -296,74 +302,90 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         {/* Current exercise header */}
         <div className="text-center pt-2">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <Dumbbell className="w-5 h-5 text-primary" />
+            <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
             <h2 className="text-lg font-bold text-foreground">{currentExercise?.name}</h2>
           </div>
           <p className="text-xs text-muted-foreground">
             Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
           </p>
+          {/* Previous performance hint */}
+          {currentExercise?.lastPerformance && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium"
+              style={{ background: `${THEME.lifting}18`, color: THEME.lifting }}>
+              <ChevronRight className="w-3 h-3" />
+              Last: {currentExercise.lastPerformance.sets}×{currentExercise.lastPerformance.reps}
+              {currentExercise.lastPerformance.weight > 0 && ` @ ${currentExercise.lastPerformance.weight}kg`}
+            </div>
+          )}
         </div>
 
-        {/* Rest Timer */}
+        {/* Rest Timer - circular */}
         <AnimatePresence>
-          {isResting && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className={cn(
-                "rounded-xl p-4 text-center border",
-                restOver
-                  ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
-                  : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
-              )}
-            >
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Timer className="w-4 h-4" />
-                <p className="text-sm font-medium text-foreground">
-                  {restOver ? "Rest complete — go!" : "Rest Timer"}
-                </p>
-              </div>
-              <p className={cn(
-                "text-4xl font-extrabold tabular-nums tracking-tight",
-                restOver ? "text-green-600 dark:text-green-400" : "text-foreground",
-              )}>
-                {formatTime(restSeconds)}
-              </p>
-              {/* Progress ring visual */}
-              <div className="w-full h-1.5 bg-muted rounded-full mt-3 overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-1000",
-                    restOver ? "bg-green-500" : "bg-blue-500",
-                  )}
-                  style={{ width: `${restProgress * 100}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-center gap-3 mt-3">
-                <button
-                  onClick={stopRest}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80"
-                >
-                  <RotateCcw className="w-3 h-3" /> Skip
-                </button>
-                <div className="flex gap-1">
-                  {[60, 90, 120, 180].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setRestTarget(t)}
-                      className={cn(
-                        "px-2 py-1 rounded text-[10px] font-medium transition-colors",
-                        restTarget === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {t}s
-                    </button>
-                  ))}
+          {isResting && (() => {
+            const RADIUS = 54;
+            const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+            const progress = Math.min(restSeconds / restTarget, 1);
+            const dashOffset = CIRCUMFERENCE * (1 - progress);
+            const isOver = restSeconds >= restTarget;
+            return (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="flex flex-col items-center gap-3 py-2"
+              >
+                {/* Circular timer */}
+                <div className="relative w-32 h-32">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
+                    {/* Track */}
+                    <circle cx="64" cy="64" r={RADIUS} fill="none"
+                      stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+                    {/* Progress */}
+                    <circle cx="64" cy="64" r={RADIUS} fill="none"
+                      stroke={isOver ? THEME.success : THEME.teal}
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={CIRCUMFERENCE}
+                      strokeDashoffset={dashOffset}
+                      style={{ transition: 'stroke-dashoffset 0.9s linear, stroke 0.3s' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <p className={cn(
+                      "text-3xl font-extrabold tabular-nums tracking-tight",
+                      isOver ? "text-green-400" : "text-foreground"
+                    )}>
+                      {formatTime(restSeconds)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {isOver ? "GO!" : `/ ${formatTime(restTarget)}`}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
+
+                {/* Controls */}
+                <div className="flex items-center gap-2">
+                  <button onClick={stopRest}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium">
+                    <RotateCcw className="w-3 h-3" /> Skip
+                  </button>
+                  <div className="flex gap-1">
+                    {[60, 90, 120, 180].map((t) => (
+                      <button key={t} onClick={() => setRestTarget(t)}
+                        className={cn(
+                          "px-2 py-1 rounded text-[10px] font-medium transition-colors",
+                          restTarget === t ? "text-white" : "bg-muted text-muted-foreground"
+                        )}
+                        style={restTarget === t ? { background: THEME.teal } : undefined}
+                      >
+                        {t}s
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })()}
         </AnimatePresence>
 
         {/* Set logging grid */}
@@ -506,3 +528,4 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     </div>
   );
 }
+

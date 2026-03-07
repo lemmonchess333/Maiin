@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getFeed } from '../lib/socialApi';
+import { getFeed, batchGetActivities, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
 
@@ -11,6 +11,10 @@ export interface FeedItem {
   type: 'run' | 'workout';
   summary: string;
   createdAt: any;
+  // Enriched at feed level — no per-card reads needed
+  activity?: any;
+  liked?: boolean;
+  kudosCount?: number;
 }
 
 export function useSocialFeed() {
@@ -25,13 +29,29 @@ export function useSocialFeed() {
     setLoading(true);
     try {
       const result = await getFeed(user.uid, 20, refresh ? undefined : lastDoc);
+      const feedItems = result.items as FeedItem[];
+
+      // Single batched read for all activities + kudos
+      const activityIds = feedItems.map(i => i.activityId);
+      const [activityMap, kudosMap] = await Promise.all([
+        batchGetActivities(activityIds),
+        batchGetKudos(activityIds, user.uid),
+      ]);
+
+      const enriched: FeedItem[] = feedItems.map(item => ({
+        ...item,
+        activity: activityMap[item.activityId] || null,
+        liked: kudosMap[item.activityId] || false,
+        kudosCount: activityMap[item.activityId]?.kudosCount || 0,
+      }));
+
       if (refresh) {
-        setItems(result.items as FeedItem[]);
+        setItems(enriched);
       } else {
-        setItems(prev => [...prev, ...(result.items as FeedItem[])]);
+        setItems(prev => [...prev, ...enriched]);
       }
       setLastDoc(result.lastDoc);
-      setHasMore(result.items.length === 20);
+      setHasMore(feedItems.length === 20);
     } catch (e) {
       console.error('Feed error:', e);
     }

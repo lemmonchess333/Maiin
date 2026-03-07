@@ -163,3 +163,34 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 }
+
+// ============================================
+// Batch fetch activities + kudos status
+// Replaces N individual reads in ActivityCard
+// ============================================
+export async function batchGetActivities(activityIds: string[]): Promise<Record<string, any>> {
+  if (activityIds.length === 0) return {};
+  // Firestore 'in' queries max 30 per batch
+  const chunks: string[][] = [];
+  for (let i = 0; i < activityIds.length; i += 30) {
+    chunks.push(activityIds.slice(i, i + 30));
+  }
+  const results: Record<string, any> = {};
+  await Promise.all(chunks.map(async (chunk) => {
+    const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'activities', id))));
+    snaps.forEach(snap => {
+      if (snap.exists()) results[snap.id] = { id: snap.id, ...snap.data() };
+    });
+  }));
+  return results;
+}
+
+export async function batchGetKudos(activityIds: string[], userId: string): Promise<Record<string, boolean>> {
+  if (activityIds.length === 0 || !userId) return {};
+  const snaps = await Promise.all(
+    activityIds.map(id => getDoc(doc(db, 'kudos', id, 'users', userId)))
+  );
+  const result: Record<string, boolean> = {};
+  activityIds.forEach((id, i) => { result[id] = snaps[i].exists(); });
+  return result;
+}

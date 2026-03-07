@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
@@ -577,30 +578,39 @@ export default function Log() {
 
           {/* Saved Meals */}
           {todaysMeals.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Meals</p>
+            <div className="space-y-2">
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
-                <div key={m.id} className="bg-card rounded-2xl border border-border/50 p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-foreground">{m.foodName || "Meal"}</p>
-                    <div className="flex items-center gap-3">
-                      <p className="text-xs text-orange-500 font-medium">
-                        {safeNum(m.totalCalories)} cal
+                <div key={m.id} className="bg-card rounded-2xl border border-border/50 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0 mr-3">
+                      <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.teal}18`, color: THEME.teal }}>
+                          P {safeNum(m.totalProtein)}g
+                        </span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.brand}18`, color: THEME.brand }}>
+                          C {safeNum(m.totalCarbs)}g
+                        </span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.warning}18`, color: THEME.warning }}>
+                          F {safeNum(m.totalFat)}g
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.warning }}>
+                        {safeNum(m.totalCalories)}
+                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
-                      <button onClick={() => deleteMeal(m.id)} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500">
+                      <button onClick={() => deleteMeal(m.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
-                    <span>P: {safeNum(m.totalProtein)}g</span>
-                    <span>C: {safeNum(m.totalCarbs)}g</span>
-                    <span>F: {safeNum(m.totalFat)}g</span>
-                  </div>
                   {m.items && m.items.length > 1 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
                       {m.items.map((item, i) => (
-                        <p key={i} className="text-xs text-muted-foreground">{item.name} ({item.portionSize}) - {item.calories} cal</p>
+                        <p key={i} className="text-[11px] text-muted-foreground">{item.name} · {item.calories} cal</p>
                       ))}
                     </div>
                   )}
@@ -783,3 +793,4 @@ function RecentRunsList() {
     </div>
   );
 }
+

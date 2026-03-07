@@ -9,31 +9,34 @@ interface PRCardProps {
   title: string;
   prs: PR[];
   accentColor?: string;
+  icon?: string;
 }
 
-export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardProps) {
+export default function PRCard({ title, prs, accentColor = '#FFB547', icon = '🏆' }: PRCardProps) {
   if (prs.length === 0) return null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
-      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-        {title}
-      </h3>
-      <div className="space-y-2">
+    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
+      style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)` }}>
+      <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
+        <span className="text-base">{icon}</span>
+        <h3 className="text-sm font-semibold text-foreground flex-1">{title}</h3>
+      </div>
+      <div className="divide-y divide-border/20">
         {prs.map((pr) => (
-          <div key={pr.label} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-            <div className="flex items-center gap-2">
+          <div key={pr.label} className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2 min-w-0">
               {pr.isNew && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
                   style={{ background: `${accentColor}20`, color: accentColor }}>
                   NEW
                 </span>
               )}
-              <span className="text-xs text-muted-foreground">{pr.label}</span>
+              <span className="text-xs text-muted-foreground truncate">{pr.label}</span>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 ml-3">
               <p className="text-sm font-bold font-mono tabular-nums text-foreground">{pr.value}</p>
-              <p className="text-[9px] text-muted-foreground/50">{pr.date}</p>
+              <p className="text-[9px] text-muted-foreground/50 mt-0.5">{pr.date}</p>
             </div>
           </div>
         ))}

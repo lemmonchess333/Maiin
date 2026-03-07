@@ -15,6 +15,7 @@ const DEFAULT_CUE_CONFIG: AudioCueConfig = {
 export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?: Partial<AudioCueConfig>) {
   const lastDistanceCue = useRef(0);
   const lastTimeCue = useRef(0);
+  const splitPaces = useRef<number[]>([]); // sec/km per split for comparison
   const primed = useRef(false);
   const halfwayAnnounced = useRef(false);
   const final500Announced = useRef(false);
@@ -37,6 +38,7 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
       const u = new SpeechSynthesisUtterance(text);
       u.rate = cueConfig.voiceRate;
       u.pitch = 1;
+      u.volume = 1;
       u.lang = 'en-GB';
       // Try to pick a clear English voice
       const voices = speechSynthesis.getVoices();
@@ -52,13 +54,37 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
       if (!enabled || frequency === 'off' || frequency === 'every_5min') return;
       const threshold = frequency === 'every_500m' ? 500 : 1000;
       const currentMark = Math.floor(distance / threshold);
-      if (currentMark > lastDistanceCue.current && currentMark > 0) {
-        lastDistanceCue.current = currentMark;
-        if (frequency === 'every_500m') {
-          speak(`${(currentMark * 0.5).toFixed(1)} kilometres. Pace: ${pace} per K.`);
-        } else {
-          speak(`${currentMark} kilometre${currentMark > 1 ? 's' : ''}. Pace: ${pace} per K.`);
-        }
+      if (currentMark <= lastDistanceCue.current || currentMark === 0) return;
+
+      lastDistanceCue.current = currentMark;
+
+      // Parse pace string "M:SS" → seconds
+      const parts = pace.split(':');
+      const currentPaceSec = parts.length === 2
+        ? parseInt(parts[0]) * 60 + parseInt(parts[1])
+        : 0;
+
+      // Build split comparison phrase
+      let comparison = '';
+      const prevPaces = splitPaces.current;
+      if (currentPaceSec > 0 && prevPaces.length > 0) {
+        const lastPace = prevPaces[prevPaces.length - 1];
+        const diff = lastPace - currentPaceSec; // positive = faster this split
+        if (diff > 10) comparison = ' Faster than last split.';
+        else if (diff < -10) comparison = ' Slower than last split.';
+        else comparison = ' On pace.';
+      }
+
+      if (currentPaceSec > 0) splitPaces.current.push(currentPaceSec);
+
+      // Haptic burst for split milestone
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+
+      if (frequency === 'every_500m') {
+        speak(`${(currentMark * 0.5).toFixed(1)} kilometres. Pace ${pace} per K.${comparison}`);
+      } else {
+        const km = currentMark;
+        speak(`${km} kilometre${km > 1 ? 's' : ''}. Pace ${pace} per K.${comparison}`);
       }
     },
     [enabled, frequency, speak]
@@ -70,7 +96,8 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
       const currentMark = Math.floor(elapsed / 300);
       if (currentMark > lastTimeCue.current && currentMark > 0) {
         lastTimeCue.current = currentMark;
-        speak(`${currentMark * 5} minutes. Distance: ${(distance / 1000).toFixed(1)} kilometres.`);
+        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        speak(`${currentMark * 5} minutes. Distance ${(distance / 1000).toFixed(1)} kilometres.`);
       }
     },
     [enabled, frequency, speak]
@@ -141,6 +168,7 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
   const reset = useCallback(() => {
     lastDistanceCue.current = 0;
     lastTimeCue.current = 0;
+    splitPaces.current = [];
     halfwayAnnounced.current = false;
     final500Announced.current = false;
     paceAlertCooldown.current = 0;

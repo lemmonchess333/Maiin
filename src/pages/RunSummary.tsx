@@ -1,7 +1,9 @@
+import { useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
@@ -10,6 +12,8 @@ import RunMap from '../components/run/RunMap';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
+import ShareCard from '../components/social/ShareCard';
+import { generateAndShare } from '../lib/shareCardGenerator';
 import { THEME } from '../lib/theme';
 import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
@@ -29,6 +33,10 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { zones: privacyZones } = usePrivacyZones();
+  const { isOnline } = useOnlineStatus();
+  const shareRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   if (!state) {
     navigate('/');
@@ -62,9 +70,10 @@ export default function RunSummary() {
       intervalData,
       runConfig,
     };
+    // Firestore queues the write offline automatically via IndexedDB persistence
     await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
-    if (profile?.autoPostRuns !== false) {
+    if (isOnline && profile?.autoPostRuns !== false) {
       await postActivity({
         authorId: user.uid,
         authorName: profile?.displayName || 'Athlete',
@@ -82,7 +91,19 @@ export default function RunSummary() {
       });
     }
 
-    navigate('/');
+    setSaved(true);
+    // Short delay so user sees the confirmation, then go home
+    setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
+  };
+
+  const handleShare = async () => {
+    if (!shareRef.current || sharing) return;
+    setSharing(true);
+    try {
+      await generateAndShare(shareRef.current, `${(distance / 1000).toFixed(2)}km run`);
+    } finally {
+      setSharing(false);
+    }
   };
 
   const handleExportGPX = () => {
@@ -116,6 +137,31 @@ export default function RunSummary() {
           weekday: 'long', month: 'long', day: 'numeric'
         })}</p>
       </div>
+
+      {/* Offline notice */}
+      {!isOnline && !saved && (
+        <div className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
+          style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <span className="text-lg">📵</span>
+          <div>
+            <p className="font-medium text-amber-400 text-xs">You're offline</p>
+            <p className="text-xs text-white/50 mt-0.5">Run will sync automatically when you reconnect</p>
+          </div>
+        </div>
+      )}
+
+      {/* Saved confirmation */}
+      {saved && (
+        <div className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
+          style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.25)' }}>
+          <span className="text-lg">✅</span>
+          <div>
+            <p className="font-medium text-emerald-400 text-xs">
+              {isOnline ? 'Run saved!' : 'Saved locally — will sync when online'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Pace-coloured route map */}
       {points.length > 1 && (
@@ -192,20 +238,45 @@ export default function RunSummary() {
 
       {/* Actions */}
       <div className="px-4 space-y-2">
-        <button onClick={handleSave}
-          className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
-          Save Run
+        <button
+          onClick={handleSave}
+          disabled={saved}
+          className="w-full py-3.5 rounded-xl font-medium text-sm transition-all"
+          style={saved
+            ? { background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }
+            : { background: 'var(--color-primary)', color: 'white' }
+          }>
+          {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
         </button>
         <div className="flex gap-2">
           <button onClick={handleExportGPX}
             className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
             Export GPX
           </button>
-          <button className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
-            Share
+          <button
+            onClick={handleShare}
+            disabled={sharing}
+            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground disabled:opacity-50">
+            {sharing ? 'Sharing…' : 'Share'}
           </button>
         </div>
         <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
+      </div>
+
+      {/* Offscreen share card rendered for html-to-image */}
+      <div style={{ position: 'absolute', left: -9999, top: -9999, pointerEvents: 'none' }}>
+        <ShareCard
+          ref={shareRef}
+          data={{
+            type: 'run',
+            userName: profile?.displayName || 'Athlete',
+            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+            distance: distance / 1000,
+            duration: elapsed,
+            pace: avgPace,
+            elevationGain,
+          }}
+        />
       </div>
     </div>
   );

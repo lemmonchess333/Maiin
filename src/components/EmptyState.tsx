@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -6,27 +7,45 @@ interface EmptyStateProps {
   description: string;
   action?: {
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
+    href?: string;
   };
+  accentColor?: string;
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, accentColor = '#8b5cf6' }: EmptyStateProps) {
   return (
-    <div className="text-center py-12 space-y-3">
-      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
-        {icon}
+    <div className="text-center py-12 px-6 space-y-4">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+        style={{ background: `${accentColor}15`, border: `1px solid ${accentColor}25` }}
+      >
+        <div style={{ color: accentColor }}>{icon}</div>
       </div>
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
-        {description}
-      </p>
+      <div className="space-y-1.5">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
+          {description}
+        </p>
+      </div>
       {action && (
-        <button
-          onClick={action.onClick}
-          className="mt-2 text-xs px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-medium shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform"
-        >
-          {action.label}
-        </button>
+        action.href ? (
+          <Link
+            to={action.href}
+            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+            style={{ background: accentColor, color: '#fff' }}
+          >
+            {action.label}
+          </Link>
+        ) : (
+          <button
+            onClick={action.onClick}
+            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+            style={{ background: accentColor, color: '#fff' }}
+          >
+            {action.label}
+          </button>
+        )
       )}
     </div>
   );

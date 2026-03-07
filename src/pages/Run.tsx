@@ -38,7 +38,6 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
   const quality = accuracy && accuracy < 10 ? 'strong' : accuracy && accuracy < 20 ? 'good' : accuracy && accuracy < 30 ? 'fair' : 'weak';
   const color = quality === 'strong' || quality === 'good' ? 'bg-green-400' : quality === 'fair' ? 'bg-yellow-400' : 'bg-red-400';
   const text = quality === 'weak' ? 'text-red-400/80' : quality === 'fair' ? 'text-yellow-400/80' : 'text-green-400/80';
-
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-end gap-0.5 h-3">
@@ -86,6 +85,7 @@ export default function Run() {
       return;
     }
     setPhase('acquiring');
+    gps.preWarm();
     gps.start();
   };
 
@@ -111,14 +111,6 @@ export default function Run() {
       setCountdown(3);
     }
   }, [phase, gps.points.length]);
-
-  // Force-start after 10s if GPS still hasn't locked
-  useEffect(() => {
-    if (phase === 'acquiring' && acquiringSeconds >= 10 && gps.points.length === 0) {
-      setPhase('countdown');
-      setCountdown(3);
-    }
-  }, [phase, acquiringSeconds, gps.points.length]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -165,9 +157,7 @@ export default function Run() {
       timer.resume();
       setAutoPaused(false);
     }
-    return () => {
-      if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
-    };
+    return () => { if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current); };
   }, [gps.currentPoint, phase, autoPaused, runConfig?.autoPause, runConfig?.activityType, timer]);
 
   useEffect(() => {
@@ -192,7 +182,6 @@ export default function Run() {
     gps.stop();
     wakeLock.release();
     setPhase('finished');
-
     const finalDistance = distanceOverride ?? gps.distance;
     navigate('/run-summary', {
       state: {
@@ -264,25 +253,70 @@ export default function Run() {
         </div>
       )}
 
-      {phase === 'acquiring' && (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 bg-background text-foreground">
-          <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-6" />
-          <p className="text-lg font-semibold mb-1">Acquiring GPS Signal...</p>
-          <p className="text-sm text-muted-foreground text-center">Stand still outdoors for best results</p>
-          <p className="text-[10px] text-muted-foreground/40 mt-1">For best tracking, keep your screen on during the run</p>
-          <p className="text-xs text-muted-foreground/60 mt-4">{gps.gpsAccuracy ? `Accuracy: \u00B1${Math.round(gps.gpsAccuracy)}m` : 'Searching...'}</p>
-          {gps.error && <p className="text-xs text-red-400 mt-2">{gps.error}</p>}
-          {acquiringSeconds >= 8 && (
-            <button
-              onClick={() => { setPhase('countdown'); setCountdown(3); }}
-              className="mt-6 px-6 py-2.5 rounded-full bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
-            >
-              Start without GPS
-            </button>
-          )}
-          <button onClick={() => { gps.stop(); setPhase('waiting'); }} className="mt-4 text-sm text-muted-foreground">Cancel</button>
-        </div>
-      )}
+      {phase === 'acquiring' && (() => {
+        const acc = gps.gpsAccuracy;
+        const quality = gps.signalQuality;
+        const bars = quality === 'strong' ? 4 : quality === 'good' ? 3 : quality === 'fair' ? 2 : quality === 'weak' ? 1 : 0;
+        const barColor = quality === 'strong' || quality === 'good' ? '#34D399' : quality === 'fair' ? '#FFB547' : '#EF4444';
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center px-8" style={{ background: THEME.bg }}>
+            {/* Signal rings */}
+            <div className="relative w-28 h-28 flex items-center justify-center mb-8">
+              <div className="absolute inset-0 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}30`, animationDuration: '2s' }} />
+              <div className="absolute inset-3 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}40`, animationDuration: '2s', animationDelay: '0.4s' }} />
+              <div className="absolute inset-6 rounded-full border-2 animate-ping" style={{ borderColor: `${THEME.teal}50`, animationDuration: '2s', animationDelay: '0.8s' }} />
+              <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(0,212,170,0.12)', border: `2px solid ${THEME.teal}` }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={THEME.teal} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Signal bars + accuracy */}
+            <div className="flex items-end gap-1 mb-4">
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{
+                  width: 8, height: 6 + i * 5, borderRadius: 3,
+                  background: i <= bars ? barColor : 'rgba(255,255,255,0.1)',
+                  transition: 'background 0.3s',
+                }} />
+              ))}
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 8, fontFamily: 'monospace' }}>
+                {acc ? `\u00B1${Math.round(acc)}m` : '---'}
+              </p>
+            </div>
+
+            <p className="text-white font-semibold text-lg mb-1">
+              {quality === 'strong' || quality === 'good' ? 'GPS locked' : 'Acquiring GPS...'}
+            </p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', maxWidth: 260 }}>
+              {quality === 'weak' || quality === 'searching'
+                ? 'Move to an open area away from buildings'
+                : 'Getting accurate signal...'}
+            </p>
+            {gps.error && (
+              <p className="text-xs text-red-400 mt-2 text-center">{gps.error}</p>
+            )}
+
+            <div className="mt-8 flex flex-col items-center gap-3 w-full">
+              {acquiringSeconds >= 15 && (
+                <button
+                  onClick={() => { setPhase('countdown'); setCountdown(3); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition-transform"
+                  style={{ background: THEME.teal, color: '#000' }}>
+                  Start without GPS {acc ? `(\u00B1${Math.round(acc)}m)` : ''}
+                </button>
+              )}
+              <button
+                onClick={() => { gps.stop(); setPhase('waiting'); }}
+                style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {phase === 'countdown' && (
         <div className="h-full flex items-center justify-center text-white" style={{ backgroundColor: THEME.bg }}>
@@ -295,11 +329,7 @@ export default function Run() {
           <TreadmillMode
             elapsed={timer.elapsed}
             formatTime={timer.formatTime}
-            onSave={(distance) => {
-              setTreadmillDistance(distance);
-              haptic('success');
-              finishRun(distance);
-            }}
+            onSave={(distance) => { setTreadmillDistance(distance); haptic('success'); finishRun(distance); }}
             onDiscard={() => navigate('/')}
           />
         </div>
@@ -338,10 +368,7 @@ export default function Run() {
             onLock={() => setLocked(true)}
             isPaused={phase === 'paused'}
             onResume={handleResume}
-            onStop={() => {
-              haptic('success');
-              finishRun();
-            }}
+            onStop={() => { haptic('success'); finishRun(); }}
             intervalDisplay={runConfig?.activityType === 'intervals' ? <IntervalDisplay state={intervals.state} /> : undefined}
             weightKg={profile?.weightKg || 70}
           />
