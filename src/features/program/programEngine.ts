@@ -59,11 +59,13 @@ function goalWeightBonus(goal: Goal): number {
 
 export function chooseSplit(weeklyTarget: number): SplitType {
   const clamped = Math.max(1, Math.min(7, weeklyTarget));
-  if (clamped <= 2) return "full_body";
+  if (clamped === 1) return "full_body";
+  if (clamped === 2) return "upper_lower";
   if (clamped === 3) return "ppl";
   if (clamped === 4) return "upper_lower";
   if (clamped === 5) return "ppl_ul";
-  return "ppl_x2";
+  if (clamped === 6) return "ppl_x2";
+  return "ppl_x2_fb";
 }
 
 export function splitLabel(split: SplitType): string {
@@ -71,8 +73,9 @@ export function splitLabel(split: SplitType): string {
     case "full_body": return "Full Body";
     case "upper_lower": return "Upper / Lower";
     case "ppl": return "Push / Pull / Legs";
-    case "ppl_ul": return "PPL + Upper/Lower";
-    case "ppl_x2": return "PPL ×2";
+    case "ppl_ul": return "Push / Pull / Legs + Upper / Lower";
+    case "ppl_x2": return "Push / Pull / Legs ×2";
+    case "ppl_x2_fb": return "Push / Pull / Legs ×2 + Full Body";
   }
 }
 
@@ -316,21 +319,33 @@ export function generateProgram(
     case "ppl":
       workouts = buildPPL(goal, existingWorkouts).slice(0, 3);
       break;
-    case "upper_lower":
-      workouts = buildUpperLower(goal, existingWorkouts);
+    case "upper_lower": {
+      const ul = buildUpperLower(goal, existingWorkouts);
+      // 2-day uses first upper + first lower only
+      workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
       break;
+    }
     case "ppl_ul":
       workouts = [
         ...buildPPL(goal, existingWorkouts).slice(0, 3),
         ...buildUpperLower(goal, existingWorkouts).slice(0, 2),
       ];
       break;
-    case "ppl_x2":
-      workouts = buildPPL(goal, existingWorkouts);
-      // Add a second legs day for 6-day PPL
+    case "ppl_x2": {
       const ppl = buildPPL(goal, existingWorkouts);
       workouts = [...ppl, { ...ppl[2], dayName: "Legs B", completed: false }];
       break;
+    }
+    case "ppl_x2_fb": {
+      const ppl7 = buildPPL(goal, existingWorkouts);
+      const fb = buildFullBody(goal, 1, existingWorkouts);
+      workouts = [
+        ...ppl7,
+        { ...ppl7[2], dayName: "Legs B", completed: false },
+        { ...fb[0], dayName: "Full Body (Recovery)", completed: false },
+      ];
+      break;
+    }
     default:
       workouts = buildUpperLower(goal, existingWorkouts);
   }

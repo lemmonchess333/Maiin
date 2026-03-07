@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import { useProgram } from "@/features/program/useProgram";
+import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
@@ -245,7 +246,7 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
-  const { refreshRunSchedule, programState, overrideRunDay } = useProgram();
+  const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
@@ -279,6 +280,11 @@ export default function Settings() {
   const [newZoneRadius, setNewZoneRadius] = useState(500);
   const { reminders: mealReminders, updateReminders } = useMealReminders();
 
+  // Restructure warning modal state
+  const [showRestructureModal, setShowRestructureModal] = useState(false);
+  const [pendingLiftDays, setPendingLiftDays] = useState<number | null>(null);
+  const [restructuring, setRestructuring] = useState(false);
+
   const schedule = useMemo(() => {
     if (customSchedule) return customSchedule;
     return generateSchedule(workoutsTarget, runsTarget);
@@ -303,8 +309,29 @@ export default function Settings() {
       s.day === day ? { ...s, type: cycle[nextIdx] } : s
     );
     setCustomSchedule(updated);
-    setWorkoutsTarget(updated.filter((s) => s.type === "lift" || s.type === "both").length);
-    setRunsTarget(updated.filter((s) => s.type === "run" || s.type === "both").length);
+    const newLiftDays = updated.filter((s) => s.type === "lift" || s.type === "both").length;
+    const newRunDays = updated.filter((s) => s.type === "run" || s.type === "both").length;
+    setRunsTarget(newRunDays);
+
+    // If lift days changed, trigger program restructure warning
+    if (newLiftDays !== workoutsTarget && newLiftDays > 0) {
+      setPendingLiftDays(newLiftDays);
+      setShowRestructureModal(true);
+    }
+    setWorkoutsTarget(newLiftDays);
+  };
+
+  const handleConfirmRestructure = async () => {
+    if (pendingLiftDays === null) return;
+    setRestructuring(true);
+    // Show spinner for 1.5s then restructure
+    await new Promise((r) => setTimeout(r, 1500));
+    await regenerateProgram(undefined, pendingLiftDays);
+    setRestructuring(false);
+    setShowRestructureModal(false);
+    setPendingLiftDays(null);
+    const newSplit = chooseSplit(pendingLiftDays);
+    toast.success(`Program updated to ${splitLabel(newSplit)}`);
   };
 
   const tdee = useMemo(() => {
@@ -565,38 +592,6 @@ export default function Settings() {
           Weekly Schedule
         </p>
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm text-muted-foreground flex items-center gap-2">
-              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-              Lift days ({workoutsTarget})
-            </label>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max={6}
-            value={workoutsTarget}
-            onChange={(e) => handleWorkoutsChange(Number(e.target.value))}
-            className="w-full accent-primary"
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm text-muted-foreground flex items-center gap-2">
-              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
-              Run days ({runsTarget})
-            </label>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max={7}
-            value={runsTarget}
-            onChange={(e) => handleRunsChange(Number(e.target.value))}
-            className="w-full accent-primary"
-          />
-        </div>
-        <div>
           <label className="text-sm text-muted-foreground">
             Protein meals per week ({mealsTarget})
           </label>
@@ -665,7 +660,7 @@ export default function Settings() {
               })}
           </div>
           <p className="text-[10px] text-muted-foreground text-center">
-            Tap a day to change it &middot; {schedule.filter(s => s.type === "rest").length} rest day{schedule.filter(s => s.type === "rest").length !== 1 ? "s" : ""}
+            Tap any day to cycle between Rest &rarr; Lift &rarr; Run &rarr; Both
           </p>
         </div>
 
@@ -1320,6 +1315,53 @@ export default function Settings() {
       <p className="text-center text-xs text-muted-foreground">
         Adaptive Fitness v1.1.0
       </p>
+
+      {/* Restructure Warning Modal */}
+      {showRestructureModal && pendingLiftDays !== null && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-[1000]"
+            onClick={() => {
+              setShowRestructureModal(false);
+              setPendingLiftDays(null);
+            }}
+          />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+            <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>
+            <p className="text-sm text-muted-foreground">
+              Changing your training days will restructure your program. Your workout history won&apos;t be affected, but your program will be rebuilt. This cannot be undone.
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Your new program will use a <span className="text-primary">{splitLabel(chooseSplit(pendingLiftDays))}</span> split.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowRestructureModal(false);
+                  setPendingLiftDays(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRestructure}
+                disabled={restructuring}
+                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
+              >
+                {restructuring ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Rebuilding...
+                  </>
+                ) : (
+                  "Confirm"
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
