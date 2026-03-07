@@ -123,7 +123,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
                     {workouts.length} session{workouts.length !== 1 ? "s" : ""}
                     {tonnage > 0 && (
                       <span className="text-muted-foreground">
-                        {" \u00B7 "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "t" : Math.round(tonnage) + "kg"}
+                        {" \u00B7 "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "k kg" : Math.round(tonnage) + "kg"}
                       </span>
                     )}
                   </span>
@@ -280,8 +280,8 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Weight</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {lastWeight ? lastWeight + " " + weightUnit : "Log"}
+                  <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
+                    {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
                   </p>
                 </div>
                 <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
@@ -322,7 +322,7 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
   var allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
   var stats = [
     { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
-    { label: "Volume", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "t" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
+    { label: "Volume", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "k kg" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
     { label: "Distance", value: runKm.toFixed(1) + "km", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
@@ -419,7 +419,7 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
   var caloriesLeft = Math.max(tCal - calories, 0);
 
   return (
-    <Link to="/log">
+    <Link to="/log" state={{ tab: 'food' }}>
       <div className="rounded-2xl bg-card border border-border/50 overflow-hidden active:scale-[0.99] transition-transform">
         {/* Calorie header */}
         <div className="px-4 pt-4 pb-3 border-b border-border/30"

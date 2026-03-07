@@ -10,7 +10,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
 } from "recharts";
 
 const WEEK_OPTIONS = ["This wk", "Last wk", "2 wk ago", "3 wk ago"];
@@ -47,11 +46,27 @@ export function WeeklyEnergyChart() {
     return days;
   }, [meals, workouts, profile, weekOffset]);
 
+  // Default selectedDay to today's index in the week (Mon=0)
+  const todayWeekIndex = useMemo(() => {
+    const jsDay = new Date().getDay(); // 0=Sun
+    return jsDay === 0 ? 6 : jsDay - 1; // Mon=0 ... Sun=6
+  }, []);
+
+  const [selectedDay, setSelectedDay] = useState(todayWeekIndex);
+
   const totals = useMemo(() => {
     const consumed = data.reduce((s, d) => s + d.consumed, 0);
     const burned = data.reduce((s, d) => s + d.burned, 0);
     return { consumed, burned, balance: burned - consumed };
   }, [data]);
+
+  const selected = data[selectedDay] || data[0];
+
+  const handleBarClick = (dayData: any) => {
+    if (!dayData?.activeLabel) return;
+    const idx = data.findIndex((d) => d.day === dayData.activeLabel);
+    if (idx >= 0) setSelectedDay(idx);
+  };
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
@@ -76,17 +91,11 @@ export function WeeklyEnergyChart() {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="flex justify-between text-[11px]">
-        <span style={{ color: THEME.warning }}>
-          Burned: {totals.burned.toLocaleString()}
-        </span>
-        <span style={{ color: THEME.success }}>
-          Consumed: {totals.consumed.toLocaleString()}
-        </span>
-        <span className={totals.balance > 0 ? "text-red-400" : "text-green-400"}>
-          Balance: {totals.balance > 0 ? "-" : "+"}{Math.abs(totals.balance).toLocaleString()}
-        </span>
+      {/* Persistent summary bar for selected day */}
+      <div className="flex items-center justify-between text-xs mb-3">
+        <span className="font-medium text-foreground">{selected.day}</span>
+        <span style={{ color: THEME.warning }}>Burned: {selected.burned.toLocaleString()} cal</span>
+        <span style={{ color: THEME.success }}>Consumed: {selected.consumed.toLocaleString()} cal</span>
       </div>
 
       {totals.consumed === 0 && (
@@ -95,7 +104,7 @@ export function WeeklyEnergyChart() {
 
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} barGap={2}>
+          <BarChart data={data} barGap={2} onClick={handleBarClick}>
             <XAxis
               dataKey="day"
               tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
@@ -108,21 +117,6 @@ export function WeeklyEnergyChart() {
               tickLine={false}
               width={30}
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
-            />
-            <Tooltip
-              cursor={false}
-              offset={10}
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 11,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              }}
-              formatter={(value: unknown, name?: string) => [
-                Number(value).toLocaleString() + " cal",
-                name === "burned" ? "Burned" : "Consumed",
-              ]}
             />
             <Bar dataKey="burned" fill={THEME.warning} radius={[4, 4, 0, 0]} barSize={14} />
             <Bar dataKey="consumed" fill={THEME.success} radius={[4, 4, 0, 0]} barSize={14} />

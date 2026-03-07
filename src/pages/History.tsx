@@ -53,7 +53,7 @@ export default function History() {
             ? 180
             : 365;
 
-  const { weeklyData } = useRunningStats(rangeDays);
+  const { weeklyData, runs } = useRunningStats(rangeDays);
   const { workouts } = useWorkouts();
   const { meals } = useMeals();
 
@@ -77,6 +77,60 @@ export default function History() {
     return { runCount, runDistance, avgPace };
   }, [weeklyData]);
 
+  const runningPRs = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const formatPace = (secPerKm: number) => {
+      const m = Math.floor(secPerKm / 60);
+      const s = Math.round(secPerKm % 60);
+      return `${m}:${s.toString().padStart(2, "0")}`;
+    };
+
+    // Fastest 1K
+    const runs1k = runs.filter((r) => r.distance >= 1000 && r.avgPace > 0);
+    const best1k = runs1k.length
+      ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+      : null;
+
+    // Fastest 5K
+    const runs5k = runs.filter((r) => r.distance >= 5000 && r.avgPace > 0);
+    const best5k = runs5k.length
+      ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+      : null;
+
+    // Longest Run
+    const longestRun = runs.length
+      ? runs.reduce((best, r) => (r.distance > best.distance ? r : best))
+      : null;
+
+    const fmtDate = (d: Date) =>
+      d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+    return [
+      {
+        label: "Fastest 1K",
+        value: best1k ? formatPace(best1k.avgPace) : "--",
+        date: best1k ? fmtDate(best1k.completedAt) : "",
+        isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
+      },
+      {
+        label: "Fastest 5K",
+        value: best5k ? formatPace(best5k.avgPace) : "--",
+        date: best5k ? fmtDate(best5k.completedAt) : "",
+        isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
+      },
+      {
+        label: "Longest Run",
+        value: longestRun
+          ? (longestRun.distance / 1000).toFixed(1) + " km"
+          : "--",
+        date: longestRun ? fmtDate(longestRun.completedAt) : "",
+        isNew: longestRun ? longestRun.completedAt >= sevenDaysAgo : false,
+      },
+    ];
+  }, [runs]);
+
   const liftingData = useMemo(() => {
     const since = new Date();
     since.setDate(since.getDate() - rangeDays);
@@ -96,15 +150,19 @@ export default function History() {
       });
     });
 
-    const weeklyVolume = filtered.map((w) => ({
-      week: w.date,
-      volume: w.exercises.reduce(
-        (sum, ex) =>
-          sum +
-          ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-        0
-      ),
-    }));
+    const weekMap: Record<string, number> = {};
+    filtered.forEach((w) => {
+      const d = new Date(w.date);
+      d.setDate(d.getDate() - d.getDay());
+      const key = d.toISOString().split('T')[0];
+      const vol = w.exercises.reduce(
+        (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
+      );
+      weekMap[key] = (weekMap[key] || 0) + vol;
+    });
+    const weeklyVolume = Object.entries(weekMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, volume]) => ({ week, volume }));
 
     // Build all-time best e1rm per exercise
     const allTimeBest: Record<string, number> = {};
@@ -265,30 +323,7 @@ export default function History() {
               </div>
               <PRCard
                 title="Running PRs"
-                prs={[
-                  {
-                    label: "Fastest 1K",
-                    value: "4:12",
-                    date: "24 Feb",
-                    isNew: false,
-                  },
-                  {
-                    label: "Fastest 5K",
-                    value: "24:32",
-                    date: "20 Feb",
-                    isNew: true,
-                  },
-                  {
-                    label: "Longest Run",
-                    value:
-                      Math.max(
-                        ...weeklyData.map((w) => w.totalDistance),
-                        0
-                      ).toFixed(1) + " km",
-                    date: "Recent",
-                    isNew: false,
-                  },
-                ]}
+                prs={runningPRs}
                 accentColor={THEME.running}
               />
               <RunningHistorySection />
@@ -308,8 +343,8 @@ export default function History() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Weekly Volume"
-                  value={(liftingData.liftVolume / 1000).toFixed(1)}
-                  unit="t"
+                  value={liftingData.liftVolume >= 1000 ? (liftingData.liftVolume / 1000).toFixed(1) + "k" : String(Math.round(liftingData.liftVolume))}
+                  unit="kg"
                   accentColor={THEME.lifting}
                 />
                 <StatCard
