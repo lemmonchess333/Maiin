@@ -7,7 +7,7 @@ export interface DayAdjustment {
   reason: string;
 }
 
-type DayType = "lift" | "run" | "rest";
+type DayType = "lift" | "run" | "both" | "rest";
 type Phase = string;
 
 const PHASE_PROTEIN_MULTIPLIERS: Record<string, number> = {
@@ -40,6 +40,13 @@ export function getDayAdjustment(
         carbAdjustment: 30,
         proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
         reason: `Run day — +${isCut ? 100 : 200} cal for fuel`,
+      };
+    case "both":
+      return {
+        calorieAdjustment: isCut ? 250 : phase === "strength" ? 500 : 350,
+        carbAdjustment: 40,
+        proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
+        reason: `Lift + Run day — +${isCut ? 250 : phase === "strength" ? 500 : 350} cal for recovery & fuel`,
       };
     case "rest":
     default:

@@ -14,13 +14,15 @@ import { cn } from "@/lib/utils";
 const DAY_TYPE_STYLES: Record<DayType, { label: string; color: string }> = {
   lift: { label: "Lift", color: THEME.lifting },
   run:  { label: "Run",  color: THEME.running },
+  both: { label: "Both", color: THEME.lifting },
   rest: { label: "Rest", color: "rgba(255,255,255,0.2)" },
 };
 
-// Cycle through lift → run → rest on tap
+// Cycle through lift → run → both → rest on tap
 function nextType(t: DayType): DayType {
   if (t === "lift") return "run";
-  if (t === "run") return "rest";
+  if (t === "run") return "both";
+  if (t === "both") return "rest";
   return "lift";
 }
 
@@ -207,7 +209,7 @@ export default function Onboarding() {
                   })}
                 </div>
                 <div className="flex items-center justify-center gap-4 mt-3">
-                  {(['lift', 'run', 'rest'] as DayType[]).map(t => (
+                  {(['lift', 'run', 'both', 'rest'] as DayType[]).map(t => (
                     <div key={t} className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full" style={{ background: DAY_TYPE_STYLES[t].color }} />
                       <span className="text-[9px] capitalize" style={{ color: 'rgba(255,255,255,0.4)' }}>

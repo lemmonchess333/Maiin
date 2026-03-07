@@ -52,7 +52,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
     var st = schedule.find(function(s) { return s.day === i; })?.type || "rest";
     return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
   });
-  var tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : "transparent"; };
+  var tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
@@ -87,8 +87,8 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   var dow = new Date(dateKey + "T00:00:00").getDay();
   var st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
   var dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
-  var typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : "Rest day";
-  var typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : THEME.textMuted;
+  var typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
+  var typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
   var tonnage = 0;
   workouts.forEach(function(w: any) {
     (w.exercises || []).forEach(function(ex: any) {
@@ -145,7 +145,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
 
 function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate: _lastWeightDate, weightUnit, onLogWeight }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
-  todayType: "lift" | "run" | "rest";
+  todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
   waterGlasses: number;
   waterTarget: number;
@@ -159,8 +159,8 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
   var touchStartX = 0;
   var cards = useMemo(function() {
     var r: { id: string; type: "scheduled" | "actions" | "quicktrack" }[] = [];
-    if (todayType === "lift" && nextWorkout) r.push({ id: "workout", type: "scheduled" });
-    else if (todayType === "run") r.push({ id: "run", type: "scheduled" });
+    if ((todayType === "lift" || todayType === "both") && nextWorkout) r.push({ id: "workout", type: "scheduled" });
+    if ((todayType === "run" || todayType === "both") && !r.some(c => c.id === "run")) r.push({ id: "run", type: "scheduled" });
     r.push({ id: "actions", type: "actions" });
     r.push({ id: "quicktrack", type: "quicktrack" });
     return r;
@@ -466,7 +466,7 @@ export default function Home() {
     return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
-  var todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "rest";
+  var todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
   var streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
 
   useEffect(function() {

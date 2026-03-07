@@ -106,16 +106,34 @@ export default function History() {
       ),
     }));
 
-    // Build PR timeline: best set per exercise across all time, with date
-    const allTime = workouts; // use all workouts, not filtered
-    const prMap: Record<string, { weight: number; reps: number; date: string }> = {};
-    allTime.forEach((w) => {
+    // Build all-time best e1rm per exercise
+    const allTimeBest: Record<string, number> = {};
+    workouts.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        ex.sets?.forEach((set) => {
+          const e1rm = set.weightKg * (1 + set.reps / 30);
+          allTimeBest[ex.exerciseName] = Math.max(allTimeBest[ex.exerciseName] || 0, e1rm);
+        });
+      });
+    });
+
+    // Best set per exercise from the last 7 days only
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentWorkouts = workouts.filter((w) => new Date(w.date) >= sevenDaysAgo);
+    const prMap: Record<string, { weight: number; reps: number; date: string; isAllTimeBest: boolean }> = {};
+    recentWorkouts.forEach((w) => {
       w.exercises?.forEach((ex) => {
         const name = ex.exerciseName;
         ex.sets?.forEach((set) => {
-          const e1rm = set.weightKg * (1 + set.reps / 30); // Epley formula
+          const e1rm = set.weightKg * (1 + set.reps / 30);
           if (!prMap[name] || e1rm > prMap[name].weight * (1 + prMap[name].reps / 30)) {
-            prMap[name] = { weight: set.weightKg, reps: set.reps, date: w.date };
+            prMap[name] = {
+              weight: set.weightKg,
+              reps: set.reps,
+              date: w.date,
+              isAllTimeBest: Math.abs(e1rm - (allTimeBest[name] || 0)) < 0.01,
+            };
           }
         });
       });
@@ -309,14 +327,14 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
-              {liftingData.prTimeline.length > 0 && (
-                <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
-                  style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
-                  <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-                    <span className="text-base">🏆</span>
-                    <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
-                    <span className="text-[10px] text-muted-foreground">Est. 1RM</span>
-                  </div>
+              <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
+                <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
+                  <span className="text-base">🏆</span>
+                  <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
+                  <span className="text-[10px] text-muted-foreground">This week</span>
+                </div>
+                {liftingData.prTimeline.length > 0 ? (
                   <div className="divide-y divide-border/20">
                     {liftingData.prTimeline.map((pr) => {
                       const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
@@ -324,7 +342,15 @@ export default function History() {
                       return (
                         <div key={pr.name} className="flex items-center justify-between px-4 py-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
+                            <div className="flex items-center gap-1.5">
+                              {pr.isAllTimeBest && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
+                                  style={{ background: `${THEME.lifting}20`, color: THEME.lifting }}>
+                                  NEW
+                                </span>
+                              )}
+                              <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
+                            </div>
                             <p className="text-[9px] text-muted-foreground mt-0.5">{dateLabel}</p>
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
@@ -337,8 +363,13 @@ export default function History() {
                       );
                     })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="px-4 py-6 text-center">
+                    <p className="text-xs text-muted-foreground">No lifts logged this week</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">Keep pushing — your best lifts will show here</p>
+                  </div>
+                )}
+              </div>
             </>
           )}
 

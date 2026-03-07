@@ -22,7 +22,7 @@ const PROGRAM_DOC = "current";
 
 function getLiftDayIndices(weekSchedule?: { day: number; type: string }[]): number[] | undefined {
   if (!weekSchedule || weekSchedule.length !== 7) return undefined;
-  const indices = weekSchedule.filter(s => s.type === "lift").map(s => s.day);
+  const indices = weekSchedule.filter(s => s.type === "lift" || s.type === "both").map(s => s.day);
   return indices.length > 0 ? indices : undefined;
 }
 
