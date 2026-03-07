@@ -783,15 +783,16 @@ function ProgramInner() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSettings(false)}
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-black/40 z-[1000]"
             />
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-2xl safe-area-pb pointer-events-auto"
               style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
@@ -812,7 +813,7 @@ function ProgramInner() {
                         key={g}
                         onClick={() => regenerateProgram(g)}
                         className={cn(
-                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
                           programState.goal === g ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
                         )}
                       >
@@ -834,7 +835,7 @@ function ProgramInner() {
                         key={s.value}
                         onClick={() => regenerateProgram(undefined, s.value)}
                         className={cn(
-                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                          "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
                           s.split === programState.splitType ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
                         )}
                       >
@@ -853,7 +854,7 @@ function ProgramInner() {
                     </div>
                     <button
                       onClick={() => updateSettings({ autoProgression: !settings.autoProgression })}
-                      className={cn("w-10 h-6 rounded-full transition-colors relative", settings.autoProgression ? "bg-primary" : "bg-muted")}
+                      className={cn("w-10 h-6 rounded-full transition-colors relative pointer-events-auto", settings.autoProgression ? "bg-primary" : "bg-muted")}
                     >
                       <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.autoProgression ? "translate-x-5" : "translate-x-1")} />
                     </button>
@@ -866,7 +867,7 @@ function ProgramInner() {
                     </div>
                     <button
                       onClick={() => updateSettings({ microloading: !settings.microloading })}
-                      className={cn("w-10 h-6 rounded-full transition-colors relative", settings.microloading ? "bg-primary" : "bg-muted")}
+                      className={cn("w-10 h-6 rounded-full transition-colors relative pointer-events-auto", settings.microloading ? "bg-primary" : "bg-muted")}
                     >
                       <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.microloading ? "translate-x-5" : "translate-x-1")} />
                     </button>
@@ -875,7 +876,7 @@ function ProgramInner() {
 
                 <button
                   onClick={handleRegenerate}
-                  className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
+                  className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors pointer-events-auto"
                 >
                   Reset Mesocycle
                 </button>

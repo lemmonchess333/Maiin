@@ -114,6 +114,9 @@ function syncDarkMode(dark: boolean) {
   }
 }
 
+// Ensure light mode on initial load (before profile loads)
+document.documentElement.classList.remove("dark");
+
 /* ================================
    AUTH CONTEXT
 ================================ */

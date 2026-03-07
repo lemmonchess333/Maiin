@@ -84,7 +84,25 @@ const MUSCLE_MAPPING: Record<string, string[]> = {
   "Forearms": ["forearms_l", "forearms_r"],
 };
 
-export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleHeatMapProps) {
+// Dark-base purple colour scheme
+const BASE_COLOR = "#2a2a3a";
+const UNTRAINED_COLOR = "#3d3d52";
+const LOW_COLOR = "#6d5a9e";     // 1–20 sets
+const MID_COLOR = "#8b5cf6";     // 21–60 sets
+const HIGH_COLOR = "#a78bfa";    // 60+ sets
+
+function getMuscleColor(sets: number): string {
+  if (sets <= 0) return UNTRAINED_COLOR;
+  if (sets <= 20) return LOW_COLOR;
+  if (sets <= 60) return MID_COLOR;
+  return HIGH_COLOR;
+}
+
+function shouldGlow(sets: number): boolean {
+  return sets > 60;
+}
+
+export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
   // Normalize technical keys → friendly names and merge counts
   const normalizedData = useMemo(() => {
     const result: Record<string, number> = {};
@@ -95,47 +113,61 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
     return result;
   }, [data]);
 
-  const maxSets = Math.max(...Object.values(normalizedData), 1);
-
-  const getOpacity = (muscleId: string): number => {
+  const getSetsForMuscle = (muscleId: string): number => {
     let sets = 0;
     for (const [group, count] of Object.entries(normalizedData)) {
       const regions = MUSCLE_MAPPING[group] || [];
       if (regions.includes(muscleId)) sets += count;
     }
-    return sets > 0 ? Math.max(0.15, sets / maxSets) : 0.05;
+    return sets;
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
-      <h3 className="text-sm font-semibold text-foreground mb-3">Muscle Groups Trained</h3>
+    <div className="p-4 rounded-2xl border border-border/50" style={{ backgroundColor: "#0F0F14" }}>
+      <h3 className="text-sm font-semibold mb-3" style={{ color: "#E8E8ED" }}>Muscle Groups Trained</h3>
       <div className="flex flex-col items-center">
         <svg viewBox="55 70 90 200" className="w-36 h-56">
+          <defs>
+            <filter id="glow-filter">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
           {/* Head */}
-          <ellipse cx="100" cy="78" rx="10" ry="11" fill="currentColor" opacity={0.08} />
+          <ellipse cx="100" cy="78" rx="10" ry="11" fill={BASE_COLOR} />
           {/* Neck */}
-          <rect x="95" y="87" width="10" height="5" rx="3" fill="currentColor" opacity={0.05} />
+          <rect x="95" y="87" width="10" height="5" rx="3" fill={BASE_COLOR} />
 
           {/* Body outline for context */}
-          <line x1="100" y1="89" x2="100" y2="92" stroke="currentColor" strokeOpacity={0.04} strokeWidth="8" />
+          <line x1="100" y1="89" x2="100" y2="92" stroke={BASE_COLOR} strokeWidth="8" />
 
           {/* Muscle regions */}
-          {MUSCLE_REGIONS.map((region) => (
-            <path key={region.id} d={region.path}
-              fill={accentColor}
-              fillOpacity={getOpacity(region.id)}
-              stroke="currentColor"
-              strokeOpacity={0.08}
-              strokeWidth="0.3"
-            />
-          ))}
+          {MUSCLE_REGIONS.map((region) => {
+            const sets = getSetsForMuscle(region.id);
+            const color = getMuscleColor(sets);
+            const glow = shouldGlow(sets);
+            return (
+              <path
+                key={region.id}
+                d={region.path}
+                fill={color}
+                stroke="rgba(255,255,255,0.06)"
+                strokeWidth="0.3"
+                filter={glow ? "url(#glow-filter)" : undefined}
+              />
+            );
+          })}
 
           {/* Knee joints (cosmetic) */}
-          <circle cx="90" cy="221" r="2.5" fill="currentColor" opacity={0.04} />
-          <circle cx="110" cy="221" r="2.5" fill="currentColor" opacity={0.04} />
+          <circle cx="90" cy="221" r="2.5" fill={BASE_COLOR} />
+          <circle cx="110" cy="221" r="2.5" fill={BASE_COLOR} />
           {/* Feet */}
-          <ellipse cx="90" cy="265" rx="5" ry="2" fill="currentColor" opacity={0.04} />
-          <ellipse cx="110" cy="265" rx="5" ry="2" fill="currentColor" opacity={0.04} />
+          <ellipse cx="90" cy="265" rx="5" ry="2" fill={BASE_COLOR} />
+          <ellipse cx="110" cy="265" rx="5" ry="2" fill={BASE_COLOR} />
         </svg>
         <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1.5">
           {Object.entries(normalizedData)
@@ -143,9 +175,9 @@ export default function MuscleHeatMap({ data, accentColor = '#6C7CFF' }: MuscleH
             .slice(0, 6)
             .map(([group, sets]) => (
               <div key={group} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: accentColor, opacity: Math.max(0.3, sets / maxSets) }} />
-                <span className="text-[10px] text-muted-foreground">{group}</span>
-                <span className="text-[10px] text-muted-foreground/50">{sets} sets</span>
+                <div className="w-2 h-2 rounded-full" style={{ background: getMuscleColor(sets) }} />
+                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.55)" }}>{group}</span>
+                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>{sets} sets</span>
               </div>
             ))}
         </div>
