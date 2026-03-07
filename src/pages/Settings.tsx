@@ -297,14 +297,14 @@ export default function Settings() {
   const handleDayToggle = (day: number) => {
     const current = schedule.find((s) => s.day === day);
     if (!current) return;
-    const cycle: DayType[] = ["lift", "run", "rest"];
+    const cycle: DayType[] = ["lift", "run", "both", "rest"];
     const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
     const updated = schedule.map((s) =>
       s.day === day ? { ...s, type: cycle[nextIdx] } : s
     );
     setCustomSchedule(updated);
-    setWorkoutsTarget(updated.filter((s) => s.type === "lift").length);
-    setRunsTarget(updated.filter((s) => s.type === "run").length);
+    setWorkoutsTarget(updated.filter((s) => s.type === "lift" || s.type === "both").length);
+    setRunsTarget(updated.filter((s) => s.type === "run" || s.type === "both").length);
   };
 
   const tdee = useMemo(() => {
@@ -574,7 +574,7 @@ export default function Settings() {
           <input
             type="range"
             min="0"
-            max={7 - runsTarget}
+            max={6}
             value={workoutsTarget}
             onChange={(e) => handleWorkoutsChange(Number(e.target.value))}
             className="w-full accent-primary"
@@ -590,7 +590,7 @@ export default function Settings() {
           <input
             type="range"
             min="0"
-            max={7 - workoutsTarget}
+            max={7}
             value={runsTarget}
             onChange={(e) => handleRunsChange(Number(e.target.value))}
             className="w-full accent-primary"
@@ -623,7 +623,10 @@ export default function Settings() {
                     ? THEME.lifting
                     : s.type === "run"
                       ? THEME.running
-                      : undefined;
+                      : s.type === "both"
+                        ? THEME.lifting
+                        : undefined;
+                const label = s.type === "lift" ? "Lift" : s.type === "run" ? "Run" : s.type === "both" ? "Both" : "Rest";
                 return (
                   <button
                     key={s.day}
@@ -638,7 +641,12 @@ export default function Settings() {
                     <span className="text-[10px] text-muted-foreground">
                       {DAY_LABELS[s.day].charAt(0)}
                     </span>
-                    {color ? (
+                    {s.type === "both" ? (
+                      <div className="w-3 h-3 rounded-full overflow-hidden flex">
+                        <div className="w-1/2 h-full" style={{ backgroundColor: THEME.lifting }} />
+                        <div className="w-1/2 h-full" style={{ backgroundColor: THEME.running }} />
+                      </div>
+                    ) : color ? (
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: color }}
@@ -648,16 +656,16 @@ export default function Settings() {
                     )}
                     <span
                       className="text-[9px] font-medium"
-                      style={{ color: color || "var(--muted-foreground)" }}
+                      style={{ color: s.type === "both" ? THEME.lifting : (color || "var(--muted-foreground)") }}
                     >
-                      {s.type === "lift" ? "Lift" : s.type === "run" ? "Run" : "Rest"}
+                      {label}
                     </span>
                   </button>
                 );
               })}
           </div>
           <p className="text-[10px] text-muted-foreground text-center">
-            Tap a day to change it &middot; {7 - workoutsTarget - runsTarget} rest day{7 - workoutsTarget - runsTarget !== 1 ? "s" : ""}
+            Tap a day to change it &middot; {schedule.filter(s => s.type === "rest").length} rest day{schedule.filter(s => s.type === "rest").length !== 1 ? "s" : ""}
           </p>
         </div>
 

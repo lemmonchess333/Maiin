@@ -72,7 +72,7 @@ export interface UserProfile {
     targetDate: string;
   };
   // Weekly schedule
-  weekSchedule?: { day: number; type: "lift" | "run" | "rest" }[];
+  weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   weeklyRunsTarget?: number;
   // TDEE computation persistence
   age?: number;

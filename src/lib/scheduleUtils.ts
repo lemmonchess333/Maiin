@@ -3,7 +3,7 @@
  * day: 0=Sun, 1=Mon ... 6=Sat (matches JS Date.getDay())
  */
 
-export type DayType = "lift" | "run" | "rest";
+export type DayType = "lift" | "run" | "both" | "rest";
 
 export interface ScheduleDay {
   day: number;
@@ -72,13 +72,13 @@ export function getTodaySchedule(schedule: ScheduleDay[]): ScheduleDay | null {
 /**
  * Count active days by type.
  */
-export function countByType(schedule: ScheduleDay[]): { lift: number; run: number; rest: number } {
+export function countByType(schedule: ScheduleDay[]): { lift: number; run: number; both: number; rest: number } {
   return schedule.reduce(
     (acc, s) => {
       acc[s.type]++;
       return acc;
     },
-    { lift: 0, run: 0, rest: 0 }
+    { lift: 0, run: 0, both: 0, rest: 0 }
   );
 }
 

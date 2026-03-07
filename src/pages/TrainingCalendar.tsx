@@ -126,20 +126,23 @@ export default function TrainingCalendar() {
         var dow = dd.getDay();
         var sched = weekSched.find(function(s) { return s.day === dow; });
         if (sched && sched.type !== 'rest') {
-          var alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === sched!.type; }) ||
-            autoWorkouts.some(function(a) { return a.date === dateStr && a.type === sched!.type; }) ||
-            autoRuns.some(function(a) { return a.date === dateStr && a.type === sched!.type; });
-          if (!alreadyCovered) {
-            scheduledFromProfile.push({
-              id: 'sched-' + sched.type + '-' + dateStr,
-              date: dateStr,
-              dayOfWeek: dow,
-              type: sched.type as 'run' | 'lift',
-              status: 'scheduled',
-              ...(sched.type === 'lift' && { liftProgramDay: 'Scheduled' }),
-              ...(sched.type === 'run' && { runTemplateName: 'Scheduled Run' }),
-            });
-          }
+          var types: ('lift' | 'run')[] = sched.type === 'both' ? ['lift', 'run'] : [sched.type as 'lift' | 'run'];
+          types.forEach(function(t) {
+            var alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === t; }) ||
+              autoWorkouts.some(function(a) { return a.date === dateStr && a.type === t; }) ||
+              autoRuns.some(function(a) { return a.date === dateStr && a.type === t; });
+            if (!alreadyCovered) {
+              scheduledFromProfile.push({
+                id: 'sched-' + t + '-' + dateStr,
+                date: dateStr,
+                dayOfWeek: dow,
+                type: t,
+                status: 'scheduled',
+                ...(t === 'lift' && { liftProgramDay: 'Scheduled' }),
+                ...(t === 'run' && { runTemplateName: 'Scheduled Run' }),
+              });
+            }
+          });
         }
       }
     }
