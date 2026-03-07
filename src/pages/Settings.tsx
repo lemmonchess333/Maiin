@@ -35,7 +35,6 @@ import {
   Lock,
   Brain,
   Footprints,
-  Dumbbell,
   MapPin,
   Trash2,
   Plus,
@@ -289,16 +288,6 @@ export default function Settings() {
     if (customSchedule) return customSchedule;
     return generateSchedule(workoutsTarget, runsTarget);
   }, [workoutsTarget, runsTarget, customSchedule]);
-
-  const handleWorkoutsChange = (val: number) => {
-    setWorkoutsTarget(val);
-    setCustomSchedule(null);
-  };
-
-  const handleRunsChange = (val: number) => {
-    setRunsTarget(val);
-    setCustomSchedule(null);
-  };
 
   const handleDayToggle = (day: number) => {
     const current = schedule.find((s) => s.day === day);
