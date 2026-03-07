@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { GuidedRunWorkout, RunSegment } from "@/lib/guidedRun";
-import { getSegmentColor } from "@/lib/guidedRun";
 
 interface GuidedRunState {
   currentSegmentIndex: number;
@@ -36,7 +35,6 @@ export function useGuidedRun(workout: GuidedRunWorkout | null, isRunning: boolea
   });
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const segmentStartRef = useRef(0);
   const spokenRef = useRef(-1);
 
   const totalDuration = workout

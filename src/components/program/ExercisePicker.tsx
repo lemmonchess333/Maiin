@@ -99,7 +99,8 @@ export default function ExercisePicker({ onSelect, onClose }: Props) {
       </div>
 
       <ExerciseDemoCard
-        exerciseName={demoExercise}
+        exerciseName={demoExercise ?? ""}
+        open={demoExercise !== null}
         onClose={() => setDemoExercise(null)}
       />
     </div>
