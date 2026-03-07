@@ -1,8 +1,19 @@
+export type BadgeTier = "bronze" | "silver" | "gold" | "platinum";
+
+export const TIER_COLORS: Record<BadgeTier, string> = {
+  bronze: "#cd7f32",
+  silver: "#c0c0c0",
+  gold: "#ffd700",
+  platinum: "#e5e4e2",
+};
+
 export interface BadgeDef {
   id: string;
   name: string;
   description: string;
   icon: string;
+  lucideIcon: string;
+  tier: BadgeTier;
   category: "consistency" | "lifting" | "running" | "nutrition" | "hybrid";
 }
 
@@ -12,32 +23,39 @@ export interface EarnedBadge extends BadgeDef {
 
 export const BADGE_DEFINITIONS: BadgeDef[] = [
   // Consistency
-  { id: "first_step", name: "First Step", description: "Log your first meal or workout", icon: "👣", category: "consistency" },
-  { id: "week_warrior", name: "Week Warrior", description: "7-day streak", icon: "🔥", category: "consistency" },
-  { id: "month_master", name: "Month Master", description: "30-day streak", icon: "💎", category: "consistency" },
-  { id: "century_club", name: "Century Club", description: "100-day streak", icon: "🏅", category: "consistency" },
+  { id: "first_step", name: "First Step", description: "Log your first meal or workout", icon: "👣", lucideIcon: "Footprints", tier: "bronze", category: "consistency" },
+  { id: "week_warrior", name: "Week Warrior", description: "7-day streak", icon: "🔥", lucideIcon: "Flame", tier: "silver", category: "consistency" },
+  { id: "month_master", name: "Month Master", description: "30-day streak", icon: "💎", lucideIcon: "Gem", tier: "gold", category: "consistency" },
+  { id: "century_club", name: "Century Club", description: "100-day streak", icon: "🏅", lucideIcon: "Medal", tier: "platinum", category: "consistency" },
+  { id: "early_bird", name: "Early Bird", description: "Log before 7am for 5 days", icon: "🌅", lucideIcon: "Sunrise", tier: "bronze", category: "consistency" },
 
   // Lifting
-  { id: "first_pr", name: "First PR", description: "Set a personal record", icon: "🏆", category: "lifting" },
-  { id: "plate_club", name: "Plate Club", description: "Lift 60kg on any compound", icon: "🏋️", category: "lifting" },
-  { id: "two_plate", name: "Two Plate Club", description: "Lift 100kg on any compound", icon: "💪", category: "lifting" },
-  { id: "programme_complete", name: "Programme Complete", description: "Finish a full programme cycle", icon: "📋", category: "lifting" },
+  { id: "first_pr", name: "First PR", description: "Set a personal record", icon: "🏆", lucideIcon: "Trophy", tier: "bronze", category: "lifting" },
+  { id: "plate_club", name: "Plate Club", description: "Lift 60kg on any compound", icon: "🏋️", lucideIcon: "Dumbbell", tier: "silver", category: "lifting" },
+  { id: "two_plate", name: "Two Plate Club", description: "Lift 100kg on any compound", icon: "💪", lucideIcon: "Dumbbell", tier: "gold", category: "lifting" },
+  { id: "three_plate", name: "Three Plate Club", description: "Lift 140kg on any compound", icon: "🔥", lucideIcon: "Flame", tier: "platinum", category: "lifting" },
+  { id: "programme_complete", name: "Programme Complete", description: "Finish a full programme cycle", icon: "📋", lucideIcon: "ClipboardCheck", tier: "silver", category: "lifting" },
+  { id: "tonnage_100", name: "100-Tonne Club", description: "Move 100 tonnes total volume", icon: "⚡", lucideIcon: "Zap", tier: "gold", category: "lifting" },
 
   // Running
-  { id: "first_5k", name: "First 5K", description: "Complete a 5K run", icon: "🏃", category: "running" },
-  { id: "10k_club", name: "10K Club", description: "Complete a 10K run", icon: "🎯", category: "running" },
-  { id: "half_marathon", name: "Half Marathon", description: "Complete 21.1km", icon: "🥇", category: "running" },
-  { id: "speed_demon", name: "Speed Demon", description: "Run a sub-5:00/km pace", icon: "⚡", category: "running" },
+  { id: "first_5k", name: "First 5K", description: "Complete a 5K run", icon: "🏃", lucideIcon: "Footprints", tier: "bronze", category: "running" },
+  { id: "10k_club", name: "10K Club", description: "Complete a 10K run", icon: "🎯", lucideIcon: "Target", tier: "silver", category: "running" },
+  { id: "half_marathon", name: "Half Marathon", description: "Complete 21.1km", icon: "🥇", lucideIcon: "Medal", tier: "gold", category: "running" },
+  { id: "marathon", name: "Marathoner", description: "Complete 42.2km", icon: "🏅", lucideIcon: "Medal", tier: "platinum", category: "running" },
+  { id: "speed_demon", name: "Speed Demon", description: "Run a sub-5:00/km pace", icon: "⚡", lucideIcon: "Zap", tier: "silver", category: "running" },
+  { id: "century_km", name: "100km Total", description: "Run 100km lifetime distance", icon: "🗺️", lucideIcon: "Map", tier: "gold", category: "running" },
 
   // Nutrition
-  { id: "macro_master", name: "Macro Master", description: "Hit all macros within 5% for a day", icon: "🎯", category: "nutrition" },
-  { id: "protein_pro", name: "Protein Pro", description: "Hit protein target 7 days in a row", icon: "🥩", category: "nutrition" },
-  { id: "hydration_hero", name: "Hydration Hero", description: "Hit water target 7 days in a row", icon: "💧", category: "nutrition" },
+  { id: "macro_master", name: "Macro Master", description: "Hit all macros within 5% for a day", icon: "🎯", lucideIcon: "Target", tier: "silver", category: "nutrition" },
+  { id: "protein_pro", name: "Protein Pro", description: "Hit protein target 7 days in a row", icon: "🥩", lucideIcon: "Beef", tier: "gold", category: "nutrition" },
+  { id: "hydration_hero", name: "Hydration Hero", description: "Hit water target 7 days in a row", icon: "💧", lucideIcon: "Droplets", tier: "silver", category: "nutrition" },
+  { id: "meal_prep_master", name: "Meal Prep Master", description: "Log all meals for 14 days straight", icon: "🍽️", lucideIcon: "UtensilsCrossed", tier: "gold", category: "nutrition" },
 
   // Hybrid
-  { id: "hybrid_athlete", name: "Hybrid Athlete", description: "Log both a lift and run in one week", icon: "🦾", category: "hybrid" },
-  { id: "iron_runner", name: "Iron Runner", description: "3 lifts + 3 runs in one week", icon: "🔱", category: "hybrid" },
-  { id: "triple_threat", name: "Triple Threat", description: "Hit nutrition, lift, and run targets same day", icon: "⭐", category: "hybrid" },
+  { id: "hybrid_athlete", name: "Hybrid Athlete", description: "Log both a lift and run in one week", icon: "🦾", lucideIcon: "Sparkles", tier: "bronze", category: "hybrid" },
+  { id: "iron_runner", name: "Iron Runner", description: "3 lifts + 3 runs in one week", icon: "🔱", lucideIcon: "Crown", tier: "silver", category: "hybrid" },
+  { id: "triple_threat", name: "Triple Threat", description: "Hit nutrition, lift, and run targets same day", icon: "⭐", lucideIcon: "Star", tier: "gold", category: "hybrid" },
+  { id: "ultimate_athlete", name: "Ultimate Athlete", description: "Earn 15 badges", icon: "🏆", lucideIcon: "Trophy", tier: "platinum", category: "hybrid" },
 ];
 
 export const CATEGORY_LABELS: Record<BadgeDef["category"], string> = {
