@@ -27,9 +27,14 @@ import {
   FastForward,
   Play,
   Calculator,
+  Pencil,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TrainingCalendar from "./TrainingCalendar";
+import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import SortableExerciseRow from "@/components/SortableExerciseRow";
+import CustomDayBuilder from "@/components/program/CustomDayBuilder";
 
 /**
  * IMPORTANT:
@@ -90,6 +95,7 @@ function ProgramInner() {
     updateExercise,
     updateSettings,
     regenerateProgram,
+    saveProgram,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
@@ -116,6 +122,45 @@ function ProgramInner() {
   const [weightFlash, setWeightFlash] = useState<"up" | "down" | null>(null);
   const [showPlateCalc, setShowPlateCalc] = useState(false);
   const [programView, setProgramView] = useState<'program' | 'calendar'>('program');
+  const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
+  const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
+
+  const handleSaveCustomDay = async (dayIdx: number, exercises: ProgramExercise[], isCustom: boolean) => {
+    if (!programState) return;
+    const updatedWorkouts = programState.workouts.map((d, i) =>
+      i === dayIdx ? { ...d, exercises, isCustom } : d
+    );
+    await saveProgram({ ...programState, workouts: updatedWorkouts });
+  };
+
+  const sensors = useSensors(
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = async (dayIndex: number, event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !programState) return;
+
+    const exercises = programState.workouts[dayIndex].exercises;
+    const oldIdx = exercises.findIndex((_, i) => `ex-${dayIndex}-${i}` === active.id);
+    const newIdx = exercises.findIndex((_, i) => `ex-${dayIndex}-${i}` === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+
+    const reordered = arrayMove(exercises, oldIdx, newIdx);
+    const updatedWorkouts = programState.workouts.map((d, i) =>
+      i === dayIndex ? { ...d, exercises: reordered } : d
+    );
+
+    // Green flash
+    setJustDroppedId(`ex-${dayIndex}-${newIdx}`);
+    setTimeout(() => setJustDroppedId(null), 300);
+
+    // Persist via useProgram's saveProgram
+    const updatedState = { ...programState, workouts: updatedWorkouts };
+    await saveProgram(updatedState);
+  };
 
   if (loading || !programState || !prescription) {
     return (
@@ -439,6 +484,9 @@ function ProgramInner() {
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">
                   {day.dayName} &middot; {day.exercises.length} exercises
+                  {day.isCustom && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-[9px] font-medium">Custom</span>
+                  )}
                 </p>
               </div>
 
@@ -463,33 +511,48 @@ function ProgramInner() {
                   className="overflow-hidden"
                 >
                   <div className="px-3 pb-3 space-y-1.5">
-                    {day.exercises.map((ex, exIndex) => (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(dayIndex, e)}>
+                      <SortableContext items={day.exercises.map((_, i) => `ex-${dayIndex}-${i}`)} strategy={verticalListSortingStrategy}>
+                        {day.exercises.map((ex, exIndex) => (
+                          <SortableExerciseRow key={`ex-${dayIndex}-${exIndex}`} id={`ex-${dayIndex}-${exIndex}`} justDropped={justDroppedId === `ex-${dayIndex}-${exIndex}`}>
+                            <button
+                              onClick={() => openDrawer(dayIndex, exIndex, ex)}
+                              className={cn(
+                                "w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors",
+                                day.completed ? "bg-muted/30 opacity-60" : "bg-muted/50 hover:bg-muted"
+                              )}
+                            >
+                              <Dumbbell className="w-4 h-4 text-primary shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <span>{ex.sets}&times;{ex.reps}</span>
+                                  {ex.weight > 0 && (
+                                    <>
+                                      <span className="text-[10px]">&middot;</span>
+                                      <span className="font-mono">{ex.weight}kg</span>
+                                    </>
+                                  )}
+                                  <span className="text-[10px]">&middot;</span>
+                                  <ProgressionLabel ex={ex} />
+                                </div>
+                              </div>
+                              {ex.lastPerformance && <DirectionIcon ex={ex} />}
+                            </button>
+                          </SortableExerciseRow>
+                        ))}
+                      </SortableContext>
+                    </DndContext>
+
+                    {/* Edit Day */}
+                    {!day.completed && !isViewingHistory && (
                       <button
-                        key={exIndex}
-                        onClick={() => openDrawer(dayIndex, exIndex, ex)}
-                        className={cn(
-                          "w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors",
-                          day.completed ? "bg-muted/30 opacity-60" : "bg-muted/50 hover:bg-muted"
-                        )}
+                        onClick={() => setEditingDayIndex(dayIndex)}
+                        className="w-full py-2 rounded-lg bg-muted/50 text-foreground text-xs font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <Dumbbell className="w-4 h-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span>{ex.sets}&times;{ex.reps}</span>
-                            {ex.weight > 0 && (
-                              <>
-                                <span className="text-[10px]">&middot;</span>
-                                <span className="font-mono">{ex.weight}kg</span>
-                              </>
-                            )}
-                            <span className="text-[10px]">&middot;</span>
-                            <ProgressionLabel ex={ex} />
-                          </div>
-                        </div>
-                        {ex.lastPerformance && <DirectionIcon ex={ex} />}
+                        <Pencil className="w-3.5 h-3.5" /> Edit day
                       </button>
-                    ))}
+                    )}
 
                     {/* Start Workout Session */}
                     {!day.completed && (
@@ -894,6 +957,18 @@ function ProgramInner() {
           onLogExercise={logExercise}
           onCompleteDay={completeWorkoutDay}
           onClose={() => setSessionDayIndex(null)}
+        />
+      )}
+
+      {/* Custom Day Builder */}
+      {editingDayIndex !== null && programState.workouts[editingDayIndex] && (
+        <CustomDayBuilder
+          open={true}
+          onClose={() => setEditingDayIndex(null)}
+          dayIndex={editingDayIndex}
+          dayName={programState.workouts[editingDayIndex].dayName}
+          exercises={programState.workouts[editingDayIndex].exercises}
+          onSave={handleSaveCustomDay}
         />
       )}
     </div>

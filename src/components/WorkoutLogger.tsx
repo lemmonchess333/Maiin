@@ -14,7 +14,9 @@ import {
   X,
   Search,
   Timer,
+  Info,
 } from "lucide-react";
+import ExerciseDemoCard from "./ExerciseDemoCard";
 
 interface Props {
   date: string;
@@ -32,6 +34,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
+  const [demoExercise, setDemoExercise] = useState<string | null>(null);
 
   const userWeight = profile?.weightKg || 70;
 
@@ -404,18 +407,28 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
           <div className="max-h-64 overflow-y-auto">
             {(allFiltered || filteredExercises).map((exercise) => (
-              <button
+              <div
                 key={exercise.id}
-                onClick={() => addExercise(exercise.id)}
-                className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
+                className="flex items-center border-b border-border/30 last:border-0"
               >
-                <p className="text-sm font-medium text-foreground">
-                  {exercise.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {exercise.muscleGroup} · {exercise.equipment}
-                </p>
-              </button>
+                <button
+                  onClick={() => addExercise(exercise.id)}
+                  className="flex-1 text-left px-4 py-3 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">
+                    {exercise.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {exercise.muscleGroup} · {exercise.equipment}
+                  </p>
+                </button>
+                <button
+                  onClick={() => setDemoExercise(exercise.name)}
+                  className="p-3 text-muted-foreground hover:text-primary transition-colors shrink-0"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </div>
             ))}
             {(allFiltered || filteredExercises).length === 0 && (
               <p className="px-4 py-6 text-sm text-muted-foreground text-center">
@@ -439,6 +452,13 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
           />
         </div>
       )}
+
+      {/* Exercise Demo */}
+      <ExerciseDemoCard
+        exerciseName={demoExercise ?? ""}
+        open={!!demoExercise}
+        onClose={() => setDemoExercise(null)}
+      />
 
       {/* Save Button */}
       {exercises.length > 0 && (

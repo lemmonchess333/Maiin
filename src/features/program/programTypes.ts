@@ -66,6 +66,7 @@ export interface WorkoutDay {
   dayType: string;
   exercises: ProgramExercise[];
   completed: boolean;
+  isCustom?: boolean;
 }
 
 /* ================================

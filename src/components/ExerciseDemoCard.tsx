@@ -1,0 +1,168 @@
+import { useState, useEffect } from "react";
+import { Drawer } from "vaul";
+import Model from "react-body-highlighter";
+import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
+import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+interface Props {
+  exerciseName: string;
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
+  const [demo, setDemo] = useState<ExerciseDemo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    setShowInstructions(false);
+    getExerciseDemo(exerciseName).then((d) => {
+      setDemo(d);
+      setLoading(false);
+    });
+  }, [exerciseName, open]);
+
+  const primaryMapped = demo ? mapMuscles(demo.primaryMuscles) : [];
+  const secondaryMapped = demo ? mapMuscles(demo.secondaryMuscles) : [];
+  const showPosterior = needsPosterior([...primaryMapped, ...secondaryMapped]);
+
+  const highlightData = [
+    ...(primaryMapped.length > 0
+      ? [{ name: "Primary", muscles: primaryMapped as any[] }]
+      : []),
+    ...(secondaryMapped.length > 0
+      ? [{ name: "Secondary", muscles: secondaryMapped as any[] }]
+      : []),
+  ];
+
+  return (
+    <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[85vh] flex flex-col">
+          <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6">
+            {/* Handle */}
+            <div className="w-10 h-1 rounded-full bg-border mx-auto mb-4" />
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !demo ? (
+              <div className="text-center py-8 space-y-3">
+                <div className="flex justify-center gap-4">
+                  <div className="opacity-30">
+                    <Model
+                      data={[]}
+                      style={{ width: "120px", padding: "0" }}
+                      type="anterior"
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">No demo available for this exercise</p>
+                <p className="text-lg font-semibold text-foreground">{exerciseName}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Title + tags */}
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">{demo.name}</h3>
+                  <div className="flex gap-2 mt-1.5">
+                    {demo.category && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        {demo.category}
+                      </span>
+                    )}
+                    {demo.equipment && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                        {demo.equipment}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Muscle highlighter */}
+                <div className="flex justify-center gap-2">
+                  <div>
+                    <Model
+                      data={highlightData}
+                      style={{ width: "140px", padding: "0" }}
+                      type="anterior"
+                      highlightedColors={["#8b5cf6", "#c4b5fd"]}
+                    />
+                    <p className="text-[9px] text-muted-foreground text-center mt-1">Front</p>
+                  </div>
+                  {showPosterior && (
+                    <div>
+                      <Model
+                        data={highlightData}
+                        style={{ width: "140px", padding: "0" }}
+                        type="posterior"
+                        highlightedColors={["#8b5cf6", "#c4b5fd"]}
+                      />
+                      <p className="text-[9px] text-muted-foreground text-center mt-1">Back</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Muscle tags */}
+                <div className="space-y-1.5">
+                  {demo.primaryMuscles.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[10px] text-muted-foreground font-medium mr-1">Primary:</span>
+                      {demo.primaryMuscles.map((m) => (
+                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 font-medium">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {demo.secondaryMuscles.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[10px] text-muted-foreground font-medium mr-1">Secondary:</span>
+                      {demo.secondaryMuscles.map((m) => (
+                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Instructions */}
+                {demo.instructions.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => setShowInstructions(!showInstructions)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-foreground w-full"
+                    >
+                      <span>Instructions</span>
+                      {showInstructions ? (
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {showInstructions && (
+                      <ol className="mt-2 space-y-2 list-decimal list-inside">
+                        {demo.instructions.map((step, i) => (
+                          <li key={i} className="text-xs text-muted-foreground leading-relaxed">
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
