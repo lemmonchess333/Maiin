@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCurrentWeather, getWeatherIcon, getRunningTip, type WeatherData } from '@/lib/weather';
+import ShoeSelector from './ShoeSelector';
+import GuidedRunPicker from './GuidedRunPicker';
+import type { GuidedRunWorkout } from '@/lib/guidedRun';
 
-export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun';
+export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun' | 'guided';
 
 export interface RunConfig {
   activityType: ActivityType;
@@ -25,6 +29,8 @@ export interface RunConfig {
     warmupDuration?: number;
     cooldownDuration?: number;
   };
+  guidedWorkout?: GuidedRunWorkout;
+  shoeId?: string;
 }
 
 const DEFAULT_CONFIG: RunConfig = {
@@ -46,6 +52,7 @@ const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: string; descrip
   { type: 'long',    label: 'Long', icon: '🛤️', description: 'Distance-focused' },
   { type: 'race',    label: 'Race', icon: '🏁', description: 'All-out effort' },
   { type: 'treadmill', label: 'Treadmill', icon: '🏋️', description: 'Indoor, no GPS' },
+  { type: 'guided', label: 'Guided', icon: '🎧', description: 'Coach-led workout' },
 ];
 
 // Descriptions for the selected activity shown below the strip
@@ -57,6 +64,7 @@ const ACTIVITY_DESCRIPTIONS: Record<ActivityType, { label: string; cues: string[
   long:      { label: 'Long Run', cues: ['Easy to moderate pace', 'Distance goal optional', 'Aerobic base building'] },
   race:      { label: 'Race', cues: ['All-out effort', 'Distance goal required', 'PR attempt mode'] },
   treadmill: { label: 'Treadmill', cues: ['Manual distance input', 'No GPS', 'Indoor tracking'] },
+  guided: { label: 'Guided Run', cues: ['Coach-led segments', 'TTS cues', 'Structured workout'] },
 };
 
 interface RunSetupModalProps {
@@ -68,9 +76,20 @@ interface RunSetupModalProps {
 export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
   const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(null);
   const updateConfig = (partial: Partial<RunConfig>) => setConfig((prev) => ({ ...prev, ...partial }));
   const intervalConfig = config.intervals ?? { reps: 5, workDistance: 1000, restDuration: 90 };
   const selectedInfo = ACTIVITY_DESCRIPTIONS[config.activityType];
+
+  // Fetch weather on mount
+  useEffect(() => {
+    getCurrentWeather().then((w) => {
+      setWeather(w);
+      setWeatherLoading(false);
+    });
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -87,6 +106,39 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <h2 className="text-2xl font-extrabold tracking-tight">Ready to run?</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Pick a type or just go</p>
         </div>
+
+        {/* Weather strip */}
+        {!weatherLoading && weather && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <span className="text-2xl">{getWeatherIcon(weather.weatherCode)}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                {weather.temperature}°C
+                {weather.feelsLike !== weather.temperature && <span className="text-xs text-muted-foreground ml-1">(feels {weather.feelsLike}°)</span>}
+              </p>
+              <motion.p
+                key={config.activityType}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+                className="text-[11px] text-muted-foreground"
+              >
+                {getRunningTip(weather, config.activityType)}
+              </motion.p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Shoe selector */}
+        <ShoeSelector
+          selectedShoeId={config.shoeId ?? null}
+          onSelect={(id) => updateConfig({ shoeId: id })}
+        />
 
         {/* Activity type strip — horizontal scroll */}
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
@@ -169,6 +221,26 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Guided run picker — shown for guided type */}
+        <AnimatePresence>
+          {config.activityType === 'guided' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <GuidedRunPicker
+                selected={selectedGuided}
+                onSelect={(w) => {
+                  setSelectedGuided(w);
+                  updateConfig({ guidedWorkout: w });
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>

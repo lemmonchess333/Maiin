@@ -17,6 +17,8 @@ import { generateAndShare } from '../lib/shareCardGenerator';
 import { THEME } from '../lib/theme';
 import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
+import { useShoes } from '../hooks/useShoes';
+import { toast } from 'sonner';
 
 interface RunData {
   points: GPSPoint[];
@@ -34,6 +36,7 @@ export default function RunSummary() {
   const { user, profile } = useAuth();
   const { zones: privacyZones } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
+  const { updateMileage } = useShoes();
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -89,6 +92,16 @@ export default function RunSummary() {
             ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
             : points.map((p) => ({ lat: p.lat, lon: p.lon })),
       });
+    }
+
+    // Update shoe mileage if a shoe was selected
+    if (runConfig?.shoeId) {
+      const alert = await updateMileage(runConfig.shoeId, distance / 1000);
+      if (alert === 'replace') {
+        toast.error('Time for new shoes! This pair has exceeded its recommended mileage.', { duration: 5000 });
+      } else if (alert === 'warning') {
+        toast.warning('Your shoes are at 85% of their recommended mileage. Start looking for a replacement!', { duration: 5000 });
+      }
     }
 
     setSaved(true);

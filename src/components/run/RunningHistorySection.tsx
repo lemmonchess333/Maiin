@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRunningStats, type RunSummaryItem } from '../../hooks/useRunningStats';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { THEME } from '../../lib/theme';
+import { calculatePaceTrend } from '../../lib/paceTrends';
 
 function formatPace(secPerKm: number): string {
   if (!secPerKm) return '--:--';
@@ -36,12 +37,17 @@ function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   );
 }
 
-function RunCard({ run }: { run: RunSummaryItem }) {
+function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryItem[] }) {
   const navigate = useNavigate();
   const activityLabel: Record<string, string> = {
     freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo', intervals: 'Intervals',
     longrun: 'Long Run', race: 'Race', treadmill: 'Treadmill',
   };
+
+  const trend = calculatePaceTrend(
+    { distance: run.distance, avgPace: run.avgPace, completedAt: run.completedAt },
+    allRuns.map(r => ({ distance: r.distance, avgPace: r.avgPace, completedAt: r.completedAt })),
+  );
 
   return (
     <button
@@ -63,6 +69,12 @@ function RunCard({ run }: { run: RunSummaryItem }) {
           <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
             {activityLabel[run.activityType] || 'Run'}
           </span>
+          {trend.label && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              style={{ color: trend.color, background: trend.bgColor }}>
+              {trend.label}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-muted-foreground">{formatDuration(run.duration)}</span>
@@ -142,7 +154,7 @@ export default function RunningHistorySection() {
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground font-medium">Recent Runs</p>
           {runs.slice(0, 10).map(run => (
-            <RunCard key={run.id} run={run} />
+            <RunCard key={run.id} run={run} allRuns={runs} />
           ))}
         </div>
       )}

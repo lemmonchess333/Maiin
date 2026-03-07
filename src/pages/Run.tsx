@@ -13,6 +13,8 @@ import IntervalDisplay from '../components/run/IntervalDisplay';
 import TreadmillMode from '../components/run/TreadmillMode';
 import PaceZoneBar from '../components/run/PaceZoneBar';
 import RunBottomSheet from '../components/run/RunBottomSheet';
+import GuidedRunOverlay from '../components/run/GuidedRunOverlay';
+import { useGuidedRun } from '../hooks/useGuidedRun';
 import { THEME } from '../lib/theme';
 import { RUN_TEMPLATES } from '../lib/workoutTemplates';
 
@@ -67,6 +69,11 @@ export default function Run() {
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const guidedRun = useGuidedRun(
+    runConfig?.activityType === 'guided' ? runConfig.guidedWorkout ?? null : null,
+    phase === 'active'
+  );
 
   const audioCues = useAudioCues(runConfig?.audioCues ?? true, runConfig?.audioCueFrequency ?? 'every_km', {
     paceAlerts: runConfig?.paceAlerts ?? true,
@@ -387,6 +394,17 @@ export default function Run() {
             <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
               <p className="text-xs text-yellow-300">Auto-paused · start moving to resume</p>
             </div>
+          )}
+
+          {runConfig?.activityType === 'guided' && (
+            <GuidedRunOverlay
+              currentSegment={guidedRun.currentSegment}
+              nextSegment={guidedRun.nextSegment}
+              timeRemaining={guidedRun.timeRemaining}
+              segmentProgress={guidedRun.segmentProgress}
+              totalProgress={guidedRun.totalProgress}
+              isComplete={guidedRun.isComplete}
+            />
           )}
 
           <RunBottomSheet

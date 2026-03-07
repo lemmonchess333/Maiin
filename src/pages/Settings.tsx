@@ -51,6 +51,7 @@ import { THEME } from "@/lib/theme";
 import AccordionSection from "@/components/AccordionSection";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { useMealReminders } from "@/hooks/useMealReminders";
+import ShoesManager from "@/components/settings/ShoesManager";
 
 const PLANS = [
   {
@@ -1020,6 +1021,11 @@ export default function Settings() {
       {/* AI Adjustments (Pro) */}
       <AIAdjustmentsSection />
 
+      </AccordionSection>
+
+      {/* Shoe Mileage Tracker */}
+      <AccordionSection icon={<Footprints className="w-5 h-5 text-primary" />} title="My Shoes" subtitle="Track mileage, get replacement alerts">
+        <ShoesManager />
       </AccordionSection>
 
       {/* Preferences */}
