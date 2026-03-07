@@ -36,6 +36,9 @@ import {
   Brain,
   Footprints,
   Dumbbell,
+  MapPin,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import { useProgram } from "@/features/program/useProgram";
@@ -45,6 +48,7 @@ import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
 import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { THEME } from "@/lib/theme";
 import AccordionSection from "@/components/AccordionSection";
+import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 
 const PLANS = [
   {
@@ -268,6 +272,9 @@ export default function Settings() {
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
     profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
   );
+  const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
+  const [newZoneName, setNewZoneName] = useState("");
+  const [newZoneRadius, setNewZoneRadius] = useState(500);
 
   const schedule = useMemo(() => {
     if (customSchedule) return customSchedule;
@@ -1119,6 +1126,70 @@ export default function Settings() {
             className={cn("w-10 h-6 rounded-full transition-colors relative", audioCues ? "bg-primary" : "bg-muted border border-border")}
           >
             <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", audioCues ? "translate-x-5" : "translate-x-1")} />
+          </button>
+        </div>
+
+        {/* Privacy Zones */}
+        <div className="p-4 rounded-lg bg-muted space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Privacy Zones</p>
+              <p className="text-[10px] text-muted-foreground">Hide route start/end near saved locations</p>
+            </div>
+          </div>
+
+          {privacyZones.map((z) => (
+            <div key={z.id} className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border/50">
+              <div>
+                <p className="text-xs font-medium text-foreground">{z.name}</p>
+                <p className="text-[10px] text-muted-foreground">{z.radiusMeters}m radius</p>
+              </div>
+              <button
+                onClick={() => removeZone(z.id)}
+                className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newZoneName}
+              onChange={(e) => setNewZoneName(e.target.value)}
+              placeholder="Zone name (e.g. Home)"
+              className="flex-1 px-3 py-2 rounded-lg bg-card border border-border text-sm"
+            />
+            <select
+              value={newZoneRadius}
+              onChange={(e) => setNewZoneRadius(Number(e.target.value))}
+              className="px-2 py-2 rounded-lg bg-card border border-border text-sm"
+            >
+              <option value={200}>200m</option>
+              <option value={500}>500m</option>
+              <option value={750}>750m</option>
+              <option value={1000}>1km</option>
+            </select>
+          </div>
+          <button
+            onClick={async () => {
+              if (!newZoneName.trim()) { toast.error("Enter a zone name"); return; }
+              try {
+                const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+                  navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 })
+                );
+                await addZone({ name: newZoneName.trim(), lat: pos.coords.latitude, lon: pos.coords.longitude, radiusMeters: newZoneRadius });
+                setNewZoneName("");
+                toast.success("Privacy zone added");
+              } catch {
+                toast.error("Could not get your location");
+              }
+            }}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Current Location
           </button>
         </div>
       </AccordionSection>

@@ -11,6 +11,8 @@ import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
 import { THEME } from '../lib/theme';
+import { usePrivacyZones } from '../hooks/usePrivacyZones';
+import { applyPrivacyZones } from '../lib/privacyZones';
 
 interface RunData {
   points: GPSPoint[];
@@ -26,13 +28,15 @@ export default function RunSummary() {
   const { state } = useLocation() as { state: RunData };
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { zones: privacyZones } = usePrivacyZones();
 
   if (!state) {
     navigate('/');
     return null;
   }
 
-  const { points, distance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
+  const { points: rawPoints, distance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
+  const points = applyPrivacyZones(rawPoints, privacyZones);
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 ? (elapsed / distance) * 1000 : 0;
