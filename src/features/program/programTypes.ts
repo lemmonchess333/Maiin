@@ -13,7 +13,7 @@ export type MovementCategory =
   | "arms_triceps"
   | "core";
 
-export type SplitType = "upper_lower" | "ppl";
+export type SplitType = "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2";
 
 export type Goal = "cut" | "lean bulk" | "recomp";
 
