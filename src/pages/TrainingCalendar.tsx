@@ -222,7 +222,7 @@ export default function TrainingCalendar() {
 
       {showAddModal && selectedDay && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="w-full bg-card rounded-t-3xl p-6 pb-10 max-h-[80vh] overflow-y-auto">
+          <div className="w-full rounded-t-3xl p-6 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">Add Session</h3>
               <button onClick={function() { setShowAddModal(false); }} className="text-muted-foreground">{"\u2715"}</button>

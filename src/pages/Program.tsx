@@ -505,7 +505,8 @@ function ProgramInner() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl border-t border-border/50 max-h-[80vh] overflow-y-auto safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb"
+              style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
@@ -758,7 +759,8 @@ function ProgramInner() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl border-t border-border/50 safe-area-pb"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb"
+              style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
