@@ -34,9 +34,8 @@ export interface TDEEResult {
 
 /**
  * Calculate BMR using Mifflin-St Jeor equation.
- * Male: 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161 + 166
+ * Male:   10 × weight(kg) + 6.25 × height(cm) − 5 × age + 5
  * Female: 10 × weight(kg) + 6.25 × height(cm) − 5 × age − 161
- * We use a simplified unisex version (slightly biased toward male).
  */
 export function calculateTDEE(
   weightKg: number,
@@ -44,9 +43,10 @@ export function calculateTDEE(
   age: number,
   activityLevel: ActivityLevel,
   goal: FitnessGoal,
+  sex: "male" | "female" = "male",
 ): TDEEResult {
-  // Mifflin-St Jeor (unisex average)
-  const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + 5);
+  const sexOffset = sex === "female" ? -161 : 5;
+  const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + sexOffset);
   const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 
   // Goal-based adjustments
