@@ -43,6 +43,7 @@ export default function RunSummary() {
   const [saved, setSaved] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(profile?.autoPostRuns !== false);
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
+  const [notes, setNotes] = useState('');
 
   // Fetch past runs to compute pace trend badge
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function RunSummary() {
       splits,
       startedAt: Timestamp.fromDate(new Date(points[0]?.timestamp || Date.now())),
       completedAt: Timestamp.now(),
-      notes: '',
+      notes: notes.trim(),
       visibility: 'followers' as const,
       type: 'run',
       activityType: runConfig?.activityType || 'freerun',
@@ -295,6 +296,14 @@ export default function RunSummary() {
             <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${shareToFeed ? 'translate-x-5' : 'translate-x-1'}`} />
           </button>
         </div>
+
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="How did it feel? Any notes about this run..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-xl bg-card border border-border/50 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+        />
 
         <button
           onClick={handleSave}

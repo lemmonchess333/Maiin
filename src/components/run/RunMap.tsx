@@ -12,6 +12,7 @@ interface RunMapProps {
   avgPaceSecPerKm?: number;
   className?: string;
   darkMode?: boolean;
+  replayIndex?: number;
 }
 
 const TILE_STYLES = {
@@ -22,7 +23,7 @@ const TILE_STYLES = {
 export default function RunMap({
   points, currentPoint, interactive = false,
   height = 'h-full', paceColored = false, avgPaceSecPerKm,
-  className = '', darkMode = true,
+  className = '', darkMode = true, replayIndex,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -100,7 +101,8 @@ export default function RunMap({
     if (!map || points.length === 0) return;
 
     const updateRoute = () => {
-      const coords = points.map(p => [p.lon, p.lat]);
+      const visiblePoints = replayIndex !== undefined ? points.slice(0, replayIndex + 1) : points;
+      const coords = visiblePoints.map(p => [p.lon, p.lat]);
 
       const routeSource = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
       if (routeSource) {
@@ -111,11 +113,11 @@ export default function RunMap({
         });
       }
 
-      if (paceColored && avgPaceSecPerKm && points.length > 1) {
+      if (paceColored && avgPaceSecPerKm && visiblePoints.length > 1) {
         const features: any[] = [];
-        for (let i = 1; i < points.length; i++) {
-          const dist = haversineQuick(points[i-1].lat, points[i-1].lon, points[i].lat, points[i].lon);
-          const timeDiff = (points[i].timestamp - points[i-1].timestamp) / 1000;
+        for (let i = 1; i < visiblePoints.length; i++) {
+          const dist = haversineQuick(visiblePoints[i-1].lat, visiblePoints[i-1].lon, visiblePoints[i].lat, visiblePoints[i].lon);
+          const timeDiff = (visiblePoints[i].timestamp - visiblePoints[i-1].timestamp) / 1000;
           const segPace = timeDiff > 0 && dist > 0 ? (timeDiff / dist) * 1000 : avgPaceSecPerKm;
           const ratio = segPace / avgPaceSecPerKm;
 
@@ -129,7 +131,7 @@ export default function RunMap({
             type: 'Feature' as const,
             geometry: {
               type: 'LineString' as const,
-              coordinates: [[points[i-1].lon, points[i-1].lat], [points[i].lon, points[i].lat]],
+              coordinates: [[visiblePoints[i-1].lon, visiblePoints[i-1].lat], [visiblePoints[i].lon, visiblePoints[i].lat]],
             },
             properties: { color },
           });
@@ -178,8 +180,12 @@ export default function RunMap({
           .addTo(map);
       }
 
-      // End marker (for post-run)
-      if (!currentPoint && points.length > 1 && !endMarkerRef.current) {
+      // End marker (for post-run, hidden during replay)
+      if (replayIndex !== undefined && endMarkerRef.current) {
+        endMarkerRef.current.remove();
+        endMarkerRef.current = null;
+      }
+      if (!currentPoint && points.length > 1 && !endMarkerRef.current && replayIndex === undefined) {
         const el = document.createElement('div');
         el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${THEME.danger};border:2px solid white;`;
         endMarkerRef.current = new maplibregl.Marker({ element: el })
@@ -193,7 +199,7 @@ export default function RunMap({
     } else {
       map.on('load', updateRoute);
     }
-  }, [points, currentPoint, paceColored, avgPaceSecPerKm]);
+  }, [points, currentPoint, paceColored, avgPaceSecPerKm, replayIndex]);
 
   return <div ref={containerRef} className={`w-full ${height} ${className}`} />;
 }
