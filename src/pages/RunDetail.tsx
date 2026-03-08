@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -10,7 +10,6 @@ import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
 import { generateAndShare } from '../lib/shareCardGenerator';
 import ShareCard from '../components/social/ShareCard';
-import { useRef } from 'react';
 
 const ACTIVITY_LABELS: Record<string, string> = {
   freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo Run',
@@ -36,6 +35,9 @@ export default function RunDetail() {
   const [run, setRun] = useState<any>(null);
   const [sharing, setSharing] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+  const [replaying, setReplaying] = useState(false);
+  const [replayIndex, setReplayIndex] = useState(0);
+  const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!user || !runId) return;
@@ -68,6 +70,33 @@ export default function RunDetail() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   }) ?? '';
 
+  const startReplay = useCallback(() => {
+    if (!run?.points?.length) return;
+    if (replayRef.current) clearInterval(replayRef.current);
+    setReplayIndex(0);
+    setReplaying(true);
+    const step = Math.max(1, Math.ceil(run.points.length / 60));
+    replayRef.current = setInterval(() => {
+      setReplayIndex((prev: number) => {
+        const next = prev + step;
+        if (next >= run.points.length - 1) {
+          clearInterval(replayRef.current!);
+          replayRef.current = null;
+          setTimeout(() => setReplaying(false), 600);
+          return run.points.length - 1;
+        }
+        return next;
+      });
+    }, 50);
+  }, [run]);
+
+  // Cleanup replay interval
+  useEffect(() => {
+    return () => {
+      if (replayRef.current) clearInterval(replayRef.current);
+    };
+  }, []);
+
   const handleShare = async () => {
     if (!shareRef.current) return;
     setSharing(true);
@@ -83,7 +112,8 @@ export default function RunDetail() {
         <div className="relative h-72">
           <RunMap points={run.points} currentPoint={null} interactive={true}
             height="h-full" paceColored={true} avgPaceSecPerKm={avgPace}
-            darkMode={!!profile?.darkMode} />
+            darkMode={!!profile?.darkMode}
+            replayIndex={replaying ? replayIndex : undefined} />
           {/* Back button over map */}
           <button onClick={() => navigate(-1)}
             className="absolute top-4 left-4 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md z-10"
@@ -91,6 +121,15 @@ export default function RunDetail() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
+          </button>
+          {/* Replay button */}
+          <button
+            onClick={startReplay}
+            disabled={replaying}
+            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
+            style={{ background: 'rgba(0,0,0,0.55)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
+          >
+            {replaying ? '▶ Replaying…' : '▶ Replay'}
           </button>
           <PaceLegend />
         </div>

@@ -97,6 +97,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [sessionComplete, setSessionComplete] = useState(false);
   const [completing, setCompleting] = useState(false);
 
+  // Undo last set
+  const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const currentExercise = day.exercises[currentExIndex];
   const currentSets = setLogs[currentExIndex] ?? [];
   const completedSetsInExercise = currentSets.filter((s) => s.completed).length;
@@ -204,6 +208,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
     haptic(100);
 
+    // Track for undo
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    setLastCompleted({ exIdx: currentExIndex, setIdx: currentSetIndex });
+    undoTimeoutRef.current = setTimeout(() => setLastCompleted(null), 4000);
+
     const isLastSet = currentSetIndex >= currentSets.length - 1;
     const isLastExercise = currentExIndex >= day.exercises.length - 1;
 
@@ -225,6 +234,29 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       startRest();
     }
   };
+
+  const handleUndo = () => {
+    if (!lastCompleted) return;
+    const { exIdx, setIdx } = lastCompleted;
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[exIdx][setIdx].completed = false;
+      return updated;
+    });
+    setCurrentExIndex(exIdx);
+    setCurrentSetIndex(setIdx);
+    stopRest();
+    if (sessionComplete) setSessionComplete(false);
+    setLastCompleted(null);
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+  };
+
+  // Cleanup undo timeout
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    };
+  }, []);
 
   const handleFinish = async () => {
     setCompleting(true);
@@ -506,6 +538,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             + Add Set
           </button>
         </div>
+
+        {/* Undo last set */}
+        <AnimatePresence>
+          {lastCompleted && (
+            <motion.button
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              onClick={handleUndo}
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95 transition-transform"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Undo last set
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* RPE toggle */}
         <button

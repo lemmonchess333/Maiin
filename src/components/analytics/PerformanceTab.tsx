@@ -2,6 +2,7 @@ import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart"
 import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
+import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
 
 function pctSigned(x: number) {
   const v = Math.round(x * 100);
@@ -137,6 +138,7 @@ export default function PerformanceTab() {
 
   const prev = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
   const delta = prev ? Math.round(currentWeek.performanceIndex - prev.performanceIndex) : null;
+  const trendData = weeks.slice(-8).map(w => ({ week: w.weekKey, score: Math.round(w.performanceIndex) }));
   const b = currentWeek.breakdown;
   const m = currentWeek.multipliers;
 
@@ -158,6 +160,55 @@ export default function PerformanceTab() {
         </div>
         <PIGauge score={currentWeek.performanceIndex} />
       </div>
+
+      {/* PI Trend — last 8 weeks */}
+      {trendData.length >= 2 && (
+        <div className="p-4 rounded-2xl border border-border/50 bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Performance Index — last 8 weeks</h3>
+            <span className="text-2xl font-black tabular-nums" style={{ color: THEME.brand }}>
+              {Math.round(currentWeek.performanceIndex)}
+            </span>
+          </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={trendData}>
+              <XAxis
+                dataKey="week"
+                fontSize={9}
+                opacity={0.3}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: string) => {
+                  const parts = v.split('-W');
+                  if (parts.length === 2) {
+                    const weekNum = parseInt(parts[1], 10);
+                    return `W${weekNum}`;
+                  }
+                  return v;
+                }}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(0,0,0,0.85)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
+                itemStyle={{ color: THEME.brand }}
+              />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke={THEME.brand}
+                strokeWidth={2}
+                dot={{ r: 3, fill: THEME.brand }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Breakdown bars */}
       <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">

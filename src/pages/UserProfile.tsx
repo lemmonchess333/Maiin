@@ -6,6 +6,8 @@ import { getFollowerCount, getFollowingCount } from '../lib/socialApi';
 import FollowButton from '../components/social/FollowButton';
 import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
+import { Skeleton } from '../components/LoadingSkeleton';
+import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
@@ -13,6 +15,10 @@ export default function UserProfile() {
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [activities, setActivities] = useState<any[]>([]);
+  const [stats, setStats] = useState<{ totalKm: number; totalSessions: number } | null>(null);
+  const [badges, setBadges] = useState<EarnedBadge[]>([]);
+  const [streak, setStreak] = useState<number>(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     if (!uid) return;
@@ -29,7 +35,36 @@ export default function UserProfile() {
       orderBy('createdAt', 'desc'),
       limit(10)
     );
-    getDocs(q).then(snap => setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    getDocs(q).then(snap => {
+      const acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setActivities(acts);
+
+      // Compute stats from activities
+      let totalKm = 0;
+      let totalSessions = 0;
+      acts.forEach((a: any) => {
+        totalSessions++;
+        if (a.distance) totalKm += a.distance / 1000;
+      });
+      setStats({ totalKm, totalSessions });
+    });
+
+    // Fetch badges from streaks data
+    getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setStreak(data.currentStreak ?? 0);
+        const earnedMap: Record<string, string> = data.badges ?? {};
+        const earned: EarnedBadge[] = BADGE_DEFINITIONS
+          .filter(b => earnedMap[b.id])
+          .map(b => ({ ...b, earnedAt: earnedMap[b.id] }))
+          .sort((a, b) => (b.earnedAt ?? '').localeCompare(a.earnedAt ?? ''))
+          .slice(0, 3);
+        setBadges(earned);
+      }
+    }).catch(() => {});
+
+    setStatsLoading(false);
   }, [uid]);
 
   if (!profile) return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading...</div>;
@@ -49,6 +84,48 @@ export default function UserProfile() {
         </div>
         {uid && <FollowButton targetUid={uid} />}
       </div>
+
+      {/* Stat pills */}
+      <div className="flex gap-2">
+        {statsLoading ? (
+          <>
+            <Skeleton className="h-8 flex-1 rounded-lg" />
+            <Skeleton className="h-8 flex-1 rounded-lg" />
+          </>
+        ) : stats && (
+          <>
+            <span className="flex-1 text-center py-1.5 rounded-lg bg-card border border-border/50 text-xs font-medium text-foreground">
+              {stats.totalKm.toFixed(1)} km
+            </span>
+            <span className="flex-1 text-center py-1.5 rounded-lg bg-card border border-border/50 text-xs font-medium text-foreground">
+              {stats.totalSessions} sessions
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Badge showcase */}
+      {badges.length > 0 && (
+        <div className="flex gap-2">
+          {badges.map(badge => (
+            <div
+              key={badge.id}
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-lg"
+              style={{ border: `2px solid ${TIER_COLORS[badge.tier]}`, background: `${TIER_COLORS[badge.tier]}15` }}
+              title={`${badge.name} — ${badge.description}`}
+            >
+              {badge.icon}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Current streak */}
+      {streak > 0 && (
+        <p className="text-xs text-muted-foreground">
+          🔥 <strong className="text-foreground">{streak}-day</strong> streak
+        </p>
+      )}
 
       <h3 className="text-sm font-semibold">Activity</h3>
       <div className="space-y-3">
