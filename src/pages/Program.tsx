@@ -65,26 +65,10 @@ function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
 
 export default function Program() {
   const { features } = useSubscription();
-
-  // Gate FIRST: do not mount the program engine until the feature flag is allowed.
-  if (!features.phaseModes) {
-    return (
-      <div className="p-6 text-center space-y-4">
-        <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
-        <h1 className="text-xl font-bold text-foreground">Program Engine</h1>
-        <p className="text-sm text-muted-foreground">
-          Unlock the adaptive Program Engine with Pro to get weekly splits, exercise prescriptions,
-          progression tracking, and deload logic.
-        </p>
-        <p className="text-xs font-semibold text-foreground">Upgrade to Pro in Settings</p>
-      </div>
-    );
-  }
-
-  return <ProgramInner />;
+  return <ProgramInner locked={!features.phaseModes} />;
 }
 
-function ProgramInner() {
+function ProgramInner({ locked = false }: { locked?: boolean }) {
   const {
     programState,
     prescription,
@@ -322,6 +306,16 @@ function ProgramInner() {
 
   return (
     <div className="space-y-4">
+      {locked && (
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+          <Lock className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-foreground">Preview Mode</p>
+            <p className="text-[10px] text-muted-foreground">Upgrade to Pro in Settings to start workouts and track progression</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center bg-muted rounded-xl p-1">
         <button
           onClick={() => setProgramView('program')}
@@ -346,15 +340,16 @@ function ProgramInner() {
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            onClick={() => !locked && setShowSettings(true)}
+            disabled={locked}
+            className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
           >
             <Settings2 className="w-4 h-4 text-muted-foreground" />
           </button>
           <button
             onClick={handleRegenerate}
-            disabled={regenerating}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            disabled={regenerating || locked}
+            className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
           >
             <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
           </button>
@@ -411,7 +406,7 @@ function ProgramInner() {
       </div>
 
       {/* Advance Week Button */}
-      {allComplete && !isViewingHistory && (
+      {allComplete && !isViewingHistory && !locked && (
         <button
           onClick={handleAdvanceWeek}
           disabled={advancing}
@@ -542,7 +537,7 @@ function ProgramInner() {
                     </DndContext>
 
                     {/* Edit Day */}
-                    {!day.completed && !isViewingHistory && (
+                    {!day.completed && !isViewingHistory && !locked && (
                       <button
                         onClick={() => setEditingDayIndex(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted/50 text-foreground text-xs font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
@@ -552,7 +547,7 @@ function ProgramInner() {
                     )}
 
                     {/* Start Workout Session */}
-                    {!day.completed && (
+                    {!day.completed && !locked && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-2.5 mt-1 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform flex items-center justify-center gap-2"
@@ -563,7 +558,7 @@ function ProgramInner() {
                     )}
 
                     {/* Complete Day button */}
-                    {!day.completed && (
+                    {!day.completed && !locked && (
                       <button
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
@@ -779,16 +774,18 @@ function ProgramInner() {
 
                 <button
                   onClick={handleLogExercise}
-                  disabled={savingState !== "idle"}
+                  disabled={savingState !== "idle" || locked}
                   className={cn(
                     "w-full py-2.5 rounded-xl text-sm font-medium transition-all",
                     savingState === "saved"
                       ? "bg-green-500 text-white"
                       : "bg-primary text-primary-foreground hover:opacity-90",
-                    savingState === "saving" && "opacity-50 cursor-not-allowed"
+                    (savingState === "saving" || locked) && "opacity-50 cursor-not-allowed"
                   )}
                 >
-                  {savingState === "saving"
+                  {locked
+                    ? "Upgrade to Pro"
+                    : savingState === "saving"
                     ? "Saving..."
                     : savingState === "saved"
                     ? "Saved!"

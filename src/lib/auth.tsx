@@ -76,6 +76,7 @@ export interface UserProfile {
   weeklyRunsTarget?: number;
   // TDEE computation persistence
   age?: number;
+  sex?: "male" | "female";
   activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
   // Macro targets (legacy)
   macroTargets?: {

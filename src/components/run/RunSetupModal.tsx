@@ -15,7 +15,7 @@ export interface RunConfig {
   audioCueFrequency: 'every_km' | 'every_500m' | 'every_5min' | 'off';
   paceAlerts: boolean;
   voiceRate: number;
-  displayStats: ('pace' | 'distance' | 'time' | 'calories' | 'elevation' | 'heartRate' | 'avgPace' | 'cadence')[];
+  displayStats: ('pace' | 'distance' | 'time' | 'calories' | 'elevation' | 'avgPace')[];
   target: {
     type: 'none' | 'distance' | 'time' | 'pace';
     value?: number;

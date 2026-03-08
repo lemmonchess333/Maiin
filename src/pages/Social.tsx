@@ -6,9 +6,10 @@ import ActivityCard from '../components/social/ActivityCard';
 import FollowButton from '../components/social/FollowButton';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
+import { ChallengeList } from '../features/challenges/ChallengeList';
 import { RefreshCw } from 'lucide-react';
 
-type SocialTab = 'feed' | 'photos' | 'find';
+type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
 
 export default function Social() {
   const { items, loading, refresh, loadMore, hasMore } = useSocialFeed();
@@ -31,7 +32,7 @@ export default function Social() {
 
       {/* Tab bar */}
       <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        {(['feed', 'photos', 'find'] as SocialTab[]).map(t => (
+        {(['feed', 'photos', 'challenges', 'find'] as SocialTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -39,7 +40,7 @@ export default function Social() {
               tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
-            {t === 'feed' ? 'Feed' : t === 'photos' ? '📸 Progress' : '🔍 Find'}
+            {t === 'feed' ? 'Feed' : t === 'photos' ? 'Progress' : t === 'challenges' ? 'Challenges' : 'Find'}
           </button>
         ))}
       </div>
@@ -67,6 +68,8 @@ export default function Social() {
       )}
 
       {tab === 'photos' && <ProgressPhotos />}
+
+      {tab === 'challenges' && <ChallengeList />}
 
       {tab === 'feed' && (
         <>

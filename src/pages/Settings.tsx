@@ -221,6 +221,7 @@ function AIAdjustmentsSection() {
                 profile?.age || 25,
                 profile?.activityLevel || "moderate",
                 tdeeGoal,
+                profile?.sex || "male",
               );
               await updateProfile({
                 aiCalorieAdjustment: 0,
@@ -363,8 +364,8 @@ export default function Settings() {
   };
 
   const tdee = useMemo(() => {
-    return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase);
-  }, [weightKg, heightCm, age, activityLevel, trainingPhase]);
+    return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex || "male");
+  }, [weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -13,6 +13,28 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+function playChime() {
+  try {
+    const ctx = new AudioContext();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc1.frequency.value = 523;
+    osc2.frequency.value = 659;
+    gain.gain.value = 0.15;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime + 0.15);
+    osc1.stop(ctx.currentTime + 0.6);
+    osc2.stop(ctx.currentTime + 0.8);
+  } catch {
+    // AudioContext may not be available
+  }
+}
+
 interface WorkoutDay {
   dayName: string;
   dayType: string;
@@ -69,6 +91,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [restTarget, setRestTarget] = useState(90);
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const chimeFiredRef = useRef(false);
 
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
@@ -89,6 +112,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const startRest = useCallback(() => {
     setRestSeconds(0);
     setIsResting(true);
+    chimeFiredRef.current = false;
     haptic(50);
   }, [haptic]);
 
@@ -114,8 +138,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
   // Auto-stop timer when it reaches target
   useEffect(() => {
-    if (isResting && restSeconds >= restTarget) {
+    if (isResting && restSeconds >= restTarget && !chimeFiredRef.current) {
+      chimeFiredRef.current = true;
       haptic([200, 100, 200]);
+      playChime();
     }
   }, [isResting, restSeconds, restTarget, haptic]);
 

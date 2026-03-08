@@ -50,14 +50,15 @@ export default function Onboarding() {
   const [raceDate, setRaceDate] = useState("");
 
   // Step 3 — Targets
+  const [sex, setSex] = useState<"male" | "female">("male");
   const [weightKg, setWeightKg] = useState(75);
   const [heightCm, setHeightCm] = useState(175);
   const [age, setAge] = useState(28);
   const [selectedGoal, setSelectedGoal] = useState<"cut" | "lean bulk" | "recomp">("recomp");
 
   const tdee = useMemo(
-    () => calculateTDEE(weightKg, heightCm, age, "moderate", selectedGoal as FitnessGoal),
-    [weightKg, heightCm, age, selectedGoal]
+    () => calculateTDEE(weightKg, heightCm, age, "moderate", selectedGoal as FitnessGoal, sex),
+    [weightKg, heightCm, age, selectedGoal, sex]
   );
 
   // If no run days, skip the run preferences step
@@ -83,6 +84,7 @@ export default function Onboarding() {
     try {
       const data: Record<string, unknown> = {
         displayName: name.trim(),
+        sex,
         age,
         weightKg,
         heightCm,
@@ -368,6 +370,24 @@ export default function Onboarding() {
           {/* ── Final Step: Targets ── */}
           {step === targetsStepIndex && (
             <div className="space-y-4">
+              {/* Sex selector */}
+              <div className="flex gap-2">
+                {([
+                  { id: "male" as const, label: "Male", icon: "♂" },
+                  { id: "female" as const, label: "Female", icon: "♀" },
+                ]).map(s => (
+                  <button key={s.id} onClick={() => setSex(s.id)}
+                    className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-95"
+                    style={{
+                      background: sex === s.id ? `${THEME.teal}20` : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${sex === s.id ? THEME.teal + '50' : 'rgba(255,255,255,0.1)'}`,
+                      color: sex === s.id ? THEME.teal : 'rgba(255,255,255,0.5)',
+                    }}>
+                    {s.icon} {s.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Body stats */}
               <div className="grid grid-cols-3 gap-3">
                 {[

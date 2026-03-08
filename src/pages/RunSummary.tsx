@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -15,6 +15,7 @@ import ElevationProfile from '../components/analytics/ElevationProfile';
 import ShareCard from '../components/social/ShareCard';
 import { generateAndShare } from '../lib/shareCardGenerator';
 import { THEME } from '../lib/theme';
+import { calculatePaceTrend, type PaceTrendResult } from '../lib/paceTrends';
 import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
@@ -40,6 +41,26 @@ export default function RunSummary() {
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [shareToFeed, setShareToFeed] = useState(profile?.autoPostRuns !== false);
+  const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
+
+  // Fetch past runs to compute pace trend badge
+  useEffect(() => {
+    if (!user || !state) return;
+    (async () => {
+      const snap = await getDocs(query(collection(db, 'users', user.uid, 'runs'), orderBy('completedAt', 'desc')));
+      const allRuns = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          distance: data.distance ?? 0,
+          avgPace: data.avgPace ?? 0,
+          completedAt: data.completedAt?.toDate?.() ?? new Date(),
+        };
+      });
+      const currentRun = { distance: state.distance, avgPace: state.elapsed > 0 ? (state.elapsed / state.distance) * 1000 : 0, completedAt: new Date() };
+      setPaceTrend(calculatePaceTrend(currentRun, allRuns));
+    })();
+  }, [user, state]);
 
   if (!state) {
     navigate('/');
@@ -76,7 +97,7 @@ export default function RunSummary() {
     // Firestore queues the write offline automatically via IndexedDB persistence
     await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
-    if (isOnline && profile?.autoPostRuns !== false) {
+    if (isOnline && shareToFeed) {
       await postActivity({
         authorId: user.uid,
         authorName: profile?.displayName || 'Athlete',
@@ -220,6 +241,16 @@ export default function RunSummary() {
         </div>
       </div>
 
+      {/* Pace Trend Badge */}
+      {paceTrend && paceTrend.trend !== 'no-data' && (
+        <div className="mx-4 mb-4 flex justify-center">
+          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
+            style={{ background: paceTrend.bgColor, color: paceTrend.color }}>
+            {paceTrend.trend === 'pr' && '🏆'} {paceTrend.label}
+          </span>
+        </div>
+      )}
+
       {/* Best Efforts */}
       {bestEfforts.length > 0 && (
         <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border/50">
@@ -251,6 +282,20 @@ export default function RunSummary() {
 
       {/* Actions */}
       <div className="px-4 space-y-2">
+        {/* Share toggle */}
+        <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50">
+          <div>
+            <p className="text-sm font-medium text-foreground">Share to feed</p>
+            <p className="text-[10px] text-muted-foreground">Post this run to your followers</p>
+          </div>
+          <button
+            onClick={() => setShareToFeed(v => !v)}
+            className={`w-10 h-6 rounded-full transition-colors relative ${shareToFeed ? 'bg-primary' : 'bg-muted border border-border'}`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${shareToFeed ? 'translate-x-5' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
         <button
           onClick={handleSave}
           disabled={saved}
