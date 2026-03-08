@@ -362,12 +362,12 @@ function ProgramInner() {
       </div>
 
       {/* Phase + Week Header */}
-      <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 dark:from-purple-500/15 dark:to-purple-500/5 rounded-2xl border border-purple-100 dark:border-purple-800/30 overflow-hidden">
+      <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={goBack}
             disabled={!canGoBack}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-purple-100 dark:hover:bg-purple-900/30 active:scale-90" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-90" : "opacity-30")}
           >
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
@@ -382,7 +382,7 @@ function ProgramInner() {
           <button
             onClick={goForward}
             disabled={!canGoForward}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-purple-100 dark:hover:bg-purple-900/30 active:scale-90" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-90" : "opacity-30")}
           >
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
@@ -431,7 +431,6 @@ function ProgramInner() {
           const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
           const isCurrent = !day.completed && dayIndex === firstIncompleteIndex;
           const sportColor = isUpper ? THEME.lifting : THEME.running;
-          const borderAccent = day.completed ? '#22c55e' : isCurrent ? sportColor : 'transparent';
 
           return (
           <div
@@ -445,8 +444,6 @@ function ProgramInner() {
                 ? `linear-gradient(135deg, ${sportColor}10 0%, transparent 60%)`
                 : 'var(--card)',
               borderColor: isCurrent ? `${sportColor}40` : day.completed ? '#22c55e30' : 'hsl(var(--border) / 0.5)',
-              borderLeftWidth: 3,
-              borderLeftColor: borderAccent,
             }}
           >
             {/* Current day label */}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -52,6 +52,14 @@ export default function Log() {
   const [hasPR, setHasPR] = useState(false);
   const [activeTab, setActiveTab] = useState<"workout" | "food" | "run">("workout");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, []);
+
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
