@@ -415,8 +415,10 @@ export default function Settings() {
     }
   };
 
-  const toggleDark = async () => {
-    await updateProfile({ darkMode: !profile?.darkMode });
+  const toggleDark = () => {
+    const next = !profile?.darkMode;
+    document.documentElement.classList.toggle("dark", next);
+    updateProfile({ darkMode: next });
   };
 
   const toggleDevPro = async () => {
