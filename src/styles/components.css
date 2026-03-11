@@ -1,5 +1,5 @@
 /* =============================================================
-   MAIIN DESIGN SYSTEM — BASE COMPONENTS
+   TROPOS DESIGN SYSTEM — BASE COMPONENTS
    Reusable component styles
 ============================================================= */
 
@@ -84,14 +84,6 @@
   font-family: Georgia, serif;
 }
 
-/* ─── PR TOGGLE — Celebratory State ─────────────────────────── */
-.pr-toggle-active {
-  background: var(--ds-warning-bg);
-  border-color: #fcd34d;
-}
-.pr-toggle-active .pr-toggle-icon {
-  color: var(--ds-warning);
-}
 
 /* ─── PROGRESS RING ─────────────────────────────────────────── */
 .progress-ring {

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { collection as fbCollection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+
 import WorkoutLogger from "@/components/WorkoutLogger";
 import { ManualFoodLogger } from "@/components/ManualFoodLogger";
 import FoodSearch from "@/components/FoodSearch";
@@ -21,7 +21,7 @@ import { parseFoodText } from "@/lib/nlFoodParser";
 import {
   Dumbbell,
   UtensilsCrossed,
-  Trophy,
+
   ChevronLeft,
   ChevronRight,
   Flame,
@@ -33,7 +33,6 @@ import {
   Cookie,
   MessageSquare,
   BookOpen,
-  ScanLine,
   Mic,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
@@ -43,13 +42,13 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
 export default function Log() {
   const { user, profile, updateProfile } = useAuth();
-  const { logs, saveLog } = useDailyLogs();
+  const { saveLog } = useDailyLogs();
   const { getWorkoutsForDate } = useWorkouts();
 
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd")
   );
-  const [hasPR, setHasPR] = useState(false);
+
   const [activeTab, setActiveTab] = useState<"workout" | "food" | "run">("workout");
   const navigate = useNavigate();
   const location = useLocation();
@@ -155,12 +154,6 @@ export default function Log() {
     return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
   };
 
-  // Load existing PR state for selected date
-  useEffect(() => {
-    const existing = logs.find((l) => l.date === selectedDate);
-    setHasPR(existing?.hasPR ?? false);
-  }, [selectedDate, logs]);
-
   // Auto-save daily log when workouts or meals change
   useEffect(() => {
     const workoutCount = todaysWorkouts.length;
@@ -171,10 +164,10 @@ export default function Log() {
       date: selectedDate,
       workouts: workoutCount,
       meals: mealCount,
-      hasPR,
+      hasPR: false,
       notes: "",
     });
-  }, [todaysWorkouts.length, todaysMeals.length, hasPR, selectedDate, saveLog]);
+  }, [todaysWorkouts.length, todaysMeals.length, selectedDate, saveLog]);
 
   // Update streak helper
   const updateStreak = async () => {
@@ -211,20 +204,6 @@ export default function Log() {
 
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
-  // Toggle PR and fire confetti
-  const togglePR = () => {
-    const next = !hasPR;
-    setHasPR(next);
-    if (next) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ["#7c3aed", "#a78bfa", "#fbbf24", "#f59e0b"],
-      });
-      toast.success("New PR! 🏆");
-    }
-  };
 
   const handleNLParse = async () => {
     if (!nlInput.trim() || !user) return;
@@ -429,45 +408,6 @@ export default function Log() {
       {/* Workout Tab */}
       {activeTab === "workout" && (
         <div className="space-y-4">
-          {/* PR Toggle */}
-          <div className={cn(
-            "rounded-2xl border p-5 transition-all",
-            hasPR
-              ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/30"
-              : "bg-card border-border/50"
-          )}>
-            <button
-              onClick={togglePR}
-              className="w-full flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Trophy
-                  className={cn(
-                    "w-4 h-4",
-                    hasPR ? "text-amber-500" : "text-muted-foreground"
-                  )}
-                />
-                <p className={cn(
-                  "text-sm font-medium",
-                  hasPR ? "text-amber-700 dark:text-amber-300" : "text-foreground"
-                )}>
-                  New Personal Record?
-                </p>
-              </div>
-
-              <div
-                className={cn(
-                  "w-12 h-7 rounded-full transition-all flex items-center",
-                  hasPR
-                    ? "bg-primary justify-end"
-                    : "bg-muted justify-start"
-                )}
-              >
-                <div className="w-5 h-5 bg-white rounded-full mx-1 shadow-sm" />
-              </div>
-            </button>
-          </div>
-
           {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
@@ -665,13 +605,6 @@ export default function Log() {
             >
               <Search className="w-5 h-5 text-primary" />
               <span className="text-[10px] text-muted-foreground">Search</span>
-            </button>
-            <button
-              onClick={() => setShowBarcodeScanner(true)}
-              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
-            >
-              <ScanLine className="w-5 h-5 text-primary" />
-              <span className="text-[10px] text-muted-foreground">Barcode</span>
             </button>
             <button
               onClick={() => setShowVoiceLogger(true)}

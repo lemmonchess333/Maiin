@@ -108,7 +108,7 @@ const FEATURE_HEROES: Record<string, {
 const DEFAULT_HERO = {
   icon: <Sparkles className="w-6 h-6" style={{ color: THEME.brand }} />,
   title: "Upgrade to Pro",
-  tagline: "Unlock the full Maiin experience for hybrid athletes.",
+  tagline: "Unlock the full Tropos experience for hybrid athletes.",
   preview: null,
 };
 

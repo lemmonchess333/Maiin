@@ -95,6 +95,7 @@ export interface UserProfile {
   enableRolloverCalories?: boolean;
   // Auto-post social
   autoPostBadges?: boolean;
+  customCalorieTarget?: number;
 }
 
 /* ================================

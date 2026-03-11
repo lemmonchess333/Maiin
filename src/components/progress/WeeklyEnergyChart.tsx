@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { useMeals } from "@/hooks/useMeals";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { useRunningStats } from "@/hooks/useRunningStats";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { format, subDays, startOfWeek, addDays } from "date-fns";
+import { Info } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -17,8 +19,11 @@ const WEEK_OPTIONS = ["This wk", "Last wk", "2 wk ago", "3 wk ago"];
 export function WeeklyEnergyChart() {
   const { meals } = useMeals();
   const { workouts } = useWorkouts();
+  const { runs } = useRunningStats(30);
   const { profile } = useAuth();
   const [weekOffset, setWeekOffset] = useState(0);
+
+  const weightKg = profile?.weightKg ?? 70;
 
   const data = useMemo(() => {
     const now = new Date();
@@ -33,18 +38,31 @@ export function WeeklyEnergyChart() {
       const dayMeals = meals.filter((m) => m.date === dateStr);
       const consumed = dayMeals.reduce((sum, m) => sum + m.totalCalories, 0);
 
-      // Burned: workouts + base TDEE
+      // Estimated burn from logged activities only
       const dayWorkouts = workouts.filter((w) => w.date === dateStr);
-      let burned = profile?.tdeeBase || 2200; // Base metabolic
-      dayWorkouts.forEach((w) => {
-        burned += w.totalCalories || 0;
+      const dayRuns = runs.filter((r) => format(r.completedAt, "yyyy-MM-dd") === dateStr);
+
+      const hasActivity = dayWorkouts.length > 0 || dayRuns.length > 0;
+
+      let burned = 0;
+
+      // Runs: weight_kg x distance_km x 1.036
+      dayRuns.forEach((r) => {
+        const distKm = (r.distance || 0) / 1000;
+        burned += Math.round(weightKg * distKm * 1.036);
       });
 
-      return { day: dayLabel, consumed, burned };
+      // Workouts: weight_kg x duration_minutes x MET(~5) / 60
+      dayWorkouts.forEach((w) => {
+        const mins = w.durationMinutes || 0;
+        burned += Math.round(weightKg * mins * 5 / 60);
+      });
+
+      return { day: dayLabel, consumed, burned, hasActivity };
     });
 
     return days;
-  }, [meals, workouts, profile, weekOffset]);
+  }, [meals, workouts, runs, profile, weekOffset, weightKg]);
 
   // Default selectedDay to today's index in the week (Mon=0)
   const todayWeekIndex = useMemo(() => {
@@ -94,8 +112,20 @@ export function WeeklyEnergyChart() {
       {/* Persistent summary bar for selected day */}
       <div className="flex items-center justify-between text-xs mb-3">
         <span className="font-medium text-foreground">{selected.day}</span>
-        <span style={{ color: THEME.warning }}>Burned: {selected.burned.toLocaleString()} cal</span>
+        <span style={{ color: THEME.warning }}>
+          {selected.hasActivity
+            ? `Est. burn: ${selected.burned.toLocaleString()} cal`
+            : "No activity tracked"}
+        </span>
         <span style={{ color: THEME.success }}>Consumed: {selected.consumed.toLocaleString()} cal</span>
+      </div>
+
+      {/* Info subtitle */}
+      <div className="flex items-center gap-1.5">
+        <Info className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+        <p className="text-[10px] text-muted-foreground">
+          Based on your logged workouts and runs
+        </p>
       </div>
 
       {totals.consumed === 0 && (
@@ -118,7 +148,7 @@ export function WeeklyEnergyChart() {
               width={30}
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
             />
-            <Bar dataKey="burned" fill={THEME.warning} radius={[4, 4, 0, 0]} barSize={14} />
+            <Bar dataKey="burned" name="Estimated burn" fill={THEME.warning} radius={[4, 4, 0, 0]} barSize={14} />
             <Bar dataKey="consumed" fill={THEME.success} radius={[4, 4, 0, 0]} barSize={14} />
           </BarChart>
         </ResponsiveContainer>

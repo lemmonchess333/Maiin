@@ -1,4 +1,4 @@
-const CACHE_NAME = "adaptive-fitness-v1";
+const CACHE_NAME = "tropos-v1";
 const BASE_PATH = "/Maiin/";
 
 const STATIC_ASSETS = [

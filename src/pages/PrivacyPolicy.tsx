@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
               1. Information We Collect
             </h2>
             <p>
-              Adaptive Fitness collects the following information when you
+              Tropos collects the following information when you
               create an account and use the app:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
@@ -48,6 +48,18 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Preferences:</strong> Unit
                 preferences, theme settings, and fitness goals
+              </li>
+              <li>
+                <strong className="text-foreground">GPS and Location Data:</strong>{" "}
+                Route coordinates during run tracking for mapping and pace calculation
+              </li>
+              <li>
+                <strong className="text-foreground">Nutrition Data:</strong>{" "}
+                Food logs, barcode scans, calorie and macro tracking data
+              </li>
+              <li>
+                <strong className="text-foreground">Body Measurements:</strong>{" "}
+                Weight logs over time for trend tracking
               </li>
             </ul>
           </section>
@@ -105,13 +117,68 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              6. Third-Party Services
+              6. GDPR Compliance
+            </h2>
+            <p>
+              If you are located in the UK or European Economic Area, you have
+              additional rights under the General Data Protection Regulation (GDPR):
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Legal basis:</strong>{" "}
+                We process your data based on your consent (provided during account
+                creation) and for the performance of our service.
+              </li>
+              <li>
+                <strong className="text-foreground">Right to access:</strong>{" "}
+                You can request a copy of all data we hold about you.
+              </li>
+              <li>
+                <strong className="text-foreground">Right to rectification:</strong>{" "}
+                You can update or correct your personal information through the app settings.
+              </li>
+              <li>
+                <strong className="text-foreground">Right to erasure:</strong>{" "}
+                You can request deletion of your account and all associated data.
+              </li>
+              <li>
+                <strong className="text-foreground">Right to data portability:</strong>{" "}
+                You can export your data in CSV format through the app's settings.
+              </li>
+              <li>
+                <strong className="text-foreground">Right to withdraw consent:</strong>{" "}
+                You can withdraw consent at any time by deleting your account.
+              </li>
+              <li>
+                <strong className="text-foreground">Data retention:</strong>{" "}
+                We retain your data for as long as your account is active. Upon deletion,
+                all personal data is permanently removed within 30 days.
+              </li>
+            </ul>
+            <p>
+              {/* TODO: Replace with real support email */}
+              For GDPR-related requests, contact us at: support@tropos.app
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">
+              7. Third-Party Services
             </h2>
             <p>We use the following third-party services:</p>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
               <li>
                 <strong className="text-foreground">Firebase (Google):</strong>{" "}
-                Authentication and data storage
+                Authentication, data storage, and analytics
+              </li>
+              {/* TODO: Add when integrated */}
+              <li>
+                <strong className="text-foreground">RevenueCat:</strong>{" "}
+                Subscription management and payment processing (planned)
+              </li>
+              <li>
+                <strong className="text-foreground">Sentry:</strong>{" "}
+                Crash reporting and error monitoring (planned)
               </li>
             </ul>
             <p>
@@ -122,17 +189,17 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              7. Children's Privacy
+              8. Children's Privacy
             </h2>
             <p>
-              Adaptive Fitness is not intended for children under 13. We do not
-              knowingly collect data from children under 13.
+              Tropos is not intended for children under 16. We do not
+              knowingly collect data from children under 16.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              8. Changes to This Policy
+              9. Changes to This Policy
             </h2>
             <p>
               We may update this privacy policy from time to time. We will
@@ -142,11 +209,12 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              9. Contact
+              10. Contact
             </h2>
             <p>
+              {/* TODO: Replace with real support email */}
               For questions about this privacy policy or your data, please
-              contact us through the app settings or at our support channels.
+              contact us at support@tropos.app
             </p>
           </section>
         </div>

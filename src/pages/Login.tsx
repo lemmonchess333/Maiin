@@ -67,7 +67,7 @@ export default function Login() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Adaptive Fitness
+              Tropos
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Track your progress, crush your goals

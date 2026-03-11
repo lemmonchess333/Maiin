@@ -142,12 +142,12 @@ export default function RunSummary() {
   };
 
   const handleExportGPX = () => {
-    const gpx = toGPX(points, `Maiin Run ${new Date().toLocaleDateString()}`);
+    const gpx = toGPX(points, `Tropos Run ${new Date().toLocaleDateString()}`);
     const blob = new Blob([gpx], { type: 'application/gpx+xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `maiin-run-${Date.now()}.gpx`;
+    a.download = `tropos-run-${Date.now()}.gpx`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -167,11 +167,37 @@ export default function RunSummary() {
   return (
     <div className="min-h-screen pb-24 bg-background text-foreground">
       <div className="text-center pt-8 pb-4 px-6">
-        <h1 className="text-xl font-bold text-foreground">Great run!</h1>
+        <h1 className="text-xl font-bold text-foreground">
+          {(distance || 0) > 200 && (elapsed || 0) > 60
+            ? "Great run!"
+            : (distance || 0) > 0
+              ? "Run saved"
+              : "Run recorded"}
+        </h1>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric'
         })}</p>
       </div>
+
+      {(distance || 0) === 0 && (elapsed || 0) < 30 && !saved && (
+        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted border border-border/50 text-center space-y-3">
+          <p className="text-sm text-muted-foreground">Run too short to save. Discard?</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted border border-border/50 text-foreground"
+            >
+              Save anyway
+            </button>
+            <button
+              onClick={handleDiscard}
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Offline notice */}
       {!isOnline && !saved && (

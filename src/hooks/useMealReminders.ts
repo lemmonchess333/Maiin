@@ -71,7 +71,7 @@ export function useMealReminders() {
 
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification(`Time for ${meal.key}!`, {
-            body: `Don't forget to log your ${meal.key} in Maiin`,
+            body: `Don't forget to log your ${meal.key} in Tropos`,
             icon: '/Maiin/icons/icon-192.png',
           });
         }

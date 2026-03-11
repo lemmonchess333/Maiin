@@ -1,9 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { detectPlateau, calculateAdaptiveMacros, phaseConfig } from "@/lib/plateauDetection";
-import type { PhaseMode } from "@/lib/plateauDetection";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { calculateTDEE, ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
@@ -32,8 +29,6 @@ import {
   Download,
   Timer,
   Users,
-  Lock,
-  Brain,
   Footprints,
   MapPin,
   Trash2,
@@ -76,171 +71,6 @@ const PLANS = [
     badge: "Best value",
   },
 ];
-
-function AIAdjustmentsSection() {
-  const { profile, updateProfile } = useAuth();
-  const { isPro } = useSubscription();
-  const { currentWeek } = usePerformanceWeeks();
-
-  const phase = (profile?.program?.goal || "recomp") as PhaseMode;
-  const config = phaseConfig[phase] || phaseConfig["recomp"];
-  const sensitivity = config.plateauSensitivity;
-
-  const avgLiftChange = currentWeek?.breakdown?.liftLoadScore != null
-    ? (currentWeek.breakdown.liftLoadScore - 50) / 50
-    : 0;
-  const avgWeightChange = 0;
-
-  const tdeeBase = profile?.tdeeBase || profile?.targetCalories || 2200;
-  const currentAdjustment = profile?.aiCalorieAdjustment || 0;
-
-  const plateau = detectPlateau(avgLiftChange, avgWeightChange, sensitivity);
-  const macros = calculateAdaptiveMacros(
-    profile?.weightKg || 70,
-    avgLiftChange,
-    avgWeightChange,
-    phase,
-    tdeeBase
-  );
-
-  const suggestedDelta = macros.calories - tdeeBase;
-
-  const statusColors: Record<string, string> = {
-    progressing: "text-green-500",
-    stalling: "text-amber-500",
-    regressing: "text-red-500",
-    weight_only: "text-amber-500",
-  };
-
-  if (!isPro) {
-    return (
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Brain className="w-5 h-5" />
-          AI Adjustments
-        </h2>
-        <div className="p-4 rounded-2xl bg-muted/50 border border-border/50 flex items-center gap-3">
-          <Lock className="w-5 h-5 text-muted-foreground shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-foreground">Pro Feature</p>
-            <p className="text-xs text-muted-foreground">
-              Upgrade to unlock AI-driven plateau detection and macro adjustments.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <Brain className="w-5 h-5" />
-        AI Adjustments
-      </h2>
-
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Phase</span>
-          <span className="text-sm font-medium text-foreground capitalize">{phase}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Status</span>
-          <span className={cn("text-sm font-semibold capitalize", statusColors[plateau.status] || "text-foreground")}>
-            {plateau.status}
-          </span>
-        </div>
-
-        <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-3 rounded-r-lg">
-          <p className="text-xs text-muted-foreground leading-relaxed">{plateau.message}</p>
-        </div>
-
-        {/* Show current state: base → applied */}
-        <div className="p-3 rounded-xl bg-muted/50 space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">TDEE Base</span>
-            <span className="font-medium text-foreground">{tdeeBase} cal</span>
-          </div>
-          {currentAdjustment !== 0 && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Active AI adjustment</span>
-              <span className={cn("font-medium", currentAdjustment > 0 ? "text-green-500" : "text-amber-500")}>
-                {currentAdjustment > 0 ? "+" : ""}{currentAdjustment} cal
-              </span>
-            </div>
-          )}
-          <div className="flex items-center justify-between text-xs border-t border-border/50 pt-1.5">
-            <span className="text-muted-foreground">Current target</span>
-            <span className="font-bold text-foreground">{tdeeBase + currentAdjustment} cal</span>
-          </div>
-        </div>
-
-        {suggestedDelta !== currentAdjustment && plateau.calorieAdjust !== 0 && (
-          <>
-            <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
-              <p className="text-xs font-medium text-foreground">AI Suggestion</p>
-              <p className="text-sm font-bold text-primary">
-                {tdeeBase} → {macros.calories} cal
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  ({suggestedDelta > 0 ? "+" : ""}{suggestedDelta})
-                </span>
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {macros.protein}g protein · {macros.carbs}g carbs · {macros.fat}g fat
-              </p>
-            </div>
-            <button
-              onClick={async () => {
-                await updateProfile({
-                  aiCalorieAdjustment: suggestedDelta,
-                  targetCalories: macros.calories,
-                  targetProtein: macros.protein,
-                  targetCarbs: macros.carbs,
-                  targetFat: macros.fat,
-                });
-                toast.success(
-                  `AI adjustment applied: ${suggestedDelta > 0 ? "+" : ""}${suggestedDelta} cal`,
-                  { description: `New target: ${macros.calories} cal · ${macros.protein}g protein` }
-                );
-              }}
-              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
-            >
-              Apply {suggestedDelta > 0 ? "+" : ""}{suggestedDelta} cal Adjustment
-            </button>
-          </>
-        )}
-
-        {currentAdjustment !== 0 && (
-          <button
-            onClick={async () => {
-              const tdeeGoal = (phase === "strength peak" ? "recomp" : phase) as "cut" | "recomp" | "lean bulk";
-              const baseMacros = calculateTDEE(
-                profile?.weightKg || 70,
-                profile?.heightCm || 170,
-                profile?.age || 25,
-                profile?.activityLevel || "moderate",
-                tdeeGoal,
-                profile?.sex || "male",
-              );
-              await updateProfile({
-                aiCalorieAdjustment: 0,
-                targetCalories: tdeeBase,
-                targetProtein: baseMacros.protein,
-                targetCarbs: baseMacros.carbs,
-                targetFat: baseMacros.fat,
-              });
-              toast.success("AI adjustment cleared, back to TDEE base");
-            }}
-            className="w-full py-2 rounded-xl bg-muted text-muted-foreground text-xs font-medium"
-          >
-            Clear AI Adjustment
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 
 export default function Settings() {
@@ -385,8 +215,7 @@ export default function Settings() {
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
       tdeeBase: tdee.targetCalories,
-      aiCalorieAdjustment: 0, // Reset AI adjustment when TDEE is recalculated
-      targetCalories: tdee.targetCalories,
+      targetCalories: profile?.customCalorieTarget || tdee.targetCalories,
       targetProtein: tdee.protein,
       targetCarbs: tdee.carbs,
       targetFat: tdee.fat,
@@ -624,7 +453,7 @@ export default function Settings() {
         </p>
         <div>
           <label className="text-sm text-muted-foreground">
-            Protein meals per week ({mealsTarget})
+            Weekly meal logging target ({mealsTarget})
           </label>
           <input
             type="range"
@@ -833,7 +662,7 @@ export default function Settings() {
       </motion.button>
 
       {/* Training Setup */}
-      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE, training phase, AI adjustments">
+      <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE & training phase">
 
       {/* TDEE Calculator */}
       <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
@@ -926,15 +755,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {(profile?.aiCalorieAdjustment ?? 0) !== 0 && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <Brain className="w-4 h-4 text-amber-500 shrink-0" />
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  AI adjustment active: {(profile?.aiCalorieAdjustment ?? 0) > 0 ? "+" : ""}{profile?.aiCalorieAdjustment} cal.
-                  Saving will reset to TDEE base.
-                </p>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -1018,11 +838,28 @@ export default function Settings() {
               {tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal vs maintenance
             </p>
           )}
+            {/* Manual calorie override */}
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <label className="text-sm text-muted-foreground">
+                Custom daily target (optional)
+              </label>
+              <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">
+                Leave blank to use your calculated TDEE of {tdee.targetCalories} cal
+              </p>
+              <input
+                type="number"
+                value={profile?.customCalorieTarget ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : undefined;
+                  updateProfile({ customCalorieTarget: val || undefined });
+                }}
+                placeholder={String(tdee.targetCalories)}
+                className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
         </div>
       </div>
 
-      {/* AI Adjustments (Pro) */}
-      <AIAdjustmentsSection />
 
       </AccordionSection>
 
@@ -1373,7 +1210,7 @@ export default function Settings() {
       </AccordionSection>
 
       <p className="text-center text-xs text-muted-foreground">
-        Adaptive Fitness v1.1.0
+        Tropos v1.1.0
       </p>
 
       {/* Restructure Warning Modal */}

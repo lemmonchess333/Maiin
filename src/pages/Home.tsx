@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
+import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp, orderBy, limit as fbLimit, addDoc, serverTimestamp } from "firebase/firestore";
@@ -44,7 +45,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
 }) {
   var today = new Date();
   var sow = new Date(today);
-  sow.setDate(today.getDate() - today.getDay());
+  sow.setDate(today.getDate() - ((today.getDay() + 6) % 7));
   var days = Array.from({ length: 7 }, function(_, i) {
     var d = new Date(sow); d.setDate(sow.getDate() + i);
     var k = format(d, "yyyy-MM-dd");
@@ -145,7 +146,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate: _lastWeightDate, weightUnit, onLogWeight, todayRun }: {
+function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight, todayRun, healthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -157,6 +158,7 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
   weightUnit: string;
   onLogWeight: () => void;
   todayRun: ScheduledRunDay | null;
+  healthScore: number | null;
 }) {
   var [ci, setCi] = useState(0);
   var touchStartX = 0;
@@ -257,7 +259,13 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Health</p>
-                  <p className="text-sm font-bold text-foreground">Score</p>
+                  {healthScore != null ? (
+                    <p className={cn("text-sm font-bold", healthScore >= 80 ? "text-green-500" : healthScore >= 60 ? "text-amber-500" : "text-red-500")}>
+                      {healthScore}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">--</p>
+                  )}
                 </div>
               </Link>
               {/* Water */}
@@ -283,20 +291,13 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                   <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
                     {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
                   </p>
+                  {lastWeightDate && (
+                    <p className="text-[8px] text-muted-foreground/60">{lastWeightDate}</p>
+                  )}
                 </div>
                 <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
                   <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 </button>
-              </div>
-              {/* Steps (placeholder) */}
-              <div className="flex items-center gap-2.5 p-3 bg-teal-50 dark:bg-teal-950/20 rounded-xl opacity-60">
-                <div className="w-9 h-9 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Footprints className="w-4 h-4 text-teal-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
-                  <p className="text-xs text-muted-foreground">In app</p>
-                </div>
               </div>
             </div>
           </motion.div>
@@ -430,7 +431,7 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
           </div>
           <div className="flex items-baseline gap-2 mb-2.5">
             <span className="text-3xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
-              {calories.toLocaleString()}
+              {(calories || 0).toLocaleString()}
             </span>
             <span className="text-xs text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
             {caloriesLeft > 0 && (
@@ -502,17 +503,46 @@ export default function Home() {
 
   var weightUnit = profile?.preferredWeightUnit || "kg";
 
+  var todayKey = format(new Date(), "yyyy-MM-dd");
+  var todayTotals = getDailyTotals(todayKey);
+  var healthScoreResult = useMemo(function() {
+    return calculateHealthScore(
+      {
+        calories: todayTotals.calories,
+        protein: todayTotals.protein,
+        fiber: todayTotals.fiber,
+        sugar: todayTotals.sugar,
+        sodium: todayTotals.sodium,
+        mealCount: todayTotals.mealCount,
+      },
+      {
+        calories: profile?.targetCalories || 2200,
+        protein: profile?.targetProtein || 160,
+        fiber: profile?.targetFiber || 30,
+        sugar: profile?.targetSugar || 30,
+        sodium: profile?.targetSodium || 2300,
+      }
+    );
+  }, [todayTotals, profile]);
+  var healthScore = healthScoreResult.score;
+
   useEffect(function() {
     if (!user?.uid) return;
     getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(1))).then(function(snap) {
-      if (snap.empty) return;
+      if (snap.empty) {
+        if (profile?.weightKg) {
+          var w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
+          setLastWeightInfo({ weight: w, date: "From profile" });
+        }
+        return;
+      }
       var d = snap.docs[0].data();
       if (typeof d.weight === "number") {
         var w = weightUnit === "lbs" ? (d.weight * 2.20462).toFixed(1) : d.weight.toFixed(1);
         setLastWeightInfo({ weight: w, date: format(new Date(d.date + "T12:00:00"), "MMM d") });
       }
     }).catch(function() {});
-  }, [user, weightUnit]);
+  }, [user, weightUnit, profile?.weightKg]);
 
   var handleLogWeight = async function() {
     if (!weightInput || !user) return;
@@ -635,7 +665,7 @@ export default function Home() {
           <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }}
             lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} />
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} />
         )}
       </motion.div>
 

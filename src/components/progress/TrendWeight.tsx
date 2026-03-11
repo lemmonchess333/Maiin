@@ -150,8 +150,15 @@ export function TrendWeight() {
               tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               axisLine={false}
               tickLine={false}
-              width={35}
+              width={45}
               tickFormatter={(v) => `${convert(v)}`}
+              label={{
+                value: unit,
+                angle: -90,
+                position: "insideLeft",
+                offset: 0,
+                style: { fontSize: 10, fill: "var(--muted-foreground)", textAnchor: "middle" },
+              }}
             />
             <Tooltip
               contentStyle={{

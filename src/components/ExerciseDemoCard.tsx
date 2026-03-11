@@ -135,26 +135,37 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                 {/* Instructions */}
                 {demo.instructions.length > 0 && (
                   <div>
-                    <button
-                      onClick={() => setShowInstructions(!showInstructions)}
-                      className="flex items-center gap-1.5 text-sm font-medium text-foreground w-full"
+                    <p className="text-sm font-medium text-foreground mb-2">Instructions</p>
+                    <div
+                      className={`relative overflow-hidden transition-all duration-300 ${
+                        showInstructions ? "max-h-[1000px]" : "max-h-20"
+                      }`}
                     >
-                      <span>Instructions</span>
-                      {showInstructions ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </button>
-                    {showInstructions && (
-                      <ol className="mt-2 space-y-2 list-decimal list-inside">
+                      <ol className="space-y-2 list-decimal list-inside">
                         {demo.instructions.map((step, i) => (
                           <li key={i} className="text-xs text-muted-foreground leading-relaxed">
                             {step}
                           </li>
                         ))}
                       </ol>
-                    )}
+                      {!showInstructions && (
+                        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setShowInstructions(!showInstructions)}
+                      className="flex items-center gap-1 mt-1.5 text-xs font-medium text-primary"
+                    >
+                      {showInstructions ? (
+                        <>
+                          <ChevronUp className="w-3.5 h-3.5" /> Hide
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3.5 h-3.5" /> Show full instructions
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
               </div>

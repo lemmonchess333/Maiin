@@ -187,10 +187,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
-  const handleRegenerate = async () => {
+  const handleRegenerate = async (goalOverride?: string, weeklyTargetOverride?: number) => {
     setRegenerating(true);
-    await regenerateProgram();
+    await regenerateProgram(goalOverride, weeklyTargetOverride);
     setRegenerating(false);
+    setShowSettings(false);
   };
 
   const handleAdvanceWeek = async () => {
@@ -347,7 +348,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
             <Settings2 className="w-4 h-4 text-muted-foreground" />
           </button>
           <button
-            onClick={handleRegenerate}
+            onClick={() => handleRegenerate()}
             disabled={regenerating || locked}
             className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
           >
@@ -868,7 +869,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     {(["cut", "recomp", "lean bulk"] as Goal[]).map((g) => (
                       <button
                         key={g}
-                        onClick={() => regenerateProgram(g)}
+                        onClick={() => handleRegenerate(g)}
                         className={cn(
                           "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
                           programState.goal === g ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
@@ -890,7 +891,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     ]).map((s) => (
                       <button
                         key={s.value}
-                        onClick={() => regenerateProgram(undefined, s.value)}
+                        onClick={() => handleRegenerate(undefined, s.value)}
                         className={cn(
                           "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
                           s.split === programState.splitType ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
@@ -932,7 +933,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                 </div>
 
                 <button
-                  onClick={handleRegenerate}
+                  onClick={() => handleRegenerate()}
                   className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors pointer-events-auto"
                 >
                   Reset Mesocycle
