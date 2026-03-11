@@ -7,7 +7,7 @@ interface QueuedWrite {
   timestamp: number;
 }
 
-const QUEUE_KEY = "maiin_offline_queue";
+const QUEUE_KEY = "tropos_offline_queue";
 
 function getQueue(): QueuedWrite[] {
   try {

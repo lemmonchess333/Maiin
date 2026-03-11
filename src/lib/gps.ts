@@ -187,7 +187,7 @@ export function toGPX(points: GPSPoint[], name: string): string {
     })
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Maiin">
+<gpx version="1.1" creator="Tropos">
   <trk><name>${name}</name><trkseg>
 ${trkpts}
   </trkseg></trk>

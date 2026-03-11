@@ -141,9 +141,6 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
         ))}
       </div>
 
-      <p className="text-[10px] text-muted-foreground text-center mt-3">
-        Hybrid Score = (km × 100) + (volume kg × 0.1)
-      </p>
     </div>
   );
 }

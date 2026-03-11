@@ -22,7 +22,7 @@ export default function SessionCard({ type, title, status, onStart, onSkip }: Se
         <p className="text-xs font-medium truncate">{title}</p>
       </div>
       {status === 'completed' ? (
-        <span className="text-green-500 text-xs">✓</span>
+        <span className="text-green-500 text-sm font-bold bg-green-100 dark:bg-green-900/30 rounded-full w-6 h-6 flex items-center justify-center">✓</span>
       ) : (
         <div className="flex gap-1">
           <button onClick={onStart} className="text-[10px] px-2 py-1 rounded bg-purple-500 text-white">

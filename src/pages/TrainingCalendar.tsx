@@ -26,7 +26,8 @@ export default function TrainingCalendar() {
   var [sessions, setSessions] = useState<TrainingSession[]>([]);
   var [currentWeekStart, setCurrentWeekStart] = useState(function() {
     var d = new Date();
-    d.setDate(d.getDate() - d.getDay() + 1);
+    var dow = d.getDay();
+    d.setDate(d.getDate() - ((dow + 6) % 7));
     d.setHours(0, 0, 0, 0);
     return d;
   });

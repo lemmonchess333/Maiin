@@ -231,35 +231,38 @@ export default function History() {
     <div className="space-y-4">
       <h1 className="text-lg font-bold text-foreground">Analytics</h1>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {VALID_TABS.map((f) => {
-          const active = filter === f;
-          let activeStyle = "bg-purple-500 text-white shadow-[var(--ds-shadow-purple-glow)]";
-          if (f === "running")
-            activeStyle =
-              "bg-[#FF6B6B] text-white shadow-[0_2px_12px_rgba(255,107,107,0.35)]";
-          else if (f === "lifting")
-            activeStyle =
-              "bg-[#6C7CFF] text-white shadow-[0_2px_12px_rgba(108,124,255,0.35)]";
-          else if (f === "nutrition")
-            activeStyle =
-              "bg-emerald-500 text-white shadow-[0_2px_12px_rgba(52,211,153,0.35)]";
-          else if (f === "performance")
-            activeStyle =
-              "bg-[#8b5cf6] text-white shadow-[0_2px_12px_rgba(139,92,246,0.35)]";
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={[
-                "shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all",
-                active ? activeStyle : "bg-muted text-muted-foreground",
-              ].join(" ")}
-            >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          );
-        })}
+      <div className="relative">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {VALID_TABS.map((f) => {
+            const active = filter === f;
+            let activeStyle = "bg-purple-500 text-white shadow-[var(--ds-shadow-purple-glow)]";
+            if (f === "running")
+              activeStyle =
+                "bg-[#FF6B6B] text-white shadow-[0_2px_12px_rgba(255,107,107,0.35)]";
+            else if (f === "lifting")
+              activeStyle =
+                "bg-[#6C7CFF] text-white shadow-[0_2px_12px_rgba(108,124,255,0.35)]";
+            else if (f === "nutrition")
+              activeStyle =
+                "bg-emerald-500 text-white shadow-[0_2px_12px_rgba(52,211,153,0.35)]";
+            else if (f === "performance")
+              activeStyle =
+                "bg-[#8b5cf6] text-white shadow-[0_2px_12px_rgba(139,92,246,0.35)]";
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={[
+                  "shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all",
+                  active ? activeStyle : "bg-muted text-muted-foreground",
+                ].join(" ")}
+              >
+                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent" />
       </div>
 
       {filter === "badges" ? (
@@ -326,6 +329,11 @@ export default function History() {
                 prs={runningPRs}
                 accentColor={THEME.running}
               />
+              {runs.length === 0 && (
+                <p className="text-gray-400 text-sm text-center py-2">
+                  🏃 Complete your first run to set records here
+                </p>
+              )}
               <RunningHistorySection />
             </>
           )}

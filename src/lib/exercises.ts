@@ -3,8 +3,10 @@ export interface Exercise {
   name: string;
   category: string;
   muscleGroup: string;
+  secondaryMuscles?: string[];
   equipment: string;
   caloriesPerMinute: number;
+  instructions?: string;
 }
 
 export const EXERCISE_CATEGORIES = [
@@ -147,31 +149,31 @@ export const EXERCISES: Exercise[] = [
   { id: "ab-wheel", name: "Ab Wheel Rollout", category: "Core", muscleGroup: "Core", equipment: "Ab Wheel", caloriesPerMinute: 6 },
 
   // ================= FULL BODY =================
-  { id: "clean-and-press", name: "Clean and Press", category: "Full Body", muscleGroup: "Full Body", equipment: "Barbell", caloriesPerMinute: 10 },
-  { id: "kettlebell-swing", name: "Kettlebell Swing", category: "Full Body", muscleGroup: "Full Body", equipment: "Kettlebell", caloriesPerMinute: 10 },
-  { id: "burpees", name: "Burpees", category: "Full Body", muscleGroup: "Full Body", equipment: "Bodyweight", caloriesPerMinute: 10 },
-  { id: "thrusters", name: "Thrusters", category: "Full Body", muscleGroup: "Full Body", equipment: "Barbell", caloriesPerMinute: 9.5 },
-  { id: "farmers-carry", name: "Farmer's Carry", category: "Full Body", muscleGroup: "Full Body", equipment: "Dumbbells", caloriesPerMinute: 9 },
-  { id: "sled-push-pull", name: "Sled Push/Pull", category: "Full Body", muscleGroup: "Full Body", equipment: "Machine", caloriesPerMinute: 10 },
-  { id: "landmine-squat", name: "Landmine Squat", category: "Full Body", muscleGroup: "Full Body", equipment: "Barbell", caloriesPerMinute: 8.5 },
-  { id: "zercher-squat", name: "Zercher Squat", category: "Full Body", muscleGroup: "Full Body", equipment: "Barbell", caloriesPerMinute: 9 },
-  { id: "turkish-get-up", name: "Turkish Get-Up", category: "Full Body", muscleGroup: "Full Body", equipment: "Kettlebell", caloriesPerMinute: 8 },
-  { id: "man-maker", name: "Man Maker", category: "Full Body", muscleGroup: "Full Body", equipment: "Dumbbells", caloriesPerMinute: 11 },
-  { id: "battle-ropes", name: "Battle Ropes", category: "Full Body", muscleGroup: "Full Body", equipment: "Battle Ropes", caloriesPerMinute: 11 },
-  { id: "box-jumps", name: "Box Jumps", category: "Full Body", muscleGroup: "Full Body", equipment: "Box", caloriesPerMinute: 9 },
+  { id: "clean-and-press", name: "Clean and Press", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Shoulders", "Legs", "Core"], equipment: "Barbell", caloriesPerMinute: 10, instructions: "Start with the barbell on the floor. Pull it to your shoulders in one explosive motion (clean), then press it overhead. Lower back to shoulders, then to the floor and repeat." },
+  { id: "kettlebell-swing", name: "Kettlebell Swing", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Glutes", "Hamstrings", "Core"], equipment: "Kettlebell", caloriesPerMinute: 10, instructions: "Stand with feet shoulder-width apart, kettlebell between your feet. Hinge at the hips, grip the bell, and swing it forward by driving your hips. Let it swing to chest height, then control the descent." },
+  { id: "burpees", name: "Burpees", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Chest", "Legs", "Core"], equipment: "Bodyweight", caloriesPerMinute: 10, instructions: "From standing, drop into a squat with hands on the floor. Jump your feet back into a push-up position, perform a push-up, jump feet forward, then explode upward into a jump." },
+  { id: "thrusters", name: "Thrusters", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Quads", "Shoulders", "Core"], equipment: "Barbell", caloriesPerMinute: 9.5, instructions: "Hold the barbell at shoulder height in a front rack position. Squat down, then drive up explosively and press the bar overhead in one fluid movement. Lower and repeat." },
+  { id: "farmers-carry", name: "Farmer's Carry", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Forearms", "Traps", "Core"], equipment: "Dumbbells", caloriesPerMinute: 9, instructions: "Pick up heavy dumbbells or kettlebells in each hand. Stand tall with shoulders back and core braced. Walk forward with controlled steps, maintaining an upright posture throughout." },
+  { id: "sled-push-pull", name: "Sled Push/Pull", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Quads", "Glutes", "Core"], equipment: "Machine", caloriesPerMinute: 10, instructions: "For push: grip the sled handles at chest height and drive forward with powerful leg strides. For pull: attach a rope, face the sled, and pull it toward you hand over hand." },
+  { id: "landmine-squat", name: "Landmine Squat", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Quads", "Glutes", "Core"], equipment: "Barbell", caloriesPerMinute: 8.5, instructions: "Hold the end of a landmine barbell at chest height with both hands. Squat down keeping your torso upright, then drive through your heels to stand back up." },
+  { id: "zercher-squat", name: "Zercher Squat", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Quads", "Glutes", "Biceps", "Core"], equipment: "Barbell", caloriesPerMinute: 9, instructions: "Cradle the barbell in the crooks of your elbows with arms bent. Squat down keeping elbows inside your knees, maintaining an upright torso. Drive up through your heels." },
+  { id: "turkish-get-up", name: "Turkish Get-Up", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Shoulders", "Core", "Glutes"], equipment: "Kettlebell", caloriesPerMinute: 8, instructions: "Lie on your back holding a kettlebell straight up with one arm. Rise to a standing position through a series of controlled movements while keeping the weight overhead. Reverse the steps to return." },
+  { id: "man-maker", name: "Man Maker", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Chest", "Shoulders", "Back", "Legs"], equipment: "Dumbbells", caloriesPerMinute: 11, instructions: "Start in push-up position gripping dumbbells. Perform a push-up, row each dumbbell, jump feet to hands, clean the dumbbells to shoulders, then press overhead. Return to start." },
+  { id: "battle-ropes", name: "Battle Ropes", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Shoulders", "Arms", "Core"], equipment: "Battle Ropes", caloriesPerMinute: 11, instructions: "Hold one end of the rope in each hand. Create waves by alternating arms up and down rapidly, or slam both arms simultaneously. Keep a slight squat and engaged core throughout." },
+  { id: "box-jumps", name: "Box Jumps", category: "Full Body", muscleGroup: "Full Body", secondaryMuscles: ["Quads", "Glutes", "Calves"], equipment: "Box", caloriesPerMinute: 9, instructions: "Stand facing a sturdy box. Swing your arms and jump explosively onto the box, landing softly with both feet. Stand fully upright, then step or jump back down and repeat." },
 
   // ================= CARDIO =================
-  { id: "treadmill", name: "Treadmill", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 10 },
-  { id: "incline-treadmill-walk", name: "Incline Treadmill Walking", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 7 },
-  { id: "elliptical", name: "Elliptical", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 8 },
-  { id: "rowing-machine", name: "Rowing Machine", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 9 },
-  { id: "stairmaster", name: "Stairmaster", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 9 },
-  { id: "bike", name: "Stationary Bike", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 7.5 },
-  { id: "spin-bike", name: "Spin Bike", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 9 },
-  { id: "assault-bike", name: "Assault Bike", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 12 },
-  { id: "ski-erg", name: "Ski Erg", category: "Cardio", muscleGroup: "Cardio", equipment: "Machine", caloriesPerMinute: 10 },
-  { id: "jump-rope", name: "Jump Rope", category: "Cardio", muscleGroup: "Cardio", equipment: "Jump Rope", caloriesPerMinute: 11 },
-  { id: "swimming", name: "Swimming", category: "Cardio", muscleGroup: "Cardio", equipment: "Pool", caloriesPerMinute: 9 },
+  { id: "treadmill", name: "Treadmill", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Quads", "Calves"], equipment: "Machine", caloriesPerMinute: 10, instructions: "Set your desired speed and incline. Walk or run at a steady pace, maintaining good posture with arms swinging naturally." },
+  { id: "incline-treadmill-walk", name: "Incline Treadmill Walking", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Glutes", "Calves"], equipment: "Machine", caloriesPerMinute: 7, instructions: "Set treadmill to a steep incline (10-15%). Walk at a moderate pace without holding the handrails. Keep your core engaged and lean slightly forward." },
+  { id: "elliptical", name: "Elliptical", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Quads", "Glutes"], equipment: "Machine", caloriesPerMinute: 8, instructions: "Stand on the pedals and grip the handles. Move in a smooth elliptical motion, pushing and pulling with both arms and legs." },
+  { id: "rowing-machine", name: "Rowing Machine", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Back", "Legs", "Core"], equipment: "Machine", caloriesPerMinute: 9, instructions: "Sit with feet strapped in and grip the handle. Drive through your legs first, then lean back and pull the handle to your chest. Return in reverse order." },
+  { id: "stairmaster", name: "Stairmaster", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Quads", "Glutes", "Calves"], equipment: "Machine", caloriesPerMinute: 9, instructions: "Step onto the machine and set your pace. Climb steadily without leaning on the handrails. Keep an upright posture throughout." },
+  { id: "bike", name: "Stationary Bike", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Quads", "Hamstrings"], equipment: "Machine", caloriesPerMinute: 7.5, instructions: "Adjust the seat height so your leg has a slight bend at the bottom. Pedal at a steady cadence, adjusting resistance as needed." },
+  { id: "spin-bike", name: "Spin Bike", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Quads", "Hamstrings", "Core"], equipment: "Machine", caloriesPerMinute: 9, instructions: "Set up the bike with proper seat and handlebar height. Pedal at high intensity, alternating between seated and standing positions." },
+  { id: "assault-bike", name: "Assault Bike", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Full Body"], equipment: "Machine", caloriesPerMinute: 12, instructions: "Grip both handles and place feet on pedals. Push and pull the handles while pedalling for a full-body cardio effort." },
+  { id: "ski-erg", name: "Ski Erg", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Lats", "Core", "Triceps"], equipment: "Machine", caloriesPerMinute: 10, instructions: "Stand facing the machine and grip both handles overhead. Pull down explosively while hinging at the hips, driving through your core and lats." },
+  { id: "jump-rope", name: "Jump Rope", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Calves", "Shoulders"], equipment: "Jump Rope", caloriesPerMinute: 11, instructions: "Hold handles at hip height with elbows close to your body. Swing the rope with your wrists and jump just high enough to clear it." },
+  { id: "swimming", name: "Swimming", category: "Cardio", muscleGroup: "Cardio", secondaryMuscles: ["Full Body"], equipment: "Pool", caloriesPerMinute: 9, instructions: "Choose your stroke and swim continuous laps. Focus on breathing rhythm and maintaining a streamlined body position in the water." },
 ];
 
 export function getExercisesByCategory(category: string): Exercise[] {

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.adaptivefit.app",
-  appName: "Adaptive Fitness",
+  appName: "Tropos",
   webDir: "dist",
   server: {
     androidScheme: "https",
@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "automatic",
-    scheme: "Adaptive Fitness",
+    scheme: "Tropos",
   },
   android: {
     backgroundColor: "#7c3aed",

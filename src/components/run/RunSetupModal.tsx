@@ -179,7 +179,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <p className="text-sm font-semibold text-white">{selectedInfo.label}</p>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
             {selectedInfo.cues.map((c) => (
-              <p key={c} className="text-[11px] text-white/50">· {c}</p>
+              <p key={c} className="text-[11px] text-gray-700 dark:text-gray-300">· {c}</p>
             ))}
           </div>
         </motion.div>

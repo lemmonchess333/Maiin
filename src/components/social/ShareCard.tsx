@@ -43,8 +43,8 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       style={{ width: 1080, height: 1920, position: 'absolute', left: -9999, top: -9999 }}
       className="bg-gray-950 text-white flex flex-col items-center justify-center p-16">
       {/* Brand header */}
-      <p className="text-4xl font-bold tracking-tight mb-1" style={{ color: '#a78bfa' }}>MAIIN</p>
-      <p className="text-lg text-white/30 mb-16">Adaptive Fitness</p>
+      <p className="text-4xl font-bold tracking-tight mb-1" style={{ color: '#a78bfa' }}>TROPOS</p>
+      <p className="text-lg text-white/30 mb-16">Tropos</p>
 
       {/* Run card */}
       {data.type === 'run' && (

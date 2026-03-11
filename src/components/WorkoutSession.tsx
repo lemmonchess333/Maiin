@@ -12,6 +12,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 function playChime() {
   try {
@@ -72,6 +76,7 @@ interface Props {
 }
 
 export default function WorkoutSession({ day, dayIndex, onLogExercise, onCompleteDay, onClose }: Props) {
+  const { user, profile, updateProfile } = useAuth();
   const [currentExIndex, setCurrentExIndex] = useState(0);
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() =>
@@ -86,6 +91,49 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   );
   const [showRPE, setShowRPE] = useState(false);
 
+  // Pre-fill weights/reps from most recent previous session
+  useEffect(() => {
+    if (!user?.uid || !day.exercises.length) return;
+
+    const fetchPreviousWeights = async () => {
+      const workoutsRef = collection(db, "users", user.uid, "workouts");
+      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(20)));
+
+      const prevWeights: Record<string, { weight: number; reps: number }[]> = {};
+
+      snap.docs.forEach((d) => {
+        const data = d.data();
+        (data.exercises || []).forEach((ex: any) => {
+          const name = ex.exerciseName;
+          if (!prevWeights[name] && ex.sets?.length > 0) {
+            prevWeights[name] = ex.sets.map((s: any) => ({
+              weight: s.weightKg || 0,
+              reps: s.reps || 0,
+            }));
+          }
+        });
+      });
+
+      setSetLogs((prev) => {
+        const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+        day.exercises.forEach((ex, i) => {
+          const name = ex.name;
+          const prevSets = prevWeights[name];
+          if (prevSets && updated[i]) {
+            updated[i] = updated[i].map((set, si) => ({
+              ...set,
+              weight: set.weight || (prevSets[si]?.weight ?? prevSets[0]?.weight ?? 0),
+              reps: set.reps || (prevSets[si]?.reps ?? prevSets[0]?.reps ?? 0),
+            }));
+          }
+        });
+        return updated;
+      });
+    };
+
+    fetchPreviousWeights();
+  }, [user?.uid]);
+
   // Rest timer
   const [restSeconds, setRestSeconds] = useState(0);
   const [restTarget, setRestTarget] = useState(90);
@@ -96,6 +144,9 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
   const [completing, setCompleting] = useState(false);
+
+  // Stall detection
+  const [stallExercise, setStallExercise] = useState<{name: string, weight: number} | null>(null);
 
   // Undo last set
   const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
@@ -258,6 +309,43 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     };
   }, []);
 
+  // Stall detection on session completion
+  useEffect(() => {
+    if (!sessionComplete || !user?.uid) return;
+
+    const checkStalls = async () => {
+      const workoutsRef = collection(db, "users", user.uid, "workouts");
+      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(20)));
+      const history = snap.docs.map(d => d.data());
+
+      for (const ex of day.exercises) {
+        // Check localStorage cooldown
+        const cooldownKey = `tropos_stall_${ex.name}`;
+        const lastPopup = localStorage.getItem(cooldownKey);
+        if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000) continue; // 3 weeks cooldown
+
+        const lastThree = history
+          .filter(w => (w.exercises || []).some((e: any) => e.exerciseName === ex.name))
+          .slice(0, 3);
+
+        if (lastThree.length < 3) continue;
+
+        const weights = lastThree.map(w => {
+          const found = (w.exercises || []).find((e: any) => e.exerciseName === ex.name);
+          return found?.sets?.map((s: any) => s.weightKg).join(',') || '';
+        });
+
+        if (weights[0] && weights[0] === weights[1] && weights[1] === weights[2]) {
+          const w = lastThree[0].exercises.find((e: any) => e.exerciseName === ex.name)?.sets?.[0]?.weightKg || 0;
+          setStallExercise({ name: ex.name, weight: w });
+          break;
+        }
+      }
+    };
+
+    checkStalls();
+  }, [sessionComplete, user?.uid]);
+
   const handleFinish = async () => {
     setCompleting(true);
     await onCompleteDay(dayIndex);
@@ -298,6 +386,49 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         >
           Close without marking complete
         </button>
+
+        {stallExercise && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setStallExercise(null)} />
+            <div className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full" style={{
+              background: 'rgba(255,255,255,0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            }}>
+              <h3 className="text-lg font-bold text-gray-900">Plateau detected</h3>
+              <p className="text-sm text-gray-600">
+                You've been at {stallExercise.weight}kg on {stallExercise.name} for 3 sessions.
+                A small calorie increase (~150 cal/day) could help you break through.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => {
+                    if (profile) {
+                      const current = profile.customCalorieTarget || profile.targetCalories || 2200;
+                      await updateProfile({ customCalorieTarget: current + 150 });
+                      toast.success('Calorie target increased by 150');
+                    }
+                    localStorage.setItem(`tropos_stall_${stallExercise.name}`, String(Date.now()));
+                    setStallExercise(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium"
+                >
+                  Adjust target (+150 cal)
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.setItem(`tropos_stall_${stallExercise.name}`, String(Date.now()));
+                    setStallExercise(null);
+                  }}
+                  className="px-4 py-2.5 text-sm text-gray-500"
+                >
+                  Not now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
     );
   }
@@ -327,32 +458,35 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       </div>
 
       {/* Exercise navigation pills */}
-      <div className="flex gap-1.5 px-4 py-3 overflow-x-auto">
-        {day.exercises.map((ex, i) => {
-          const setsForEx = setLogs[i] ?? [];
-          const done = setsForEx.every((s) => s.completed);
-          const active = i === currentExIndex;
-          return (
-            <button
-              key={i}
-              onClick={() => {
-                setCurrentExIndex(i);
-                const nextIncomplete = setsForEx.findIndex((s) => !s.completed);
-                setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
-              }}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors shrink-0",
-                done
-                  ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
-                  : active
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-              )}
-            >
-              {ex.name.length > 15 ? ex.name.slice(0, 15) + "…" : ex.name}
-            </button>
-          );
-        })}
+      <div className="relative">
+        <div className="flex gap-1.5 px-4 py-3 overflow-x-auto">
+          {day.exercises.map((ex, i) => {
+            const setsForEx = setLogs[i] ?? [];
+            const done = setsForEx.every((s) => s.completed);
+            const active = i === currentExIndex;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  setCurrentExIndex(i);
+                  const nextIncomplete = setsForEx.findIndex((s) => !s.completed);
+                  setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
+                }}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors shrink-0",
+                  done
+                    ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                    : active
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {ex.name.length > 15 ? ex.name.slice(0, 15) + "…" : ex.name}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent" />
       </div>
 
       {/* Main content area */}
@@ -372,7 +506,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
               style={{ background: `${THEME.lifting}18`, color: THEME.lifting }}>
               <ChevronRight className="w-3 h-3" />
               Last: {currentExercise.lastPerformance.sets}×{currentExercise.lastPerformance.reps}
-              {currentExercise.lastPerformance.weight > 0 && ` @ ${currentExercise.lastPerformance.weight}kg`}
+              {currentExercise.lastPerformance.weight > 0 ? ` @ ${currentExercise.lastPerformance.weight}kg` : " @ Bodyweight"}
             </div>
           )}
         </div>
@@ -484,9 +618,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     <input
                       type="number"
                       value={set.weight || ""}
+                      placeholder={set.weight === 0 ? "BW" : ""}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                       disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="col-span-4">
@@ -569,7 +704,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         {currentExercise && (
           <p className="text-xs text-muted-foreground text-center">
             Target: {currentExercise.sets}&times;{currentExercise.reps} @{" "}
-            {currentExercise.weight > 0 ? `${currentExercise.weight}kg` : "bodyweight"}
+            {currentExercise.weight > 0 ? `${currentExercise.weight}kg` : "Bodyweight"}
           </p>
         )}
       </div>

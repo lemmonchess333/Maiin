@@ -77,7 +77,7 @@ export function ProGate({ children, feature, preview }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-amber-500" />
-                  <h3 className="text-lg font-bold text-foreground">Maiin Pro</h3>
+                  <h3 className="text-lg font-bold text-foreground">Tropos Pro</h3>
                 </div>
                 <button onClick={() => setShowPaywall(false)} className="p-1 rounded-lg hover:bg-muted">
                   <X className="w-5 h-5 text-muted-foreground" />
