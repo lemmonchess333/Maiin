@@ -16,6 +16,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
 function playChime() {
   try {
@@ -129,6 +130,20 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         });
         return updated;
       });
+
+      // Build all-time bests for PR detection
+      const bests: Record<string, number> = {};
+      snap.docs.forEach((d) => {
+        const data = d.data();
+        (data.exercises || []).forEach((ex: any) => {
+          const name = ex.exerciseName;
+          (ex.sets || []).forEach((s: any) => {
+            const w = s.weightKg || 0;
+            if (w > (bests[name] || 0)) bests[name] = w;
+          });
+        });
+      });
+      setAllTimeBests(bests);
     };
 
     fetchPreviousWeights();
@@ -151,6 +166,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Undo last set
   const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // All-time best weights for PR detection
+  const [allTimeBests, setAllTimeBests] = useState<Record<string, number>>({});
+  const [firedPRs, setFiredPRs] = useState<Set<string>>(new Set());
 
   const currentExercise = day.exercises[currentExIndex];
   const currentSets = setLogs[currentExIndex] ?? [];
@@ -258,6 +277,15 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     });
 
     haptic(100);
+
+    // PR detection: check if current weight exceeds all-time best
+    const exName = currentExercise.name;
+    if (set.weight > 0 && set.weight > (allTimeBests[exName] || 0) && !firedPRs.has(exName)) {
+      setFiredPRs((prev) => new Set(prev).add(exName));
+      setAllTimeBests((prev) => ({ ...prev, [exName]: set.weight }));
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      toast.success(`New PR! ${set.weight}kg on ${exName} 🏆`);
+    }
 
     // Track for undo
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);

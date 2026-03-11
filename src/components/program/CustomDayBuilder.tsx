@@ -128,9 +128,10 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                             <label className="text-[10px] text-muted-foreground">kg</label>
                             <input
                               type="number"
-                              value={ex.weight}
+                              value={ex.weight || ""}
+                              placeholder="BW"
                               onChange={(e) => updateField(i, "weight", Math.max(0, Number(e.target.value) || 0))}
-                              className="w-14 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center"
+                              className="w-14 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>

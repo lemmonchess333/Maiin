@@ -62,8 +62,8 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
         var cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
         if (day.isSelected && !day.isToday) cls += " ring-2 ring-primary ring-offset-1 ring-offset-card";
         if (day.isToday) cls += " bg-primary text-primary-foreground";
-        else if (day.hasActivity) cls += " bg-primary/15 text-primary";
-        else cls += " text-muted-foreground";
+        else if (day.hasActivity) cls += " ring-2 ring-green-500 text-primary";
+        else cls += " border border-dashed border-purple-200 dark:border-purple-800 text-muted-foreground";
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
@@ -299,6 +299,17 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                   <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 </button>
               </div>
+              {/* Steps */}
+              <div className="flex items-center gap-2.5 p-3 bg-green-50 dark:bg-green-950/20 rounded-xl">
+                <div className="w-9 h-9 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Footprints className="w-4 h-4 text-green-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
+                  <p className="text-xs text-muted-foreground">—</p>
+                  <p className="text-[8px] text-muted-foreground/60">Connect in app</p>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -505,6 +516,11 @@ export default function Home() {
 
   var todayKey = format(new Date(), "yyyy-MM-dd");
   var todayTotals = getDailyTotals(todayKey);
+  var todayWorkoutCount = useMemo(function() {
+    var tk = format(new Date(), "yyyy-MM-dd");
+    return workouts.filter(function(w) { return w.date === tk; }).length;
+  }, [workouts]);
+
   var healthScoreResult = useMemo(function() {
     return calculateHealthScore(
       {
@@ -521,9 +537,14 @@ export default function Home() {
         fiber: profile?.targetFiber || 30,
         sugar: profile?.targetSugar || 30,
         sodium: profile?.targetSodium || 2300,
+      },
+      {
+        workoutsToday: todayWorkoutCount,
+        waterGlasses: waterGlasses,
+        waterTarget: waterTarget,
       }
     );
-  }, [todayTotals, profile]);
+  }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget]);
   var healthScore = healthScoreResult.score;
 
   useEffect(function() {
@@ -669,9 +690,11 @@ export default function Home() {
         )}
       </motion.div>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
-      </motion.div>
+      {(snapData.ls > 0 || snapData.rs > 0 || snapData.lt > 0 || snapData.rk > 0) && (
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+          <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
+        </motion.div>
+      )}
 
       {perfDoc && perfDoc.insight && (
         <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />

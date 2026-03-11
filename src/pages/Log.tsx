@@ -34,6 +34,7 @@ import {
   MessageSquare,
   BookOpen,
   Mic,
+  ScanBarcode,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -619,6 +620,13 @@ export default function Log() {
             >
               <BookOpen className="w-5 h-5 text-primary" />
               <span className="text-[10px] text-muted-foreground">Recipe</span>
+            </button>
+            <button
+              onClick={() => setShowBarcodeScanner(true)}
+              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
+            >
+              <ScanBarcode className="w-5 h-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">Scan</span>
             </button>
           </div>
 
