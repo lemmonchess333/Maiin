@@ -37,12 +37,10 @@ export function HealthScoreCard() {
   const scoreColor = score != null ? getScoreColor(score) : undefined;
 
   const breakdownItems = [
-    { label: "Calories", pts: breakdown.calories, max: 25 },
-    { label: "Protein", pts: breakdown.protein, max: 25 },
-    { label: "Fiber", pts: breakdown.fiber, max: 15 },
-    { label: "Sugar", pts: breakdown.sugar, max: 10 },
-    { label: "Sodium", pts: breakdown.sodium, max: 10 },
-    { label: "Meal Timing", pts: breakdown.distribution, max: 15 },
+    { label: "Workouts", pts: breakdown.workouts, max: 35 },
+    { label: "Nutrition", pts: breakdown.nutrition, max: 30 },
+    { label: "Water", pts: breakdown.water, max: 15 },
+    { label: "Activity", pts: breakdown.activity, max: 20 },
   ];
 
   return (
@@ -65,7 +63,7 @@ export function HealthScoreCard() {
               <p className="text-xs text-muted-foreground">{getScoreLabel(score)}</p>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">Log 2+ meals to see score</p>
+            <p className="text-xs text-muted-foreground">Log activity to see score</p>
           )}
         </div>
 

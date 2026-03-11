@@ -1174,7 +1174,7 @@ export default function Settings() {
                   if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
                   else if (key === "meals") csv = await exportMealsCSV(user.uid);
                   else csv = await exportBodyweightCSV(user.uid);
-                  downloadCSV(csv, `maiin-${key}-${new Date().toISOString().split("T")[0]}.csv`);
+                  downloadCSV(csv, `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`);
                   toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
                 } catch (err) {
                   toast.error("Export failed");
