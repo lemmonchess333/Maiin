@@ -63,7 +63,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
         if (day.isSelected && !day.isToday) cls += " ring-2 ring-primary ring-offset-1 ring-offset-card";
         if (day.isToday) cls += " bg-primary text-primary-foreground";
         else if (day.hasActivity) cls += " ring-2 ring-green-500 text-primary";
-        else cls += " border border-dashed border-purple-200 dark:border-purple-800 text-muted-foreground";
+        else cls += " border border-dashed border-primary/40 text-muted-foreground";
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>

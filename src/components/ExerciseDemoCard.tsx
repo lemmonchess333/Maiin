@@ -122,7 +122,7 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                     <div className="flex flex-wrap gap-1.5">
                       <span className="text-[10px] text-muted-foreground font-medium mr-1">Primary:</span>
                       {demo.primaryMuscles.map((m) => (
-                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full text-purple-700 dark:text-purple-300 font-medium" style={{ backgroundColor: "rgba(139,92,246,0.08)" }}>
+                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                           {m}
                         </span>
                       ))}
