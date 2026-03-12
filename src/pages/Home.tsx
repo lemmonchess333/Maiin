@@ -60,14 +60,26 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
         var cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
-        if (day.isSelected && !day.isToday) cls += " ring-2 ring-primary ring-offset-1 ring-offset-card";
-        if (day.isToday) cls += " bg-primary text-primary-foreground";
-        else if (day.hasActivity) cls += " ring-2 ring-green-500 text-primary";
-        else cls += " border border-dashed border-primary/40 text-muted-foreground";
+        var st: React.CSSProperties = {};
+        if (day.isToday && day.isSelected) {
+          cls += " bg-primary text-primary-foreground";
+          st = { boxShadow: "0 0 8px rgba(109,40,217,0.4)" };
+        } else if (day.isToday) {
+          cls += " text-primary";
+          st = { border: "2px dashed rgba(109,40,217,1)" };
+        } else if (day.isSelected) {
+          cls += " text-primary";
+          st = { border: "2px solid rgba(109,40,217,1)", backgroundColor: "#ede9fe" };
+        } else if (day.hasActivity) {
+          cls += " ring-2 ring-green-500 text-primary";
+        } else {
+          cls += " text-muted-foreground";
+          st = { border: "2px dashed rgba(109,40,217,0.33)" };
+        }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
-            <div className={cls}>{day.date.getDate()}</div>
+            <div className={cls} style={st}>{day.date.getDate()}</div>
             {day.sType !== "rest" ? (
               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: day.hasActivity ? THEME.success : tc(day.sType) }} />
             ) : (
