@@ -253,8 +253,8 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
             className="p-4 rounded-2xl bg-card border border-border/50">
             <div className="grid grid-cols-2 gap-3">
               {/* Health Score */}
-              <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 bg-pink-50 dark:bg-pink-950/20 rounded-xl">
-                <div className="w-9 h-9 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(236,72,153,0.06)" }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(236,72,153,0.10)" }}>
                   <Heart className="w-4 h-4 text-pink-500" />
                 </div>
                 <div className="min-w-0">
@@ -269,21 +269,21 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                 </div>
               </Link>
               {/* Water */}
-              <div className="flex items-center gap-2.5 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl">
-                <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Droplets className="w-4 h-4 text-blue-500" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Water</p>
                   <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
                 </div>
-                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 </button>
               </div>
               {/* Weight */}
-              <div className="flex items-center gap-2.5 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
-                <div className="w-9 h-9 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(139,92,246,0.06)" }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
                   <Scale className="w-4 h-4 text-purple-500" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -295,13 +295,13 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
                     <p className="text-[8px] text-muted-foreground/60">{lastWeightDate}</p>
                   )}
                 </div>
-                <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0">
+                <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
                   <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                 </button>
               </div>
               {/* Steps */}
-              <div className="flex items-center gap-2.5 p-3 bg-green-50 dark:bg-green-950/20 rounded-xl">
-                <div className="w-9 h-9 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(34,197,94,0.10)" }}>
                   <Footprints className="w-4 h-4 text-green-500" />
                 </div>
                 <div className="min-w-0">
