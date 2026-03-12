@@ -10,6 +10,7 @@ import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell, Footprints, ChevronRight, Check, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCrews } from "@/hooks/useCrews";
 
 const DAY_TYPE_STYLES: Record<DayType, { label: string; color: string }> = {
   lift: { label: "Lift", color: THEME.lifting },
@@ -44,7 +45,11 @@ export default function Onboarding() {
   const [schedule, setSchedule] = useState(defaultSchedule);
   const [mealsTarget, setMealsTarget] = useState(10);
 
-  // Step 2 — Run preferences (only shown if runDays > 0)
+  // Step 2 — Crew selection
+  const { defaultCrews, joinCrew } = useCrews();
+  const [selectedCrewId, setSelectedCrewId] = useState<string | null>(null);
+
+  // Step 3 — Run preferences (only shown if runDays > 0)
   const [runMode, setRunMode] = useState<RunMode>("freeform");
   const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
   const [raceDate, setRaceDate] = useState("");
@@ -67,6 +72,7 @@ export default function Onboarding() {
   const STEPS = [
     { title: "What's your name?", subtitle: "You'll see this on your home screen" },
     { title: "Build your week", subtitle: "Tap each day to set your training type" },
+    { title: "Join a crew", subtitle: "Train with people who share your style" },
     ...(showRunStep ? [{ title: "Run preferences", subtitle: "How do you want to schedule your runs?" }] : []),
     { title: "Your targets", subtitle: "We'll calculate calories and macros from this" },
   ];
@@ -74,6 +80,7 @@ export default function Onboarding() {
   const canAdvance = [
     name.trim().length >= 2,
     true,
+    true, // crew step — always can advance (skip allowed)
     ...(showRunStep ? [runMode !== "race_prep" || (raceDate !== "")] : []),
     weightKg > 0 && heightCm > 0 && age > 0,
   ];
@@ -125,15 +132,25 @@ export default function Onboarding() {
         data.weeklyRunDaysTarget = runDays;
       }
 
+      if (selectedCrewId) {
+        data.crewId = selectedCrewId;
+      }
+
       await setDoc(doc(db, "users", user.uid), data, { merge: true });
+
+      // Join the selected crew
+      if (selectedCrewId) {
+        try { await joinCrew(selectedCrewId); } catch (e) { console.warn('Failed to join crew:', e); }
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  // Determine the "real" step index for the run step
-  const runStepIndex = showRunStep ? 2 : -1;
-  const targetsStepIndex = showRunStep ? 3 : 2;
+  // Determine the "real" step index for each step
+  const crewStepIndex = 2;
+  const runStepIndex = showRunStep ? 3 : -1;
+  const targetsStepIndex = showRunStep ? 4 : 3;
 
   return (
     <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe"
@@ -283,7 +300,36 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* ── Step 2: Run preferences (if runDays > 0) ── */}
+          {/* ── Step 2: Crew selection ── */}
+          {step === crewStepIndex && (
+            <div className="space-y-3">
+              {defaultCrews.map(crew => (
+                <button
+                  key={crew.id}
+                  onClick={() => setSelectedCrewId(crew.id === selectedCrewId ? null : crew.id)}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.98]"
+                  style={{
+                    background: selectedCrewId === crew.id ? `${THEME.brand}18` : 'rgba(255,255,255,0.05)',
+                    border: `1px solid ${selectedCrewId === crew.id ? THEME.brand + '50' : 'rgba(255,255,255,0.08)'}`,
+                  }}
+                >
+                  <span className="text-2xl">{crew.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold">{crew.name}</p>
+                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{crew.description}</p>
+                  </div>
+                  {selectedCrewId === crew.id && (
+                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: THEME.brand }} />
+                  )}
+                </button>
+              ))}
+              <p className="text-center text-[11px] pt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                You can change your crew later in Settings
+              </p>
+            </div>
+          )}
+
+          {/* ── Step 3: Run preferences (if runDays > 0) ── */}
           {step === runStepIndex && (
             <div className="space-y-5">
               {/* Run mode selector */}

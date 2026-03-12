@@ -38,11 +38,40 @@ export async function getFollowingCount(uid: string): Promise<number> {
 // ============================================
 // Post Activity + Fan-out to Followers
 // ============================================
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function formatPace(secPerKm: number): string {
+  const m = Math.floor(secPerKm / 60);
+  const s = Math.round(secPerKm % 60);
+  return `${m}:${s.toString().padStart(2, '0')}/km`;
+}
+
 export async function postActivity(activity: {
   authorId: string;
   authorName: string;
   type: 'run' | 'workout';
   visibility: 'public' | 'followers' | 'private';
+  // Enriched fields
+  workoutName?: string;
+  runName?: string;
+  exerciseCount?: number;
+  totalVolume?: number;
+  duration?: number;
+  distance?: number;
+  avgPace?: number | string;
+  elevationGain?: number;
+  calories?: number;
+  muscleGroups?: string[];
+  prHit?: boolean;
+  prExercise?: string;
+  prWeight?: number;
+  challengeMilestone?: string;
+  badgeEarned?: string;
+  crewId?: string;
   [key: string]: any;
 }) {
   const activityRef = await addDoc(collection(db, 'activities'), {
@@ -55,11 +84,28 @@ export async function postActivity(activity: {
   if (activity.visibility !== 'private') {
     const followersSnap = await getDocs(collection(db, 'followers', activity.authorId, 'users'));
 
-    const summary = activity.type === 'run'
-      ? `${((activity.distance || 0) / 1000).toFixed(1)} km run · ${activity.avgPace || ''}`
-      : `${activity.exerciseCount || 0} exercises · ${activity.prsHit || 0} PRs`;
+    let summary: string;
+    if (activity.type === 'run') {
+      const km = ((activity.distance || 0) / 1000).toFixed(1);
+      const time = activity.duration ? formatDuration(activity.duration) : '';
+      const pace = typeof activity.avgPace === 'number'
+        ? formatPace(activity.avgPace)
+        : activity.avgPace || '';
+      const name = activity.runName || 'Run';
+      summary = `${name} · ${km}km · ${time} · ${pace} pace`;
+    } else {
+      const name = activity.workoutName || 'Workout';
+      const exCount = activity.exerciseCount || 0;
+      const vol = activity.totalVolume
+        ? `${Math.round(activity.totalVolume).toLocaleString()}kg volume`
+        : '';
+      const dur = activity.duration
+        ? `${Math.round(activity.duration / 60)} min`
+        : '';
+      summary = [name, `${exCount} exercises`, vol, dur].filter(Boolean).join(' · ');
+    }
 
-    const feedItem = {
+    const feedItem: Record<string, any> = {
       activityId: activityRef.id,
       authorId: activity.authorId,
       authorName: activity.authorName,
@@ -67,6 +113,10 @@ export async function postActivity(activity: {
       summary,
       createdAt: serverTimestamp(),
     };
+    // Include highlight fields for filtering
+    if (activity.prHit) feedItem.prHit = true;
+    if (activity.badgeEarned) feedItem.badgeEarned = activity.badgeEarned;
+    if (activity.challengeMilestone) feedItem.challengeMilestone = activity.challengeMilestone;
 
     const promises = followersSnap.docs.map(followerDoc =>
       addDoc(collection(db, 'feeds', followerDoc.id, 'items'), feedItem)
@@ -101,14 +151,44 @@ export async function hasGivenKudos(activityId: string, userId: string): Promise
   return snap.exists();
 }
 
+export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string }[]> {
+  const snap = await getDocs(collection(db, 'kudos', activityId, 'users'));
+  const userIds = snap.docs.map(d => d.id);
+  if (userIds.length === 0) return [];
+  const users = await Promise.all(
+    userIds.map(async uid => {
+      const userSnap = await getDoc(doc(db, 'users', uid));
+      return { userId: uid, userName: userSnap.exists() ? (userSnap.data().displayName || 'Athlete') : 'Athlete' };
+    })
+  );
+  return users;
+}
+
 // ============================================
 // Comments
 // ============================================
-export async function addComment(activityId: string, authorId: string, authorName: string, text: string) {
+export async function addComment(
+  activityId: string,
+  authorId: string,
+  authorName: string,
+  text: string,
+  activityAuthorId?: string,
+) {
   await addDoc(collection(db, 'comments', activityId, 'items'), {
     authorId, authorName, text, createdAt: serverTimestamp(),
   });
   await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(1) });
+
+  // Notify activity author
+  if (activityAuthorId && activityAuthorId !== authorId) {
+    await writeNotification(activityAuthorId, {
+      type: 'comment',
+      fromUserId: authorId,
+      fromName: authorName,
+      activityId,
+      message: `${authorName} commented on your activity`,
+    });
+  }
 }
 
 export async function getComments(activityId: string, limitCount = 20) {
@@ -151,6 +231,32 @@ export async function getActivity(activityId: string) {
 }
 
 // ============================================
+// Discovery Feed (Public Activities)
+// ============================================
+export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapshot) {
+  let q = query(
+    collection(db, 'activities'),
+    where('visibility', '==', 'public'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  );
+  if (afterDoc) {
+    q = query(
+      collection(db, 'activities'),
+      where('visibility', '==', 'public'),
+      orderBy('createdAt', 'desc'),
+      startAfter(afterDoc),
+      limit(limitCount)
+    );
+  }
+  const snap = await getDocs(q);
+  return {
+    items: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1],
+  };
+}
+
+// ============================================
 // User Search
 // ============================================
 export async function searchUsers(queryStr: string, limitCount = 10) {
@@ -162,6 +268,33 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
+export async function searchUsersByEmail(email: string, limitCount = 10) {
+  const q = query(
+    collection(db, 'users'),
+    where('email', '==', email.toLowerCase().trim()),
+    limit(limitCount)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
+// ============================================
+// Notifications
+// ============================================
+export async function writeNotification(targetUserId: string, data: {
+  type: 'kudos' | 'comment' | 'follow' | 'challenge_milestone';
+  fromUserId?: string;
+  fromName?: string;
+  activityId?: string;
+  message?: string;
+}) {
+  await addDoc(collection(db, 'notifications', targetUserId, 'items'), {
+    ...data,
+    read: false,
+    createdAt: serverTimestamp(),
+  });
 }
 
 // ============================================

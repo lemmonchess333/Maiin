@@ -96,6 +96,8 @@ export interface UserProfile {
   // Auto-post social
   autoPostBadges?: boolean;
   customCalorieTarget?: number;
+  // Crew
+  crewId?: string;
 }
 
 /* ================================
