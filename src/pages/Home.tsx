@@ -634,12 +634,24 @@ export default function Home() {
     <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Hey, {profile.displayName || "Athlete"}</h1>
-          <p className="text-xs text-muted-foreground">
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <svg width="28" height="28" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#9b6ff7"/>
+                  <stop offset="100%" stopColor="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
+              <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
+            </svg>
+            <span className="text-lg font-extrabold tracking-wider text-gray-900 dark:text-gray-100 uppercase">TROPOS</span>
+          </div>
+          <span className="text-sm text-gray-400 mt-0.5">
             {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
-          </p>
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <motion.div key={streak}
