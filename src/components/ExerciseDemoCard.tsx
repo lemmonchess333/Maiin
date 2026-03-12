@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Drawer } from "vaul";
 import Model from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
@@ -14,6 +14,8 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
   const [demo, setDemo] = useState<ExerciseDemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const instructionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -24,6 +26,12 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
       setLoading(false);
     });
   }, [exerciseName, open]);
+
+  useLayoutEffect(() => {
+    if (instructionsRef.current) {
+      setOverflows(instructionsRef.current.scrollHeight > 80);
+    }
+  }, [demo]);
 
   const primaryMapped = demo ? mapMuscles(demo.primaryMuscles) : [];
   const secondaryMapped = demo ? mapMuscles(demo.secondaryMuscles) : [];
@@ -114,7 +122,7 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                     <div className="flex flex-wrap gap-1.5">
                       <span className="text-[10px] text-muted-foreground font-medium mr-1">Primary:</span>
                       {demo.primaryMuscles.map((m) => (
-                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 font-medium">
+                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
                           {m}
                         </span>
                       ))}
@@ -137,8 +145,9 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                   <div>
                     <p className="text-sm font-medium text-foreground mb-2">Instructions</p>
                     <div
+                      ref={instructionsRef}
                       className={`relative overflow-hidden transition-all duration-300 ${
-                        showInstructions ? "max-h-[1000px]" : "max-h-20"
+                        overflows && !showInstructions ? "max-h-20" : "max-h-[1000px]"
                       }`}
                     >
                       <ol className="space-y-2 list-decimal list-inside">
@@ -148,24 +157,26 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                           </li>
                         ))}
                       </ol>
-                      {!showInstructions && (
+                      {overflows && !showInstructions && (
                         <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />
                       )}
                     </div>
-                    <button
-                      onClick={() => setShowInstructions(!showInstructions)}
-                      className="flex items-center gap-1 mt-1.5 text-xs font-medium text-primary"
-                    >
-                      {showInstructions ? (
-                        <>
-                          <ChevronUp className="w-3.5 h-3.5" /> Hide
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="w-3.5 h-3.5" /> Show full instructions
-                        </>
-                      )}
-                    </button>
+                    {overflows && (
+                      <button
+                        onClick={() => setShowInstructions(!showInstructions)}
+                        className="flex items-center gap-1 mt-1.5 text-xs font-medium text-primary"
+                      >
+                        {showInstructions ? (
+                          <>
+                            <ChevronUp className="w-3.5 h-3.5" /> Hide
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3.5 h-3.5" /> Show full instructions
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
