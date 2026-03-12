@@ -47,6 +47,7 @@ import AccordionSection from "@/components/AccordionSection";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { useMealReminders } from "@/hooks/useMealReminders";
 import ShoesManager from "@/components/settings/ShoesManager";
+import { useCrews } from "@/hooks/useCrews";
 
 const PLANS = [
   {
@@ -77,6 +78,8 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
+  const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
+  const [showCrewPicker, setShowCrewPicker] = useState(false);
   const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
@@ -1018,7 +1021,54 @@ export default function Settings() {
       </AccordionSection>
 
       {/* Social & Privacy */}
-      <AccordionSection icon={<Users className="w-5 h-5 text-primary" />} title="Social & Privacy" subtitle="Visibility, auto-post, audio cues">
+      <AccordionSection icon={<Users className="w-5 h-5 text-primary" />} title="Social & Privacy" subtitle="Crew, visibility, auto-post">
+        {/* Crew switcher */}
+        <div className="p-4 rounded-lg bg-muted space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground">Your crew</p>
+              <p className="text-[10px] text-muted-foreground">
+                {currentCrew ? `${currentCrew.icon} ${currentCrew.name}` : 'Not in a crew'}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCrewPicker(!showCrewPicker)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground"
+            >
+              {currentCrew ? 'Switch' : 'Join'}
+            </button>
+          </div>
+          {showCrewPicker && (
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              {defaultCrews.map(crew => (
+                <button
+                  key={crew.id}
+                  onClick={async () => { await joinCrew(crew.id); setShowCrewPicker(false); toast.success(`Joined ${crew.name}`); }}
+                  className={cn(
+                    "w-full flex items-center gap-2 p-2.5 rounded-lg text-left text-xs transition-colors",
+                    currentCrew?.id === crew.id ? "bg-primary/10 border border-primary/30" : "bg-background hover:bg-muted"
+                  )}
+                >
+                  <span className="text-lg">{crew.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-medium">{crew.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{crew.description}</p>
+                  </div>
+                  {currentCrew?.id === crew.id && <Check className="w-3.5 h-3.5 text-primary" />}
+                </button>
+              ))}
+              {currentCrew && (
+                <button
+                  onClick={async () => { await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
+                  className="w-full text-center text-[11px] text-muted-foreground hover:text-red-400 py-1"
+                >
+                  Leave crew
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Default visibility</p>

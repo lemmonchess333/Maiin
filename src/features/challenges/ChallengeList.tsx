@@ -3,13 +3,13 @@ import { ChallengeCard } from "./ChallengeCard";
 import { Trophy } from "lucide-react";
 
 export function ChallengeList() {
-  const { myChallenges, availableChallenges, progress, loading, joinChallenge } = useChallenges();
+  const { myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge } = useChallenges();
 
   if (loading) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />
+          <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />
         ))}
       </div>
     );
@@ -20,15 +20,17 @@ export function ChallengeList() {
       {myChallenges.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Active Challenges
+            Your Challenges
           </p>
           {myChallenges.map((ch) => (
             <ChallengeCard
               key={ch.id}
               challenge={ch}
-              progress={progress[ch.id]}
+              myProgress={myProgress[ch.id]}
+              leaderboard={leaderboards[ch.id]}
               joined
               onJoin={() => {}}
+              onLeave={() => leaveChallenge(ch.id)}
             />
           ))}
         </div>
@@ -37,14 +39,16 @@ export function ChallengeList() {
       {availableChallenges.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Available Challenges
+            Available
           </p>
           {availableChallenges.map((ch) => (
             <ChallengeCard
               key={ch.id}
               challenge={ch}
+              leaderboard={leaderboards[ch.id]}
               joined={false}
               onJoin={() => joinChallenge(ch.id)}
+              onLeave={() => {}}
             />
           ))}
         </div>
@@ -56,7 +60,9 @@ export function ChallengeList() {
             <Trophy className="w-6 h-6 text-purple-500" />
           </div>
           <p className="text-sm font-semibold text-foreground">No active challenges</p>
-          <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">Challenges help you push your limits. Check back soon!</p>
+          <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
+            Challenges help you push your limits. Check back soon!
+          </p>
         </div>
       )}
     </div>

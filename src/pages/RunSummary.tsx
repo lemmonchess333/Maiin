@@ -103,12 +103,14 @@ export default function RunSummary() {
         authorId: user.uid,
         authorName: profile?.displayName || 'Athlete',
         type: 'run',
-        visibility: (profile?.defaultVisibility as any) || 'followers',
+        visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
+        runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
         distance,
         duration: elapsed,
         avgPace,
         elevationGain,
         calories,
+        crewId: profile?.crewId,
         routePreview:
           points.length > 20
             ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))

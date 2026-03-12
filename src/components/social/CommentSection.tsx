@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
 import { getComments, addComment } from '../../lib/socialApi';
 
-export default function CommentSection({ activityId }: { activityId: string }) {
+export default function CommentSection({ activityId, activityAuthorId }: { activityId: string; activityAuthorId?: string }) {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
   const [text, setText] = useState('');
@@ -15,7 +15,7 @@ export default function CommentSection({ activityId }: { activityId: string }) {
   const handleSend = async () => {
     if (!user || !text.trim()) return;
     setSending(true);
-    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim());
+    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId);
     setText('');
     const updated = await getComments(activityId);
     setComments(updated);
@@ -40,6 +40,7 @@ export default function CommentSection({ activityId }: { activityId: string }) {
 
       <div className="flex gap-2">
         <input value={text} onChange={e => setText(e.target.value)}
+          data-comment-input={activityId}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="Add a comment..." disabled={sending}
           className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border" />

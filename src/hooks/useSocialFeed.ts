@@ -15,9 +15,15 @@ export interface FeedItem {
   activity?: any;
   liked?: boolean;
   kudosCount?: number;
+  // Highlight fields for filtering
+  prHit?: boolean;
+  prExercise?: string;
+  prWeight?: number;
+  badgeEarned?: string;
+  challengeMilestone?: string;
 }
 
-export function useSocialFeed() {
+export function useSocialFeed(highlightsOnly = false) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,12 +44,26 @@ export function useSocialFeed() {
         batchGetKudos(activityIds, user.uid),
       ]);
 
-      const enriched: FeedItem[] = feedItems.map(item => ({
+      let enriched: FeedItem[] = feedItems.map(item => ({
         ...item,
         activity: activityMap[item.activityId] || null,
         liked: kudosMap[item.activityId] || false,
         kudosCount: activityMap[item.activityId]?.kudosCount || 0,
+        prHit: activityMap[item.activityId]?.prHit || item.prHit || false,
+        prExercise: activityMap[item.activityId]?.prExercise || item.prExercise,
+        prWeight: activityMap[item.activityId]?.prWeight || item.prWeight,
+        badgeEarned: activityMap[item.activityId]?.badgeEarned || item.badgeEarned,
+        challengeMilestone: activityMap[item.activityId]?.challengeMilestone || item.challengeMilestone,
       }));
+
+      if (highlightsOnly) {
+        enriched = enriched.filter(item =>
+          item.prHit ||
+          item.badgeEarned ||
+          item.challengeMilestone ||
+          (item.activity?.duration && item.activity.duration > 5400)
+        );
+      }
 
       if (refresh) {
         setItems(enriched);
@@ -56,9 +76,9 @@ export function useSocialFeed() {
       console.error('Feed error:', e);
     }
     setLoading(false);
-  }, [user, lastDoc]);
+  }, [user, lastDoc, highlightsOnly]);
 
-  useEffect(() => { loadFeed(true); }, [user]);
+  useEffect(() => { loadFeed(true); }, [user, highlightsOnly]);
 
   return {
     items, loading, hasMore,

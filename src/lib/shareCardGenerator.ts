@@ -1,9 +1,17 @@
 import { toBlob } from 'html-to-image';
+import type { ShareCardTheme } from '@/components/social/ShareCard';
 
-export async function generateAndShare(node: HTMLElement, title: string) {
+const THEME_BG: Record<ShareCardTheme, string | undefined> = {
+  dark: '#0a0a0f',
+  light: '#ffffff',
+  transparent: undefined,
+};
+
+export async function generateAndShare(node: HTMLElement, title: string, theme: ShareCardTheme = 'dark') {
   try {
     const blob = await toBlob(node, {
-      width: 1080, height: 1920, pixelRatio: 2, backgroundColor: '#0a0a0a',
+      width: 1080, height: 1920, pixelRatio: 2,
+      backgroundColor: THEME_BG[theme] || '#0a0a0a',
     });
     if (!blob) throw new Error('Failed to generate image');
 

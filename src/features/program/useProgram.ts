@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { postActivity } from "@/lib/socialApi";
 import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
 import { normalizeProgramState } from "./programTypes";
 import {
@@ -211,6 +212,26 @@ export function useProgram() {
           createdAt: Timestamp.now(),
           source: "programme",
         });
+        // Post to social feed if autoPostWorkouts is enabled
+        if (profile?.autoPostWorkouts !== false) {
+          const uniqueCategories = [...new Set(day.exercises.map(ex => ex.movementCategory).filter(Boolean))];
+          try {
+            await postActivity({
+              authorId: user.uid,
+              authorName: profile?.displayName || 'Athlete',
+              type: 'workout',
+              visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
+              workoutName: day.dayName,
+              exerciseCount: day.exercises.length,
+              totalVolume: tonnage,
+              duration: day.exercises.length * 5 * 60, // estimated seconds
+              muscleGroups: uniqueCategories,
+              crewId: profile?.crewId,
+            });
+          } catch (socialErr) {
+            console.warn("Failed to post workout to feed:", socialErr);
+          }
+        }
       } catch (err) {
         console.warn("Failed to sync programme day to workouts:", err);
       }

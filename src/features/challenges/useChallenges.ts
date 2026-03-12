@@ -1,262 +1,258 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  collection,
-  query,
-  onSnapshot,
-  doc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  Timestamp,
-  where,
-  getDocs,
+  collection, query, onSnapshot, doc, setDoc, deleteDoc,
+  updateDoc, Timestamp, getDocs, orderBy, limit, getDoc,
+  serverTimestamp, increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+
+export type ChallengeTier = "bronze" | "silver" | "gold";
+
+export const TIER_COLORS: Record<ChallengeTier, string> = {
+  bronze: "#cd7f32",
+  silver: "#c0c0c0",
+  gold: "#ffd700",
+};
 
 export interface Challenge {
   id: string;
   name: string;
   description: string;
-  type: "lifting" | "running" | "hybrid" | "nutrition";
-  target: { metric: string; value: number; unit: string };
+  type: string;
+  metric: string;
+  icon: string;
+  tiers: { bronze: number; silver: number; gold: number };
   startDate: Timestamp;
   endDate: Timestamp;
-  participants: string[];
-  createdBy: string;
-  isGlobal: boolean;
-  rotation?: "weekly" | "monthly" | "seasonal" | "permanent";
-  season?: "summer" | "winter" | "spring" | "autumn";
+  participantCount: number;
+  season?: string;
 }
 
-export interface ChallengeProgress {
-  current: number;
-  completed: boolean;
-  lastUpdated: Timestamp;
+export interface ChallengeParticipant {
+  currentValue: number;
+  tierAchieved: ChallengeTier | null;
+  joinedAt: Timestamp;
+  displayName?: string;
+  uid?: string;
 }
 
-export const GLOBAL_CHALLENGES: Omit<Challenge, "id" | "startDate" | "endDate" | "participants" | "createdBy">[] = [
-  // Permanent challenges
-  {
-    name: "Iron Runner",
-    description: "Complete 3 lifts + 3 runs this week",
-    type: "hybrid",
-    target: { metric: "hybrid_sessions", value: 6, unit: "sessions" },
-    isGlobal: true,
-    rotation: "permanent",
-  },
-  {
-    name: "100K Month",
-    description: "Run 100km in a calendar month",
-    type: "running",
-    target: { metric: "distance_km", value: 100, unit: "km" },
-    isGlobal: true,
-    rotation: "permanent",
-  },
-  {
-    name: "Tonnage Titan",
-    description: "Lift 50,000kg total in one week",
-    type: "lifting",
-    target: { metric: "tonnage_kg", value: 50000, unit: "kg" },
-    isGlobal: true,
-    rotation: "permanent",
-  },
-  {
-    name: "Macro Master",
-    description: "Hit macros within 5% for 5 consecutive days",
-    type: "nutrition",
-    target: { metric: "macro_days", value: 5, unit: "days" },
-    isGlobal: true,
-    rotation: "permanent",
-  },
-  {
-    name: "Hybrid 30",
-    description: "Log both a lift and run for 30 days",
-    type: "hybrid",
-    target: { metric: "hybrid_days", value: 30, unit: "days" },
-    isGlobal: true,
-    rotation: "permanent",
-  },
-  // Weekly challenges
-  {
-    name: "Weekly Warrior",
-    description: "Log the most workouts this week",
-    type: "hybrid",
-    target: { metric: "workout_count", value: 7, unit: "workouts" },
-    isGlobal: true,
-    rotation: "weekly",
-  },
-  {
-    name: "Mile Chaser",
-    description: "Run the most km this week",
-    type: "running",
-    target: { metric: "total_km", value: 50, unit: "km" },
-    isGlobal: true,
-    rotation: "weekly",
-  },
-  {
-    name: "Volume King",
-    description: "Lift the most total kg this week",
-    type: "lifting",
-    target: { metric: "total_volume_kg", value: 100000, unit: "kg" },
-    isGlobal: true,
-    rotation: "weekly",
-  },
-  // Monthly challenges
-  {
-    name: "Iron Month",
-    description: "Most total volume lifted this month",
-    type: "lifting",
-    target: { metric: "total_volume_kg", value: 500000, unit: "kg" },
-    isGlobal: true,
-    rotation: "monthly",
-  },
-  {
-    name: "Consistency Crown",
-    description: "Longest streak of daily logging this month",
-    type: "hybrid",
-    target: { metric: "streak_days", value: 30, unit: "days" },
-    isGlobal: true,
-    rotation: "monthly",
-  },
-  // Seasonal challenges
-  {
-    name: "Summer Shred",
-    description: "Combined km + workout count for the summer",
-    type: "hybrid",
-    target: { metric: "summer_score", value: 200, unit: "points" },
-    isGlobal: true,
-    rotation: "seasonal",
-    season: "summer",
-  },
-  {
-    name: "Winter Bulk",
-    description: "Total volume lifted during winter",
-    type: "lifting",
-    target: { metric: "total_volume_kg", value: 1000000, unit: "kg" },
-    isGlobal: true,
-    rotation: "seasonal",
-    season: "winter",
-  },
-];
+function getWeekStart(): Date {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const start = new Date(d.getFullYear(), d.getMonth(), diff);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
 
-export function getActiveChallenges(challenges: Challenge[]): Challenge[] {
-  const now = new Date();
-  const month = now.getMonth();
+function getWeekEnd(): Date {
+  const start = getWeekStart();
+  return new Date(start.getTime() + 7 * 86400000);
+}
 
-  return challenges.filter(c => {
-    if (c.rotation === 'permanent') return true;
-    if (c.rotation === 'weekly') return true; // Always show weekly
-    if (c.rotation === 'monthly') return true; // Always show monthly
-    if (c.rotation === 'seasonal') {
-      if (c.season === 'summer' && month >= 5 && month <= 7) return true;
-      if (c.season === 'winter' && (month >= 11 || month <= 1)) return true;
-      if (c.season === 'spring' && month >= 2 && month <= 4) return true;
-      if (c.season === 'autumn' && month >= 8 && month <= 10) return true;
+function getMonthStart(): Date {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function getMonthEnd(): Date {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+}
+
+function getSeason() {
+  const month = new Date().getMonth();
+  if (month >= 2 && month <= 4) return { name: "Spring Reset", description: "Longest consistency streak — days with any logged activity", metric: "streak_days", icon: "🌱", tiers: { bronze: 5, silver: 14, gold: 30 } };
+  if (month >= 5 && month <= 7) return { name: "Summer Shred", description: "Combined workout count + km run", metric: "combined_score", icon: "☀️", tiers: { bronze: 20, silver: 50, gold: 100 } };
+  if (month >= 8 && month <= 10) return { name: "Autumn Push", description: "Hybrid score: km x 100 + volume kg x 0.1", metric: "hybrid_score", icon: "🍂", tiers: { bronze: 500, silver: 2000, gold: 5000 } };
+  return { name: "Winter Bulk", description: "Highest total volume lifted (kg)", metric: "total_volume", icon: "❄️", tiers: { bronze: 5000, silver: 25000, gold: 50000 } };
+}
+
+function getSeasonStart(): Date {
+  const month = new Date().getMonth();
+  const year = new Date().getFullYear();
+  if (month >= 2 && month <= 4) return new Date(year, 2, 1);
+  if (month >= 5 && month <= 7) return new Date(year, 5, 1);
+  if (month >= 8 && month <= 10) return new Date(year, 8, 1);
+  return month >= 11 ? new Date(year, 11, 1) : new Date(year - 1, 11, 1);
+}
+
+function getSeasonEnd(): Date {
+  const month = new Date().getMonth();
+  const year = new Date().getFullYear();
+  if (month >= 2 && month <= 4) return new Date(year, 5, 1);
+  if (month >= 5 && month <= 7) return new Date(year, 8, 1);
+  if (month >= 8 && month <= 10) return new Date(year, 11, 1);
+  return month >= 11 ? new Date(year + 1, 2, 1) : new Date(year, 2, 1);
+}
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+export function computeTier(value: number, tiers: { bronze: number; silver: number; gold: number }): ChallengeTier | null {
+  if (value >= tiers.gold) return "gold";
+  if (value >= tiers.silver) return "silver";
+  if (value >= tiers.bronze) return "bronze";
+  return null;
+}
+
+export function getTimeRemaining(endDate: Timestamp | Date): string {
+  const end = endDate instanceof Date ? endDate : endDate.toDate();
+  const ms = end.getTime() - Date.now();
+  if (ms <= 0) return "Ended";
+  const days = Math.floor(ms / 86400000);
+  if (days > 1) return `${days} days left`;
+  const hours = Math.floor(ms / 3600000);
+  return `${hours}h left`;
+}
+
+async function seedChallenges() {
+  const weekStart = getWeekStart();
+  const weekEnd = getWeekEnd();
+  const monthStart = getMonthStart();
+  const monthEnd = getMonthEnd();
+  const seasonStart = getSeasonStart();
+  const seasonEnd = getSeasonEnd();
+  const season = getSeason();
+  const monthName = MONTH_NAMES[new Date().getMonth()];
+
+  const defs = [
+    {
+      docId: `weekly-${weekStart.toISOString().split("T")[0]}`,
+      name: "Weekly Warrior",
+      description: "Log workouts this week (Mon-Sun)",
+      type: "weekly",
+      metric: "workout_count",
+      icon: "🏆",
+      tiers: { bronze: 2, silver: 4, gold: 6 },
+      startDate: Timestamp.fromDate(weekStart),
+      endDate: Timestamp.fromDate(weekEnd),
+    },
+    {
+      docId: `monthly-${monthStart.toISOString().split("T")[0]}`,
+      name: `${monthName} Mileage`,
+      description: "Total km run this month",
+      type: "monthly",
+      metric: "total_km",
+      icon: "🏃",
+      tiers: { bronze: 10, silver: 25, gold: 50 },
+      startDate: Timestamp.fromDate(monthStart),
+      endDate: Timestamp.fromDate(monthEnd),
+    },
+    {
+      docId: `seasonal-${seasonStart.toISOString().split("T")[0]}`,
+      name: season.name,
+      description: season.description,
+      type: "seasonal",
+      metric: season.metric,
+      icon: season.icon,
+      tiers: season.tiers,
+      startDate: Timestamp.fromDate(seasonStart),
+      endDate: Timestamp.fromDate(seasonEnd),
+    },
+  ];
+
+  for (const def of defs) {
+    const ref = doc(db, "challenges", def.docId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      const { docId: _, ...data } = def;
+      await setDoc(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
     }
-    // Challenges without a rotation field default to active
-    if (!c.rotation) return true;
-    return false;
-  });
+  }
 }
 
 export function useChallenges() {
   const { user } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [progress, setProgress] = useState<Record<string, ChallengeProgress>>({});
+  const [myProgress, setMyProgress] = useState<Record<string, ChallengeParticipant>>({});
+  const [leaderboards, setLeaderboards] = useState<Record<string, ChallengeParticipant[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ref = collection(db, "challenges");
-    // Timeout fallback: if Firestore doesn't respond in 3s, stop loading
+    seedChallenges().catch(console.error);
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
-      ref,
+      collection(db, "challenges"),
       (snap) => {
         clearTimeout(timeout);
-        setChallenges(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Challenge)));
+        const now = new Date();
+        const active = snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as Challenge))
+          .filter(c => {
+            const end = c.endDate?.toDate?.();
+            return end ? end > now : true;
+          });
+        setChallenges(active);
         setLoading(false);
       },
-      () => {
-        // On error (e.g. collection doesn't exist), gracefully resolve
-        clearTimeout(timeout);
-        setChallenges([]);
-        setLoading(false);
-      }
+      () => { clearTimeout(timeout); setChallenges([]); setLoading(false); }
     );
     return () => { clearTimeout(timeout); unsub(); };
   }, []);
 
-  // Load user's progress
   useEffect(() => {
     if (!user || challenges.length === 0) return;
-
-    const loadProgress = async () => {
-      const prog: Record<string, ChallengeProgress> = {};
+    const load = async () => {
+      const prog: Record<string, ChallengeParticipant> = {};
       for (const ch of challenges) {
-        try {
-          const snap = await getDocs(
-            query(collection(db, "challenges", ch.id, "progress"), where("__name__", "==", user.uid))
-          );
-          if (!snap.empty) {
-            prog[ch.id] = snap.docs[0].data() as ChallengeProgress;
-          }
-        } catch {
-          // Skip errors for individual challenges
-        }
+        const snap = await getDoc(doc(db, "challenges", ch.id, "participants", user.uid));
+        if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
       }
-      setProgress(prog);
+      setMyProgress(prog);
     };
-    loadProgress();
+    load();
   }, [user, challenges]);
 
-  const joinChallenge = useCallback(
-    async (challengeId: string) => {
-      if (!user) return;
-      const ref = doc(db, "challenges", challengeId);
-      await updateDoc(ref, { participants: arrayUnion(user.uid) });
+  useEffect(() => {
+    if (challenges.length === 0) return;
+    const load = async () => {
+      const boards: Record<string, ChallengeParticipant[]> = {};
+      for (const ch of challenges) {
+        const snap = await getDocs(
+          query(collection(db, "challenges", ch.id, "participants"), orderBy("currentValue", "desc"), limit(20))
+        );
+        boards[ch.id] = snap.docs.map(d => ({ uid: d.id, ...d.data() } as ChallengeParticipant));
+      }
+      setLeaderboards(boards);
+    };
+    load();
+  }, [challenges, myProgress]);
 
-      const progRef = doc(db, "challenges", challengeId, "progress", user.uid);
-      await setDoc(progRef, {
-        current: 0,
-        completed: false,
-        lastUpdated: Timestamp.now(),
-      });
-    },
-    [user]
-  );
+  const joinChallenge = useCallback(async (challengeId: string) => {
+    if (!user) return;
+    const profileSnap = await getDoc(doc(db, "users", user.uid));
+    const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
+    await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+      currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
+    });
+    await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
+    setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
+  }, [user]);
 
-  const updateProgress = useCallback(
-    async (challengeId: string, current: number) => {
-      if (!user) return;
-      const challenge = challenges.find((c) => c.id === challengeId);
-      const completed = challenge ? current >= challenge.target.value : false;
+  const leaveChallenge = useCallback(async (challengeId: string) => {
+    if (!user) return;
+    await deleteDoc(doc(db, "challenges", challengeId, "participants", user.uid));
+    await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
+    setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
+  }, [user]);
 
-      const ref = doc(db, "challenges", challengeId, "progress", user.uid);
-      await setDoc(ref, {
-        current,
-        completed,
-        lastUpdated: Timestamp.now(),
-      });
-    },
-    [user, challenges]
-  );
+  const updateProgress = useCallback(async (challengeId: string, newValue: number) => {
+    if (!user) return;
+    const ch = challenges.find(c => c.id === challengeId);
+    if (!ch) return;
+    const tier = computeTier(newValue, ch.tiers);
+    await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+      currentValue: newValue, tierAchieved: tier,
+    }, { merge: true });
+    setMyProgress(prev => ({
+      ...prev,
+      [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
+    }));
+  }, [user, challenges, myProgress]);
 
-  const myChallenges = challenges.filter(
-    (c) => user && c.participants?.includes(user.uid)
-  );
+  const myChallenges = challenges.filter(c => !!myProgress[c.id]);
+  const availableChallenges = challenges.filter(c => !myProgress[c.id]);
 
-  const availableChallenges = challenges.filter(
-    (c) => user && !c.participants?.includes(user.uid)
-  );
-
-  return {
-    challenges,
-    myChallenges,
-    availableChallenges,
-    progress,
-    loading,
-    joinChallenge,
-    updateProgress,
-  };
+  return { challenges, myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge, updateProgress };
 }
