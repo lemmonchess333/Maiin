@@ -1,6 +1,9 @@
 /**
  * Exercise demo data — fetches from free-exercise-db and maps to react-body-highlighter muscle IDs.
+ * Falls back to local exercise data when external DB has no match.
  */
+
+import { EXERCISES } from "@/lib/exercises";
 
 export interface ExerciseDemo {
   name: string;
@@ -34,6 +37,40 @@ const MUSCLE_MAP: Record<string, string> = {
   calves: "calves",
   adductors: "adductor",
   abductors: "abductors",
+};
+
+// Mapping from local exercises.ts muscleGroup/secondaryMuscles names → free-exercise-db names
+// (which then get mapped through MUSCLE_MAP to highlighter IDs)
+const LOCAL_MUSCLE_MAP: Record<string, string[]> = {
+  "pectorals": ["chest"],
+  "upper chest": ["chest", "shoulders"],
+  "lower chest": ["chest"],
+  "triceps": ["triceps"],
+  "biceps": ["biceps"],
+  "front delts": ["shoulders"],
+  "rear delts": ["shoulders"],
+  "deltoids": ["shoulders"],
+  "lats": ["lats"],
+  "upper back": ["middle back"],
+  "full back": ["lats", "lower back", "middle back"],
+  "lower back": ["lower back"],
+  "traps": ["traps"],
+  "quads": ["quadriceps"],
+  "quadriceps": ["quadriceps"],
+  "hamstrings": ["hamstrings"],
+  "glutes": ["glutes"],
+  "calves": ["calves"],
+  "core": ["abdominals", "obliques"],
+  "abs": ["abdominals"],
+  "obliques": ["obliques"],
+  "forearms": ["forearms"],
+  "legs": ["quadriceps", "hamstrings", "glutes"],
+  "full body": ["chest", "lats", "quadriceps", "shoulders", "abdominals"],
+  "shoulders": ["shoulders"],
+  "hip flexors": ["quadriceps", "abdominals"],
+  "adductors": ["adductors"],
+  "abductors": ["abductors"],
+  "cardio": ["quadriceps", "hamstrings", "calves", "glutes"],
 };
 
 // Valid muscle IDs accepted by react-body-highlighter
@@ -99,7 +136,30 @@ function normaliseKey(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-// Fuzzy match: try exact, then stripped, then partial
+// Build a fallback ExerciseDemo from local exercises.ts data
+function buildLocalFallback(name: string): ExerciseDemo | null {
+  const key = name.toLowerCase().trim();
+  const match = EXERCISES.find(
+    (ex) => ex.name.toLowerCase() === key || ex.id === key.replace(/\s+/g, "-"),
+  );
+  if (!match) return null;
+
+  // Map local muscleGroup name to free-exercise-db muscle names
+  const mapLocal = (label: string): string[] =>
+    LOCAL_MUSCLE_MAP[label.toLowerCase()] ?? [];
+
+  return {
+    name: match.name,
+    category: match.category,
+    equipment: match.equipment,
+    primaryMuscles: mapLocal(match.muscleGroup),
+    secondaryMuscles: (match.secondaryMuscles ?? []).flatMap(mapLocal),
+    instructions: match.instructions ? [match.instructions] : [],
+    images: [],
+  };
+}
+
+// Fuzzy match: try exact, then stripped, then partial, then word overlap, then local fallback
 export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null> {
   const demos = await loadDemos();
   const key = normaliseKey(name);
@@ -112,16 +172,21 @@ export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null
     if (k.includes(key) || key.includes(k)) return v;
   }
 
-  // Word overlap
-  const words = key.match(/.{3,}/g) ?? [];
-  let bestMatch: ExerciseDemo | null = null;
-  let bestScore = 0;
-  for (const [k, v] of demos) {
-    const score = words.filter((w) => k.includes(w)).length;
-    if (score > bestScore) {
-      bestScore = score;
-      bestMatch = v;
+  // Word overlap — split on actual words (not arbitrary 3-char chunks)
+  const words = name.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3);
+  if (words.length >= 2) {
+    let bestMatch: ExerciseDemo | null = null;
+    let bestScore = 0;
+    for (const [k, v] of demos) {
+      const score = words.filter((w) => k.includes(w)).length;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = v;
+      }
     }
+    if (bestScore >= 2) return bestMatch;
   }
-  return bestScore >= 2 ? bestMatch : null;
+
+  // Fallback to local exercise database
+  return buildLocalFallback(name);
 }
