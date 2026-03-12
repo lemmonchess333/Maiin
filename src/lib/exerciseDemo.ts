@@ -36,10 +36,18 @@ const MUSCLE_MAP: Record<string, string> = {
   abductors: "abductors",
 };
 
+// Valid muscle IDs accepted by react-body-highlighter
+const VALID_MUSCLES = new Set([
+  "trapezius", "upper-back", "lower-back", "chest", "biceps", "triceps",
+  "forearm", "back-deltoids", "front-deltoids", "abs", "obliques",
+  "adductor", "hamstring", "quadriceps", "abductors", "calves", "gluteal",
+  "head", "neck", "knees", "left-soleus", "right-soleus",
+]);
+
 export function mapMuscles(names: string[]): string[] {
   return names
     .map((n) => MUSCLE_MAP[n.toLowerCase()] ?? null)
-    .filter((m): m is string => m !== null);
+    .filter((m): m is string => m !== null && VALID_MUSCLES.has(m));
 }
 
 export function needsPosterior(muscles: string[]): boolean {
