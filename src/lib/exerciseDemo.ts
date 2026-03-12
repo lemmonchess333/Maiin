@@ -29,11 +29,11 @@ const MUSCLE_MAP: Record<string, string> = {
   obliques: "obliques",
   // Lower
   quadriceps: "quadriceps",
-  hamstrings: "hamstrings",
+  hamstrings: "hamstring",
   glutes: "gluteal",
   calves: "calves",
-  adductors: "adpictor",
-  abductors: "abpictor",
+  adductors: "adductor",
+  abductors: "abductors",
 };
 
 export function mapMuscles(names: string[]): string[] {
@@ -43,7 +43,7 @@ export function mapMuscles(names: string[]): string[] {
 }
 
 export function needsPosterior(muscles: string[]): boolean {
-  const posterior = new Set(["upper-back", "lower-back", "trapezius", "hamstrings", "gluteal", "calves"]);
+  const posterior = new Set(["upper-back", "lower-back", "trapezius", "hamstring", "gluteal", "calves"]);
   return muscles.some((m) => posterior.has(m));
 }
 
