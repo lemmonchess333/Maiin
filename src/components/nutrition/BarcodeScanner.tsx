@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import type { BrowserMultiFormatReader } from "@zxing/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
 
@@ -73,25 +73,35 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
     if (!scanning) return;
 
     const videoEl = videoRef.current;
-    const reader = new BrowserMultiFormatReader();
-    readerRef.current = reader;
+    let cancelled = false;
 
-    reader.decodeFromVideoDevice(
-      undefined,
-      videoEl!,
-      (result) => {
-        if (result) {
-          const code = result.getText();
-          setScanning(false);
-          fetchProduct(code);
+    async function initScanner() {
+      const { BrowserMultiFormatReader } = await import("@zxing/browser");
+      if (cancelled) return;
+
+      const reader = new BrowserMultiFormatReader();
+      readerRef.current = reader;
+
+      reader.decodeFromVideoDevice(
+        undefined,
+        videoEl!,
+        (result) => {
+          if (result) {
+            const code = result.getText();
+            setScanning(false);
+            fetchProduct(code);
+          }
         }
-      }
-    ).catch(() => {
-      setError("Camera access denied. Please allow camera permissions.");
-      setScanning(false);
-    });
+      ).catch(() => {
+        setError("Camera access denied. Please allow camera permissions.");
+        setScanning(false);
+      });
+    }
+
+    initScanner();
 
     return () => {
+      cancelled = true;
       // Stop any active video streams
       if (videoEl?.srcObject) {
         (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop());
