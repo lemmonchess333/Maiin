@@ -8,7 +8,7 @@ import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
 import type { DayType } from "@/lib/scheduleUtils";
 import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, Footprints, ChevronRight, Check, Calendar } from "lucide-react";
+import { Dumbbell, Footprints, ChevronRight, Check, Calendar, Flag, ClipboardList, Flame, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCrews } from "@/hooks/useCrews";
 
@@ -335,9 +335,9 @@ export default function Onboarding() {
               {/* Run mode selector */}
               <div className="space-y-2">
                 {([
-                  { id: "freeform" as RunMode, label: "Freeform", desc: "Pick any run type when you start", icon: "🏃" },
-                  { id: "structured" as RunMode, label: "Structured", desc: "Auto-assigns run templates around lift days", icon: "📅" },
-                  { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodized plan for a goal race", icon: "🏁" },
+                  { id: "freeform" as RunMode, label: "Freeform", desc: "Pick any run type when you start", icon: <Footprints size={24} className="text-green-500" /> },
+                  { id: "structured" as RunMode, label: "Structured", desc: "Auto-assigns run templates around lift days", icon: <ClipboardList size={24} /> },
+                  { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodized plan for a goal race", icon: <Flag size={24} /> },
                 ]).map(m => (
                   <button key={m.id} onClick={() => setRunMode(m.id)}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
@@ -462,9 +462,9 @@ export default function Onboarding() {
               {/* Goal selector */}
               <div className="space-y-2">
                 {[
-                  { id: "cut" as const,       label: "Lose fat",     desc: "Calorie deficit, preserve muscle", icon: "🔥" },
-                  { id: "lean bulk" as const, label: "Build muscle", desc: "Slight surplus, lean gains",        icon: "💪" },
-                  { id: "recomp" as const,    label: "Recomp",       desc: "Maintain weight, improve fitness", icon: "⚡" },
+                  { id: "cut" as const,       label: "Lose fat",     desc: "Calorie deficit, preserve muscle", icon: <Flame size={24} className="text-orange-500" /> },
+                  { id: "lean bulk" as const, label: "Build muscle", desc: "Slight surplus, lean gains",        icon: <Dumbbell size={24} className="text-orange-500" /> },
+                  { id: "recomp" as const,    label: "Recomp",       desc: "Maintain weight, improve fitness", icon: <Zap size={24} className="text-yellow-500" /> },
                 ].map(g => (
                   <button key={g.id} onClick={() => setSelectedGoal(g.id)}
                     className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
@@ -530,7 +530,7 @@ export default function Onboarding() {
           style={{ background: THEME.teal, color: '#000' }}
         >
           {step === STEPS.length - 1
-            ? (saving ? "Setting up…" : `Let's go, ${name.split(' ')[0]} 🚀`)
+            ? (saving ? "Setting up…" : `Let's go, ${name.split(' ')[0]}!`)
             : (<>Continue <ChevronRight className="w-4 h-4" /></>)}
         </button>
       </div>

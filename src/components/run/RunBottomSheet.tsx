@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, type ReactNode } from 'react';
+import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { THEME } from '../../lib/theme';
 import { calculatePace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
 import type { GPSPoint, Split } from '../../lib/gps';
@@ -19,87 +19,10 @@ interface RunBottomSheetProps {
 
 // Sheet height as fraction of viewport: full, mid, compact
 const SNAPS: [number, number, number] = [0.13, 0.4, 0.91];
-const HOLD_MS = 2000;
 
 function haptic(type: 'light' | 'medium' | 'heavy') {
   if (!navigator.vibrate) return;
   navigator.vibrate(type === 'light' ? 12 : type === 'medium' ? 35 : 65);
-}
-
-// ── Hold-to-stop with animated SVG ring ──────────────────────────────────────
-function HoldStop({ onStop }: { onStop: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const [pressing, setPressing] = useState(false);
-  const raf = useRef<number | null>(null);
-  const t0 = useRef<number | null>(null);
-  const R = 30;
-  const C = 2 * Math.PI * R;
-
-  const begin = (e: React.PointerEvent) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setPressing(true);
-    haptic('light');
-    t0.current = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - t0.current!) / HOLD_MS, 1);
-      setProgress(p);
-      if (p < 1) { raf.current = requestAnimationFrame(tick); }
-      else { haptic('heavy'); onStop(); }
-    };
-    raf.current = requestAnimationFrame(tick);
-  };
-
-  const cancel = () => {
-    if (raf.current) cancelAnimationFrame(raf.current);
-    setPressing(false);
-    setProgress(0);
-    t0.current = null;
-  };
-
-  useEffect(() => () => { if (raf.current) cancelAnimationFrame(raf.current); }, []);
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <button
-        onPointerDown={begin}
-        onPointerUp={cancel}
-        onPointerLeave={cancel}
-        onPointerCancel={cancel}
-        style={{ userSelect: 'none', WebkitUserSelect: 'none', touchAction: 'none',
-          transform: pressing ? 'scale(0.9)' : 'scale(1)',
-          transition: pressing ? 'transform 0.06s' : 'transform 0.25s ease' }}
-        className="relative w-[76px] h-[76px] flex items-center justify-center"
-      >
-        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 76 76" width="76" height="76">
-          {/* Track */}
-          <circle cx="38" cy="38" r={R} fill="none" stroke="rgba(239,68,68,0.18)" strokeWidth="3.5" />
-          {/* Fill ring */}
-          {progress > 0 && (
-            <circle cx="38" cy="38" r={R} fill="none" stroke="#EF4444" strokeWidth="3.5"
-              strokeDasharray={`${C * progress} ${C}`} strokeLinecap="round" />
-          )}
-        </svg>
-        {/* Inner button */}
-        <div style={{
-          width: 54, height: 54, borderRadius: '50%',
-          background: pressing ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.12)',
-          border: '2px solid #EF4444',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'background 0.12s',
-        }}>
-          <div style={{
-            width: 20, height: 20, background: '#EF4444',
-            borderRadius: pressing ? '50%' : 5,
-            transition: 'border-radius 0.18s',
-          }} />
-        </div>
-      </button>
-      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>
-        {pressing ? 'RELEASE TO CANCEL' : 'HOLD TO STOP'}
-      </p>
-    </div>
-  );
 }
 
 // ── Live splits strip (last 3) ────────────────────────────────────────────────
@@ -157,6 +80,7 @@ export default function RunBottomSheet({
   intervalDisplay, weightKg,
 }: RunBottomSheetProps) {
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
   const dragY = useRef<number | null>(null);
   const isExpanded = snapIdx === 2;
 
@@ -296,7 +220,14 @@ export default function RunBottomSheet({
               </div>
             ) : (
               <div className="flex items-center justify-center gap-12 flex-shrink-0">
-                <HoldStop onStop={onStop} />
+                <div className="flex flex-col items-center gap-2">
+                  <button onClick={() => setShowStopConfirm(true)}
+                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88] transition-transform"
+                    style={{ background: 'rgba(239,68,68,0.12)', border: '2.5px solid #EF4444' }}>
+                    <div style={{ width: 22, height: 22, background: '#EF4444', borderRadius: 5 }} />
+                  </button>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>STOP</p>
+                </div>
 
                 {/* Resume */}
                 <div className="flex flex-col items-center gap-2">
@@ -346,6 +277,40 @@ export default function RunBottomSheet({
           </div>
         )}
       </div>
+      {/* Stop confirmation modal */}
+      {showStopConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <div className="mx-6 p-6 rounded-2xl w-full max-w-sm" style={{ background: THEME.surface, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <h3 className="text-lg font-bold text-white text-center mb-4">End run?</h3>
+            <div className="flex justify-around mb-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{(distance / 1000).toFixed(2)}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>KM</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsed)}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>TIME</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{pace}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/KM</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <button onClick={() => { setShowStopConfirm(false); onStop(); }}
+                className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
+                style={{ background: '#EF4444' }}>
+                End Run
+              </button>
+              <button onClick={() => setShowStopConfirm(false)}
+                className="w-full py-3.5 rounded-xl font-semibold text-sm"
+                style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                Keep Going
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCurrentWeather, getWeatherIcon, getRunningTip, type WeatherData } from '@/lib/weather';
 import ShoeSelector from './ShoeSelector';
 import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
 
+
+const ICON_MAP: Record<string, React.ComponentType<any>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
 export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun' | 'guided';
 
 export interface RunConfig {
@@ -34,7 +36,7 @@ export interface RunConfig {
 }
 
 const DEFAULT_CONFIG: RunConfig = {
-  activityType: 'freerun',
+  activityType: 'easy',
   autoPause: true,
   audioCues: true,
   audioCueFrequency: 'every_km',
@@ -45,27 +47,16 @@ const DEFAULT_CONFIG: RunConfig = {
 };
 
 const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: string; description: string }[] = [
-  { type: 'freerun', label: 'Free', icon: '🏃', description: 'Run at your own pace' },
-  { type: 'easy',    label: 'Easy', icon: '🚶', description: 'Recovery pace' },
-  { type: 'tempo',   label: 'Tempo', icon: '⚡', description: 'Comfortably hard' },
-  { type: 'intervals', label: 'Intervals', icon: '🔄', description: 'Repeats + rest' },
-  { type: 'long',    label: 'Long', icon: '🛤️', description: 'Distance-focused' },
-  { type: 'race',    label: 'Race', icon: '🏁', description: 'All-out effort' },
-  { type: 'treadmill', label: 'Treadmill', icon: '🏋️', description: 'Indoor, no GPS' },
-  { type: 'guided', label: 'Guided', icon: '🎧', description: 'Coach-led workout' },
+  { type: 'freerun', label: 'Free', icon: 'Footprints', description: 'Run at your own pace' },
+  { type: 'easy',    label: 'Easy', icon: 'PersonStanding', description: 'Recovery pace' },
+  { type: 'tempo',   label: 'Tempo', icon: 'Zap', description: 'Comfortably hard' },
+  { type: 'intervals', label: 'Intervals', icon: 'RefreshCw', description: 'Repeats + rest' },
+  { type: 'long',    label: 'Long', icon: 'Route', description: 'Distance-focused' },
+  { type: 'race',    label: 'Race', icon: 'Flag', description: 'All-out effort' },
+  { type: 'treadmill', label: 'Treadmill', icon: 'Dumbbell', description: 'Indoor, no GPS' },
+  { type: 'guided', label: 'Guided', icon: 'Headphones', description: 'Coach-led workout' },
 ];
 
-// Descriptions for the selected activity shown below the strip
-const ACTIVITY_DESCRIPTIONS: Record<ActivityType, { label: string; cues: string[] }> = {
-  freerun:   { label: 'Free Run', cues: ['No targets', 'GPS tracking', 'Audio cues per km'] },
-  easy:      { label: 'Easy Run', cues: ['Conversational pace', 'Zone 2 effort', 'Recovery-focused'] },
-  tempo:     { label: 'Tempo Run', cues: ['Comfortably hard', '20–40 min effort', 'Pace-goal optional'] },
-  intervals: { label: 'Intervals', cues: ['High-intensity repeats', 'Built-in rest timer', 'Configurable reps'] },
-  long:      { label: 'Long Run', cues: ['Easy to moderate pace', 'Distance goal optional', 'Aerobic base building'] },
-  race:      { label: 'Race', cues: ['All-out effort', 'Distance goal required', 'PR attempt mode'] },
-  treadmill: { label: 'Treadmill', cues: ['Manual distance input', 'No GPS', 'Indoor tracking'] },
-  guided: { label: 'Guided Run', cues: ['Coach-led segments', 'TTS cues', 'Structured workout'] },
-};
 
 interface RunSetupModalProps {
   onStart: (config: RunConfig) => void;
@@ -76,12 +67,12 @@ interface RunSetupModalProps {
 export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
   const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showTypeSheet, setShowTypeSheet] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(null);
   const updateConfig = (partial: Partial<RunConfig>) => setConfig((prev) => ({ ...prev, ...partial }));
   const intervalConfig = config.intervals ?? { reps: 5, workDistance: 1000, restDuration: 90 };
-  const selectedInfo = ACTIVITY_DESCRIPTIONS[config.activityType];
 
   // Fetch weather on mount
   useEffect(() => {
@@ -92,8 +83,8 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 overflow-y-auto px-5 py-4 pb-36 space-y-5">
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto px-5 py-4 pb-36 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
         {/* Back */}
         <button onClick={onCancel}
           className="flex items-center gap-1.5 text-sm text-muted-foreground self-start active:scale-95 transition-transform">
@@ -140,49 +131,6 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           onSelect={(id) => updateConfig({ shoeId: id })}
         />
 
-        {/* Activity type strip — horizontal scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-          {ACTIVITY_TYPES.map((at) => {
-            const isActive = config.activityType === at.type;
-            return (
-              <button
-                key={at.type}
-                onClick={() => updateConfig({ activityType: at.type })}
-                className="flex-shrink-0 flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-2xl border-2 transition-all active:scale-95"
-                style={isActive ? {
-                  borderColor: 'rgba(139,92,246,0.7)',
-                  background: 'rgba(139,92,246,0.12)',
-                  boxShadow: '0 0 0 3px rgba(139,92,246,0.2)',
-                } : {
-                  borderColor: 'rgba(255,255,255,0.08)',
-                  background: 'rgba(255,255,255,0.04)',
-                }}
-              >
-                <span className="text-2xl leading-none">{at.icon}</span>
-                <span className="text-[11px] font-semibold whitespace-nowrap"
-                  style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.6)' }}>
-                  {at.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Selected activity description */}
-        <motion.div
-          key={config.activityType}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-3.5 rounded-xl space-y-1.5"
-          style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)' }}
-        >
-          <p className="text-sm font-semibold text-white">{selectedInfo.label}</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-            {selectedInfo.cues.map((c) => (
-              <p key={c} className="text-[11px] text-gray-600 dark:text-gray-300">· {c}</p>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Interval config — only shown for intervals */}
         <AnimatePresence>
@@ -342,8 +290,32 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] transition-transform"
           style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
         >
-          {config.activityType === 'treadmill' ? '🏋️  Start Treadmill' : '🏃  Start Run'}
+          {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
         </button>
+        <button onClick={() => setShowTypeSheet(v => !v)} className="text-sm text-gray-400 underline mt-2 block mx-auto">
+          Change type ({ACTIVITY_TYPES.find(a => a.type === config.activityType)?.label || 'Easy'})
+        </button>
+
+        {showTypeSheet && (
+          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1">
+            {ACTIVITY_TYPES.map((at) => {
+              const IC = ICON_MAP[at.icon];
+              const isActive = config.activityType === at.type;
+              return (
+                <button key={at.type}
+                  onClick={() => { updateConfig({ activityType: at.type }); setShowTypeSheet(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors active:scale-[0.98]"
+                  style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
+                  {IC && <IC size={18} style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.4)' }} />}
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.7)' }}>{at.label}</p>
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{at.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

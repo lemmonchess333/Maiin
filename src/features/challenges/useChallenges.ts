@@ -63,10 +63,10 @@ function getMonthEnd(): Date {
 
 function getSeason() {
   const month = new Date().getMonth();
-  if (month >= 2 && month <= 4) return { name: "Spring Reset", description: "Longest consistency streak — days with any logged activity", metric: "streak_days", icon: "🌱", tiers: { bronze: 5, silver: 14, gold: 30 } };
-  if (month >= 5 && month <= 7) return { name: "Summer Shred", description: "Combined workout count + km run", metric: "combined_score", icon: "☀️", tiers: { bronze: 20, silver: 50, gold: 100 } };
-  if (month >= 8 && month <= 10) return { name: "Autumn Push", description: "Hybrid score: km x 100 + volume kg x 0.1", metric: "hybrid_score", icon: "🍂", tiers: { bronze: 500, silver: 2000, gold: 5000 } };
-  return { name: "Winter Bulk", description: "Highest total volume lifted (kg)", metric: "total_volume", icon: "❄️", tiers: { bronze: 5000, silver: 25000, gold: 50000 } };
+  if (month >= 2 && month <= 4) return { name: "Spring Reset", description: "Longest consistency streak — days with any logged activity", metric: "streak_days", icon: "sprout", tiers: { bronze: 5, silver: 14, gold: 30 } };
+  if (month >= 5 && month <= 7) return { name: "Summer Shred", description: "Combined workout count + km run", metric: "combined_score", icon: "sun", tiers: { bronze: 20, silver: 50, gold: 100 } };
+  if (month >= 8 && month <= 10) return { name: "Autumn Push", description: "Hybrid score: km x 100 + volume kg x 0.1", metric: "hybrid_score", icon: "leaf", tiers: { bronze: 500, silver: 2000, gold: 5000 } };
+  return { name: "Winter Bulk", description: "Highest total volume lifted (kg)", metric: "total_volume", icon: "snowflake", tiers: { bronze: 5000, silver: 25000, gold: 50000 } };
 }
 
 function getSeasonStart(): Date {
@@ -123,7 +123,7 @@ async function seedChallenges() {
       description: "Log workouts this week (Mon-Sun)",
       type: "weekly",
       metric: "workout_count",
-      icon: "🏆",
+      icon: "trophy",
       tiers: { bronze: 2, silver: 4, gold: 6 },
       startDate: Timestamp.fromDate(weekStart),
       endDate: Timestamp.fromDate(weekEnd),
@@ -134,7 +134,7 @@ async function seedChallenges() {
       description: "Total km run this month",
       type: "monthly",
       metric: "total_km",
-      icon: "🏃",
+      icon: "footprints",
       tiers: { bronze: 10, silver: 25, gold: 50 },
       startDate: Timestamp.fromDate(monthStart),
       endDate: Timestamp.fromDate(monthEnd),

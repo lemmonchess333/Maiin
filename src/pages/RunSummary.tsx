@@ -20,6 +20,7 @@ import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
+import { WifiOff, CheckCircle, Trophy } from 'lucide-react';
 
 interface RunData {
   points: GPSPoint[];
@@ -205,7 +206,7 @@ export default function RunSummary() {
       {!isOnline && !saved && (
         <div className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
           style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
-          <span className="text-lg">📵</span>
+          <WifiOff size={20} className="text-amber-400" />
           <div>
             <p className="font-medium text-amber-400 text-xs">You're offline</p>
             <p className="text-xs text-white/50 mt-0.5">Run will sync automatically when you reconnect</p>
@@ -217,7 +218,7 @@ export default function RunSummary() {
       {saved && (
         <div className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
           style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.25)' }}>
-          <span className="text-lg">✅</span>
+          <CheckCircle size={20} className="text-emerald-400" />
           <div>
             <p className="font-medium text-emerald-400 text-xs">
               {isOnline ? 'Run saved!' : 'Saved locally — will sync when online'}
@@ -275,7 +276,7 @@ export default function RunSummary() {
         <div className="mx-4 mb-4 flex justify-center">
           <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
             style={{ background: paceTrend.bgColor, color: paceTrend.color }}>
-            {paceTrend.trend === 'pr' && '🏆'} {paceTrend.label}
+            {paceTrend.trend === 'pr' && <Trophy size={16} className="text-amber-500" />} {paceTrend.label}
           </span>
         </div>
       )}
@@ -299,6 +300,27 @@ export default function RunSummary() {
       {splits.length > 0 && (
         <div className="px-4 mb-4">
           <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
+
+          {/* Per-km split list */}
+          <div className="mt-3 space-y-1">
+            {splits.map((s, i) => {
+              const fastest = Math.min(...splits.map(sp => sp.paceSeconds));
+              const slowest = Math.max(...splits.map(sp => sp.paceSeconds));
+              const color = s.paceSeconds === fastest ? 'text-emerald-500' : s.paceSeconds === slowest ? 'text-red-500' : 'text-muted-foreground';
+              return (
+                <div key={i} className="flex items-center justify-between text-xs px-1">
+                  <span className="text-muted-foreground">km {s.km}</span>
+                  <span className={`font-mono tabular-nums font-medium ${color}`}>{s.pace}/km</span>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between text-xs px-1 pt-1 border-t border-border/50">
+              <span className="text-muted-foreground font-medium">Average</span>
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {Math.floor(avgPaceSeconds / 60)}:{(Math.floor(avgPaceSeconds) % 60).toString().padStart(2, '0')}/km
+              </span>
+            </div>
+          </div>
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import { Footprints } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useRunningStats, type RunSummaryItem } from '../../hooks/useRunningStats';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -57,7 +58,7 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
       <div className="w-16 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50">
         {run.routePreview && run.routePreview.length > 1
           ? <MiniRoute preview={run.routePreview} />
-          : <div className="w-full h-full flex items-center justify-center text-lg">🏃</div>
+          : <div className="w-full h-full flex items-center justify-center"><Footprints size={16} className="text-green-500" /></div>
         }
       </div>
 
@@ -105,7 +106,7 @@ export default function RunningHistorySection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2">🏃 Running</h3>
+      <h3 className="text-sm font-semibold flex items-center gap-2"><Footprints size={14} className="text-green-500" /> Running</h3>
 
       {weeklyData.length > 0 && (
         <div className="p-4 rounded-2xl bg-card border border-border">

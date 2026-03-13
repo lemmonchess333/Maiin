@@ -3,14 +3,13 @@ import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { searchUsers, searchUsersByEmail } from '../lib/socialApi';
+import { searchUsers } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Search, Users, UserPlus, Mail, Smartphone } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
@@ -37,7 +36,6 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState<'name' | 'email'>('name');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -46,9 +44,7 @@ export default function Social() {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
-      const results = searchMode === 'email'
-        ? await searchUsersByEmail(searchQuery.trim())
-        : await searchUsers(searchQuery.trim());
+      const results = await searchUsers(searchQuery.trim());
       setSearchResults(results.filter((u: any) => u.uid !== user?.uid));
     } catch {
       setSearchResults([]);
@@ -160,7 +156,7 @@ export default function Social() {
           {!activeFeed.loading && activeFeed.items.length === 0 && (
             <div className="text-center py-16 space-y-3">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
-                <p className="text-3xl">{feedSubTab === 'discover' ? '🌍' : '👋'}</p>
+                {feedSubTab === 'discover' ? <Globe size={32} className="text-gray-400" /> : <Hand size={32} className="text-gray-400" />}
               </div>
               <p className="text-sm font-bold text-foreground">
                 {feedSubTab === 'discover' ? 'No public activities yet' : 'No activity yet'}
@@ -208,23 +204,11 @@ export default function Social() {
 
           {/* Section 2: Search */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search</p>
-              <div className="ml-auto flex gap-1">
-                <button onClick={() => setSearchMode('name')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${searchMode === 'name' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-                  <Search className="w-3 h-3 inline mr-1" />Name
-                </button>
-                <button onClick={() => setSearchMode('email')}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${searchMode === 'email' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}>
-                  <Mail className="w-3 h-3 inline mr-1" />Email
-                </button>
-              </div>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search by name</p>
             <div className="flex gap-2">
               <input
-                type={searchMode === 'email' ? 'email' : 'text'}
-                placeholder={searchMode === 'email' ? 'Search by email...' : 'Search by name...'}
+                type="text"
+                placeholder="Search by name..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
@@ -267,25 +251,7 @@ export default function Social() {
             )}
           </div>
 
-          {/* Section 4: QR Code */}
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your QR Code</p>
-            <div className="p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-4">
-              {user && (
-                <div className="bg-white p-3 rounded-xl">
-                  <QRCodeSVG value={`${window.location.origin}/user/${user.uid}`} size={160} />
-                </div>
-              )}
-              <p className="text-[10px] text-muted-foreground">Others can scan this to find your profile</p>
-              <button disabled
-                className="w-full py-3 rounded-xl bg-muted text-muted-foreground text-sm font-medium flex items-center justify-center gap-2 opacity-50">
-                <Smartphone className="w-4 h-4" />
-                Scan a Code — Available on iOS
-              </button>
-            </div>
-          </div>
-
-          {/* Section 5: Contact Sync Stub */}
+          {/* Section 4: Contact Sync Stub */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
@@ -304,7 +270,7 @@ export default function Social() {
                   <Smartphone className="w-10 h-10 text-primary mx-auto" />
                   <p className="text-base font-semibold text-foreground">Contact syncing</p>
                   <p className="text-sm text-muted-foreground">Contact syncing is available in the Tropos iOS app. Download it to find friends from your phone.</p>
-                  <p className="text-xs text-muted-foreground">In the meantime, you can search by email above.</p>
+                  <p className="text-xs text-muted-foreground">In the meantime, you can search by name above.</p>
                 </div>
                 <button onClick={() => setShowContactModal(false)}
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
@@ -359,17 +325,27 @@ export default function Social() {
                   onChange={(e) => setNewGroupDesc(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
                 <div className="flex gap-2 flex-wrap">
-                  {['💪','🏃','🏋️','⚡','🎯','🔥','🥗','🧘','🏅','🌅'].map(e => (
-                    <button key={e} onClick={() => setNewGroupIcon(e)}
-                      className={`text-2xl p-2 rounded-lg ${newGroupIcon === e ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
-                      {e}
+                  {[
+                    { name: 'dumbbell', Icon: Dumbbell },
+                    { name: 'footprints', Icon: Footprints },
+                    { name: 'zap', Icon: Zap },
+                    { name: 'target', Icon: Target },
+                    { name: 'flame', Icon: Flame },
+                    { name: 'salad', Icon: Salad },
+                    { name: 'person', Icon: PersonStanding },
+                    { name: 'medal', Icon: Medal },
+                    { name: 'sunrise', Icon: Sunrise },
+                  ].map(({ name, Icon }) => (
+                    <button key={name} onClick={() => setNewGroupIcon(name)}
+                      className={`p-2.5 rounded-lg ${newGroupIcon === name ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
+                      <Icon size={24} className={newGroupIcon === name ? 'text-primary' : 'text-muted-foreground'} />
                     </button>
                   ))}
                 </div>
                 <button
                   onClick={async () => {
                     if (newGroupName.trim()) {
-                      await createCrew(newGroupName, newGroupDesc, newGroupIcon || '💪');
+                      await createCrew(newGroupName, newGroupDesc, newGroupIcon || 'dumbbell');
                       setShowCreateGroup(false);
                       setNewGroupName('');
                       setNewGroupDesc('');

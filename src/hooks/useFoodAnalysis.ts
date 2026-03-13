@@ -48,7 +48,8 @@ export function useFoodAnalysis() {
       });
 
       if (!response.ok) {
-        throw new Error("Analysis failed");
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || errorBody?.error || "Analysis failed");
       }
 
       const data = await response.json();

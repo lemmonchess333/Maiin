@@ -1,3 +1,5 @@
+import { Footprints, Dumbbell } from 'lucide-react';
+
 interface SessionCardProps {
   type: 'run' | 'lift';
   title: string;
@@ -17,7 +19,7 @@ export default function SessionCard({ type, title, status, onStart, onSkip }: Se
             : 'bg-muted/30'
       }`}
     >
-      <span className="text-lg">{type === 'run' ? '🏃' : '🏋️'}</span>
+      {type === 'run' ? <Footprints size={16} className="text-green-500" /> : <Dumbbell size={16} className="text-purple-500" />}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate">{title}</p>
       </div>

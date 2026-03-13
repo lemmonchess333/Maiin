@@ -1,26 +1,14 @@
 import { useMemo } from "react";
 import { useFoodFavourites, type FoodFavourite } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
-import { Star, ChevronRight } from "lucide-react";
+import { Star, ChevronRight, UtensilsCrossed } from "lucide-react";
 
 interface QuickRelogProps {
   onSelect: (food: FoodFavourite) => void;
   onViewAll?: () => void;
 }
 
-const FOOD_EMOJI: Record<string, string> = {
-  egg: "🥚", chicken: "🍗", rice: "🍚", bread: "🍞", banana: "🍌",
-  oats: "🥣", protein: "🥛", salad: "🥗", fish: "🐟", beef: "🥩",
-  pasta: "🍝", yogurt: "🥛", apple: "🍎", coffee: "☕", sandwich: "🥪",
-};
 
-function getFoodEmoji(name: string): string {
-  const lower = name.toLowerCase();
-  for (const [key, emoji] of Object.entries(FOOD_EMOJI)) {
-    if (lower.includes(key)) return emoji;
-  }
-  return "🍽️";
-}
 
 export function QuickRelog({ onSelect, onViewAll }: QuickRelogProps) {
   const { favourites, getTimeRelevant } = useFoodFavourites();
@@ -61,7 +49,7 @@ export function QuickRelog({ onSelect, onViewAll }: QuickRelogProps) {
               "hover:bg-amber-500/20 active:scale-95 transition-all"
             )}
           >
-            <span>{getFoodEmoji(fav.name)}</span>
+            <UtensilsCrossed size={14} className="text-amber-500" />
             <span className="max-w-[100px] truncate">{fav.name}</span>
             <span className="text-muted-foreground">{fav.calories}</span>
           </button>
