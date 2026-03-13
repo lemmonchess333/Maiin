@@ -255,7 +255,7 @@ export default function Run() {
             savedPreferences={(() => {
               const prefs: Partial<RunConfig> = {
                 autoPause: true,
-                audioCues: (profile as any)?.audioCues !== false,
+                audioCues: profile?.audioCues !== false,
               };
               // Support ?type=tempo for direct type selection
               if (searchParams.get('type')) {

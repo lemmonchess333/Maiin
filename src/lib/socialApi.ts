@@ -302,14 +302,14 @@ export async function writeNotification(targetUserId: string, data: {
 // Batch fetch activities + kudos status
 // Replaces N individual reads in ActivityCard
 // ============================================
-export async function batchGetActivities(activityIds: string[]): Promise<Record<string, any>> {
+export async function batchGetActivities(activityIds: string[]): Promise<Record<string, Record<string, unknown>>> {
   if (activityIds.length === 0) return {};
   // Firestore 'in' queries max 30 per batch
   const chunks: string[][] = [];
   for (let i = 0; i < activityIds.length; i += 30) {
     chunks.push(activityIds.slice(i, i + 30));
   }
-  const results: Record<string, any> = {};
+  const results: Record<string, Record<string, unknown>> = {};
   await Promise.all(chunks.map(async (chunk) => {
     const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'activities', id))));
     snaps.forEach(snap => {

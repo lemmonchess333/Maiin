@@ -97,7 +97,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
 function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   dateKey: string;
   schedule: ScheduleDay[];
-  workouts: any[];
+  workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[] }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
 }) {
@@ -107,9 +107,9 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
   const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
   let tonnage = 0;
-  workouts.forEach(function(w: any) {
-    (w.exercises || []).forEach(function(ex: any) {
-      (ex.sets || []).forEach(function(s: any) {
+  workouts.forEach(function(w) {
+    (w.exercises || []).forEach(function(ex) {
+      (ex.sets || []).forEach(function(s) {
         tonnage += (s.weightKg || 0) * (s.reps || 0);
       });
     });

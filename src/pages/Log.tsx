@@ -67,7 +67,7 @@ export default function Log() {
   const todaysMeals = getMealsForDate(selectedDate);
   const dailyTotals = getDailyTotals(selectedDate);
 
-  const safeNum = (value: any): number => {
+  const safeNum = (value: unknown): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
   };

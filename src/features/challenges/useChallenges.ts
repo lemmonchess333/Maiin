@@ -249,7 +249,7 @@ export function useChallenges() {
       ...prev,
       [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
     }));
-  }, [user, challenges, myProgress]);
+  }, [user, challenges]);
 
   const myChallenges = challenges.filter(c => !!myProgress[c.id]);
   const availableChallenges = challenges.filter(c => !myProgress[c.id]);
