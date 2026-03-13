@@ -11,7 +11,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus } from "lucide-react";
+import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Target, Zap, Leaf } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
@@ -355,7 +355,7 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
       <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-3">This Week</p>
       {allZero ? (
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
-          <p className="text-lg">🎯</p>
+          <p className="text-lg"><Target size={24} className="text-purple-500" /></p>
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
           <p className="text-[11px] text-muted-foreground">Log a workout or run to see your weekly stats</p>
         </div>
@@ -376,11 +376,11 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
 }
 
 function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: string; loadBand: string }) {
-  var emoji = loadBand === "overreach" ? "\uD83D\uDD25" : loadBand === "high" ? "\u26A1" : loadBand === "moderate" ? "\uD83D\uDCAA" : "\uD83C\uDF31";
+  var icon = loadBand === "overreach" ? <Flame size={20} className="text-orange-500" /> : loadBand === "high" ? <Zap size={20} className="text-yellow-500" /> : loadBand === "moderate" ? <Dumbbell size={20} className="text-orange-500" /> : <Leaf size={20} className="text-green-400" />;
   return (
     <Link to="/history?tab=performance">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="p-4 rounded-2xl bg-card border border-border/50 flex items-start gap-3 active:scale-[0.99]">
-        <span className="text-lg mt-0.5">{emoji}</span>
+        <span className="mt-0.5">{icon}</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground">{title}</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{bullet}</p>

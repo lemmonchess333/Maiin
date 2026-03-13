@@ -35,6 +35,10 @@ import {
   BookOpen,
   Mic,
   ScanBarcode,
+  Footprints,
+  MapPin,
+  Volume2,
+  BarChart3,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -678,7 +682,7 @@ export default function Log() {
       {activeTab === "run" && (
         <div className="space-y-6">
           <div className="text-center py-8 space-y-4">
-            <p className="text-5xl">🏃</p>
+            <p className="text-5xl"><Footprints size={48} className="text-green-500" /></p>
             <h2 className="text-lg font-bold">Ready to run?</h2>
             <p className="text-sm text-muted-foreground px-6">
               GPS tracking with live pace, distance, splits, and route mapping
@@ -691,15 +695,15 @@ export default function Log() {
 
           <div className="grid grid-cols-3 gap-2">
             <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg">📍</p>
+              <p className="text-lg"><MapPin size={24} className="text-gray-400" /></p>
               <p className="text-[10px] text-muted-foreground mt-1">GPS Tracking</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg">🗣️</p>
+              <p className="text-lg"><Volume2 size={24} className="text-gray-400" /></p>
               <p className="text-[10px] text-muted-foreground mt-1">Audio Cues</p>
             </div>
             <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg">📊</p>
+              <p className="text-lg"><BarChart3 size={24} className="text-gray-400" /></p>
               <p className="text-[10px] text-muted-foreground mt-1">Split Analysis</p>
             </div>
           </div>
