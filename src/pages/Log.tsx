@@ -351,13 +351,6 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Start a run link */}
-      <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
-        <Footprints className="w-4 h-4 text-primary" />
-        <span className="text-xs font-medium text-foreground">Start a run</span>
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
-      </Link>
-
       {/* Tabs — Workout / Food */}
       <div className="flex gap-1 bg-muted rounded-xl p-1">
         {([
@@ -382,6 +375,13 @@ export default function Log() {
       {/* Workout Tab */}
       {activeTab === "workout" && (
         <div className="space-y-4">
+          {/* Start a run link */}
+          <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
+            <Footprints className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-foreground">Start a run</span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+          </Link>
+
           {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
