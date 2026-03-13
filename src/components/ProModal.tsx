@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useAuth } from "@/lib/auth";
+import { purchase, restorePurchases, type PlanId } from "@/lib/purchaseProvider";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { X, Sparkles, TrendingUp, Zap, BarChart2, Utensils, Brain, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const PLANS = [
   { id: "monthly" as const, label: "Monthly", price: "£2.99", period: "/mo" },
@@ -126,8 +128,25 @@ interface Props {
 }
 
 export default function ProModal({ onClose, feature }: Props) {
-  const { checkout, loading } = useStripeCheckout();
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly" | "lifetime">("yearly");
+  const { user } = useAuth();
+  const [loading, setLoading] = useState<PlanId | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>("yearly");
+
+  const handleCheckout = async (plan: PlanId) => {
+    if (!user) return;
+    setLoading(plan);
+    const result = await purchase(plan, user.uid, user.email || '');
+    if (!result.success && result.error) {
+      toast.error(result.error);
+    }
+    setLoading(null);
+  };
+
+  const handleRestore = async () => {
+    const result = await restorePurchases();
+    if (result.success) toast.success('Purchases restored successfully.');
+    else if (result.error) toast.error(result.error);
+  };
 
   const hero = (feature && FEATURE_HEROES[feature]) ? FEATURE_HEROES[feature] : DEFAULT_HERO;
 
@@ -227,7 +246,7 @@ export default function ProModal({ onClose, feature }: Props) {
 
           {/* CTA */}
           <button
-            onClick={() => checkout(selectedPlan)}
+            onClick={() => handleCheckout(selectedPlan)}
             disabled={loading !== null}
             className="w-full py-4 rounded-2xl text-white font-bold text-base transition-opacity disabled:opacity-50"
             style={{ background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})` }}
@@ -235,7 +254,21 @@ export default function ProModal({ onClose, feature }: Props) {
             {loading ? "Loading…" : `Start Pro — ${PLANS.find(p => p.id === selectedPlan)?.price}${PLANS.find(p => p.id === selectedPlan)?.period}`}
           </button>
 
-          <p className="text-center text-[11px] text-white/30 pb-1">Cancel anytime. No hidden fees.</p>
+          {/* Subscription terms (App Store Guideline 3.1.2(c)) */}
+          <div className="text-center space-y-1 pb-1">
+            <p className="text-[11px] text-white/30">
+              {selectedPlan === 'lifetime'
+                ? 'One-time purchase. No recurring charges.'
+                : `Subscription auto-renews ${selectedPlan === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period.`}
+            </p>
+            <p className="text-[11px] text-white/30">
+              {selectedPlan !== 'lifetime' && 'Manage or cancel anytime in your device settings. '}
+              No hidden fees.
+            </p>
+            <button onClick={handleRestore} className="text-[11px] text-white/40 underline">
+              Restore purchases
+            </button>
+          </div>
         </div>
       </motion.div>
     </>
