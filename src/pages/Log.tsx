@@ -29,7 +29,6 @@ import {
   Beef,
   Wheat,
   Cookie,
-  MessageSquare,
   ScanBarcode,
   Footprints,
 } from "lucide-react";
@@ -55,7 +54,7 @@ export default function Log() {
     }
   }, []);
 
-  const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual">("quick");
+  const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const { addFavourite } = useFoodFavourites();
@@ -530,25 +529,46 @@ export default function Log() {
             </div>
           )}
 
-          {/* Unified Add Food Card */}
+          {/* Add Food — Quick Add is always visible, other modes expand inline */}
           <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
             <p className="text-sm font-medium text-foreground">Add Food</p>
-            {/* Mode selector */}
-            <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+
+            {/* Quick Add — always visible */}
+            <textarea
+              value={nlInput}
+              onChange={(e) => setNlInput(e.target.value)}
+              placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <button
+              onClick={handleNLParse}
+              disabled={!nlInput.trim() || nlParsing}
+              className={cn(
+                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
+                nlInput.trim()
+                  ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              {nlParsing ? "Parsing..." : "Log Meal"}
+            </button>
+
+            {/* Secondary actions row */}
+            <div className="flex gap-2">
               {([
-                { key: "quick", label: "Quick Add", Icon: MessageSquare },
-                { key: "search", label: "Search", Icon: Search },
-                { key: "scan", label: "Scan", Icon: ScanBarcode },
-                { key: "manual", label: "Manual", Icon: UtensilsCrossed },
-              ] as const).map(({ key, label, Icon }) => (
+                { key: "search" as const, label: "Search", Icon: Search },
+                { key: "scan" as const, label: "Scan", Icon: ScanBarcode },
+                { key: "manual" as const, label: "Manual", Icon: UtensilsCrossed },
+              ]).map(({ key, label, Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setFoodMode(key)}
+                  onClick={() => setFoodMode(foodMode === key ? null : key)}
                   className={cn(
-                    "flex-1 py-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1",
+                    "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
                     foodMode === key
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground"
+                      ? "bg-primary/10 text-primary border-primary/30"
+                      : "bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" /> {label}
@@ -556,38 +576,12 @@ export default function Log() {
               ))}
             </div>
 
-            {/* Content based on mode */}
-            {foodMode === "quick" && (
-              <div className="space-y-3">
-                <p className="text-[11px] text-muted-foreground">
-                  Describe what you ate — e.g. "2 eggs, toast with butter, protein shake"
-                </p>
-                <textarea
-                  value={nlInput}
-                  onChange={(e) => setNlInput(e.target.value)}
-                  placeholder="Type your meal..."
-                  rows={2}
-                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-                <button
-                  onClick={handleNLParse}
-                  disabled={!nlInput.trim() || nlParsing}
-                  className={cn(
-                    "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
-                    nlInput.trim()
-                      ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
-                >
-                  {nlParsing ? "Parsing..." : "Log Meal"}
-                </button>
-              </div>
-            )}
+            {/* Expanded secondary mode */}
             {foodMode === "search" && (
-              <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode("quick")} />
+              <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode(null)} />
             )}
             {foodMode === "scan" && (
-              <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode("quick")} />
+              <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode(null)} />
             )}
             {foodMode === "manual" && (
               <ManualFoodLogger date={selectedDate} />
