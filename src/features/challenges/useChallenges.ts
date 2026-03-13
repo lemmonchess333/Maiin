@@ -156,7 +156,7 @@ async function seedChallenges() {
     const ref = doc(db, "challenges", def.docId);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
-      const { docId: _, ...data } = def;
+      const { docId: _docId, ...data } = def;
       await setDoc(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
     }
   }

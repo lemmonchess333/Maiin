@@ -19,6 +19,7 @@ const NotificationBubbleContext = createContext<NotificationBubbleContextValue>(
   showBubble: () => {},
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNotificationBubble() {
   return useContext(NotificationBubbleContext);
 }

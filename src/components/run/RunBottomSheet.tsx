@@ -266,7 +266,7 @@ export default function RunBottomSheet({
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>/KM</p>
             </div>
             <button
-              onClick={() => { isPaused ? onResume() : onPause(); haptic('medium'); }}
+              onClick={() => { if (isPaused) { onResume(); } else { onPause(); } haptic('medium'); }}
               className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
               style={{ background: isPaused ? THEME.teal : 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.18)' }}>
               {isPaused
