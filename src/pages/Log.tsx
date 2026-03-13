@@ -1,19 +1,18 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
-import { collection as fbCollection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import WorkoutLogger from "@/components/WorkoutLogger";
 import { ManualFoodLogger } from "@/components/ManualFoodLogger";
 import FoodSearch from "@/components/FoodSearch";
 import { useMeals } from "@/hooks/useMeals";
-import FoodAnalyzer from "@/components/FoodAnalyzer";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText } from "@/lib/nlFoodParser";
@@ -33,9 +32,6 @@ import {
   MessageSquare,
   ScanBarcode,
   Footprints,
-  MapPin,
-  Volume2,
-  BarChart3,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -50,8 +46,7 @@ export default function Log() {
     format(new Date(), "yyyy-MM-dd")
   );
 
-  const [activeTab, setActiveTab] = useState<"workout" | "food" | "run">("workout");
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"workout" | "food">("workout");
   const location = useLocation();
 
   useEffect(() => {
@@ -60,10 +55,9 @@ export default function Log() {
     }
   }, []);
 
-  const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual">("quick");
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const { addFavourite } = useFoodFavourites();
 
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -254,7 +248,7 @@ export default function Log() {
       confidence: "database",
       createdAt: Timestamp.now(),
     });
-    setShowFoodSearch(false);
+    setFoodMode("quick");
     await addFavourite({ ...food, source: "search" });
     toast.success(`${food.name} added!`);
   };
@@ -276,7 +270,7 @@ export default function Log() {
       confidence: "barcode",
       createdAt: Timestamp.now(),
     });
-    setShowBarcodeScanner(false);
+    setFoodMode("quick");
     await addFavourite({ name: food.name, calories: Math.round(food.calories * s), protein: Math.round(food.protein * s), carbs: Math.round(food.carbs * s), fat: Math.round(food.fat * s), fiber: food.fiber != null ? Math.round(food.fiber * s) : undefined, sugar: food.sugar != null ? Math.round(food.sugar * s) : undefined, sodium: food.sodium != null ? Math.round(food.sodium * s) : undefined, servingSize: food.servingSize, source: "barcode" });
     toast.success(`${food.name} logged!`);
   };
@@ -314,16 +308,18 @@ export default function Log() {
       <div className="flex items-center justify-between bg-card rounded-xl border border-border/50 p-3">
         <button
           onClick={() => changeDate(-1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label="Previous day"
+          className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary"
         >
-          <ChevronLeft className="w-4 h-4 text-foreground" />
+          <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
 
         <button
           onClick={() => dateInputRef.current?.showPicker?.()}
-          className="text-center flex items-center gap-2"
+          aria-label="Select date"
+          className="text-center flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg"
         >
-          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+          <CalendarDays aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium text-foreground">
               {isToday
@@ -341,24 +337,32 @@ export default function Log() {
           ref={dateInputRef}
           type="date"
           value={selectedDate}
+          aria-label="Select date"
           onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
           className="sr-only"
         />
 
         <button
           onClick={() => changeDate(1)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label="Next day"
+          className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary"
         >
-          <ChevronRight className="w-4 h-4 text-foreground" />
+          <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
       </div>
 
-      {/* Tabs — Workout / Food / Run */}
+      {/* Start a run link */}
+      <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
+        <Footprints className="w-4 h-4 text-primary" />
+        <span className="text-xs font-medium text-foreground">Start a run</span>
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+      </Link>
+
+      {/* Tabs — Workout / Food */}
       <div className="flex gap-1 bg-muted rounded-xl p-1">
         {([
           { key: "workout" as const, label: "Workout", Icon: Dumbbell },
           { key: "food" as const, label: "Food", Icon: UtensilsCrossed },
-          { key: "run" as const, label: "Run", Icon: Flame },
         ]).map(({ key, label, Icon }) => (
           <button
             key={key}
@@ -520,8 +524,8 @@ export default function Log() {
                         {safeNum(m.totalCalories)}
                         <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
-                      <button onClick={() => deleteMeal(m.id)} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90">
-                        <Trash2 className="w-3.5 h-3.5" />
+                      <button onClick={() => deleteMeal(m.id)} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
+                        <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -537,144 +541,72 @@ export default function Log() {
             </div>
           )}
 
-          {/* Quick Text Input (NL Food Logging) */}
+          {/* Unified Add Food Card */}
           <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">Quick Add</p>
+            <p className="text-sm font-medium text-foreground">Add Food</p>
+            {/* Mode selector */}
+            <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+              {([
+                { key: "quick", label: "Quick Add", Icon: MessageSquare },
+                { key: "search", label: "Search", Icon: Search },
+                { key: "scan", label: "Scan", Icon: ScanBarcode },
+                { key: "manual", label: "Manual", Icon: UtensilsCrossed },
+              ] as const).map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setFoodMode(key)}
+                  className={cn(
+                    "flex-1 py-2 rounded-md text-[11px] font-medium transition-all flex items-center justify-center gap-1",
+                    foodMode === key
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" /> {label}
+                </button>
+              ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Describe what you ate — e.g. "2 eggs, toast with butter, protein shake"
-            </p>
-            <textarea
-              value={nlInput}
-              onChange={(e) => setNlInput(e.target.value)}
-              placeholder="Type your meal..."
-              rows={2}
-              className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <button
-              onClick={handleNLParse}
-              disabled={!nlInput.trim() || nlParsing}
-              className={cn(
-                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
-                nlInput.trim()
-                  ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
-              )}
-            >
-              {nlParsing ? "Parsing..." : "Log Meal"}
-            </button>
+
+            {/* Content based on mode */}
+            {foodMode === "quick" && (
+              <div className="space-y-3">
+                <p className="text-[11px] text-muted-foreground">
+                  Describe what you ate — e.g. "2 eggs, toast with butter, protein shake"
+                </p>
+                <textarea
+                  value={nlInput}
+                  onChange={(e) => setNlInput(e.target.value)}
+                  placeholder="Type your meal..."
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <button
+                  onClick={handleNLParse}
+                  disabled={!nlInput.trim() || nlParsing}
+                  className={cn(
+                    "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
+                    nlInput.trim()
+                      ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  {nlParsing ? "Parsing..." : "Log Meal"}
+                </button>
+              </div>
+            )}
+            {foodMode === "search" && (
+              <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode("quick")} />
+            )}
+            {foodMode === "scan" && (
+              <BarcodeScanner onLog={handleBarcodeLog} onClose={() => setFoodMode("quick")} />
+            )}
+            {foodMode === "manual" && (
+              <ManualFoodLogger date={selectedDate} />
+            )}
           </div>
-
-          {/* Quick action icon row */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowFoodSearch(true)}
-              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
-            >
-              <Search className="w-5 h-5 text-primary" />
-              <span className="text-[10px] text-muted-foreground">Search</span>
-            </button>
-            <button
-              onClick={() => setShowBarcodeScanner(true)}
-              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
-            >
-              <ScanBarcode className="w-5 h-5 text-primary" />
-              <span className="text-[10px] text-muted-foreground">Scan</span>
-            </button>
-          </div>
-
-          {/* Expanded panels */}
-          {showFoodSearch && (
-            <FoodSearch
-              onSelect={handleFoodSearchSelect}
-              onClose={() => setShowFoodSearch(false)}
-            />
-          )}
-
-          {showBarcodeScanner && (
-            <div className="bg-card rounded-2xl border border-border/50 p-4">
-              <BarcodeScanner
-                onLog={handleBarcodeLog}
-                onClose={() => setShowBarcodeScanner(false)}
-              />
-            </div>
-          )}
-
-          {/* Manual Food Logger */}
-          <ManualFoodLogger date={selectedDate} />
-
-          {/* AI Food Analyzer */}
-          <FoodAnalyzer date={selectedDate} />
         </div>
       )}
 
-      {/* Run Tab */}
-      {activeTab === "run" && (
-        <div className="space-y-6">
-          <div className="text-center py-8 space-y-4">
-            <p className="text-5xl"><Footprints size={48} className="text-green-500" /></p>
-            <h2 className="text-lg font-bold">Ready to run?</h2>
-            <p className="text-sm text-muted-foreground px-6">
-              GPS tracking with live pace, distance, splits, and route mapping
-            </p>
-            <button onClick={() => navigate('/run')}
-              className="btn-start-run-pulse px-10 py-3.5 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-95 transition-transform">
-              Start Run
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><MapPin size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">GPS Tracking</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><Volume2 size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">Audio Cues</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><BarChart3 size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">Split Analysis</p>
-            </div>
-          </div>
-
-          <RecentRunsList />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RecentRunsList() {
-  const { user } = useAuth();
-  const [runs, setRuns] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    const q = query(fbCollection(db, 'users', user.uid, 'runs'), orderBy('completedAt', 'desc'), limit(3));
-    getDocs(q).then(snap => setRuns(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-  }, [user]);
-
-  if (runs.length === 0) return null;
-
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">Recent Runs</h3>
-      {runs.map((run: any) => (
-        <div key={run.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50 pressable">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{((run.distance || 0) / 1000).toFixed(2)} km</p>
-            <p className="text-[10px] text-muted-foreground">
-              {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''}
-            </p>
-          </div>
-          <p className="text-sm font-mono tabular-nums text-muted-foreground">
-            {run.avgPace ? `${Math.floor(run.avgPace / 60)}:${(Math.floor(run.avgPace) % 60).toString().padStart(2, '0')}/km` : ''}
-          </p>
-        </div>
-      ))}
     </div>
   );
 }

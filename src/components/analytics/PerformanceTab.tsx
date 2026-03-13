@@ -1,8 +1,12 @@
+import { useState } from "react";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
+import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 function pctSigned(x: number) {
   const v = Math.round(x * 100);
@@ -114,8 +118,39 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
   );
 }
 
+function getPlainLanguageSummary(
+  pi: number,
+  loadBand: string | undefined,
+  delta: number | null
+): { headline: string; body: string } {
+  const headline =
+    pi >= 80 ? "Strong week — your training is on track" :
+    pi >= 60 ? "Solid progress — keep building momentum" :
+    pi >= 40 ? "Moderate effort — room to push harder" :
+    "Light week — focus on recovery or ramp up";
+
+  const band = (loadBand ?? "").toLowerCase();
+  let body =
+    band === "overreach"
+      ? "You're pushing hard — recovery matters. Consider a lighter session."
+      : band === "high"
+      ? "High training load. Keep nutrition and sleep on point."
+      : band === "moderate"
+      ? "Balanced workload. Room to push harder or maintain."
+      : "Low training load. Good time to recover or increase intensity.";
+
+  if (delta !== null && Math.abs(delta) > 5) {
+    body += delta > 0
+      ? ` Trending up ${delta} pts from last week.`
+      : ` Down ${Math.abs(delta)} pts from last week.`;
+  }
+
+  return { headline, body };
+}
+
 export default function PerformanceTab() {
   const { weeks, currentWeek, loading } = usePerformanceWeeks(12);
+  const [showTechnical, setShowTechnical] = useState(false);
 
   if (loading) {
     return (
@@ -142,119 +177,192 @@ export default function PerformanceTab() {
   const b = currentWeek.breakdown;
   const m = currentWeek.multipliers;
 
+  const pi = Math.round(currentWeek.performanceIndex);
+  const loadBand = currentWeek.labels?.loadBand;
+  const { headline, body } = getPlainLanguageSummary(pi, loadBand, delta);
+
+  const summaryColor =
+    pi >= 80 ? THEME.success :
+    pi >= 60 ? THEME.teal :
+    pi >= 40 ? THEME.warning :
+    THEME.running;
+
   return (
     <div className="space-y-4">
-      {/* Gauge card */}
+      {/* Plain language summary card */}
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-foreground">This Week</h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3
+            className="text-base font-bold"
+            style={{ color: summaryColor }}
+          >
+            {headline}
+          </h3>
           {delta !== null && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2"
               style={{
                 color: delta >= 0 ? THEME.success : THEME.running,
                 background: `${delta >= 0 ? THEME.success : THEME.running}18`,
-              }}>
+              }}
+            >
               {delta >= 0 ? "+" : ""}{delta} pts
             </span>
           )}
         </div>
-        <PIGauge score={currentWeek.performanceIndex} />
-      </div>
-
-      {/* PI Trend — last 8 weeks */}
-      {trendData.length >= 2 && (
-        <div className="p-4 rounded-2xl border border-border/50 bg-card">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Performance Index — last 8 weeks</h3>
-            <span className="text-2xl font-black tabular-nums" style={{ color: THEME.brand }}>
-              {Math.round(currentWeek.performanceIndex)}
-            </span>
-          </div>
-          <ResponsiveContainer width="100%" height={120}>
-            <LineChart data={trendData}>
-              <XAxis
-                dataKey="week"
-                fontSize={9}
-                opacity={0.3}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: string) => {
-                  const parts = v.split('-W');
-                  if (parts.length === 2) {
-                    const weekNum = parseInt(parts[1], 10);
-                    return `W${weekNum}`;
-                  }
-                  return v;
-                }}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: 'rgba(0,0,0,0.85)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-                labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
-                itemStyle={{ color: THEME.brand }}
-              />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke={THEME.brand}
-                strokeWidth={2}
-                dot={{ r: 3, fill: THEME.brand }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-3xl font-black tabular-nums" style={{ color: summaryColor }}>
+            {pi}
+          </span>
+          <span className="text-xs text-muted-foreground">/100 Performance Index</span>
         </div>
-      )}
-
-      {/* Breakdown bars */}
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">Breakdown</h3>
-        <ScoreBar label="Lift Load" value={b.liftLoadScore} color={THEME.lifting} />
-        <ScoreBar label="Run Load" value={b.runLoadScore} color={THEME.running} />
-        <ScoreBar label="Recovery" value={b.recoveryScore} color={THEME.success} />
-        <ScoreBar label="Adherence" value={b.adherenceScore} color={THEME.teal} />
       </div>
 
-      {/* Trend chart */}
-      <PerformanceIndexChart weeks={weeks} />
-
-      {/* Load band + adjustments */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          label="Load Band"
-          value={currentWeek.labels?.loadBand || "—"}
-          unit=""
-          accentColor={THEME.brand}
+      {/* Technical details toggle */}
+      <button
+        onClick={() => setShowTechnical((v) => !v)}
+        className={cn(
+          "flex items-center gap-1.5 text-xs font-medium text-muted-foreground",
+          "hover:text-foreground transition-colors w-full justify-center py-1"
+        )}
+      >
+        {showTechnical ? "Hide technical details" : "Show technical details"}
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 transition-transform duration-200",
+            showTechnical && "rotate-180"
+          )}
         />
-        <StatCard
-          label="Avg PI (12w)"
-          value={String(Math.round(weeks.reduce((s, w) => s + w.performanceIndex, 0) / weeks.length))}
-          unit="/100"
-          accentColor={THEME.brand}
-        />
-      </div>
+      </button>
 
-      <div className="p-4 rounded-2xl bg-card border border-border/50">
-        <h3 className="text-sm font-semibold text-foreground mb-2">This Week Adjustments</h3>
-        <ul className="text-sm text-muted-foreground space-y-1">
-          <li>
-            Lifting progression:{" "}
-            <span className="text-foreground font-medium">{pctSigned(m.liftProgression - 1)}</span>
-          </li>
-          <li>
-            Run volume:{" "}
-            <span className="text-foreground font-medium">{pctSigned(m.runVolume - 1)}</span>
-          </li>
-          <li>
-            Run pace adjustment:{" "}
-            <span className="text-foreground font-medium">{pctSigned(m.runPaceAdjustmentPct)}</span>
-          </li>
-        </ul>
-      </div>
+      {/* Collapsible technical section */}
+      <AnimatePresence initial={false}>
+        {showTechnical && (
+          <motion.div
+            key="technical"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4">
+              {/* Gauge card */}
+              <div className="p-4 rounded-2xl border border-border/50 bg-card">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-foreground">This Week</h3>
+                  {delta !== null && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                      style={{
+                        color: delta >= 0 ? THEME.success : THEME.running,
+                        background: `${delta >= 0 ? THEME.success : THEME.running}18`,
+                      }}>
+                      {delta >= 0 ? "+" : ""}{delta} pts
+                    </span>
+                  )}
+                </div>
+                <PIGauge score={currentWeek.performanceIndex} />
+              </div>
+
+              {/* PI Trend — last 8 weeks */}
+              {trendData.length >= 2 && (
+                <div className="p-4 rounded-2xl border border-border/50 bg-card">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Performance Index — last 8 weeks</h3>
+                    <span className="text-2xl font-black tabular-nums" style={{ color: THEME.brand }}>
+                      {Math.round(currentWeek.performanceIndex)}
+                    </span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <LineChart data={trendData}>
+                      <XAxis
+                        dataKey="week"
+                        fontSize={9}
+                        opacity={0.3}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v: string) => {
+                          const parts = v.split('-W');
+                          if (parts.length === 2) {
+                            const weekNum = parseInt(parts[1], 10);
+                            return `W${weekNum}`;
+                          }
+                          return v;
+                        }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'rgba(0,0,0,0.85)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                        }}
+                        labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
+                        itemStyle={{ color: THEME.brand }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke={THEME.brand}
+                        strokeWidth={2}
+                        dot={{ r: 3, fill: THEME.brand }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Breakdown bars */}
+              <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">Breakdown</h3>
+                <ScoreBar label="Lift Load" value={b.liftLoadScore} color={THEME.lifting} />
+                <ScoreBar label="Run Load" value={b.runLoadScore} color={THEME.running} />
+                <ScoreBar label="Recovery" value={b.recoveryScore} color={THEME.success} />
+                <ScoreBar label="Adherence" value={b.adherenceScore} color={THEME.teal} />
+              </div>
+
+              {/* Trend chart */}
+              <PerformanceIndexChart weeks={weeks} />
+
+              {/* Load band + adjustments */}
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard
+                  label="Load Band"
+                  value={currentWeek.labels?.loadBand || "—"}
+                  unit=""
+                  accentColor={THEME.brand}
+                />
+                <StatCard
+                  label="Avg PI (12w)"
+                  value={String(Math.round(weeks.reduce((s, w) => s + w.performanceIndex, 0) / weeks.length))}
+                  unit="/100"
+                  accentColor={THEME.brand}
+                />
+              </div>
+
+              <div className="p-4 rounded-2xl bg-card border border-border/50">
+                <h3 className="text-sm font-semibold text-foreground mb-2">This Week Adjustments</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>
+                    Lifting progression:{" "}
+                    <span className="text-foreground font-medium">{pctSigned(m.liftProgression - 1)}</span>
+                  </li>
+                  <li>
+                    Run volume:{" "}
+                    <span className="text-foreground font-medium">{pctSigned(m.runVolume - 1)}</span>
+                  </li>
+                  <li>
+                    Run pace adjustment:{" "}
+                    <span className="text-foreground font-medium">{pctSigned(m.runPaceAdjustmentPct)}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   getDocs,
   onSnapshot,
   Timestamp,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -45,7 +46,7 @@ export function useDailyLogs() {
     }
 
     const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(logsRef, orderBy("date", "desc"));
+    const q = query(logsRef, orderBy("date", "desc"), limit(90));
 
     const unsubscribe = onSnapshot(
       q,

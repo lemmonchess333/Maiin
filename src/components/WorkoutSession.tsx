@@ -58,6 +58,20 @@ const SET_TYPE_CONFIG: Record<SetType, { label: string; color: string; bg: strin
 
 const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
 
+const TYPE_COLORS: Record<SetType, string> = {
+  working: "#a3a3a3",
+  warmup: "#ca8a04",
+  dropset: "#9333ea",
+  failure: "#dc2626",
+};
+
+const TYPE_LABELS: Record<SetType, string> = {
+  working: "Working",
+  warmup: "Warmup",
+  dropset: "Drop",
+  failure: "Failure",
+};
+
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 interface SetLog {
@@ -231,6 +245,14 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       const current = updated[exIdx][setIdx].type;
       const currentIndex = SET_TYPE_ORDER.indexOf(current);
       updated[exIdx][setIdx].type = SET_TYPE_ORDER[(currentIndex + 1) % SET_TYPE_ORDER.length];
+      return updated;
+    });
+  };
+
+  const setSetType = (exIdx: number, setIdx: number, type: SetType) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[exIdx][setIdx].type = type;
       return updated;
     });
   };
@@ -647,6 +669,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       type="number"
                       value={set.weight || ""}
                       placeholder={set.weight === 0 ? "BW" : ""}
+                      aria-label={`Set ${setIdx + 1} weight`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                       disabled={set.completed}
                       className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
@@ -656,6 +679,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     <input
                       type="number"
                       value={set.reps || ""}
+                      aria-label={`Set ${setIdx + 1} reps`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                       disabled={set.completed}
                       className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
@@ -685,6 +709,26 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         )}
                       >
                         {rpe}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Set type buttons for active (non-completed) current set */}
+                {setIdx === currentSetIndex && !set.completed && (
+                  <div className="flex gap-1.5 px-4 py-2 border-t border-border/20">
+                    {(['working', 'warmup', 'dropset', 'failure'] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setSetType(currentExIndex, setIdx, type)}
+                        aria-label={`Set type: ${TYPE_LABELS[type]}`}
+                        aria-pressed={set.type === type}
+                        className={cn(
+                          "flex-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all focus-visible:outline-2 focus-visible:outline-primary",
+                          set.type === type ? "opacity-100 ring-2 ring-current" : "opacity-40"
+                        )}
+                        style={{ color: TYPE_COLORS[type], backgroundColor: TYPE_COLORS[type] + '15' }}
+                      >
+                        {TYPE_LABELS[type]}
                       </button>
                     ))}
                   </div>

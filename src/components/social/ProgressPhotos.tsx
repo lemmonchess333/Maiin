@@ -3,7 +3,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
-import { Camera, Lock } from 'lucide-react';
+import { Camera, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
@@ -33,6 +33,7 @@ export default function ProgressPhotos() {
   const [isPrivate, setIsPrivate] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadPhotos = useCallback(async () => {
@@ -43,6 +44,43 @@ export default function ProgressPhotos() {
   }, [user]);
 
   useEffect(() => { loadPhotos(); }, [loadPhotos]);
+
+  // Auto-decrypt the 6 most recent photos on mount
+  useEffect(() => {
+    if (photos.length === 0 || !user) return;
+
+    const autoDecrypt = async () => {
+      const key = await getEncryptionKey(user.uid);
+
+      for (const photo of photos.slice(0, 6)) {
+        if (decryptedUrls[photo.id]) continue;
+
+        setDecrypting(prev => new Set(prev).add(photo.id));
+        try {
+          const storageRef = ref(storage, photo.storagePath);
+          const url = await getDownloadURL(storageRef);
+          const response = await fetch(url);
+          const encryptedBuffer = await response.arrayBuffer();
+          const iv = new Uint8Array(photo.iv);
+          const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+          const blob = new Blob([decrypted], { type: 'image/webp' });
+          const objectUrl = URL.createObjectURL(blob);
+          setDecryptedUrls(prev => ({ ...prev, [photo.id]: objectUrl }));
+        } catch (err) {
+          console.error(`Auto-decrypt failed for photo ${photo.id}:`, err);
+        } finally {
+          setDecrypting(prev => {
+            const next = new Set(prev);
+            next.delete(photo.id);
+            return next;
+          });
+        }
+      }
+    };
+
+    autoDecrypt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos, user]);
 
   const decryptPhoto = useCallback(async (photo: typeof photos[0]) => {
     if (!user || decryptedUrls[photo.id]) return;
@@ -166,7 +204,12 @@ export default function ProgressPhotos() {
             className={`aspect-[3/4] rounded-lg overflow-hidden border-2 ${
               selected.includes(photo.id) ? 'border-purple-500' : 'border-transparent'
             }`}>
-            {decryptedUrls[photo.id] ? (
+            {decrypting.has(photo.id) ? (
+              <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
+                <Loader2 size={16} className="text-muted-foreground animate-spin" />
+                <span className="text-[10px] text-muted-foreground mt-1">{photo.date}</span>
+              </div>
+            ) : decryptedUrls[photo.id] ? (
               <img src={decryptedUrls[photo.id]} className="w-full h-full object-cover" alt="" />
             ) : (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">

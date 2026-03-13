@@ -116,10 +116,8 @@ function syncDarkMode(dark: boolean) {
   } else {
     document.documentElement.classList.remove("dark");
   }
+  localStorage.setItem('tropos-dark-mode', String(dark));
 }
-
-// Ensure light mode on initial load (before profile loads)
-document.documentElement.classList.remove("dark");
 
 /* ================================
    AUTH CONTEXT
