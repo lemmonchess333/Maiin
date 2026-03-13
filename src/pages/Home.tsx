@@ -288,6 +288,17 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             </button>
           </div>
+          {/* Steps */}
+          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(34,197,94,0.10)" }}>
+              <Footprints className="w-4 h-4 text-green-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Steps</p>
+              <p className="text-xs text-muted-foreground">—</p>
+              <p className="text-[10px] text-muted-foreground/60">Connect in app</p>
+            </div>
+          </div>
         </div>
       </motion.div>
     </div>
