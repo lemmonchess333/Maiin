@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
+import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy
 function lazyRetry<T extends { default: React.ComponentType<Record<string, never>> }>(
@@ -158,17 +159,17 @@ function AppRoutes() {
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/log" element={<Log />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/program" element={<Program />} />
-          <Route path="/social" element={<Social />} />
-          <Route path="/user/:uid" element={<UserProfile />} />
-          <Route path="/run/:runId" element={<RunDetail />} />
+          <Route path="/" element={<RouteErrorBoundary><Home /></RouteErrorBoundary>} />
+          <Route path="/log" element={<RouteErrorBoundary><Log /></RouteErrorBoundary>} />
+          <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
+          <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
+          <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
+          <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />
+          <Route path="/user/:uid" element={<RouteErrorBoundary><UserProfile /></RouteErrorBoundary>} />
+          <Route path="/run/:runId" element={<RouteErrorBoundary><RunDetail /></RouteErrorBoundary>} />
         </Route>
-        <Route path="/run" element={<Run />} />
-        <Route path="/run-summary" element={<RunSummary />} />
+        <Route path="/run" element={<RouteErrorBoundary><Run /></RouteErrorBoundary>} />
+        <Route path="/run-summary" element={<RouteErrorBoundary><RunSummary /></RouteErrorBoundary>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

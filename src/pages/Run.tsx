@@ -5,7 +5,7 @@ import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
-import RunMap from '../components/run/RunMap';
+import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig } from '../components/run/RunSetupModal';
 import { useAudioCues } from '../hooks/useAudioCues';
 import { useIntervalWorkout } from '../hooks/useIntervalWorkout';
