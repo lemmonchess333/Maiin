@@ -79,8 +79,6 @@ export default function Settings() {
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
-  const [settingsTab, setSettingsTab] = useState<"profile" | "training" | "prefs" | "social" | "account">("profile");
-  // Simplified tab mapping: 3 visible tabs → internal tab keys
   const [visibleTab, setVisibleTab] = useState<"profile" | "prefs" | "account">("profile");
   const [showCrewPicker, setShowCrewPicker] = useState(false);
   const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
@@ -447,7 +445,7 @@ export default function Settings() {
           { key: "prefs" as const, label: "Preferences" },
           { key: "account" as const, label: "Account" },
         ]).map(({ key, label }) => (
-          <button key={key} onClick={() => { setVisibleTab(key); setSettingsTab(key); }}
+          <button key={key} onClick={() => setVisibleTab(key)}
             className={cn(
               "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               visibleTab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
