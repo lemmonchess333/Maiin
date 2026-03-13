@@ -253,13 +253,21 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
       {showError && !activeResult && (
         <div className="bg-red-50 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-red-600">{String(showError)}</p>
-          <button
-            onClick={handleResetAll}
-            className="text-sm text-red-500 font-medium flex items-center gap-1"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> Try again
-          </button>
+          <p className="text-sm text-red-600">Couldn't identify food. Try manual entry.</p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleResetAll}
+              className="text-sm text-red-500 font-medium flex items-center gap-1"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Try again
+            </button>
+            <button
+              onClick={() => { handleResetAll(); setCameraOpen(false); }}
+              className="text-sm text-primary font-medium"
+            >
+              Switch to manual entry
+            </button>
+          </div>
         </div>
       )}
 

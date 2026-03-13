@@ -9,7 +9,7 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Search, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise } from 'lucide-react';
+import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
@@ -36,7 +36,6 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode] = useState<'name'>('name');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);

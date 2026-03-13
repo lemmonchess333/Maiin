@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
-import { ArrowRight, Timer } from 'lucide-react';
+import { ArrowRight, Timer, Footprints } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 import { format } from 'date-fns';
@@ -78,7 +78,7 @@ export default function RunDashboard() {
 
       {/* Info banner */}
       <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30">
-        <span className="text-lg shrink-0">🏃</span>
+        <Footprints size={16} className="text-green-500 shrink-0" />
         <p className="text-xs text-gray-700 dark:text-purple-200">
           Head to the <strong className="text-purple-600 dark:text-purple-300">Log</strong> tab → <strong className="text-purple-600 dark:text-purple-300">Run</strong> to start your next run
         </p>
@@ -92,8 +92,8 @@ export default function RunDashboard() {
               className="ds-fade-up flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 pressable"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
-              <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-lg shrink-0">
-                🏃
+              <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center shrink-0">
+                <Footprints size={16} className="text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">
@@ -121,7 +121,7 @@ export default function RunDashboard() {
         <div className="text-center py-12 space-y-3 ds-fade-up">
           <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
-            <span className="text-4xl">🏃</span>
+            <Footprints size={36} className="text-green-500" />
           </div>
           <p className="text-sm font-bold text-foreground">No runs yet</p>
           <p className="text-xs text-muted-foreground max-w-[220px] mx-auto">

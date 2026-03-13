@@ -284,7 +284,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       setFiredPRs((prev) => new Set(prev).add(exName));
       setAllTimeBests((prev) => ({ ...prev, [exName]: set.weight }));
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-      toast.success(`New PR! ${set.weight}kg on ${exName} 🏆`);
+      toast.success(`New PR! ${set.weight}kg on ${exName}`);
     }
 
     // Track for undo

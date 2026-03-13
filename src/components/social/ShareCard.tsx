@@ -1,3 +1,4 @@
+import { Footprints, Dumbbell, Trophy, Flame } from 'lucide-react';
 import { forwardRef } from 'react';
 import { getDistanceComparison, getVolumeComparison } from '@/lib/funComparisons';
 
@@ -73,7 +74,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* Run card */}
       {data.type === 'run' && (
         <>
-          <p className="text-8xl mb-10">🏃</p>
+          <Footprints size={80} className="mb-10" />
           <div className="text-center space-y-8">
             {!hidden.has('distance') && (
               <div>
@@ -102,7 +103,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* Workout card */}
       {data.type === 'workout' && (
         <>
-          <p className="text-8xl mb-10">🏋️</p>
+          <Dumbbell size={80} className="mb-10" />
           <div className="text-center space-y-8">
             {!hidden.has('volume') && (
               <div>
@@ -121,7 +122,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
               )}
               {!hidden.has('prs') && (data.prsHit || 0) > 0 && (
                 <div className="text-center">
-                  <p className="text-5xl font-bold" style={{ color: '#facc15' }}>🏆 {data.prsHit}</p>
+                  <p className="text-5xl font-bold flex items-center gap-2" style={{ color: "#facc15" }}><Trophy size={40} /> {data.prsHit}</p>
                   <p className="text-lg" style={{ color: s.muted }}>PRs</p>
                 </div>
               )}
@@ -133,7 +134,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* Badge card */}
       {data.type === 'badge' && (
         <div className="text-center space-y-6">
-          <p className="text-[120px]">{data.badgeIcon || '🏅'}</p>
+          <p className="text-[120px]">{data.badgeIcon || "trophy"}</p>
           <div>
             <p className="text-5xl font-bold">{data.badgeName}</p>
             <p className="text-2xl mt-2" style={{ color: s.muted }}>{data.badgeDescription}</p>
@@ -145,7 +146,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* PR card */}
       {data.type === 'pr' && (
         <div className="text-center space-y-6">
-          <p className="text-8xl mb-4">🏆</p>
+          <Trophy size={80} className="mb-4" style={{ color: "#facc15" }} />
           <p className="text-4xl font-bold">{data.exerciseName}</p>
           <div className="flex items-center justify-center gap-8">
             <div className="text-center">
@@ -186,7 +187,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             )}
             {!hidden.has('streak') && (
               <div className="text-center">
-                <p className="text-6xl font-bold font-mono" style={{ color: '#f97316' }}>🔥 {data.weekStreak || 0}</p>
+                <p className="text-6xl font-bold font-mono flex items-center gap-2" style={{ color: '#f97316' }}><Flame size={48} /> {data.weekStreak || 0}</p>
                 <p className="text-xl" style={{ color: s.muted }}>streak</p>
               </div>
             )}
@@ -197,7 +198,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* Streak card */}
       {data.type === 'streak' && (
         <div className="text-center space-y-6">
-          <p className="text-[120px]">🔥</p>
+          <Flame size={120} style={{ color: "#f97316" }} />
           <p className="text-8xl font-bold font-mono" style={{ color: '#f97316' }}>{data.streakCount}</p>
           <p className="text-3xl" style={{ color: s.muted }}>day streak</p>
         </div>

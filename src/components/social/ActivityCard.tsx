@@ -39,8 +39,8 @@ function formatDur(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-const RUN_CHIPS = ['Nice run! 🏃', 'Great pace! ⚡', 'Keep it up! 💪'];
-const LIFT_CHIPS = ['Great lift! 🏋️', 'Beast mode! 💪', 'Strong work! 🔥'];
+const RUN_CHIPS = ['Nice run!', 'Great pace!', 'Keep it up!'];
+const LIFT_CHIPS = ['Great lift!', 'Beast mode!', 'Strong work!'];
 
 export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (item: FeedItem) => void }) {
   const { user, profile } = useAuth();
@@ -238,7 +238,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           <button onClick={handleKudos}
             className="flex items-center gap-1.5 transition-transform"
             style={kudosAnimating ? { animation: 'kudos-pop 0.4s ease-out' } : undefined}>
-            <span className="text-lg" style={{ filter: liked ? 'none' : 'grayscale(1) opacity(0.5)' }}>💪</span>
+            <Dumbbell size={16} style={{ filter: liked ? "none" : "grayscale(1) opacity(0.5)" }} />
             {kudosCount > 0 && (
               <button onClick={(e) => { e.stopPropagation(); handleShowKudosList(); }}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">

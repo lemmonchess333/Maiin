@@ -1,3 +1,5 @@
+import { Trophy } from 'lucide-react';
+
 interface PR {
   label: string;
   value: string;
@@ -12,14 +14,14 @@ interface PRCardProps {
   icon?: string;
 }
 
-export default function PRCard({ title, prs, accentColor = '#FFB547', icon = '🏆' }: PRCardProps) {
+export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardProps) {
   if (prs.length === 0) return null;
 
   return (
     <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)` }}>
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-        <span className="text-base">{icon}</span>
+        <Trophy size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-foreground flex-1">{title}</h3>
       </div>
       <div className="divide-y divide-border/20">

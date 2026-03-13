@@ -1,3 +1,4 @@
+import { Footprints, Dumbbell, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
@@ -73,9 +74,9 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   const [loading, setLoading] = useState(true);
 
   const challengeLabels: Record<ChallengeType, { title: string; unit: string; icon: string }> = {
-    weekly_distance: { title: 'Weekly Distance', unit: 'km', icon: '🏃' },
-    weekly_volume: { title: 'Weekly Volume', unit: 'kg', icon: '🏋️' },
-    weekly_hybrid: { title: 'Hybrid Score', unit: 'pts', icon: '⚡' },
+    weekly_distance: { title: 'Weekly Distance', unit: 'km', icon: 'footprints' },
+    weekly_volume: { title: 'Weekly Volume', unit: 'kg', icon: 'dumbbell' },
+    weekly_hybrid: { title: 'Hybrid Score', unit: 'pts', icon: 'zap' },
   };
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   return (
     <div className="p-4 rounded-2xl bg-card border border-border">
       <div className="flex items-center gap-2 mb-3">
-        <span>{icon}</span>
+        {icon === 'footprints' ? <Footprints size={16} className='text-green-500' /> : icon === 'dumbbell' ? <Dumbbell size={16} className='text-purple-500' /> : <Zap size={16} className='text-amber-500' />}
         <h3 className="text-sm font-semibold">{title}</h3>
         <span className="ml-auto text-[10px] text-muted-foreground">This Week</span>
       </div>

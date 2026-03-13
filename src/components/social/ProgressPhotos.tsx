@@ -3,7 +3,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
-import { Camera } from 'lucide-react';
+import { Camera, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
@@ -29,6 +30,7 @@ export default function ProgressPhotos() {
   const [photos, setPhotos] = useState<{ id: string; date: string; storagePath: string; iv: number[] }[]>([]);
   const [decryptedUrls, setDecryptedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,14 +77,29 @@ export default function ProgressPhotos() {
       const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
       await uploadBytes(ref(storage, path), new Uint8Array(encrypted));
 
-      await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
+      const docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
         storagePath: path,
         iv: Array.from(iv),
         date: new Date().toISOString().split('T')[0],
+        visibility: isPrivate ? 'private' : 'public',
         createdAt: Timestamp.now(),
       });
-      loadPhotos();
-    } catch (err) { console.error('Upload failed:', err); }
+      await loadPhotos();
+
+      // Auto-decrypt newly uploaded photo
+      const newUrl = await getDownloadURL(ref(storage, path));
+      const encResponse = await fetch(newUrl);
+      const encBuffer = await encResponse.arrayBuffer();
+      const decryptedData = await decryptBlob(encBuffer, key, iv);
+      const decBlob = new Blob([decryptedData], { type: 'image/webp' });
+      const objectUrl = URL.createObjectURL(decBlob);
+      setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
+
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      console.error('Upload failed:', err);
+      toast.error('Upload failed. Please try again.');
+    }
     setLoading(false);
   }, [user, loadPhotos]);
 
@@ -103,6 +120,16 @@ export default function ProgressPhotos() {
           </button>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleUpload} className="hidden" />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Keep photos private</span>
+        <button
+          onClick={() => setIsPrivate(v => !v)}
+          className={`w-9 h-5 rounded-full transition-colors relative ${isPrivate ? 'bg-primary' : 'bg-muted border border-border'}`}
+        >
+          <div className={`w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm ${isPrivate ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+        </button>
       </div>
 
       {loading && <p className="text-xs text-muted-foreground animate-pulse">Encrypting & uploading...</p>}
@@ -143,7 +170,7 @@ export default function ProgressPhotos() {
               <img src={decryptedUrls[photo.id]} className="w-full h-full object-cover" alt="" />
             ) : (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
-                <span className="text-lg">🔒</span>
+                <Lock size={16} className="text-muted-foreground" />
                 <span className="text-[10px] text-muted-foreground mt-1">{photo.date}</span>
               </div>
             )}

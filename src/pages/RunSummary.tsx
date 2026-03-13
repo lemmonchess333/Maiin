@@ -300,6 +300,27 @@ export default function RunSummary() {
       {splits.length > 0 && (
         <div className="px-4 mb-4">
           <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
+
+          {/* Per-km split list */}
+          <div className="mt-3 space-y-1">
+            {splits.map((s, i) => {
+              const fastest = Math.min(...splits.map(sp => sp.paceSeconds));
+              const slowest = Math.max(...splits.map(sp => sp.paceSeconds));
+              const color = s.paceSeconds === fastest ? 'text-emerald-500' : s.paceSeconds === slowest ? 'text-red-500' : 'text-muted-foreground';
+              return (
+                <div key={i} className="flex items-center justify-between text-xs px-1">
+                  <span className="text-muted-foreground">km {s.km}</span>
+                  <span className={`font-mono tabular-nums font-medium ${color}`}>{s.pace}/km</span>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between text-xs px-1 pt-1 border-t border-border/50">
+              <span className="text-muted-foreground font-medium">Average</span>
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {Math.floor(avgPaceSeconds / 60)}:{(Math.floor(avgPaceSeconds) % 60).toString().padStart(2, '0')}/km
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
