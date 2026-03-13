@@ -1,8 +1,10 @@
-import { collection, addDoc, Firestore } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
 
 interface QueuedWrite {
   id: string;
   collectionPath: string;
+  docId?: string;
+  merge?: boolean;
   data: Record<string, any>;
   timestamp: number;
 }
@@ -22,11 +24,18 @@ function saveQueue(queue: QueuedWrite[]) {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
-export function queueWrite(collectionPath: string, data: Record<string, any>) {
+export function queueWrite(
+  collectionPath: string,
+  data: Record<string, any>,
+  docId?: string,
+  merge?: boolean,
+) {
   const queue = getQueue();
   queue.push({
     id: crypto.randomUUID(),
     collectionPath,
+    docId,
+    merge,
     data,
     timestamp: Date.now(),
   });
@@ -46,10 +55,13 @@ export async function flushQueue(db: Firestore): Promise<number> {
 
   for (const item of queue) {
     try {
-      await addDoc(collection(db, item.collectionPath), {
-        ...item.data,
-        _offlineCreatedAt: item.timestamp,
-      });
+      const payload = { ...item.data, _offlineCreatedAt: item.timestamp };
+      if (item.docId) {
+        const docRef = doc(db, item.collectionPath, item.docId);
+        await setDoc(docRef, payload, item.merge ? { merge: true } : {});
+      } else {
+        await addDoc(collection(db, item.collectionPath), payload);
+      }
       flushed++;
     } catch {
       remaining.push(item);
@@ -74,6 +86,23 @@ export async function safeSave(
     }
   }
   queueWrite(collectionPath, data);
+}
+
+export async function safeMerge(
+  db: Firestore,
+  collectionPath: string,
+  docId: string,
+  data: Record<string, any>,
+): Promise<void> {
+  if (navigator.onLine) {
+    try {
+      await setDoc(doc(db, collectionPath, docId), data, { merge: true });
+      return;
+    } catch {
+      // Fall through to offline queue
+    }
+  }
+  queueWrite(collectionPath, data, docId, true);
 }
 
 // Auto-flush when coming back online

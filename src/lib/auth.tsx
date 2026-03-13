@@ -155,8 +155,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profileDoc.exists()) {
           const data = profileDoc.data();
-          // Safe profile construction with fallback defaults
+          // Spread all Firestore fields, then apply defaults for required fields only
           const safeProfile: UserProfile = {
+            ...data as Partial<UserProfile>,
             uid: firebaseUser.uid,
             displayName: data.displayName ?? "",
             email: data.email ?? firebaseUser.email ?? "",
@@ -171,8 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             onboardingComplete: data.onboardingComplete ?? false,
             trialExpiresAt: data.trialExpiresAt ?? null,
             subscriptionTier: data.subscriptionTier ?? "free",
-            stripeCustomerId: data.stripeCustomerId,
-            stripeSubscriptionId: data.stripeSubscriptionId,
             currentStreak: data.currentStreak ?? 0,
             lastLogDate: data.lastLogDate ?? null,
             program: {
@@ -273,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       const data = profileDoc.data();
       const safeProfile: UserProfile = {
+        ...data as Partial<UserProfile>,
         uid: cred.user.uid,
         displayName: data.displayName ?? cred.user.displayName ?? "",
         email: data.email ?? cred.user.email ?? "",
@@ -287,8 +287,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onboardingComplete: data.onboardingComplete ?? false,
         trialExpiresAt: data.trialExpiresAt ?? null,
         subscriptionTier: data.subscriptionTier ?? "free",
-        stripeCustomerId: data.stripeCustomerId,
-        stripeSubscriptionId: data.stripeSubscriptionId,
         currentStreak: data.currentStreak ?? 0,
         lastLogDate: data.lastLogDate ?? null,
         program: {
