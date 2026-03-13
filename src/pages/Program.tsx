@@ -46,21 +46,16 @@ import CustomDayBuilder from "@/components/program/CustomDayBuilder";
 
 function DirectionIcon({ ex }: { ex: ProgramExercise }) {
   const dir = getProgressionDirection(ex);
-  if (dir === "up") return <TrendingUp className="w-3.5 h-3.5 text-green-500" />;
-  if (dir === "down") return <TrendingDown className="w-3.5 h-3.5 text-red-400" />;
+  if (dir === "up") return <TrendingUp className="w-3.5 h-3.5" style={{ color: THEME.success }} />;
+  if (dir === "down") return <TrendingDown className="w-3.5 h-3.5" style={{ color: THEME.danger }} />;
   return <Minus className="w-3.5 h-3.5 text-muted-foreground" />;
 }
 
 function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
   const label = getProgressionLabel(ex);
   const dir = getProgressionDirection(ex);
-  const colorClass =
-    dir === "up"
-      ? "text-green-600 dark:text-green-400"
-      : dir === "down"
-        ? "text-red-500 dark:text-red-400"
-        : "text-foreground";
-  return <span className={cn("font-medium", colorClass)}>{label}</span>;
+  const color = dir === "up" ? THEME.success : dir === "down" ? THEME.danger : undefined;
+  return <span className="font-medium" style={color ? { color } : undefined}>{label}</span>;
 }
 
 export default function Program() {
@@ -363,7 +358,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           <button
             onClick={goBack}
             disabled={!canGoBack}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-90" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.93]" : "opacity-30")}
           >
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
@@ -378,7 +373,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           <button
             onClick={goForward}
             disabled={!canGoForward}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-90" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.93]" : "opacity-30")}
           >
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
@@ -389,12 +384,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
             {goalLabel(programState.goal)}
           </span>
           <span
-            className={cn(
-              "px-2.5 py-0.5 rounded-full text-[10px] font-medium",
-              prescription.deload
-                ? "bg-blue-100 text-blue-600"
-                : "bg-green-100 text-green-600"
-            )}
+            className="px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+            style={prescription.deload
+              ? { backgroundColor: `${THEME.lifting}18`, color: THEME.lifting }
+              : { backgroundColor: `${THEME.success}18`, color: THEME.success }
+            }
           >
             {prescription.deload ? "Deload" : "Progression"}
           </span>
@@ -551,7 +545,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     {!day.completed && !locked && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
-                        className="w-full py-2.5 mt-1 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform flex items-center justify-center gap-2"
+                        className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
                         style={{ background: `linear-gradient(135deg, ${sportColor}, ${sportColor}cc)` }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
@@ -656,10 +650,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">{last.date}</span>
                         <span
-                          className={cn(
-                            "text-xs font-medium px-2 py-0.5 rounded-full",
-                            passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
-                          )}
+                          className="text-xs font-medium px-2 py-0.5 rounded-full"
+                          style={passed
+                            ? { backgroundColor: `${THEME.success}18`, color: THEME.success }
+                            : { backgroundColor: `${THEME.danger}18`, color: THEME.danger }
+                          }
                         >
                           {passed ? "Pass" : "Fail"}
                         </span>
@@ -694,7 +689,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                               {rec.weight > 0 ? `${rec.weight}kg` : "BW"} × {rec.repsCompleted}/{rec.repsTarget}
                             </span>
                             <span
-                              className={rec.repsCompleted >= rec.repsTarget ? "text-green-500" : "text-red-400"}
+                              style={{ color: rec.repsCompleted >= rec.repsTarget ? THEME.success : THEME.danger }}
                             >
                               {rec.repsCompleted >= rec.repsTarget ? "Pass" : "Miss"}
                             </span>
@@ -777,12 +772,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                   onClick={handleLogExercise}
                   disabled={savingState !== "idle" || locked}
                   className={cn(
-                    "w-full py-2.5 rounded-xl text-sm font-medium transition-all",
-                    savingState === "saved"
-                      ? "bg-green-500 text-white"
-                      : "bg-primary text-primary-foreground hover:opacity-90",
+                    "w-full py-3 rounded-xl text-sm font-medium transition-all",
+                    savingState !== "saved" && "bg-primary text-primary-foreground hover:opacity-90",
                     (savingState === "saving" || locked) && "opacity-50 cursor-not-allowed"
                   )}
+                  style={savingState === "saved" ? { backgroundColor: THEME.success, color: "#fff" } : undefined}
                 >
                   {locked
                     ? "Upgrade to Pro"

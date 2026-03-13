@@ -350,7 +350,7 @@ export default function Log() {
             key={key}
             onClick={() => setActiveTab(key)}
             className={cn(
-              "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+              "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5",
               activeTab === key
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground"
@@ -392,7 +392,7 @@ export default function Log() {
       {activeTab === "food" && (
         <div className="space-y-4">
           {/* Daily Totals - now exact same look as Today's Intake on Home */}
-          <div className="bg-card rounded-2xl border border-border/50 p-5">
+          <div className="bg-card rounded-2xl border border-border/50 p-4">
             <p className="text-sm font-medium text-foreground mb-4">Daily Totals</p>
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
@@ -473,7 +473,7 @@ export default function Log() {
                       key={i}
                       onClick={() => toggleCommonMeal(cm)}
                       className={cn(
-                        "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-all active:scale-95",
+                        "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-all active:scale-[0.97]",
                         isActive
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted text-foreground border-border/50 hover:border-primary/50"
@@ -540,13 +540,13 @@ export default function Log() {
               onChange={(e) => setNlInput(e.target.value)}
               placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
               rows={2}
-              className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <button
               onClick={handleNLParse}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95",
+                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]",
                 nlInput.trim()
                   ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
                   : "bg-muted text-muted-foreground cursor-not-allowed"

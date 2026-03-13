@@ -11,6 +11,7 @@ import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise } from 'lucide-react';
 import { toast } from 'sonner';
+import { THEME } from '../lib/theme';
 
 type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
 type FeedSubTab = 'following' | 'discover';
@@ -149,15 +150,15 @@ export default function Social() {
           {activeFeed.loading && <p className="text-xs text-muted-foreground text-center animate-pulse">Loading...</p>}
 
           {activeFeed.hasMore && !activeFeed.loading && activeFeed.items.length > 0 && (
-            <button onClick={activeFeed.loadMore} className="w-full py-2 text-xs text-purple-500 font-medium">
+            <button onClick={activeFeed.loadMore} className="w-full py-2 text-xs font-medium" style={{ color: THEME.brand }}>
               Load more
             </button>
           )}
 
           {!activeFeed.loading && activeFeed.items.length === 0 && (
             <div className="text-center py-16 space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
-                {feedSubTab === 'discover' ? <Globe size={32} className="text-gray-400" /> : <Hand size={32} className="text-gray-400" />}
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: `linear-gradient(135deg, ${THEME.brand}15, ${THEME.brandLight}10)` }}>
+                {feedSubTab === 'discover' ? <Globe size={32} className="text-muted-foreground" /> : <Hand size={32} className="text-muted-foreground" />}
               </div>
               <p className="text-sm font-bold text-foreground">
                 {feedSubTab === 'discover' ? 'No public activities yet' : 'No activity yet'}
@@ -171,7 +172,8 @@ export default function Social() {
               </p>
               {feedSubTab === 'following' && feedFilter === 'all' && (
                 <button onClick={() => setTab('find')}
-                  className="mt-2 text-xs px-5 py-2.5 rounded-full bg-purple-500 text-white font-medium active:scale-95 transition-transform">
+                  className="mt-2 text-xs px-5 py-2.5 rounded-full text-white font-medium active:scale-[0.97] transition-transform"
+                  style={{ backgroundColor: THEME.brand }}>
                   Find People
                 </button>
               )}
@@ -195,7 +197,7 @@ export default function Social() {
             <p className="text-sm font-bold text-foreground">Train together</p>
             <p className="text-xs text-muted-foreground">Invite friends to compete on challenges and share workouts</p>
             <button onClick={handleShareInvite}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.98] transition-transform">
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform">
               <div className="flex items-center justify-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Share invite link
@@ -265,7 +267,7 @@ export default function Social() {
           {showContactModal && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
-              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.95)', backdropFilter: 'blur(20px)' }}>
+              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="text-center space-y-3 py-4">
                   <Smartphone className="w-10 h-10 text-primary mx-auto" />
@@ -316,7 +318,7 @@ export default function Social() {
           {showCreateGroup && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
-              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.95)', backdropFilter: 'blur(20px)' }}>
+              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
                 <input type="text" placeholder="Crew name" value={newGroupName}
