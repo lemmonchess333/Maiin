@@ -8,6 +8,7 @@ import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
 import { Skeleton } from '../components/LoadingSkeleton';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
+import { Flame } from 'lucide-react';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
@@ -123,7 +124,7 @@ export default function UserProfile() {
       {/* Current streak */}
       {streak > 0 && (
         <p className="text-xs text-muted-foreground">
-          🔥 <strong className="text-foreground">{streak}-day</strong> streak
+          <Flame size={14} className="text-orange-500 inline" /> <strong className="text-foreground">{streak}-day</strong> streak
         </p>
       )}
 

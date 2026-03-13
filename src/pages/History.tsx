@@ -15,6 +15,7 @@ import PerformanceTab from "@/components/analytics/PerformanceTab";
 import { BadgeGrid } from "@/features/streaks/BadgeGrid";
 import { TrendWeight } from "@/components/progress/TrendWeight";
 import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
+import { Footprints, Trophy } from "lucide-react";
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
 
@@ -331,7 +332,7 @@ export default function History() {
               />
               {runs.length === 0 && (
                 <p className="text-gray-400 text-sm text-center py-2">
-                  🏃 Complete your first run to set records here
+                  <Footprints size={14} className="text-green-500 inline" /> Complete your first run to set records here
                 </p>
               )}
               <RunningHistorySection />
@@ -373,7 +374,7 @@ export default function History() {
               <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
                 style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-                  <span className="text-base">🏆</span>
+                  <Trophy size={16} className="text-amber-500" />
                   <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
                   <span className="text-[10px] text-muted-foreground">This week</span>
                 </div>
