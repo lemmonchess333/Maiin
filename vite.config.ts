@@ -18,11 +18,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          firebase: ["firebase/app", "firebase/auth", "firebase/firestore"],
+          firebase: ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/storage"],
           charts: ["recharts"],
           vendor: ["react", "react-dom", "react-router-dom"],
           maplibre: ["maplibre-gl"],
           motion: ["framer-motion"],
+          "date-fns": ["date-fns"],
         },
       },
     },

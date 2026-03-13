@@ -3,11 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
-import Layout from "@/components/Layout";
-import Login from "@/pages/Login";
-import Onboarding from "@/pages/Onboarding";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy
 function lazyRetry<T extends { default: React.ComponentType<any> }>(
@@ -26,7 +21,11 @@ function lazyRetry<T extends { default: React.ComponentType<any> }>(
   );
 }
 
-// Lazy-loaded pages for code splitting
+// Lazy-loaded pages & layout for code splitting
+const Layout = lazyRetry(() => import("@/components/Layout"));
+const Login = lazyRetry(() => import("@/pages/Login"));
+const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
+const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Log = lazyRetry(() => import("@/pages/Log"));
 const History = lazyRetry(() => import("@/pages/History"));
@@ -132,20 +131,24 @@ function AppRoutes() {
   // Not logged in
   if (!user) {
     return (
-      <Routes>
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="*" element={<Login />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   // Logged in but hasn't completed onboarding
   if (!profile?.onboardingComplete) {
     return (
-      <Routes>
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="*" element={<Onboarding />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="*" element={<Onboarding />} />
+        </Routes>
+      </Suspense>
     );
   }
 
