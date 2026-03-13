@@ -36,6 +36,7 @@ import {
   Bell,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
+import { deleteAccount } from "@/lib/socialApi";
 import { useProgram } from "@/features/program/useProgram";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -114,6 +115,9 @@ export default function Settings() {
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
   const { reminders: mealReminders, updateReminders } = useMealReminders();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Restructure warning modal state
   const [showRestructureModal, setShowRestructureModal] = useState(false);
@@ -1325,6 +1329,14 @@ export default function Settings() {
         >
           <LogOut className="w-4 h-4" /> Sign Out
         </motion.button>
+
+        {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="w-4 h-4" /> Delete Account
+        </button>
       </AccordionSection>
 
       )}
@@ -1332,6 +1344,72 @@ export default function Settings() {
       <p className="text-center text-xs text-muted-foreground">
         Tropos v1.1.0
       </p>
+
+      {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
+      {showDeleteModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-[1000]"
+            onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
+          />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+            <h3 className="text-base font-semibold text-destructive">Delete Account</h3>
+            <p className="text-sm text-muted-foreground">
+              This will permanently delete your account and all associated data including workouts, meals, runs, and social activity. This action cannot be undone.
+            </p>
+            <p className="text-sm text-foreground font-medium">
+              Type <span className="text-destructive font-bold">DELETE</span> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE"
+              className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive/50"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
+                className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user || deleteConfirmText !== "DELETE") return;
+                  setDeleting(true);
+                  try {
+                    await deleteAccount(user.uid);
+                    toast.success("Account deleted successfully.");
+                  } catch (err) {
+                    const msg = err instanceof Error ? err.message : "Failed to delete account";
+                    if (msg.includes("requires-recent-login")) {
+                      toast.error("Please sign out and sign back in, then try again.");
+                    } else {
+                      toast.error(msg);
+                    }
+                  } finally {
+                    setDeleting(false);
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText("");
+                  }
+                }}
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Account"
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Restructure Warning Modal */}
       {showRestructureModal && pendingLiftDays !== null && (

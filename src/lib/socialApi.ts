@@ -1,10 +1,11 @@
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import {
   collection, doc, setDoc, deleteDoc, getDocs, getDoc,
   query, orderBy, limit, startAfter, where, increment,
   updateDoc, addDoc, Timestamp, serverTimestamp,
-  type DocumentSnapshot,
+  type DocumentSnapshot, writeBatch,
 } from 'firebase/firestore';
+import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
 // ============================================
 // Follow / Unfollow
@@ -326,4 +327,89 @@ export async function batchGetKudos(activityIds: string[], userId: string): Prom
   const result: Record<string, boolean> = {};
   activityIds.forEach((id, i) => { result[id] = snaps[i].exists(); });
   return result;
+}
+
+// ============================================
+// Report Content (App Store Guideline 1.2)
+// ============================================
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+
+export async function reportContent(reporterId: string, data: {
+  targetType: 'activity' | 'comment' | 'user';
+  targetId: string;
+  reason: ReportReason;
+  details?: string;
+}) {
+  await addDoc(collection(db, 'reports'), {
+    reporterId,
+    ...data,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+}
+
+// ============================================
+// Block User (App Store Guideline 1.2)
+// ============================================
+export async function blockUser(currentUid: string, targetUid: string) {
+  await setDoc(doc(db, 'blocks', currentUid, 'users', targetUid), {
+    blockedAt: serverTimestamp(),
+  });
+  // Also unfollow in both directions
+  await deleteDoc(doc(db, 'following', currentUid, 'users', targetUid)).catch(() => {});
+  await deleteDoc(doc(db, 'followers', currentUid, 'users', targetUid)).catch(() => {});
+  await deleteDoc(doc(db, 'following', targetUid, 'users', currentUid)).catch(() => {});
+  await deleteDoc(doc(db, 'followers', targetUid, 'users', currentUid)).catch(() => {});
+}
+
+export async function unblockUser(currentUid: string, targetUid: string) {
+  await deleteDoc(doc(db, 'blocks', currentUid, 'users', targetUid));
+}
+
+export async function isBlocked(currentUid: string, targetUid: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, 'blocks', currentUid, 'users', targetUid));
+  return snap.exists();
+}
+
+export async function getBlockedUsers(uid: string): Promise<string[]> {
+  const snap = await getDocs(collection(db, 'blocks', uid, 'users'));
+  return snap.docs.map(d => d.id);
+}
+
+// ============================================
+// Account Deletion (App Store Guideline 5.1.1(v))
+// ============================================
+export async function deleteAccount(uid: string): Promise<void> {
+  const batch = writeBatch(db);
+
+  // Delete user profile
+  batch.delete(doc(db, 'users', uid));
+
+  // Batch-delete subcollections we know about
+  const subcollections = [
+    { parent: 'feeds', sub: 'items' },
+    { parent: 'notifications', sub: 'items' },
+    { parent: 'following', sub: 'users' },
+    { parent: 'followers', sub: 'users' },
+    { parent: 'blocks', sub: 'users' },
+  ];
+
+  for (const { parent, sub } of subcollections) {
+    const snap = await getDocs(collection(db, parent, uid, sub));
+    snap.docs.forEach(d => batch.delete(d.ref));
+  }
+
+  // Delete user's activities
+  const activitiesSnap = await getDocs(
+    query(collection(db, 'activities'), where('authorId', '==', uid))
+  );
+  activitiesSnap.docs.forEach(d => batch.delete(d.ref));
+
+  await batch.commit();
+
+  // Delete Firebase Auth account
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    await firebaseDeleteUser(currentUser);
+  }
 }

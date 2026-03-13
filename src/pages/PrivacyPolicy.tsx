@@ -94,9 +94,14 @@ export default function PrivacyPolicy() {
               4. Data Sharing
             </h2>
             <p>
-              We do <strong>not</strong> sell, rent, or share your personal data
-              with third parties. Your fitness data is private and only
-              accessible to you.
+              We do <strong>not</strong> sell or rent your personal data.
+              Your fitness data is only accessible to you, except when you
+              choose to share activities publicly or with followers via social features.
+            </p>
+            <p>
+              Some data is processed by the third-party services listed in section 7
+              (e.g. Firebase for storage, AI services for food photo analysis).
+              These services process data solely to provide their functionality to you.
             </p>
           </section>
 
@@ -109,7 +114,7 @@ export default function PrivacyPolicy() {
               <li>Access all data we store about you</li>
               <li>Update or correct your personal information</li>
               <li>
-                Delete your account and all associated data by contacting us
+                Delete your account and all associated data from within the app (Settings &gt; Delete Account)
               </li>
               <li>Export your data in a standard format</li>
             </ul>
@@ -156,7 +161,7 @@ export default function PrivacyPolicy() {
               </li>
             </ul>
             <p>
-              {/* TODO: Replace with real support email */}
+              {/* Support email — update before App Store submission */}
               For GDPR-related requests, contact us at: support@tropos.app
             </p>
           </section>
@@ -171,14 +176,18 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">Firebase (Google):</strong>{" "}
                 Authentication, data storage, and analytics
               </li>
-              {/* TODO: Add when integrated */}
               <li>
-                <strong className="text-foreground">RevenueCat:</strong>{" "}
-                Subscription management and payment processing (planned)
+                <strong className="text-foreground">Apple StoreKit / Stripe:</strong>{" "}
+                Subscription and payment processing (platform-dependent)
               </li>
               <li>
-                <strong className="text-foreground">Sentry:</strong>{" "}
-                Crash reporting and error monitoring (planned)
+                <strong className="text-foreground">AI Food Analysis:</strong>{" "}
+                Food photos may be processed by AI services to estimate
+                nutritional content. Photos are not stored by the AI provider.
+              </li>
+              <li>
+                <strong className="text-foreground">MapLibre:</strong>{" "}
+                Map rendering for run routes (no personal data shared)
               </li>
             </ul>
             <p>
@@ -189,7 +198,27 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              8. Children's Privacy
+              8. Health &amp; Fitness Data
+            </h2>
+            <p>
+              Tropos collects health and fitness data including body weight, nutrition
+              intake, workout performance, and GPS running data. This data is used
+              solely to provide personalised fitness tracking and is never used for
+              advertising, marketing, or data mining purposes.
+            </p>
+            <p>
+              <strong className="text-foreground">Disclaimer:</strong> Tropos is a
+              fitness tracking tool, not a medical device. The app does not provide
+              medical advice, diagnosis, or treatment. AI-generated nutrition and
+              training suggestions are estimates only. Always consult a qualified
+              healthcare professional before making changes to your diet or exercise
+              routine.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">
+              9. Children's Privacy
             </h2>
             <p>
               Tropos is not intended for children under 16. We do not
@@ -199,7 +228,7 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              9. Changes to This Policy
+              10. Changes to This Policy
             </h2>
             <p>
               We may update this privacy policy from time to time. We will
@@ -209,10 +238,10 @@ export default function PrivacyPolicy() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              10. Contact
+              11. Contact
             </h2>
             <p>
-              {/* TODO: Replace with real support email */}
+              {/* Support email — update before App Store submission */}
               For questions about this privacy policy or your data, please
               contact us at support@tropos.app
             </p>

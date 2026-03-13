@@ -1,4 +1,4 @@
-// Phase 2: Gemini AI integration placeholder
+// Gemini AI integration
 // Add VITE_GEMINI_API_KEY to your .env file to enable AI features
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -16,15 +16,34 @@ export async function askGemini(prompt: string): Promise<GeminiResponse> {
     };
   }
 
-  // Phase 2: Implement real Gemini API call
-  // For now, return a placeholder
-  console.log("[Gemini] Prompt:", prompt);
-  return {
-    text: "AI features coming soon! This is a placeholder response.",
-  };
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return { text };
+  } catch (err) {
+    return {
+      text: "",
+      error: err instanceof Error ? err.message : "AI request failed",
+    };
+  }
 }
 
-// Phase 2: Generate next week's training plan
+// Generate next week's training plan
 export async function generateWeeklyPlan(
   athleteType: string,
   _currentStats: Record<string, number>
@@ -34,7 +53,7 @@ export async function generateWeeklyPlan(
   );
 }
 
-// Phase 2: AI macro adjustments based on progress
+// AI macro adjustments based on progress
 export async function adjustMacros(
   _currentMacros: Record<string, number>,
   _progressData: Record<string, number>

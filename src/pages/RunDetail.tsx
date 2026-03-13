@@ -32,7 +32,8 @@ export default function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const [run, setRun] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [run, setRun] = useState<Record<string, any> | null>(null);
   const [sharing, setSharing] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const [replaying, setReplaying] = useState(false);
@@ -45,30 +46,6 @@ export default function RunDetail() {
       if (snap.exists()) setRun({ id: snap.id, ...snap.data() });
     });
   }, [user, runId]);
-
-  if (!run) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
-  const avgPace = run.duration > 0 && run.distance > 0 ? (run.duration / run.distance) * 1000 : 0;
-  const avgPaceStr = avgPace > 0
-    ? `${Math.floor(avgPace / 60)}:${(Math.floor(avgPace) % 60).toString().padStart(2, '0')}`
-    : '--:--';
-
-  const formatTime = (secs: number): string => {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = Math.floor(secs % 60);
-    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const date = run.completedAt?.toDate?.();
-  const dateStr = date?.toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  }) ?? '';
 
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
@@ -96,6 +73,30 @@ export default function RunDetail() {
       if (replayRef.current) clearInterval(replayRef.current);
     };
   }, []);
+
+  if (!run) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  const avgPace = run.duration > 0 && run.distance > 0 ? (run.duration / run.distance) * 1000 : 0;
+  const avgPaceStr = avgPace > 0
+    ? `${Math.floor(avgPace / 60)}:${(Math.floor(avgPace) % 60).toString().padStart(2, '0')}`
+    : '--:--';
+
+  const formatTime = (secs: number): string => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const date = run.completedAt?.toDate?.();
+  const dateStr = date?.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }) ?? '';
 
   const handleShare = async () => {
     if (!shareRef.current) return;

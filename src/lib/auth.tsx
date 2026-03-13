@@ -11,6 +11,7 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   type User,
 } from "firebase/auth";
@@ -130,6 +131,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
@@ -299,6 +301,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    const provider = new OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    const cred = await signInWithPopup(auth, provider);
+    const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
+
+    if (!profileDoc.exists()) {
+      const newProfile: UserProfile = {
+        uid: cred.user.uid,
+        displayName: cred.user.displayName || "",
+        email: cred.user.email || "",
+        athleteType: "Lifter",
+        weightKg: 70,
+        heightCm: 170,
+        weeklyWorkoutsTarget: 4,
+        weeklyMealsTarget: 10,
+        preferredWeightUnit: "kg",
+        preferredHeightUnit: "cm",
+        darkMode: false,
+        onboardingComplete: false,
+        trialExpiresAt: getTrialExpiresAt(),
+        subscriptionTier: "free",
+        currentStreak: 0,
+        lastLogDate: null,
+        program: {
+          goal: "recomp",
+          startWeight: 70,
+          currentPhase: "base",
+        },
+      };
+
+      await setDoc(doc(db, "users", cred.user.uid), {
+        ...newProfile,
+        createdAt: serverTimestamp(),
+      });
+      setProfile(newProfile);
+    } else {
+      const data = profileDoc.data();
+      const safeProfile: UserProfile = {
+        ...data as Partial<UserProfile>,
+        uid: cred.user.uid,
+        displayName: data.displayName ?? cred.user.displayName ?? "",
+        email: data.email ?? cred.user.email ?? "",
+        athleteType: data.athleteType ?? "Lifter",
+        weightKg: data.weightKg ?? 70,
+        heightCm: data.heightCm ?? 170,
+        weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
+        weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
+        preferredWeightUnit: data.preferredWeightUnit ?? "kg",
+        preferredHeightUnit: data.preferredHeightUnit ?? "cm",
+        darkMode: data.darkMode ?? false,
+        onboardingComplete: data.onboardingComplete ?? false,
+        trialExpiresAt: data.trialExpiresAt ?? null,
+        subscriptionTier: data.subscriptionTier ?? "free",
+        currentStreak: data.currentStreak ?? 0,
+        lastLogDate: data.lastLogDate ?? null,
+        program: {
+          goal: data.program?.goal ?? "recomp",
+          startWeight: data.program?.startWeight ?? 0,
+          currentPhase: data.program?.currentPhase ?? "base",
+        },
+      };
+      setProfile(safeProfile);
+    }
+  };
+
   const signOutUser = async () => {
     await firebaseSignOut(auth);
     setProfile(null);
@@ -326,6 +395,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signInWithGoogle,
+        signInWithApple,
         signOut: signOutUser,
         updateProfile,
       }}

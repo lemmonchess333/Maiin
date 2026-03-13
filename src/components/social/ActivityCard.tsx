@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth';
-import { toggleKudos, getKudosList, writeNotification } from '../../lib/socialApi';
+import { toggleKudos, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
 import CommentSection from './CommentSection';
+import ReportModal from './ReportModal';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
-import { MessageCircle, Dumbbell, Footprints, Trophy, Mountain, Share2, Target } from 'lucide-react';
+import { MessageCircle, Dumbbell, Footprints, Trophy, Mountain, Share2, Target, MoreHorizontal, Flag, Ban } from 'lucide-react';
+import { toast } from 'sonner';
 
 function getTimeAgo(date: Date): string {
   const s = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -50,6 +52,8 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
   const [kudosAnimating, setKudosAnimating] = useState(false);
   const [showKudosList, setShowKudosList] = useState(false);
   const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string }[]>([]);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const activity = feedItem.activity;
 
   const handleKudos = async () => {
@@ -120,6 +124,41 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
               <p className="text-[10px]">{timeAgo}</p>
             </div>
           </div>
+          {/* Report/Block menu */}
+          {user && activity?.authorId !== user.uid && (
+            <div className="relative">
+              <button onClick={() => setShowMenu(!showMenu)}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
+                    <button
+                      onClick={() => { setShowMenu(false); setShowReport(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Flag className="w-3.5 h-3.5 text-muted-foreground" />
+                      Report activity
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setShowMenu(false);
+                        if (!user || !activity?.authorId) return;
+                        await blockUser(user.uid, activity.authorId);
+                        toast.success(`Blocked ${feedItem.authorName}`);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                      Block user
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Summary line */}
@@ -305,6 +344,15 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           100% { transform: scale(1); }
         }
       `}</style>
+
+      {/* Report Modal */}
+      {showReport && (
+        <ReportModal
+          targetType="activity"
+          targetId={feedItem.activityId}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }
