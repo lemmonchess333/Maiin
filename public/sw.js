@@ -1,5 +1,6 @@
-const CACHE_NAME = "tropos-v2";
+const CACHE_NAME = "tropos-v3";
 const BASE_PATH = "/Maiin/";
+const MAX_CACHE_ENTRIES = 100;
 
 const STATIC_ASSETS = [
   BASE_PATH,
@@ -17,7 +18,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean old caches and limit cache size
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -26,6 +27,16 @@ self.addEventListener("activate", (event) => {
           .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key))
       );
+    }).then(() => {
+      // Trim cache to MAX_CACHE_ENTRIES
+      return caches.open(CACHE_NAME).then((cache) => {
+        return cache.keys().then((requests) => {
+          if (requests.length > MAX_CACHE_ENTRIES) {
+            const toDelete = requests.slice(0, requests.length - MAX_CACHE_ENTRIES);
+            return Promise.all(toDelete.map((req) => cache.delete(req)));
+          }
+        });
+      });
     })
   );
   self.clients.claim();
@@ -36,14 +47,32 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") return;
 
-  // Skip Firebase/API requests
+  // Skip Firebase/API and external API requests
   const url = new URL(event.request.url);
   if (
     url.hostname.includes("firebaseio.com") ||
     url.hostname.includes("googleapis.com") ||
     url.hostname.includes("firebase") ||
-    url.hostname.includes("identitytoolkit")
+    url.hostname.includes("identitytoolkit") ||
+    url.hostname.includes("openfoodfacts.org") ||
+    url.hostname.includes("stripe.com") ||
+    url.hostname.includes("generativelanguage")
   ) {
+    return;
+  }
+
+  // Stale-while-revalidate for fonts and images
+  if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico)$/)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response.status === 200) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
     return;
   }
 
