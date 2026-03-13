@@ -262,7 +262,7 @@ export default function RunSummary() {
       </div>
       <div className="grid grid-cols-2 gap-3 px-4 mb-4">
         <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
-          <p className="text-lg font-bold font-mono tabular-nums text-emerald-500">{calories}</p>
+          <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.success }}>{calories}</p>
           <p className="text-[10px] text-muted-foreground">calories</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
@@ -352,16 +352,16 @@ export default function RunSummary() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="How did it feel? Any notes about this run..."
           rows={3}
-          className="w-full px-4 py-3 rounded-xl bg-card border border-border/50 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
 
         <button
           onClick={handleSave}
           disabled={saved}
-          className="w-full py-3.5 rounded-xl font-medium text-sm transition-all"
+          className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97]"
           style={saved
-            ? { background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)' }
-            : { background: 'var(--color-primary)', color: 'white' }
+            ? { background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }
+            : { background: THEME.running, color: 'white' }
           }>
           {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
         </button>

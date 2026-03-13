@@ -220,11 +220,11 @@ export default function Onboarding() {
                       style={{ color: 'rgba(255,255,255,0.5)' }}>{label}</p>
                     <div className="flex items-center justify-center gap-4">
                       <button onClick={() => setter(v => Math.max(0, v - 1))}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-90 transition-transform"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.93] transition-transform"
                         style={{ background: 'rgba(255,255,255,0.1)' }}>−</button>
                       <span className="text-2xl font-bold font-mono" style={{ color }}>{value}</span>
                       <button onClick={() => setter(v => Math.min(max, v + 1))}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-90 transition-transform"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.93] transition-transform"
                         style={{ background: 'rgba(255,255,255,0.1)' }}>+</button>
                     </div>
                   </div>
@@ -241,11 +241,11 @@ export default function Onboarding() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={() => setMealsTarget(v => Math.max(3, v - 1))}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-90 transition-transform"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-[0.93] transition-transform"
                       style={{ background: 'rgba(255,255,255,0.1)' }}>−</button>
                     <span className="text-lg font-bold font-mono tabular-nums w-6 text-center" style={{ color: THEME.success }}>{mealsTarget}</span>
                     <button onClick={() => setMealsTarget(v => Math.min(28, v + 1))}
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-90 transition-transform"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold active:scale-[0.93] transition-transform"
                       style={{ background: 'rgba(255,255,255,0.1)' }}>+</button>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default function Onboarding() {
                             idx === i ? { ...d, type: next } : d
                           ));
                         }}
-                        className="flex flex-col items-center gap-1.5 py-3 rounded-xl active:scale-90 transition-transform"
+                        className="flex flex-col items-center gap-1.5 py-3 rounded-xl active:scale-[0.93] transition-transform"
                         style={{ background: `${style.color}18`, border: `1px solid ${style.color}35` }}>
                         <span className="text-[9px] uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>
                           {DAY_LABELS[i].charAt(0)}
@@ -376,7 +376,7 @@ export default function Onboarding() {
                         { id: "marathon" as RaceDistance, label: "Marathon" },
                       ]).map(d => (
                         <button key={d.id} onClick={() => setRaceDistance(d.id)}
-                          className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                          className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
                           style={{
                             background: raceDistance === d.id ? THEME.running : 'rgba(255,255,255,0.08)',
                             color: raceDistance === d.id ? '#fff' : 'rgba(255,255,255,0.5)',
@@ -423,7 +423,7 @@ export default function Onboarding() {
                   { id: "female" as const, label: "Female", icon: "♀" },
                 ]).map(s => (
                   <button key={s.id} onClick={() => setSex(s.id)}
-                    className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-95"
+                    className="flex-1 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-[0.97]"
                     style={{
                       background: sex === s.id ? `${THEME.teal}20` : 'rgba(255,255,255,0.06)',
                       border: `1px solid ${sex === s.id ? THEME.teal + '50' : 'rgba(255,255,255,0.1)'}`,
@@ -447,11 +447,11 @@ export default function Onboarding() {
                       style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</p>
                     <div className="flex items-center justify-center gap-2">
                       <button onClick={() => setter(v => Math.max(min, v - 1))}
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-sm active:scale-90 transition-transform"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-sm active:scale-[0.93] transition-transform"
                         style={{ background: 'rgba(255,255,255,0.1)' }}>−</button>
                       <span className="text-lg font-bold font-mono tabular-nums w-10 text-center">{value}</span>
                       <button onClick={() => setter(v => Math.min(max, v + 1))}
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-sm active:scale-90 transition-transform"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-sm active:scale-[0.93] transition-transform"
                         style={{ background: 'rgba(255,255,255,0.1)' }}>+</button>
                     </div>
                     <p className="text-[9px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>{unit}</p>
@@ -512,7 +512,7 @@ export default function Onboarding() {
       <div className="flex items-center gap-3 pt-6">
         {step > 0 && (
           <button onClick={() => setStep(s => s - 1)}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-95 transition-transform"
+            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97] transition-transform"
             style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
             Back
           </button>

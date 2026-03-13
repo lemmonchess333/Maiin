@@ -65,21 +65,21 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
         let st: React.CSSProperties = {};
         if (day.isToday && day.isSelected) {
           cls += " bg-primary text-primary-foreground";
-          st = { boxShadow: "0 0 8px rgba(109,40,217,0.4)" };
+          st = { boxShadow: `0 0 8px ${THEME.brand}66` };
         } else if (day.isToday) {
           cls += " text-primary";
-          st = { border: "2px dashed rgba(109,40,217,1)" };
+          st = { border: `2px dashed ${THEME.brand}` };
         } else if (day.isSelected) {
           cls += " text-primary";
-          st = { border: "2px solid rgba(109,40,217,1)", backgroundColor: "#ede9fe" };
+          st = { border: `2px solid ${THEME.brand}`, backgroundColor: `${THEME.brand}12` };
         } else if (day.hasActivity) {
           cls += " ring-2 ring-green-500 text-primary";
         } else {
           cls += " text-muted-foreground";
-          st = { border: "2px dashed rgba(109,40,217,0.33)" };
+          st = { border: `2px dashed ${THEME.brand}55` };
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 transition-transform active:scale-90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>{day.date.getDate()}</div>
             {day.sType !== "rest" ? (
@@ -266,7 +266,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
               <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
             </div>
-            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
               <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             </button>
           </div>
@@ -284,7 +284,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
                 <p className="text-[10px] text-muted-foreground/60">{lastWeightDate}</p>
               )}
             </div>
-            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
               <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             </button>
           </div>
@@ -419,7 +419,7 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
           <div className="flex items-baseline gap-2 mb-2.5">
-            <span className="text-3xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
+            <span className="text-2xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
               {(calories || 0).toLocaleString()}
             </span>
             <span className="text-xs text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
@@ -602,22 +602,22 @@ export default function Home() {
     <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3 border-b border-gray-100 dark:border-gray-800">
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3 border-b border-border">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <svg width="28" height="28" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#9b6ff7"/>
-                  <stop offset="100%" stopColor="#7c3aed"/>
+                  <stop offset="0%" stopColor={THEME.brandLight}/>
+                  <stop offset="100%" stopColor={THEME.brand}/>
                 </linearGradient>
               </defs>
               <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
               <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
             </svg>
-            <span className="text-lg font-extrabold tracking-wider text-gray-900 dark:text-gray-100 uppercase">TROPOS</span>
+            <span className="text-lg font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
           </div>
-          <span className="text-sm text-gray-400 mt-0.5">
+          <span className="text-sm text-muted-foreground mt-0.5">
             {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
           </span>
         </div>
