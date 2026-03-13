@@ -39,8 +39,8 @@ export function useDailyLogs() {
 
   useEffect(() => {
     if (!user) {
-      setLogs([]);
-      setLoading(false);
+      const reset = () => { setLogs([]); setLoading(false); };
+      reset();
       return;
     }
 
@@ -198,7 +198,8 @@ export function useWeeklyDayMap() {
 
   useEffect(() => {
     if (!user) {
-      setDayMap(new Map());
+      const reset = () => { setDayMap(new Map()); };
+      reset();
       return;
     }
 
