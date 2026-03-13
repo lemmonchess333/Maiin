@@ -563,7 +563,7 @@ export default function Home() {
   var handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
   var peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
   var peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
-  var nextWorkout = programState?.workouts.find(function(d) { return !d.completed; }) || null;
+  var nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
 
   // Find today's scheduled run (if any)
   var todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
@@ -577,7 +577,8 @@ export default function Home() {
 
   useEffect(function() {
     if (perfDoc) {
-      setSnapData({ ls: perfDoc.aggregates.liftSessions, rs: perfDoc.aggregates.runSessions, lt: perfDoc.aggregates.liftTonnage, rk: perfDoc.aggregates.runKm, ad: perfDoc.adherenceScore });
+      var agg = perfDoc.aggregates || { liftSessions: 0, runSessions: 0, liftTonnage: 0, runKm: 0 };
+      setSnapData({ ls: agg.liftSessions || 0, rs: agg.runSessions || 0, lt: agg.liftTonnage || 0, rk: agg.runKm || 0, ad: perfDoc.adherenceScore ?? null });
       return;
     }
     var now = new Date();
