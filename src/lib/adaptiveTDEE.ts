@@ -40,7 +40,7 @@ function getTargetWeeklyChange(goal: string): number {
   }
 }
 
-function linearTrend(weights: WeightLog[]): number {
+export function linearTrend(weights: WeightLog[]): number {
   if (weights.length < 2) return 0;
   const n = weights.length;
   const xs = weights.map((_, i) => i);

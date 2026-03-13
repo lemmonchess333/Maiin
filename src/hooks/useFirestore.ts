@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { safeMerge } from "@/lib/offlineQueue";
 import {
   startOfWeek,
   endOfWeek,
@@ -70,8 +71,10 @@ export function useDailyLogs() {
   const saveLog = useCallback(
     async (log: Omit<DailyLog, "id" | "createdAt">) => {
       if (!user) return;
-      const logRef = doc(db, "users", user.uid, "logs", log.date);
-      await setDoc(logRef, { ...log, createdAt: Timestamp.now() }, { merge: true });
+      await safeMerge(db, `users/${user.uid}/logs`, log.date, {
+        ...log,
+        createdAt: Timestamp.now(),
+      });
     },
     [user]
   );

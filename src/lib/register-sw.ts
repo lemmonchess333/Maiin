@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
@@ -6,7 +8,6 @@ export function registerServiceWorker() {
         .then((registration) => {
           console.log("SW registered:", registration.scope);
 
-          // Check for updates
           registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;
             if (newWorker) {
@@ -15,8 +16,13 @@ export function registerServiceWorker() {
                   newWorker.state === "activated" &&
                   navigator.serviceWorker.controller
                 ) {
-                  // New content available
-                  console.log("New content available, refresh to update.");
+                  toast("New version available", {
+                    action: {
+                      label: "Refresh",
+                      onClick: () => window.location.reload(),
+                    },
+                    duration: Infinity,
+                  });
                 }
               });
             }

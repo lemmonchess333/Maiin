@@ -1,4 +1,4 @@
-const CACHE_NAME = "tropos-v1";
+const CACHE_NAME = "tropos-v2";
 const BASE_PATH = "/Maiin/";
 
 const STATIC_ASSETS = [
@@ -31,7 +31,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first with cache fallback
+// Fetch handler
 self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") return;
@@ -47,10 +47,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Cache-first for Vite-hashed assets (immutable — URL changes when content changes)
+  if (url.pathname.startsWith(BASE_PATH + "assets/")) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first for everything else
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
         if (response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -60,7 +79,6 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => {
-        // Fallback to cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
 

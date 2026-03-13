@@ -16,6 +16,8 @@ import { BadgeGrid } from "@/features/streaks/BadgeGrid";
 import { TrendWeight } from "@/components/progress/TrendWeight";
 import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
 import { Footprints, Trophy } from "lucide-react";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { CardSkeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
 
@@ -363,10 +365,12 @@ export default function History() {
                   accentColor={THEME.lifting}
                 />
               </div>
-              <VolumeChart
-                data={liftingData.weeklyVolume}
-                accentColor={THEME.lifting}
-              />
+              <SectionErrorBoundary sectionName="volume-chart">
+                <VolumeChart
+                  data={liftingData.weeklyVolume}
+                  accentColor={THEME.lifting}
+                />
+              </SectionErrorBoundary>
               <MuscleHeatMap
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
@@ -442,8 +446,12 @@ export default function History() {
                 />
               </div>
 
-              <TrendWeight />
-              <WeeklyEnergyChart />
+              <SectionErrorBoundary sectionName="trend-weight">
+                <TrendWeight />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary sectionName="weekly-energy">
+                <WeeklyEnergyChart />
+              </SectionErrorBoundary>
             </>
           )}
         </>

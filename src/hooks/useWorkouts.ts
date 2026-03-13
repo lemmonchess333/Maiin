@@ -16,6 +16,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { estimateCalories } from "@/lib/exercises";
+import { safeMerge } from "@/lib/offlineQueue";
 
 export interface WorkoutSet {
   setNumber: number;
@@ -93,8 +94,7 @@ export function useWorkouts() {
     async (workout: Omit<Workout, "id" | "createdAt">) => {
       if (!user) return;
       const workoutId = `${workout.date}-${Date.now()}`;
-      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
-      await setDoc(workoutRef, {
+      await safeMerge(db, `users/${user.uid}/workouts`, workoutId, {
         ...workout,
         createdAt: Timestamp.now(),
       });

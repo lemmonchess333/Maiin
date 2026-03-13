@@ -15,6 +15,8 @@ import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
+import { HomeSkeleton } from "@/components/LoadingSkeleton";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
 import { collection, query, where, getDocs, Timestamp, orderBy, limit as fbLimit, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -592,7 +594,7 @@ export default function Home() {
     }).catch(function() { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); });
   }, [perfDoc, workouts, user]);
 
-  if (!profile) return <div className="p-8 text-center text-muted-foreground">Loading your profile…</div>;
+  if (!profile) return <HomeSkeleton />;
 
   return (
     <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
@@ -689,7 +691,9 @@ export default function Home() {
       )}
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
+        <SectionErrorBoundary sectionName="today-intake">
+          <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
+        </SectionErrorBoundary>
       </motion.div>
 
       {!isPro && (
