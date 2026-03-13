@@ -28,7 +28,7 @@ export interface Meal {
   totalSugar?: number;
   totalSodium?: number;
   confidence: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 export function useMeals() {

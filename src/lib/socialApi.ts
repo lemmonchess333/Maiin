@@ -73,7 +73,7 @@ export async function postActivity(activity: {
   challengeMilestone?: string;
   badgeEarned?: string;
   crewId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }) {
   const activityRef = await addDoc(collection(db, 'activities'), {
     ...activity,
@@ -106,7 +106,7 @@ export async function postActivity(activity: {
       summary = [name, `${exCount} exercises`, vol, dur].filter(Boolean).join(' · ');
     }
 
-    const feedItem: Record<string, any> = {
+    const feedItem: Record<string, unknown> = {
       activityId: activityRef.id,
       authorId: activity.authorId,
       authorName: activity.authorName,

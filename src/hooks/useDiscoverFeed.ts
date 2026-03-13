@@ -15,7 +15,7 @@ export function useDiscoverFeed() {
     setLoading(true);
     try {
       const result = await getDiscoverFeed(20, refresh ? undefined : lastDoc);
-      const rawItems = result.items as any[];
+      const rawItems = result.items as { id: string; authorId?: string; authorName?: string; type?: string; summary?: string; createdAt?: unknown }[];
 
       // Convert activity docs to FeedItem shape
       const feedItems: FeedItem[] = rawItems.map(item => ({

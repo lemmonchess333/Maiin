@@ -109,7 +109,7 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
   fetchPromise = (async () => {
     try {
       const res = await fetch(DEMO_URL);
-      const data: any[] = await res.json();
+      const data: { name: string; category?: string; equipment?: string; primaryMuscles?: string[]; secondaryMuscles?: string[]; instructions?: string[]; images?: string[] }[] = await res.json();
       const map = new Map<string, ExerciseDemo>();
       for (const ex of data) {
         map.set(normaliseKey(ex.name), {

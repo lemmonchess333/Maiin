@@ -19,12 +19,14 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
-    setShowInstructions(false);
-    getExerciseDemo(exerciseName).then((d) => {
+    const load = async () => {
+      setLoading(true);
+      setShowInstructions(false);
+      const d = await getExerciseDemo(exerciseName);
       setDemo(d);
       setLoading(false);
-    });
+    };
+    load();
   }, [exerciseName, open]);
 
   useLayoutEffect(() => {
@@ -39,10 +41,10 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
 
   const highlightData = [
     ...(primaryMapped.length > 0
-      ? [{ name: "Primary", muscles: primaryMapped as any[] }]
+      ? [{ name: "Primary" as const, muscles: primaryMapped }]
       : []),
     ...(secondaryMapped.length > 0
-      ? [{ name: "Secondary", muscles: secondaryMapped as any[] }]
+      ? [{ name: "Secondary" as const, muscles: secondaryMapped }]
       : []),
   ];
 

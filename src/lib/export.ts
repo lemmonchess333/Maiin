@@ -12,9 +12,9 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
     const w = docSnap.data();
     const date = w.date || "";
     if (Array.isArray(w.exercises)) {
-      w.exercises.forEach((ex: any) => {
+      w.exercises.forEach((ex: { exerciseName?: string; name?: string; sets?: { weightKg?: number; weight?: number; reps?: number; type?: string }[] }) => {
         if (Array.isArray(ex.sets)) {
-          ex.sets.forEach((set: any, i: number) => {
+          ex.sets.forEach((set, i: number) => {
             rows.push(
               `${date},"${(ex.exerciseName || ex.name || "").replace(/"/g, '""')}",${i + 1},${set.weightKg ?? set.weight ?? 0},${set.reps ?? 0},${set.type || "working"}`
             );

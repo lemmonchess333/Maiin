@@ -63,8 +63,8 @@ export function useRunningStats(days: number = 30) {
           completedAt: date,
           routePreview: data.points?.length > 1
             ? data.points
-                .filter((_: any, i: number) => i % Math.ceil(data.points.length / 20) === 0)
-                .map((p: any) => ({ lat: p.lat, lon: p.lon }))
+                .filter((_: { lat: number; lon: number }, i: number) => i % Math.ceil(data.points.length / 20) === 0)
+                .map((p: { lat: number; lon: number }) => ({ lat: p.lat, lon: p.lon }))
             : undefined,
         });
 

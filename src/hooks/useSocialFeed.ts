@@ -10,9 +10,9 @@ export interface FeedItem {
   authorName: string;
   type: 'run' | 'workout';
   summary: string;
-  createdAt: any;
+  createdAt: unknown;
   // Enriched at feed level — no per-card reads needed
-  activity?: any;
+  activity?: Record<string, unknown>;
   liked?: boolean;
   kudosCount?: number;
   // Highlight fields for filtering

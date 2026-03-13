@@ -8,8 +8,13 @@ export default function FollowButton({ targetUid }: { targetUid: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || user.uid === targetUid) { setLoading(false); return; }
-    isFollowing(user.uid, targetUid).then(v => { setFollowing(v); setLoading(false); });
+    const check = async () => {
+      if (!user || user.uid === targetUid) { setLoading(false); return; }
+      const v = await isFollowing(user.uid, targetUid);
+      setFollowing(v);
+      setLoading(false);
+    };
+    check();
   }, [user, targetUid]);
 
   const handleToggle = async () => {

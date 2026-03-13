@@ -46,14 +46,14 @@ export default function FoodSearch({ onSelect, onClose }: Props) {
         );
         const data = await res.json();
         const products: FoodResult[] = (data.products || [])
-          .filter((p: any) => p.product_name && p.nutriments)
-          .map((p: any) => ({
+          .filter((p: { product_name?: string; nutriments?: Record<string, number>; brands?: string; serving_size?: string }) => p.product_name && p.nutriments)
+          .map((p: { product_name?: string; nutriments?: Record<string, number>; brands?: string; serving_size?: string }) => ({
             name: p.product_name || "Unknown",
             brand: p.brands || "",
-            calories: Math.round(p.nutriments["energy-kcal_100g"] || p.nutriments["energy-kcal"] || 0),
-            protein: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
-            carbs: Math.round((p.nutriments.carbohydrates_100g || 0) * 10) / 10,
-            fat: Math.round((p.nutriments.fat_100g || 0) * 10) / 10,
+            calories: Math.round(p.nutriments?.["energy-kcal_100g"] || p.nutriments?.["energy-kcal"] || 0),
+            protein: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
+            carbs: Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
+            fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
             servingSize: p.serving_size || "100g",
           }));
         setResults(products);

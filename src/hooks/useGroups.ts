@@ -9,7 +9,7 @@ export interface Group {
   description: string;
   icon: string;
   memberCount: number;
-  createdAt: any;
+  createdAt: unknown;
   createdBy: string;
 }
 

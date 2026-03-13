@@ -28,8 +28,8 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
       (snap) => {
         const docs = snap.docs
           .map((d) => {
-            const data = d.data() as any;
-            const weekKey: string = data.weekKey || d.id;
+            const data = d.data();
+            const weekKey: string = (data.weekKey as string) || d.id;
             return { weekKey, ...data } as PerformanceWeekDoc;
           })
           .sort(sortAsc);

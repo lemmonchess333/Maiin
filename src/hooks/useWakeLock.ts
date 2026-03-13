@@ -6,7 +6,7 @@ export function useWakeLock() {
   const request = useCallback(async () => {
     if (!('wakeLock' in navigator)) return false;
     try {
-      wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      wakeLockRef.current = await navigator.wakeLock.request('screen');
       wakeLockRef.current!.addEventListener('release', () => { wakeLockRef.current = null; });
       return true;
     } catch { return false; }

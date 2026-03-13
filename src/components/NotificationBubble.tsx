@@ -52,7 +52,7 @@ export function NotificationBubbleProvider({ children }: { children: React.React
     };
     const raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [bubble?.id]);
+  }, [bubble]);
 
   const config = bubble ? VARIANT_CONFIG[bubble.variant] : VARIANT_CONFIG.generic;
   const Icon = config.icon;

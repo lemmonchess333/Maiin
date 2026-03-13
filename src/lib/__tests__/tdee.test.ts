@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateTDEE } from "../tdee";
+import { calculateTDEE, type ActivityLevel } from "../tdee";
 
 describe("calculateTDEE", () => {
   it("calculates male BMR correctly (Mifflin-St Jeor)", () => {
@@ -25,7 +25,7 @@ describe("calculateTDEE", () => {
     } as const;
 
     for (const [level, mult] of Object.entries(multipliers)) {
-      const result = calculateTDEE(80, 180, 25, level as any, "recomp", "male");
+      const result = calculateTDEE(80, 180, 25, level as ActivityLevel, "recomp", "male");
       expect(result.tdee).toBe(Math.round(bmr * mult));
     }
   });

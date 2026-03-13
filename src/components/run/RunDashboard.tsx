@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 export default function RunDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [recentRuns, setRecentRuns] = useState<any[]>([]);
+  const [recentRuns, setRecentRuns] = useState<{ id: string; distance?: number; avgPace?: number; completedAt?: { toDate: () => Date } }[]>([]);
   const [weeklyDistance, setWeeklyDistance] = useState(0);
   const [weeklyRunCount, setWeeklyRunCount] = useState(0);
 

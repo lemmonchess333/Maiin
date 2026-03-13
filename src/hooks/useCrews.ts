@@ -14,7 +14,7 @@ export interface Crew {
   memberCount: number;
   leaderboardMetric: string;
   type: 'default' | 'custom';
-  createdAt: any;
+  createdAt: unknown;
   createdBy: string;
 }
 
