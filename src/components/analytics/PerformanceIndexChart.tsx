@@ -96,13 +96,13 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               color: THEME.textPrimary,
               padding: "8px 12px",
             }}
-            labelFormatter={(label: string | number) => {
+            labelFormatter={(label) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
               return `Week of ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
             }}
-            formatter={(value: string | number, name: string | number) => {
+            formatter={(value, name) => {
               const labels: Record<string, string> = {
                 pi: "PI",
                 liftLoad: "Lift Load",
@@ -123,8 +123,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             stroke={THEME.brand}
             strokeWidth={2.5}
             fill="url(#pi-gradient)"
-            dot={(props: { cx: number; cy: number; payload: { week: string; band: string } }) => {
-              const { cx, cy, payload } = props;
+            dot={(props) => {
+              const { cx, cy, payload } = props as { cx: number; cy: number; payload: { week: string; band: string } };
               return (
                 <circle
                   key={payload.week}

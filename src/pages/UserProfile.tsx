@@ -15,7 +15,7 @@ export default function UserProfile() {
   const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [activities, setActivities] = useState<{ id: string; distance?: number; [key: string]: unknown }[]>([]);
+  const [activities, setActivities] = useState<{ id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }[]>([]);
   const [stats, setStats] = useState<{ totalKm: number; totalSessions: number } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [streak, setStreak] = useState<number>(0);
@@ -37,7 +37,7 @@ export default function UserProfile() {
       limit(10)
     );
     getDocs(q).then(snap => {
-      const acts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const acts = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }));
       setActivities(acts);
 
       // Compute stats from activities
