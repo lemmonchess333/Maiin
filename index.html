@@ -17,6 +17,14 @@
     <link rel="manifest" href="/Maiin/manifest.json" />
 
     <title>Tropos</title>
+    <script>
+      (function(){
+        var d = localStorage.getItem('tropos-dark-mode');
+        if (d === 'true' || (d === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

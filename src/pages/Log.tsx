@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
-import { collection as fbCollection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import WorkoutLogger from "@/components/WorkoutLogger";
@@ -33,9 +33,6 @@ import {
   MessageSquare,
   ScanBarcode,
   Footprints,
-  MapPin,
-  Volume2,
-  BarChart3,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -50,8 +47,7 @@ export default function Log() {
     format(new Date(), "yyyy-MM-dd")
   );
 
-  const [activeTab, setActiveTab] = useState<"workout" | "food" | "run">("workout");
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"workout" | "food">("workout");
   const location = useLocation();
 
   useEffect(() => {
@@ -353,12 +349,18 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Tabs — Workout / Food / Run */}
+      {/* Start a run link */}
+      <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
+        <Footprints className="w-4 h-4 text-primary" />
+        <span className="text-xs font-medium text-foreground">Start a run</span>
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+      </Link>
+
+      {/* Tabs — Workout / Food */}
       <div className="flex gap-1 bg-muted rounded-xl p-1">
         {([
           { key: "workout" as const, label: "Workout", Icon: Dumbbell },
           { key: "food" as const, label: "Food", Icon: UtensilsCrossed },
-          { key: "run" as const, label: "Run", Icon: Flame },
         ]).map(({ key, label, Icon }) => (
           <button
             key={key}
@@ -610,71 +612,6 @@ export default function Log() {
         </div>
       )}
 
-      {/* Run Tab */}
-      {activeTab === "run" && (
-        <div className="space-y-6">
-          <div className="text-center py-8 space-y-4">
-            <p className="text-5xl"><Footprints size={48} className="text-green-500" /></p>
-            <h2 className="text-lg font-bold">Ready to run?</h2>
-            <p className="text-sm text-muted-foreground px-6">
-              GPS tracking with live pace, distance, splits, and route mapping
-            </p>
-            <button onClick={() => navigate('/run')}
-              className="btn-start-run-pulse px-10 py-3.5 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-95 transition-transform">
-              Start Run
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><MapPin size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">GPS Tracking</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><Volume2 size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">Audio Cues</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card border border-border text-center">
-              <p className="text-lg"><BarChart3 size={24} className="text-gray-400" /></p>
-              <p className="text-[10px] text-muted-foreground mt-1">Split Analysis</p>
-            </div>
-          </div>
-
-          <RecentRunsList />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RecentRunsList() {
-  const { user } = useAuth();
-  const [runs, setRuns] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    const q = query(fbCollection(db, 'users', user.uid, 'runs'), orderBy('completedAt', 'desc'), limit(3));
-    getDocs(q).then(snap => setRuns(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-  }, [user]);
-
-  if (runs.length === 0) return null;
-
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">Recent Runs</h3>
-      {runs.map((run: any) => (
-        <div key={run.id} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50 pressable">
-          <div>
-            <p className="text-sm font-semibold text-foreground">{((run.distance || 0) / 1000).toFixed(2)} km</p>
-            <p className="text-[10px] text-muted-foreground">
-              {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''}
-            </p>
-          </div>
-          <p className="text-sm font-mono tabular-nums text-muted-foreground">
-            {run.avgPace ? `${Math.floor(run.avgPace / 60)}:${(Math.floor(run.avgPace) % 60).toString().padStart(2, '0')}/km` : ''}
-          </p>
-        </div>
-      ))}
     </div>
   );
 }

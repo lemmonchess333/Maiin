@@ -251,6 +251,7 @@ export default function Settings() {
   const toggleDark = () => {
     const next = !profile?.darkMode;
     document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem('tropos-dark-mode', String(next));
     updateProfile({ darkMode: next });
   };
 
