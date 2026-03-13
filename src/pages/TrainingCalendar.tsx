@@ -20,45 +20,45 @@ interface TrainingSession {
 }
 
 export default function TrainingCalendar() {
-  var { user, profile } = useAuth();
-  var { programState } = useProgram();
-  var navigate = useNavigate();
-  var [sessions, setSessions] = useState<TrainingSession[]>([]);
-  var [currentWeekStart, setCurrentWeekStart] = useState(function() {
-    var d = new Date();
-    var dow = d.getDay();
+  const { user, profile } = useAuth();
+  const { programState } = useProgram();
+  const navigate = useNavigate();
+  const [sessions, setSessions] = useState<TrainingSession[]>([]);
+  const [currentWeekStart, setCurrentWeekStart] = useState(function() {
+    const d = new Date();
+    const dow = d.getDay();
     d.setDate(d.getDate() - ((dow + 6) % 7));
     d.setHours(0, 0, 0, 0);
     return d;
   });
-  var [showAddModal, setShowAddModal] = useState(false);
-  var [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  var weekEnd = new Date(currentWeekStart.getTime() + 6 * 86400000);
-  var weekStartStr = currentWeekStart.toISOString().split('T')[0];
-  var weekEndStr = weekEnd.toISOString().split('T')[0];
+  const weekEnd = new Date(currentWeekStart.getTime() + 6 * 86400000);
+  const weekStartStr = currentWeekStart.toISOString().split('T')[0];
+  const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-  var loadSessions = useCallback(async function() {
+  const loadSessions = useCallback(async function() {
     if (!user) return;
 
     // 1. Load manually planned sessions
-    var ref = collection(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions');
-    var snap = await getDocs(query(ref, orderBy('date')));
-    var planned = snap.docs.map(function(d) { return { id: d.id, ...d.data() } as TrainingSession; });
+    const ref = collection(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions');
+    const snap = await getDocs(query(ref, orderBy('date')));
+    const planned = snap.docs.map(function(d) { return { id: d.id, ...d.data() } as TrainingSession; });
 
     // 2. Load completed workouts in this week range
-    var workoutsRef = collection(db, 'users', user.uid, 'workouts');
-    var wSnap = await getDocs(query(workoutsRef, where('date', '>=', weekStartStr), where('date', '<=', weekEndStr)));
-    var autoWorkouts: TrainingSession[] = [];
+    const workoutsRef = collection(db, 'users', user.uid, 'workouts');
+    const wSnap = await getDocs(query(workoutsRef, where('date', '>=', weekStartStr), where('date', '<=', weekEndStr)));
+    const autoWorkouts: TrainingSession[] = [];
     wSnap.docs.forEach(function(d) {
-      var data = d.data();
-      var date = data.date as string;
+      const data = d.data();
+      const date = data.date as string;
       // Skip if there is already a planned session for this date and type
-      var alreadyPlanned = planned.some(function(p) { return p.date === date && p.type === 'lift'; });
+      const alreadyPlanned = planned.some(function(p) { return p.date === date && p.type === 'lift'; });
       if (!alreadyPlanned) {
         // Get first exercise name as label
-        var exercises = data.exercises || [];
-        var label = exercises.length > 0 ? exercises[0].exerciseName || 'Workout' : 'Workout';
+        const exercises = data.exercises || [];
+        const label = exercises.length > 0 ? exercises[0].exerciseName || 'Workout' : 'Workout';
         autoWorkouts.push({
           id: 'auto-lift-' + d.id,
           date: date,
@@ -71,20 +71,20 @@ export default function TrainingCalendar() {
     });
 
     // 3. Load completed runs in this week range
-    var runsRef = collection(db, 'users', user.uid, 'runs');
-    var startTs = Timestamp.fromDate(currentWeekStart);
-    var endTs = Timestamp.fromDate(new Date(weekEnd.getTime() + 86400000));
-    var rSnap = await getDocs(query(runsRef, where('completedAt', '>=', startTs), where('completedAt', '<=', endTs), orderBy('completedAt')));
-    var autoRuns: TrainingSession[] = [];
+    const runsRef = collection(db, 'users', user.uid, 'runs');
+    const startTs = Timestamp.fromDate(currentWeekStart);
+    const endTs = Timestamp.fromDate(new Date(weekEnd.getTime() + 86400000));
+    const rSnap = await getDocs(query(runsRef, where('completedAt', '>=', startTs), where('completedAt', '<=', endTs), orderBy('completedAt')));
+    const autoRuns: TrainingSession[] = [];
     rSnap.docs.forEach(function(d) {
-      var data = d.data();
-      var completedAt = data.completedAt?.toDate?.();
+      const data = d.data();
+      const completedAt = data.completedAt?.toDate?.();
       if (!completedAt) return;
-      var date = completedAt.toISOString().split('T')[0];
-      var alreadyPlanned = planned.some(function(p) { return p.date === date && p.type === 'run'; });
+      const date = completedAt.toISOString().split('T')[0];
+      const alreadyPlanned = planned.some(function(p) { return p.date === date && p.type === 'run'; });
       if (!alreadyPlanned) {
-        var dist = ((data.distance || 0) / 1000).toFixed(1);
-        var actType = data.activityType || 'run';
+        const dist = ((data.distance || 0) / 1000).toFixed(1);
+        const actType = data.activityType || 'run';
         autoRuns.push({
           id: 'auto-run-' + d.id,
           date: date,
@@ -97,16 +97,16 @@ export default function TrainingCalendar() {
     });
 
     // 4. Mark planned sessions as completed if a matching workout/run exists
-    var merged = planned.map(function(session) {
+    const merged = planned.map(function(session) {
       if (session.status === 'completed' || session.status === 'skipped') return session;
       if (session.type === 'lift') {
-        var hasWorkout = wSnap.docs.some(function(d) { return (d.data().date as string) === session.date; });
+        const hasWorkout = wSnap.docs.some(function(d) { return (d.data().date as string) === session.date; });
         if (hasWorkout) return { ...session, status: 'completed' as const };
       }
       if (session.type === 'run') {
-        var hasRun = autoRuns.some(function(r) { return r.date === session.date; }) ||
+        const hasRun = autoRuns.some(function(r) { return r.date === session.date; }) ||
           rSnap.docs.some(function(d) {
-            var ca = d.data().completedAt?.toDate?.();
+            const ca = d.data().completedAt?.toDate?.();
             return ca && ca.toISOString().split('T')[0] === session.date;
           });
         if (hasRun) return { ...session, status: 'completed' as const };
@@ -115,21 +115,21 @@ export default function TrainingCalendar() {
     });
 
     // 5. Auto-populate scheduled sessions from weekSchedule (or generated fallback)
-    var weekSched = (profile?.weekSchedule && profile.weekSchedule.length === 7)
+    const weekSched = (profile?.weekSchedule && profile.weekSchedule.length === 7)
       ? profile.weekSchedule
       : generateSchedule(profile?.weeklyWorkoutsTarget ?? 4, profile?.weeklyRunsTarget ?? 2);
-    var scheduledFromProfile: TrainingSession[] = [];
+    const scheduledFromProfile: TrainingSession[] = [];
     if (weekSched) {
-      for (var di = 0; di < 7; di++) {
-        var dd = new Date(currentWeekStart);
+      for (let di = 0; di < 7; di++) {
+        const dd = new Date(currentWeekStart);
         dd.setDate(dd.getDate() + di);
-        var dateStr = dd.toISOString().split('T')[0];
-        var dow = dd.getDay();
-        var sched = weekSched.find(function(s) { return s.day === dow; });
+        const dateStr = dd.toISOString().split('T')[0];
+        const dow = dd.getDay();
+        const sched = weekSched.find(function(s) { return s.day === dow; });
         if (sched && sched.type !== 'rest') {
-          var types: ('lift' | 'run')[] = sched.type === 'both' ? ['lift', 'run'] : [sched.type as 'lift' | 'run'];
+          const types: ('lift' | 'run')[] = sched.type === 'both' ? ['lift', 'run'] : [sched.type as 'lift' | 'run'];
           types.forEach(function(t) {
-            var alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === t; }) ||
+            const alreadyCovered = merged.some(function(p) { return p.date === dateStr && p.type === t; }) ||
               autoWorkouts.some(function(a) { return a.date === dateStr && a.type === t; }) ||
               autoRuns.some(function(a) { return a.date === dateStr && a.type === t; });
             if (!alreadyCovered) {
@@ -156,8 +156,8 @@ export default function TrainingCalendar() {
     loadSessions();
   }, [loadSessions, currentWeekStart]);
 
-  var weekDays = Array.from({ length: 7 }, function(_, i) {
-    var d = new Date(currentWeekStart);
+  const weekDays = Array.from({ length: 7 }, function(_, i) {
+    const d = new Date(currentWeekStart);
     d.setDate(d.getDate() + i);
     return {
       date: d.toISOString().split('T')[0],
@@ -167,9 +167,9 @@ export default function TrainingCalendar() {
     };
   });
 
-  var addSession = async function(date: string, type: 'run' | 'lift', template?: RunTemplate, liftDay?: string) {
+  const addSession = async function(date: string, type: 'run' | 'lift', template?: RunTemplate, liftDay?: string) {
     if (!user) return;
-    var ref = collection(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions');
+    const ref = collection(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions');
     await addDoc(ref, {
       date: date,
       dayOfWeek: new Date(date).getDay(),
@@ -182,20 +182,20 @@ export default function TrainingCalendar() {
     await loadSessions();
   };
 
-  var updateSession = async function(sessionId: string, updates: Partial<TrainingSession>) {
+  const updateSession = async function(sessionId: string, updates: Partial<TrainingSession>) {
     if (!user) return;
     // Don't try to update auto-generated or schedule-generated sessions in Firestore
     if (sessionId.startsWith('auto-') || sessionId.startsWith('sched-')) return;
-    var ref = doc(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions', sessionId);
+    const ref = doc(db, 'users', user.uid, 'trainingPlan', 'current', 'sessions', sessionId);
     await updateDoc(ref, updates);
     await loadSessions();
   };
 
-  var prevWeek = function() {
-    setCurrentWeekStart(function(d) { var n = new Date(d); n.setDate(n.getDate() - 7); return n; });
+  const prevWeek = function() {
+    setCurrentWeekStart(function(d) { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
   };
-  var nextWeek = function() {
-    setCurrentWeekStart(function(d) { var n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+  const nextWeek = function() {
+    setCurrentWeekStart(function(d) { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
   };
 
   return (
