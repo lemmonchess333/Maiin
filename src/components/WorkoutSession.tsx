@@ -669,6 +669,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       type="number"
                       value={set.weight || ""}
                       placeholder={set.weight === 0 ? "BW" : ""}
+                      aria-label={`Set ${setIdx + 1} weight`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                       disabled={set.completed}
                       className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
@@ -678,6 +679,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     <input
                       type="number"
                       value={set.reps || ""}
+                      aria-label={`Set ${setIdx + 1} reps`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                       disabled={set.completed}
                       className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
@@ -718,8 +720,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       <button
                         key={type}
                         onClick={() => setSetType(currentExIndex, setIdx, type)}
+                        aria-label={`Set type: ${TYPE_LABELS[type]}`}
+                        aria-pressed={set.type === type}
                         className={cn(
-                          "flex-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all",
+                          "flex-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all focus-visible:outline-2 focus-visible:outline-primary",
                           set.type === type ? "opacity-100 ring-2 ring-current" : "opacity-40"
                         )}
                         style={{ color: TYPE_COLORS[type], backgroundColor: TYPE_COLORS[type] + '15' }}

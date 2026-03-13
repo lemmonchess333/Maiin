@@ -8,6 +8,10 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
+  limit,
+  startAfter,
+  getDocs,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -45,6 +49,10 @@ export function useWorkouts() {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
     if (!user) {
@@ -54,7 +62,7 @@ export function useWorkouts() {
     }
 
     const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const q = query(workoutsRef, orderBy("date", "desc"));
+    const q = query(workoutsRef, orderBy("date", "desc"), limit(PAGE_SIZE));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((d) => ({
@@ -62,11 +70,24 @@ export function useWorkouts() {
         ...d.data(),
       })) as Workout[];
       setWorkouts(data);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length >= PAGE_SIZE);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [user]);
+
+  const loadMore = useCallback(async () => {
+    if (!user || !lastDoc || !hasMore) return;
+    const workoutsRef = collection(db, "users", user.uid, "workouts");
+    const q = query(workoutsRef, orderBy("date", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+    const snapshot = await getDocs(q);
+    const newData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Workout[];
+    setWorkouts(prev => [...prev, ...newData]);
+    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+    setHasMore(snapshot.docs.length >= PAGE_SIZE);
+  }, [user, lastDoc, hasMore]);
 
   const saveWorkout = useCallback(
     async (workout: Omit<Workout, "id" | "createdAt">) => {
@@ -111,6 +132,8 @@ export function useWorkouts() {
   return {
     workouts,
     loading,
+    hasMore,
+    loadMore,
     saveWorkout,
     deleteWorkout,
     getWorkoutsForDate,

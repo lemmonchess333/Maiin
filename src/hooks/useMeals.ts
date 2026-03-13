@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, limit, startAfter, getDocs, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 
@@ -35,6 +35,10 @@ export function useMeals() {
   const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+
+  const PAGE_SIZE = 100;
 
   useEffect(() => {
     if (!user) {
@@ -44,7 +48,7 @@ export function useMeals() {
     }
 
     const mealsRef = collection(db, "users", user.uid, "meals");
-    const q = query(mealsRef, orderBy("createdAt", "desc"));
+    const q = query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((d) => ({
@@ -52,11 +56,24 @@ export function useMeals() {
         ...d.data(),
       })) as Meal[];
       setMeals(data);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      setHasMore(snapshot.docs.length >= PAGE_SIZE);
       setLoading(false);
     });
 
     return unsubscribe;
   }, [user]);
+
+  const loadMore = useCallback(async () => {
+    if (!user || !lastDoc || !hasMore) return;
+    const mealsRef = collection(db, "users", user.uid, "meals");
+    const q = query(mealsRef, orderBy("createdAt", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+    const snapshot = await getDocs(q);
+    const newData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Meal[];
+    setMeals(prev => [...prev, ...newData]);
+    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+    setHasMore(snapshot.docs.length >= PAGE_SIZE);
+  }, [user, lastDoc, hasMore]);
 
   const deleteMeal = useCallback(
     async (mealId: string) => {
@@ -90,5 +107,5 @@ export function useMeals() {
     [meals]
   );
 
-  return { meals, loading, deleteMeal, getMealsForDate, getDailyTotals };
+  return { meals, loading, hasMore, loadMore, deleteMeal, getMealsForDate, getDailyTotals };
 }

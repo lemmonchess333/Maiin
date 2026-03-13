@@ -11,7 +11,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, ChevronRight, ChevronLeft, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Target, Zap, Leaf } from "lucide-react";
+import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Target, Zap, Leaf } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
           st = { border: "2px dashed rgba(109,40,217,0.33)" };
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} className="flex flex-col items-center gap-1 transition-transform active:scale-90">
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 transition-transform active:scale-90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>{day.date.getDate()}</div>
             {day.sType !== "rest" ? (
@@ -123,8 +123,8 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
-            <button onClick={onClose} className="p-0.5 rounded hover:bg-muted transition-colors">
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            <button onClick={onClose} aria-label="Close day details" className="p-0.5 rounded hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary">
+              <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>
           {(hasW || hasM) ? (
@@ -158,7 +158,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight, todayRun, healthScore }: {
+function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight, todayRun, healthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -172,169 +172,133 @@ function CyclingCTACard({ nextWorkout, todayType, navigate, waterGlasses, waterT
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
 }) {
-  var [ci, setCi] = useState(0);
-  var touchStartX = 0;
-  var cards = useMemo(function() {
-    var r: { id: string; type: "scheduled" | "actions" | "quicktrack" }[] = [];
-    if ((todayType === "lift" || todayType === "both") && nextWorkout) r.push({ id: "workout", type: "scheduled" });
-    if ((todayType === "run" || todayType === "both") && !r.some(c => c.id === "run")) r.push({ id: "run", type: "scheduled" });
-    r.push({ id: "actions", type: "actions" });
-    r.push({ id: "quicktrack", type: "quicktrack" });
-    return r;
-  }, [todayType, nextWorkout]);
-  var cc = cards[ci % cards.length];
-  var swipe = function(d: number) {
-    setCi(function(p) { var n = p + d; return n < 0 ? cards.length - 1 : n % cards.length; });
-  };
-
-  var handleTouchStart = function(e: React.TouchEvent) { touchStartX = e.touches[0].clientX; };
-  var handleTouchEnd = function(e: React.TouchEvent) {
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    if (dx < -50) swipe(1);
-    else if (dx > 50) swipe(-1);
-  };
+  var showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
+  var showRun = todayType === "run" || todayType === "both";
+  var tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
+  var runLabel = tmpl ? tmpl.name : "Start a run";
+  var runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
+  var runIcon = tmpl?.icon;
+  var templateParam = tmpl ? "?template=" + tmpl.id : "";
 
   return (
-    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      <AnimatePresence mode="wait">
-        {cc?.type === "scheduled" && cc.id === "workout" && nextWorkout && (
-          <motion.button key="w" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
-            onClick={function() { navigate("/program"); }}
-            className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
-            style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}>
-                <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
-                <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
-                <p className="text-[11px] text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
-              </div>
-              <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.lifting, color: "#fff" }}>
-                <Play className="w-3.5 h-3.5" />Start
-              </div>
+    <div className="space-y-3">
+      {showLift && nextWorkout && (
+        <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
+          onClick={function() { navigate("/program"); }}
+          className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
+          style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}>
+              <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
             </div>
-          </motion.button>
-        )}
-        {cc?.type === "scheduled" && cc.id === "run" && (() => {
-          var tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
-          var runLabel = tmpl ? tmpl.name : "Start a run";
-          var runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
-          var runIcon = tmpl?.icon;
-          var templateParam = tmpl ? "?template=" + tmpl.id : "";
-          return (
-          <motion.button key="r" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
-            onClick={function() { navigate("/run" + templateParam); }}
-            className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
-            style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}>
-                {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
-                <p className="text-sm font-semibold text-foreground">{runLabel}</p>
-                <p className="text-[11px] text-muted-foreground truncate">{runDesc}</p>
-              </div>
-              <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
-                <Play className="w-3.5 h-3.5" />{todayRun?.completed ? "Done" : "Go"}
-              </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
+              <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
+              <p className="text-[11px] text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
             </div>
-          </motion.button>
-          );
-        })()}
-        {cc?.type === "actions" && (
-          <motion.div key="a" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }} className="flex gap-2">
-            <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
-              <span className="text-xs font-medium text-foreground">Log Workout</span>
-            </Link>
-            <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
-              <span className="text-xs font-medium text-foreground">Start Run</span>
-            </Link>
-            <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
-              <span className="text-xs font-medium text-foreground">Log Food</span>
-            </Link>
-          </motion.div>
-        )}
-        {cc?.type === "quicktrack" && (
-          <motion.div key="qt" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.2 }}
-            className="p-4 rounded-2xl bg-card border border-border/50">
-            <div className="grid grid-cols-2 gap-3">
-              {/* Health Score */}
-              <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(236,72,153,0.06)" }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(236,72,153,0.10)" }}>
-                  <Heart className="w-4 h-4 text-pink-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Health</p>
-                  {healthScore != null ? (
-                    <p className={cn("text-sm font-bold", healthScore >= 80 ? "text-green-500" : healthScore >= 60 ? "text-amber-500" : "text-red-500")}>
-                      {healthScore}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">--</p>
-                  )}
-                </div>
-              </Link>
-              {/* Water */}
-              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
-                  <Droplets className="w-4 h-4 text-blue-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Water</p>
-                  <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
-                </div>
-                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
-                  <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                </button>
-              </div>
-              {/* Weight */}
-              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(139,92,246,0.06)" }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
-                  <Scale className="w-4 h-4 text-purple-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Weight</p>
-                  <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
-                    {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
-                  </p>
-                  {lastWeightDate && (
-                    <p className="text-[8px] text-muted-foreground/60">{lastWeightDate}</p>
-                  )}
-                </div>
-                <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
-                  <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                </button>
-              </div>
-              {/* Steps */}
-              <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(34,197,94,0.10)" }}>
-                  <Footprints className="w-4 h-4 text-green-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
-                  <p className="text-xs text-muted-foreground">—</p>
-                  <p className="text-[8px] text-muted-foreground/60">Connect in app</p>
-                </div>
-              </div>
+            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.lifting, color: "#fff" }}>
+              <Play className="w-3.5 h-3.5" />Start
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <div className="flex items-center justify-center gap-3 mt-2">
-        <button onClick={function() { swipe(-1); }} className="p-1 rounded-full hover:bg-muted"><ChevronLeft className="w-4 h-4 text-muted-foreground" /></button>
-        <div className="flex gap-1.5">
-          {cards.map(function(_, i) {
-            return <div key={i} className={"w-1.5 h-1.5 rounded-full transition-all " + (i === ci % cards.length ? "bg-primary w-3" : "bg-muted-foreground/30")} />;
-          })}
+          </div>
+        </motion.button>
+      )}
+      {showRun && (
+        <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
+          onClick={function() { navigate("/run" + templateParam); }}
+          className="w-full p-5 rounded-2xl bg-card border border-border/50 text-left active:scale-[0.99]"
+          style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}>
+              {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
+              <p className="text-sm font-semibold text-foreground">{runLabel}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{runDesc}</p>
+            </div>
+            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
+              <Play className="w-3.5 h-3.5" />{todayRun?.completed ? "Done" : "Go"}
+            </div>
+          </div>
+        </motion.button>
+      )}
+      <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
+        <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
+          <span className="text-xs font-medium text-foreground">Log Workout</span>
+        </Link>
+        <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.running + "20" }}><Footprints className="w-5 h-5" style={{ color: THEME.running }} /></div>
+          <span className="text-xs font-medium text-foreground">Start Run</span>
+        </Link>
+        <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.success + "20" }}><ClipboardList className="w-5 h-5" style={{ color: THEME.success }} /></div>
+          <span className="text-xs font-medium text-foreground">Log Food</span>
+        </Link>
+      </motion.div>
+      <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
+        className="p-4 rounded-2xl bg-card border border-border/50">
+        <div className="grid grid-cols-2 gap-3">
+          {/* Health Score */}
+          <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(236,72,153,0.06)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(236,72,153,0.10)" }}>
+              <Heart className="w-4 h-4 text-pink-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Health</p>
+              {healthScore != null ? (
+                <p className={cn("text-sm font-bold", healthScore >= 80 ? "text-green-500" : healthScore >= 60 ? "text-amber-500" : "text-red-500")}>
+                  {healthScore}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">--</p>
+              )}
+            </div>
+          </Link>
+          {/* Water */}
+          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+              <Droplets className="w-4 h-4 text-blue-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Water</p>
+              <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
+            </div>
+            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+              <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            </button>
+          </div>
+          {/* Weight */}
+          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(139,92,246,0.06)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+              <Scale className="w-4 h-4 text-purple-500" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Weight</p>
+              <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
+                {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
+              </p>
+              {lastWeightDate && (
+                <p className="text-[8px] text-muted-foreground/60">{lastWeightDate}</p>
+              )}
+            </div>
+            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+              <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            </button>
+          </div>
+          {/* Steps */}
+          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(34,197,94,0.10)" }}>
+              <Footprints className="w-4 h-4 text-green-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
+              <p className="text-xs text-muted-foreground">—</p>
+              <p className="text-[8px] text-muted-foreground/60">Connect in app</p>
+            </div>
+          </div>
         </div>
-        <button onClick={function() { swipe(1); }} className="p-1 rounded-full hover:bg-muted"><ChevronRight className="w-4 h-4 text-muted-foreground" /></button>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -663,8 +627,8 @@ export default function Home() {
               {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
             </span>
           </motion.div>
-          <Link to="/settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
-            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+          <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
+            <SettingsIcon aria-hidden="true" className="w-5 h-5 text-muted-foreground" />
           </Link>
         </div>
       </motion.div>
@@ -707,7 +671,7 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
-          <CyclingCTACard nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
+          <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }}
             lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null}
             weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} />
@@ -745,10 +709,10 @@ export default function Home() {
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center justify-between">
                   <p className="text-base font-semibold text-foreground">Log Weight</p>
-                  <button onClick={function() { setShowWeightSheet(false); }} className="p-1 rounded hover:bg-muted"><X className="w-4 h-4 text-muted-foreground" /></button>
+                  <button onClick={function() { setShowWeightSheet(false); }} aria-label="Close weight log" className="p-1 rounded hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"><X aria-hidden="true" className="w-4 h-4 text-muted-foreground" /></button>
                 </div>
                 <div className="flex gap-3">
-                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
                     {weightSaving ? "..." : "Log"}
                   </button>
