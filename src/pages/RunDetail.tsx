@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { THEME } from '../lib/theme';
-import RunMap from '../components/run/RunMap';
+import RunMap from '../components/run/RunMapLazy';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';

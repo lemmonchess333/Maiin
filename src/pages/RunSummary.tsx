@@ -8,7 +8,7 @@ import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '..
 import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
-import RunMap from '../components/run/RunMap';
+import RunMap from '../components/run/RunMapLazy';
 import PaceLegend from '../components/run/PaceLegend';
 import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
