@@ -249,8 +249,8 @@ export function useHistoryData(days: number = 30) {
 
   useEffect(() => {
     if (!user) {
-      setData([]);
-      setLoading(false);
+      const reset = () => { setData([]); setLoading(false); };
+      reset();
       return;
     }
 

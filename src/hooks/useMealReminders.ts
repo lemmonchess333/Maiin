@@ -28,7 +28,7 @@ export function useMealReminders() {
 
   // Load from Firestore
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
     const ref = doc(db, 'users', user.uid, 'settings', 'mealReminders');
     getDoc(ref).then((snap) => {
       if (snap.exists()) {

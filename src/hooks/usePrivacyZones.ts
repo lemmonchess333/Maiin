@@ -17,7 +17,7 @@ export function usePrivacyZones() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { setZones([]); setLoading(false); return; }
+    if (!user) { const reset = () => { setZones([]); setLoading(false); }; reset(); return; }
 
     const ref = collection(db, 'users', user.uid, 'privacyZones');
     const unsub = onSnapshot(ref, (snap) => {

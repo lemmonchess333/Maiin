@@ -15,8 +15,8 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
 
   useEffect(() => {
     if (!user) {
-      setWeeks([]);
-      setLoading(false);
+      const reset = () => { setWeeks([]); setLoading(false); };
+      reset();
       return;
     }
 

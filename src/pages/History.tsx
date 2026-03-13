@@ -40,9 +40,10 @@ export default function History() {
 
   useEffect(() => {
     if (searchParams.has("tab")) {
-      setSearchParams({}, { replace: true });
+      const clear = () => { setSearchParams({}, { replace: true }); };
+      clear();
     }
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   const [timeRange, setTimeRange] = useState("1M");
   const rangeDays =

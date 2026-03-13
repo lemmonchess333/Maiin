@@ -44,17 +44,20 @@ export function useGuidedRun(workout: GuidedRunWorkout | null, isRunning: boolea
   // Initialize
   useEffect(() => {
     if (!workout) return;
-    setState({
-      currentSegmentIndex: 0,
-      timeRemaining: workout.segments[0]?.durationSeconds ?? 0,
-      segmentProgress: 0,
-      totalProgress: 0,
-      totalElapsed: 0,
-      isComplete: false,
-      currentSegment: workout.segments[0] ?? null,
-      nextSegment: workout.segments[1] ?? null,
-    });
-    spokenRef.current = -1;
+    const init = () => {
+      setState({
+        currentSegmentIndex: 0,
+        timeRemaining: workout.segments[0]?.durationSeconds ?? 0,
+        segmentProgress: 0,
+        totalProgress: 0,
+        totalElapsed: 0,
+        isComplete: false,
+        currentSegment: workout.segments[0] ?? null,
+        nextSegment: workout.segments[1] ?? null,
+      });
+      spokenRef.current = -1;
+    };
+    init();
   }, [workout]);
 
   // Tick

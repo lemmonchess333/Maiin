@@ -29,7 +29,7 @@ export function useRunningStats(days: number = 30) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
+    if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
 
     const loadStats = async () => {
       const since = new Date();

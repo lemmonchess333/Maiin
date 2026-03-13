@@ -42,8 +42,8 @@ export function useMeals() {
 
   useEffect(() => {
     if (!user) {
-      setMeals([]);
-      setLoading(false);
+      const reset = () => { setMeals([]); setLoading(false); };
+      reset();
       return;
     }
 

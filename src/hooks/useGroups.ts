@@ -71,10 +71,11 @@ export function useGroups() {
     } catch (e) {
       console.error('Failed to fetch my groups:', e);
     }
-  }, [user?.uid]);
+  }, [user]);
 
   useEffect(() => {
-    Promise.all([fetchGroups(), fetchMyGroups()]).then(() => setLoading(false));
+    const load = async () => { await Promise.all([fetchGroups(), fetchMyGroups()]); setLoading(false); };
+    load();
   }, [fetchGroups, fetchMyGroups]);
 
   const joinGroup = useCallback(async (groupId: string) => {
@@ -85,7 +86,7 @@ export function useGroups() {
     await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(1) });
     setMyGroupIds(prev => new Set([...prev, groupId]));
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: g.memberCount + 1 } : g));
-  }, [user?.uid]);
+  }, [user]);
 
   const leaveGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
@@ -93,7 +94,7 @@ export function useGroups() {
     await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(-1) });
     setMyGroupIds(prev => { const s = new Set(prev); s.delete(groupId); return s; });
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: Math.max(0, g.memberCount - 1) } : g));
-  }, [user?.uid]);
+  }, [user]);
 
   const createGroup = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;
@@ -111,7 +112,7 @@ export function useGroups() {
     const newGroup: Group = { id: ref.id, name, description, icon, memberCount: 1, createdAt: new Date(), createdBy: user.uid };
     setGroups(prev => [newGroup, ...prev]);
     setMyGroupIds(prev => new Set([...prev, ref.id]));
-  }, [user?.uid]);
+  }, [user]);
 
   return { groups, myGroupIds, loading, joinGroup, leaveGroup, createGroup };
 }

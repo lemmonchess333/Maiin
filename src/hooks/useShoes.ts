@@ -30,8 +30,8 @@ export function useShoes() {
 
   useEffect(() => {
     if (!user) {
-      setShoes([]);
-      setLoading(false);
+      const reset = () => { setShoes([]); setLoading(false); };
+      reset();
       return;
     }
 

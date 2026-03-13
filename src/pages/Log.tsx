@@ -50,9 +50,10 @@ export default function Log() {
 
   useEffect(() => {
     if (location.state?.tab) {
-      setActiveTab(location.state.tab);
+      const apply = () => { setActiveTab(location.state.tab); };
+      apply();
     }
-  }, []);
+  }, [location.state]);
 
   const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
