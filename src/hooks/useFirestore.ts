@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   collection,
-  doc,
-  setDoc,
   query,
   where,
   orderBy,
