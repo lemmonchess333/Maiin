@@ -225,7 +225,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <Link to="/program" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
+        <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card border border-border/50 flex flex-col items-center gap-2 active:scale-[0.97] transition-transform">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "20" }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
           <span className="text-xs font-medium text-foreground">Log Workout</span>
         </Link>
@@ -247,7 +247,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <Heart className="w-4 h-4 text-pink-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Health</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Health</p>
               {healthScore != null ? (
                 <p className={cn("text-sm font-bold", healthScore >= 80 ? "text-green-500" : healthScore >= 60 ? "text-amber-500" : "text-red-500")}>
                   {healthScore}
@@ -263,7 +263,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <Droplets className="w-4 h-4 text-blue-500" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Water</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
               <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
             </div>
             <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
@@ -276,12 +276,12 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <Scale className="w-4 h-4 text-purple-500" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Weight</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight</p>
               <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
                 {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
               </p>
               {lastWeightDate && (
-                <p className="text-[8px] text-muted-foreground/60">{lastWeightDate}</p>
+                <p className="text-[10px] text-muted-foreground/60">{lastWeightDate}</p>
               )}
             </div>
             <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
@@ -294,9 +294,9 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <Footprints className="w-4 h-4 text-green-500" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Steps</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Steps</p>
               <p className="text-xs text-muted-foreground">—</p>
-              <p className="text-[8px] text-muted-foreground/60">Connect in app</p>
+              <p className="text-[10px] text-muted-foreground/60">Connect in app</p>
             </div>
           </div>
         </div>
@@ -331,7 +331,7 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
             return (
               <div key={s.label} className="text-center p-2 rounded-xl" style={{ background: s.color + "10" }}>
                 <p className="text-base font-bold font-mono tabular-nums leading-none" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[8px] text-muted-foreground mt-1 leading-tight">{s.label}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{s.label}</p>
               </div>
             );
           })}
@@ -387,7 +387,7 @@ function MacroRing({ value, target, color, label, unit = "" }: {
       </div>
       <div className="text-center">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="text-[8px] text-muted-foreground/50">{target}{unit}</p>
+        <p className="text-[10px] text-muted-foreground/50">{target}{unit}</p>
       </div>
     </div>
   );
@@ -460,6 +460,7 @@ export default function Home() {
   var [showWeightSheet, setShowWeightSheet] = useState(false);
   var [weightInput, setWeightInput] = useState("");
   var [weightSaving, setWeightSaving] = useState(false);
+  var [proUpsellDismissed, setProUpsellDismissed] = useState(false);
 
   var schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
@@ -696,8 +697,11 @@ export default function Home() {
         </SectionErrorBoundary>
       </motion.div>
 
-      {!isPro && (
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card border border-border/50 text-center space-y-1">
+      {!isPro && !proUpsellDismissed && (
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card border border-border/50 text-center space-y-1 relative">
+          <button onClick={function() { setProUpsellDismissed(true); }} aria-label="Dismiss" className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted transition-colors">
+            <X className="w-3.5 h-3.5 text-muted-foreground" />
+          </button>
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
           <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
         </motion.div>
@@ -708,7 +712,7 @@ export default function Home() {
         {showWeightSheet && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={function() { setShowWeightSheet(false); }} className="fixed inset-0 bg-black/40 z-40" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb" style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}>
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center justify-between">

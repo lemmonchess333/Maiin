@@ -62,6 +62,16 @@
   animation: ds-shimmer 1.2s linear infinite;
 }
 
+.dark .ds-skeleton {
+  background: linear-gradient(90deg, #1c1c24 0px, #2a2a35 40%, #1c1c24 80%);
+  background-size: 600px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* ─── NUMBER UPDATE FLASH ───────────────────────────────────── */
 @keyframes ds-number-update {
   0%   { transform: scale(1); }

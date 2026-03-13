@@ -44,7 +44,7 @@ export default function Layout() {
                 {({ isActive }) => (
                   <>
                     <Icon aria-hidden="true" className={cn("w-5 h-5", isActive && "ds-tab-active-icon")} />
-                    <span className="text-[10px] font-medium tracking-wide">{tab.label}</span>
+                    <span className="text-[11px] font-medium tracking-wide">{tab.label}</span>
                   </>
                 )}
               </NavLink>
