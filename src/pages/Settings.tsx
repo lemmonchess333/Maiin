@@ -80,6 +80,8 @@ export default function Settings() {
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
   const [settingsTab, setSettingsTab] = useState<"profile" | "training" | "prefs" | "social" | "account">("profile");
+  // Simplified tab mapping: 3 visible tabs → internal tab keys
+  const [visibleTab, setVisibleTab] = useState<"profile" | "prefs" | "account">("profile");
   const [showCrewPicker, setShowCrewPicker] = useState(false);
   const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
@@ -156,6 +158,24 @@ export default function Settings() {
     if (!savedSchedule) return true; // custom schedule set but no saved one
     return customSchedule.some((s, i) => s.type !== savedSchedule[i]?.type);
   }, [customSchedule, savedSchedule]);
+
+  // Detect any unsaved profile changes (not just schedule)
+  const hasUnsavedProfileChanges = useMemo(() => {
+    if (!profile) return false;
+    return (
+      name !== (profile.displayName || "") ||
+      weightKg !== (profile.weightKg || 70) ||
+      heightCm !== (profile.heightCm || 170) ||
+      age !== (profile.age ?? 25) ||
+      workoutsTarget !== (profile.weeklyWorkoutsTarget || 4) ||
+      mealsTarget !== Math.min(profile.weeklyMealsTarget || 10, 20) ||
+      runsTarget !== (profile.weeklyRunsTarget || 2) ||
+      activityLevel !== ((profile.activityLevel as ActivityLevel) ?? "moderate") ||
+      trainingPhase !== ((profile.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp")
+    );
+  }, [name, weightKg, heightCm, age, workoutsTarget, mealsTarget, runsTarget, activityLevel, trainingPhase, profile]);
+
+  const hasAnyUnsavedChanges = hasUnsavedScheduleChanges || hasUnsavedProfileChanges;
 
   const handleApplyScheduleChanges = async () => {
     const currentLiftDays = schedule.filter((s) => s.type === "lift" || s.type === "both").length;
@@ -420,19 +440,17 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Settings tabs */}
-      <div className="flex gap-1 bg-muted rounded-xl p-1 overflow-x-auto">
+      {/* Settings tabs — consolidated from 5 to 3 */}
+      <div className="flex gap-1 bg-muted rounded-xl p-1">
         {([
-          { key: "profile" as const, label: "Profile" },
-          { key: "training" as const, label: "Training" },
+          { key: "profile" as const, label: "Profile & Training" },
           { key: "prefs" as const, label: "Preferences" },
-          { key: "social" as const, label: "Social" },
           { key: "account" as const, label: "Account" },
         ]).map(({ key, label }) => (
-          <button key={key} onClick={() => setSettingsTab(key)}
+          <button key={key} onClick={() => { setVisibleTab(key); setSettingsTab(key); }}
             className={cn(
               "flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
-              settingsTab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              visibleTab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             )}>
             {label}
           </button>
@@ -440,7 +458,7 @@ export default function Settings() {
       </div>
 
       {/* Profile & Goals */}
-      {settingsTab === "profile" && (
+      {visibleTab === "profile" && (
       <>
       <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile & Goals" subtitle="Name, body stats, weekly schedule" defaultOpen>
         <input
@@ -459,6 +477,7 @@ export default function Settings() {
               onChange={(e) => setWeightKg(Number(e.target.value))}
               className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
+            <p className="text-[10px] text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
           </div>
           <div>
             <label className="text-sm text-muted-foreground">Height (cm)</label>
@@ -665,12 +684,23 @@ export default function Settings() {
       </div>
       </AccordionSection>
 
-      {/* Save — always visible */}
+      {/* Unsaved changes warning + save button */}
+      {hasAnyUnsavedChanges && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+          <Save className="w-3.5 h-3.5 shrink-0" />
+          <p className="text-xs font-medium">You have unsaved changes</p>
+        </div>
+      )}
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        className={cn(
+          "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50",
+          hasAnyUnsavedChanges
+            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-muted text-muted-foreground"
+        )}
       >
         {saved ? (
           <>
@@ -690,8 +720,8 @@ export default function Settings() {
       </>
       )}
 
-      {/* Training Setup */}
-      {settingsTab === "training" && (
+      {/* Training Setup — merged into Profile & Training tab */}
+      {visibleTab === "profile" && (
       <>
       <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE & training phase">
 
@@ -903,7 +933,7 @@ export default function Settings() {
       )}
 
       {/* Preferences */}
-      {settingsTab === "prefs" && (
+      {visibleTab === "prefs" && (
       <>
       <AccordionSection icon={<Timer className="w-5 h-5 text-primary" />} title="Preferences" subtitle="Rest timer, units, dark mode">
       <div className="space-y-3">
@@ -1056,8 +1086,8 @@ export default function Settings() {
       </>
       )}
 
-      {/* Social & Privacy */}
-      {settingsTab === "social" && (
+      {/* Social & Privacy — merged into Account tab */}
+      {visibleTab === "account" && (
       <AccordionSection icon={<Users className="w-5 h-5 text-primary" />} title="Social & Privacy" subtitle="Crew, visibility, auto-post">
         {/* Crew switcher */}
         <div className="p-4 rounded-lg bg-muted space-y-3">
@@ -1244,8 +1274,8 @@ export default function Settings() {
 
       )}
 
-      {/* Data & Account */}
-      {settingsTab === "account" && (
+      {/* Data & Account — also under Account tab */}
+      {visibleTab === "account" && (
       <AccordionSection icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, privacy, sign out">
         <div className="space-y-2">
           {[

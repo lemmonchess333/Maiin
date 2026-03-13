@@ -16,7 +16,7 @@ const DAY_TYPE_STYLES: Record<DayType, { label: string; color: string }> = {
   lift: { label: "Lift", color: THEME.lifting },
   run:  { label: "Run",  color: THEME.running },
   both: { label: "Both", color: THEME.lifting },
-  rest: { label: "Rest", color: "rgba(255,255,255,0.2)" },
+  rest: { label: "Rest", color: "rgba(255,255,255,0.35)" },
 };
 
 // Cycle through lift → run → both → rest on tap

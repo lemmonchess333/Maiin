@@ -126,12 +126,12 @@ export default function Log() {
     }
   };
 
-  // Light pastel macro style (exact match to Today's Intake on Home)
+  // Macro colors — unified with Home page's TodayIntake (THEME values)
   const macroColors = {
-    calories: "#f97316",
-    protein: "#3b82f6",
-    carbs: "#f59e0b",
-    fat: "#a855f6",
+    calories: THEME.warning,   // #FFB547
+    protein: THEME.teal,       // #00D4AA
+    carbs: THEME.brand,        // #8b5cf6
+    fat: THEME.warning,        // #FFB547 (same as calories — fat ring on Home)
   };
 
   const tint = (hex: string, factor: number = 0.85): string => {
@@ -251,6 +251,17 @@ export default function Log() {
     setFoodMode("quick");
     await addFavourite({ ...food, source: "search" });
     toast.success(`${food.name} added!`);
+  };
+
+  const handleDeleteMeal = (mealId: string, foodName: string) => {
+    const timeoutId = setTimeout(() => { deleteMeal(mealId); }, 3000);
+    toast(`${foodName} deleted`, {
+      action: {
+        label: "Undo",
+        onClick: () => { clearTimeout(timeoutId); },
+      },
+      duration: 3000,
+    });
   };
 
   const handleQuickRelog = async (fav: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string }) => {
@@ -446,14 +457,14 @@ export default function Log() {
             </div>
           </div>
 
-          {/* Quick Relog Favourites */}
+          {/* Quick Relog Favourites + Common Meals (unified) */}
           <QuickRelog onSelect={handleQuickRelog} />
 
-          {/* Common Meals (fallback if no favourites) */}
+          {/* Common Meals — only shown when no favourites cover them */}
           {commonMeals.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Common Meals</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-1">Frequently Logged</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                 {commonMeals.map((cm, i) => {
                   const key = cm.foodName?.trim().toLowerCase() ?? "";
                   const isActive = selectedCommonIds.has(key);
@@ -462,7 +473,7 @@ export default function Log() {
                       key={i}
                       onClick={() => toggleCommonMeal(cm)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                        "shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-all active:scale-95",
                         isActive
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted text-foreground border-border/50 hover:border-primary/50"
@@ -486,13 +497,13 @@ export default function Log() {
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.teal}18`, color: THEME.teal }}>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}18`, color: macroColors.protein }}>
                           P {safeNum(m.totalProtein)}g
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.brand}18`, color: THEME.brand }}>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}18`, color: macroColors.carbs }}>
                           C {safeNum(m.totalCarbs)}g
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${THEME.warning}18`, color: THEME.warning }}>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}18`, color: macroColors.fat }}>
                           F {safeNum(m.totalFat)}g
                         </span>
                       </div>
@@ -502,7 +513,7 @@ export default function Log() {
                         {safeNum(m.totalCalories)}
                         <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
-                      <button onClick={() => deleteMeal(m.id)} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
+                      <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
                         <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                       </button>
                     </div>

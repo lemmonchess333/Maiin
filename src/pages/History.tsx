@@ -235,6 +235,7 @@ export default function History() {
       <h1 className="text-lg font-bold text-foreground">Analytics</h1>
 
       <div className="relative">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-4 bg-gradient-to-r from-background to-transparent z-10" />
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {VALID_TABS.map((f) => {
             const active = filter === f;
@@ -265,7 +266,7 @@ export default function History() {
             );
           })}
         </div>
-        <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
       </div>
 
       {filter === "badges" ? (
