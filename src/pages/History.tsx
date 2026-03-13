@@ -17,7 +17,7 @@ import { TrendWeight } from "@/components/progress/TrendWeight";
 import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
 import { Footprints, Trophy } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { CardSkeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
+
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
 

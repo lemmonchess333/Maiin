@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   collection,
-  doc,
-  setDoc,
   deleteDoc,
+  doc,
   query,
   orderBy,
   onSnapshot,
