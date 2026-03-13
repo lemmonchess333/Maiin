@@ -306,7 +306,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   onClick={() => { updateConfig({ activityType: at.type }); setShowTypeSheet(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors active:scale-[0.98]"
                   style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
-                  {IC && <IC size={18} style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.4)' }} />}
+                  {IC && <IC size={18} className={isActive ? 'text-purple-300' : 'text-white/40'} />}
                   <div>
                     <p className="text-sm font-medium" style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.7)' }}>{at.label}</p>
                     <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{at.description}</p>

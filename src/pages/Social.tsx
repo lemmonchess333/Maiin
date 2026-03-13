@@ -36,7 +36,7 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; crewId?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 

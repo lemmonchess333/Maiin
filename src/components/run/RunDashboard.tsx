@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 export default function RunDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [recentRuns, setRecentRuns] = useState<{ id: string; distance?: number; avgPace?: number; completedAt?: { toDate: () => Date } }[]>([]);
+  const [recentRuns, setRecentRuns] = useState<{ id: string; distance?: number; avgPace?: number; duration?: number; completedAt?: { toDate: () => Date } }[]>([]);
   const [weeklyDistance, setWeeklyDistance] = useState(0);
   const [weeklyRunCount, setWeeklyRunCount] = useState(0);
 
@@ -100,7 +100,7 @@ export default function RunDashboard() {
                   {((run.distance || 0) / 1000).toFixed(2)} km
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace)}/km
+                  {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace ?? 0)}/km
                 </p>
               </div>
               <div className="text-right">

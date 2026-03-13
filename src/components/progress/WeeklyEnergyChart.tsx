@@ -80,9 +80,10 @@ export function WeeklyEnergyChart() {
 
   const selected = data[selectedDay] || data[0];
 
-  const handleBarClick = (dayData: { activeLabel?: string } | null) => {
+  const handleBarClick = (dayData: { activeLabel?: string | number } | null) => {
     if (!dayData?.activeLabel) return;
-    const idx = data.findIndex((d) => d.day === dayData.activeLabel);
+    const label = String(dayData.activeLabel);
+    const idx = data.findIndex((d) => d.day === label);
     if (idx >= 0) setSelectedDay(idx);
   };
 

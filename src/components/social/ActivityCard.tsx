@@ -94,7 +94,8 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
   };
 
   const isRun = feedItem.type === 'run';
-  const timeAgo = feedItem.createdAt?.toDate ? getTimeAgo(feedItem.createdAt.toDate()) : '';
+  const createdAtObj = feedItem.createdAt as { toDate?: () => Date } | undefined;
+  const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : '';
   const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
   const avatarColor = isRun ? THEME.running : THEME.lifting;
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
@@ -102,7 +103,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
   return (
     <div className="bg-card rounded-2xl border border-border overflow-hidden">
       {/* Route thumbnail for runs */}
-      {isRun && activity?.routePreview?.length > 1 && (
+      {isRun && activity?.routePreview && activity.routePreview.length > 1 && (
         <div className="h-28 border-b border-border/50" style={{ background: 'rgba(255,255,255,0.02)' }}>
           <MiniRoute preview={activity.routePreview} />
         </div>
@@ -217,15 +218,15 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
             )}
             {/* Workout volume/duration */}
             <div className="flex gap-4">
-              {activity.totalVolume > 0 && (
+              {(activity.totalVolume ?? 0) > 0 && (
                 <div>
                   <p className="text-lg font-bold font-mono tabular-nums leading-none" style={{ color: THEME.lifting }}>
-                    {Math.round(activity.totalVolume).toLocaleString()}
+                    {Math.round(activity.totalVolume ?? 0).toLocaleString()}
                   </p>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">kg volume</p>
                 </div>
               )}
-              {activity.exerciseCount > 0 && (
+              {(activity.exerciseCount ?? 0) > 0 && (
                 <div>
                   <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
                     {activity.exerciseCount}
@@ -233,10 +234,10 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">exercises</p>
                 </div>
               )}
-              {activity.duration > 0 && (
+              {(activity.duration ?? 0) > 0 && (
                 <div>
                   <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
-                    {Math.round(activity.duration / 60)}
+                    {Math.round((activity.duration ?? 0) / 60)}
                   </p>
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">min</p>
                 </div>
@@ -288,8 +289,8 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           <button onClick={() => setShowComments(!showComments)}
             className="flex items-center gap-1.5 text-muted-foreground active:scale-90 transition-transform">
             <MessageCircle className="w-5 h-5" />
-            {(activity?.commentCount || 0) > 0 && (
-              <span className="text-xs font-medium">{activity.commentCount}</span>
+            {(activity?.commentCount ?? 0) > 0 && (
+              <span className="text-xs font-medium">{activity!.commentCount}</span>
             )}
           </button>
           {onShare && (

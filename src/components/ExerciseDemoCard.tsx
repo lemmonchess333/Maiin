@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Drawer } from "vaul";
-import Model from "react-body-highlighter";
+import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -35,11 +35,11 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
     }
   }, [demo]);
 
-  const primaryMapped = demo ? mapMuscles(demo.primaryMuscles) : [];
-  const secondaryMapped = demo ? mapMuscles(demo.secondaryMuscles) : [];
+  const primaryMapped = demo ? mapMuscles(demo.primaryMuscles) as Muscle[] : [];
+  const secondaryMapped = demo ? mapMuscles(demo.secondaryMuscles) as Muscle[] : [];
   const showPosterior = needsPosterior([...primaryMapped, ...secondaryMapped]);
 
-  const highlightData = [
+  const highlightData: IExerciseData[] = [
     ...(primaryMapped.length > 0
       ? [{ name: "Primary" as const, muscles: primaryMapped }]
       : []),

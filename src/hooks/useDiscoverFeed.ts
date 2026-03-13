@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDiscoverFeed, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
-import type { FeedItem } from './useSocialFeed';
+import type { FeedItem, ActivityData } from './useSocialFeed';
 
 export function useDiscoverFeed() {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const lastDocRef = useRef<DocumentSnapshot | undefined>();
+  const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
   const loadFeed = useCallback(async (refresh = false) => {
@@ -21,12 +21,12 @@ export function useDiscoverFeed() {
       const feedItems: FeedItem[] = rawItems.map(item => ({
         id: item.id,
         activityId: item.id,
-        authorId: item.authorId,
-        authorName: item.authorName,
-        type: item.type,
+        authorId: item.authorId || '',
+        authorName: item.authorName || '',
+        type: (item.type || 'workout') as 'run' | 'workout',
         summary: item.summary || '',
         createdAt: item.createdAt,
-        activity: item,
+        activity: item as unknown as ActivityData,
         kudosCount: item.kudosCount || 0,
         prHit: item.prHit,
         prExercise: item.prExercise,
