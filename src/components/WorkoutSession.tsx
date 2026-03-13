@@ -106,6 +106,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   );
   const [showRPE, setShowRPE] = useState(false);
 
+  // All-time best weights for PR detection (declared before useEffect that references them)
+  const [allTimeBests, setAllTimeBests] = useState<Record<string, number>>({});
+  const [firedPRs, setFiredPRs] = useState<Set<string>>(new Set());
+
   // Pre-fill weights/reps from most recent previous session
   useEffect(() => {
     if (!user?.uid || !day.exercises.length) return;
@@ -180,10 +184,6 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Undo last set
   const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // All-time best weights for PR detection
-  const [allTimeBests, setAllTimeBests] = useState<Record<string, number>>({});
-  const [firedPRs, setFiredPRs] = useState<Set<string>>(new Set());
 
   const currentExercise = day.exercises[currentExIndex];
   const currentSets = setLogs[currentExIndex] ?? [];

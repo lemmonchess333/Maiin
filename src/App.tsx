@@ -8,17 +8,35 @@ import Login from "@/pages/Login";
 import Onboarding from "@/pages/Onboarding";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
+// Retry wrapper for lazy imports — handles stale cache serving old HTML
+// that references chunk hashes that no longer exist after a deploy
+function lazyRetry<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>,
+): React.LazyExoticComponent<T["default"]> {
+  return lazy(() =>
+    factory().catch((err) => {
+      // Only retry once to avoid infinite loops
+      const key = "chunk-retry-" + factory.toString().slice(0, 64);
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+      }
+      throw err;
+    }),
+  );
+}
+
 // Lazy-loaded pages for code splitting
-const Home = lazy(() => import("@/pages/Home"));
-const Log = lazy(() => import("@/pages/Log"));
-const History = lazy(() => import("@/pages/History"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const Program = lazy(() => import("@/pages/Program"));
-const Run = lazy(() => import("@/pages/Run"));
-const RunSummary = lazy(() => import("@/pages/RunSummary"));
-const RunDetail = lazy(() => import("@/pages/RunDetail"));
-const Social = lazy(() => import("@/pages/Social"));
-const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const Home = lazyRetry(() => import("@/pages/Home"));
+const Log = lazyRetry(() => import("@/pages/Log"));
+const History = lazyRetry(() => import("@/pages/History"));
+const Settings = lazyRetry(() => import("@/pages/Settings"));
+const Program = lazyRetry(() => import("@/pages/Program"));
+const Run = lazyRetry(() => import("@/pages/Run"));
+const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
+const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
+const Social = lazyRetry(() => import("@/pages/Social"));
+const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 
 function PageLoader() {
   return (

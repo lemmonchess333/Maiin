@@ -4,6 +4,7 @@ import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  memoryLocalCache,
   connectFirestoreEmulator,
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -20,11 +21,24 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-});
+
+// Try persistent cache first; fall back to memory cache if IndexedDB is unavailable
+// (e.g. Safari private browsing, restricted environments)
+let db_: ReturnType<typeof initializeFirestore>;
+try {
+  db_ = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+  });
+} catch (e) {
+  console.warn("Persistent cache unavailable, falling back to memory cache:", e);
+  db_ = initializeFirestore(app, {
+    localCache: memoryLocalCache(),
+  });
+}
+export const db = db_;
+
 export const storage = getStorage(app);
 
 // Connect to emulators in development

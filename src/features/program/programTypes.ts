@@ -158,9 +158,9 @@ export function normalizeProgramState(state: ProgramState): ProgramState {
     ...state,
     settings: state.settings ?? { autoProgression: true, microloading: true },
     weekHistory: state.weekHistory ?? [],
-    workouts: state.workouts.map((day) => ({
+    workouts: (state.workouts ?? []).map((day) => ({
       ...day,
-      exercises: day.exercises.map((ex) => normalizeExercise(ex)),
+      exercises: (day.exercises ?? []).map((ex) => normalizeExercise(ex)),
     })),
   };
 }
