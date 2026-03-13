@@ -84,16 +84,16 @@ export async function getCurrentWeather(): Promise<WeatherData | null> {
 }
 
 export function getWeatherIcon(code: number): string {
-  if (code === 0 || code === 1) return "☀️";
-  if (code === 2) return "⛅";
-  if (code === 3) return "☁️";
-  if (code >= 45 && code <= 48) return "🌫️";
-  if (code >= 51 && code <= 55) return "🌦️";
-  if (code >= 61 && code <= 65) return "🌧️";
-  if (code >= 71 && code <= 75) return "🌨️";
-  if (code >= 80 && code <= 82) return "🌧️";
-  if (code >= 95) return "⛈️";
-  return "🌤️";
+  if (code === 0 || code === 1) return "sun";
+  if (code === 2) return "cloud-sun";
+  if (code === 3) return "cloud";
+  if (code >= 45 && code <= 48) return "cloud-fog";
+  if (code >= 51 && code <= 55) return "cloud-drizzle";
+  if (code >= 61 && code <= 65) return "cloud-rain";
+  if (code >= 71 && code <= 75) return "cloud-snow";
+  if (code >= 80 && code <= 82) return "cloud-rain";
+  if (code >= 95) return "cloud-lightning";
+  return "cloud-sun";
 }
 
 export function getRunningTip(weather: WeatherData, activityType?: string): string {

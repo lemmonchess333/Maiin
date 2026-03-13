@@ -19,10 +19,10 @@ export interface Crew {
 }
 
 const DEFAULT_CREWS: Omit<Crew, 'id' | 'memberCount' | 'createdAt'>[] = [
-  { name: 'Hybrid Athletes', description: 'Lift and run — best of both worlds', icon: '💪', leaderboardMetric: 'hybrid_score', type: 'default', createdBy: 'system' },
-  { name: 'Runners', description: 'Road, trail, track — all distances welcome', icon: '🏃', leaderboardMetric: 'total_km', type: 'default', createdBy: 'system' },
-  { name: 'Lifters', description: 'Strength, power, and muscle', icon: '🏋️', leaderboardMetric: 'total_volume', type: 'default', createdBy: 'system' },
-  { name: 'General Fitness', description: 'Stay active, stay healthy', icon: '🌟', leaderboardMetric: 'workout_count', type: 'default', createdBy: 'system' },
+  { name: 'Hybrid Athletes', description: 'Lift and run — best of both worlds', icon: 'dumbbell', leaderboardMetric: 'hybrid_score', type: 'default', createdBy: 'system' },
+  { name: 'Runners', description: 'Road, trail, track — all distances welcome', icon: 'footprints', leaderboardMetric: 'total_km', type: 'default', createdBy: 'system' },
+  { name: 'Lifters', description: 'Strength, power, and muscle', icon: 'dumbbell', leaderboardMetric: 'total_volume', type: 'default', createdBy: 'system' },
+  { name: 'General Fitness', description: 'Stay active, stay healthy', icon: 'star', leaderboardMetric: 'workout_count', type: 'default', createdBy: 'system' },
 ];
 
 export function useCrews() {

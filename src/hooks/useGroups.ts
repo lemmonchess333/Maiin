@@ -14,16 +14,16 @@ export interface Group {
 }
 
 const DEFAULT_GROUPS: Omit<Group, 'id' | 'memberCount' | 'createdAt'>[] = [
-  { name: 'Running Club', description: 'For runners of all levels', icon: '🏃', createdBy: 'system' },
-  { name: 'Lifting Crew', description: 'For strength training enthusiasts', icon: '🏋️', createdBy: 'system' },
-  { name: 'Hybrid Athletes', description: 'For people who lift and run', icon: '⚡', createdBy: 'system' },
-  { name: 'Eating Well', description: 'Nutrition-focused community', icon: '🥗', createdBy: 'system' },
-  { name: '5K & 10K Runners', description: 'Distance running group', icon: '🏅', createdBy: 'system' },
-  { name: 'Powerlifting', description: 'Squat, bench, deadlift focus', icon: '💪', createdBy: 'system' },
-  { name: 'Bodybuilding', description: 'Hypertrophy and physique', icon: '🪞', createdBy: 'system' },
-  { name: 'Marathon Training', description: 'Long distance preparation', icon: '🏁', createdBy: 'system' },
-  { name: 'Weight Loss Journey', description: 'Supportive weight loss community', icon: '🎯', createdBy: 'system' },
-  { name: 'Morning Workout Gang', description: 'Early bird fitness', icon: '🌅', createdBy: 'system' },
+  { name: 'Running Club', description: 'For runners of all levels', icon: 'footprints', createdBy: 'system' },
+  { name: 'Lifting Crew', description: 'For strength training enthusiasts', icon: 'dumbbell', createdBy: 'system' },
+  { name: 'Hybrid Athletes', description: 'For people who lift and run', icon: 'zap', createdBy: 'system' },
+  { name: 'Eating Well', description: 'Nutrition-focused community', icon: 'salad', createdBy: 'system' },
+  { name: '5K & 10K Runners', description: 'Distance running group', icon: 'medal', createdBy: 'system' },
+  { name: 'Powerlifting', description: 'Squat, bench, deadlift focus', icon: 'dumbbell', createdBy: 'system' },
+  { name: 'Bodybuilding', description: 'Hypertrophy and physique', icon: 'mirror', createdBy: 'system' },
+  { name: 'Marathon Training', description: 'Long distance preparation', icon: 'flag', createdBy: 'system' },
+  { name: 'Weight Loss Journey', description: 'Supportive weight loss community', icon: 'target', createdBy: 'system' },
+  { name: 'Morning Workout Gang', description: 'Early bird fitness', icon: 'sunrise', createdBy: 'system' },
 ];
 
 export function useGroups() {

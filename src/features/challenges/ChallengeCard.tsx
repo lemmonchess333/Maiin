@@ -146,7 +146,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             <p className="text-xs text-muted-foreground text-center">
               {currentTier === "gold" ? (
                 <span>
-                  🏆 <span className="font-semibold" style={{ color: TIER_COLORS.gold }}>Gold achieved!</span> — {currentValue} {challenge.metric.replace("_", " ")}
+                  <Trophy size={14} className="inline text-yellow-500" /> <span className="font-semibold" style={{ color: TIER_COLORS.gold }}>Gold achieved!</span> — {currentValue} {challenge.metric.replace("_", " ")}
                 </span>
               ) : nextTier && nextValue ? (
                 <span>
