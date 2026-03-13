@@ -33,7 +33,7 @@ import {
   ScanBarcode,
   Footprints,
 } from "lucide-react";
-import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
+import FoodAnalyzer from "@/components/FoodAnalyzer";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
@@ -351,13 +351,6 @@ export default function Log() {
         </button>
       </div>
 
-      {/* Start a run link */}
-      <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
-        <Footprints className="w-4 h-4 text-primary" />
-        <span className="text-xs font-medium text-foreground">Start a run</span>
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
-      </Link>
-
       {/* Tabs — Workout / Food */}
       <div className="flex gap-1 bg-muted rounded-xl p-1">
         {([
@@ -382,6 +375,13 @@ export default function Log() {
       {/* Workout Tab */}
       {activeTab === "workout" && (
         <div className="space-y-4">
+          {/* Start a run link */}
+          <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
+            <Footprints className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-foreground">Start a run</span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
+          </Link>
+
           {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
@@ -474,7 +474,7 @@ export default function Log() {
           {/* Common Meals (fallback if no favourites) */}
           {commonMeals.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Common Meals</p>
+              <p className="text-sm font-medium text-foreground">Common Meals</p>
               <div className="flex flex-wrap gap-2">
                 {commonMeals.map((cm, i) => {
                   const key = cm.foodName?.trim().toLowerCase() ?? "";
@@ -501,7 +501,7 @@ export default function Log() {
           {/* Saved Meals */}
           {todaysMeals.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground px-1">Logged Today</p>
+              <p className="text-[10px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
                 <div key={m.id} className="bg-card rounded-2xl border border-border/50 px-4 py-3">
                   <div className="flex items-center justify-between">
@@ -598,7 +598,7 @@ export default function Log() {
               <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode("quick")} />
             )}
             {foodMode === "scan" && (
-              <BarcodeScanner onLog={handleBarcodeLog} onClose={() => setFoodMode("quick")} />
+              <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode("quick")} />
             )}
             {foodMode === "manual" && (
               <ManualFoodLogger date={selectedDate} />
