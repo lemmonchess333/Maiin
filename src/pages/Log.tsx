@@ -253,28 +253,6 @@ export default function Log() {
     toast.success(`${food.name} added!`);
   };
 
-  const handleBarcodeLog = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string; barcode: string; servings: number }) => {
-    if (!user) return;
-    const s = food.servings;
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: food.name,
-      items: [{ name: food.name, portionSize: `${s}x ${food.servingSize}`, calories: Math.round(food.calories * s), protein: Math.round(food.protein * s), carbs: Math.round(food.carbs * s), fat: Math.round(food.fat * s), fiber: food.fiber != null ? Math.round(food.fiber * s) : undefined, sugar: food.sugar != null ? Math.round(food.sugar * s) : undefined, sodium: food.sodium != null ? Math.round(food.sodium * s) : undefined }],
-      totalCalories: Math.round(food.calories * s),
-      totalProtein: Math.round(food.protein * s),
-      totalCarbs: Math.round(food.carbs * s),
-      totalFat: Math.round(food.fat * s),
-      totalFiber: food.fiber != null ? Math.round(food.fiber * s) : undefined,
-      totalSugar: food.sugar != null ? Math.round(food.sugar * s) : undefined,
-      totalSodium: food.sodium != null ? Math.round(food.sodium * s) : undefined,
-      confidence: "barcode",
-      createdAt: Timestamp.now(),
-    });
-    setFoodMode("quick");
-    await addFavourite({ name: food.name, calories: Math.round(food.calories * s), protein: Math.round(food.protein * s), carbs: Math.round(food.carbs * s), fat: Math.round(food.fat * s), fiber: food.fiber != null ? Math.round(food.fiber * s) : undefined, sugar: food.sugar != null ? Math.round(food.sugar * s) : undefined, sodium: food.sodium != null ? Math.round(food.sodium * s) : undefined, servingSize: food.servingSize, source: "barcode" });
-    toast.success(`${food.name} logged!`);
-  };
-
   const handleQuickRelog = async (fav: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string }) => {
     if (!user) return;
     await addDoc(collection(db, "users", user.uid, "meals"), {
