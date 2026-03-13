@@ -239,6 +239,9 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   <span className="text-sm">{setting.label}</span>
                   <button
                     onClick={() => updateConfig({ [setting.key]: !config[setting.key] })}
+                    role="switch"
+                    aria-checked={config[setting.key]}
+                    aria-label={setting.label}
                     className="w-11 h-6 rounded-full transition-colors relative"
                     style={{ background: config[setting.key] ? '#8b5cf6' : 'rgba(255,255,255,0.1)' }}
                   >
@@ -253,6 +256,9 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     <span className="text-sm">Pace alerts</span>
                     <button
                       onClick={() => updateConfig({ paceAlerts: !config.paceAlerts })}
+                      role="switch"
+                      aria-checked={config.paceAlerts}
+                      aria-label="Pace alerts"
                       className="w-11 h-6 rounded-full transition-colors relative"
                       style={{ background: config.paceAlerts ? '#8b5cf6' : 'rgba(255,255,255,0.1)' }}
                     >
