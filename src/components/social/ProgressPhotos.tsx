@@ -40,7 +40,7 @@ export default function ProgressPhotos() {
     if (!user) return;
     const q = query(collection(db, 'users', user.uid, 'progressPhotos'), orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    setPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
+    setPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string; date: string; storagePath: string; iv: number[] })));
   }, [user]);
 
   useEffect(() => { loadPhotos(); }, [loadPhotos]);
@@ -139,7 +139,7 @@ export default function ProgressPhotos() {
       toast.error('Upload failed. Please try again.');
     }
     setLoading(false);
-  }, [user, loadPhotos]);
+  }, [user, loadPhotos, isPrivate]);
 
   return (
     <div className="space-y-4">

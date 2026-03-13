@@ -12,10 +12,10 @@ import { Flame } from 'lucide-react';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<{ id: string; distance?: number; [key: string]: unknown }[]>([]);
   const [stats, setStats] = useState<{ totalKm: number; totalSessions: number } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [streak, setStreak] = useState<number>(0);
@@ -43,7 +43,7 @@ export default function UserProfile() {
       // Compute stats from activities
       let totalKm = 0;
       let totalSessions = 0;
-      acts.forEach((a: any) => {
+      acts.forEach((a) => {
         totalSessions++;
         if (a.distance) totalKm += a.distance / 1000;
       });

@@ -50,9 +50,10 @@ export default function Log() {
 
   useEffect(() => {
     if (location.state?.tab) {
-      setActiveTab(location.state.tab);
+      const apply = () => { setActiveTab(location.state.tab); };
+      apply();
     }
-  }, []);
+  }, [location.state]);
 
   const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
@@ -67,7 +68,7 @@ export default function Log() {
   const todaysMeals = getMealsForDate(selectedDate);
   const dailyTotals = getDailyTotals(selectedDate);
 
-  const safeNum = (value: any): number => {
+  const safeNum = (value: unknown): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
   };

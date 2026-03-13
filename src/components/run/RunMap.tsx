@@ -93,7 +93,7 @@ export default function RunMap({
     mapRef.current = map;
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [interactive, paceColored, darkMode]);
+  }, [interactive, paceColored, darkMode, currentPoint, points]);
 
   // Update route
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function RunMap({
       }
 
       if (paceColored && avgPaceSecPerKm && visiblePoints.length > 1) {
-        const features: any[] = [];
+        const features: { type: 'Feature'; geometry: { type: 'LineString'; coordinates: number[][] }; properties: { color: string } }[] = [];
         for (let i = 1; i < visiblePoints.length; i++) {
           const dist = haversineQuick(visiblePoints[i-1].lat, visiblePoints[i-1].lon, visiblePoints[i].lat, visiblePoints[i].lon);
           const timeDiff = (visiblePoints[i].timestamp - visiblePoints[i-1].timestamp) / 1000;

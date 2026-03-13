@@ -359,7 +359,10 @@ export function AdaptiveSummary({
   const mealsDone = safeNum(mode === "weekly" ? weeklyMealsDone : monthlyMealsDone);
   const mealsTarget = safeNum(mode === "weekly" ? weeklyMealsTarget : monthlyMealsTarget, 10);
   const newPR = mode === "weekly" ? weeklyPR : monthlyPR;
-  const bodyweightTrend = (mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend) || [];
+  const bodyweightTrend = useMemo(
+    () => (mode === "weekly" ? weeklyBodyweightTrend : monthlyBodyweightTrend) || [],
+    [mode, weeklyBodyweightTrend, monthlyBodyweightTrend]
+  );
 
   const badgeInfo = getBadgeInfo(newPR, workoutsDone, workoutsTarget, mealsDone, mealsTarget);
   const BadgeIcon = badgeInfo.icon;

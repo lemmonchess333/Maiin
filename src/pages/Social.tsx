@@ -36,7 +36,7 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
@@ -45,7 +45,7 @@ export default function Social() {
     setSearching(true);
     try {
       const results = await searchUsers(searchQuery.trim());
-      setSearchResults(results.filter((u: any) => u.uid !== user?.uid));
+      setSearchResults(results.filter((u) => u.uid !== user?.uid));
     } catch {
       setSearchResults([]);
     }
@@ -221,7 +221,7 @@ export default function Social() {
             </div>
             {searchResults.length > 0 && (
               <div className="space-y-2">
-                {searchResults.map((u: any) => (
+                {searchResults.map((u) => (
                   <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
                       {(u.displayName || '?').charAt(0).toUpperCase()}

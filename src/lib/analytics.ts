@@ -106,7 +106,7 @@ export function computeVolume(
   for (const ex of exercises) {
     const group = exerciseToMuscleGroup(ex.category);
     if (group in vol) {
-      (vol as any)[group] += ex.sets.length;
+      vol[group as keyof VolumeByMuscle] += ex.sets.length;
     }
   }
   return vol;

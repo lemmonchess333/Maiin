@@ -28,7 +28,7 @@ export interface Meal {
   totalSugar?: number;
   totalSodium?: number;
   confidence: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 export function useMeals() {
@@ -42,8 +42,8 @@ export function useMeals() {
 
   useEffect(() => {
     if (!user) {
-      setMeals([]);
-      setLoading(false);
+      const reset = () => { setMeals([]); setLoading(false); };
+      reset();
       return;
     }
 

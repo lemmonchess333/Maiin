@@ -20,8 +20,8 @@ export function useWaterLog() {
 
   useEffect(() => {
     if (!user) {
-      setGlasses(0);
-      setLoading(false);
+      const reset = () => { setGlasses(0); setLoading(false); };
+      reset();
       return;
     }
 

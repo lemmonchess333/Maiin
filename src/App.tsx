@@ -5,7 +5,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy
-function lazyRetry<T extends { default: React.ComponentType<any> }>(
+function lazyRetry<T extends { default: React.ComponentType<Record<string, never>> }>(
   factory: () => Promise<T>,
 ): React.LazyExoticComponent<T["default"]> {
   return lazy(() =>

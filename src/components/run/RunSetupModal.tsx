@@ -7,7 +7,7 @@ import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
 
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
 export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun' | 'guided';
 
 export interface RunConfig {

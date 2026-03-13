@@ -70,7 +70,7 @@ export default function FoodCameraModal({
         if (!videoEl) return;
 
         streamRef.current = await startStream(videoEl, "environment");
-      } catch (e: any) {
+      } catch (e: unknown) {
         // If camera permissions fail, close gracefully
         console.error(e);
         onClose();
@@ -102,7 +102,7 @@ export default function FoodCameraModal({
 
         stopStream(streamRef.current);
         streamRef.current = await startStream(videoEl, facing);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error(e);
       }
     };
@@ -130,13 +130,13 @@ export default function FoodCameraModal({
         setBarcodeHint("Scanning…");
 
         const mod = await import("@zxing/browser");
-        const { BrowserMultiFormatReader } = mod as any;
+        const { BrowserMultiFormatReader } = mod as { BrowserMultiFormatReader: new () => { decodeFromVideoElement: (el: HTMLVideoElement, cb: (result: { getText?: () => string; text?: string } | null, err: unknown) => void) => Promise<{ stop: () => void }> } };
 
         const reader = new BrowserMultiFormatReader();
 
         const controls = await reader.decodeFromVideoElement(
           videoEl,
-          async (result: any, err: any) => {
+          async (result: { getText?: () => string; text?: string } | null, err: unknown) => {
             // ignore noisy errors
             if (err) void err;
             if (!result) return;
@@ -164,7 +164,7 @@ export default function FoodCameraModal({
             // ignore
           }
         };
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error(e);
         setBarcodeHint("Scanner failed — try again");
       }

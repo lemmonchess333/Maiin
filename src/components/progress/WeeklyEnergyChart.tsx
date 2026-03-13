@@ -62,7 +62,7 @@ export function WeeklyEnergyChart() {
     });
 
     return days;
-  }, [meals, workouts, runs, profile, weekOffset, weightKg]);
+  }, [meals, workouts, runs, weekOffset, weightKg]);
 
   // Default selectedDay to today's index in the week (Mon=0)
   const todayWeekIndex = useMemo(() => {
@@ -80,7 +80,7 @@ export function WeeklyEnergyChart() {
 
   const selected = data[selectedDay] || data[0];
 
-  const handleBarClick = (dayData: any) => {
+  const handleBarClick = (dayData: { activeLabel?: string } | null) => {
     if (!dayData?.activeLabel) return;
     const idx = data.findIndex((d) => d.day === dayData.activeLabel);
     if (idx >= 0) setSelectedDay(idx);

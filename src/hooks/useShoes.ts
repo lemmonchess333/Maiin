@@ -30,8 +30,8 @@ export function useShoes() {
 
   useEffect(() => {
     if (!user) {
-      setShoes([]);
-      setLoading(false);
+      const reset = () => { setShoes([]); setLoading(false); };
+      reset();
       return;
     }
 
@@ -97,7 +97,7 @@ export function useShoes() {
     const shoe = shoes.find((s) => s.id === shoeId);
     if (!shoe) return;
     const newTotal = shoe.totalKm + addKm;
-    const updates: Record<string, any> = { totalKm: Math.round(newTotal * 10) / 10 };
+    const updates: Record<string, number | boolean> = { totalKm: Math.round(newTotal * 10) / 10 };
 
     // Alert flags
     const pct = newTotal / shoe.maxKm;

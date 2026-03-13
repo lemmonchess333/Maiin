@@ -140,7 +140,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   }, []);
 
   const activeResult: MealResult | null = useMemo(() => {
-    return (aiResult as any) || barcodeResult;
+    return (aiResult as MealResult | null) || barcodeResult;
   }, [aiResult, barcodeResult]);
 
   const isBarcode = activeResult?.confidence === "barcode";
@@ -211,16 +211,16 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     if (!activeResult) return;
 
     const meal: MealResult = {
-      foodName: (activeResult as any).foodName ?? "Meal",
-      items: (activeResult as any).items ?? [],
-      totalCalories: safeNum((activeResult as any).totalCalories),
-      totalProtein: safeNum((activeResult as any).totalProtein),
-      totalCarbs: safeNum((activeResult as any).totalCarbs),
-      totalFat: safeNum((activeResult as any).totalFat),
-      confidence: ((activeResult as any).confidence ?? "low") as any,
-      barcode: (activeResult as any).barcode,
-      brand: (activeResult as any).brand,
-      imageUrl: (activeResult as any).imageUrl,
+      foodName: activeResult.foodName ?? "Meal",
+      items: activeResult.items ?? [],
+      totalCalories: safeNum(activeResult.totalCalories),
+      totalProtein: safeNum(activeResult.totalProtein),
+      totalCarbs: safeNum(activeResult.totalCarbs),
+      totalFat: safeNum(activeResult.totalFat),
+      confidence: activeResult.confidence ?? "low",
+      barcode: activeResult.barcode,
+      brand: activeResult.brand,
+      imageUrl: activeResult.imageUrl,
     };
 
     await saveMeal(meal);
@@ -251,9 +251,10 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       const meal = await fetchOpenFoodFacts(code);
       setBarcodeResult(meal);
       toast.success("Barcode found!");
-    } catch (e: any) {
-      setBarcodeError(e?.message || "Barcode lookup failed.");
-      toast.error(e?.message || "Barcode lookup failed.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Barcode lookup failed.";
+      setBarcodeError(msg);
+      toast.error(msg);
     } finally {
       setBarcodeLoading(false);
     }
@@ -321,42 +322,42 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-foreground truncate">
-                    {(activeResult as any).foodName}
+                    {activeResult.foodName}
                   </h3>
-                  {(activeResult as any).brand && (
+                  {activeResult.brand && (
                     <p className="text-xs text-muted-foreground truncate">
-                      {(activeResult as any).brand}
+                      {activeResult.brand}
                     </p>
                   )}
                 </div>
 
                 <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-foreground">
-                  {(activeResult as any).confidence}
+                  {activeResult.confidence}
                 </span>
               </div>
 
               <div className="grid grid-cols-4 gap-2 text-center">
                 <div className="bg-orange-50 rounded-lg p-2">
                   <p className="text-lg font-bold text-orange-600 tabular-nums">
-                    {Math.round(safeNum((activeResult as any).totalCalories) * s)}
+                    {Math.round(safeNum(activeResult.totalCalories) * s)}
                   </p>
                   <p className="text-xs text-orange-500">cal</p>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-2">
                   <p className="text-lg font-bold text-blue-600 tabular-nums">
-                    {Math.round(safeNum((activeResult as any).totalProtein) * s)}g
+                    {Math.round(safeNum(activeResult.totalProtein) * s)}g
                   </p>
                   <p className="text-xs text-blue-500">protein</p>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-2">
                   <p className="text-lg font-bold text-amber-600 tabular-nums">
-                    {Math.round(safeNum((activeResult as any).totalCarbs) * s)}g
+                    {Math.round(safeNum(activeResult.totalCarbs) * s)}g
                   </p>
                   <p className="text-xs text-amber-500">carbs</p>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-2">
                   <p className="text-lg font-bold text-purple-600 tabular-nums">
-                    {Math.round(safeNum((activeResult as any).totalFat) * s)}g
+                    {Math.round(safeNum(activeResult.totalFat) * s)}g
                   </p>
                   <p className="text-xs text-purple-500">fat</p>
                 </div>

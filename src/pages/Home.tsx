@@ -27,12 +27,12 @@ import type { ScheduledRunDay } from "@/features/program/runScheduler";
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
-  var u = [...new Set(wd)].sort().reverse();
-  var t = format(new Date(), "yyyy-MM-dd");
-  var y = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+  const u = [...new Set(wd)].sort().reverse();
+  const t = format(new Date(), "yyyy-MM-dd");
+  const y = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
   if (u[0] !== t && u[0] !== y) return 0;
-  var s = 1;
-  for (var i = 1; i < u.length; i++) {
+  let s = 1;
+  for (let i = 1; i < u.length; i++) {
     if ((new Date(u[i-1]).getTime() - new Date(u[i]).getTime()) / 86400000 === 1) s++;
     else break;
   }
@@ -45,24 +45,24 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
 }) {
-  var today = new Date();
-  var sow = new Date(today);
+  const today = new Date();
+  const sow = new Date(today);
   sow.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  var days = Array.from({ length: 7 }, function(_, i) {
-    var d = new Date(sow); d.setDate(sow.getDate() + i);
-    var k = format(d, "yyyy-MM-dd");
-    var data = dayMap.get(k);
-    var isToday = k === format(today, "yyyy-MM-dd");
-    var hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
-    var st = schedule.find(function(s) { return s.day === i; })?.type || "rest";
+  const days = Array.from({ length: 7 }, function(_, i) {
+    const d = new Date(sow); d.setDate(sow.getDate() + i);
+    const k = format(d, "yyyy-MM-dd");
+    const data = dayMap.get(k);
+    const isToday = k === format(today, "yyyy-MM-dd");
+    const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
+    const st = schedule.find(function(s) { return s.day === i; })?.type || "rest";
     return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
   });
-  var tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
+  const tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
-        var cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
-        var st: React.CSSProperties = {};
+        let cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
+        let st: React.CSSProperties = {};
         if (day.isToday && day.isSelected) {
           cls += " bg-primary text-primary-foreground";
           st = { boxShadow: "0 0 8px rgba(109,40,217,0.4)" };
@@ -97,25 +97,25 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
 function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   dateKey: string;
   schedule: ScheduleDay[];
-  workouts: any[];
+  workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[] }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
 }) {
-  var dow = new Date(dateKey + "T00:00:00").getDay();
-  var st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
-  var dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
-  var typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
-  var typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
-  var tonnage = 0;
-  workouts.forEach(function(w: any) {
-    (w.exercises || []).forEach(function(ex: any) {
-      (ex.sets || []).forEach(function(s: any) {
+  const dow = new Date(dateKey + "T00:00:00").getDay();
+  const st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
+  const dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
+  const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
+  const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
+  let tonnage = 0;
+  workouts.forEach(function(w) {
+    (w.exercises || []).forEach(function(ex) {
+      (ex.sets || []).forEach(function(s) {
         tonnage += (s.weightKg || 0) * (s.reps || 0);
       });
     });
   });
-  var hasW = workouts.length > 0;
-  var hasM = dailyTotals.mealCount > 0;
+  const hasW = workouts.length > 0;
+  const hasM = dailyTotals.mealCount > 0;
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
       <div className="pt-3 pb-1 px-1">
@@ -174,13 +174,13 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
 }) {
-  var showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
-  var showRun = todayType === "run" || todayType === "both";
-  var tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
-  var runLabel = tmpl ? tmpl.name : "Start a run";
-  var runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
-  var runIcon = tmpl?.icon;
-  var templateParam = tmpl ? "?template=" + tmpl.id : "";
+  const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
+  const showRun = todayType === "run" || todayType === "both";
+  const tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
+  const runLabel = tmpl ? tmpl.name : "Start a run";
+  const runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
+  const runIcon = tmpl?.icon;
+  const templateParam = tmpl ? "?template=" + tmpl.id : "";
 
   return (
     <div className="space-y-3">
@@ -309,8 +309,8 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
 function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, adherenceScore }: {
   liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
-  var allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
-  var stats = [
+  const allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
+  const stats = [
     { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
     { label: "Volume", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "k kg" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
     { label: "Distance", value: runKm.toFixed(1) + "km", color: THEME.running },
@@ -342,7 +342,7 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
 }
 
 function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: string; loadBand: string }) {
-  var icon = loadBand === "overreach" ? <Flame size={20} className="text-orange-500" /> : loadBand === "high" ? <Zap size={20} className="text-yellow-500" /> : loadBand === "moderate" ? <Dumbbell size={20} className="text-orange-500" /> : <Leaf size={20} className="text-green-400" />;
+  const icon = loadBand === "overreach" ? <Flame size={20} className="text-orange-500" /> : loadBand === "high" ? <Zap size={20} className="text-yellow-500" /> : loadBand === "moderate" ? <Dumbbell size={20} className="text-orange-500" /> : <Leaf size={20} className="text-green-400" />;
   return (
     <Link to="/history?tab=performance">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="p-4 rounded-2xl bg-card border border-border/50 flex items-start gap-3 active:scale-[0.99]">
@@ -364,11 +364,11 @@ function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: stri
 function MacroRing({ value, target, color, label, unit = "" }: {
   value: number; target: number; color: string; label: string; unit?: string;
 }) {
-  var size = 68;
-  var r = size / 2 - 6;
-  var circ = 2 * Math.PI * r;
-  var pct = Math.min(value / Math.max(target, 1), 1);
-  var done = pct >= 0.98;
+  const size = 68;
+  const r = size / 2 - 6;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(value / Math.max(target, 1), 1);
+  const done = pct >= 0.98;
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
@@ -396,17 +396,17 @@ function MacroRing({ value, target, color, label, unit = "" }: {
 function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein: initProt }: {
   calories: number; protein: number; targetCalories: number; targetProtein: number;
 }) {
-  var tCal = initCal > 0 ? initCal : 2200;
-  var tProt = initProt > 0 ? initProt : 160;
-  var tCarbs = Math.round((tCal * 0.45) / 4);
-  var tFat = Math.round((tCal * 0.28) / 9);
+  const tCal = initCal > 0 ? initCal : 2200;
+  const tProt = initProt > 0 ? initProt : 160;
+  const tCarbs = Math.round((tCal * 0.45) / 4);
+  const tFat = Math.round((tCal * 0.28) / 9);
   // Estimate carbs/fat from remaining calories after protein
-  var proteinCal = protein * 4;
-  var remaining = Math.max(calories - proteinCal, 0);
-  var estimatedCarbs = Math.round((remaining * 0.62) / 4);
-  var estimatedFat = Math.round((remaining * 0.38) / 9);
-  var calPct = Math.min((calories / tCal) * 100, 100);
-  var caloriesLeft = Math.max(tCal - calories, 0);
+  const proteinCal = protein * 4;
+  const remaining = Math.max(calories - proteinCal, 0);
+  const estimatedCarbs = Math.round((remaining * 0.62) / 4);
+  const estimatedFat = Math.round((remaining * 0.38) / 9);
+  const calPct = Math.min((calories / tCal) * 100, 100);
+  const caloriesLeft = Math.max(tCal - calories, 0);
 
   return (
     <Link to="/log" state={{ tab: 'food' }}>
@@ -446,61 +446,61 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
 }
 
 export default function Home() {
-  var { user, profile, updateProfile } = useAuth();
-  var { workouts, getWorkoutsForDate } = useWorkouts();
-  var { getDailyTotals } = useMeals();
-  var { currentWeek: perfDoc } = usePerformanceWeeks();
-  var { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  var { programState, loading: programLoading } = useProgram();
-  var weeklyDayMap = useWeeklyDayMap();
-  var navigate = useNavigate();
-  var { newBadge, dismissNewBadge } = useStreaks();
-  var { glasses: waterGlasses, target: waterTarget, logWater } = useWaterLog();
-  var [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
-  var [showWeightSheet, setShowWeightSheet] = useState(false);
-  var [weightInput, setWeightInput] = useState("");
-  var [weightSaving, setWeightSaving] = useState(false);
-  var [proUpsellDismissed, setProUpsellDismissed] = useState(false);
+  const { user, profile, updateProfile } = useAuth();
+  const { workouts, getWorkoutsForDate } = useWorkouts();
+  const { getDailyTotals } = useMeals();
+  const { currentWeek: perfDoc } = usePerformanceWeeks();
+  const { isPro, isInTrial, trialDaysLeft } = useSubscription();
+  const { programState, loading: programLoading } = useProgram();
+  const weeklyDayMap = useWeeklyDayMap();
+  const navigate = useNavigate();
+  const { newBadge, dismissNewBadge } = useStreaks();
+  const { glasses: waterGlasses, target: waterTarget, logWater } = useWaterLog();
+  const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
+  const [showWeightSheet, setShowWeightSheet] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
+  const [weightSaving, setWeightSaving] = useState(false);
+  const [proUpsellDismissed, setProUpsellDismissed] = useState(false);
 
-  var schedule = useMemo<ScheduleDay[]>(function() {
+  const schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
     return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
-  var todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
-  var streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
+  const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
+  const streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
 
   useEffect(function() {
     if (profile && streak !== profile.currentStreak) updateProfile({ currentStreak: streak });
   }, [streak, profile, updateProfile]);
 
-  var [dailyCal, setDailyCal] = useState(0);
-  var [dailyProt, setDailyProt] = useState(0);
+  const [dailyCal, setDailyCal] = useState(0);
+  const [dailyProt, setDailyProt] = useState(0);
 
   useEffect(function() {
     if (!user?.uid) return;
     (async function() {
       try {
-        var ts = new Date();
+        const ts = new Date();
         ts.setHours(0, 0, 0, 0);
-        var snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(ts))));
-        var c = 0; var p = 0;
-        snap.forEach(function(d) { var dd = d.data(); c += dd.totalCalories || dd.calories || 0; p += dd.totalProtein || dd.protein || 0; });
+        const snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(ts))));
+        let c = 0; let p = 0;
+        snap.forEach(function(d) { const dd = d.data(); c += dd.totalCalories || dd.calories || 0; p += dd.totalProtein || dd.protein || 0; });
         setDailyCal(c); setDailyProt(p);
       } catch (e) { console.error(e); }
     })();
   }, [user]);
 
-  var weightUnit = profile?.preferredWeightUnit || "kg";
+  const weightUnit = profile?.preferredWeightUnit || "kg";
 
-  var todayKey = format(new Date(), "yyyy-MM-dd");
-  var todayTotals = getDailyTotals(todayKey);
-  var todayWorkoutCount = useMemo(function() {
-    var tk = format(new Date(), "yyyy-MM-dd");
+  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const todayTotals = getDailyTotals(todayKey);
+  const todayWorkoutCount = useMemo(function() {
+    const tk = format(new Date(), "yyyy-MM-dd");
     return workouts.filter(function(w) { return w.date === tk; }).length;
   }, [workouts]);
 
-  var healthScoreResult = useMemo(function() {
+  const healthScoreResult = useMemo(function() {
     return calculateHealthScore(
       {
         calories: todayTotals.calories,
@@ -524,73 +524,73 @@ export default function Home() {
       }
     );
   }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget]);
-  var healthScore = healthScoreResult.score;
+  const healthScore = healthScoreResult.score;
 
   useEffect(function() {
     if (!user?.uid) return;
     getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(1))).then(function(snap) {
       if (snap.empty) {
         if (profile?.weightKg) {
-          var w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
+          const w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
           setLastWeightInfo({ weight: w, date: "From profile" });
         }
         return;
       }
-      var d = snap.docs[0].data();
+      const d = snap.docs[0].data();
       if (typeof d.weight === "number") {
-        var w = weightUnit === "lbs" ? (d.weight * 2.20462).toFixed(1) : d.weight.toFixed(1);
+        const w = weightUnit === "lbs" ? (d.weight * 2.20462).toFixed(1) : d.weight.toFixed(1);
         setLastWeightInfo({ weight: w, date: format(new Date(d.date + "T12:00:00"), "MMM d") });
       }
     }).catch(function() {});
   }, [user, weightUnit, profile?.weightKg]);
 
-  var handleLogWeight = async function() {
+  const handleLogWeight = async function() {
     if (!weightInput || !user) return;
     setWeightSaving(true);
     try {
-      var raw = Number(weightInput);
-      var storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
-      var today = format(new Date(), "yyyy-MM-dd");
+      const raw = Number(weightInput);
+      const storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
+      const today = format(new Date(), "yyyy-MM-dd");
       await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), { date: today, weight: storeW, createdAt: serverTimestamp() });
-      var disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
+      const disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
       setLastWeightInfo({ weight: disp, date: format(new Date(), "MMM d") });
       setWeightInput(""); setShowWeightSheet(false);
     } catch (e) { console.error(e); }
     setWeightSaving(false);
   };
 
-  var [peekDate, setPeekDate] = useState<string | null>(null);
-  var handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
-  var peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
-  var peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
-  var nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
+  const [peekDate, setPeekDate] = useState<string | null>(null);
+  const handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
+  const peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
+  const peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
+  const nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
 
   // Find today's scheduled run (if any)
-  var todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
-  var todayRun = useMemo(function() {
+  const todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
+  const todayRun = useMemo(function() {
     if (!programState?.runDays) return null;
-    var rd = programState.runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
+    const rd = programState.runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
     return rd || null;
   }, [programState?.runDays, todayDayIndex]);
 
-  var [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
+  const [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
 
   useEffect(function() {
     if (perfDoc) {
-      var agg = perfDoc.aggregates || { liftSessions: 0, runSessions: 0, liftTonnage: 0, runKm: 0 };
+      const agg = perfDoc.aggregates || { liftSessions: 0, runSessions: 0, liftTonnage: 0, runKm: 0 };
       setSnapData({ ls: agg.liftSessions || 0, rs: agg.runSessions || 0, lt: agg.liftTonnage || 0, rk: agg.runKm || 0, ad: perfDoc.adherenceScore ?? null });
       return;
     }
-    var now = new Date();
-    var ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0, 0, 0, 0);
-    var ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
-    var t = 0;
+    const now = new Date();
+    const ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0, 0, 0, 0);
+    const ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
+    let t = 0;
     ww.forEach(function(w) { w.exercises?.forEach(function(ex) { ex.sets?.forEach(function(s) { t += (s.weightKg || 0) * (s.reps || 0); }); }); });
     if (!user?.uid) { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); return; }
-    var startTs = Timestamp.fromDate(ws);
-    var endTs = Timestamp.fromDate(new Date(now.getTime() + 86400000));
+    const startTs = Timestamp.fromDate(ws);
+    const endTs = Timestamp.fromDate(new Date(now.getTime() + 86400000));
     getDocs(query(collection(db, "users", user.uid, "runs"), where("completedAt", ">=", startTs), where("completedAt", "<=", endTs))).then(function(snap) {
-      var rc = 0; var km = 0;
+      let rc = 0; let km = 0;
       snap.docs.forEach(function(d) { rc++; km += ((d.data().distance || 0) / 1000); });
       setSnapData({ ls: ww.length, rs: rc, lt: t, rk: Math.round(km * 10) / 10, ad: null });
     }).catch(function() { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); });

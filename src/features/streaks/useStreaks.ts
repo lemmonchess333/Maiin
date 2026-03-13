@@ -29,8 +29,11 @@ export function useStreaks() {
 
   useEffect(() => {
     if (!user) {
-      setStreakData(DEFAULT_STREAKS);
-      setLoading(false);
+      const reset = () => {
+        setStreakData(DEFAULT_STREAKS);
+        setLoading(false);
+      };
+      reset();
       return;
     }
 

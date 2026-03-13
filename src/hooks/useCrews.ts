@@ -14,7 +14,7 @@ export interface Crew {
   memberCount: number;
   leaderboardMetric: string;
   type: 'default' | 'custom';
-  createdAt: any;
+  createdAt: unknown;
   createdBy: string;
 }
 
@@ -57,7 +57,10 @@ export function useCrews() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchCrews(); }, [fetchCrews]);
+  useEffect(() => {
+    const load = async () => { await fetchCrews(); };
+    load();
+  }, [fetchCrews]);
 
   const joinCrew = useCallback(async (crewId: string) => {
     if (!user?.uid) return;
@@ -76,7 +79,7 @@ export function useCrews() {
     await updateDoc(doc(db, 'groups', crewId), { memberCount: increment(1) });
     await updateProfile({ crewId });
     setCrews(prev => prev.map(c => c.id === crewId ? { ...c, memberCount: c.memberCount + 1 } : c));
-  }, [user?.uid, currentCrewId, profile?.displayName, updateProfile]);
+  }, [user, currentCrewId, profile?.displayName, updateProfile]);
 
   const leaveCrew = useCallback(async () => {
     if (!user?.uid || !currentCrewId) return;
@@ -84,7 +87,7 @@ export function useCrews() {
     await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
     await updateProfile({ crewId: undefined });
     setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
-  }, [user?.uid, currentCrewId, updateProfile]);
+  }, [user, currentCrewId, updateProfile]);
 
   const createCrew = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;
@@ -110,7 +113,7 @@ export function useCrews() {
     await updateProfile({ crewId: ref.id });
     const newCrew: Crew = { id: ref.id, name, description, icon, memberCount: 1, leaderboardMetric: 'workout_count', type: 'custom', createdAt: new Date(), createdBy: user.uid };
     setCrews(prev => [newCrew, ...prev]);
-  }, [user?.uid, currentCrewId, profile?.displayName, updateProfile]);
+  }, [user, currentCrewId, profile?.displayName, updateProfile]);
 
   const currentCrew = crews.find(c => c.id === currentCrewId) || null;
   const defaultCrews = crews.filter(c => c.type === 'default');

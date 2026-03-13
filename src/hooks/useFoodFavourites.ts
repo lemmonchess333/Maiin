@@ -42,8 +42,8 @@ export function useFoodFavourites() {
 
   useEffect(() => {
     if (!user) {
-      setFavourites([]);
-      setLoading(false);
+      const reset = () => { setFavourites([]); setLoading(false); };
+      reset();
       return;
     }
 

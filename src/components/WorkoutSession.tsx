@@ -122,10 +122,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
       snap.docs.forEach((d) => {
         const data = d.data();
-        (data.exercises || []).forEach((ex: any) => {
+        (data.exercises || []).forEach((ex: { exerciseName: string; sets?: { weightKg?: number; reps?: number }[] }) => {
           const name = ex.exerciseName;
-          if (!prevWeights[name] && ex.sets?.length > 0) {
-            prevWeights[name] = ex.sets.map((s: any) => ({
+          if (!prevWeights[name] && ex.sets?.length && ex.sets.length > 0) {
+            prevWeights[name] = ex.sets.map((s) => ({
               weight: s.weightKg || 0,
               reps: s.reps || 0,
             }));
@@ -153,9 +153,9 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       const bests: Record<string, number> = {};
       snap.docs.forEach((d) => {
         const data = d.data();
-        (data.exercises || []).forEach((ex: any) => {
+        (data.exercises || []).forEach((ex: { exerciseName: string; sets?: { weightKg?: number }[] }) => {
           const name = ex.exerciseName;
-          (ex.sets || []).forEach((s: any) => {
+          (ex.sets || []).forEach((s) => {
             const w = s.weightKg || 0;
             if (w > (bests[name] || 0)) bests[name] = w;
           });
@@ -165,7 +165,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     };
 
     fetchPreviousWeights();
-  }, [user?.uid]);
+  }, [user?.uid, day.exercises]);
 
   // Rest timer
   const [restSeconds, setRestSeconds] = useState(0);
@@ -375,18 +375,18 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000) continue; // 3 weeks cooldown
 
         const lastThree = history
-          .filter(w => (w.exercises || []).some((e: any) => e.exerciseName === ex.name))
+          .filter(w => (w.exercises || []).some((e: { exerciseName: string }) => e.exerciseName === ex.name))
           .slice(0, 3);
 
         if (lastThree.length < 3) continue;
 
         const weights = lastThree.map(w => {
-          const found = (w.exercises || []).find((e: any) => e.exerciseName === ex.name);
-          return found?.sets?.map((s: any) => s.weightKg).join(',') || '';
+          const found = (w.exercises || []).find((e: { exerciseName: string }) => e.exerciseName === ex.name);
+          return found?.sets?.map((s: { weightKg?: number }) => s.weightKg).join(',') || '';
         });
 
         if (weights[0] && weights[0] === weights[1] && weights[1] === weights[2]) {
-          const w = lastThree[0].exercises.find((e: any) => e.exerciseName === ex.name)?.sets?.[0]?.weightKg || 0;
+          const w = lastThree[0].exercises.find((e: { exerciseName: string }) => e.exerciseName === ex.name)?.sets?.[0]?.weightKg || 0;
           setStallExercise({ name: ex.name, weight: w });
           break;
         }
@@ -394,7 +394,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     };
 
     checkStalls();
-  }, [sessionComplete, user?.uid]);
+  }, [sessionComplete, user?.uid, day.exercises]);
 
   const handleFinish = async () => {
     setCompleting(true);

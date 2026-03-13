@@ -116,7 +116,7 @@ export function calculateAdaptiveMacros(
   const config = phaseConfig[phase];
   const bw = safeNum(bodyweight, 70);
 
-  let baseCalories = baseTDEE ?? bw * 33;
+  const baseCalories = baseTDEE ?? bw * 33;
 
   let adjustment = 0;
   if (avgLiftChange <= 0 && avgWeightChange <= 0) adjustment += 150;

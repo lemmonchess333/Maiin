@@ -100,14 +100,14 @@ export default function Run() {
   // Auto-start without GPS if permission denied or geolocation unavailable
   useEffect(() => {
     if (phase === 'acquiring' && gps.error) {
-      setPhase('countdown');
-      setCountdown(3);
+      const transition = () => { setPhase('countdown'); setCountdown(3); };
+      transition();
     }
   }, [phase, gps.error]);
 
   // Count seconds spent in acquiring phase
   useEffect(() => {
-    if (phase !== 'acquiring') { setAcquiringSeconds(0); return; }
+    if (phase !== 'acquiring') { const reset = () => { setAcquiringSeconds(0); }; reset(); return; }
     const t = setInterval(() => setAcquiringSeconds((s) => s + 1), 1000);
     return () => clearInterval(t);
   }, [phase]);
@@ -115,18 +115,16 @@ export default function Run() {
   // Transition from acquiring to countdown when we get a GPS point
   useEffect(() => {
     if (phase === 'acquiring' && gps.points.length > 0) {
-      setPhase('countdown');
-      setCountdown(3);
+      const transition = () => { setPhase('countdown'); setCountdown(3); };
+      transition();
     }
   }, [phase, gps.points.length]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
     if (countdown <= 0) {
-      setPhase('active');
-      timer.start();
-      audioCues.speak('Go!');
-      haptic('heavy');
+      const go = () => { setPhase('active'); timer.start(); audioCues.speak('Go!'); haptic('heavy'); };
+      go();
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
@@ -162,8 +160,8 @@ export default function Run() {
         setAutoPaused(true);
       }, 5000);
     } else if (autoPaused && speed !== null && speed !== undefined && speed >= 1) {
-      timer.resume();
-      setAutoPaused(false);
+      const resume = () => { timer.resume(); setAutoPaused(false); };
+      resume();
     }
     return () => { if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current); };
   }, [gps.currentPoint, phase, autoPaused, runConfig?.autoPause, runConfig?.activityType, timer]);
@@ -255,7 +253,7 @@ export default function Run() {
             savedPreferences={(() => {
               const prefs: Partial<RunConfig> = {
                 autoPause: true,
-                audioCues: (profile as any)?.audioCues !== false,
+                audioCues: profile?.audioCues !== false,
               };
               // Support ?type=tempo for direct type selection
               if (searchParams.get('type')) {

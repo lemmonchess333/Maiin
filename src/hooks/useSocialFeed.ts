@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getFeed, batchGetActivities, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
@@ -10,9 +10,9 @@ export interface FeedItem {
   authorName: string;
   type: 'run' | 'workout';
   summary: string;
-  createdAt: any;
+  createdAt: unknown;
   // Enriched at feed level — no per-card reads needed
-  activity?: any;
+  activity?: Record<string, unknown>;
   liked?: boolean;
   kudosCount?: number;
   // Highlight fields for filtering
@@ -27,14 +27,14 @@ export function useSocialFeed(highlightsOnly = false) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | undefined>();
+  const lastDocRef = useRef<DocumentSnapshot | undefined>();
   const [hasMore, setHasMore] = useState(true);
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;
     setLoading(true);
     try {
-      const result = await getFeed(user.uid, 20, refresh ? undefined : lastDoc);
+      const result = await getFeed(user.uid, 20, refresh ? undefined : lastDocRef.current);
       const feedItems = result.items as FeedItem[];
 
       // Single batched read for all activities + kudos
@@ -70,15 +70,15 @@ export function useSocialFeed(highlightsOnly = false) {
       } else {
         setItems(prev => [...prev, ...enriched]);
       }
-      setLastDoc(result.lastDoc);
+      lastDocRef.current = result.lastDoc;
       setHasMore(feedItems.length === 20);
     } catch (e) {
       console.error('Feed error:', e);
     }
     setLoading(false);
-  }, [user, lastDoc, highlightsOnly]);
+  }, [user, highlightsOnly]);
 
-  useEffect(() => { loadFeed(true); }, [user, highlightsOnly]);
+  useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
 
   return {
     items, loading, hasMore,

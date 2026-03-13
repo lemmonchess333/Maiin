@@ -5,7 +5,7 @@ interface QueuedWrite {
   collectionPath: string;
   docId?: string;
   merge?: boolean;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -26,7 +26,7 @@ function saveQueue(queue: QueuedWrite[]) {
 
 export function queueWrite(
   collectionPath: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   docId?: string,
   merge?: boolean,
 ) {
@@ -75,7 +75,7 @@ export async function flushQueue(db: Firestore): Promise<number> {
 export async function safeSave(
   db: Firestore,
   collectionPath: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
 ): Promise<void> {
   if (navigator.onLine) {
     try {
@@ -92,7 +92,7 @@ export async function safeMerge(
   db: Firestore,
   collectionPath: string,
   docId: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
 ): Promise<void> {
   if (navigator.onLine) {
     try {

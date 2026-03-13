@@ -70,7 +70,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             tick={{ fontSize: 9, fill: "currentColor", opacity: 0.3 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: any) => {
+            tickFormatter={(v: string | number) => {
               const s = typeof v === "string" ? v : String(v ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
@@ -96,13 +96,13 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               color: THEME.textPrimary,
               padding: "8px 12px",
             }}
-            labelFormatter={(label: any) => {
+            labelFormatter={(label: string | number) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
               return `Week of ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
             }}
-            formatter={(value: any, name: any) => {
+            formatter={(value: string | number, name: string | number) => {
               const labels: Record<string, string> = {
                 pi: "PI",
                 liftLoad: "Lift Load",
@@ -123,7 +123,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             stroke={THEME.brand}
             strokeWidth={2.5}
             fill="url(#pi-gradient)"
-            dot={(props: any) => {
+            dot={(props: { cx: number; cy: number; payload: { week: string; band: string } }) => {
               const { cx, cy, payload } = props;
               return (
                 <circle

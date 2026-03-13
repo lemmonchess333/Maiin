@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
@@ -31,36 +31,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!scanning) return;
-
-    const reader = new BrowserMultiFormatReader();
-    readerRef.current = reader;
-
-    reader.decodeFromVideoDevice(
-      undefined,
-      videoRef.current!,
-      (result) => {
-        if (result) {
-          const code = result.getText();
-          setScanning(false);
-          fetchProduct(code);
-        }
-      }
-    ).catch(() => {
-      setError("Camera access denied. Please allow camera permissions.");
-      setScanning(false);
-    });
-
-    return () => {
-      // Stop any active video streams
-      if (videoRef.current?.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-      }
-    };
-  }, [scanning]);
-
-  const fetchProduct = async (barcode: string) => {
+  const fetchProduct = useCallback(async (barcode: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -96,7 +67,37 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
       setError("Failed to look up product. Check your connection.");
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!scanning) return;
+
+    const videoEl = videoRef.current;
+    const reader = new BrowserMultiFormatReader();
+    readerRef.current = reader;
+
+    reader.decodeFromVideoDevice(
+      undefined,
+      videoEl!,
+      (result) => {
+        if (result) {
+          const code = result.getText();
+          setScanning(false);
+          fetchProduct(code);
+        }
+      }
+    ).catch(() => {
+      setError("Camera access denied. Please allow camera permissions.");
+      setScanning(false);
+    });
+
+    return () => {
+      // Stop any active video streams
+      if (videoEl?.srcObject) {
+        (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [scanning, fetchProduct]);
 
   const handleConfirm = () => {
     if (!product) return;

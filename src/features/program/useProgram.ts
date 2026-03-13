@@ -35,13 +35,13 @@ export function useProgram() {
 
   // Load program from Firestore (with backward-compat normalize)
   useEffect(() => {
-    if (!user || !profile) {
-      setProgramState(null);
-      setLoading(false);
-      return;
-    }
-
     const loadProgram = async () => {
+      if (!user || !profile) {
+        setProgramState(null);
+        setLoading(false);
+        return;
+      }
+
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
       const snap = await getDoc(ref);
 
@@ -241,7 +241,7 @@ export function useProgram() {
         toast.success("All workouts complete! Advance to next week when ready.");
       }
     },
-    [programState, user, saveProgram],
+    [programState, user, saveProgram, profile],
   );
 
   // Manually advance to next week (called from UI)

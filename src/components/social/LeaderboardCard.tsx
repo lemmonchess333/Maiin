@@ -47,8 +47,8 @@ async function buildLeaderboard(
           where('date', '>=', since.toISOString().split('T')[0]), orderBy('date'), limit(50))
       );
       const kg = workoutsSnap.docs.reduce((s, d) => {
-        return s + (d.data().exercises || []).reduce((es: number, ex: any) =>
-          es + (ex.sets || []).reduce((ss: number, set: any) =>
+        return s + (d.data().exercises || []).reduce((es: number, ex: { sets?: { weightKg?: number; reps?: number }[] }) =>
+          es + (ex.sets || []).reduce((ss: number, set: { weightKg?: number; reps?: number }) =>
             ss + (set.weightKg || 0) * (set.reps || 0), 0), 0);
       }, 0);
       if (challenge === 'weekly_volume') value = Math.round(kg);
@@ -81,10 +81,10 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
 
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    buildLeaderboard(user.uid, challenge)
-      .then(async (raw) => {
-        // Fetch display names
+    const load = async () => {
+      setLoading(true);
+      try {
+        const raw = await buildLeaderboard(user.uid, challenge);
         const named = await Promise.all(raw.map(async (e) => {
           try {
             const snap = await getDocs(
@@ -97,8 +97,11 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
           }
         }));
         setEntries(named.filter(e => e.value > 0));
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, [user, challenge]);
 
   const { title, unit, icon } = challengeLabels[challenge];

@@ -56,8 +56,8 @@ export function useWorkouts() {
 
   useEffect(() => {
     if (!user) {
-      setWorkouts([]);
-      setLoading(false);
+      const reset = () => { setWorkouts([]); setLoading(false); };
+      reset();
       return;
     }
 

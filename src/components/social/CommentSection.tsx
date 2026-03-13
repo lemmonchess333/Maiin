@@ -2,9 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
 import { getComments, addComment } from '../../lib/socialApi';
 
+interface Comment {
+  id: string;
+  authorName?: string;
+  text?: string;
+  createdAt?: { toDate?: () => Date };
+}
+
 export default function CommentSection({ activityId, activityAuthorId }: { activityId: string; activityAuthorId?: string }) {
   const { user, profile } = useAuth();
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -24,7 +31,7 @@ export default function CommentSection({ activityId, activityAuthorId }: { activ
 
   return (
     <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
-      {comments.map((c: any) => (
+      {comments.map((c) => (
         <div key={c.id} className="flex gap-2">
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
             {(c.authorName || '?').charAt(0)}

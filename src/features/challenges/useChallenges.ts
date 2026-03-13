@@ -156,7 +156,7 @@ async function seedChallenges() {
     const ref = doc(db, "challenges", def.docId);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
-      const { docId: _, ...data } = def;
+      const { docId: _docId, ...data } = def;
       await setDoc(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
     }
   }
@@ -249,7 +249,7 @@ export function useChallenges() {
       ...prev,
       [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
     }));
-  }, [user, challenges, myProgress]);
+  }, [user, challenges]);
 
   const myChallenges = challenges.filter(c => !!myProgress[c.id]);
   const availableChallenges = challenges.filter(c => !myProgress[c.id]);
