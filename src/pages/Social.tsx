@@ -134,6 +134,7 @@ export default function Social() {
 
           {activeFeed.items.length > 0 && (
             <button onClick={activeFeed.refresh}
+              aria-label="Refresh feed"
               className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -263,7 +264,7 @@ export default function Social() {
           {/* Contact Sync Modal */}
           {showContactModal && (
             <>
-              <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowContactModal(false)} />
+              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
               <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.95)', backdropFilter: 'blur(20px)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="text-center space-y-3 py-4">
@@ -314,7 +315,7 @@ export default function Social() {
           {/* Create Crew Modal */}
           {showCreateGroup && (
             <>
-              <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowCreateGroup(false)} />
+              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
               <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.95)', backdropFilter: 'blur(20px)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>

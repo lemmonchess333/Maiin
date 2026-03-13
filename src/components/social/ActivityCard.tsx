@@ -129,12 +129,13 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           {user && activity?.authorId !== user.uid && (
             <div className="relative">
               <button onClick={() => setShowMenu(!showMenu)}
+                aria-label="More options" aria-expanded={showMenu}
                 className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                 <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
               </button>
               {showMenu && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <div className="fixed inset-0 z-10" role="presentation" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
                     <button
                       onClick={() => { setShowMenu(false); setShowReport(true); }}
@@ -276,6 +277,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
         {/* Actions */}
         <div className="flex items-center gap-5 pt-2.5 border-t border-border/40">
           <button onClick={handleKudos}
+            aria-label={liked ? "Remove kudos" : "Give kudos"}
             className="flex items-center gap-1.5 transition-transform"
             style={kudosAnimating ? { animation: 'kudos-pop 0.4s ease-out' } : undefined}>
             <Dumbbell size={16} style={{ filter: liked ? "none" : "grayscale(1) opacity(0.5)" }} />

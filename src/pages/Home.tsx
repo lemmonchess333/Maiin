@@ -266,7 +266,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
               <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
             </div>
-            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
               <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             </button>
           </div>
@@ -284,7 +284,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
                 <p className="text-[10px] text-muted-foreground/60">{lastWeightDate}</p>
               )}
             </div>
-            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
               <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
             </button>
           </div>
