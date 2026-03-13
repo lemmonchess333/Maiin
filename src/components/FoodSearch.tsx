@@ -32,8 +32,8 @@ export default function FoodSearch({ onSelect, onClose }: Props) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (query.trim().length < 2) {
-      setResults([]);
-      setSearched(false);
+      const reset = () => { setResults([]); setSearched(false); };
+      reset();
       return;
     }
 

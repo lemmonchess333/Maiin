@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, where, doc, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -34,7 +34,7 @@ export default function TrainingCalendar() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const weekEnd = new Date(currentWeekStart.getTime() + 6 * 86400000);
+  const weekEnd = useMemo(() => new Date(currentWeekStart.getTime() + 6 * 86400000), [currentWeekStart]);
   const weekStartStr = currentWeekStart.toISOString().split('T')[0];
   const weekEndStr = weekEnd.toISOString().split('T')[0];
 
@@ -150,10 +150,11 @@ export default function TrainingCalendar() {
 
     // 6. Combine: planned (with auto-completion) + auto-detected + schedule-generated
     setSessions([...merged, ...autoWorkouts, ...autoRuns, ...scheduledFromProfile]);
-  }, [user, weekStartStr, weekEndStr, currentWeekStart, profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
+  }, [user, weekStartStr, weekEndStr, currentWeekStart, weekEnd, profile]);
 
   useEffect(function() {
-    loadSessions();
+    const load = async () => { await loadSessions(); };
+    load();
   }, [loadSessions, currentWeekStart]);
 
   const weekDays = Array.from({ length: 7 }, function(_, i) {

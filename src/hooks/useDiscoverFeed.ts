@@ -54,7 +54,7 @@ export function useDiscoverFeed() {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { loadFeed(true); }, [loadFeed]);
+  useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
 
   return {
     items, loading, hasMore,

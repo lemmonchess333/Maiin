@@ -241,7 +241,7 @@ export function useProgram() {
         toast.success("All workouts complete! Advance to next week when ready.");
       }
     },
-    [programState, user, saveProgram, profile?.autoPostWorkouts, profile?.crewId, profile?.defaultVisibility, profile?.displayName],
+    [programState, user, saveProgram, profile],
   );
 
   // Manually advance to next week (called from UI)

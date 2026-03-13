@@ -78,7 +78,7 @@ export function useSocialFeed(highlightsOnly = false) {
     setLoading(false);
   }, [user, highlightsOnly]);
 
-  useEffect(() => { loadFeed(true); }, [loadFeed]);
+  useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
 
   return {
     items, loading, hasMore,
