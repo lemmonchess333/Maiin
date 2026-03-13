@@ -26,11 +26,12 @@ interface FoodEntry {
 }
 
 const DEFAULT_QUICK_MEALS = [
-  { name: "Grilled Chicken & Rice", cal: 520, pro: 45, carb: 55, fat: 8 },
-  { name: "Whey Protein Shake", cal: 120, pro: 25, carb: 4, fat: 2 },
-  { name: "Greek Yogurt + Berries", cal: 180, pro: 20, carb: 15, fat: 3 },
-  { name: "Salmon & Avocado", cal: 380, pro: 28, carb: 8, fat: 25 },
-  { name: "Oats & Banana", cal: 320, pro: 10, carb: 55, fat: 6 },
+  { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
+  { name: "Protein Shake", cal: 250, pro: 30, carb: 20, fat: 5 },
+  { name: "Oatmeal & Banana", cal: 350, pro: 10, carb: 60, fat: 8 },
+  { name: "Eggs on Toast", cal: 380, pro: 22, carb: 30, fat: 18 },
+  { name: "Greek Yoghurt & Berries", cal: 200, pro: 15, carb: 25, fat: 5 },
+  { name: "Tuna Salad", cal: 300, pro: 35, carb: 10, fat: 12 },
 ];
 
 interface Props {
@@ -162,9 +163,12 @@ export function ManualFoodLogger({ date }: Props) {
               key={i}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleQuickAdd(meal)}
-              className="px-4 py-2 text-xs bg-muted hover:bg-muted/80 border border-border rounded-xl transition-all active:bg-primary/10"
+              className="px-4 py-2.5 text-left bg-muted hover:bg-muted/80 border border-border rounded-xl transition-all active:bg-primary/10"
             >
-              {meal.name}
+              <span className="text-xs font-semibold text-foreground">{meal.name}</span>
+              <span className="block text-[10px] text-muted-foreground mt-0.5">
+                ~{meal.cal} kcal · {meal.pro}P · {meal.carb}C · {meal.fat}F
+              </span>
             </motion.button>
           ))}
         </div>

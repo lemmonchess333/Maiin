@@ -16,7 +16,6 @@ import { useMeals } from "@/hooks/useMeals";
 import FoodAnalyzer from "@/components/FoodAnalyzer";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { RecipeBuilder } from "@/components/RecipeBuilder";
 import { parseFoodText } from "@/lib/nlFoodParser";
 import {
   Dumbbell,
@@ -32,8 +31,6 @@ import {
   Wheat,
   Cookie,
   MessageSquare,
-  BookOpen,
-  Mic,
   ScanBarcode,
   Footprints,
   MapPin,
@@ -42,7 +39,6 @@ import {
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/nutrition/BarcodeScanner";
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
-import { VoiceLogger } from "@/components/nutrition/VoiceLogger";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
 export default function Log() {
@@ -67,9 +63,7 @@ export default function Log() {
   const [showFoodSearch, setShowFoodSearch] = useState(false);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
-  const [showRecipeBuilder, setShowRecipeBuilder] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showVoiceLogger, setShowVoiceLogger] = useState(false);
   const { addFavourite } = useFoodFavourites();
 
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -245,35 +239,6 @@ export default function Log() {
     setNlInput("");
     setNlParsing(false);
     toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
-  };
-
-  const handleRecipeSave = async (recipe: { name: string; servings: number; ingredients: Array<{ name: string; amount: number; unit: string; calories: number; protein: number; carbs: number; fat: number }> }) => {
-    if (!user) return;
-    const totalCalories = recipe.ingredients.reduce((s, i) => s + i.calories, 0) / recipe.servings;
-    const totalProtein = recipe.ingredients.reduce((s, i) => s + i.protein, 0) / recipe.servings;
-    const totalCarbs = recipe.ingredients.reduce((s, i) => s + i.carbs, 0) / recipe.servings;
-    const totalFat = recipe.ingredients.reduce((s, i) => s + i.fat, 0) / recipe.servings;
-
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: recipe.name,
-      items: recipe.ingredients.map((ing) => ({
-        name: ing.name,
-        portionSize: `${ing.amount}${ing.unit}`,
-        calories: Math.round(ing.calories / recipe.servings),
-        protein: Math.round(ing.protein / recipe.servings),
-        carbs: Math.round(ing.carbs / recipe.servings),
-        fat: Math.round(ing.fat / recipe.servings),
-      })),
-      totalCalories: Math.round(totalCalories),
-      totalProtein: Math.round(totalProtein),
-      totalCarbs: Math.round(totalCarbs),
-      totalFat: Math.round(totalFat),
-      confidence: "recipe",
-      createdAt: Timestamp.now(),
-    });
-    setShowRecipeBuilder(false);
-    toast.success(`${recipe.name} logged (1 serving)!`);
   };
 
   const handleFoodSearchSelect = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string }) => {
@@ -612,20 +577,6 @@ export default function Log() {
               <span className="text-[10px] text-muted-foreground">Search</span>
             </button>
             <button
-              onClick={() => setShowVoiceLogger(true)}
-              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
-            >
-              <Mic className="w-5 h-5 text-primary" />
-              <span className="text-[10px] text-muted-foreground">Voice</span>
-            </button>
-            <button
-              onClick={() => setShowRecipeBuilder(true)}
-              className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
-            >
-              <BookOpen className="w-5 h-5 text-primary" />
-              <span className="text-[10px] text-muted-foreground">Recipe</span>
-            </button>
-            <button
               onClick={() => setShowBarcodeScanner(true)}
               className="flex-1 flex flex-col items-center gap-1 p-3 bg-muted/50 rounded-xl active:scale-95 transition-transform"
             >
@@ -642,30 +593,11 @@ export default function Log() {
             />
           )}
 
-          {showRecipeBuilder && (
-            <RecipeBuilder
-              onSave={handleRecipeSave}
-              onClose={() => setShowRecipeBuilder(false)}
-            />
-          )}
-
           {showBarcodeScanner && (
             <div className="bg-card rounded-2xl border border-border/50 p-4">
               <BarcodeScanner
                 onLog={handleBarcodeLog}
                 onClose={() => setShowBarcodeScanner(false)}
-              />
-            </div>
-          )}
-
-          {showVoiceLogger && (
-            <div className="bg-card rounded-2xl border border-border/50 p-4">
-              <VoiceLogger
-                onResult={(text) => {
-                  setShowVoiceLogger(false);
-                  setNlInput(text);
-                }}
-                onClose={() => setShowVoiceLogger(false)}
               />
             </div>
           )}
