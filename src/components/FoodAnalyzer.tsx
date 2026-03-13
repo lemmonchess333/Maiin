@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
-import { Loader2, RotateCcw, Save, Check } from "lucide-react";
+import { Loader2, RotateCcw, Save, Check, Plus, Minus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -111,6 +113,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 
 export default function FoodAnalyzer({ date, onSaved }: Props) {
   const { user } = useAuth();
+  const { addFavourite } = useFoodFavourites();
 
   const {
     analyzeFood,
@@ -126,12 +129,21 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
+  const [servings, setServings] = useState(1);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Auto-open camera with 150ms delay to avoid jarring
+  useEffect(() => {
+    const timer = setTimeout(() => setCameraOpen(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   const activeResult: MealResult | null = useMemo(() => {
     return (aiResult as any) || barcodeResult;
   }, [aiResult, barcodeResult]);
+
+  const isBarcode = activeResult?.confidence === "barcode";
 
   const showLoading = aiLoading || barcodeLoading;
   const showError = aiError || barcodeError;
@@ -140,6 +152,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     setBarcodeResult(null);
     setBarcodeError(null);
     setBarcodeLoading(false);
+    setServings(1);
     resetAI();
   };
 
@@ -147,20 +160,40 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     if (!user) return;
     setSaving(true);
 
+    const s = isBarcode ? servings : 1;
+
     const mealRef = doc(collection(db, "users", user.uid, "meals"));
     await setDoc(mealRef, {
       date,
       foodName: meal.foodName,
-      items: meal.items,
-      totalCalories: meal.totalCalories,
-      totalProtein: meal.totalProtein,
-      totalCarbs: meal.totalCarbs,
-      totalFat: meal.totalFat,
+      items: meal.items.map((item) => ({
+        ...item,
+        portionSize: s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
+        calories: Math.round(item.calories * s),
+        protein: Math.round(item.protein * s),
+        carbs: Math.round(item.carbs * s),
+        fat: Math.round(item.fat * s),
+      })),
+      totalCalories: Math.round(meal.totalCalories * s),
+      totalProtein: Math.round(meal.totalProtein * s),
+      totalCarbs: Math.round(meal.totalCarbs * s),
+      totalFat: Math.round(meal.totalFat * s),
       confidence: meal.confidence,
       barcode: meal.barcode || null,
       brand: meal.brand || null,
       imageUrl: meal.imageUrl || null,
       createdAt: Timestamp.now(),
+    });
+
+    // Preserve favourites functionality
+    await addFavourite({
+      name: meal.foodName,
+      calories: Math.round(meal.totalCalories * s),
+      protein: Math.round(meal.totalProtein * s),
+      carbs: Math.round(meal.totalCarbs * s),
+      fat: Math.round(meal.totalFat * s),
+      servingSize: meal.items[0]?.portionSize ?? "1 serving",
+      source: meal.barcode ? "barcode" : "photo",
     });
 
     setSaving(false);
@@ -212,6 +245,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
     setBarcodeLoading(true);
     setBarcodeError(null);
     setBarcodeResult(null);
+    setServings(1);
 
     try {
       const meal = await fetchOpenFoodFacts(code);
@@ -224,6 +258,8 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       setBarcodeLoading(false);
     }
   };
+
+  const s = isBarcode ? servings : 1;
 
   return (
     <div className="space-y-4">
@@ -271,88 +307,119 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
         </div>
       )}
 
-      {activeResult && (
-        <div className="space-y-4">
-          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-foreground truncate">
-                  {(activeResult as any).foodName}
-                </h3>
-                {(activeResult as any).brand && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {(activeResult as any).brand}
+      {/* AnimatePresence enter-only: no exit animation keeps it snappy */}
+      <AnimatePresence>
+        {activeResult && (
+          <motion.div
+            key="result"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground truncate">
+                    {(activeResult as any).foodName}
+                  </h3>
+                  {(activeResult as any).brand && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {(activeResult as any).brand}
+                    </p>
+                  )}
+                </div>
+
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-foreground">
+                  {(activeResult as any).confidence}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="bg-orange-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-orange-600 tabular-nums">
+                    {Math.round(safeNum((activeResult as any).totalCalories) * s)}
                   </p>
+                  <p className="text-xs text-orange-500">cal</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-blue-600 tabular-nums">
+                    {Math.round(safeNum((activeResult as any).totalProtein) * s)}g
+                  </p>
+                  <p className="text-xs text-blue-500">protein</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-amber-600 tabular-nums">
+                    {Math.round(safeNum((activeResult as any).totalCarbs) * s)}g
+                  </p>
+                  <p className="text-xs text-amber-500">carbs</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-2">
+                  <p className="text-lg font-bold text-purple-600 tabular-nums">
+                    {Math.round(safeNum((activeResult as any).totalFat) * s)}g
+                  </p>
+                  <p className="text-xs text-purple-500">fat</p>
+                </div>
+              </div>
+
+              {/* Serving size adjuster — shown for barcode results */}
+              {isBarcode && (
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    onClick={() => setServings(Math.max(0.5, servings - 0.5))}
+                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground">{servings}</p>
+                    <p className="text-[10px] text-muted-foreground">servings</p>
+                  </div>
+                  <button
+                    onClick={() => setServings(servings + 0.5)}
+                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleResetAll}
+                className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Reset
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={cn(
+                  "flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
+                  saved
+                    ? "bg-green-500 text-white"
+                    : "bg-primary text-primary-foreground hover:opacity-90",
+                  saving && "opacity-50 cursor-not-allowed"
                 )}
-              </div>
-
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-foreground">
-                {(activeResult as any).confidence}
-              </span>
+              >
+                {saved ? (
+                  <>
+                    <Check className="w-4 h-4" /> Saved!
+                  </>
+                ) : saving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Log meal
+                  </>
+                )}
+              </button>
             </div>
-
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-orange-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-orange-600 tabular-nums">
-                  {safeNum((activeResult as any).totalCalories)}
-                </p>
-                <p className="text-xs text-orange-500">cal</p>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-blue-600 tabular-nums">
-                  {safeNum((activeResult as any).totalProtein)}g
-                </p>
-                <p className="text-xs text-blue-500">protein</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-amber-600 tabular-nums">
-                  {safeNum((activeResult as any).totalCarbs)}g
-                </p>
-                <p className="text-xs text-amber-500">carbs</p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-2">
-                <p className="text-lg font-bold text-purple-600 tabular-nums">
-                  {safeNum((activeResult as any).totalFat)}g
-                </p>
-                <p className="text-xs text-purple-500">fat</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleResetAll}
-              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
-              Reset
-            </button>
-
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={cn(
-                "flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
-                saved
-                  ? "bg-green-500 text-white"
-                  : "bg-primary text-primary-foreground hover:opacity-90",
-                saving && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {saved ? (
-                <>
-                  <Check className="w-4 h-4" /> Saved!
-                </>
-              ) : saving ? (
-                "Saving..."
-              ) : (
-                <>
-                  <Save className="w-4 h-4" /> Log meal
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
