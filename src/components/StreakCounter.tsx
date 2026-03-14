@@ -8,8 +8,8 @@ interface StreakCounterProps {
 export function StreakCounter({ streak }: StreakCounterProps) {
   if (streak <= 0) {
     return (
-      <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-muted/50 border border-border/50">
-        <Flame className="w-6 h-6 text-muted-foreground" />
+      <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-muted/50 border border-border/50" role="status" aria-label="No active streak">
+        <Flame className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
         <div>
           <p className="text-sm font-medium text-muted-foreground">No streak yet</p>
           <p className="text-xs text-muted-foreground">Log a workout today to start your fire</p>
@@ -22,17 +22,20 @@ export function StreakCounter({ streak }: StreakCounterProps) {
     <motion.div
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
+      role="status"
+      aria-label={`${streak} day streak`}
       className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/10 border border-orange-500/30 shadow-sm"
     >
       <motion.div
-        animate={{ 
+        aria-hidden="true"
+        animate={{
           scale: [1, 1.25, 1],
           rotate: [0, 8, -8, 0]
         }}
-        transition={{ 
-          repeat: Infinity, 
-          duration: 2.2, 
-          ease: "easeInOut" 
+        transition={{
+          repeat: Infinity,
+          duration: 2.2,
+          ease: "easeInOut"
         }}
       >
         <Flame className="w-7 h-7 text-orange-500 drop-shadow-sm" />

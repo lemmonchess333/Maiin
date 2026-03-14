@@ -14,11 +14,13 @@ export default defineConfig({
   build: {
     minify: "esbuild",
     sourcemap: true,
+    chunkSizeWarningLimit: 600,
 
     rollupOptions: {
       output: {
         manualChunks: {
-          firebase: ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/storage"],
+          "firebase-auth": ["firebase/app", "firebase/auth"],
+          "firebase-db": ["firebase/firestore", "firebase/storage"],
           charts: ["recharts"],
           vendor: ["react", "react-dom", "react-router-dom"],
           maplibre: ["maplibre-gl"],

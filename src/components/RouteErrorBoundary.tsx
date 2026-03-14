@@ -28,7 +28,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="flex-1 flex items-center justify-center px-6 py-12" role="alert">
           <div className="text-center space-y-4 max-w-sm w-full">
             <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center"
               style={{ background: `${THEME.danger}15` }}>
