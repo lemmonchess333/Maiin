@@ -189,8 +189,8 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       {/* Empty state */}
       {exercises.length === 0 && !showPicker && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Dumbbell className="w-12 h-12 text-gray-200" />
-          <p className="text-sm text-gray-400 text-center">Add exercises to build your workout</p>
+          <Dumbbell className="w-12 h-12 text-muted-foreground/20" />
+          <p className="text-sm text-muted-foreground/60 text-center">Add exercises to build your workout</p>
         </div>
       )}
 

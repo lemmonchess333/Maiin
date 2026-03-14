@@ -8,9 +8,9 @@ const PLATE_COLORS: Record<number, string> = {
   20: "bg-blue-500",
   15: "bg-yellow-500",
   10: "bg-green-500",
-  5: "bg-white border border-gray-300",
+  5: "bg-muted border border-border",
   2.5: "bg-red-300",
-  1.25: "bg-gray-300",
+  1.25: "bg-muted-foreground/40",
 };
 
 const PLATE_HEIGHTS: Record<number, number> = {
@@ -83,17 +83,17 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
         {[...plates].reverse().map((p, i) => (
           <div
             key={`l-${i}`}
-            className={`rounded-sm ${PLATE_COLORS[p] ?? "bg-gray-400"}`}
+            className={`rounded-sm ${PLATE_COLORS[p] ?? "bg-muted-foreground/40"}`}
             style={{ width: 8, height: PLATE_HEIGHTS[p] ?? 28 }}
           />
         ))}
         {/* Bar */}
-        <div className="w-16 h-2 bg-gray-400 rounded" />
+        <div className="w-16 h-2 bg-muted-foreground/40 rounded" />
         {/* Right plates */}
         {plates.map((p, i) => (
           <div
             key={`r-${i}`}
-            className={`rounded-sm ${PLATE_COLORS[p] ?? "bg-gray-400"}`}
+            className={`rounded-sm ${PLATE_COLORS[p] ?? "bg-muted-foreground/40"}`}
             style={{ width: 8, height: PLATE_HEIGHTS[p] ?? 28 }}
           />
         ))}

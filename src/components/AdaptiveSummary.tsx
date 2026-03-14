@@ -451,7 +451,7 @@ export function AdaptiveSummary({
       className="bg-card rounded-2xl border border-border/50 overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-border/30 bg-white">
+      <div className="px-5 py-4 border-b border-border/30 bg-card">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-primary/10">
             <BadgeIcon className="w-5 h-5 text-primary" />
@@ -539,7 +539,7 @@ export function AdaptiveSummary({
 
             {/* Performance Insight (phase-aware, quantitative) */}
             <div
-              className="rounded-3xl p-6 border border-border/50 shadow-sm bg-white"
+              className="rounded-3xl p-6 border border-border/50 shadow-sm bg-card"
               style={{
                 boxShadow: "0 1px 12px rgba(0,0,0,0.04)",
               }}
