@@ -586,8 +586,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb"
-              style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb bg-background border-t border-border shadow-xl"
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
@@ -670,34 +669,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     </div>
                   );
                 })()}
-
-                {/* Older performances */}
-                {drawerExercise.exercise.performanceHistory.length > 1 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">History</p>
-                    <div className="space-y-1">
-                      {drawerExercise.exercise.performanceHistory
-                        .slice(-4, -1)
-                        .reverse()
-                        .map((rec, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center justify-between py-1.5 px-2 rounded bg-muted/50 text-xs"
-                          >
-                            <span className="text-muted-foreground">{rec.date}</span>
-                            <span className="text-foreground font-medium">
-                              {rec.weight > 0 ? `${rec.weight}kg` : "BW"} × {rec.repsCompleted}/{rec.repsTarget}
-                            </span>
-                            <span
-                              style={{ color: rec.repsCompleted >= rec.repsTarget ? THEME.success : THEME.danger }}
-                            >
-                              {rec.repsCompleted >= rec.repsTarget ? "Pass" : "Miss"}
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Log form with auto-fill indicator */}
                 <div>
