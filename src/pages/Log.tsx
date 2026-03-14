@@ -62,8 +62,7 @@ export default function Log() {
   const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
-  const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsActive, setSuggestionsActive] = useState(true);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
@@ -207,20 +206,13 @@ export default function Log() {
 
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
-  // Compute food suggestions as user types
-  useEffect(() => {
-    // Get the last segment (after the last comma) for suggestions
+  // Derive food suggestions from input (no useEffect needed)
+  const suggestions = useMemo(() => {
     const parts = nlInput.split(/,/);
     const lastPart = (parts[parts.length - 1] || "").trim();
-    if (lastPart.length >= 2) {
-      const s = getFoodSuggestions(lastPart, 6);
-      setSuggestions(s);
-      setShowSuggestions(s.length > 0);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
+    return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 6) : [];
   }, [nlInput]);
+  const showSuggestions = suggestionsActive && suggestions.length > 0;
 
   const handleSuggestionSelect = (suggestion: FoodSuggestion) => {
     // Replace the last segment with the selected suggestion
@@ -231,7 +223,7 @@ export default function Log() {
     const prefix = qtyMatch ? qtyMatch[1] + " " : "";
     parts[parts.length - 1] = " " + prefix + suggestion.name.toLowerCase();
     setNlInput(parts.join(",").trim());
-    setShowSuggestions(false);
+    setSuggestionsActive(false);
   };
 
   const handleNLParse = async () => {
@@ -616,10 +608,10 @@ export default function Log() {
               <textarea
                 value={nlInput}
                 onChange={(e) => setNlInput(e.target.value)}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                onFocus={() => setSuggestionsActive(true)}
                 onBlur={() => {
                   // Delay hiding so click on suggestion registers
-                  setTimeout(() => setShowSuggestions(false), 200);
+                  setTimeout(() => setSuggestionsActive(false), 200);
                 }}
                 placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
                 rows={2}
