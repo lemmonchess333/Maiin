@@ -21,7 +21,21 @@ function getQueue(): QueuedWrite[] {
 }
 
 function saveQueue(queue: QueuedWrite[]) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  } catch (e: unknown) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      // Drop oldest half and retry
+      const trimmed = queue.slice(Math.floor(queue.length / 2));
+      console.warn(`[OfflineQueue] Quota exceeded, dropping ${queue.length - trimmed.length} oldest items`);
+      try {
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(trimmed));
+      } catch {
+        // Last resort: clear the queue entirely
+        localStorage.removeItem(QUEUE_KEY);
+      }
+    }
+  }
 }
 
 export function queueWrite(

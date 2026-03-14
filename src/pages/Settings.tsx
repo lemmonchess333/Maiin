@@ -1126,7 +1126,7 @@ export default function Settings() {
               ))}
               {currentCrew && (
                 <button
-                  onClick={async () => { await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
+                  onClick={async () => { if (!window.confirm('Leave this crew? You can rejoin later.')) return; await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
                   className="w-full text-center text-[11px] text-muted-foreground hover:text-red-400 py-1"
                 >
                   Leave crew

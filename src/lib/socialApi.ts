@@ -123,7 +123,12 @@ export async function postActivity(activity: {
       addDoc(collection(db, 'feeds', followerDoc.id, 'items'), feedItem)
     );
     promises.push(addDoc(collection(db, 'feeds', activity.authorId, 'items'), feedItem));
-    await Promise.all(promises);
+    // Use allSettled so partial fan-out failures don't block the entire post
+    const results = await Promise.allSettled(promises);
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+      console.warn(`[postActivity] ${failed.length}/${results.length} feed writes failed`);
+    }
   }
 
   return activityRef.id;

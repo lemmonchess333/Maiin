@@ -48,7 +48,16 @@ export function useRunningStats(days: number = 30) {
 
       snap.docs.forEach(d => {
         const data = d.data();
-        const date = data.completedAt?.toDate?.();
+        let date: Date | undefined;
+        if (data.completedAt instanceof Timestamp) {
+          date = data.completedAt.toDate();
+        } else if (data.completedAt instanceof Date) {
+          date = data.completedAt;
+        } else if (typeof data.completedAt === 'number') {
+          date = new Date(data.completedAt);
+        } else if (data.completedAt?.toDate) {
+          date = data.completedAt.toDate();
+        }
         if (!date) return;
 
         // Individual run entry

@@ -39,13 +39,13 @@ function safeRatio(current: number, baseline: number): number {
 
 export function computeBaseline(priorWeeks: WeeklyAggregates[]): Baseline {
   const valid = priorWeeks.filter((w) => w.liftSessions > 0 || w.runSessions > 0);
-  const n = valid.length || 1;
+  const n = valid.length;
   return {
-    liftTonnage: valid.reduce((s, w) => s + w.liftTonnage, 0) / n,
-    liftHardSets: valid.reduce((s, w) => s + w.liftHardSets, 0) / n,
-    runKm: valid.reduce((s, w) => s + w.runKm, 0) / n,
-    runLongKm: valid.reduce((s, w) => s + w.runLongKm, 0) / n,
-    weeksUsed: valid.length,
+    liftTonnage: n > 0 ? valid.reduce((s, w) => s + w.liftTonnage, 0) / n : 0,
+    liftHardSets: n > 0 ? valid.reduce((s, w) => s + w.liftHardSets, 0) / n : 0,
+    runKm: n > 0 ? valid.reduce((s, w) => s + w.runKm, 0) / n : 0,
+    runLongKm: n > 0 ? valid.reduce((s, w) => s + w.runLongKm, 0) / n : 0,
+    weeksUsed: n,
   };
 }
 

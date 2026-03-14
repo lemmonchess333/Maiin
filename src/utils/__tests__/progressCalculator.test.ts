@@ -20,10 +20,10 @@ describe("calculateProgress", () => {
 
   it("adjusts calories based on weight change", () => {
     // Weight trend of [0.5, 0.5] = 1.0 total change
-    // Base for recomp: 2200 + 1.0 * 20 = 2220
+    // Base for recomp: 2200 + round((1.0 * 7700) / 7) = 2200 + 1100 = 3300
     const result = calculateProgress({ bodyweightTrend: [0.5, 0.5], userGoal: "recomp" });
     expect(result.weightChange).toBe(1.0);
-    expect(result.calorieBase).toBe(2220);
+    expect(result.calorieBase).toBe(3300);
   });
 
   it("calculates macros as 40/40/20 split", () => {
@@ -36,8 +36,8 @@ describe("calculateProgress", () => {
 
   it("handles negative weight trend", () => {
     const result = calculateProgress({ bodyweightTrend: [-0.5, -0.5], userGoal: "cut" });
-    // cut: 2200 - 300 = 1900, weight change = -1.0, adjust = -20
+    // cut: 2200 - 300 = 1900, weight change = -1.0, adjust = round((-1.0 * 7700) / 7) = -1100
     expect(result.weightChange).toBe(-1.0);
-    expect(result.calorieBase).toBe(1880);
+    expect(result.calorieBase).toBe(800);
   });
 });
