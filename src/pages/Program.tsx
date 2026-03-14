@@ -98,7 +98,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
   // Save feedback states
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
-  const [weightFlash, setWeightFlash] = useState<"up" | "down" | null>(null);
   const [showPlateCalc, setShowPlateCalc] = useState(false);
   const [programView, setProgramView] = useState<'program' | 'calendar'>('program');
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
@@ -247,16 +246,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       setSavingState("idle");
       closeDrawer();
     }, 800);
-  };
-
-  const handleWeightOverride = async (newWeight: number) => {
-    if (!drawerExercise) return;
-    await updateExercise(drawerExercise.dayIndex, drawerExercise.exIndex, { weight: newWeight });
-    // Update drawer state to show new weight without closing
-    setDrawerExercise({
-      ...drawerExercise,
-      exercise: { ...drawerExercise.exercise, weight: newWeight },
-    });
   };
 
   const handleSetsChange = async (delta: number) => {
@@ -588,7 +577,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb bg-background border-t border-border shadow-xl"
             >
-              <div className="max-w-md mx-auto p-5 space-y-4">
+              <div className="max-w-md mx-auto p-5 space-y-3">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
                 <div className="flex items-center justify-between">
@@ -644,12 +633,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                   ];
                   const passed = last.repsCompleted >= last.repsTarget;
                   return (
-                    <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-                      <p className="text-xs font-medium text-muted-foreground">Previous Session</p>
+                    <div className="rounded-lg p-3 space-y-1 border border-border bg-muted/30">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{last.date}</span>
+                        <p className="text-xs font-medium text-muted-foreground">Previous Session</p>
                         <span
-                          className="text-xs font-medium px-2 py-0.5 rounded-full"
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
                           style={passed
                             ? { backgroundColor: `${THEME.success}18`, color: THEME.success }
                             : { backgroundColor: `${THEME.danger}18`, color: THEME.danger }
@@ -658,13 +646,16 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                           {passed ? "Pass" : "Fail"}
                         </span>
                       </div>
-                      <div className="flex gap-4 text-sm">
+                      <div className="flex items-center gap-3 text-sm">
                         <span className="text-foreground font-medium">
                           {last.weight > 0 ? `${last.weight}kg` : "BW"}
                         </span>
+                        <span className="text-muted-foreground">·</span>
                         <span className="text-foreground">
                           {last.repsCompleted}/{last.repsTarget} reps
                         </span>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">{last.date}</span>
                       </div>
                     </div>
                   );
@@ -681,7 +672,10 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       if (lastPerf && lastPerf.repsCompleted >= lastPerf.repsTarget) {
                         const inc = getProgressionIncrement(drawerExercise.exercise);
                         return (
-                          <span className="text-[10px] font-medium text-green-500 bg-green-50 px-1.5 py-0.5 rounded-full">
+                          <span
+                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                            style={{ backgroundColor: `${THEME.success}18`, color: THEME.success }}
+                          >
                             +{inc}kg auto-fill
                           </span>
                         );
@@ -758,39 +752,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     : "Save Performance"}
                 </button>
 
-                {/* Manual weight override */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setWeightFlash("down");
-                      handleWeightOverride(Math.max(0, drawerExercise.exercise.weight - 2.5));
-                      setTimeout(() => setWeightFlash(null), 600);
-                    }}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                      weightFlash === "down"
-                        ? "bg-red-100 text-red-600 border border-red-200"
-                        : "bg-muted text-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    -2.5kg
-                  </button>
-                  <button
-                    onClick={() => {
-                      setWeightFlash("up");
-                      handleWeightOverride(drawerExercise.exercise.weight + 2.5);
-                      setTimeout(() => setWeightFlash(null), 600);
-                    }}
-                    className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                      weightFlash === "up"
-                        ? "bg-green-100 text-green-600 border border-green-200"
-                        : "bg-muted text-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    +2.5kg
-                  </button>
-                </div>
               </div>
             </motion.div>
           </>
