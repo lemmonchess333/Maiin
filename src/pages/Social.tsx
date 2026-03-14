@@ -258,7 +258,7 @@ export default function Social() {
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
-              className="w-full py-3 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
+              className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
               Sync Contacts
             </button>
           </div>

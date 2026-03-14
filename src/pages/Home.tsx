@@ -310,9 +310,9 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
 }) {
   const allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
   const stats = [
-    { label: "Sessions", value: String(liftSessions + runSessions), color: THEME.brand },
-    { label: "Volume", value: liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "k kg" : Math.round(liftTonnage) + "kg", color: THEME.lifting },
-    { label: "Distance", value: runKm.toFixed(1) + "km", color: THEME.running },
+    { label: "Sessions", value: liftSessions + runSessions > 0 ? String(liftSessions + runSessions) : "\u2014", color: THEME.brand },
+    { label: "Volume", value: liftTonnage > 0 ? (liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "k kg" : Math.round(liftTonnage) + "kg") : "\u2014", color: THEME.lifting },
+    { label: "Distance", value: runKm > 0 ? runKm.toFixed(1) + "km" : "\u2014", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
   return (
