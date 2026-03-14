@@ -606,8 +606,8 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3 border-b border-border">
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <svg width="28" height="28" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+          <div className="flex items-center gap-2.5">
+            <svg width="34" height="34" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
               <defs>
                 <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor={THEME.brandLight}/>
@@ -617,7 +617,7 @@ export default function Home() {
               <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
               <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
             </svg>
-            <span className="text-lg font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
+            <span className="text-xl font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
           </div>
           <span className="text-sm text-muted-foreground mt-0.5">
             {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}

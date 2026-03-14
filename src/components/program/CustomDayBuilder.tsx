@@ -137,7 +137,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                         </div>
                         <button
                           onClick={() => removeExercise(i)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors shrink-0 self-center"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
