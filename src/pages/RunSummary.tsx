@@ -59,7 +59,7 @@ export default function RunSummary() {
           completedAt: data.completedAt?.toDate?.() ?? new Date(),
         };
       });
-      const currentRun = { distance: state.distance, avgPace: state.elapsed > 0 ? (state.elapsed / state.distance) * 1000 : 0, completedAt: new Date() };
+      const currentRun = { distance: state.distance, avgPace: state.elapsed > 0 && state.distance > 0 ? (state.elapsed / state.distance) * 1000 : 0, completedAt: new Date() };
       setPaceTrend(calculatePaceTrend(currentRun, allRuns));
     })();
   }, [user, state]);
@@ -73,7 +73,7 @@ export default function RunSummary() {
   const points = applyPrivacyZones(rawPoints, privacyZones);
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
-  const avgPaceSeconds = elapsed > 0 ? (elapsed / distance) * 1000 : 0;
+  const avgPaceSeconds = elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(points, distance);
 
   const handleSave = async () => {

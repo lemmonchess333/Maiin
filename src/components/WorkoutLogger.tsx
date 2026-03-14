@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts";
@@ -97,7 +97,8 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
   ) => {
     setExercises((prev) => {
       const updated = [...prev];
-      updated[exerciseIndex].sets[setIndex][field] = value;
+      const clamped = Math.max(0, Math.min(field === "reps" ? 100 : 999, value));
+      updated[exerciseIndex].sets[setIndex][field] = clamped;
       updated[exerciseIndex].caloriesBurned = calculateExerciseCalories(
         updated[exerciseIndex].exerciseId,
         updated[exerciseIndex].sets,
@@ -128,47 +129,76 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
   const handleSave = async () => {
     if (exercises.length === 0) return;
+
+    // Validate cardio exercises have duration
+    const invalidCardio = exercises.filter(e => isCardio(e.category) && !e.durationMinutes);
+    if (invalidCardio.length > 0) {
+      const { toast } = await import("sonner");
+      toast.error("Enter a duration for cardio exercises");
+      return;
+    }
+
+    // Filter out strength exercises with no sets
+    const validExercises = exercises.filter(e => isCardio(e.category) || e.sets.length > 0);
+    if (validExercises.length === 0) return;
+    if (validExercises.length < exercises.length) {
+      const { toast } = await import("sonner");
+      toast.warning("Removed exercises with no sets");
+    }
+
     setSaving(true);
 
-    const durationEstimate = exercises.reduce((sum, e) => {
+    const durationEstimate = validExercises.reduce((sum, e) => {
       if (isCardio(e.category)) return sum + (e.durationMinutes || 0);
       return sum + e.sets.length * 2.5;
     }, 0);
 
-    await saveWorkout({
-      date,
-      exercises,
-      totalCalories,
-      durationMinutes: Math.round(durationEstimate),
-      notes,
-    });
+    try {
+      await saveWorkout({
+        date,
+        exercises: validExercises,
+        totalCalories,
+        durationMinutes: Math.round(durationEstimate),
+        notes,
+      });
 
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      setExercises([]);
-      setNotes("");
-      onSaved?.();
-    }, 1500);
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        setExercises([]);
+        setNotes("");
+        onSaved?.();
+      }, 1500);
+    } catch {
+      setSaving(false);
+      const { toast } = await import("sonner");
+      toast.error("Failed to save workout. Please try again.");
+    }
   };
 
-  const filteredExercises = searchQuery
-    ? getExercisesByCategory(selectedCategory).filter((e) =>
-        e.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : getExercisesByCategory(selectedCategory);
+  const filteredExercises = useMemo(() =>
+    searchQuery
+      ? getExercisesByCategory(selectedCategory).filter((e) =>
+          e.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : getExercisesByCategory(selectedCategory),
+    [searchQuery, selectedCategory]
+  );
 
-  const allFiltered = searchQuery
-    ? (() => {
-        const q = searchQuery.toLowerCase();
-        return EXERCISE_CATEGORIES.flatMap((cat) =>
-          getExercisesByCategory(cat).filter((e) =>
-            e.name.toLowerCase().includes(q)
-          )
-        );
-      })()
-    : null;
+  const allFiltered = useMemo(() =>
+    searchQuery
+      ? (() => {
+          const q = searchQuery.toLowerCase();
+          return EXERCISE_CATEGORIES.flatMap((cat) =>
+            getExercisesByCategory(cat).filter((e) =>
+              e.name.toLowerCase().includes(q)
+            )
+          );
+        })()
+      : null,
+    [searchQuery]
+  );
 
   return (
     <div className="space-y-4">

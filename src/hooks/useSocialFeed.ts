@@ -94,7 +94,7 @@ export function useSocialFeed(highlightsOnly = false) {
         setItems(prev => [...prev, ...enriched]);
       }
       lastDocRef.current = result.lastDoc;
-      setHasMore(feedItems.length === 20);
+      setHasMore(feedItems.length >= 20);
     } catch (e) {
       console.error('Feed error:', e);
     }

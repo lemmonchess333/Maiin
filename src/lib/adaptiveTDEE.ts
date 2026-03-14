@@ -82,8 +82,9 @@ export function calculateAdaptiveTDEE(
   const avgDailyCalories =
     recentCalories.reduce((s, m) => s + m.calories, 0) / Math.max(recentCalories.length, 1);
 
-  // Weight trend (daily slope)
-  const recentWeights = weightLogs.slice(0, 14);
+  // Weight trend (daily slope) — sort chronologically for correct slope
+  const recentWeights = weightLogs.slice(0, 14)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const dailySlope = linearTrend(recentWeights);
   const weeklyWeightChange = dailySlope * 7;
 

@@ -115,14 +115,14 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                             <input
                               type="number"
                               value={ex.sets}
-                              onChange={(e) => updateField(i, "sets", Math.max(1, Number(e.target.value) || 1))}
+                              onChange={(e) => updateField(i, "sets", Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
                               className="w-12 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center"
                             />
                             <label className="text-[10px] text-muted-foreground">Reps</label>
                             <input
                               type="number"
                               value={ex.reps}
-                              onChange={(e) => updateField(i, "reps", Math.max(1, Number(e.target.value) || 1))}
+                              onChange={(e) => updateField(i, "reps", Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
                               className="w-12 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center"
                             />
                             <label className="text-[10px] text-muted-foreground">kg</label>
