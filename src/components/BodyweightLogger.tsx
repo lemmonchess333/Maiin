@@ -127,10 +127,10 @@ export default function BodyweightLogger() {
     setSaving(false);
   }
 
-  // Deduplicate by date for trend calculation (keep latest per date)
+  // Deduplicate by date for trend calculation (keep last entry per date)
   const uniqueDateLogs = Object.values(
     recentLogs.reduce((acc, log) => {
-      if (!acc[log.date] || log.id > acc[log.date].id) acc[log.date] = log;
+      acc[log.date] = log;
       return acc;
     }, {} as Record<string, WeightLog>)
   ).sort((a, b) => b.date.localeCompare(a.date));

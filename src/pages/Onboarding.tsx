@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
-import type { FitnessGoal } from "@/lib/tdee";
+import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { generateSchedule, DAY_LABELS } from "@/lib/scheduleUtils";
 import type { DayType } from "@/lib/scheduleUtils";
 import { THEME } from "@/lib/theme";
@@ -61,9 +61,16 @@ export default function Onboarding() {
   const [age, setAge] = useState(28);
   const [selectedGoal, setSelectedGoal] = useState<"cut" | "lean bulk" | "recomp">("recomp");
 
+  const activityLevel = useMemo((): ActivityLevel => {
+    const totalDays = liftDays + runDays;
+    if (totalDays >= 5) return "very_active";
+    if (totalDays >= 3) return "moderate";
+    return "light";
+  }, [liftDays, runDays]);
+
   const tdee = useMemo(
-    () => calculateTDEE(weightKg, heightCm, age, "moderate", selectedGoal as FitnessGoal, sex),
-    [weightKg, heightCm, age, selectedGoal, sex]
+    () => calculateTDEE(weightKg, heightCm, age, activityLevel, selectedGoal as FitnessGoal, sex),
+    [weightKg, heightCm, age, activityLevel, selectedGoal, sex]
   );
 
   // If no run days, skip the run preferences step
