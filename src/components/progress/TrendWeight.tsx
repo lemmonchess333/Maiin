@@ -137,6 +137,7 @@ export function TrendWeight() {
           <ComposedChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <XAxis
               dataKey="date"
+              allowDuplicatedCategory={false}
               tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               tickFormatter={(v) => {
                 const d = new Date(v);

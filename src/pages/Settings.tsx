@@ -698,10 +698,8 @@ export default function Settings() {
         onClick={handleSave}
         disabled={saving}
         className={cn(
-          "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50",
-          hasAnyUnsavedChanges
-            ? "bg-primary text-primary-foreground hover:bg-primary/90"
-            : "bg-muted text-muted-foreground"
+          "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors bg-purple-600 text-white font-semibold hover:bg-purple-700",
+          !hasAnyUnsavedChanges && "opacity-50 cursor-not-allowed"
         )}
       >
         {saved ? (

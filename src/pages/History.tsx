@@ -232,7 +232,7 @@ export default function History() {
   }, [meals, rangeDays]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       <h1 className="text-lg font-bold text-foreground">Analytics</h1>
 
       <div className="relative">
@@ -297,7 +297,7 @@ export default function History() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Weekly Distance"
-                  value={runningTotals.runDistance.toFixed(1)}
+                  value={runningTotals.runDistance > 0 ? runningTotals.runDistance.toFixed(1) : "--"}
                   unit="km"
                   sparklineData={weeklyData
                     .map((w) => w.totalDistance)
@@ -350,7 +350,7 @@ export default function History() {
                 <StatCard
                   label="Weekly Volume"
                   value={liftingData.liftVolume >= 1000 ? (liftingData.liftVolume / 1000).toFixed(1) + "k" : String(Math.round(liftingData.liftVolume))}
-                  unit="kg"
+                  unit={liftingData.liftVolume >= 1000 ? "" : "kg"}
                   accentColor={THEME.lifting}
                 />
                 <StatCard
