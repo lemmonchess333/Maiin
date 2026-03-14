@@ -15,8 +15,8 @@ import FoodSearch from "@/components/FoodSearch";
 import { useMeals } from "@/hooks/useMeals";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { parseFoodText } from "@/lib/nlFoodParser";
-import type { ParsedFood } from "@/lib/nlFoodParser";
+import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
+import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -62,6 +62,9 @@ export default function Log() {
   const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
+  const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
@@ -204,6 +207,32 @@ export default function Log() {
 
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
 
+  // Compute food suggestions as user types
+  useEffect(() => {
+    // Get the last segment (after the last comma) for suggestions
+    const parts = nlInput.split(/,/);
+    const lastPart = (parts[parts.length - 1] || "").trim();
+    if (lastPart.length >= 2) {
+      const s = getFoodSuggestions(lastPart, 6);
+      setSuggestions(s);
+      setShowSuggestions(s.length > 0);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [nlInput]);
+
+  const handleSuggestionSelect = (suggestion: FoodSuggestion) => {
+    // Replace the last segment with the selected suggestion
+    const parts = nlInput.split(/,/);
+    // Preserve leading quantity if present
+    const lastPart = (parts[parts.length - 1] || "").trim();
+    const qtyMatch = lastPart.match(/^(\d+(?:\.\d+)?)\s*/);
+    const prefix = qtyMatch ? qtyMatch[1] + " " : "";
+    parts[parts.length - 1] = " " + prefix + suggestion.name.toLowerCase();
+    setNlInput(parts.join(",").trim());
+    setShowSuggestions(false);
+  };
 
   const handleNLParse = async () => {
     if (!nlInput.trim() || !user) return;
@@ -583,13 +612,40 @@ export default function Log() {
             <p className="text-sm font-medium text-foreground">Add Food</p>
 
             {/* Quick Add — always visible */}
-            <textarea
-              value={nlInput}
-              onChange={(e) => setNlInput(e.target.value)}
-              placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+            <div className="relative">
+              <textarea
+                value={nlInput}
+                onChange={(e) => setNlInput(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                onBlur={() => {
+                  // Delay hiding so click on suggestion registers
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                >
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSuggestionSelect(s)}
+                      className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+                    >
+                      <span className="text-sm font-medium text-foreground">{s.name}</span>
+                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                        {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={handleNLParse}
               disabled={!nlInput.trim() || nlParsing}
