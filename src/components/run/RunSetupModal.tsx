@@ -298,7 +298,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         >
           {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
         </button>
-        <button onClick={() => setShowTypeSheet(v => !v)} className="text-sm text-gray-400 underline mt-2 block mx-auto">
+        <button onClick={() => setShowTypeSheet(v => !v)} className="text-sm text-muted-foreground underline mt-2 block mx-auto hover:text-foreground transition-colors">
           Change type ({ACTIVITY_TYPES.find(a => a.type === config.activityType)?.label || 'Easy'})
         </button>
 

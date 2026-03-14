@@ -129,9 +129,9 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
               entry.uid === user?.uid ? 'bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800' : ''
             }`}>
             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-              entry.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-              entry.rank === 2 ? 'bg-gray-200 text-gray-600' :
-              entry.rank === 3 ? 'bg-orange-100 text-orange-600' : 'bg-muted text-muted-foreground'
+              entry.rank === 1 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+              entry.rank === 2 ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
+              entry.rank === 3 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-muted text-muted-foreground'
             }`}>
               {entry.rank}
             </span>

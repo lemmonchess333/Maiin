@@ -1,5 +1,6 @@
 import { THEME } from '@/lib/theme';
 import { Footprints, Dumbbell, UtensilsCrossed } from 'lucide-react';
+import { formatVolumeSub } from '@/utils/formatters';
 
 interface WeeklyOverviewProps {
   runCount: number;
@@ -34,7 +35,7 @@ export default function WeeklyOverview({
     },
     {
       icon: <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />,
-      label: 'Sessions', value: liftCount, sub: `${liftVolume >= 1000 ? (liftVolume / 1000).toFixed(1) + "k" : Math.round(liftVolume) + "kg"} vol`,
+      label: 'Sessions', value: liftCount, sub: formatVolumeSub(liftVolume),
       color: THEME.lifting, ringVal: liftCount, ringMax: 5,
     },
     {

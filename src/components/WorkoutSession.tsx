@@ -16,7 +16,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 
 function playChime() {
   try {
@@ -305,7 +305,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     if (set.weight > 0 && set.weight > (allTimeBests[exName] || 0) && !firedPRs.has(exName)) {
       setFiredPRs((prev) => new Set(prev).add(exName));
       setAllTimeBests((prev) => ({ ...prev, [exName]: set.weight }));
-      confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      lazyConfetti().then(confetti => confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } }));
       toast.success(`New PR! ${set.weight}kg on ${exName}`);
     }
 
@@ -440,14 +440,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         {stallExercise && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
             <div className="absolute inset-0 bg-black/40" onClick={() => setStallExercise(null)} />
-            <div className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full" style={{
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+            <div className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full bg-card/95 backdrop-blur-xl border border-border/50" style={{
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             }}>
-              <h3 className="text-lg font-bold text-gray-900">Plateau detected</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-bold text-foreground">Plateau detected</h3>
+              <p className="text-sm text-muted-foreground">
                 You've been at {stallExercise.weight}kg on {stallExercise.name} for 3 sessions.
                 A small calorie increase (~150 cal/day) could help you break through.
               </p>
@@ -471,7 +468,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     localStorage.setItem(`tropos_stall_${stallExercise.name}`, String(Date.now()));
                     setStallExercise(null);
                   }}
-                  className="px-4 py-2.5 text-sm text-gray-500"
+                  className="px-4 py-2.5 text-sm text-muted-foreground"
                 >
                   Not now
                 </button>
