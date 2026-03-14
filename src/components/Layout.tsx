@@ -16,7 +16,14 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background transition-colors pb-20">
-      <main className="max-w-md mx-auto px-4 py-6">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium"
+      >
+        Skip to content
+      </a>
+
+      <main id="main-content" className="max-w-md mx-auto px-4 py-6">
         <Outlet />
       </main>
 

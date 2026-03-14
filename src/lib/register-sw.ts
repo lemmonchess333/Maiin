@@ -8,6 +8,11 @@ export function registerServiceWorker() {
         .then((registration) => {
           console.log("SW registered:", registration.scope);
 
+          // Check for updates every 60 minutes
+          setInterval(() => {
+            registration.update().catch(() => {});
+          }, 60 * 60 * 1000);
+
           registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;
             if (newWorker) {

@@ -15,9 +15,10 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action, accentColor = '#8b5cf6' }: EmptyStateProps) {
   return (
-    <div className="text-center py-12 px-6 space-y-4">
+    <div className="text-center py-12 px-6 space-y-4" role="status">
       <div
         className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+        aria-hidden="true"
         style={{ background: `${accentColor}15`, border: `1px solid ${accentColor}25` }}
       >
         <div style={{ color: accentColor }}>{icon}</div>

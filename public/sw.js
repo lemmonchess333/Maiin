@@ -1,6 +1,6 @@
-const CACHE_NAME = "tropos-v3";
+const CACHE_NAME = "tropos-v4";
 const BASE_PATH = "/Maiin/";
-const MAX_CACHE_ENTRIES = 100;
+const MAX_CACHE_ENTRIES = 150;
 
 const STATIC_ASSETS = [
   BASE_PATH,
@@ -62,7 +62,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Stale-while-revalidate for fonts and images
-  if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico)$/)) {
+  if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico|avif)$/)) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(event.request);
@@ -123,4 +123,11 @@ self.addEventListener("fetch", (event) => {
         });
       })
   );
+});
+
+// Handle messages from clients
+self.addEventListener("message", (event) => {
+  if (event.data === "skipWaiting") {
+    self.skipWaiting();
+  }
 });

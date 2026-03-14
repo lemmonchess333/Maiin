@@ -40,8 +40,9 @@ const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center py-12">
-      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="flex items-center justify-center py-12" role="status" aria-label="Loading page">
+      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+      <span className="sr-only">Loading...</span>
     </div>
   );
 }
@@ -75,9 +76,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div className="min-h-screen bg-background flex items-center justify-center px-6" role="alert">
           <div className="text-center space-y-4 max-w-sm w-full">
-            <p className="text-4xl">Warning</p>
+            <p className="text-4xl" aria-hidden="true">Warning</p>
             <h1 className="text-lg font-bold text-foreground">Something went wrong</h1>
 
             <p className="text-sm text-muted-foreground break-words">
@@ -123,8 +124,9 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading application">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+        <span className="sr-only">Loading Tropos...</span>
       </div>
     );
   }
