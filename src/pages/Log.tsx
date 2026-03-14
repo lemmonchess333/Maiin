@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
@@ -9,8 +9,8 @@ import { addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-import WorkoutLogger from "@/components/WorkoutLogger";
-import { ManualFoodLogger } from "@/components/ManualFoodLogger";
+const WorkoutLogger = lazy(() => import("@/components/WorkoutLogger"));
+const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
 import FoodSearch from "@/components/FoodSearch";
 import { useMeals } from "@/hooks/useMeals";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
@@ -32,7 +32,7 @@ import {
   ScanBarcode,
   Footprints,
 } from "lucide-react";
-import FoodAnalyzer from "@/components/FoodAnalyzer";
+const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
@@ -384,7 +384,9 @@ export default function Log() {
             </div>
           )}
 
-          <WorkoutLogger date={selectedDate} onSaved={handleWorkoutSaved} />
+          <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading workout tracker...</div>}>
+            <WorkoutLogger date={selectedDate} onSaved={handleWorkoutSaved} />
+          </Suspense>
         </div>
       )}
 
@@ -580,10 +582,14 @@ export default function Log() {
               <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode(null)} />
             )}
             {foodMode === "scan" && (
-              <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode(null)} />
+              <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
+                <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode(null)} />
+              </Suspense>
             )}
             {foodMode === "manual" && (
-              <ManualFoodLogger date={selectedDate} />
+              <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading food logger...</div>}>
+                <ManualFoodLogger date={selectedDate} />
+              </Suspense>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
@@ -7,17 +7,18 @@ import { THEME } from "@/lib/theme";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
-import VolumeChart from "@/components/analytics/VolumeChart";
-import MuscleHeatMap from "@/components/analytics/MuscleHeatMap";
 import PRCard from "@/components/analytics/PRCard";
-import RunningHistorySection from "@/components/run/RunningHistorySection";
-import PerformanceTab from "@/components/analytics/PerformanceTab";
-import { BadgeGrid } from "@/features/streaks/BadgeGrid";
-import { TrendWeight } from "@/components/progress/TrendWeight";
-import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
 import { Footprints, Trophy } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { formatVolume, formatDistance } from "@/utils/formatters";
+
+const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
+const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
+const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
+const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
+const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
+const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
+const WeeklyEnergyChart = lazy(() => import("@/components/progress/WeeklyEnergyChart").then(m => ({ default: m.WeeklyEnergyChart })));
 
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
@@ -264,6 +265,7 @@ export default function History() {
         <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
       </div>
 
+      <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
         <BadgeGrid />
       ) : filter === "performance" ? (
@@ -452,6 +454,7 @@ export default function History() {
           )}
         </>
       )}
+      </Suspense>
     </div>
   );
 }
