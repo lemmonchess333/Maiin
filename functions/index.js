@@ -91,6 +91,92 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
 });
 
 // ══════════════════════════════════════════════
+// AI TEXT FOOD PARSING (Pro feature)
+// ══════════════════════════════════════════════
+
+exports.analyzeFoodText = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method not allowed" });
+        return;
+      }
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const token = authHeader.split("Bearer ")[1];
+      await admin.auth().verifyIdToken(token);
+
+      const { text } = req.body;
+      if (!text || !text.trim()) {
+        res.status(400).json({ error: "No text provided" });
+        return;
+      }
+
+      const projectId = process.env.GCLOUD_PROJECT;
+      const accessToken = await admin.credential.applicationDefault().getAccessToken();
+
+      const prompt = `You are a nutrition expert. Parse this food description and estimate accurate macronutrient values per serving.
+Return ONLY a valid JSON object with this exact format, no other text:
+{"foodName": "short summary name", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}
+
+Be accurate with calorie and macro estimates. Use standard serving sizes unless the user specifies a quantity.
+
+Food description: "${text.replace(/"/g, '\\"')}"`;
+
+      const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" + projectId + "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + accessToken.access_token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Vertex AI error:", JSON.stringify(data));
+        res.status(500).json({ error: "AI service error" });
+        return;
+      }
+
+      let responseText = "";
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+        responseText = data.candidates[0].content.parts[0].text;
+      } else {
+        console.error("Unexpected response format:", JSON.stringify(data));
+        res.status(500).json({ error: "Unexpected AI response format" });
+        return;
+      }
+
+      const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const nutrition = JSON.parse(cleaned);
+
+      res.status(200).json(nutrition);
+    } catch (error) {
+      console.error("Error analyzing food text:", error);
+      res.status(500).json({ error: "Failed to analyze food description" });
+    }
+  });
+});
+
+// ══════════════════════════════════════════════
 // PERFORMANCE ENGINE
 // ══════════════════════════════════════════════
 

@@ -51,10 +51,10 @@ describe("parseFoodText", () => {
   });
 
   it("returns zero macros for unknown food", () => {
-    const result = parseFoodText("sushi");
+    const result = parseFoodText("xylophone");
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
-      name: "Sushi",
+      name: "Xylophone",
       calories: 0,
       protein: 0,
       carbs: 0,
