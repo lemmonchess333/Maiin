@@ -2,6 +2,7 @@ import { useState } from "react";
 import { auth } from "@/lib/firebase";
 
 const FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFood";
+const TEXT_FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFoodText";
 
 export interface FoodItem {
   name: string;
@@ -64,10 +65,32 @@ export function useFoodAnalysis() {
     }
   };
 
+  const analyzeFoodText = async (text: string): Promise<FoodAnalysis | null> => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return null;
+
+      const token = await user.getIdToken();
+      const response = await fetch(TEXT_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    }
+  };
+
   const reset = () => {
     setResult(null);
     setError(null);
   };
 
-  return { analyzeFood, loading, error, result, reset };
+  return { analyzeFood, analyzeFoodText, loading, error, result, reset };
 }

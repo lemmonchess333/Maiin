@@ -16,6 +16,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText } from "@/lib/nlFoodParser";
+import type { ParsedFood } from "@/lib/nlFoodParser";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -31,10 +32,13 @@ import {
   Cookie,
   ScanBarcode,
   Footprints,
+  Sparkles,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import { useSubscription } from "@/lib/subscription";
+import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 
 export default function Log() {
   const { user, profile, updateProfile } = useAuth();
@@ -59,6 +63,8 @@ export default function Log() {
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const { addFavourite } = useFoodFavourites();
+  const { isPro } = useSubscription();
+  const { analyzeFoodText } = useFoodAnalysis();
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +93,7 @@ export default function Log() {
       }
     }
     return Array.from(freq.values())
+      .filter((v) => v.count >= 3)
       .sort((a, b) => b.count - a.count)
       .slice(0, 6)
       .map((v) => v.meal);
@@ -201,12 +208,51 @@ export default function Log() {
   const handleNLParse = async () => {
     if (!nlInput.trim() || !user) return;
     setNlParsing(true);
-    const items = parseFoodText(nlInput);
+
+    let items: ParsedFood[];
+    let confidence: string;
+
+    if (isPro) {
+      try {
+        const result = await analyzeFoodText(nlInput);
+        if (result && result.items?.length > 0) {
+          items = result.items.map((i) => ({
+            name: i.name,
+            calories: i.calories,
+            protein: i.protein,
+            carbs: i.carbs,
+            fat: i.fat,
+          }));
+          confidence = "ai-parse";
+        } else {
+          items = parseFoodText(nlInput);
+          confidence = "nl-parse";
+        }
+      } catch {
+        items = parseFoodText(nlInput);
+        confidence = "nl-parse";
+      }
+    } else {
+      items = parseFoodText(nlInput);
+      confidence = "nl-parse";
+    }
+
     if (items.length === 0) {
       toast.error("Could not parse any foods. Try a different description.");
       setNlParsing(false);
       return;
     }
+
+    // Zero-calorie warning for local parser results
+    if (confidence === "nl-parse") {
+      const zeroItems = items.filter((i) => i.calories === 0);
+      if (zeroItems.length > 0) {
+        toast.warning(
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try Search for accurate data.`
+        );
+      }
+    }
+
     const totalCalories = items.reduce((s, i) => s + i.calories, 0);
     const totalProtein = items.reduce((s, i) => s + i.protein, 0);
     const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
@@ -227,7 +273,7 @@ export default function Log() {
       totalProtein,
       totalCarbs,
       totalFat,
-      confidence: "nl-parse",
+      confidence,
       createdAt: Timestamp.now(),
     });
     setNlInput("");
@@ -548,12 +594,18 @@ export default function Log() {
               onClick={handleNLParse}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-lg text-sm font-semibold transition-all active:scale-[0.97] bg-purple-600 text-white",
+                "w-full py-3 rounded-lg text-sm font-semibold transition-all active:scale-[0.97] bg-purple-600 text-white flex items-center justify-center gap-1.5",
                 (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
             >
-              {nlParsing ? "Parsing..." : "Log Meal"}
+              {isPro && <Sparkles className="w-3.5 h-3.5" />}
+              {nlParsing ? "Analyzing..." : "Log Meal"}
             </button>
+            {!isPro && (
+              <p className="text-[10px] text-muted-foreground text-center">
+                Upgrade to Pro for AI-powered macro estimates
+              </p>
+            )}
 
             {/* Secondary actions row */}
             <div className="flex gap-2">
