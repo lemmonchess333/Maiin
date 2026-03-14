@@ -251,11 +251,18 @@ const FOOD_DB: Record<string, Macros> = {
 /**
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
  * Also handles "a" and "an" as qty=1.
+ * Handles missing spaces: "2chocolate" → { qty: 2, rest: "chocolate" }
  */
 function extractQty(segment: string): { qty: number; rest: string } {
+  // "2 eggs" or "2.5 servings"
   const match = segment.match(/^(\d+(?:\.\d+)?)\s+(.+)/);
   if (match) {
     return { qty: parseFloat(match[1]), rest: match[2].trim() };
+  }
+  // "2chocolate" — number glued to text (no space)
+  const gluedMatch = segment.match(/^(\d+(?:\.\d+)?)([a-zA-Z].*)$/);
+  if (gluedMatch) {
+    return { qty: parseFloat(gluedMatch[1]), rest: gluedMatch[2].trim() };
   }
   // "a slice of toast" → qty=1, rest="slice of toast"
   const aMatch = segment.match(/^an?\s+(.+)/i);
@@ -266,7 +273,36 @@ function extractQty(segment: string): { qty: number; rest: string } {
 }
 
 /**
+ * Simple Levenshtein distance for fuzzy matching.
+ */
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+/** Strip common plural suffixes: "bars" → "bar", "cookies" → "cookie" */
+function depluralize(word: string): string {
+  if (word.endsWith("ies") && word.length > 4) return word.slice(0, -3) + "y";
+  if (word.endsWith("es") && word.length > 3) return word.slice(0, -2);
+  if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3) return word.slice(0, -1);
+  return word;
+}
+
+/**
  * Try to find an exact or substring match in the food DB.
+ * Falls back to depluralized forms and fuzzy (Levenshtein) matching.
  * Returns the best matching key, or null.
  */
 function findBestMatch(text: string): string | null {
@@ -275,12 +311,43 @@ function findBestMatch(text: string): string | null {
   // Exact match
   if (FOOD_DB[lower]) return lower;
 
+  // Try depluralized form: "chocolate bars" → "chocolate bar"
+  const depluralWords = lower.split(/\s+/).map(depluralize).join(" ");
+  if (FOOD_DB[depluralWords]) return depluralWords;
+
   // Try multi-word matches (longest first) — require word boundaries
   const sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
   for (const key of sortedKeys) {
     const re = new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
     if (re.test(lower)) return key;
   }
+
+  // Try depluralized text against word boundaries
+  if (depluralWords !== lower) {
+    for (const key of sortedKeys) {
+      const re = new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+      if (re.test(depluralWords)) return key;
+    }
+  }
+
+  // Fuzzy matching: allow small typos (distance ≤ 2 for words ≥ 4 chars)
+  let bestKey: string | null = null;
+  let bestDist = Infinity;
+  const candidates = [lower, depluralWords];
+  for (const candidate of candidates) {
+    for (const key of sortedKeys) {
+      // Only fuzzy-match single-word keys against single-word input,
+      // or multi-word keys against multi-word input of similar length
+      if (Math.abs(candidate.length - key.length) > 3) continue;
+      const dist = levenshtein(candidate, key);
+      const maxDist = key.length <= 3 ? 1 : 2;
+      if (dist <= maxDist && dist < bestDist) {
+        bestDist = dist;
+        bestKey = key;
+      }
+    }
+  }
+  if (bestKey) return bestKey;
 
   return null;
 }
@@ -417,4 +484,90 @@ export function parseFoodText(input: string): ParsedFood[] {
   }
 
   return results;
+}
+
+export interface FoodSuggestion {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+/**
+ * Return autocomplete suggestions from the food DB based on partial input.
+ * Handles leading numbers (e.g. "2choc" → searches "choc"), fuzzy typos,
+ * and ranks results by relevance.
+ */
+export function getFoodSuggestions(input: string, limit = 8): FoodSuggestion[] {
+  const raw = input.trim().toLowerCase();
+  if (!raw || raw.length < 2) return [];
+
+  // Strip leading quantity so "2choc" searches for "choc"
+  const { rest } = extractQty(raw);
+  const query = rest.toLowerCase().trim();
+  if (!query || query.length < 2) return [];
+
+  const depluralQuery = query.split(/\s+/).map(depluralize).join(" ");
+  const seen = new Set<string>();
+  const results: { key: string; score: number }[] = [];
+
+  // De-duplicate keys that map to the same macros (e.g. "egg" and "eggs")
+  const uniqueKeys = Object.keys(FOOD_DB);
+
+  for (const key of uniqueKeys) {
+    // Exact prefix match (highest priority)
+    if (key.startsWith(query) || key.startsWith(depluralQuery)) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ key, score: 0 });
+      }
+      continue;
+    }
+
+    // Contains the query as a substring
+    if (key.includes(query) || key.includes(depluralQuery)) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ key, score: 1 });
+      }
+      continue;
+    }
+
+    // Any word in the key starts with query
+    const keyWords = key.split(/\s+/);
+    if (keyWords.some(w => w.startsWith(query) || w.startsWith(depluralQuery))) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        results.push({ key, score: 2 });
+      }
+      continue;
+    }
+
+    // Fuzzy match: only for single-word queries against single-word keys
+    if (!query.includes(" ") && !key.includes(" ") && query.length >= 3) {
+      const dist = levenshtein(query, key);
+      const maxDist = query.length <= 4 ? 1 : 2;
+      if (dist <= maxDist) {
+        if (!seen.has(key)) {
+          seen.add(key);
+          results.push({ key, score: 3 + dist });
+        }
+      }
+    }
+  }
+
+  // Sort by score (lower is better), then alphabetically
+  results.sort((a, b) => a.score - b.score || a.key.localeCompare(b.key));
+
+  return results.slice(0, limit).map(({ key }) => {
+    const m = FOOD_DB[key];
+    return {
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      calories: m.calories,
+      protein: m.protein,
+      carbs: m.carbs,
+      fat: m.fat,
+    };
+  });
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseFoodText } from "@/lib/nlFoodParser";
+import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 
 describe("parseFoodText", () => {
   it("returns [] for empty input", () => {
@@ -69,5 +69,53 @@ describe("parseFoodText", () => {
     expect(result[0].protein).toBe(31);
     expect(result[0].carbs).toBe(0);
     expect(result[0].fat).toBe(4);
+  });
+
+  it("handles number glued to food name (no space): '2chocolate bars'", () => {
+    const result = parseFoodText("2chocolate bars");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(0);
+  });
+
+  it("handles typos via fuzzy matching: 'chciken' → chicken", () => {
+    const result = parseFoodText("chciken");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBe(165);
+  });
+
+  it("handles depluralized forms: 'chocolate bars' → chocolate", () => {
+    const result = parseFoodText("chocolate bar");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(0);
+  });
+});
+
+describe("getFoodSuggestions", () => {
+  it("returns [] for short input", () => {
+    expect(getFoodSuggestions("")).toEqual([]);
+    expect(getFoodSuggestions("a")).toEqual([]);
+  });
+
+  it("returns suggestions for partial input 'choc'", () => {
+    const results = getFoodSuggestions("choc");
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some((r) => r.name.toLowerCase().includes("chocolate"))).toBe(true);
+  });
+
+  it("returns suggestions for input with leading number '2choc'", () => {
+    const results = getFoodSuggestions("2choc");
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some((r) => r.name.toLowerCase().includes("chocolate"))).toBe(true);
+  });
+
+  it("returns fuzzy suggestions for typos 'chiken'", () => {
+    const results = getFoodSuggestions("chiken");
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some((r) => r.name.toLowerCase().includes("chicken"))).toBe(true);
+  });
+
+  it("limits results to the specified limit", () => {
+    const results = getFoodSuggestions("ch", 3);
+    expect(results.length).toBeLessThanOrEqual(3);
   });
 });
