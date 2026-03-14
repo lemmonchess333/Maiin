@@ -121,6 +121,67 @@ function syncDarkMode(dark: boolean) {
 }
 
 /* ================================
+   DEFAULT PROFILE FACTORY
+================================ */
+
+function createDefaultProfile(
+  uid: string,
+  displayName: string,
+  email: string,
+): UserProfile {
+  return {
+    uid,
+    displayName,
+    email,
+    athleteType: "Lifter",
+    weightKg: 70,
+    heightCm: 170,
+    weeklyWorkoutsTarget: 4,
+    weeklyMealsTarget: 10,
+    preferredWeightUnit: "kg",
+    preferredHeightUnit: "cm",
+    darkMode: false,
+    onboardingComplete: false,
+    trialExpiresAt: getTrialExpiresAt(),
+    subscriptionTier: "free",
+    currentStreak: 0,
+    lastLogDate: null,
+    program: {
+      goal: "recomp",
+      startWeight: 70,
+      currentPhase: "base",
+    },
+  };
+}
+
+function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName = "", fallbackEmail = ""): UserProfile {
+  return {
+    ...data as Partial<UserProfile>,
+    uid,
+    displayName: (data.displayName as string) ?? fallbackName,
+    email: (data.email as string) ?? fallbackEmail,
+    athleteType: (data.athleteType as string) ?? "Lifter",
+    weightKg: (data.weightKg as number) ?? 70,
+    heightCm: (data.heightCm as number) ?? 170,
+    weeklyWorkoutsTarget: (data.weeklyWorkoutsTarget as number) ?? 4,
+    weeklyMealsTarget: (data.weeklyMealsTarget as number) ?? 10,
+    preferredWeightUnit: (data.preferredWeightUnit as UserProfile["preferredWeightUnit"]) ?? "kg",
+    preferredHeightUnit: (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
+    darkMode: (data.darkMode as boolean) ?? false,
+    onboardingComplete: (data.onboardingComplete as boolean) ?? false,
+    trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
+    subscriptionTier: (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
+    currentStreak: (data.currentStreak as number) ?? 0,
+    lastLogDate: (data.lastLogDate as string | null) ?? null,
+    program: {
+      goal: ((data.program as Record<string, unknown>)?.goal as UserProfile["program"] extends { goal: infer G } ? G : never) ?? "recomp",
+      startWeight: ((data.program as Record<string, unknown>)?.startWeight as number) ?? 0,
+      currentPhase: ((data.program as Record<string, unknown>)?.currentPhase as string) ?? "base",
+    },
+  } as UserProfile;
+}
+
+/* ================================
    AUTH CONTEXT
 ================================ */
 
@@ -149,39 +210,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [profile?.darkMode]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isMounted) return;
       setUser(firebaseUser);
 
       if (firebaseUser) {
         const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (!isMounted) return;
 
         if (profileDoc.exists()) {
           const data = profileDoc.data();
-          // Spread all Firestore fields, then apply defaults for required fields only
-          const safeProfile: UserProfile = {
-            ...data as Partial<UserProfile>,
-            uid: firebaseUser.uid,
-            displayName: data.displayName ?? "",
-            email: data.email ?? firebaseUser.email ?? "",
-            athleteType: data.athleteType ?? "Lifter",
-            weightKg: data.weightKg ?? 70,
-            heightCm: data.heightCm ?? 170,
-            weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
-            weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
-            preferredWeightUnit: data.preferredWeightUnit ?? "kg",
-            preferredHeightUnit: data.preferredHeightUnit ?? "cm",
-            darkMode: data.darkMode ?? false,
-            onboardingComplete: data.onboardingComplete ?? false,
-            trialExpiresAt: data.trialExpiresAt ?? null,
-            subscriptionTier: data.subscriptionTier ?? "free",
-            currentStreak: data.currentStreak ?? 0,
-            lastLogDate: data.lastLogDate ?? null,
-            program: {
-              goal: data.program?.goal ?? "recomp",
-              startWeight: data.program?.startWeight ?? 0,
-              currentPhase: data.program?.currentPhase ?? "base",
-            },
-          };
+          const safeProfile = hydrateProfile(firebaseUser.uid, data, "", firebaseUser.email ?? "");
           setProfile(safeProfile);
           syncDarkMode(safeProfile.darkMode);
         } else {
@@ -195,7 +236,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -204,31 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-    const newProfile: UserProfile = {
-      uid: cred.user.uid,
-      displayName: "",
-      email: cred.user.email || "",
-      athleteType: "Lifter",
-      weightKg: 70,
-      heightCm: 170,
-      weeklyWorkoutsTarget: 4,
-      weeklyMealsTarget: 10,
-      preferredWeightUnit: "kg",
-      preferredHeightUnit: "cm",
-      darkMode: false,
-      onboardingComplete: false,
-      trialExpiresAt: getTrialExpiresAt(),
-      subscriptionTier: "free",
-      currentStreak: 0,
-      lastLogDate: null,
-      program: {
-        goal: "recomp",
-        startWeight: 70,
-        currentPhase: "base",
-      },
-    };
-
+    const newProfile = createDefaultProfile(cred.user.uid, "", cred.user.email || "");
     await setDoc(doc(db, "users", cred.user.uid), {
       ...newProfile,
       createdAt: serverTimestamp(),
@@ -242,30 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
     if (!profileDoc.exists()) {
-      const newProfile: UserProfile = {
-        uid: cred.user.uid,
-        displayName: cred.user.displayName || "",
-        email: cred.user.email || "",
-        athleteType: "Lifter",
-        weightKg: 70,
-        heightCm: 170,
-        weeklyWorkoutsTarget: 4,
-        weeklyMealsTarget: 10,
-        preferredWeightUnit: "kg",
-        preferredHeightUnit: "cm",
-        darkMode: false,
-        onboardingComplete: false,
-        trialExpiresAt: getTrialExpiresAt(),
-        subscriptionTier: "free",
-        currentStreak: 0,
-        lastLogDate: null,
-        program: {
-          goal: "recomp",
-          startWeight: 70,
-          currentPhase: "base",
-        },
-      };
-
+      const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
       await setDoc(doc(db, "users", cred.user.uid), {
         ...newProfile,
         createdAt: serverTimestamp(),
@@ -273,31 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
-      const safeProfile: UserProfile = {
-        ...data as Partial<UserProfile>,
-        uid: cred.user.uid,
-        displayName: data.displayName ?? cred.user.displayName ?? "",
-        email: data.email ?? cred.user.email ?? "",
-        athleteType: data.athleteType ?? "Lifter",
-        weightKg: data.weightKg ?? 70,
-        heightCm: data.heightCm ?? 170,
-        weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
-        weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
-        preferredWeightUnit: data.preferredWeightUnit ?? "kg",
-        preferredHeightUnit: data.preferredHeightUnit ?? "cm",
-        darkMode: data.darkMode ?? false,
-        onboardingComplete: data.onboardingComplete ?? false,
-        trialExpiresAt: data.trialExpiresAt ?? null,
-        subscriptionTier: data.subscriptionTier ?? "free",
-        currentStreak: data.currentStreak ?? 0,
-        lastLogDate: data.lastLogDate ?? null,
-        program: {
-          goal: data.program?.goal ?? "recomp",
-          startWeight: data.program?.startWeight ?? 0,
-          currentPhase: data.program?.currentPhase ?? "base",
-        },
-      };
-      setProfile(safeProfile);
+      setProfile(hydrateProfile(cred.user.uid, data, cred.user.displayName ?? "", cred.user.email ?? ""));
     }
   };
 
@@ -309,30 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
     if (!profileDoc.exists()) {
-      const newProfile: UserProfile = {
-        uid: cred.user.uid,
-        displayName: cred.user.displayName || "",
-        email: cred.user.email || "",
-        athleteType: "Lifter",
-        weightKg: 70,
-        heightCm: 170,
-        weeklyWorkoutsTarget: 4,
-        weeklyMealsTarget: 10,
-        preferredWeightUnit: "kg",
-        preferredHeightUnit: "cm",
-        darkMode: false,
-        onboardingComplete: false,
-        trialExpiresAt: getTrialExpiresAt(),
-        subscriptionTier: "free",
-        currentStreak: 0,
-        lastLogDate: null,
-        program: {
-          goal: "recomp",
-          startWeight: 70,
-          currentPhase: "base",
-        },
-      };
-
+      const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
       await setDoc(doc(db, "users", cred.user.uid), {
         ...newProfile,
         createdAt: serverTimestamp(),
@@ -340,31 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
-      const safeProfile: UserProfile = {
-        ...data as Partial<UserProfile>,
-        uid: cred.user.uid,
-        displayName: data.displayName ?? cred.user.displayName ?? "",
-        email: data.email ?? cred.user.email ?? "",
-        athleteType: data.athleteType ?? "Lifter",
-        weightKg: data.weightKg ?? 70,
-        heightCm: data.heightCm ?? 170,
-        weeklyWorkoutsTarget: data.weeklyWorkoutsTarget ?? 4,
-        weeklyMealsTarget: data.weeklyMealsTarget ?? 10,
-        preferredWeightUnit: data.preferredWeightUnit ?? "kg",
-        preferredHeightUnit: data.preferredHeightUnit ?? "cm",
-        darkMode: data.darkMode ?? false,
-        onboardingComplete: data.onboardingComplete ?? false,
-        trialExpiresAt: data.trialExpiresAt ?? null,
-        subscriptionTier: data.subscriptionTier ?? "free",
-        currentStreak: data.currentStreak ?? 0,
-        lastLogDate: data.lastLogDate ?? null,
-        program: {
-          goal: data.program?.goal ?? "recomp",
-          startWeight: data.program?.startWeight ?? 0,
-          currentPhase: data.program?.currentPhase ?? "base",
-        },
-      };
-      setProfile(safeProfile);
+      setProfile(hydrateProfile(cred.user.uid, data, cred.user.displayName ?? "", cred.user.email ?? ""));
     }
   };
 

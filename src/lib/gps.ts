@@ -14,6 +14,11 @@ export class KalmanFilter {
   private lat = 0;
   private lon = 0;
   private variance = -1;
+  private processNoise: number;
+
+  constructor(processNoise = 3) {
+    this.processNoise = processNoise;
+  }
 
   process(lat: number, lon: number, accuracy: number): { lat: number; lon: number } {
     if (this.variance < 0) {
@@ -21,7 +26,7 @@ export class KalmanFilter {
       this.lon = lon;
       this.variance = accuracy * accuracy;
     } else {
-      this.variance += 3;
+      this.variance += this.processNoise;
       const k = this.variance / (this.variance + accuracy * accuracy);
       this.lat += k * (lat - this.lat);
       this.lon += k * (lon - this.lon);

@@ -24,36 +24,46 @@ export function getDayAdjustment(
   phase: Phase,
   goal?: string
 ): DayAdjustment {
-  const isCut = goal === "cut";
+  // Use goal to determine cut behavior; fall back to phase if goal not provided
+  const isCut = goal === "cut" || (!goal && phase === "cut");
+  // Protein multiplier: prefer phase-specific, but if goal is "cut" use cut multiplier
+  const proteinKey = isCut ? "cut" : phase;
+  const proteinMultiplier = PHASE_PROTEIN_MULTIPLIERS[proteinKey] || 2.0;
 
   switch (dayType) {
-    case "lift":
+    case "lift": {
+      const calAdj = isCut ? 150 : phase === "strength" ? 400 : 200;
       return {
-        calorieAdjustment: isCut ? 150 : phase === "strength" ? 400 : 200,
+        calorieAdjustment: calAdj,
         carbAdjustment: 20,
-        proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
-        reason: `Lift day — +${isCut ? 150 : phase === "strength" ? 400 : 200} cal for recovery`,
+        proteinMultiplier,
+        reason: `Lift day — +${calAdj} cal for recovery`,
       };
-    case "run":
+    }
+    case "run": {
+      const calAdj = isCut ? 100 : 200;
       return {
-        calorieAdjustment: isCut ? 100 : 200,
+        calorieAdjustment: calAdj,
         carbAdjustment: 30,
-        proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
-        reason: `Run day — +${isCut ? 100 : 200} cal for fuel`,
+        proteinMultiplier,
+        reason: `Run day — +${calAdj} cal for fuel`,
       };
-    case "both":
+    }
+    case "both": {
+      const calAdj = isCut ? 250 : phase === "strength" ? 500 : 350;
       return {
-        calorieAdjustment: isCut ? 250 : phase === "strength" ? 500 : 350,
+        calorieAdjustment: calAdj,
         carbAdjustment: 40,
-        proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
-        reason: `Lift + Run day — +${isCut ? 250 : phase === "strength" ? 500 : 350} cal for recovery & fuel`,
+        proteinMultiplier,
+        reason: `Lift + Run day — +${calAdj} cal for recovery & fuel`,
       };
+    }
     case "rest":
     default:
       return {
         calorieAdjustment: 0,
         carbAdjustment: 0,
-        proteinMultiplier: PHASE_PROTEIN_MULTIPLIERS[phase] || 2.0,
+        proteinMultiplier,
         reason: "Rest day — baseline targets",
       };
   }

@@ -49,12 +49,14 @@ export function useSocialFeed(highlightsOnly = false) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await getFeed(user.uid, 20, refresh ? undefined : lastDocRef.current);
       const feedItems = result.items as FeedItem[];
@@ -97,6 +99,7 @@ export function useSocialFeed(highlightsOnly = false) {
       setHasMore(feedItems.length >= 20);
     } catch (e) {
       console.error('Feed error:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load feed');
     }
     setLoading(false);
   }, [user, highlightsOnly]);
@@ -104,7 +107,7 @@ export function useSocialFeed(highlightsOnly = false) {
   useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
 
   return {
-    items, loading, hasMore,
+    items, loading, hasMore, error,
     refresh: () => loadFeed(true),
     loadMore: () => { if (hasMore && !loading) loadFeed(false); },
   };

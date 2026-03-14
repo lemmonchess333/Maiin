@@ -19,6 +19,8 @@ interface RunForTrend {
 
 const MIN_COMPARABLE_RUNS = 8;
 const DISTANCE_TOLERANCE = 0.2; // 20%
+const IMPROVING_THRESHOLD = 0.98; // 2% faster than recent average
+const CONSISTENT_THRESHOLD = 1.02; // within 2% of recent average
 
 export function calculatePaceTrend(
   currentRun: RunForTrend,
@@ -60,7 +62,7 @@ export function calculatePaceTrend(
   }
 
   // Improving — faster than recent average (never show if slower)
-  if (currentRun.avgPace < recentAvg * 0.98) {
+  if (currentRun.avgPace < recentAvg * IMPROVING_THRESHOLD) {
     return {
       trend: "improving",
       label: "Faster",
@@ -70,7 +72,7 @@ export function calculatePaceTrend(
   }
 
   // Consistent — within 2% of recent average
-  if (currentRun.avgPace <= recentAvg * 1.02) {
+  if (currentRun.avgPace <= recentAvg * CONSISTENT_THRESHOLD) {
     return {
       trend: "consistent",
       label: "Steady",

@@ -148,6 +148,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
                       onClick={async () => {
                         setShowMenu(false);
                         if (!user || !activity?.authorId) return;
+                        if (!window.confirm("Block this user? They won't be able to see your activities.")) return;
                         await blockUser(user.uid, activity.authorId);
                         toast.success(`Blocked ${feedItem.authorName}`);
                       }}

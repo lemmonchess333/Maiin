@@ -53,6 +53,17 @@ export function detectPlateau(
   avgWeightChange: number,
   sensitivity: number
 ): PlateauResult {
+  // Guard against NaN/Infinity — return safe default
+  if (!isFinite(avgLiftChange) || !isFinite(avgWeightChange) || !isFinite(sensitivity) || sensitivity <= 0) {
+    return {
+      status: "progressing",
+      message: "Insufficient data for plateau detection.",
+      calorieAdjust: 0,
+      volumeAdjust: 0,
+      macroNote: "No changes needed.",
+    };
+  }
+
   const threshold = 0.1 * sensitivity;
 
   if (avgLiftChange < -threshold) {

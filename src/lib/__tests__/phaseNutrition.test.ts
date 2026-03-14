@@ -309,7 +309,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "both");
     // cut overrides: +250 cal (cut takes precedence over strength for both)
     expect(result.calories).toBe(2750); // 2500 + 250
-    expect(result.protein).toBe(Math.round(2.2 * 85)); // 187
+    expect(result.protein).toBe(Math.round(2.4 * 85)); // 204 — cut goal uses cut protein multiplier
     expect(result.carbs).toBe(340); // 300 + 40
   });
 });

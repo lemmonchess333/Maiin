@@ -5,15 +5,18 @@ export function useOnlineStatus() {
   const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const handleOnline = () => {
       setIsOnline(true);
       setWasOffline(true);
-      // Auto-clear "back online" notice after 4s
-      setTimeout(() => setWasOffline(false), 4000);
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => setWasOffline(false), 4000);
     };
     const handleOffline = () => {
       setIsOnline(false);
       setWasOffline(false);
+      if (timeoutId) clearTimeout(timeoutId);
     };
 
     window.addEventListener('online', handleOnline);
@@ -21,6 +24,7 @@ export function useOnlineStatus() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 

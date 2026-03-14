@@ -69,7 +69,7 @@ export function calculateHealthScore(
 
   // Redistribution: if a category isn't available, spread its weight to others
   const categories = [
-    { score: workoutScore, max: 35, available: hasWorkout || consumed.mealCount > 0 },
+    { score: workoutScore, max: 35, available: hasWorkout },
     { score: nutritionScore, max: 30, available: consumed.mealCount >= 1 },
     { score: waterScore, max: 15, available: hasWater },
     { score: activityScore, max: 20, available: hasSteps },

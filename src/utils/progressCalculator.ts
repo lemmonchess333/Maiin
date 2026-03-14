@@ -13,7 +13,8 @@ export function calculateProgress({
   if (userGoal === "lean bulk") calorieBase += 200;
   if (userGoal === "cut") calorieBase -= 300;
 
-  calorieBase += Math.round(weightChange * 20);
+  // 1kg body weight ≈ 7700 kcal; spread over 7 days ≈ 1100 kcal/day
+  calorieBase += Math.round((weightChange * 7700) / 7);
 
   const macros = {
     protein: Math.round((calorieBase * 0.40) / 4),

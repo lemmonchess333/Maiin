@@ -65,10 +65,9 @@ export function useWorkouts() {
     const q = query(workoutsRef, orderBy("date", "desc"), limit(PAGE_SIZE));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as Workout[];
+      const data = snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as Workout)
+        .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
       setWorkouts(data);
       setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
       setHasMore(snapshot.docs.length >= PAGE_SIZE);
@@ -83,7 +82,9 @@ export function useWorkouts() {
     const workoutsRef = collection(db, "users", user.uid, "workouts");
     const q = query(workoutsRef, orderBy("date", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
     const snapshot = await getDocs(q);
-    const newData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Workout[];
+    const newData = snapshot.docs
+      .map((d) => ({ id: d.id, ...d.data() }) as Workout)
+      .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
     setWorkouts(prev => [...prev, ...newData]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length >= PAGE_SIZE);
