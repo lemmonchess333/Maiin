@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, lazy, Suspense } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
@@ -31,6 +31,51 @@ const VALID_TABS: FilterTab[] = [
   "badges",
   "performance",
 ];
+
+function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: FilterTab) => void }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current) setScrolled(scrollRef.current.scrollLeft > 4);
+  }, []);
+
+  return (
+    <div className="relative">
+      {scrolled && (
+        <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-4 bg-gradient-to-r from-background to-transparent z-10" />
+      )}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        {VALID_TABS.map((f) => {
+          const active = filter === f;
+          const tabColor = f === "running" ? THEME.running
+            : f === "lifting" ? THEME.lifting
+            : f === "nutrition" ? THEME.success
+            : f === "performance" ? THEME.brand
+            : THEME.brand;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={[
+                "shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all",
+                active ? "text-white" : "bg-muted text-muted-foreground",
+              ].join(" ")}
+              style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
+            >
+              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          );
+        })}
+      </div>
+      <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
+    </div>
+  );
+}
 
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -237,33 +282,7 @@ export default function History() {
     <div className="space-y-4 pt-2">
       <h1 className="text-lg font-bold text-foreground">Analytics</h1>
 
-      <div className="relative">
-        <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-4 bg-gradient-to-r from-background to-transparent z-10" />
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {VALID_TABS.map((f) => {
-            const active = filter === f;
-            const tabColor = f === "running" ? THEME.running
-              : f === "lifting" ? THEME.lifting
-              : f === "nutrition" ? THEME.success
-              : f === "performance" ? THEME.brand
-              : THEME.brand;
-            return (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={[
-                  "shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all",
-                  active ? "text-white" : "bg-muted text-muted-foreground",
-                ].join(" ")}
-                style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
-              >
-                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            );
-          })}
-        </div>
-        <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
-      </div>
+      <FilterPills filter={filter} setFilter={setFilter} />
 
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
