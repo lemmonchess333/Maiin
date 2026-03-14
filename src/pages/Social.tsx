@@ -74,7 +74,7 @@ export default function Social() {
       {/* Crew banner if no crew */}
       {!profile?.crewId && tab === 'feed' && (
         <button onClick={() => setTab('find')}
-          className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-left">
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-100 text-left">
           <Users className="w-5 h-5 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
@@ -258,7 +258,7 @@ export default function Social() {
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
-              className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+              className="w-full py-3 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
               Sync Contacts
             </button>
           </div>

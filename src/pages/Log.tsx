@@ -546,10 +546,8 @@ export default function Log() {
               onClick={handleNLParse}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]",
-                nlInput.trim()
-                  ? "bg-primary text-primary-foreground shadow-[var(--ds-shadow-purple-glow)]"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                "w-full py-3 rounded-lg text-sm font-semibold transition-all active:scale-[0.97] bg-purple-600 text-white",
+                (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
             >
               {nlParsing ? "Parsing..." : "Log Meal"}

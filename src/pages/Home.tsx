@@ -64,26 +64,25 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
         let cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
         let st: React.CSSProperties = {};
         if (day.isToday && day.isSelected) {
-          cls += " bg-primary text-primary-foreground";
-          st = { boxShadow: `0 0 8px ${THEME.brand}66` };
-        } else if (day.isToday) {
-          cls += " text-primary";
-          st = { border: `2px dashed ${THEME.brand}` };
+          cls += " bg-purple-600 text-white";
         } else if (day.isSelected) {
-          cls += " text-primary";
-          st = { border: `2px solid ${THEME.brand}`, backgroundColor: `${THEME.brand}12` };
-        } else if (day.hasActivity) {
-          cls += " ring-2 ring-green-500 text-primary";
+          cls += " text-purple-600";
+          st = { border: "2px solid #9333ea", backgroundColor: "#faf5ff" };
+        } else if (day.isToday) {
+          cls += " text-foreground";
+          st = { border: "2px dashed #9333ea" };
         } else {
           cls += " text-muted-foreground";
-          st = { border: `2px dashed ${THEME.brand}55` };
+          st = { border: "2px dashed #d8b4fe" };
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>{day.date.getDate()}</div>
-            {day.sType !== "rest" ? (
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: day.hasActivity ? THEME.success : tc(day.sType) }} />
+            {day.hasActivity ? (
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            ) : day.sType !== "rest" ? (
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tc(day.sType) }} />
             ) : (
               <div className="w-1.5 h-1.5" />
             )}
@@ -374,9 +373,11 @@ function MacroRing({ value, target, color, label, unit = "" }: {
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} style={{ transform: "rotate(-90deg)", position: "absolute", inset: 0 }}>
           <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color + "18"} strokeWidth="4.5" />
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={done ? THEME.success : color}
-            strokeWidth="4.5" strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
-            style={{ transition: "stroke-dasharray 0.5s ease" }} />
+          {pct > 0 && (
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={done ? THEME.success : color}
+              strokeWidth="4.5" strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
+              style={{ transition: "stroke-dasharray 0.5s ease" }} />
+          )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
@@ -663,11 +664,6 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
         <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
-        <div className="flex items-center justify-center gap-4 pt-1">
-          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.lifting }} /><span className="text-[9px] text-muted-foreground">Lift</span></div>
-          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.running }} /><span className="text-[9px] text-muted-foreground">Run</span></div>
-          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.success }} /><span className="text-[9px] text-muted-foreground">Done</span></div>
-        </div>
         <AnimatePresence>
           {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
         </AnimatePresence>

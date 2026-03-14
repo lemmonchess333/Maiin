@@ -59,9 +59,9 @@ export function ChallengeList() {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
             <Trophy className="w-6 h-6 text-purple-500" />
           </div>
-          <p className="text-sm font-semibold text-foreground">No active challenges</p>
+          <p className="text-sm font-semibold text-foreground">Challenges coming soon</p>
           <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
-            Challenges help you push your limits. Check back soon!
+            Compete on weekly distance, volume, and hybrid score with the people you follow.
           </p>
         </div>
       )}
