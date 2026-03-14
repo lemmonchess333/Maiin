@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import confetti from "canvas-confetti";
+const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import type { EarnedBadge } from "./badges";
 import { TIER_COLORS } from "./badges";
 
@@ -40,12 +40,12 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
   useEffect(() => {
     if (badge) {
       const tierColor = TIER_COLORS[badge.tier];
-      confetti({
+      lazyConfetti().then(confetti => confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.4 },
         colors: [tierColor, "#8b5cf6", "#fbbf24", "#34d399"],
-      });
+      }));
       playChime();
 
       autoDismissRef.current = setTimeout(onDismiss, 3500);

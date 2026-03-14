@@ -56,10 +56,10 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold ${day.isToday ? 'text-purple-600' : (!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                <span className={`text-xs font-semibold ${day.isToday ? 'text-purple-600' : (!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
                   {day.label}
                 </span>
-                <span className={`text-xs ${(!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-gray-400' : 'text-muted-foreground'}`}>{day.dayNum}</span>
+                <span className={`text-xs ${(!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{day.dayNum}</span>
                 {daySessions.length === 0 && isLiftDay && (
                   <span className="w-2 h-2 rounded-full bg-blue-400" title="Lift day" />
                 )}
@@ -73,7 +73,7 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
             </div>
 
             {daySessions.length === 0 && (
-              <p className={`text-[10px] italic ${(isLiftDay || isRunDay) ? 'text-muted-foreground' : 'text-gray-400'}`}>
+              <p className={`text-[10px] italic ${(isLiftDay || isRunDay) ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}>
                 {isLiftDay ? 'Lift day' : isRunDay ? 'Run day' : 'Rest day'}
               </p>
             )}

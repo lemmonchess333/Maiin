@@ -74,7 +74,7 @@ export default function Social() {
       {/* Crew banner if no crew */}
       {!profile?.crewId && tab === 'feed' && (
         <button onClick={() => setTab('find')}
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 border border-purple-100 text-left">
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/30 text-left">
           <Users className="w-5 h-5 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>

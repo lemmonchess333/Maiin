@@ -337,29 +337,29 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
               </div>
 
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-orange-600 tabular-nums">
+                <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2">
+                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
                     {Math.round(safeNum(activeResult.totalCalories) * s)}
                   </p>
-                  <p className="text-xs text-orange-500">cal</p>
+                  <p className="text-xs text-orange-500 dark:text-orange-400/70">cal</p>
                 </div>
-                <div className="bg-blue-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-blue-600 tabular-nums">
+                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-2">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 tabular-nums">
                     {Math.round(safeNum(activeResult.totalProtein) * s)}g
                   </p>
-                  <p className="text-xs text-blue-500">protein</p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400/70">protein</p>
                 </div>
-                <div className="bg-amber-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-600 tabular-nums">
+                <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
                     {Math.round(safeNum(activeResult.totalCarbs) * s)}g
                   </p>
-                  <p className="text-xs text-amber-500">carbs</p>
+                  <p className="text-xs text-amber-500 dark:text-amber-400/70">carbs</p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-2">
-                  <p className="text-lg font-bold text-purple-600 tabular-nums">
+                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-2">
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400 tabular-nums">
                     {Math.round(safeNum(activeResult.totalFat) * s)}g
                   </p>
-                  <p className="text-xs text-purple-500">fat</p>
+                  <p className="text-xs text-purple-500 dark:text-purple-400/70">fat</p>
                 </div>
               </div>
 

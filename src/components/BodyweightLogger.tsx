@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import confetti from "canvas-confetti";
+const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 
 interface WeightLog {
   id: string;
@@ -105,12 +105,12 @@ export default function BodyweightLogger() {
       setSaved(true);
 
       // Light confetti on successful log
-      confetti({
+      lazyConfetti().then(confetti => confetti({
         particleCount: 60,
         spread: 60,
         origin: { y: 0.7 },
         colors: ["#f59e0b", "#fbbf24"],
-      });
+      }));
 
       setTimeout(() => setSaved(false), 1800);
     } catch (error) {

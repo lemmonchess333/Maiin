@@ -24,6 +24,7 @@ import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import { formatVolume, formatStat, macroRingState } from "@/utils/formatters";
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
@@ -309,9 +310,10 @@ function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, 
   liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
   const allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
+  const vol = formatVolume(liftTonnage);
   const stats = [
-    { label: "Sessions", value: liftSessions + runSessions > 0 ? String(liftSessions + runSessions) : "\u2014", color: THEME.brand },
-    { label: "Volume", value: liftTonnage > 0 ? (liftTonnage >= 1000 ? (liftTonnage / 1000).toFixed(1) + "k kg" : Math.round(liftTonnage) + "kg") : "\u2014", color: THEME.lifting },
+    { label: "Sessions", value: formatStat(liftSessions + runSessions), color: THEME.brand },
+    { label: "Volume", value: vol.value + (vol.unit ? " " + vol.unit : ""), color: THEME.lifting },
     { label: "Distance", value: runKm > 0 ? runKm.toFixed(1) + "km" : "\u2014", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
@@ -366,8 +368,7 @@ function MacroRing({ value, target, color, label, unit = "" }: {
   const size = 68;
   const r = size / 2 - 6;
   const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / Math.max(target, 1), 1);
-  const done = pct >= 0.98;
+  const { pct, done } = macroRingState(value, target);
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>

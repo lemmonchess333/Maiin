@@ -17,6 +17,7 @@ import { TrendWeight } from "@/components/progress/TrendWeight";
 import { WeeklyEnergyChart } from "@/components/progress/WeeklyEnergyChart";
 import { Footprints, Trophy } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { formatVolume, formatDistance } from "@/utils/formatters";
 
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
@@ -297,7 +298,7 @@ export default function History() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Weekly Distance"
-                  value={runningTotals.runDistance > 0 ? runningTotals.runDistance.toFixed(1) : "--"}
+                  value={formatDistance(runningTotals.runDistance)}
                   unit="km"
                   sparklineData={weeklyData
                     .map((w) => w.totalDistance)
@@ -349,8 +350,8 @@ export default function History() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Weekly Volume"
-                  value={liftingData.liftVolume >= 1000 ? (liftingData.liftVolume / 1000).toFixed(1) + "k" : String(Math.round(liftingData.liftVolume))}
-                  unit={liftingData.liftVolume >= 1000 ? "" : "kg"}
+                  value={formatVolume(liftingData.liftVolume).value}
+                  unit={formatVolume(liftingData.liftVolume).unit}
                   accentColor={THEME.lifting}
                 />
                 <StatCard

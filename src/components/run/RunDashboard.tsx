@@ -79,7 +79,7 @@ export default function RunDashboard() {
       {/* Info banner */}
       <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30">
         <Footprints size={16} className="text-green-500 shrink-0" />
-        <p className="text-xs text-gray-700 dark:text-purple-200">
+        <p className="text-xs text-muted-foreground dark:text-purple-200">
           Head to the <strong className="text-purple-600 dark:text-purple-300">Log</strong> tab → <strong className="text-purple-600 dark:text-purple-300">Run</strong> to start your next run
         </p>
       </div>

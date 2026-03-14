@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import { format } from "date-fns";
 
 interface FoodEntry {
@@ -117,11 +117,11 @@ export function ManualFoodLogger({ date }: Props) {
       setSaved(true);
       toast.success("Meal logged!");
 
-      confetti({
+      lazyConfetti().then(confetti => confetti({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-      });
+      }));
 
       setTimeout(() => {
         setSaved(false);
