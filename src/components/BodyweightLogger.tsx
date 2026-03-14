@@ -72,6 +72,12 @@ export default function BodyweightLogger() {
     }
   }, [user]);
 
+  const unit = profile?.preferredWeightUnit || "kg";
+  const displayWeight = (w: number | undefined | null) => {
+    const val = typeof w === "number" && !isNaN(w) ? w : 0;
+    return unit === "lbs" ? (val * 2.20462).toFixed(1) : val.toFixed(1);
+  };
+
   async function handleSubmit() {
     if (!weight || !user) return;
 
@@ -120,12 +126,6 @@ export default function BodyweightLogger() {
     }
     setSaving(false);
   }
-
-  const unit = profile?.preferredWeightUnit || "kg";
-  const displayWeight = (w: number | undefined | null) => {
-    const val = typeof w === "number" && !isNaN(w) ? w : 0;
-    return unit === "lbs" ? (val * 2.20462).toFixed(1) : val.toFixed(1);
-  };
 
   // Deduplicate by date for trend calculation (keep latest per date)
   const uniqueDateLogs = Object.values(
