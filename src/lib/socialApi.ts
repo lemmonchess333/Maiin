@@ -321,11 +321,15 @@ export async function batchGetActivities(activityIds: string[]): Promise<Record<
 
 export async function batchGetKudos(activityIds: string[], userId: string): Promise<Record<string, boolean>> {
   if (activityIds.length === 0 || !userId) return {};
-  const snaps = await Promise.all(
-    activityIds.map(id => getDoc(doc(db, 'kudos', id, 'users', userId)))
-  );
+  const chunks: string[][] = [];
+  for (let i = 0; i < activityIds.length; i += 30) {
+    chunks.push(activityIds.slice(i, i + 30));
+  }
   const result: Record<string, boolean> = {};
-  activityIds.forEach((id, i) => { result[id] = snaps[i].exists(); });
+  await Promise.all(chunks.map(async (chunk) => {
+    const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'kudos', id, 'users', userId))));
+    chunk.forEach((id, i) => { result[id] = snaps[i].exists(); });
+  }));
   return result;
 }
 
