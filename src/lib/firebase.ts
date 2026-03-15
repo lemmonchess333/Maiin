@@ -9,13 +9,21 @@ import {
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+function requireEnv(name: string): string {
+  const value = import.meta.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB-JX_RC7zxR6WopylzqG3B0RFzX32zjic",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "adaptive-fitness-af8bb.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "adaptive-fitness-af8bb",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "adaptive-fitness-af8bb.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "110047207547",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:110047207547:web:04c99eb6c034e0f6cc02de",
+  apiKey: requireEnv("VITE_FIREBASE_API_KEY"),
+  authDomain: requireEnv("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: requireEnv("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: requireEnv("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: requireEnv("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: requireEnv("VITE_FIREBASE_APP_ID"),
 };
 
 

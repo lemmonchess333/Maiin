@@ -35,9 +35,10 @@ vi.mock('firebase/auth', () => ({
   deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
 }));
 
+const MOCK_UID = 'user1';
 vi.mock('../firebase', () => ({
   db: 'mock-db',
-  auth: { currentUser: { uid: 'current-user' } },
+  auth: { currentUser: { uid: 'user1' } },
 }));
 
 import {
