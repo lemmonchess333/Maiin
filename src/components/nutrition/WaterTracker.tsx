@@ -1,69 +1,113 @@
-import { motion } from "framer-motion";
-import { Droplets, Plus } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Droplets, Plus, Minus } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { toast } from "sonner";
 
 export function WaterTracker() {
-  const { glasses, target, logWater, progress } = useWaterLog();
+  const { glasses, target, logWater, setWaterAmount, progress } = useWaterLog();
+  const [rippleKey, setRippleKey] = useState(0);
 
-  const handleLog = async () => {
+  const handleAdd = async () => {
     await logWater(1);
+    setRippleKey((k) => k + 1);
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(20);
     if (glasses + 1 >= target) {
       toast.success("Water target hit! Stay hydrated!");
     }
   };
 
-  const circumference = 2 * Math.PI * 20;
-  const offset = circumference * (1 - progress);
+  const handleRemove = async () => {
+    if (glasses <= 0) return;
+    await setWaterAmount(glasses - 1);
+  };
+
+  const pct = Math.round(progress * 100);
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
-      <div className="flex items-center gap-4">
-        {/* Progress ring */}
-        <div className="relative w-12 h-12 shrink-0">
-          <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-            <circle
-              cx="24" cy="24" r="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              className="text-muted/50"
-            />
-            <motion.circle
-              cx="24" cy="24" r="20"
-              fill="none"
-              stroke="#3b82f6"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              initial={{ strokeDashoffset: circumference }}
-              animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Droplets className="w-4 h-4 text-blue-500" />
+    <div className="p-4 rounded-2xl bg-card border border-border/50 overflow-hidden relative" style={{ minHeight: 180 }}>
+      {/* Animated fill background */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        initial={{ height: "0%" }}
+        animate={{ height: pct + "%" }}
+        transition={{ type: "spring", stiffness: 120, damping: 14 }}
+        style={{
+          background: "linear-gradient(to top, rgba(59,130,246,0.18), rgba(59,130,246,0.04))",
+        }}
+      />
+
+      {/* Ripple effect */}
+      <AnimatePresence>
+        {rippleKey > 0 && (
+          <motion.div
+            key={rippleKey}
+            className="absolute pointer-events-none rounded-full border-2 border-blue-400/40"
+            style={{
+              bottom: `calc(${pct}% - 24px)`,
+              left: "50%",
+              marginLeft: -24,
+              width: 48,
+              height: 48,
+            }}
+            initial={{ scale: 0.3, opacity: 0.6 }}
+            animate={{ scale: 2.5, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Content */}
+      <div className="relative z-10 space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Droplets size={16} className="text-blue-500" />
+            <span className="text-sm font-bold text-foreground">Water</span>
           </div>
+          <span className="text-[11px] text-muted-foreground">{pct}%</span>
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Water</p>
-          <p className="text-sm font-semibold text-foreground">
-            {glasses} / {target} glasses
+        {/* Big number */}
+        <div className="text-center py-2">
+          <p className="text-4xl font-extrabold text-blue-500 tabular-nums leading-tight">
+            {Math.round(glasses * 250)}
           </p>
-          <p className="text-[10px] text-muted-foreground">
-            {Math.round(glasses * 250)}ml ({Math.round(glasses * 8.45)} fl oz)
+          <p className="text-[11px] text-muted-foreground mt-1">
+            of {target * 250} ml
           </p>
         </div>
 
-        {/* Log button */}
-        <button
-          onClick={handleLog}
-          className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center active:scale-90 transition-transform"
-        >
-          <Plus className="w-4 h-4 text-blue-500" />
-        </button>
+        {/* Glass dots */}
+        <div className="flex justify-center gap-1 flex-wrap">
+          {Array.from({ length: target }).map((_, i) => (
+            <div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full transition-colors duration-300"
+              style={{
+                backgroundColor: i < glasses ? "#3b82f6" : "rgba(59,130,246,0.15)",
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-center gap-3">
+          <button
+            onClick={handleRemove}
+            disabled={glasses <= 0}
+            className="w-10 h-10 rounded-xl bg-muted border border-border/50 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
+          >
+            <Minus size={18} className="text-muted-foreground" />
+          </button>
+          <button
+            onClick={handleAdd}
+            className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center active:scale-90 transition-all"
+          >
+            <Plus size={18} className="text-blue-500" />
+          </button>
+        </div>
       </div>
     </div>
   );

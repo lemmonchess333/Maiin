@@ -9,6 +9,7 @@ import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
 import { Footprints, Trophy } from "lucide-react";
+import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 
@@ -19,6 +20,7 @@ const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
 const WeeklyEnergyChart = lazy(() => import("@/components/progress/WeeklyEnergyChart").then(m => ({ default: m.WeeklyEnergyChart })));
+const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
 type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
@@ -409,10 +411,13 @@ export default function History() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               {pr.isAllTimeBest && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                                  style={{ background: `${THEME.lifting}20`, color: THEME.lifting }}>
-                                  NEW
-                                </span>
+                                <>
+                                  <PRBadge isNew={pr.isAllTimeBest} />
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
+                                    style={{ background: `${THEME.lifting}20`, color: THEME.lifting }}>
+                                    NEW
+                                  </span>
+                                </>
                               )}
                               <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
                             </div>
@@ -468,6 +473,9 @@ export default function History() {
               </SectionErrorBoundary>
               <SectionErrorBoundary sectionName="weekly-energy">
                 <WeeklyEnergyChart />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary sectionName="calorie-balance">
+                <CalorieBalanceChart />
               </SectionErrorBoundary>
             </>
           )}
