@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
@@ -11,7 +11,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Target, Zap, Leaf } from "lucide-react";
+import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf, TrendingDown, TrendingUp } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,21 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { formatVolume, formatStat, macroRingState } from "@/utils/formatters";
+import { calcWeightTrend } from "@/utils/weightTrend";
+import type { WeightTrend } from "@/utils/weightTrend";
+
+function WeightSparkline({ values, color, width = 80, height = 20 }: { values: number[]; color: string; width?: number; height?: number }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values) - 0.3;
+  const max = Math.max(...values) + 0.3;
+  const range = max - min || 1;
+  const points = values.map((v, i) => `${(i / (values.length - 1)) * width},${height - ((v - min) / range) * height}`).join(" ");
+  return (
+    <svg width={width} height={height} className="block">
+      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
@@ -160,19 +175,21 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, lastWeight, lastWeightDate, weightUnit, onLogWeight, todayRun, healthScore }: {
+function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore, weightTrend }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
   waterGlasses: number;
   waterTarget: number;
   onAddWater: () => void;
+  onRemoveWater: () => void;
   lastWeight: string | null;
-  lastWeightDate: string | null;
   weightUnit: string;
   onLogWeight: () => void;
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
+  prevHealthScore: number | null;
+  weightTrend: WeightTrend | null;
 }) {
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
@@ -241,11 +258,22 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
         className="p-4 rounded-2xl bg-card border border-border/50">
         <div className="grid grid-cols-2 gap-3">
-          {/* Health Score */}
+          {/* Health Score with heartbeat */}
           <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(236,72,153,0.06)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(236,72,153,0.10)" }}>
+            <motion.div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: "rgba(236,72,153,0.10)" }}
+              animate={
+                healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
+                  ? (healthScore >= 70 && prevHealthScore < 70
+                    ? { scale: [1, 1.3, 0.95, 1.2, 1] }
+                    : { scale: [1, 1.25, 1] })
+                  : { scale: 1 }
+              }
+              transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
+            >
               <Heart className="w-4 h-4 text-pink-500" />
-            </div>
+            </motion.div>
             <div className="min-w-0">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Health</p>
               {healthScore != null ? (
@@ -257,36 +285,72 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               )}
             </div>
           </Link>
-          {/* Water */}
-          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
-              <Droplets className="w-4 h-4 text-blue-500" />
+          {/* Water with fill bar */}
+          <div className="flex flex-col gap-2 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                <Droplets className="w-4 h-4 text-blue-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
+                <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={function(e) { e.stopPropagation(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                  <Minus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                </button>
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                  <Plus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                </button>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
-              <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
+            {/* Mini fill bar */}
+            <div className="h-1.5 rounded-full overflow-hidden bg-blue-500/10">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, rgba(59,130,246,0.4), rgba(59,130,246,0.7))" }}
+                initial={{ width: 0 }}
+                animate={{ width: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
+                transition={{ type: "spring", stiffness: 120, damping: 14 }}
+              />
             </div>
-            <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
-              <Plus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            </button>
           </div>
-          {/* Weight */}
-          <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(139,92,246,0.06)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
-              <Scale className="w-4 h-4 text-purple-500" />
+          {/* Weight with 7d trend */}
+          <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(139,92,246,0.06)" }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+                <Scale className="w-4 h-4 text-purple-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight</p>
+                <p className={cn("text-foreground font-semibold truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
+                  {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
+                </p>
+                {weightTrend && Math.abs(weightTrend.delta) >= 0.1 && (
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    {weightTrend.direction === "down" ? (
+                      <TrendingDown className="w-3 h-3" style={{ color: THEME.success }} />
+                    ) : weightTrend.direction === "up" ? (
+                      <TrendingUp className="w-3 h-3" style={{ color: THEME.danger }} />
+                    ) : null}
+                    <span className="text-[9px] font-medium tabular-nums" style={{
+                      color: weightTrend.direction === "down" ? THEME.success : weightTrend.direction === "up" ? THEME.danger : THEME.textMuted
+                    }}>
+                      {weightTrend.delta >= 0 ? "+" : ""}{weightUnit === "lbs" ? (weightTrend.delta * 2.205).toFixed(1) : weightTrend.delta} vs 7d
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
+                <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              </button>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Weight</p>
-              <p className={cn("text-muted-foreground truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
-                {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
-              </p>
-              {lastWeightDate && (
-                <p className="text-[10px] text-muted-foreground/60">{lastWeightDate}</p>
-              )}
-            </div>
-            <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
-              <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-            </button>
+            {weightTrend && weightTrend.sparkline.length >= 2 && (
+              <WeightSparkline
+                values={weightUnit === "lbs" ? weightTrend.sparkline.map(function(v) { return v * 2.205; }) : weightTrend.sparkline}
+                color={weightTrend.direction === "down" ? THEME.success : weightTrend.direction === "up" ? THEME.danger : THEME.brand}
+              />
+            )}
           </div>
           {/* Steps */}
           <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
@@ -369,6 +433,21 @@ function MacroRing({ value, target, color, label, unit = "" }: {
   const r = size / 2 - 6;
   const circ = 2 * Math.PI * r;
   const { pct, done } = macroRingState(value, target);
+  const [flashKey, setFlashKey] = useState(0);
+  const prevDoneRef = useRef(done);
+
+  useEffect(function() {
+    const wasDone = prevDoneRef.current;
+    prevDoneRef.current = done;
+    if (done && !wasDone) {
+      // Schedule flash on next microtask to satisfy lint
+      queueMicrotask(function() {
+        setFlashKey(function(k) { return k + 1; });
+      });
+      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+    }
+  }, [done]);
+
   return (
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
@@ -386,6 +465,16 @@ function MacroRing({ value, target, color, label, unit = "" }: {
           </span>
           {done && <span className="text-[8px]" style={{ color: THEME.success }}>✓</span>}
         </div>
+        {/* Completion flash overlay */}
+        {flashKey > 0 && (
+          <motion.div
+            key={flashKey}
+            className="absolute inset-0 rounded-full bg-white pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.4, 0] }}
+            transition={{ duration: 0.5 }}
+          />
+        )}
       </div>
       <div className="text-center">
         <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
@@ -457,8 +546,10 @@ export default function Home() {
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
   const { newBadge, dismissNewBadge } = useStreaks();
-  const { glasses: waterGlasses, target: waterTarget, logWater } = useWaterLog();
+  const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
   const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
+  const [weightTrendData, setWeightTrendData] = useState<WeightTrend | null>(null);
+  const prevHealthScoreRef = useRef<number | null>(null);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
@@ -527,10 +618,15 @@ export default function Home() {
     );
   }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget]);
   const healthScore = healthScoreResult.score;
+  const prevHealthScore = prevHealthScoreRef.current;
+
+  useEffect(function() {
+    if (healthScore != null) prevHealthScoreRef.current = healthScore;
+  }, [healthScore]);
 
   useEffect(function() {
     if (!user?.uid) return;
-    getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(1))).then(function(snap) {
+    getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(30))).then(function(snap) {
       if (snap.empty) {
         if (profile?.weightKg) {
           const w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
@@ -538,10 +634,13 @@ export default function Home() {
         }
         return;
       }
-      const d = snap.docs[0].data();
-      if (typeof d.weight === "number") {
-        const w = weightUnit === "lbs" ? (d.weight * 2.20462).toFixed(1) : d.weight.toFixed(1);
-        setLastWeightInfo({ weight: w, date: format(new Date(d.date + "T12:00:00"), "MMM d") });
+      const entries = snap.docs.map(function(doc) { const d = doc.data(); return { date: d.date as string, weight: d.weight as number }; }).filter(function(e) { return typeof e.weight === "number"; });
+      if (entries.length > 0) {
+        const sorted = [...entries].sort(function(a, b) { return a.date.localeCompare(b.date); });
+        const latest = sorted[sorted.length - 1];
+        const w = weightUnit === "lbs" ? (latest.weight * 2.20462).toFixed(1) : latest.weight.toFixed(1);
+        setLastWeightInfo({ weight: w, date: format(new Date(latest.date + "T12:00:00"), "MMM d") });
+        setWeightTrendData(calcWeightTrend(entries));
       }
     }).catch(function() {});
   }, [user, weightUnit, profile?.weightKg]);
@@ -628,7 +727,12 @@ export default function Home() {
             initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
             animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
             className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
-            <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+            <motion.span
+              animate={streak > 0 ? { opacity: [0.7, 1, 0.7] } : { opacity: 0.4 }}
+              transition={streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
+            >
+              <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+            </motion.span>
             <span className={cn("text-sm font-bold", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
               {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
             </span>
@@ -673,9 +777,9 @@ export default function Home() {
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
-            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }}
-            lastWeight={lastWeightInfo?.weight || null} lastWeightDate={lastWeightInfo?.date || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} />
+            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
+            lastWeight={lastWeightInfo?.weight || null}
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} weightTrend={weightTrendData} />
         )}
       </motion.div>
 
