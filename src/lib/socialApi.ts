@@ -8,15 +8,28 @@ import {
 import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
 
 // ============================================
+// Auth helper — single source of truth for identity
+// ============================================
+function getAuthUid(): string {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('Not authenticated');
+  return uid;
+}
+
+// ============================================
 // Follow / Unfollow
 // ============================================
 export async function followUser(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error('Identity mismatch');
   const now = Timestamp.now();
   await setDoc(doc(db, 'following', currentUid, 'users', targetUid), { followedAt: now });
   await setDoc(doc(db, 'followers', targetUid, 'users', currentUid), { followedAt: now });
 }
 
 export async function unfollowUser(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error('Identity mismatch');
   await deleteDoc(doc(db, 'following', currentUid, 'users', targetUid));
   await deleteDoc(doc(db, 'followers', targetUid, 'users', currentUid));
 }
@@ -75,6 +88,8 @@ export async function postActivity(activity: {
   crewId?: string;
   [key: string]: unknown;
 }) {
+  const authedUid = getAuthUid();
+  if (activity.authorId !== authedUid) throw new Error('Identity mismatch');
   const activityRef = await addDoc(collection(db, 'activities'), {
     ...activity,
     kudosCount: 0,
@@ -138,6 +153,8 @@ export async function postActivity(activity: {
 // Kudos
 // ============================================
 export async function toggleKudos(activityId: string, userId: string): Promise<boolean> {
+  const authedUid = getAuthUid();
+  if (userId !== authedUid) throw new Error('Identity mismatch');
   const kudosRef = doc(db, 'kudos', activityId, 'users', userId);
   const snap = await getDoc(kudosRef);
 
@@ -180,6 +197,8 @@ export async function addComment(
   text: string,
   activityAuthorId?: string,
 ) {
+  const authedUid = getAuthUid();
+  if (authorId !== authedUid) throw new Error('Identity mismatch');
   await addDoc(collection(db, 'comments', activityId, 'items'), {
     authorId, authorName, text, createdAt: serverTimestamp(),
   });
@@ -349,6 +368,8 @@ export async function reportContent(reporterId: string, data: {
   reason: ReportReason;
   details?: string;
 }) {
+  const authedUid = getAuthUid();
+  if (reporterId !== authedUid) throw new Error('Identity mismatch');
   await addDoc(collection(db, 'reports'), {
     reporterId,
     ...data,
@@ -361,6 +382,8 @@ export async function reportContent(reporterId: string, data: {
 // Block User (App Store Guideline 1.2)
 // ============================================
 export async function blockUser(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error('Identity mismatch');
   await setDoc(doc(db, 'blocks', currentUid, 'users', targetUid), {
     blockedAt: serverTimestamp(),
   });
@@ -372,6 +395,8 @@ export async function blockUser(currentUid: string, targetUid: string) {
 }
 
 export async function unblockUser(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error('Identity mismatch');
   await deleteDoc(doc(db, 'blocks', currentUid, 'users', targetUid));
 }
 
@@ -389,6 +414,8 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
 // Account Deletion (App Store Guideline 5.1.1(v))
 // ============================================
 export async function deleteAccount(uid: string): Promise<void> {
+  const authedUid = getAuthUid();
+  if (uid !== authedUid) throw new Error('Identity mismatch');
   const batch = writeBatch(db);
 
   // Delete user profile
