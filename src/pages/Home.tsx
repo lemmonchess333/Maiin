@@ -25,6 +25,11 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { formatVolume, formatStat, macroRingState } from "@/utils/formatters";
+import { estimateBMR } from "@/utils/calorieBalance";
+import { calcDailyBurn } from "@/utils/dailyBurn";
+import type { DailyBurn } from "@/utils/dailyBurn";
+import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 
 function computeStreak(wd: string[]): number {
@@ -304,13 +309,13 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Water</p>
-                <p className="text-sm font-bold text-foreground">{waterGlasses}/{waterTarget}</p>
+                <p className="text-sm font-bold text-foreground">{Math.min(waterGlasses, waterTarget)}/{waterTarget}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={function(e) { e.stopPropagation(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Minus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                 </button>
-                <button onClick={function(e) { e.stopPropagation(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" className="w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Plus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                 </button>
               </div>
@@ -465,14 +470,14 @@ function MacroRing({ value, target, color, label, unit = "" }: {
   );
 }
 
-function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein: initProt }: {
-  calories: number; protein: number; targetCalories: number; targetProtein: number;
+function TodayEnergy({ calories, protein, burn, targetProtein: initProt }: {
+  calories: number; protein: number; burn: DailyBurn; targetProtein: number;
 }) {
-  const tCal = initCal > 0 ? initCal : 2200;
+  const [expanded, setExpanded] = useState(false);
+  const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
   const tProt = initProt > 0 ? initProt : 160;
   const tCarbs = Math.round((tCal * 0.45) / 4);
   const tFat = Math.round((tCal * 0.28) / 9);
-  // Estimate carbs/fat from remaining calories after protein
   const proteinCal = protein * 4;
   const remaining = Math.max(calories - proteinCal, 0);
   const estimatedCarbs = Math.round((remaining * 0.62) / 4);
@@ -481,39 +486,94 @@ function TodayIntake({ calories, protein, targetCalories: initCal, targetProtein
   const caloriesLeft = Math.max(tCal - calories, 0);
 
   return (
-    <Link to="/log" state={{ tab: 'food' }}>
-      <div className="rounded-2xl bg-card border border-border/50 overflow-hidden active:scale-[0.99] transition-transform">
-        {/* Calorie header */}
-        <div className="px-4 pt-4 pb-3 border-b border-border/30"
-          style={{ background: "linear-gradient(135deg, " + THEME.warning + "08 0%, transparent 70%)" }}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Today's Intake</p>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-          </div>
-          <div className="flex items-baseline gap-2 mb-2.5">
-            <span className="text-2xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
-              {(calories || 0).toLocaleString()}
-            </span>
-            <span className="text-xs text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
-            {caloriesLeft > 0 && (
-              <span className="ml-auto text-[10px] text-muted-foreground">{caloriesLeft} left</span>
-            )}
-          </div>
-          <div className="h-2 rounded-full overflow-hidden bg-muted">
-            <motion.div initial={{ width: 0 }} animate={{ width: calPct + "%" }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-              className="h-full rounded-full"
-              style={{ background: calPct >= 98 ? THEME.success : "linear-gradient(90deg, " + THEME.warning + ", " + THEME.running + ")" }} />
-          </div>
+    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+      {/* Calorie header — tappable to expand */}
+      <button
+        onClick={function() { setExpanded(function(e) { return !e; }); }}
+        className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
+        style={{ background: "linear-gradient(135deg, " + THEME.warning + "08 0%, transparent 70%)" }}>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[9px] uppercase tracking-widest text-muted-foreground">Today's Energy</p>
+          {expanded
+            ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+            : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
         </div>
-        {/* Macro rings */}
-        <div className="flex items-center justify-around px-4 py-4">
-          <MacroRing value={protein} target={tProt} color={THEME.teal} label="Protein" unit="g" />
-          <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.brand} label="Carbs" unit="g" />
-          <MacroRing value={estimatedFat} target={tFat} color={THEME.warning} label="Fat" unit="g" />
+        <div className="flex items-baseline gap-2 mb-2.5">
+          <span className="text-2xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.warning }}>
+            {(calories || 0).toLocaleString()}
+          </span>
+          <span className="text-xs text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
+          {caloriesLeft > 0 && (
+            <span className="ml-auto text-[10px] text-muted-foreground">{caloriesLeft} left</span>
+          )}
         </div>
-      </div>
-    </Link>
+        <div className="h-2 rounded-full overflow-hidden bg-muted">
+          <motion.div initial={{ width: 0 }} animate={{ width: calPct + "%" }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="h-full rounded-full"
+            style={{ background: calPct >= 98 ? THEME.success : "linear-gradient(90deg, " + THEME.warning + ", " + THEME.running + ")" }} />
+        </div>
+      </button>
+
+      <AnimatePresence mode="wait">
+        {expanded ? (
+          <motion.div
+            key="breakdown"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 py-4 space-y-2.5">
+              <BreakdownRow label={"Base TDEE (" + burn.phaseLabel + ")"} value={burn.phaseAdjustedTdee} />
+              <BreakdownRow label="+ Workout" value={burn.workoutCalories} color={THEME.success} />
+              <BreakdownRow label="+ Run" value={burn.runCalories} color={THEME.running} />
+              <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect in app" color={THEME.textMuted} />
+              <div className="h-px bg-border/50" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground">Today's budget</span>
+                <span className="text-xs font-bold font-mono tabular-nums" style={{ color: THEME.warning }}>
+                  {burn.dailyBudget.toLocaleString()}
+                </span>
+              </div>
+              <Link to="/log" state={{ tab: 'food' }} className="block text-center text-[10px] font-medium pt-1" style={{ color: THEME.brand }}>
+                View food log →
+              </Link>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="rings"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <Link to="/log" state={{ tab: 'food' }} className="block">
+              <div className="flex items-center justify-around px-4 py-4">
+                <MacroRing value={protein} target={tProt} color={THEME.teal} label="Protein" unit="g" />
+                <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.brand} label="Carbs" unit="g" />
+                <MacroRing value={estimatedFat} target={tFat} color={THEME.warning} label="Fat" unit="g" />
+              </div>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function BreakdownRow({ label, value, color, placeholder }: {
+  label: string; value: number; color?: string; placeholder?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className="text-[11px] font-semibold font-mono tabular-nums" style={{ color: color || THEME.textPrimary }}>
+        {value > 0 ? value.toLocaleString() : (placeholder || "\u2014")}
+      </span>
+    </div>
   );
 }
 
@@ -614,6 +674,44 @@ export default function Home() {
   useEffect(function() {
     if (healthScore != null) prevHealthScoreRef.current = healthScore;
   }, [healthScore]);
+
+  // Compute daily burn for Today's Energy card
+  const [todayWorkoutCals, setTodayWorkoutCals] = useState(0);
+  const [todayRunCals, setTodayRunCals] = useState(0);
+
+  useEffect(function() {
+    if (!user?.uid) return;
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    // Workout calories
+    const dayW = workouts.filter(function(w) { return w.date === todayStr; });
+    let wCals = 0;
+    dayW.forEach(function(w) {
+      const mins = w.durationMinutes || 0;
+      wCals += Math.round(((profile?.weightKg || 70) * mins * 5) / 60);
+    });
+    setTodayWorkoutCals(wCals);
+    // Run calories
+    const ts = new Date(); ts.setHours(0, 0, 0, 0);
+    getDocs(query(collection(db, "users", user.uid, "runs"), where("completedAt", ">=", Timestamp.fromDate(ts)))).then(function(snap) {
+      let rCals = 0;
+      snap.docs.forEach(function(d) {
+        const distKm = ((d.data().distance || 0) / 1000);
+        rCals += Math.round((profile?.weightKg || 70) * distKm * 1.036);
+      });
+      setTodayRunCals(rCals);
+    }).catch(function() {});
+  }, [user, workouts, profile?.weightKg]);
+
+  const dailyBurn = useMemo(function() {
+    const wKg = profile?.weightKg || 70;
+    const hCm = profile?.heightCm || 170;
+    const a = profile?.age || 30;
+    const s = (profile?.sex as "male" | "female") || "male";
+    const bmr = estimateBMR(wKg, hCm, a, s);
+    const actLevel = (profile?.activityLevel as ActivityLevel) || "moderate";
+    const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
+    return calcDailyBurn(bmr, actLevel, phase, todayWorkoutCals, todayRunCals, 0);
+  }, [profile, todayWorkoutCals, todayRunCals]);
 
   useEffect(function() {
     if (!user?.uid) return;
@@ -806,7 +904,7 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <SectionErrorBoundary sectionName="today-intake">
-          <TodayIntake calories={dailyCal} protein={dailyProt} targetCalories={profile.targetCalories || 2200} targetProtein={profile.targetProtein || 160} />
+          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} />
         </SectionErrorBoundary>
       </motion.div>
 

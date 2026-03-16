@@ -5,7 +5,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { calculateTDEE, ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -34,6 +34,7 @@ import {
   Trash2,
   Plus,
   Bell,
+  RefreshCw,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import { deleteAccount } from "@/lib/socialApi";
@@ -76,6 +77,7 @@ const PLANS = [
 
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
@@ -463,6 +465,23 @@ export default function Settings() {
       {visibleTab === "profile" && (
       <>
       <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile & Goals" subtitle="Name, body stats, weekly schedule" defaultOpen>
+        {/* Retake Onboarding Quiz */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={async () => {
+            await updateProfile({ onboardingComplete: false });
+            navigate("/onboarding", { state: { retake: true } });
+          }}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50 border border-border/30 hover:bg-muted transition-colors"
+        >
+          <RefreshCw className="w-4 h-4 text-primary" />
+          <div className="flex-1 text-left">
+            <p className="text-sm font-medium">Retake quiz</p>
+            <p className="text-[11px] text-muted-foreground">Re-run the onboarding quiz and get a new program</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </motion.button>
+
         <input
           type="text"
           value={name}
