@@ -139,7 +139,7 @@ export function ManualFoodLogger({ date }: Props) {
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-5">
+    <div className="bg-card rounded-2xl p-5 space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/10">
@@ -179,7 +179,7 @@ export function ManualFoodLogger({ date }: Props) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Meal name (e.g. Chicken & rice)"
-        className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        className="w-full px-4 py-3 rounded-xl bg-muted text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
 
       <div className="grid grid-cols-2 gap-3">
@@ -200,7 +200,7 @@ export function ManualFoodLogger({ date }: Props) {
               value={field.value}
               onChange={(e) => field.set(e.target.value)}
               placeholder="0"
-              className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-4 py-3 rounded-xl bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
         ))}

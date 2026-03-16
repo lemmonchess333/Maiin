@@ -448,7 +448,7 @@ export function AdaptiveSummary({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl border border-border/50 overflow-hidden"
+      className="bg-card rounded-2xl overflow-hidden"
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-border/30 bg-card">

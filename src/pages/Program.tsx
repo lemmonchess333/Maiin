@@ -342,7 +342,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       </div>
 
       {/* Phase + Week Header */}
-      <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">
+      <div className="bg-card rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={goBack}
@@ -415,14 +415,13 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           <div
             key={dayIndex}
             className={cn(
-              "rounded-2xl border overflow-hidden transition-all",
+              "rounded-2xl overflow-hidden transition-all",
               day.completed ? "opacity-70" : ""
             )}
             style={{
               background: isCurrent
                 ? `linear-gradient(135deg, ${sportColor}10 0%, transparent 60%)`
                 : 'var(--card)',
-              borderColor: isCurrent ? `${sportColor}40` : day.completed ? '#22c55e30' : 'hsl(var(--border) / 0.5)',
             }}
           >
             {/* Current day label */}

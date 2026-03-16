@@ -13,7 +13,7 @@ interface AccordionSectionProps {
 export default function AccordionSection({ icon, title, subtitle, defaultOpen = false, children }: AccordionSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+    <div className="bg-card rounded-2xl overflow-hidden">
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           {icon}

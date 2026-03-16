@@ -81,7 +81,7 @@ export function AdaptiveTDEECard() {
 
   return (
     <ProGate feature="Adaptive TDEE">
-      <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+      <div className="p-4 rounded-2xl bg-card space-y-3">
         <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/10">
             <Brain className="w-5 h-5 text-purple-500" />

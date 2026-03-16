@@ -210,7 +210,7 @@ export default function Social() {
       {tab === 'find' && (
         <div className="space-y-5">
           {/* Section 1: Invite */}
-          <div className="p-4 rounded-2xl bg-card border border-border/50 text-center space-y-3">
+          <div className="p-4 rounded-2xl bg-card text-center space-y-3">
             <UserPlus className="w-8 h-8 text-primary mx-auto" />
             <p className="text-sm font-bold text-foreground">Train together</p>
             <p className="text-xs text-muted-foreground">Invite friends to compete on challenges and share workouts</p>
@@ -243,7 +243,7 @@ export default function Social() {
             {searchResults.length > 0 && (
               <div className="space-y-2">
                 {searchResults.map((u) => (
-                  <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50">
+                  <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
                       {(u.displayName || '?').charAt(0).toUpperCase()}
                     </div>
@@ -308,7 +308,7 @@ export default function Social() {
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
                 return (
-                  <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50">
+                  <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                     <span className="text-2xl">{crew.icon}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{crew.name}</p>

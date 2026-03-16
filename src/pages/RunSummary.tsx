@@ -183,12 +183,12 @@ export default function RunSummary() {
       </div>
 
       {(distance || 0) === 0 && (elapsed || 0) < 30 && !saved && (
-        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted border border-border/50 text-center space-y-3">
+        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted text-center space-y-3">
           <p className="text-sm text-muted-foreground">Run too short to save. Discard?</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={handleSave}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted border border-border/50 text-foreground"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted text-foreground"
             >
               Save anyway
             </button>
@@ -229,7 +229,7 @@ export default function RunSummary() {
 
       {/* Pace-coloured route map */}
       {points.length > 1 && (
-        <div className="mx-4 mb-4 rounded-2xl overflow-hidden border border-border/50">
+        <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
           <RunMap
             points={points}
             currentPoint={null}
@@ -245,27 +245,27 @@ export default function RunSummary() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
             {(distance / 1000).toFixed(2)}
           </p>
           <p className="text-[10px] text-muted-foreground mt-0.5">km</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">time</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">/km pace</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.success }}>{calories}</p>
           <p className="text-[10px] text-muted-foreground">calories</p>
         </div>
-        <div className="p-3 rounded-xl bg-card border border-border/50 text-center">
+        <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
           <p className="text-[10px] text-muted-foreground">elevation gain</p>
         </div>
@@ -283,7 +283,7 @@ export default function RunSummary() {
 
       {/* Best Efforts */}
       {bestEfforts.length > 0 && (
-        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card border border-border/50">
+        <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">Best Efforts</h3>
           <div className="grid grid-cols-3 gap-2">
             {bestEfforts.map((effort) => (
@@ -334,7 +334,7 @@ export default function RunSummary() {
       {/* Actions */}
       <div className="px-4 space-y-2">
         {/* Share toggle */}
-        <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50">
+        <div className="flex items-center justify-between p-3 rounded-xl bg-card">
           <div>
             <p className="text-sm font-medium text-foreground">Share to feed</p>
             <p className="text-[10px] text-muted-foreground">Post this run to your followers</p>
@@ -352,7 +352,7 @@ export default function RunSummary() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="How did it feel? Any notes about this run..."
           rows={3}
-          className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
 
         <button
@@ -367,13 +367,13 @@ export default function RunSummary() {
         </button>
         <div className="flex gap-2">
           <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground">
+            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground">
             Export GPX
           </button>
           <button
             onClick={handleShare}
             disabled={sharing}
-            className="flex-1 py-3 rounded-xl bg-card border border-border/50 text-sm font-medium text-foreground disabled:opacity-50">
+            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50">
             {sharing ? 'Sharing…' : 'Share'}
           </button>
         </div>

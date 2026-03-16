@@ -62,7 +62,7 @@ export function TrendWeight() {
     const entry = entries[0];
     const d = new Date(entry.date);
     return (
-      <div className="p-4 rounded-2xl bg-card border border-border/50 text-center py-6 space-y-2">
+      <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Weight Trend
         </p>
@@ -82,7 +82,7 @@ export function TrendWeight() {
   // Less than 3 entries: show message
   if (data.length < 3) {
     return (
-      <div className="p-4 rounded-2xl bg-card border border-border/50 text-center py-8">
+      <div className="p-4 rounded-2xl bg-card text-center py-8">
         <p className="text-sm text-muted-foreground">
           Log 3+ weigh-ins to see your trend
         </p>
@@ -107,7 +107,7 @@ export function TrendWeight() {
     : null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Weight Trend

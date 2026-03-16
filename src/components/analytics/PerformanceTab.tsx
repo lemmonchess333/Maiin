@@ -154,7 +154,7 @@ export default function PerformanceTab() {
 
   if (loading) {
     return (
-      <div className="p-4 rounded-2xl bg-card border border-border/50">
+      <div className="p-4 rounded-2xl bg-card">
         <p className="text-sm text-muted-foreground">Loading performance…</p>
       </div>
     );
@@ -162,7 +162,7 @@ export default function PerformanceTab() {
 
   if (!weeks.length || !currentWeek) {
     return (
-      <div className="p-4 rounded-2xl bg-card border border-border/50">
+      <div className="p-4 rounded-2xl bg-card">
         <h3 className="text-sm font-semibold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
           No performance weeks yet. Log workouts/runs and your weekly index will appear here.
@@ -315,7 +315,7 @@ export default function PerformanceTab() {
               )}
 
               {/* Breakdown bars */}
-              <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+              <div className="p-4 rounded-2xl bg-card space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Breakdown</h3>
                 <ScoreBar label="Lift Load" value={b.liftLoadScore} color={THEME.lifting} />
                 <ScoreBar label="Run Load" value={b.runLoadScore} color={THEME.running} />
@@ -342,7 +342,7 @@ export default function PerformanceTab() {
                 />
               </div>
 
-              <div className="p-4 rounded-2xl bg-card border border-border/50">
+              <div className="p-4 rounded-2xl bg-card">
                 <h3 className="text-sm font-semibold text-foreground mb-2">This Week Adjustments</h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>

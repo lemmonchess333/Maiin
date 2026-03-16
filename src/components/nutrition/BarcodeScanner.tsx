@@ -193,7 +193,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
-            <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+            <div className="p-4 rounded-2xl bg-card space-y-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">{product.name}</p>
                 {product.brand && (

@@ -39,15 +39,15 @@ export default function WeeklyOverview({
       color: THEME.lifting, ringVal: liftCount, ringMax: 5,
     },
     {
-      icon: <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.success }} />,
+      icon: <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />,
       label: 'Adherence', value: `${nutritionAdherence}%`, sub: `${caloriesBurned.toLocaleString()} cal`,
-      color: THEME.success, ringVal: nutritionAdherence, ringMax: 100,
+      color: THEME.semantic.nutrition, ringVal: nutritionAdherence, ringMax: 100,
     },
   ];
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
-      <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-4">This Week</p>
+    <div className="p-4 rounded-2xl bg-card">
+      <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-4" style={{ color: '#8E8E93' }}>This Week</p>
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="flex flex-col items-center gap-2">

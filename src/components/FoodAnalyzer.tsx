@@ -318,7 +318,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
             transition={{ duration: 0.2 }}
             className="space-y-4"
           >
-            <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+            <div className="bg-card rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-foreground truncate">

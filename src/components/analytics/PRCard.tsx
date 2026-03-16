@@ -18,7 +18,7 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
   if (prs.length === 0) return null;
 
   return (
-    <div className="rounded-2xl bg-card border border-border/50 overflow-hidden"
+    <div className="rounded-2xl bg-card overflow-hidden"
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)` }}>
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-amber-500" />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
+import { THEME } from "@/lib/theme";
 import { toast } from "sonner";
 
 export function WaterTracker() {
@@ -25,7 +26,7 @@ export function WaterTracker() {
   const pct = Math.round(progress * 100);
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 overflow-hidden relative" style={{ minHeight: 180 }}>
+    <div className="p-4 rounded-2xl bg-card overflow-hidden relative" style={{ minHeight: 180 }}>
       {/* Animated fill background */}
       <motion.div
         className="absolute bottom-0 left-0 right-0 pointer-events-none"
@@ -33,7 +34,7 @@ export function WaterTracker() {
         animate={{ height: pct + "%" }}
         transition={{ type: "spring", stiffness: 120, damping: 14 }}
         style={{
-          background: "linear-gradient(to top, rgba(59,130,246,0.18), rgba(59,130,246,0.04))",
+          background: `linear-gradient(to top, ${THEME.semantic.hydration}2E, ${THEME.semantic.hydration}0A)`,
         }}
       />
 
@@ -63,15 +64,15 @@ export function WaterTracker() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Droplets size={16} className="text-blue-500" />
-            <span className="text-sm font-bold text-foreground">Water</span>
+            <Droplets size={16} style={{ color: THEME.semantic.hydration }} />
+            <span className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</span>
           </div>
           <span className="text-[11px] text-muted-foreground">{pct}%</span>
         </div>
 
         {/* Big number */}
         <div className="text-center py-2">
-          <p className="text-4xl font-extrabold text-blue-500 tabular-nums leading-tight">
+          <p className="text-[32px] font-extrabold tabular-nums leading-tight" style={{ color: THEME.semantic.hydration }}>
             {Math.round(glasses * 250)}
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
@@ -86,7 +87,7 @@ export function WaterTracker() {
               key={i}
               className="w-1.5 h-1.5 rounded-full transition-colors duration-300"
               style={{
-                backgroundColor: i < glasses ? "#3b82f6" : "rgba(59,130,246,0.15)",
+                backgroundColor: i < glasses ? THEME.semantic.hydration : `${THEME.semantic.hydration}26`,
               }}
             />
           ))}
@@ -97,15 +98,16 @@ export function WaterTracker() {
           <button
             onClick={handleRemove}
             disabled={glasses <= 0}
-            className="w-10 h-10 rounded-xl bg-muted border border-border/50 flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
+            className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
           >
             <Minus size={18} className="text-muted-foreground" />
           </button>
           <button
             onClick={handleAdd}
-            className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center active:scale-90 transition-all"
+            className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition-all"
+            style={{ backgroundColor: `${THEME.semantic.hydration}26` }}
           >
-            <Plus size={18} className="text-blue-500" />
+            <Plus size={18} style={{ color: THEME.semantic.hydration }} />
           </button>
         </div>
       </div>

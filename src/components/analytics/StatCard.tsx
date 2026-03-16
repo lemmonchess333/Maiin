@@ -16,14 +16,14 @@ export default function StatCard({
   const gradientId = `spark-${label.replace(/\s/g, '-')}`;
   return (
     <button onClick={onClick}
-      className="p-4 rounded-2xl bg-card border border-border/50 text-left w-full active:scale-[0.98] transition-transform"
+      className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98] transition-transform"
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 70%)` }}>
-      <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-2">{label}</p>
+      <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-2" style={{ color: '#8E8E93' }}>{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold font-mono tabular-nums text-foreground leading-none">{value}</span>
-            {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+            <span className="text-[28px] font-extrabold font-mono tabular-nums text-foreground leading-none">{value}</span>
+            {unit && <span className="text-[13px]" style={{ color: '#8E8E93' }}>{unit}</span>}
           </div>
           {delta && (
             <p className={`text-[10px] mt-1 font-medium flex items-center gap-0.5 ${delta.positive ? 'text-emerald-500' : 'text-red-400'}`}>

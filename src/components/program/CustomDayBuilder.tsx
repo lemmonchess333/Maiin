@@ -106,7 +106,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                 <div className="space-y-2">
                   {exercises.map((ex, i) => (
                     <SortableExerciseRow key={`custom-ex-${i}`} id={`custom-ex-${i}`} justDropped={justDroppedId === `custom-ex-${i}`}>
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-card border border-border/50">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-card">
                         <Dumbbell className="w-4 h-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
@@ -116,14 +116,14 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                               type="number"
                               value={ex.sets}
                               onChange={(e) => updateField(i, "sets", Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
-                              className="w-12 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center"
+                              className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
                             />
                             <label className="text-[10px] text-muted-foreground">Reps</label>
                             <input
                               type="number"
                               value={ex.reps}
                               onChange={(e) => updateField(i, "reps", Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
-                              className="w-12 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center"
+                              className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
                             />
                             <label className="text-[10px] text-muted-foreground">kg</label>
                             <input
@@ -131,7 +131,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                               value={ex.weight || ""}
                               placeholder="BW"
                               onChange={(e) => updateField(i, "weight", Math.max(0, Number(e.target.value) || 0))}
-                              className="w-14 px-1.5 py-0.5 rounded bg-muted border border-border/50 text-xs text-foreground text-center placeholder:text-muted-foreground"
+                              className="w-14 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center placeholder:text-muted-foreground"
                             />
                           </div>
                         </div>

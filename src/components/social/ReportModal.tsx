@@ -40,7 +40,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={onClose} />
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flag className="w-4 h-4 text-destructive" />
@@ -76,7 +76,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             placeholder="Please describe the issue..."
-            className="w-full px-3 py-2 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
             rows={3}
           />
         )}
