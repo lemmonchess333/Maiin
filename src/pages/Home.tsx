@@ -11,7 +11,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf, TrendingDown, TrendingUp } from "lucide-react";
+import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
@@ -25,21 +25,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { formatVolume, formatStat, macroRingState } from "@/utils/formatters";
-import { calcWeightTrend } from "@/utils/weightTrend";
-import type { WeightTrend } from "@/utils/weightTrend";
 
-function WeightSparkline({ values, color, width = 80, height = 20 }: { values: number[]; color: string; width?: number; height?: number }) {
-  if (values.length < 2) return null;
-  const min = Math.min(...values) - 0.3;
-  const max = Math.max(...values) + 0.3;
-  const range = max - min || 1;
-  const points = values.map((v, i) => `${(i / (values.length - 1)) * width},${height - ((v - min) / range) * height}`).join(" ");
-  return (
-    <svg width={width} height={height} className="block">
-      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
@@ -175,7 +161,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
-function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore, weightTrend }: {
+function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -189,8 +175,8 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
   prevHealthScore: number | null;
-  weightTrend: WeightTrend | null;
 }) {
+  const [rippleKey, setRippleKey] = useState(0);
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
   const tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
@@ -260,20 +246,23 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         <div className="grid grid-cols-2 gap-3">
           {/* Health Score with heartbeat */}
           <Link to="/history?tab=health" className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(236,72,153,0.06)" }}>
-            <motion.div
+            <div
               className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: "rgba(236,72,153,0.10)" }}
-              animate={
-                healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
-                  ? (healthScore >= 70 && prevHealthScore < 70
-                    ? { scale: [1, 1.3, 0.95, 1.2, 1] }
-                    : { scale: [1, 1.25, 1] })
-                  : { scale: 1 }
-              }
-              transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
             >
-              <Heart className="w-4 h-4 text-pink-500" />
-            </motion.div>
+              <motion.div
+                animate={
+                  healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
+                    ? (healthScore >= 70 && prevHealthScore < 70
+                      ? { scale: [1, 1.3, 0.95, 1.2, 1] }
+                      : { scale: [1, 1.25, 1] })
+                    : { scale: 1 }
+                }
+                transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
+              >
+                <Heart className="w-4 h-4 text-pink-500" />
+              </motion.div>
+            </div>
             <div className="min-w-0">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Health</p>
               {healthScore != null ? (
@@ -285,9 +274,31 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               )}
             </div>
           </Link>
-          {/* Water with fill bar */}
-          <div className="flex flex-col gap-2 p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
-            <div className="flex items-center gap-2.5">
+          {/* Water with fill-from-bottom */}
+          <div className="relative overflow-hidden p-3 rounded-xl" style={{ backgroundColor: "rgba(59,130,246,0.06)" }}>
+            {/* Fill-from-bottom gradient */}
+            <motion.div
+              className="absolute inset-x-0 bottom-0 pointer-events-none"
+              style={{ background: "linear-gradient(0deg, rgba(59,130,246,0.25) 0%, rgba(59,130,246,0.08) 100%)" }}
+              initial={{ height: 0 }}
+              animate={{ height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
+              transition={{ type: "spring", stiffness: 120, damping: 14 }}
+            />
+            {/* Ripple on add */}
+            <AnimatePresence>
+              {rippleKey > 0 && (
+                <motion.div
+                  key={rippleKey}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: "radial-gradient(circle at 50% 80%, rgba(59,130,246,0.3), transparent 70%)" }}
+                  initial={{ opacity: 1, scale: 0.5 }}
+                  animate={{ opacity: 0, scale: 1.5 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                />
+              )}
+            </AnimatePresence>
+            <div className="relative z-10 flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                 <Droplets className="w-4 h-4 text-blue-500" />
               </div>
@@ -299,20 +310,10 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
                 <button onClick={function(e) { e.stopPropagation(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Minus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                 </button>
-                <button onClick={function(e) { e.stopPropagation(); onAddWater(); }} aria-label="Add water" className="w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                <button onClick={function(e) { e.stopPropagation(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" className="w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
                   <Plus className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                 </button>
               </div>
-            </div>
-            {/* Mini fill bar */}
-            <div className="h-1.5 rounded-full overflow-hidden bg-blue-500/10">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, rgba(59,130,246,0.4), rgba(59,130,246,0.7))" }}
-                initial={{ width: 0 }}
-                animate={{ width: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
-                transition={{ type: "spring", stiffness: 120, damping: 14 }}
-              />
             </div>
           </div>
           {/* Weight with 7d trend */}
@@ -326,31 +327,11 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
                 <p className={cn("text-foreground font-semibold truncate", lastWeight && (lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit)).length > 7 ? "text-[10px]" : "text-xs")}>
                   {lastWeight ? lastWeight + " " + (weightUnit === "lbs" ? "lb" : weightUnit) : "Log"}
                 </p>
-                {weightTrend && Math.abs(weightTrend.delta) >= 0.1 && (
-                  <div className="flex items-center gap-0.5 mt-0.5">
-                    {weightTrend.direction === "down" ? (
-                      <TrendingDown className="w-3 h-3" style={{ color: THEME.success }} />
-                    ) : weightTrend.direction === "up" ? (
-                      <TrendingUp className="w-3 h-3" style={{ color: THEME.danger }} />
-                    ) : null}
-                    <span className="text-[9px] font-medium tabular-nums" style={{
-                      color: weightTrend.direction === "down" ? THEME.success : weightTrend.direction === "up" ? THEME.danger : THEME.textMuted
-                    }}>
-                      {weightTrend.delta >= 0 ? "+" : ""}{weightUnit === "lbs" ? (weightTrend.delta * 2.205).toFixed(1) : weightTrend.delta} vs 7d
-                    </span>
-                  </div>
-                )}
               </div>
               <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.10)" }}>
                 <Plus className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               </button>
             </div>
-            {weightTrend && weightTrend.sparkline.length >= 2 && (
-              <WeightSparkline
-                values={weightUnit === "lbs" ? weightTrend.sparkline.map(function(v) { return v * 2.205; }) : weightTrend.sparkline}
-                color={weightTrend.direction === "down" ? THEME.success : weightTrend.direction === "up" ? THEME.danger : THEME.brand}
-              />
-            )}
           </div>
           {/* Steps */}
           <div className="flex items-center gap-2.5 p-3 rounded-xl" style={{ backgroundColor: "rgba(34,197,94,0.06)" }}>
@@ -548,8 +529,9 @@ export default function Home() {
   const { newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
   const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
-  const [weightTrendData, setWeightTrendData] = useState<WeightTrend | null>(null);
   const prevHealthScoreRef = useRef<number | null>(null);
+  const prevStreakRef = useRef<number>(0);
+  const [streakJustExtended, setStreakJustExtended] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
@@ -566,6 +548,15 @@ export default function Home() {
   useEffect(function() {
     if (profile && streak !== profile.currentStreak) updateProfile({ currentStreak: streak });
   }, [streak, profile, updateProfile]);
+
+  useEffect(function() {
+    if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
+      setStreakJustExtended(true);
+      const t = setTimeout(function() { setStreakJustExtended(false); }, 800);
+      return function() { clearTimeout(t); };
+    }
+    prevStreakRef.current = streak;
+  }, [streak]);
 
   const [dailyCal, setDailyCal] = useState(0);
   const [dailyProt, setDailyProt] = useState(0);
@@ -640,7 +631,6 @@ export default function Home() {
         const latest = sorted[sorted.length - 1];
         const w = weightUnit === "lbs" ? (latest.weight * 2.20462).toFixed(1) : latest.weight.toFixed(1);
         setLastWeightInfo({ weight: w, date: format(new Date(latest.date + "T12:00:00"), "MMM d") });
-        setWeightTrendData(calcWeightTrend(entries));
       }
     }).catch(function() {});
   }, [user, weightUnit, profile?.weightKg]);
@@ -726,14 +716,35 @@ export default function Home() {
           <motion.div key={streak}
             initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
             animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
-            className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
+            className={cn("relative flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
+            {/* Glow behind flame on streak extension */}
+            <AnimatePresence>
+              {streakJustExtended && (
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(249,115,22,0.4) 0%, transparent 70%)" }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1.3 }}
+                  exit={{ opacity: 0, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                />
+              )}
+            </AnimatePresence>
             <motion.span
-              animate={streak > 0 ? { opacity: [0.7, 1, 0.7] } : { opacity: 0.4 }}
-              transition={streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }}
+              animate={
+                streakJustExtended
+                  ? { opacity: 1, scale: [1, 1.3, 1] }
+                  : streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
+              }
+              transition={
+                streakJustExtended
+                  ? { duration: 0.5 }
+                  : streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
+              }
             >
               <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
             </motion.span>
-            <span className={cn("text-sm font-bold", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
+            <span className={cn("text-sm font-bold relative z-10", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
               {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
             </span>
           </motion.div>
@@ -779,7 +790,7 @@ export default function Home() {
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} weightTrend={weightTrendData} />
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
         )}
       </motion.div>
 
