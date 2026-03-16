@@ -11,6 +11,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+const MotionLink = motion.create(Link);
 import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore, getScoreColor } from "@/lib/healthScore";
@@ -65,7 +66,7 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
     const data = dayMap.get(k);
     const isToday = k === format(today, "yyyy-MM-dd");
     const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
-    const st = schedule.find(function(s) { return s.day === i; })?.type || "rest";
+    const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
     return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
   });
   const tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
@@ -74,12 +75,9 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
       {days.map(function(day) {
         let cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
         let st: React.CSSProperties = {};
-        if (day.isToday && day.isSelected) {
+        if (day.isSelected) {
           cls += " text-white";
           st = { backgroundColor: THEME.brand };
-        } else if (day.isSelected) {
-          cls += " text-purple-600";
-          st = { border: "2px solid #9333ea", backgroundColor: "#faf5ff" };
         } else if (day.isToday) {
           cls += " text-foreground";
           st = { border: "2px dashed #9333ea" };
@@ -130,7 +128,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
       <div className="pt-3 pb-1 px-1">
-        <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+        <div className="rounded-xl bg-card p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
@@ -297,18 +295,18 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <Link to="/log" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Dumbbell className="w-5 h-5" style={{ color: THEME.semantic.activity }} /></div>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Dumbbell className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
           <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Workout</span>
-        </Link>
-        <Link to="/run" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Footprints className="w-5 h-5" style={{ color: THEME.semantic.vitals }} /></div>
+        </MotionLink>
+        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Footprints className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
           <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Start Run</span>
-        </Link>
-        <Link to="/log" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><ClipboardList className="w-5 h-5" style={{ color: THEME.semantic.nutrition }} /></div>
+        </MotionLink>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><ClipboardList className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
           <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Food</span>
-        </Link>
+        </MotionLink>
       </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
         className="p-4 rounded-2xl bg-card">
@@ -539,8 +537,8 @@ function MacroRing({ value, target, color, label, unit = "" }: {
   );
 }
 
-function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity }: {
-  calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number;
+function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false }: {
+  calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
@@ -625,13 +623,13 @@ function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLi
                 <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.semantic.activity} label="Carbs" unit="g" />
                 <MacroRing value={estimatedFat} target={tFat} color={THEME.semantic.nutrition} label="Fat" unit="g" />
               </div>
-              {calories === 0 && totalLifetimeMeals === 0 && (
+              {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
                   <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
                 </div>
               )}
-              {calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
+              {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
                   <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
@@ -661,7 +659,7 @@ function BreakdownRow({ label, value, color, placeholder }: {
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
-  const { meals, getDailyTotals } = useMeals();
+  const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
   const { currentWeek: perfDoc } = usePerformanceWeeks();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState, loading: programLoading } = useProgram();
@@ -746,9 +744,10 @@ export default function Home() {
         workoutsToday: todayWorkoutCount,
         waterGlasses: waterGlasses,
         waterTarget: waterTarget,
+        isRestDay: todayType === "rest",
       }
     );
-  }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget]);
+  }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget, todayType]);
   const healthScore = healthScoreResult.score;
   const prevHealthScore = prevHealthScoreRef.current;
 
@@ -993,7 +992,7 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <SectionErrorBoundary sectionName="today-intake">
-          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} />
+          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} />
         </SectionErrorBoundary>
       </motion.div>
 

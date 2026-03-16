@@ -28,6 +28,7 @@ export function calculateHealthScore(
     waterTarget?: number;
     steps?: number;
     stepsTarget?: number;
+    isRestDay?: boolean;
   }
 ): { score: number | null; breakdown: ScoreBreakdown } {
   const e = extra ?? {};
@@ -40,8 +41,10 @@ export function calculateHealthScore(
   // If a category has no data, redistribute its weight proportionally
 
   // --- Workouts (35 pts) ---
+  // Rest days: full points automatically (rest IS healthy)
+  const isRestDay = e.isRestDay ?? false;
   const hasWorkout = (e.workoutsToday ?? 0) > 0;
-  const workoutScore = hasWorkout ? 35 : 0;
+  const workoutScore = hasWorkout || isRestDay ? 35 : 0;
 
   // --- Nutrition (30 pts) ---
   let nutritionScore = 0;

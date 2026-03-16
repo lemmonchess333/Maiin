@@ -1,4 +1,5 @@
 import SessionCard from './SessionCard';
+import { THEME } from '@/lib/theme';
 
 interface TrainingSession {
   id: string;
@@ -61,10 +62,10 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
                 </span>
                 <span className={`text-xs ${(!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{day.dayNum}</span>
                 {daySessions.length === 0 && isLiftDay && (
-                  <span className="w-2 h-2 rounded-full bg-blue-400" title="Lift day" />
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: THEME.calendar.liftDay }} title="Lift day" />
                 )}
                 {daySessions.length === 0 && isRunDay && (
-                  <span className="w-2 h-2 rounded-full bg-red-400" title="Run day" />
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: THEME.calendar.runDay }} title="Run day" />
                 )}
               </div>
               <button onClick={() => onAdd(day.date)} className="text-xs text-purple-500 font-medium">

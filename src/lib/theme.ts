@@ -47,6 +47,12 @@ export const THEME = {
     200: '#E5E5EA',
   },
 
+  // Calendar dot colours — only TWO, ever
+  calendar: {
+    liftDay: '#7C6EF6',    // purple dot = lift day (matches lifting)
+    runDay: '#E8637A',      // coral dot = run day (matches running)
+  },
+
   // Unified icon background
   iconBg: 'rgba(124, 110, 246, 0.06)',  // barely-there brand tint
 
