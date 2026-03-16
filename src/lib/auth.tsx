@@ -99,6 +99,16 @@ export interface UserProfile {
   customCalorieTarget?: number;
   // Crew
   crewId?: string;
+  // Onboarding quiz (program generation)
+  ageRange?: "16-24" | "25-34" | "35-44" | "45-54" | "55+";
+  primaryGoal?: "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
+  experience?: "beginner" | "intermediate" | "advanced";
+  daysPerWeek?: 2 | 3 | 4 | 5 | 6;
+  equipment?: "full_gym" | "home_gym" | "minimal";
+  preferredSplit?: "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto";
+  runFrequency?: "regular" | "occasional" | "none";
+  injuries?: string[];
+  gender?: "male" | "female" | "unspecified";
 }
 
 /* ================================
