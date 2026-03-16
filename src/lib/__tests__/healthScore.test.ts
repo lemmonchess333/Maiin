@@ -24,7 +24,7 @@ describe("calculateHealthScore", () => {
       { calories: 2000, protein: 150, fiber: 30, sugar: 40, sodium: 2000, mealCount: 3 },
       defaultTargets
     );
-    // Nutrition = 30/30, only nutrition available, redistributed to 100
+    // Nutrition = 30/30
     expect(result.breakdown.nutrition).toBe(30);
   });
 
@@ -37,24 +37,28 @@ describe("calculateHealthScore", () => {
     expect(result.score).toBe(100);
   });
 
-  it("redistributes when only some categories have data", () => {
+  it("does not inflate score when only water is logged", () => {
     const result = calculateHealthScore(
       { calories: 0, protein: 0, fiber: 0, sugar: 0, sodium: 0, mealCount: 0 },
       defaultTargets,
       { workoutsToday: 0, waterGlasses: 8, waterTarget: 8, steps: 0, stepsTarget: 10000 }
     );
-    // Only water has data: 15/15, redistributed => 100
-    expect(result.score).toBe(100);
+    // Water 15/15, workouts 0/35, nutrition 0/30 — all always available
+    // Steps not available (0 steps). So 15/80 scaled = 19
+    expect(result.breakdown.water).toBe(15);
+    expect(result.score).toBe(19);
   });
 
-  it("handles workout-only scenario", () => {
+  it("handles workout-only scenario without inflating", () => {
     const result = calculateHealthScore(
       { calories: 0, protein: 0, fiber: 0, sugar: 0, sodium: 0, mealCount: 0 },
       defaultTargets,
       { workoutsToday: 1 }
     );
     expect(result.breakdown.workouts).toBe(35);
-    expect(result.score).toBe(100);
+    // Workout 35/35, nutrition 0/30, water 0/15 — all always available
+    // Steps not available. So 35/80 scaled = 44
+    expect(result.score).toBe(44);
   });
 
   it("returns capped score between 0 and 100", () => {

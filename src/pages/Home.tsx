@@ -13,7 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
-import { calculateHealthScore } from "@/lib/healthScore";
+import { calculateHealthScore, getScoreColor } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -31,6 +31,10 @@ import type { DailyBurn } from "@/utils/dailyBurn";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
+
+function haptic(ms = 10) {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
+}
 
 function computeStreak(wd: string[]): number {
   if (!wd.length) return 0;
@@ -71,7 +75,8 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
         let cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
         let st: React.CSSProperties = {};
         if (day.isToday && day.isSelected) {
-          cls += " bg-purple-600 text-white";
+          cls += " text-white";
+          st = { backgroundColor: THEME.brand };
         } else if (day.isSelected) {
           cls += " text-purple-600";
           st = { border: "2px solid #9333ea", backgroundColor: "#faf5ff" };
@@ -125,7 +130,7 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
       <div className="pt-3 pb-1 px-1">
-        <div className="rounded-xl bg-muted/50 border border-border/30 p-3 space-y-2">
+        <div className="rounded-xl bg-muted/50 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
@@ -166,6 +171,63 @@ function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   );
 }
 
+function WaterWave({ width, splash }: { width: number; splash: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ampRef = useRef(2);
+  const frameRef = useRef(0);
+
+  useEffect(function() {
+    ampRef.current = 7;
+    const decay = setInterval(function() {
+      ampRef.current = Math.max(ampRef.current * 0.92, 2);
+      if (ampRef.current <= 2.1) clearInterval(decay);
+    }, 50);
+    return function() { clearInterval(decay); };
+  }, [splash]);
+
+  useEffect(function() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let running = true;
+    const h = 16;
+    canvas.width = width;
+    canvas.height = h;
+
+    function draw() {
+      if (!running || !ctx) return;
+      frameRef.current++;
+      const t = frameRef.current * 0.04;
+      const amp = ampRef.current;
+      ctx.clearRect(0, 0, width, h);
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= width; x += 2) {
+        const y = amp * Math.sin((x / width) * 3 * Math.PI + t) + amp * 0.5 * Math.sin((x / width) * 5 * Math.PI - t * 0.7);
+        ctx.lineTo(x, y + h / 2);
+      }
+      ctx.lineTo(width, h);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(78, 173, 204, 0.15)";
+      ctx.fill();
+      requestAnimationFrame(draw);
+    }
+    draw();
+    return function() { running = false; };
+  }, [width]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={16}
+      className="absolute inset-x-0 top-0 pointer-events-none"
+      style={{ transform: "translateY(-8px)" }}
+    />
+  );
+}
+
 function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
@@ -194,8 +256,9 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
     <div className="space-y-3">
       {showLift && nextWorkout && (
         <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-          onClick={function() { navigate("/program"); }}
-          className="w-full p-5 rounded-2xl bg-card text-left active:scale-[0.99]"
+          whileTap={{ scale: 0.97 }}
+          onClick={function() { haptic(); navigate("/program"); }}
+          className="w-full p-5 rounded-2xl bg-card text-left"
           style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
@@ -214,8 +277,9 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
       )}
       {showRun && (
         <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-          onClick={function() { navigate("/run" + templateParam); }}
-          className="w-full p-5 rounded-2xl bg-card text-left active:scale-[0.99]"
+          whileTap={{ scale: 0.97 }}
+          onClick={function() { haptic(); navigate("/run" + templateParam); }}
+          className="w-full p-5 rounded-2xl bg-card text-left"
           style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
@@ -233,15 +297,15 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <Link to="/log" className="flex-[1.2] p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.semantic.activity, color: '#fff' }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}><Dumbbell className="w-5 h-5 text-white" /></div>
-          <span className="text-xs font-bold text-white">Log Workout</span>
+        <Link to="/log" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Dumbbell className="w-5 h-5" style={{ color: THEME.semantic.activity }} /></div>
+          <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Workout</span>
         </Link>
-        <Link to="/run" className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+        <Link to="/run" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
           <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Footprints className="w-5 h-5" style={{ color: THEME.semantic.vitals }} /></div>
           <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Start Run</span>
         </Link>
-        <Link to="/log" className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+        <Link to="/log" onClick={function() { haptic(); }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 active:scale-[0.95] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
           <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><ClipboardList className="w-5 h-5" style={{ color: THEME.semantic.nutrition }} /></div>
           <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Food</span>
         </Link>
@@ -250,7 +314,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         className="p-4 rounded-2xl bg-card">
         <div className="grid grid-cols-2 gap-3">
           {/* Health Score with heartbeat */}
-          <Link to="/history?tab=health" className="p-3 rounded-xl bg-card" style={{ backgroundColor: THEME.neutral[100] }}>
+          <Link to="/history?tab=health" onClick={function() { haptic(); }} className="p-3 rounded-xl bg-card active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
             <div className="flex items-center gap-2.5 mb-2">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
@@ -272,7 +336,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health</p>
             </div>
             {healthScore != null ? (
-              <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.semantic.vitals }}>
+              <p className="text-[28px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
                 {healthScore}
               </p>
             ) : (
@@ -288,7 +352,9 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               initial={{ height: 0 }}
               animate={{ height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
               transition={{ type: "spring", stiffness: 120, damping: 14 }}
-            />
+            >
+              {waterGlasses > 0 && <WaterWave width={160} splash={rippleKey} />}
+            </motion.div>
             {/* Ripple on add */}
             <AnimatePresence>
               {rippleKey > 0 && (
@@ -313,10 +379,10 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
               <div className="flex items-center justify-between">
                 <p className="text-[28px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span></p>
                 <div className="flex items-center gap-1">
-                  <button onClick={function(e) { e.stopPropagation(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
+                  <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
                     <Minus className="w-3 h-3" style={{ color: THEME.semantic.hydration }} />
                   </button>
-                  <button onClick={function(e) { e.stopPropagation(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
+                  <button onClick={function(e) { e.stopPropagation(); haptic(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
                     <Plus className="w-3 h-3" style={{ color: THEME.semantic.hydration }} />
                   </button>
                 </div>
@@ -330,7 +396,7 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
                 <Scale className="w-4 h-4" style={{ color: THEME.semantic.activity }} />
               </div>
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Weight</p>
-              <button onClick={function(e) { e.stopPropagation(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0 ml-auto" style={{ backgroundColor: THEME.iconBg }}>
+              <button onClick={function(e) { e.stopPropagation(); haptic(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0 ml-auto" style={{ backgroundColor: THEME.iconBg }}>
                 <Plus className="w-3.5 h-3.5" style={{ color: THEME.semantic.activity }} />
               </button>
             </div>
@@ -473,8 +539,8 @@ function MacroRing({ value, target, color, label, unit = "" }: {
   );
 }
 
-function TodayEnergy({ calories, protein, burn, targetProtein: initProt }: {
-  calories: number; protein: number; burn: DailyBurn; targetProtein: number;
+function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity }: {
+  calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
@@ -492,7 +558,7 @@ function TodayEnergy({ calories, protein, burn, targetProtein: initProt }: {
     <div className="rounded-2xl bg-card overflow-hidden">
       {/* Calorie header — tappable to expand */}
       <button
-        onClick={function() { setExpanded(function(e) { return !e; }); }}
+        onClick={function() { haptic(); setExpanded(function(e) { return !e; }); }}
         className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
         style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
@@ -559,10 +625,16 @@ function TodayEnergy({ calories, protein, burn, targetProtein: initProt }: {
                 <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.semantic.activity} label="Carbs" unit="g" />
                 <MacroRing value={estimatedFat} target={tFat} color={THEME.semantic.nutrition} label="Fat" unit="g" />
               </div>
-              {calories === 0 && (
+              {calories === 0 && totalLifetimeMeals === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
                   <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
+                </div>
+              )}
+              {calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
                 </div>
               )}
             </Link>
@@ -589,7 +661,7 @@ function BreakdownRow({ label, value, color, placeholder }: {
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
-  const { getDailyTotals } = useMeals();
+  const { meals, getDailyTotals } = useMeals();
   const { currentWeek: perfDoc } = usePerformanceWeeks();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState, loading: programLoading } = useProgram();
@@ -721,6 +793,14 @@ export default function Home() {
     const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
     return calcDailyBurn(bmr, actLevel, phase, todayWorkoutCals, todayRunCals, 0);
   }, [profile, todayWorkoutCals, todayRunCals]);
+
+  // Meal history for conditional "Log first meal" CTA
+  const totalLifetimeMeals = meals.length;
+  const daysSinceLastMeal = useMemo(function() {
+    if (meals.length === 0) return Infinity;
+    const lastDate = meals[0].date; // meals sorted desc by createdAt
+    return Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000);
+  }, [meals]);
 
   useEffect(function() {
     if (!user?.uid) return;
@@ -913,7 +993,7 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <SectionErrorBoundary sectionName="today-intake">
-          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} />
+          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} />
         </SectionErrorBoundary>
       </motion.div>
 
