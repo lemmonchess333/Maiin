@@ -3,6 +3,7 @@ import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useMeals } from "@/hooks/useMeals";
+import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
   UtensilsCrossed,
@@ -139,7 +140,7 @@ export function ManualFoodLogger({ date }: Props) {
   };
 
   return (
-    <div className="bg-card rounded-2xl p-5 space-y-5">
+    <div className="rounded-2xl p-5 space-y-5" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/10">
@@ -163,7 +164,8 @@ export function ManualFoodLogger({ date }: Props) {
               key={i}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleQuickAdd(meal)}
-              className="px-4 py-2.5 text-left bg-muted hover:bg-muted/80 border border-border rounded-xl transition-all active:bg-primary/10"
+              className="px-4 py-2.5 text-left hover:opacity-90 border border-border/50 rounded-xl transition-all active:bg-primary/10"
+              style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}
             >
               <span className="text-xs font-semibold text-foreground">{meal.name}</span>
               <span className="block text-[10px] text-muted-foreground mt-0.5">
@@ -212,10 +214,10 @@ export function ManualFoodLogger({ date }: Props) {
   {(() => {
     // Keep these local so you don't have to refactor imports everywhere.
     const macroColors = {
-      calories: "#f97316",
-      protein: "#3b82f6",
-      carbs: "#f59e0b",
-      fat: "#a855f6",
+      calories: THEME.semantic.nutrition,
+      protein: THEME.semantic.hydration,
+      carbs: THEME.semantic.activity,
+      fat: THEME.semantic.nutrition,
     };
 
     const tint = (hex: string, factor: number = 0.85): string => {

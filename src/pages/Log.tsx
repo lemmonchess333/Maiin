@@ -8,6 +8,17 @@ import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+const MotionLink = motion.create(Link);
+
+function haptic(ms = 10) {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
+}
+
+const itemVariant = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
 
 const WorkoutLogger = lazy(() => import("@/components/WorkoutLogger"));
 const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
@@ -352,20 +363,22 @@ export default function Log() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <motion.div className="space-y-6" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      <motion.div variants={itemVariant}>
         <h1 className="text-xl font-bold text-foreground">Log Activity</h1>
         <p className="text-sm text-muted-foreground">
           Record your daily progress
         </p>
-      </div>
+      </motion.div>
 
       {/* Date Switcher */}
-      <div className="flex items-center justify-between bg-card rounded-xl p-3">
+      <motion.div variants={itemVariant} className="flex items-center justify-between rounded-2xl p-3"
+        style={{ background: `linear-gradient(135deg, ${THEME.brand}12 0%, transparent 60%)` }}>
         <button
-          onClick={() => changeDate(-1)}
+          onClick={() => { haptic(); changeDate(-1); }}
           aria-label="Previous day"
-          className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+          className="p-2 rounded-lg hover:bg-muted active:scale-[0.93] transition-all focus-visible:outline-2 focus-visible:outline-primary"
         >
           <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
@@ -399,23 +412,24 @@ export default function Log() {
         />
 
         <button
-          onClick={() => changeDate(1)}
+          onClick={() => { haptic(); changeDate(1); }}
           aria-label="Next day"
-          className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+          className="p-2 rounded-lg hover:bg-muted active:scale-[0.93] transition-all focus-visible:outline-2 focus-visible:outline-primary"
         >
           <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
-      </div>
+      </motion.div>
 
       {/* Tabs — Workout / Food */}
-      <div className="flex gap-1 bg-muted rounded-xl p-1">
+      <motion.div variants={itemVariant} className="flex gap-1 bg-muted rounded-xl p-1">
         {([
           { key: "workout" as const, label: "Workout", Icon: Dumbbell },
           { key: "food" as const, label: "Food", Icon: UtensilsCrossed },
         ]).map(({ key, label, Icon }) => (
-          <button
+          <motion.button
             key={key}
-            onClick={() => setActiveTab(key)}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { haptic(); setActiveTab(key); }}
             className={cn(
               "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5",
               activeTab === key
@@ -423,25 +437,32 @@ export default function Log() {
                 : "text-muted-foreground"
             )}
           >
-            <Icon className="w-4 h-4" /> {label}
-          </button>
+            <Icon className="w-4 h-4" style={activeTab === key ? { color: THEME.brand } : undefined} /> {label}
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
       {/* Workout Tab */}
       {activeTab === "workout" && (
-        <div className="space-y-4">
+        <motion.div variants={itemVariant} className="space-y-4">
           {/* Start a run link */}
-          <Link to="/run" className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 active:scale-[0.98] transition-transform">
-            <Footprints className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium text-foreground">Start a run</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
-          </Link>
+          <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform"
+            style={{ background: `linear-gradient(135deg, ${THEME.running}12 0%, transparent 60%)` }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
+              <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
+            </div>
+            <div>
+              <span className="text-sm font-medium text-foreground">Start a run</span>
+              <span className="block text-xs text-muted-foreground">Track your route & pace</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" />
+          </MotionLink>
 
           {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/10">
-              <Dumbbell className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ background: `linear-gradient(135deg, ${THEME.lifting}10 0%, transparent 60%)` }}>
+              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
               <span className="text-sm font-medium text-foreground">
                 {todaysWorkouts.length} workout{todaysWorkouts.length !== 1 ? "s" : ""} logged today
               </span>
@@ -454,14 +475,14 @@ export default function Log() {
           <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading workout tracker...</div>}>
             <WorkoutLogger date={selectedDate} onSaved={handleWorkoutSaved} />
           </Suspense>
-        </div>
+        </motion.div>
       )}
 
       {/* Food Tab */}
       {activeTab === "food" && (
-        <div className="space-y-4">
+        <motion.div variants={itemVariant} className="space-y-4">
           {/* Daily Totals - now exact same look as Today's Intake on Home */}
-          <div className="bg-card rounded-2xl p-4">
+          <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
             <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-4" style={{ color: THEME.text.muted }}>Daily Totals</p>
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
@@ -558,10 +579,10 @@ export default function Log() {
 
           {/* Saved Meals */}
           {todaysMeals.length > 0 && (
-            <div className="space-y-2">
+            <motion.div variants={itemVariant} className="space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
-                <div key={m.id} className="bg-card rounded-2xl px-4 py-3">
+                <div key={m.id} className="rounded-2xl px-4 py-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}04 0%, transparent 70%)` }}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
@@ -596,12 +617,12 @@ export default function Log() {
                   )}
                 </div>
               ))}
-            </div>
+            </motion.div>
           )}
 
           {/* Add Food — Quick Add is always visible, other modes expand inline */}
-          <div className="bg-card rounded-2xl p-4 space-y-3">
-            <p className="text-sm font-medium text-foreground">Add Food</p>
+          <div className="rounded-2xl p-4 space-y-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
+            <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Add Food</p>
 
             {/* Quick Add — always visible */}
             <div className="relative">
@@ -638,17 +659,18 @@ export default function Log() {
                 </div>
               )}
             </div>
-            <button
-              onClick={handleNLParse}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { haptic(); handleNLParse(); }}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-lg text-sm font-semibold transition-all active:scale-[0.97] bg-purple-600 text-white flex items-center justify-center gap-1.5",
+                "w-full py-3 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white flex items-center justify-center gap-1.5",
                 (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
             >
               {isPro && <Sparkles className="w-3.5 h-3.5" />}
               {nlParsing ? "Analyzing..." : "Log Meal"}
-            </button>
+            </motion.button>
             {!isPro && (
               <p className="text-[10px] text-muted-foreground text-center">
                 Upgrade to Pro for AI-powered macro estimates
@@ -662,9 +684,10 @@ export default function Log() {
                 { key: "scan" as const, label: "Scan", Icon: ScanBarcode },
                 { key: "manual" as const, label: "Manual", Icon: UtensilsCrossed },
               ]).map(({ key, label, Icon }) => (
-                <button
+                <motion.button
                   key={key}
-                  onClick={() => setFoodMode(foodMode === key ? null : key)}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { haptic(); setFoodMode(foodMode === key ? null : key); }}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
                     foodMode === key
@@ -673,7 +696,7 @@ export default function Log() {
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" /> {label}
-                </button>
+                </motion.button>
               ))}
             </div>
 
@@ -692,10 +715,10 @@ export default function Log() {
               </Suspense>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
-    </div>
+    </motion.div>
   );
 }
 

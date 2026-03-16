@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts";
 import { EXERCISE_CATEGORIES, getExercisesByCategory, getExerciseById } from "@/lib/exercises";
+import { THEME } from "@/lib/theme";
+import { motion } from "framer-motion";
 import {
   Dumbbell,
   Plus,
@@ -219,7 +221,9 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       {/* Empty state */}
       {exercises.length === 0 && !showPicker && (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Dumbbell className="w-12 h-12 text-muted-foreground/20" />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
+            <Dumbbell className="w-8 h-8 text-muted-foreground/30" />
+          </div>
           <p className="text-sm text-muted-foreground/60 text-center">Add exercises to build your workout</p>
         </div>
       )}
@@ -229,6 +233,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
         <div
           key={exIndex}
           className="bg-card rounded-2xl overflow-hidden"
+          style={expandedExercise === exIndex ? { background: `linear-gradient(135deg, ${THEME.lifting}06 0%, transparent 70%)` } : undefined}
         >
           <button
             onClick={() =>
@@ -387,12 +392,13 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
       {/* Add Exercise Button */}
       {!showPicker && (
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={() => setShowPicker(true)}
-          className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm transition-all flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" /> Add Exercise
-        </button>
+        </motion.button>
       )}
 
       {/* Exercise Picker */}
@@ -427,18 +433,20 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
           {!searchQuery && (
             <div className="flex overflow-x-auto gap-1 p-2 border-b border-border/50">
               {EXERCISE_CATEGORIES.map((cat) => (
-                <button
+                <motion.button
                   key={cat}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
                     selectedCategory === cat
-                      ? "bg-primary text-primary-foreground"
+                      ? "text-white"
                       : "bg-muted text-muted-foreground hover:text-foreground"
                   )}
+                  style={selectedCategory === cat ? { background: `linear-gradient(135deg, ${THEME.lifting} 0%, ${THEME.liftingLight} 100%)` } : undefined}
                 >
                   {cat}
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
@@ -451,7 +459,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
               >
                 <button
                   onClick={() => addExercise(exercise.id)}
-                  className="flex-1 text-left px-4 py-3 hover:bg-muted/50 transition-colors"
+                  className="flex-1 text-left px-4 py-3 hover:bg-muted/50 active:scale-[0.98] transition-all"
                 >
                   <p className="text-sm font-medium text-foreground">
                     {exercise.name}
@@ -500,7 +508,8 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
       {/* Save Button */}
       {exercises.length > 0 && (
-        <button
+        <motion.button
+          whileTap={{ scale: 0.97 }}
           onClick={handleSave}
           disabled={saving}
           className={cn(
@@ -522,7 +531,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
               Save Workout · {totalCalories} cal burned
             </>
           )}
-        </button>
+        </motion.button>
       )}
     </div>
   );
