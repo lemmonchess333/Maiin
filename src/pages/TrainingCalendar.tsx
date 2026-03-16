@@ -240,7 +240,7 @@ export default function TrainingCalendar() {
                   <button
                     key={t.id}
                     onClick={function() { addSession(selectedDay!, 'run', t); }}
-                    className="p-3 rounded-xl border border-border bg-card text-left pressable"
+                    className="p-3 rounded-xl bg-card text-left pressable"
                   >
                     <span className="text-lg">{t.icon}</span>
                     <p className="text-xs font-semibold mt-1">{t.name}</p>
@@ -257,7 +257,7 @@ export default function TrainingCalendar() {
                   <button
                     key={day.dayName}
                     onClick={function() { addSession(selectedDay!, 'lift', undefined, day.dayName); }}
-                    className="p-3 rounded-xl border border-border bg-card text-left pressable"
+                    className="p-3 rounded-xl bg-card text-left pressable"
                   >
                     <span className="text-lg">{"\uD83C\uDFCB\uFE0F"}</span>
                     <p className="text-xs font-semibold mt-1">{day.dayName}</p>

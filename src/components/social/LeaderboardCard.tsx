@@ -107,7 +107,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   const { title, unit, icon } = challengeLabels[challenge];
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border">
+    <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center gap-2 mb-3">
         {icon === 'footprints' ? <Footprints size={16} className='text-green-500' /> : icon === 'dumbbell' ? <Dumbbell size={16} className='text-purple-500' /> : <Zap size={16} className='text-amber-500' />}
         <h3 className="text-sm font-semibold">{title}</h3>

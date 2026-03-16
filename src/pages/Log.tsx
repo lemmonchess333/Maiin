@@ -135,12 +135,12 @@ export default function Log() {
     }
   };
 
-  // Macro colors — unified with Home page's TodayIntake (THEME values)
+  // Macro colors — semantic palette
   const macroColors = {
-    calories: THEME.warning,   // #FFB547
-    protein: THEME.teal,       // #00D4AA
-    carbs: THEME.brand,        // #8b5cf6
-    fat: THEME.warning,        // #FFB547 (same as calories — fat ring on Home)
+    calories: THEME.semantic.nutrition,
+    protein: THEME.semantic.hydration,
+    carbs: THEME.semantic.activity,
+    fat: THEME.semantic.nutrition,
   };
 
   const tint = (hex: string, factor: number = 0.85): string => {
@@ -361,7 +361,7 @@ export default function Log() {
       </div>
 
       {/* Date Switcher */}
-      <div className="flex items-center justify-between bg-card rounded-xl border border-border/50 p-3">
+      <div className="flex items-center justify-between bg-card rounded-xl p-3">
         <button
           onClick={() => changeDate(-1)}
           aria-label="Previous day"
@@ -461,8 +461,8 @@ export default function Log() {
       {activeTab === "food" && (
         <div className="space-y-4">
           {/* Daily Totals - now exact same look as Today's Intake on Home */}
-          <div className="bg-card rounded-2xl border border-border/50 p-4">
-            <p className="text-sm font-medium text-foreground mb-4">Daily Totals</p>
+          <div className="bg-card rounded-2xl p-4">
+            <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-4" style={{ color: THEME.text.muted }}>Daily Totals</p>
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
               <div
@@ -561,7 +561,7 @@ export default function Log() {
             <div className="space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
-                <div key={m.id} className="bg-card rounded-2xl border border-border/50 px-4 py-3">
+                <div key={m.id} className="bg-card rounded-2xl px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
@@ -578,7 +578,7 @@ export default function Log() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.warning }}>
+                      <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.semantic.nutrition }}>
                         {safeNum(m.totalCalories)}
                         <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
@@ -600,7 +600,7 @@ export default function Log() {
           )}
 
           {/* Add Food — Quick Add is always visible, other modes expand inline */}
-          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+          <div className="bg-card rounded-2xl p-4 space-y-3">
             <p className="text-sm font-medium text-foreground">Add Food</p>
 
             {/* Quick Add — always visible */}

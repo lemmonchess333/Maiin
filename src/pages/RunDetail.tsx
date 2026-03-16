@@ -169,7 +169,7 @@ export default function RunDetail() {
         </div>
 
         {/* Primary stats row */}
-        <div className="rounded-2xl bg-card border border-border/50 flex divide-x divide-border/40">
+        <div className="rounded-2xl bg-card flex divide-x divide-border/40">
           <StatPill value={formatTime(run.duration)} label="Time" />
           <StatPill value={avgPaceStr} label="/km Pace" color={THEME.teal} />
           <StatPill value={`${run.calories ?? 0}`} label="Cal" color={THEME.warning} />
@@ -177,13 +177,13 @@ export default function RunDetail() {
 
         {/* Secondary stats */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-2xl bg-card border border-border/50 text-center">
+          <div className="p-3 rounded-2xl bg-card text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.elevationGain ?? 0}m
             </p>
             <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-0.5">Elevation Gain</p>
           </div>
-          <div className="p-3 rounded-2xl bg-card border border-border/50 text-center">
+          <div className="p-3 rounded-2xl bg-card text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.splits?.length ?? 0}
             </p>

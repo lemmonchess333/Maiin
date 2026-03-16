@@ -332,7 +332,7 @@ export default function Settings() {
       )}
 
       {/* Current plan & trial banner */}
-      <div className="bg-card rounded-2xl border border-border/50 border-l-4 border-purple-500 p-4 space-y-3">
+      <div className="bg-card rounded-2xl border-l-4 border-purple-500 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Crown className="w-4 h-4 text-primary" />
           <p className="text-sm font-medium text-foreground">Your Plan</p>
@@ -374,7 +374,7 @@ export default function Settings() {
           </p>
 
           {/* Free vs Pro comparison */}
-          <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+          <div className="bg-card rounded-2xl p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="space-y-2">
                 <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">
@@ -532,7 +532,7 @@ export default function Settings() {
         </div>
 
         {/* Visual schedule editor */}
-        <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+        <div className="bg-card rounded-2xl p-4 space-y-3">
           <p className="text-xs font-medium text-foreground">
             Your week
             {hasUnsavedScheduleChanges && (
@@ -647,7 +647,7 @@ export default function Settings() {
 
             {/* Race prep details */}
             {profile?.runMode === "race_prep" && programState?.runPlan?.raceGoal && (
-              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-2">
+              <div className="p-3 rounded-xl bg-card space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
                   <span className="text-sm font-medium text-foreground">
@@ -677,7 +677,7 @@ export default function Settings() {
 
             {/* Template overrides per run day */}
             {profile?.runMode && profile.runMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
-              <div className="p-3 rounded-xl bg-card border border-border/50 space-y-1.5">
+              <div className="p-3 rounded-xl bg-card space-y-1.5">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
                 {(programState?.runDays ?? []).map((rd) => (
                   <div key={rd.dayIndex} className="flex items-center gap-3 py-1">
@@ -745,7 +745,7 @@ export default function Settings() {
       <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE & training phase">
 
       {/* TDEE Calculator */}
-      <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+      <div className="bg-card rounded-2xl overflow-hidden">
         <button
           onClick={() => setShowTDEE(!showTDEE)}
           className="w-full flex items-center justify-between p-4"
@@ -840,7 +840,7 @@ export default function Settings() {
       </div>
 
       {/* Training Phase */}
-      <div className="bg-card rounded-2xl border border-border/50 p-4 space-y-3">
+      <div className="bg-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
           <Zap className="w-5 h-5 text-primary" />
           <div>
@@ -1237,7 +1237,7 @@ export default function Settings() {
           </div>
 
           {privacyZones.map((z) => (
-            <div key={z.id} className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border/50">
+            <div key={z.id} className="flex items-center justify-between p-2.5 rounded-lg bg-card">
               <div>
                 <p className="text-xs font-medium text-foreground">{z.name}</p>
                 <p className="text-[10px] text-muted-foreground">{z.radiusMeters}m radius</p>
@@ -1369,7 +1369,7 @@ export default function Settings() {
             className="fixed inset-0 bg-black/50 z-[1000]"
             onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
           />
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-destructive">Delete Account</h3>
             <p className="text-sm text-muted-foreground">
               This will permanently delete your account and all associated data including workouts, meals, runs, and social activity. This action cannot be undone.
@@ -1438,7 +1438,7 @@ export default function Settings() {
               setShowRestructureModal(false);
             }}
           />
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl border border-border/50 p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>
             <p className="text-sm text-muted-foreground">
               Changing your training days will restructure your program. Your workout history won&apos;t be affected, but your program will be rebuilt. This cannot be undone.

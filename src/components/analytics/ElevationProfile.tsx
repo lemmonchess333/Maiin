@@ -18,7 +18,7 @@ export default function ElevationProfile({ points, accentColor = '#FF6B6B' }: El
   const maxAlt = Math.max(...data.map((d) => d.alt));
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
+    <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
         <p className="text-[10px] text-muted-foreground">

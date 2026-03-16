@@ -9,7 +9,7 @@ export default function VolumeChart({ data, accentColor = '#6C7CFF' }: VolumeCha
   if (data.length === 0) return null;
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
+    <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Weekly Volume</h3>
         <p className="text-[10px] text-muted-foreground">kg lifted</p>

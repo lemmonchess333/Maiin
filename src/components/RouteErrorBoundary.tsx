@@ -48,7 +48,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={() => this.setState({ hasError: false, error: null })}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium bg-card border border-border/50 text-foreground">
+                className="px-4 py-2.5 rounded-xl text-sm font-medium bg-card text-foreground">
                 Try again
               </button>
               <button

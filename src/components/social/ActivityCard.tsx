@@ -101,7 +101,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
 
   return (
-    <div className="bg-card rounded-2xl border border-border overflow-hidden">
+    <div className="bg-card rounded-2xl overflow-hidden">
       {/* Route thumbnail for runs */}
       {isRun && activity?.routePreview && activity.routePreview.length > 1 && (
         <div className="h-28 border-b border-border/50" style={{ background: 'rgba(255,255,255,0.02)' }}>
@@ -306,7 +306,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
 
         {/* Kudos list popup */}
         {showKudosList && kudosUsers.length > 0 && (
-          <div className="mt-2 p-3 rounded-xl bg-muted border border-border/50 space-y-2">
+          <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Props from</p>
             {kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">

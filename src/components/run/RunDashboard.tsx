@@ -51,7 +51,7 @@ export default function RunDashboard() {
   return (
     <div className="space-y-4">
       {/* Weekly distance with progress ring */}
-      <div className="p-5 rounded-2xl bg-card border border-border/50 shadow-sm">
+      <div className="p-5 rounded-2xl bg-card shadow-sm">
         <p className="text-[11px] text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
         <div className="flex items-center gap-5">
           <div className="relative inline-flex items-center justify-center shrink-0">
@@ -89,7 +89,7 @@ export default function RunDashboard() {
           <h3 className="text-sm font-semibold text-foreground">Recent Runs</h3>
           {recentRuns.map((run, i) => (
             <div key={run.id}
-              className="ds-fade-up flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 pressable"
+              className="ds-fade-up flex items-center gap-3 p-3 rounded-xl bg-card pressable"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center shrink-0">

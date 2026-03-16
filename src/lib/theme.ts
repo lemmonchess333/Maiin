@@ -7,30 +7,55 @@ export const THEME = {
   elevated: '#2A2A35',
 
   // Accent colours (sport-specific — used in both light & dark)
-  running: '#FF6B6B',
-  runningLight: '#FF8A8A',
-  lifting: '#6C7CFF',
-  liftingLight: '#8B99FF',
-  brand: '#8b5cf6',
-  brandLight: '#a78bfa',
+  running: '#E8637A',
+  runningLight: '#F08A9B',
+  lifting: '#7C6EF6',
+  liftingLight: '#9B90F8',
+  brand: '#7C6EF6',
+  brandLight: '#9B90F8',
 
-  // Semantic
-  success: '#34D399',
-  warning: '#FFB547',
-  danger: '#EF4444',
-  teal: '#00D4AA',
+  // Semantic — harmonised hues (same saturation/brightness band)
+  semantic: {
+    activity: '#7C6EF6',   // purple — weight, brand, lifting
+    hydration: '#4EADCC',  // teal — water
+    vitals: '#E8637A',     // coral — health, heart rate, recovery
+    nutrition: '#ED8B4E',  // warm orange — food, calories, macros
+    positive: '#4ECC7A',   // green — positive states (streak, PR)
+    negative: '#E8637A',   // shares coral — negative states, alerts
+  },
 
-  // Text (dark mode only)
+  // Legacy semantic (kept for compatibility)
+  success: '#4ECC7A',
+  warning: '#ED8B4E',
+  danger: '#E8637A',
+  teal: '#4EADCC',
+
+  // Text
   textPrimary: '#E8E8ED',
   textSecondary: 'rgba(255,255,255,0.55)',
   textMuted: 'rgba(255,255,255,0.25)',
+
+  // Light mode text helpers
+  text: {
+    muted: '#8E8E93',     // iOS system grey
+  },
+
+  // Neutral backgrounds
+  neutral: {
+    50: '#FAFAFA',
+    100: '#F2F2F7',        // iOS system grouped background
+    200: '#E5E5EA',
+  },
+
+  // Unified icon background
+  iconBg: 'rgba(124, 110, 246, 0.06)',  // barely-there brand tint
 
   // Charts
   chartGrid: 'rgba(255,255,255,0.06)',
   chartTooltipBg: '#2A2A35',
 
   // Pace colours (for splits — used in both themes)
-  paceFast: '#34D399',
-  paceOnTarget: '#8b5cf6',
-  paceSlow: '#EF4444',
+  paceFast: '#4ECC7A',
+  paceOnTarget: '#7C6EF6',
+  paceSlow: '#E8637A',
 } as const;

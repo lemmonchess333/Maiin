@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { estimateBMR, calcDayBalance, getBalanceColor } from "../calorieBalance";
+import { THEME } from "@/lib/theme";
 
 describe("estimateBMR", () => {
   it("calculates BMR for male", () => {
@@ -30,26 +31,26 @@ describe("calcDayBalance", () => {
 describe("getBalanceColor", () => {
   it("returns success (green) for deficit during cut", () => {
     const color = getBalanceColor(300, "cut");
-    expect(color).toBe("#34D399");
+    expect(color).toBe(THEME.success);
   });
 
   it("returns danger (red) for surplus during cut", () => {
     const color = getBalanceColor(-300, "cut");
-    expect(color).toBe("#EF4444");
+    expect(color).toBe(THEME.danger);
   });
 
   it("returns success (green) for surplus during lean bulk", () => {
     const color = getBalanceColor(-300, "lean bulk");
-    expect(color).toBe("#34D399");
+    expect(color).toBe(THEME.success);
   });
 
   it("returns warning (amber) for deficit during lean bulk", () => {
     const color = getBalanceColor(300, "lean bulk");
-    expect(color).toBe("#FFB547");
+    expect(color).toBe(THEME.warning);
   });
 
   it("defaults to cut-like behavior for undefined goal", () => {
     const color = getBalanceColor(300, undefined);
-    expect(color).toBe("#34D399");
+    expect(color).toBe(THEME.success);
   });
 });

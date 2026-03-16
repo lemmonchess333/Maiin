@@ -44,7 +44,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
+    <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Performance Index</h3>
         <span className="text-[10px] text-muted-foreground">0–100 · last {data.length}w</span>

@@ -76,7 +76,7 @@ export default function CalorieBalanceChart() {
           : "Maintain";
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Calorie Balance

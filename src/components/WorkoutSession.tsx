@@ -628,7 +628,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         </AnimatePresence>
 
         {/* Set logging grid */}
-        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+        <div className="bg-card rounded-2xl overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-muted/50 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             <div className="col-span-2">Set</div>
             <div className="col-span-4">Weight (kg)</div>
@@ -669,7 +669,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       aria-label={`Set ${setIdx + 1} weight`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                       disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="col-span-4">
@@ -679,7 +679,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       aria-label={`Set ${setIdx + 1} reps`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                       disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                     />
                   </div>
                   <div className="col-span-2 flex justify-center">

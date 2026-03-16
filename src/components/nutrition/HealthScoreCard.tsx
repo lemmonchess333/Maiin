@@ -4,6 +4,7 @@ import { Heart, ChevronDown, ChevronUp } from "lucide-react";
 import { calculateHealthScore, getScoreColor, getScoreLabel } from "@/lib/healthScore";
 import { useMeals } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
+import { THEME } from "@/lib/theme";
 import { format } from "date-fns";
 
 export function HealthScoreCard() {
@@ -44,20 +45,20 @@ export function HealthScoreCard() {
   ];
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50">
+    <div className="p-4 rounded-2xl bg-card">
       <button
         onClick={() => score != null && setExpanded(!expanded)}
         className="w-full flex items-center gap-3"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-pink-500/10">
-          <Heart className="w-5 h-5 text-pink-500" />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
+          <Heart className="w-5 h-5" style={{ color: THEME.semantic.vitals }} />
         </div>
 
         <div className="flex-1 text-left">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Health Score</p>
+          <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
           {score != null ? (
             <div className="flex items-center gap-2">
-              <p className="text-lg font-bold" style={{ color: scoreColor }}>
+              <p className="text-[28px] font-extrabold leading-none" style={{ color: scoreColor }}>
                 {score}
               </p>
               <p className="text-xs text-muted-foreground">{getScoreLabel(score)}</p>

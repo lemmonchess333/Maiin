@@ -141,7 +141,7 @@ export default function BodyweightLogger() {
       : null;
 
   return (
-    <div className="bg-card rounded-2xl border border-border/50 p-5 space-y-5">
+    <div className="bg-card rounded-2xl p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -177,7 +177,7 @@ export default function BodyweightLogger() {
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder={`${displayWeight(profile?.weightKg ?? 70)} ${unit}`}
-          className="flex-1 min-w-0 px-5 py-3.5 rounded-2xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
+          className="flex-1 min-w-0 px-5 py-3.5 rounded-2xl bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg font-medium"
         />
         <motion.button
           whileTap={{ scale: 0.97 }}
