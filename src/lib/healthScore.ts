@@ -67,11 +67,12 @@ export function calculateHealthScore(
   const hasSteps = steps > 0;
   const activityScore = hasSteps ? Math.min(20, Math.round((steps / stepsTarget) * 20)) : 0;
 
-  // Redistribution: if a category isn't available, spread its weight to others
+  // Redistribution: only exclude categories the user CAN'T do (e.g. no step tracker)
+  // Workouts, nutrition, water are always available — score 0 if not done yet
   const categories = [
-    { score: workoutScore, max: 35, available: hasWorkout },
-    { score: nutritionScore, max: 30, available: consumed.mealCount >= 1 },
-    { score: waterScore, max: 15, available: hasWater },
+    { score: workoutScore, max: 35, available: true },
+    { score: nutritionScore, max: 30, available: true },
+    { score: waterScore, max: 15, available: true },
     { score: activityScore, max: 20, available: hasSteps },
   ];
 
