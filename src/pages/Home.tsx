@@ -12,7 +12,7 @@ import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 const MotionLink = motion.create(Link);
-import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf } from "lucide-react";
+import { Dumbbell, ChevronRight, Sparkles, Settings as SettingsIcon, Flame, Play, Footprints, ClipboardList, X, Scale, Heart, Droplets, Plus, Minus, Target, Zap, Leaf, Activity, UtensilsCrossed } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore, getScoreColor } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
@@ -295,17 +295,17 @@ function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, water
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Dumbbell className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
-          <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Workout</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(124, 110, 246, 0.1)' }}><Dumbbell className="w-5 h-5" style={{ color: THEME.semantic.activity }} /></div>
+          <span className="text-xs font-semibold" style={{ color: '#1C1C1E' }}>Log Workout</span>
         </MotionLink>
-        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><Footprints className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
-          <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Start Run</span>
+        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(232, 99, 122, 0.1)' }}><Activity className="w-5 h-5" style={{ color: THEME.semantic.vitals }} /></div>
+          <span className="text-xs font-semibold" style={{ color: '#1C1C1E' }}>Start Run</span>
         </MotionLink>
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}><ClipboardList className="w-5 h-5" style={{ color: THEME.text.muted }} /></div>
-          <span className="text-xs font-medium" style={{ color: THEME.text.muted }}>Log Food</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl bg-card flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: '#FFFFFF' }}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(237, 139, 78, 0.1)' }}><UtensilsCrossed className="w-5 h-5" style={{ color: THEME.semantic.nutrition }} /></div>
+          <span className="text-xs font-semibold" style={{ color: '#1C1C1E' }}>Log Food</span>
         </MotionLink>
       </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
