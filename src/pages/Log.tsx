@@ -90,7 +90,7 @@ export default function Log() {
     }
   }, [location.state]);
 
-  const [foodMode, setFoodMode] = useState<"scan" | "manual" | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const [suggestionsActive, setSuggestionsActive] = useState(true);
@@ -457,8 +457,11 @@ export default function Log() {
     return fromHistory.length >= 3 ? fromHistory : DEFAULT_QUICK_MEALS;
   }, [meals]);
 
+  const [quickAdding, setQuickAdding] = useState<string | null>(null);
+
   const handleQuickMealAdd = async (meal: typeof DEFAULT_QUICK_MEALS[0]) => {
-    if (!user) return;
+    if (!user || quickAdding) return;
+    setQuickAdding(meal.name);
     await addDoc(collection(db, "users", user.uid, "meals"), {
       date: selectedDate,
       foodName: meal.name,
@@ -471,6 +474,7 @@ export default function Log() {
       createdAt: Timestamp.now(),
     });
     toast.success(`${meal.name} added!`);
+    setQuickAdding(null);
   };
 
   return (
@@ -671,7 +675,11 @@ export default function Log() {
                   key={i}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                  className="shrink-0 text-left border border-border/50 rounded-xl transition-all active:bg-primary/10"
+                  disabled={quickAdding !== null}
+                  className={cn(
+                    "shrink-0 text-left border border-border/50 rounded-xl transition-all active:bg-primary/10",
+                    quickAdding !== null && "opacity-60 cursor-not-allowed"
+                  )}
                   style={{
                     width: "165px",
                     padding: "10px 12px",
@@ -871,37 +879,31 @@ export default function Log() {
 
             {/* Scan + Manual buttons — side by side */}
             <div className="flex gap-2" style={{ marginTop: "10px" }}>
-              {([
-                { key: "scan" as const, label: "Scan", Icon: ScanBarcode },
-                { key: "manual" as const, label: "Manual", Icon: UtensilsCrossed },
-              ]).map(({ key, label, Icon }) => (
-                <motion.button
-                  key={key}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    haptic();
-                    if (key === "manual") {
-                      setManualOpen(true);
-                    } else {
-                      setFoodMode(foodMode === key ? null : key);
-                    }
-                  }}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
-                    foodMode === key
-                      ? "bg-primary/10 text-primary border-primary/30"
-                      : "bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
-                  )}
-                >
-                  <Icon className="w-3.5 h-3.5" /> {label}
-                </motion.button>
-              ))}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { haptic(); setScanOpen(!scanOpen); }}
+                className={cn(
+                  "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
+                  scanOpen
+                    ? "bg-primary/10 text-primary border-primary/30"
+                    : "bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
+                )}
+              >
+                <ScanBarcode className="w-3.5 h-3.5" /> Scan
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { haptic(); setManualOpen(true); }}
+                className="flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
+              >
+                <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
+              </motion.button>
             </div>
 
             {/* Expanded scan mode */}
-            {foodMode === "scan" && (
+            {scanOpen && (
               <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
-                <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode(null)} />
+                <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />
               </Suspense>
             )}
           </div>
