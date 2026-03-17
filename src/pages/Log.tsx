@@ -51,6 +51,7 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { tint } from "@/lib/colorUtils";
 
 // Quick-add default meals (moved from ManualFoodLogger)
 const DEFAULT_QUICK_MEALS = [
@@ -184,19 +185,6 @@ export default function Log() {
     protein: THEME.semantic.hydration,
     carbs: THEME.semantic.activity,
     fat: THEME.semantic.nutrition,
-  };
-
-  const tint = (hex: string, factor: number = 0.85): string => {
-    if (!hex || !hex.startsWith("#")) return hex;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-
-    const newR = Math.min(255, Math.floor(r + (255 - r) * factor));
-    const newG = Math.min(255, Math.floor(g + (255 - g) * factor));
-    const newB = Math.min(255, Math.floor(b + (255 - b) * factor));
-
-    return `#${newR.toString(16).padStart(2, "0")}${newG.toString(16).padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
   };
 
   // Auto-save daily log when workouts or meals change
@@ -616,13 +604,12 @@ export default function Log() {
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
-            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold mb-4" style={{ color: THEME.text.muted }}>Daily Totals</p>
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
               <div
                 className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
-                  backgroundColor: tint(macroColors.calories),
+                  backgroundColor: tint(macroColors.calories, 0.06),
                   color: macroColors.calories,
                 }}
               >
@@ -637,7 +624,7 @@ export default function Log() {
               <div
                 className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
-                  backgroundColor: tint(macroColors.protein),
+                  backgroundColor: tint(macroColors.protein, 0.06),
                   color: macroColors.protein,
                 }}
               >
@@ -652,7 +639,7 @@ export default function Log() {
               <div
                 className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
-                  backgroundColor: tint(macroColors.carbs),
+                  backgroundColor: tint(macroColors.carbs, 0.06),
                   color: macroColors.carbs,
                 }}
               >
@@ -667,7 +654,7 @@ export default function Log() {
               <div
                 className="min-w-0 rounded-xl p-3 shadow-sm"
                 style={{
-                  backgroundColor: tint(macroColors.fat),
+                  backgroundColor: tint(macroColors.fat, 0.06),
                   color: macroColors.fat,
                 }}
               >
@@ -681,7 +668,7 @@ export default function Log() {
           </div>
 
           {/* Quick Add — horizontal scroll row */}
-          <div style={{ marginTop: "16px" }}>
+          <div style={{ marginTop: "14px" }}>
             <p className="text-[11px] uppercase tracking-[0.05em] font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
             <div
               className="flex gap-2.5 pb-1 -mx-1 px-1"
@@ -699,14 +686,14 @@ export default function Log() {
                     quickAdding !== null && "opacity-60 cursor-not-allowed"
                   )}
                   style={{
-                    width: "165px",
-                    padding: "10px 12px",
+                    width: "180px",
+                    padding: "8px 12px",
                     background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)`,
                   }}
                 >
-                  <span className="text-sm font-bold text-foreground block truncate">{meal.name}</span>
+                  <span className="text-[13px] font-bold text-foreground block truncate">{meal.name}</span>
                   <span className="block text-[11px] text-muted-foreground mt-1">
-                    ~{meal.cal} kcal · {meal.pro}P · {meal.carb}C · {meal.fat}F
+                    ~{meal.cal} kcal
                   </span>
                 </motion.button>
               ))}
@@ -753,14 +740,14 @@ export default function Log() {
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}18`, color: macroColors.protein }}>
-                          P {safeNum(m.totalProtein)}g
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}10`, color: macroColors.protein }}>
+                          Protein {safeNum(m.totalProtein)}g
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}18`, color: macroColors.carbs }}>
-                          C {safeNum(m.totalCarbs)}g
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}10`, color: macroColors.carbs }}>
+                          Carbs {safeNum(m.totalCarbs)}g
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}18`, color: macroColors.fat }}>
-                          F {safeNum(m.totalFat)}g
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}10`, color: macroColors.fat }}>
+                          Fat {safeNum(m.totalFat)}g
                         </span>
                       </div>
                     </div>
@@ -800,8 +787,8 @@ export default function Log() {
                   // Delay hiding so click on suggestion registers
                   setTimeout(() => setSuggestionsActive(false), 200);
                 }}
-                placeholder='Describe what you ate — e.g. "2 eggs, toast with butter"'
-                rows={2}
+                placeholder="Describe what you ate\u2026"
+                rows={1}
                 className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               {/* Unified dropdown: AI Suggestions + Database results */}
