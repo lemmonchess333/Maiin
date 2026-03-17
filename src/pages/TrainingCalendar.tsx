@@ -7,6 +7,17 @@ import { RUN_TEMPLATES, type RunTemplate } from '../lib/workoutTemplates';
 import { generateSchedule } from '../lib/scheduleUtils';
 import { useProgram } from '../features/program/useProgram';
 import WeekView from '../components/calendar/WeekView';
+import { PersonStanding, Zap, RefreshCw, Wind, Route, Flag, Dumbbell, X as XIcon } from 'lucide-react';
+import { Drawer } from 'vaul';
+
+const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  'person-standing': PersonStanding,
+  'zap': Zap,
+  'refresh-cw': RefreshCw,
+  'wind': Wind,
+  'route': Route,
+  'flag': Flag,
+};
 
 interface TrainingSession {
   id: string;
@@ -225,53 +236,65 @@ export default function TrainingCalendar() {
         onSkip={function(id) { updateSession(id, { status: 'skipped' }); }}
       />
 
-      {showAddModal && selectedDay && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="w-full rounded-t-3xl p-6 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "rgba(15, 15, 20, 0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">Add Session</h3>
-              <button onClick={function() { setShowAddModal(false); }} className="text-muted-foreground">{"\u2715"}</button>
-            </div>
+      <Drawer.Root open={showAddModal && !!selectedDay} onOpenChange={function(o) { if (!o) setShowAddModal(false); }}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[80vh] overflow-y-auto bg-background safe-area-pb">
+            <div className="max-w-md mx-auto p-5 pb-10 space-y-4">
+              <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
-            <h4 className="text-sm font-semibold mb-2">{"\uD83C\uDFC3"} Run Workouts</h4>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {RUN_TEMPLATES.map(function(t) {
-                return (
-                  <button
-                    key={t.id}
-                    onClick={function() { addSession(selectedDay!, 'run', t); }}
-                    className="p-3 rounded-xl bg-card text-left pressable"
-                  >
-                    <span className="text-lg">{t.icon}</span>
-                    <p className="text-xs font-semibold mt-1">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{t.estimatedDuration} min</p>
-                  </button>
-                );
-              })}
-            </div>
+              <div className="flex items-center justify-between">
+                <Drawer.Title className="text-base font-semibold text-foreground">Add Session</Drawer.Title>
+                <button onClick={function() { setShowAddModal(false); }} className="p-1 rounded hover:bg-muted">
+                  <XIcon className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
 
-            <h4 className="text-sm font-semibold mb-2">{"\uD83C\uDFCB\uFE0F"} Lift Sessions</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {(programState?.workouts ?? []).map(function(day) {
-                return (
-                  <button
-                    key={day.dayName}
-                    onClick={function() { addSession(selectedDay!, 'lift', undefined, day.dayName); }}
-                    className="p-3 rounded-xl bg-card text-left pressable"
-                  >
-                    <span className="text-lg">{"\uD83C\uDFCB\uFE0F"}</span>
-                    <p className="text-xs font-semibold mt-1">{day.dayName}</p>
-                    <p className="text-[10px] text-muted-foreground">{day.exercises.length} exercises</p>
-                  </button>
-                );
-              })}
-              {(!programState?.workouts || programState.workouts.length === 0) && (
-                <p className="text-xs text-muted-foreground col-span-2">No programme set up yet</p>
-              )}
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Run Workouts</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {RUN_TEMPLATES.map(function(t) {
+                    const IconComp = RUN_ICON_MAP[t.icon] || PersonStanding;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={function() { addSession(selectedDay!, 'run', t); }}
+                        className="p-2.5 rounded-xl bg-card border border-border/50 text-left pressable"
+                      >
+                        <IconComp className="w-5 h-5 text-primary" />
+                        <p className="text-xs font-semibold mt-1 text-foreground">{t.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{t.estimatedDuration} min</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Lift Sessions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(programState?.workouts ?? []).map(function(day) {
+                    return (
+                      <button
+                        key={day.dayName}
+                        onClick={function() { addSession(selectedDay!, 'lift', undefined, day.dayName); }}
+                        className="p-2.5 rounded-xl bg-card border border-border/50 text-left pressable"
+                      >
+                        <Dumbbell className="w-5 h-5 text-primary" />
+                        <p className="text-xs font-semibold mt-1 text-foreground">{day.dayName}</p>
+                        <p className="text-[10px] text-muted-foreground">{day.exercises.length} exercises</p>
+                      </button>
+                    );
+                  })}
+                  {(!programState?.workouts || programState.workouts.length === 0) && (
+                    <p className="text-xs text-muted-foreground col-span-2">No programme set up yet</p>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     </div>
   );
 }

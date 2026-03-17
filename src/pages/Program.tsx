@@ -48,14 +48,15 @@ function DirectionIcon({ ex }: { ex: ProgramExercise }) {
   const dir = getProgressionDirection(ex);
   if (dir === "up") return <TrendingUp className="w-3.5 h-3.5" style={{ color: THEME.success }} />;
   if (dir === "down") return <TrendingDown className="w-3.5 h-3.5" style={{ color: THEME.danger }} />;
-  return <Minus className="w-3.5 h-3.5 text-muted-foreground" />;
+  return null;
 }
 
 function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
   const label = getProgressionLabel(ex);
   const dir = getProgressionDirection(ex);
+  if (dir === "stable") return null;
   const color = dir === "up" ? THEME.success : dir === "down" ? THEME.danger : undefined;
-  return <span className="font-medium" style={color ? { color } : undefined}>{label}</span>;
+  return <><span className="text-[10px]">&middot;</span><span className="font-medium" style={color ? { color } : undefined}>{label}</span></>;
 }
 
 export default function Program() {
@@ -369,20 +370,20 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
         </div>
 
         <div className="flex items-center justify-center gap-2 px-4 pb-3">
-          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+          <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-medium border-primary/30 text-primary">
             {goalLabel(programState.goal)}
           </span>
           <span
-            className="px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+            className="px-2.5 py-0.5 rounded-full border text-[10px] font-medium"
             style={prescription.deload
-              ? { backgroundColor: `${THEME.lifting}18`, color: THEME.lifting }
-              : { backgroundColor: `${THEME.success}18`, color: THEME.success }
+              ? { borderColor: `${THEME.lifting}40`, color: THEME.lifting }
+              : { borderColor: `${THEME.success}40`, color: THEME.success }
             }
           >
             {prescription.deload ? "Deload" : "Progression"}
           </span>
           {!isViewingHistory && (
-            <span className="px-2.5 py-0.5 rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+            <span className="px-2.5 py-0.5 rounded-full border border-border text-[10px] font-medium text-muted-foreground">
               {completedCount}/{totalDays} done
             </span>
           )}
@@ -508,7 +509,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                                       <span className="font-mono">{ex.weight}kg</span>
                                     </>
                                   )}
-                                  <span className="text-[10px]">&middot;</span>
                                   <ProgressionLabel ex={ex} />
                                 </div>
                               </div>
@@ -534,7 +534,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
-                        style={{ background: `linear-gradient(135deg, ${sportColor}, ${sportColor}cc)` }}
+                        style={{ background: 'linear-gradient(135deg, #9b6ff7, #7c3aed)' }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
                       </button>
@@ -546,7 +546,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
                       >
-                        Mark complete (skip session)
+                        Skip session
                       </button>
                     )}
                   </div>
@@ -773,7 +773,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-2xl safe-area-pb pointer-events-auto"
+              className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
               style={{ background: "var(--card)", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -863,6 +863,8 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                 >
                   Reset Mesocycle
                 </button>
+
+                <div className="h-24" />
               </div>
             </motion.div>
           </>

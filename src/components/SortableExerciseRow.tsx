@@ -41,7 +41,7 @@ export default function SortableExerciseRow({ id, children, justDropped }: Props
         className="touch-none p-2 shrink-0 cursor-grab active:cursor-grabbing"
         style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        <GripVertical className="w-4 h-4 text-muted-foreground" />
+        <GripVertical className="w-4 h-4" style={{ color: '#6b7280' }} />
       </button>
       <div className="flex-1 min-w-0">{children}</div>
     </div>

@@ -446,7 +446,7 @@ export function getProgressionLabel(ex: ProgramExercise): string {
   const dir = getProgressionDirection(ex);
   const w = ex.weight > 0 ? `${ex.weight}kg` : "BW";
 
-  if (dir === "up") return `${w} ↑`;
+  if (dir === "up" && ex.lastAttemptedWeight && ex.weight > ex.lastAttemptedWeight) return `${w} ↑`;
   if (dir === "down") return `${w} ↓`;
   return w;
 }
