@@ -22,7 +22,6 @@ const itemVariant = {
 
 const WorkoutLogger = lazy(() => import("@/components/WorkoutLogger"));
 const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
-import FoodSearch from "@/components/FoodSearch";
 import { useMeals } from "@/hooks/useMeals";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -37,19 +36,40 @@ import {
   Flame,
   Trash2,
   CalendarDays,
-  Search,
   Beef,
   Wheat,
   Cookie,
   ScanBarcode,
   Footprints,
   Sparkles,
+  Plus,
+  Loader2,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+
+// Quick-add default meals (moved from ManualFoodLogger)
+const DEFAULT_QUICK_MEALS = [
+  { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
+  { name: "Protein Shake", cal: 250, pro: 30, carb: 20, fat: 5 },
+  { name: "Oatmeal & Banana", cal: 350, pro: 10, carb: 60, fat: 8 },
+  { name: "Eggs on Toast", cal: 380, pro: 22, carb: 30, fat: 18 },
+  { name: "Greek Yoghurt & Berries", cal: 200, pro: 15, carb: 25, fat: 5 },
+  { name: "Tuna Salad", cal: 300, pro: 35, carb: 10, fat: 12 },
+];
+
+interface OFFResult {
+  name: string;
+  brand: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: string;
+}
 
 export default function Log() {
   const { user, profile, updateProfile } = useAuth();
@@ -70,7 +90,7 @@ export default function Log() {
     }
   }, [location.state]);
 
-  const [foodMode, setFoodMode] = useState<"quick" | "search" | "scan" | "manual" | null>(null);
+  const [foodMode, setFoodMode] = useState<"scan" | "manual" | null>(null);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const [suggestionsActive, setSuggestionsActive] = useState(true);
@@ -78,6 +98,14 @@ export default function Log() {
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
+
+  // OpenFoodFacts search state
+  const [offResults, setOffResults] = useState<OFFResult[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
+  const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Manual bottom sheet state
+  const [manualOpen, setManualOpen] = useState(false);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -223,7 +251,50 @@ export default function Log() {
     const lastPart = (parts[parts.length - 1] || "").trim();
     return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 6) : [];
   }, [nlInput]);
-  const showSuggestions = suggestionsActive && suggestions.length > 0;
+  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0 || offLoading);
+
+  // OpenFoodFacts search triggered alongside AI suggestions
+  useEffect(() => {
+    if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
+
+    const parts = nlInput.split(/,/);
+    const lastPart = (parts[parts.length - 1] || "").trim();
+
+    if (lastPart.length < 2 || !suggestionsActive) {
+      setOffResults([]);
+      setOffLoading(false);
+      return;
+    }
+
+    offDebounceRef.current = setTimeout(async () => {
+      setOffLoading(true);
+      try {
+        const res = await fetch(
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(lastPart)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size`
+        );
+        const data = await res.json();
+        const products: OFFResult[] = (data.products || [])
+          .filter((p: { product_name?: string; nutriments?: Record<string, number> }) => p.product_name && p.nutriments)
+          .map((p: { product_name?: string; nutriments?: Record<string, number>; brands?: string; serving_size?: string }) => ({
+            name: p.product_name || "Unknown",
+            brand: p.brands || "",
+            calories: Math.round(p.nutriments?.["energy-kcal_100g"] || p.nutriments?.["energy-kcal"] || 0),
+            protein: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
+            carbs: Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
+            fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
+            servingSize: p.serving_size || "100g",
+          }));
+        setOffResults(products);
+      } catch {
+        setOffResults([]);
+      }
+      setOffLoading(false);
+    }, 400);
+
+    return () => {
+      if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
+    };
+  }, [nlInput, suggestionsActive]);
 
   const handleSuggestionSelect = (suggestion: FoodSuggestion) => {
     // Replace the last segment with the selected suggestion
@@ -235,6 +306,26 @@ export default function Log() {
     parts[parts.length - 1] = " " + prefix + suggestion.name.toLowerCase();
     setNlInput(parts.join(",").trim());
     setSuggestionsActive(false);
+  };
+
+  const handleOFFSelect = async (food: OFFResult) => {
+    if (!user) return;
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: food.name,
+      items: [{ name: food.name, portionSize: food.servingSize, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat }],
+      totalCalories: food.calories,
+      totalProtein: food.protein,
+      totalCarbs: food.carbs,
+      totalFat: food.fat,
+      confidence: "database",
+      createdAt: Timestamp.now(),
+    });
+    await addFavourite({ ...food, source: "search" });
+    setSuggestionsActive(false);
+    setNlInput("");
+    setOffResults([]);
+    toast.success(`${food.name} added!`);
   };
 
   const handleNLParse = async () => {
@@ -280,7 +371,7 @@ export default function Log() {
       const zeroItems = items.filter((i) => i.calories === 0);
       if (zeroItems.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try Search for accurate data.`
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`
         );
       }
     }
@@ -313,24 +404,6 @@ export default function Log() {
     toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
   };
 
-  const handleFoodSearchSelect = async (food: { name: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string }) => {
-    if (!user) return;
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: food.name,
-      items: [{ name: food.name, portionSize: food.servingSize, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat }],
-      totalCalories: food.calories,
-      totalProtein: food.protein,
-      totalCarbs: food.carbs,
-      totalFat: food.fat,
-      confidence: "database",
-      createdAt: Timestamp.now(),
-    });
-    setFoodMode("quick");
-    await addFavourite({ ...food, source: "search" });
-    toast.success(`${food.name} added!`);
-  };
-
   const handleDeleteMeal = (mealId: string, foodName: string) => {
     const timeoutId = setTimeout(() => { deleteMeal(mealId); }, 3000);
     toast(`${foodName} deleted`, {
@@ -360,6 +433,44 @@ export default function Log() {
     });
     await addFavourite({ ...fav, source: "manual" });
     toast.success(`${fav.name} added!`);
+  };
+
+  // Quick-add meals from user history or defaults
+  const quickMeals = useMemo(() => {
+    const seen = new Set<string>();
+    const fromHistory: typeof DEFAULT_QUICK_MEALS = [];
+
+    for (const meal of meals) {
+      const key = (meal.foodName || "").toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      fromHistory.push({
+        name: meal.foodName,
+        cal: meal.totalCalories || 0,
+        pro: meal.totalProtein || 0,
+        carb: meal.totalCarbs || 0,
+        fat: meal.totalFat || 0,
+      });
+      if (fromHistory.length >= 5) break;
+    }
+
+    return fromHistory.length >= 3 ? fromHistory : DEFAULT_QUICK_MEALS;
+  }, [meals]);
+
+  const handleQuickMealAdd = async (meal: typeof DEFAULT_QUICK_MEALS[0]) => {
+    if (!user) return;
+    await addDoc(collection(db, "users", user.uid, "meals"), {
+      date: selectedDate,
+      foodName: meal.name,
+      items: [{ name: meal.name, portionSize: "1 serving", calories: meal.cal, protein: meal.pro, carbs: meal.carb, fat: meal.fat }],
+      totalCalories: meal.cal,
+      totalProtein: meal.pro,
+      totalCarbs: meal.carb,
+      totalFat: meal.fat,
+      confidence: "quick-add",
+      createdAt: Timestamp.now(),
+    });
+    toast.success(`${meal.name} added!`);
   };
 
   return (
@@ -481,9 +592,9 @@ export default function Log() {
       {/* Food Tab */}
       {activeTab === "food" && (
         <motion.div variants={itemVariant} className="space-y-4">
-          {/* Daily Totals - now exact same look as Today's Intake on Home */}
+          {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
-            <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-4" style={{ color: THEME.text.muted }}>Daily Totals</p>
+            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold mb-4" style={{ color: THEME.text.muted }}>Daily Totals</p>
             <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
               {/* Calories */}
               <div
@@ -547,7 +658,36 @@ export default function Log() {
             </div>
           </div>
 
-          {/* Quick Relog Favourites + Common Meals (unified) */}
+          {/* Quick Add — horizontal scroll row */}
+          <div style={{ marginTop: "16px" }}>
+            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
+            <div
+              className="flex gap-2.5 pb-1 -mx-1 px-1"
+              style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+            >
+              <style>{`.quick-add-scroll::-webkit-scrollbar { display: none; }`}</style>
+              {quickMeals.map((meal, i) => (
+                <motion.button
+                  key={i}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { haptic(); handleQuickMealAdd(meal); }}
+                  className="shrink-0 text-left border border-border/50 rounded-xl transition-all active:bg-primary/10"
+                  style={{
+                    width: "165px",
+                    padding: "10px 12px",
+                    background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)`,
+                  }}
+                >
+                  <span className="text-sm font-bold text-foreground block truncate">{meal.name}</span>
+                  <span className="block text-[11px] text-muted-foreground mt-1">
+                    ~{meal.cal} kcal · {meal.pro}P · {meal.carb}C · {meal.fat}F
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Relog Favourites */}
           <QuickRelog onSelect={handleQuickRelog} />
 
           {/* Common Meals — only shown when no favourites cover them */}
@@ -620,12 +760,12 @@ export default function Log() {
             </motion.div>
           )}
 
-          {/* Add Food — Quick Add is always visible, other modes expand inline */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
-            <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Add Food</p>
+          {/* Add Food */}
+          <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
+            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
 
-            {/* Quick Add — always visible */}
-            <div className="relative">
+            {/* Unified smart input */}
+            <div className="relative" style={{ marginTop: "10px" }}>
               <textarea
                 value={nlInput}
                 onChange={(e) => setNlInput(e.target.value)}
@@ -638,56 +778,114 @@ export default function Log() {
                 rows={2}
                 className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
-              {showSuggestions && suggestions.length > 0 && (
+              {/* Unified dropdown: AI Suggestions + Database results */}
+              {showSuggestions && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+                  className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
                 >
-                  {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSuggestionSelect(s)}
-                      className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
-                    >
-                      <span className="text-sm font-medium text-foreground">{s.name}</span>
-                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
-                      </span>
-                    </button>
-                  ))}
+                  {/* AI Suggestions section */}
+                  {suggestions.length > 0 && (
+                    <div>
+                      <p className="px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/50">Suggestions</p>
+                      {suggestions.map((s, i) => (
+                        <button
+                          key={`ai-${i}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleSuggestionSelect(s)}
+                          className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+                        >
+                          <span className="text-sm font-medium text-foreground">{s.name}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                            {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Database section */}
+                  {(offResults.length > 0 || offLoading) && (
+                    <div>
+                      <p className="px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/50">Database</p>
+                      {offLoading && offResults.length === 0 && (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        </div>
+                      )}
+                      {offResults.map((food, i) => (
+                        <button
+                          key={`off-${i}`}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleOFFSelect(food)}
+                          className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
+                              {food.brand && (
+                                <p className="text-[11px] text-muted-foreground truncate">{food.brand}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+                                <span className="text-orange-500 font-medium">{food.calories} cal</span>
+                                <span>&middot;</span>
+                                <span>P {food.protein}g</span>
+                                <span>C {food.carbs}g</span>
+                                <span>F {food.fat}g</span>
+                                <span className="text-[9px]">per {food.servingSize}</span>
+                              </div>
+                            </div>
+                            <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Log Meal button */}
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => { haptic(); handleNLParse(); }}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white flex items-center justify-center gap-1.5",
+                "w-full py-3 rounded-[14px] text-[15px] font-bold transition-all text-white flex items-center justify-center gap-1.5",
                 (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
+              style={{
+                marginTop: "12px",
+                background: "linear-gradient(135deg, #9b6ff7, #7c3aed)",
+                boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+              }}
             >
               {isPro && <Sparkles className="w-3.5 h-3.5" />}
               {nlParsing ? "Analyzing..." : "Log Meal"}
             </motion.button>
             {!isPro && (
-              <p className="text-[10px] text-muted-foreground text-center">
+              <p className="text-[10px] text-muted-foreground text-center mt-1">
                 Upgrade to Pro for AI-powered macro estimates
               </p>
             )}
 
-            {/* Secondary actions row */}
-            <div className="flex gap-2">
+            {/* Scan + Manual buttons — side by side */}
+            <div className="flex gap-2" style={{ marginTop: "10px" }}>
               {([
-                { key: "search" as const, label: "Search", Icon: Search },
                 { key: "scan" as const, label: "Scan", Icon: ScanBarcode },
                 { key: "manual" as const, label: "Manual", Icon: UtensilsCrossed },
               ]).map(({ key, label, Icon }) => (
                 <motion.button
                   key={key}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => { haptic(); setFoodMode(foodMode === key ? null : key); }}
+                  onClick={() => {
+                    haptic();
+                    if (key === "manual") {
+                      setManualOpen(true);
+                    } else {
+                      setFoodMode(foodMode === key ? null : key);
+                    }
+                  }}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
                     foodMode === key
@@ -700,25 +898,21 @@ export default function Log() {
               ))}
             </div>
 
-            {/* Expanded secondary mode */}
-            {foodMode === "search" && (
-              <FoodSearch onSelect={handleFoodSearchSelect} onClose={() => setFoodMode(null)} />
-            )}
+            {/* Expanded scan mode */}
             {foodMode === "scan" && (
               <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
                 <FoodAnalyzer date={selectedDate} onSaved={() => setFoodMode(null)} />
               </Suspense>
             )}
-            {foodMode === "manual" && (
-              <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading food logger...</div>}>
-                <ManualFoodLogger date={selectedDate} />
-              </Suspense>
-            )}
           </div>
+
+          {/* Manual entry bottom sheet */}
+          <Suspense fallback={null}>
+            <ManualFoodLogger date={selectedDate} open={manualOpen} onClose={() => setManualOpen(false)} />
+          </Suspense>
         </motion.div>
       )}
 
     </motion.div>
   );
 }
-
