@@ -37,30 +37,42 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
   const [saved, setSaved] = useState(false);
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState<Set<string>>(new Set());
 
   const userWeight = profile?.weightKg || 70;
 
   const isCardio = (category: string) => category === "Cardio";
 
-  const addExercise = (exerciseId: string) => {
-    const exercise = getExerciseById(exerciseId);
-    if (!exercise) return;
-
-    const cardio = isCardio(exercise.category);
-
-    const newExercise: WorkoutExercise = {
-      exerciseId: exercise.id,
-      exerciseName: exercise.name,
-      category: exercise.category,
-      sets: cardio ? [] : [{ setNumber: 1, reps: 10, weightKg: 0 }],
-      caloriesBurned: 0,
-      ...(cardio ? { durationMinutes: 20, distanceKm: 0 } : {}),
-    };
-
-    setExercises((prev) => [...prev, newExercise]);
+  const addMultipleExercises = (ids: string[]) => {
+    const newExercises: WorkoutExercise[] = [];
+    for (const exerciseId of ids) {
+      const exercise = getExerciseById(exerciseId);
+      if (!exercise) continue;
+      const cardio = isCardio(exercise.category);
+      newExercises.push({
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        category: exercise.category,
+        sets: cardio ? [] : [{ setNumber: 1, reps: 10, weightKg: 0 }],
+        caloriesBurned: 0,
+        ...(cardio ? { durationMinutes: 20, distanceKm: 0 } : {}),
+      });
+    }
+    if (newExercises.length === 0) return;
+    setExercises((prev) => [...prev, ...newExercises]);
+    setExpandedExercise(exercises.length);
     setShowPicker(false);
     setSearchQuery("");
-    setExpandedExercise(exercises.length);
+    setSelectedExerciseIds(new Set());
+  };
+
+  const toggleExerciseSelection = (id: string) => {
+    setSelectedExerciseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const removeExercise = (index: number) => {
@@ -410,6 +422,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
               onClick={() => {
                 setShowPicker(false);
                 setSearchQuery("");
+                setSelectedExerciseIds(new Set());
               }}
               className="p-1 rounded-lg hover:bg-muted"
             >
@@ -451,29 +464,75 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             </div>
           )}
 
-          <div className="max-h-64 overflow-y-auto">
+          {!searchQuery && (
+            <div
+              style={{
+                padding: '12px 20px 8px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#9ca3af',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.05em',
+              }}
+            >
+              {selectedCategory} · {filteredExercises.length} exercises
+            </div>
+          )}
+
+          <div
+            className="max-h-64 overflow-y-auto"
+            style={selectedExerciseIds.size > 0 ? { paddingBottom: 8 } : undefined}
+          >
             {(allFiltered || filteredExercises).map((exercise) => (
               <div
                 key={exercise.id}
-                className="flex items-center border-b border-border/30 last:border-0"
+                className="flex items-center border-b border-border/30 last:border-0 px-4 py-2.5 transition-colors duration-150"
+                style={
+                  selectedExerciseIds.has(exercise.id)
+                    ? { backgroundColor: 'rgba(124,58,237,0.04)' }
+                    : undefined
+                }
               >
-                <button
-                  onClick={() => addExercise(exercise.id)}
-                  className="flex-1 text-left px-4 py-3 hover:bg-muted/50 active:scale-[0.98] transition-all"
-                >
-                  <p className="text-sm font-medium text-foreground">
-                    {exercise.name}
-                  </p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{exercise.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {exercise.muscleGroup} · {exercise.equipment}
                   </p>
-                </button>
-                <button
-                  onClick={() => setDemoExercise(exercise.name)}
-                  className="p-3 text-muted-foreground hover:text-primary transition-colors shrink-0"
-                >
-                  <Info className="w-4 h-4" />
-                </button>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  <button
+                    onClick={() => setDemoExercise(exercise.name)}
+                    className="flex items-center justify-center shrink-0"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 10,
+                      backgroundColor: 'rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    <Info className="w-4 h-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    onClick={() => toggleExerciseSelection(exercise.id)}
+                    className="flex items-center justify-center shrink-0"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 10,
+                      backgroundColor: selectedExerciseIds.has(exercise.id)
+                        ? '#7c3aed'
+                        : 'rgba(124,58,237,0.08)',
+                    }}
+                  >
+                    {selectedExerciseIds.has(exercise.id) ? (
+                      <Check className="w-4 h-4 text-white" />
+                    ) : (
+                      <Plus className="w-4 h-4" style={{ color: '#7c3aed' }} />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
             {(allFiltered || filteredExercises).length === 0 && (
@@ -482,6 +541,25 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
               </p>
             )}
           </div>
+
+          {selectedExerciseIds.size > 0 && (
+            <div className="p-3">
+              <motion.button
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => addMultipleExercises(Array.from(selectedExerciseIds))}
+                className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: '#7c3aed',
+                  borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
+                }}
+              >
+                {selectedExerciseIds.size} exercise{selectedExerciseIds.size !== 1 ? 's' : ''} selected — Add to workout
+              </motion.button>
+            </div>
+          )}
         </div>
       )}
 
