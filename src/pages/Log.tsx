@@ -604,7 +604,7 @@ export default function Log() {
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
-            <div className="grid grid-cols-4 gap-2 text-center overflow-hidden">
+            <div className="grid grid-cols-4 gap-2 text-center">
               {/* Calories */}
               <div
                 className="min-w-0 rounded-xl p-3 shadow-sm"
@@ -787,7 +787,7 @@ export default function Log() {
                   // Delay hiding so click on suggestion registers
                   setTimeout(() => setSuggestionsActive(false), 200);
                 }}
-                placeholder="Describe what you ate\u2026"
+                placeholder="Describe what you ate…"
                 rows={1}
                 className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />

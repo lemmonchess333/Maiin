@@ -19,7 +19,6 @@ export function ToastProvider() {
         },
         className: "dark:!bg-gray-900/80 dark:!border-white/8",
       }}
-      richColors
       closeButton
     />
   );
