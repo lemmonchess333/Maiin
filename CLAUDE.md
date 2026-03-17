@@ -104,3 +104,22 @@ functions/              # Firebase Cloud Functions (plain JS)
 - `useRef` in strict mode requires an explicit initial value argument
 - `functions/` is plain JS (CommonJS) — excluded from ESLint TS config
 - Firestore `d.data()` returns `DocumentData` — always assert types at boundaries
+
+## gstack
+
+Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__claude-in-chrome__*` tools.
+
+### Available Skills
+
+- `/plan-ceo-review` — CEO-level plan review
+- `/plan-eng-review` — Engineering plan review
+- `/plan-design-review` — Design plan review
+- `/review` — Code review
+- `/ship` — Ship changes
+- `/browse` — Web browsing (use this instead of MCP browser tools)
+- `/qa` — QA testing
+- `/qa-only` — QA testing only
+- `/qa-design-review` — QA design review
+- `/setup-browser-cookies` — Set up browser cookies
+- `/retro` — Retrospective
+- `/document-release` — Document a release
