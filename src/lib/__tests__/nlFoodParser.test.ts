@@ -100,6 +100,7 @@ describe("getFoodSuggestions", () => {
     const results = getFoodSuggestions("choc");
     expect(results.length).toBeGreaterThan(0);
     expect(results.some((r) => r.name.toLowerCase().includes("chocolate"))).toBe(true);
+    expect(results[0]).toHaveProperty("serving");
   });
 
   it("returns suggestions for input with leading number '2choc'", () => {

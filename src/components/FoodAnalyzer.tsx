@@ -264,15 +264,6 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Always visible — won't disappear if you cancel camera */}
-      <button
-        onClick={() => setCameraOpen(true)}
-        className="w-full py-4 rounded-xl bg-primary/5 border border-primary/20 text-primary active:scale-[0.98] transition-all"
-      >
-        <span className="font-medium text-sm">Scan Food</span>
-        <span className="block text-[10px] text-primary/60 mt-0.5">AI photo scan & barcode</span>
-      </button>
-
       <FoodCameraModal
         open={cameraOpen}
         onClose={() => setCameraOpen(false)}
