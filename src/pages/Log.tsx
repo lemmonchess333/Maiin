@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
+import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -106,6 +107,9 @@ export default function Log() {
 
   // Manual bottom sheet state
   const [manualOpen, setManualOpen] = useState(false);
+
+  // Serving size drawer for OFF results
+  const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -308,23 +312,37 @@ export default function Log() {
     setSuggestionsActive(false);
   };
 
-  const handleOFFSelect = async (food: OFFResult) => {
-    if (!user) return;
+  const handleOFFSelect = (food: OFFResult) => {
+    setOffDrawerFood(food);
+    setSuggestionsActive(false);
+    setNlInput("");
+    setOffResults([]);
+  };
+
+  const handleOFFConfirm = async (servings: number) => {
+    const food = offDrawerFood;
+    if (!user || !food) return;
+    const s = servings;
     await addDoc(collection(db, "users", user.uid, "meals"), {
       date: selectedDate,
       foodName: food.name,
-      items: [{ name: food.name, portionSize: food.servingSize, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat }],
-      totalCalories: food.calories,
-      totalProtein: food.protein,
-      totalCarbs: food.carbs,
-      totalFat: food.fat,
+      items: [{
+        name: food.name,
+        portionSize: s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
+        calories: Math.round(food.calories * s),
+        protein: Math.round(food.protein * s),
+        carbs: Math.round(food.carbs * s),
+        fat: Math.round(food.fat * s),
+      }],
+      totalCalories: Math.round(food.calories * s),
+      totalProtein: Math.round(food.protein * s),
+      totalCarbs: Math.round(food.carbs * s),
+      totalFat: Math.round(food.fat * s),
       confidence: "database",
       createdAt: Timestamp.now(),
     });
     await addFavourite({ ...food, source: "search" });
-    setSuggestionsActive(false);
-    setNlInput("");
-    setOffResults([]);
+    setOffDrawerFood(null);
     toast.success(`${food.name} added!`);
   };
 
@@ -912,6 +930,14 @@ export default function Log() {
           <Suspense fallback={null}>
             <ManualFoodLogger date={selectedDate} open={manualOpen} onClose={() => setManualOpen(false)} />
           </Suspense>
+
+          {/* Serving size drawer for database results */}
+          <ServingSizeDrawer
+            food={offDrawerFood}
+            open={offDrawerFood !== null}
+            onClose={() => setOffDrawerFood(null)}
+            onConfirm={handleOFFConfirm}
+          />
         </motion.div>
       )}
 
