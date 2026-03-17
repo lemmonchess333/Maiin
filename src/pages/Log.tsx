@@ -43,7 +43,6 @@ import {
   Footprints,
   Sparkles,
   Plus,
-  Loader2,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -103,7 +102,7 @@ export default function Log() {
 
   // OpenFoodFacts search state
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
-  const [offLoading, setOffLoading] = useState(false);
+  const [, setOffLoading] = useState(false);
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Manual bottom sheet state
@@ -241,9 +240,9 @@ export default function Log() {
   const suggestions = useMemo(() => {
     const parts = nlInput.split(/,/);
     const lastPart = (parts[parts.length - 1] || "").trim();
-    return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 6) : [];
+    return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 4) : [];
   }, [nlInput]);
-  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0 || offLoading);
+  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0);
 
   // OpenFoodFacts search triggered alongside AI suggestions
   useEffect(() => {
@@ -262,7 +261,7 @@ export default function Log() {
       setOffLoading(true);
       try {
         const res = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(lastPart)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size`
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(lastPart)}&search_simple=1&action=process&json=1&page_size=4&fields=product_name,brands,nutriments,serving_size&lc=en&countries_tags_contains=en`
         );
         const data = await res.json();
         const products: OFFResult[] = (data.products || [])
@@ -730,49 +729,6 @@ export default function Log() {
             </div>
           )}
 
-          {/* Saved Meals */}
-          {todaysMeals.length > 0 && (
-            <motion.div variants={itemVariant} className="space-y-2">
-              <p className="text-[10px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
-              {todaysMeals.map((m) => (
-                <div key={m.id} className="rounded-2xl px-4 py-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}04 0%, transparent 70%)` }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0 mr-3">
-                      <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
-                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}10`, color: macroColors.protein }}>
-                          Protein {safeNum(m.totalProtein)}g
-                        </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}10`, color: macroColors.carbs }}>
-                          Carbs {safeNum(m.totalCarbs)}g
-                        </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}10`, color: macroColors.fat }}>
-                          Fat {safeNum(m.totalFat)}g
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.semantic.nutrition }}>
-                        {safeNum(m.totalCalories)}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
-                      </p>
-                      <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
-                        <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  {m.items && m.items.length > 1 && (
-                    <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
-                      {m.items.map((item, i) => (
-                        <p key={i} className="text-[11px] text-muted-foreground">{item.name} · {item.calories} cal</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </motion.div>
-          )}
-
           {/* Add Food */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
             <p className="text-[11px] uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
@@ -797,10 +753,9 @@ export default function Log() {
                   ref={suggestionsRef}
                   className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
                 >
-                  {/* AI Suggestions section */}
+                  {/* AI Suggestions */}
                   {suggestions.length > 0 && (
                     <div>
-                      <p className="px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/50">Suggestions</p>
                       {suggestions.map((s, i) => (
                         <button
                           key={`ai-${i}`}
@@ -808,7 +763,7 @@ export default function Log() {
                           onClick={() => handleSuggestionSelect(s)}
                           className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
                         >
-                          <span className="text-sm font-medium text-foreground">{s.name}</span>
+                          <span className="text-sm font-medium text-foreground">{s.name} — <span className="text-muted-foreground font-normal">{s.serving}</span></span>
                           <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                             {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
                           </span>
@@ -817,15 +772,9 @@ export default function Log() {
                     </div>
                   )}
 
-                  {/* Database section */}
-                  {(offResults.length > 0 || offLoading) && (
-                    <div>
-                      <p className="px-4 py-2 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground bg-muted/50">Database</p>
-                      {offLoading && offResults.length === 0 && (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        </div>
-                      )}
+                  {/* Database results */}
+                  {offResults.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
                       {offResults.map((food, i) => (
                         <button
                           key={`off-${i}`}
@@ -852,7 +801,7 @@ export default function Log() {
                           </div>
                         </button>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
               )}
@@ -912,6 +861,49 @@ export default function Log() {
               </Suspense>
             )}
           </div>
+
+          {/* Logged Today */}
+          {todaysMeals.length > 0 && (
+            <motion.div variants={itemVariant} className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
+              {todaysMeals.map((m) => (
+                <div key={m.id} className="rounded-2xl px-4 py-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}04 0%, transparent 70%)` }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0 mr-3">
+                      <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}10`, color: macroColors.protein }}>
+                          Protein {safeNum(m.totalProtein)}g
+                        </span>
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}10`, color: macroColors.carbs }}>
+                          Carbs {safeNum(m.totalCarbs)}g
+                        </span>
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}10`, color: macroColors.fat }}>
+                          Fat {safeNum(m.totalFat)}g
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.semantic.nutrition }}>
+                        {safeNum(m.totalCalories)}
+                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">cal</span>
+                      </p>
+                      <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
+                        <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  {m.items && m.items.length > 1 && (
+                    <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
+                      {m.items.map((item, i) => (
+                        <p key={i} className="text-[11px] text-muted-foreground">{item.name} · {item.calories} cal</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </motion.div>
+          )}
 
           {/* Manual entry bottom sheet */}
           <Suspense fallback={null}>

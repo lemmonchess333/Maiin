@@ -6,7 +6,7 @@ export function ToastProvider() {
       position="top-center"
       toastOptions={{
         style: {
-          background: "rgba(255, 255, 255, 0.8)",
+          background: "#F5F3F0",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           border: "1px solid rgba(0, 0, 0, 0.06)",
