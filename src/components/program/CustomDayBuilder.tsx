@@ -58,6 +58,21 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
     setShowPicker(false);
   };
 
+  const addMultipleExercises = (exerciseList: Exercise[]) => {
+    const newExercises = exerciseList.map((exercise) =>
+      normalizeExercise({
+        name: exercise.name,
+        exerciseId: exercise.id,
+        movementCategory: "horizontal_push",
+        sets: 3,
+        reps: 10,
+        weight: 0,
+      })
+    );
+    setExercises((prev) => [...prev, ...newExercises]);
+    setShowPicker(false);
+  };
+
   const removeExercise = (index: number) => {
     setExercises((prev) => prev.filter((_, i) => i !== index));
   };
@@ -152,6 +167,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
             {showPicker ? (
               <ExercisePicker
                 onSelect={addExercise}
+                onMultiSelect={addMultipleExercises}
                 onClose={() => setShowPicker(false)}
               />
             ) : (

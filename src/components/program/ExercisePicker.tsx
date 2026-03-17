@@ -2,18 +2,21 @@ import { useState, useMemo } from "react";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
-import { Search, X, Info } from "lucide-react";
+import { Search, X, Info, Plus, Check } from "lucide-react";
+import { motion } from "framer-motion";
 import ExerciseDemoCard from "@/components/ExerciseDemoCard";
 
 interface Props {
   onSelect: (exercise: Exercise) => void;
+  onMultiSelect?: (exercises: Exercise[]) => void;
   onClose: () => void;
 }
 
-export default function ExercisePicker({ onSelect, onClose }: Props) {
+export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(EXERCISE_CATEGORIES[0]);
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filteredExercises = useMemo(() => {
     if (searchQuery) {
@@ -26,6 +29,34 @@ export default function ExercisePicker({ onSelect, onClose }: Props) {
     }
     return getExercisesByCategory(selectedCategory);
   }, [searchQuery, selectedCategory]);
+
+  const allExercises = useMemo(() => {
+    return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
+  }, []);
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleAddSelected = () => {
+    if (onMultiSelect) {
+      const selected = allExercises.filter((e) => selectedIds.has(e.id));
+      onMultiSelect(selected);
+    } else {
+      // Fallback: add one at a time
+      for (const id of selectedIds) {
+        const ex = allExercises.find((e) => e.id === id);
+        if (ex) onSelect(ex);
+      }
+    }
+    setSelectedIds(new Set());
+    onClose();
+  };
 
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
@@ -68,27 +99,75 @@ export default function ExercisePicker({ onSelect, onClose }: Props) {
         </div>
       )}
 
-      <div className="max-h-64 overflow-y-auto">
+      {!searchQuery && (
+        <div
+          style={{
+            padding: '12px 20px 8px',
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#9ca3af',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.05em',
+          }}
+        >
+          {selectedCategory} · {filteredExercises.length} exercises
+        </div>
+      )}
+
+      <div
+        className="max-h-64 overflow-y-auto"
+        style={selectedIds.size > 0 ? { paddingBottom: 8 } : undefined}
+      >
         {filteredExercises.map((exercise) => (
           <div
             key={exercise.id}
-            className="flex items-center border-b border-border/30 last:border-0"
+            className="flex items-center border-b border-border/30 last:border-0 px-4 py-2.5 transition-colors duration-150"
+            style={
+              selectedIds.has(exercise.id)
+                ? { backgroundColor: 'rgba(124,58,237,0.04)' }
+                : undefined
+            }
           >
-            <button
-              onClick={() => onSelect(exercise)}
-              className="flex-1 text-left px-4 py-3 hover:bg-muted/50 transition-colors"
-            >
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">{exercise.name}</p>
               <p className="text-xs text-muted-foreground">
                 {exercise.muscleGroup} · {exercise.equipment}
               </p>
-            </button>
-            <button
-              onClick={() => setDemoExercise(exercise.name)}
-              className="p-3 text-muted-foreground hover:text-primary transition-colors shrink-0"
-            >
-              <Info className="w-4 h-4" />
-            </button>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 ml-3">
+              <button
+                onClick={() => setDemoExercise(exercise.name)}
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(0,0,0,0.03)',
+                }}
+              >
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </button>
+
+              <button
+                onClick={() => toggleSelection(exercise.id)}
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  backgroundColor: selectedIds.has(exercise.id)
+                    ? '#7c3aed'
+                    : 'rgba(124,58,237,0.08)',
+                }}
+              >
+                {selectedIds.has(exercise.id) ? (
+                  <Check className="w-4 h-4 text-white" />
+                ) : (
+                  <Plus className="w-4 h-4" style={{ color: '#7c3aed' }} />
+                )}
+              </button>
+            </div>
           </div>
         ))}
         {filteredExercises.length === 0 && (
@@ -97,6 +176,25 @@ export default function ExercisePicker({ onSelect, onClose }: Props) {
           </p>
         )}
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="p-3">
+          <motion.button
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleAddSelected}
+            className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
+            style={{
+              backgroundColor: '#7c3aed',
+              borderRadius: 16,
+              boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
+            }}
+          >
+            {selectedIds.size} exercise{selectedIds.size !== 1 ? 's' : ''} selected — Add to workout
+          </motion.button>
+        </div>
+      )}
 
       <ExerciseDemoCard
         exerciseName={demoExercise ?? ""}
