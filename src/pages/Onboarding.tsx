@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import type { UserProfile } from "@/lib/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
@@ -30,6 +31,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 /* ============================
    TYPES
@@ -184,7 +186,7 @@ const STEP_META: { title: string; subtitle: string }[] = [
 ============================ */
 
 export default function Onboarding() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const location = useLocation();
   const isRetake = !!(location.state as { retake?: boolean } | null)?.retake;
 
@@ -353,8 +355,6 @@ export default function Onboarding() {
         },
       };
 
-      await setDoc(doc(db, "users", user.uid), data, { merge: true });
-
       // ── Match & assign program template ──
       const profileForMatch = {
         daysPerWeek,
@@ -372,6 +372,12 @@ export default function Onboarding() {
       const programState = templateToProgramState(filtered, fitnessGoal);
       const programRef = doc(db, "users", user.uid, "programState", "current");
       await setDoc(programRef, programState);
+
+      // Update profile last — this updates local state and triggers router transition
+      await updateProfile(data as Partial<UserProfile>);
+    } catch (err) {
+      console.error("Onboarding save failed:", err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
