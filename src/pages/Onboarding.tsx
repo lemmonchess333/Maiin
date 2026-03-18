@@ -377,7 +377,10 @@ export default function Onboarding() {
       await updateProfile(data as Partial<UserProfile>);
     } catch (err) {
       console.error("Onboarding save failed:", err);
-      toast.error("Something went wrong. Please try again.");
+      const code = (err as { code?: string })?.code;
+      toast.error(code === "permission-denied"
+        ? "Permission denied — please sign out and back in."
+        : "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
