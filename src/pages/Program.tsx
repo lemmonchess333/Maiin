@@ -503,13 +503,29 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                                 <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                   <span>{ex.sets}&times;{ex.reps}</span>
-                                  {ex.weight > 0 && (
-                                    <>
-                                      <span className="text-[10px]">&middot;</span>
-                                      <span className="font-mono">{ex.weight}kg</span>
-                                    </>
-                                  )}
-                                  <ProgressionLabel ex={ex} />
+                                  {ex.weight > 0 && (() => {
+                                    const dir = getProgressionDirection(ex);
+                                    const baseWeight = (dir !== "stable" && ex.lastAttemptedWeight && ex.lastAttemptedWeight > 0)
+                                      ? ex.lastAttemptedWeight
+                                      : ex.weight;
+                                    // If direction changed, show base weight (last attempted) then target with arrow
+                                    // If stable, just show the weight once
+                                    if (dir === "stable" || baseWeight === ex.weight) {
+                                      return (
+                                        <>
+                                          <span className="text-[10px]">&middot;</span>
+                                          <span className="font-mono">{ex.weight}kg</span>
+                                        </>
+                                      );
+                                    }
+                                    return (
+                                      <>
+                                        <span className="text-[10px]">&middot;</span>
+                                        <span className="font-mono">{baseWeight}kg</span>
+                                        <ProgressionLabel ex={ex} />
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                               {ex.lastPerformance && <DirectionIcon ex={ex} />}
@@ -774,7 +790,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
-              style={{ background: "var(--card)", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+              style={{ background: "#F5F3F0", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
@@ -782,9 +798,14 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
                 <div className="flex items-center justify-between">
                   <p className="text-base font-semibold text-foreground">Program Settings</p>
-                  <button onClick={() => setShowSettings(false)} className="p-1 rounded hover:bg-muted">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setShowSettings(false)} className="text-sm font-medium text-primary">
+                      Done
+                    </button>
+                    <button onClick={() => setShowSettings(false)} className="p-1 rounded hover:bg-muted">
+                      <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Goal selector */}
@@ -861,10 +882,10 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                   onClick={() => handleRegenerate()}
                   className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors pointer-events-auto"
                 >
-                  Reset Mesocycle
+                  Reset Program
                 </button>
 
-                <div className="h-24" />
+                <div className="h-[120px]" />
               </div>
             </motion.div>
           </>
