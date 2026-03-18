@@ -27,6 +27,7 @@ const Layout = lazyRetry(() => import("@/components/Layout"));
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
+const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Log = lazyRetry(() => import("@/pages/Log"));
 const History = lazyRetry(() => import("@/pages/History"));
@@ -137,6 +138,7 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
@@ -149,6 +151,7 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
           <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>
@@ -160,6 +163,7 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route element={<Layout />}>
           <Route path="/" element={<RouteErrorBoundary><Home /></RouteErrorBoundary>} />
           <Route path="/log" element={<RouteErrorBoundary><Log /></RouteErrorBoundary>} />

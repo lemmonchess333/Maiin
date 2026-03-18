@@ -65,6 +65,9 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
           onClick={onDismiss}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Badge earned: ${badge.name}`}
             initial={{ scale: 0.3, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.5, opacity: 0 }}

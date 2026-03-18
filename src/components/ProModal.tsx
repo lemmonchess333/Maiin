@@ -157,6 +157,9 @@ export default function ProModal({ onClose, feature }: Props) {
         onClick={onClose} className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
       />
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pro-modal-title"
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[92vh] overflow-y-auto safe-area-pb"
@@ -178,7 +181,7 @@ export default function ProModal({ onClose, feature }: Props) {
               style={{ background: 'rgba(255,255,255,0.06)' }}>
               {hero.icon}
             </div>
-            <h2 className="text-xl font-bold text-white">{hero.title}</h2>
+            <h2 id="pro-modal-title" className="text-xl font-bold text-white">{hero.title}</h2>
             <p className="text-sm text-white/50">{hero.tagline}</p>
           </div>
 

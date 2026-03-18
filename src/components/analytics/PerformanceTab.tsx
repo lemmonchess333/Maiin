@@ -82,9 +82,9 @@ function PIGauge({ score }: { score: number }) {
         />
         <circle cx={CX} cy={CY} r={4} fill="white" />
         {/* Labels */}
-        <text x={14} y={98} fontSize={9} fill="rgba(255,255,255,0.3)" textAnchor="middle">0</text>
-        <text x={90} y={16} fontSize={9} fill="rgba(255,255,255,0.3)" textAnchor="middle">50</text>
-        <text x={166} y={98} fontSize={9} fill="rgba(255,255,255,0.3)" textAnchor="middle">100</text>
+        <text x={14} y={98} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">0</text>
+        <text x={90} y={16} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">50</text>
+        <text x={166} y={98} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">100</text>
       </svg>
       {/* Score */}
       <div className="text-center -mt-2">
@@ -105,7 +105,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="text-[10px] text-muted-foreground">{label}</p>
         <p className="text-xs font-bold tabular-nums" style={{ color }}>{Math.round(value)}</p>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -278,7 +278,7 @@ export default function PerformanceTab() {
                     <LineChart data={trendData}>
                       <XAxis
                         dataKey="week"
-                        fontSize={9}
+                        fontSize={10}
                         opacity={0.3}
                         axisLine={false}
                         tickLine={false}

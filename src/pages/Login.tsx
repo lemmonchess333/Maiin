@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -101,26 +102,32 @@ export default function Login() {
 
           <div className="space-y-3">
             <div className="relative">
+              <label htmlFor="login-email" className="sr-only">Email address</label>
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
+                id="login-email"
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
 
             <div className="relative">
+              <label htmlFor="login-password" className="sr-only">Password</label>
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
+                id="login-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
               <button
@@ -146,7 +153,7 @@ export default function Login() {
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
-            {loading ? "..." : isSignUp ? "Create Account" : "Sign In"}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isSignUp ? "Create Account" : "Sign In"}
           </button>
         </form>
 
@@ -200,6 +207,13 @@ export default function Login() {
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
+
+        {/* Legal links */}
+        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+          <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+        </div>
       </div>
     </div>
   );

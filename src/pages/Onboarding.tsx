@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 ============================ */
 
 type Gender = "male" | "female" | "unspecified";
-type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
+type AgeRange = "under-16" | "16-24" | "25-34" | "35-44" | "45-54" | "55+";
 type PrimaryGoal = "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
 type Experience = "beginner" | "intermediate" | "advanced";
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
@@ -49,6 +49,7 @@ type RunFrequency = "regular" | "occasional" | "none";
 ============================ */
 
 const AGE_MIDPOINTS: Record<AgeRange, number> = {
+  "under-16": 14,
   "16-24": 20,
   "25-34": 30,
   "35-44": 40,
@@ -292,7 +293,7 @@ export default function Onboarding() {
   // Can advance per step
   const canAdvance: boolean[] = [
     true,                                   // 0: gender (always has default)
-    true,                                   // 1: age range
+    ageRange !== "under-16",                // 1: age range (blocks under 16)
     weightKg > 0 && heightCm > 0,           // 2: body metrics
     true,                                   // 3: primary goal
     true,                                   // 4: experience
@@ -560,6 +561,7 @@ export default function Onboarding() {
           {step === 1 && (
             <div className="space-y-2">
               {([
+                { id: "under-16" as AgeRange, label: "Under 16" },
                 { id: "16-24" as AgeRange, label: "16 – 24" },
                 { id: "25-34" as AgeRange, label: "25 – 34" },
                 { id: "35-44" as AgeRange, label: "35 – 44" },
@@ -574,6 +576,17 @@ export default function Onboarding() {
                   label={opt.label}
                 />
               ))}
+              {ageRange === "under-16" && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span className="font-medium">Age requirement not met</span>
+                  </div>
+                  <p className="text-xs text-red-500/80 dark:text-red-400/80">
+                    Tropos is only available for users aged 16 and over. Please check back when you meet the age requirement.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -968,6 +981,16 @@ export default function Onboarding() {
           )}
         </button>
       </div>
+
+      {/* Validation hint when button is disabled */}
+      {!canAdvance[step] && !saving && (
+        <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {step === 1 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
+          {step === 2 && 'Enter your height and weight to continue'}
+          {step === 7 && 'This split requires more training days'}
+          {step === 9 && injuries.length === 0 && 'Select at least one option (or "None")'}
+        </p>
+      )}
     </div>
   );
 }

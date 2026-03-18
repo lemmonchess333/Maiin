@@ -550,7 +550,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
-                        style={{ background: 'linear-gradient(135deg, #9b6ff7, #7c3aed)' }}
+                        style={{ background: THEME.gradient.brand }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
                       </button>

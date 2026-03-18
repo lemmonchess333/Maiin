@@ -18,7 +18,7 @@ export default function StatCard({
     <button onClick={onClick}
       className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98] transition-transform"
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 70%)` }}>
-      <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-2" style={{ color: '#8E8E93' }}>{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.5px] font-medium mb-2" style={{ color: '#8E8E93' }}>{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-baseline gap-1">

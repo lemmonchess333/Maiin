@@ -3,6 +3,7 @@ import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -153,8 +154,8 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                   (saving || !name.trim()) && !saved && "opacity-50 cursor-not-allowed"
                 )}
                 style={!saved ? {
-                  background: "linear-gradient(135deg, #9b6ff7, #7c3aed)",
-                  boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+                  background: THEME.gradient.brand,
+                  boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
                 } : undefined}
               >
                 {saved ? (

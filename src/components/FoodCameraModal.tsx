@@ -240,7 +240,7 @@ export default function FoodCameraModal({
   const disableShutter = loading || busy || tab === "barcode";
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black">
+    <div role="dialog" aria-modal="true" aria-label="Food camera" className="fixed inset-0 z-[60] bg-black">
       {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button
