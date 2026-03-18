@@ -64,4 +64,9 @@ export const THEME = {
   paceFast: '#4ECC7A',
   paceOnTarget: '#7C6EF6',
   paceSlow: '#E8637A',
+  // Gradient helpers
+  gradient: {
+    brand: 'linear-gradient(135deg, #9B90F8, #7C6EF6)',
+    brandCta: 'linear-gradient(135deg, #7C6EF6, #4EADCC)',
+  },
 } as const;

@@ -29,7 +29,7 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
           <div key={pr.label} className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2 min-w-0">
               {pr.isNew && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
                   style={{ background: `${accentColor}20`, color: accentColor }}>
                   NEW
                 </span>
@@ -38,7 +38,7 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
             </div>
             <div className="text-right flex-shrink-0 ml-3">
               <p className="text-sm font-bold font-mono tabular-nums text-foreground">{pr.value}</p>
-              <p className="text-[9px] text-muted-foreground/50 mt-0.5">{pr.date}</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-0.5">{pr.date}</p>
             </div>
           </div>
         ))}

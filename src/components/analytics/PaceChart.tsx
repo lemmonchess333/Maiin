@@ -14,7 +14,7 @@ export default function PaceChart({ data, accentColor = '#FF6B6B' }: PaceChartPr
       <ResponsiveContainer width="100%" height={140}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
           <YAxis hide />
           <Line type="monotone" dataKey="paceSeconds" stroke={accentColor} strokeWidth={2} dot={false} />
         </LineChart>

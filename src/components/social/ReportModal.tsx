@@ -39,12 +39,17 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={onClose} />
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+      <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={onClose} aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-modal-title"
+        className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flag className="w-4 h-4 text-destructive" />
-            <h3 className="text-base font-semibold text-foreground">Report {targetType}</h3>
+            <h3 id="report-modal-title" className="text-base font-semibold text-foreground">Report {targetType}</h3>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted">
             <X className="w-4 h-4 text-muted-foreground" />

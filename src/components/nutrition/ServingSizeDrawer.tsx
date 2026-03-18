@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Drawer } from "vaul";
 import { Plus, Minus } from "lucide-react";
+import { THEME } from "@/lib/theme";
 
 interface Props {
   food: { name: string; brand: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string } | null;
@@ -22,14 +23,17 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
     <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[50vh] flex flex-col">
+        <Drawer.Content
+          aria-labelledby="serving-drawer-title"
+          className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[50vh] flex flex-col"
+        >
           <div className="px-5 pt-4 pb-6">
             {/* Drag handle */}
             <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: "rgba(0,0,0,0.15)" }} />
 
             {/* Food header */}
             <div className="mb-4">
-              <p className="text-sm font-semibold text-foreground">{food.name}</p>
+              <p id="serving-drawer-title" className="text-sm font-semibold text-foreground">{food.name}</p>
               {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
               <p className="text-[11px] text-muted-foreground mt-0.5">per {food.servingSize}</p>
             </div>
@@ -87,8 +91,8 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               onClick={() => onConfirm(servings)}
               className="w-full py-3 rounded-[14px] text-[15px] font-bold text-white mt-4"
               style={{
-                background: "linear-gradient(135deg, #9b6ff7, #7c3aed)",
-                boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+                background: THEME.gradient.brand,
+                boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
               }}
             >
               Log Food

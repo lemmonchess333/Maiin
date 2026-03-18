@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useId } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,9 +12,19 @@ interface AccordionSectionProps {
 
 export default function AccordionSection({ icon, title, subtitle, defaultOpen = false, children }: AccordionSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
+  const triggerId = `${id}-trigger`;
+  const panelId = `${id}-panel`;
+
   return (
     <div className="bg-card rounded-2xl overflow-hidden">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4">
+      <button
+        id={triggerId}
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-4"
+        aria-expanded={open}
+        aria-controls={panelId}
+      >
         <div className="flex items-center gap-3">
           {icon}
           <div className="text-left">
@@ -27,6 +37,9 @@ export default function AccordionSection({ icon, title, subtitle, defaultOpen = 
       <AnimatePresence>
         {open && (
           <motion.div
+            id={panelId}
+            role="region"
+            aria-labelledby={triggerId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

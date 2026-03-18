@@ -67,7 +67,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 9, fill: "currentColor", opacity: 0.3 }}
+            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.3 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v: string | number) => {
@@ -81,7 +81,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
           <YAxis
             domain={[0, 100]}
             ticks={[0, 25, 50, 75, 100]}
-            tick={{ fontSize: 9, fill: "currentColor", opacity: 0.2 }}
+            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.2 }}
             axisLine={false}
             tickLine={false}
             width={28}
@@ -92,7 +92,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               background: THEME.chartTooltipBg,
               border: "none",
               borderRadius: 12,
-              fontSize: 11,
+              fontSize: 12,
               color: THEME.textPrimary,
               padding: "8px 12px",
             }}
@@ -153,7 +153,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
         ].map((z) => (
           <div key={z.label} className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
-            <span className="text-[9px] text-muted-foreground">{z.label}</span>
+            <span className="text-[10px] text-muted-foreground">{z.label}</span>
           </div>
         ))}
       </div>

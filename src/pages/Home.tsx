@@ -26,6 +26,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { formatVolume, formatStat, macroRingState } from "@/utils/formatters";
+import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { estimateBMR } from "@/utils/calorieBalance";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { DailyBurn } from "@/utils/dailyBurn";
@@ -675,6 +676,7 @@ export default function Home() {
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
   const [proUpsellDismissed, setProUpsellDismissed] = useState(false);
+  const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
 
   const schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
@@ -946,6 +948,33 @@ export default function Home() {
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">Pro Trial &mdash; {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left</p>
             <p className="text-xs text-muted-foreground">Full access to all features.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* First-time coach marks */}
+      {showCoachMarks && (
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+          className="p-4 rounded-2xl bg-card border border-primary/20 space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-foreground">Welcome to Tropos!</p>
+            <button onClick={dismissCoachMarks} className="p-1 rounded-lg hover:bg-muted"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Dumbbell className="w-4 h-4 text-primary shrink-0" />
+              <span>Tap <strong className="text-foreground">Program</strong> to start a workout</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Footprints className="w-4 h-4 shrink-0" style={{ color: THEME.running }} />
+              <span>Tap <strong className="text-foreground">Log</strong> to track runs and meals</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Target className="w-4 h-4 text-primary shrink-0" />
+              <span>Check <strong className="text-foreground">History</strong> to view your progress</span>
+            </div>
           </div>
         </motion.div>
       )}

@@ -818,8 +818,8 @@ export default function Log() {
               )}
               style={{
                 marginTop: "12px",
-                background: "linear-gradient(135deg, #9b6ff7, #7c3aed)",
-                boxShadow: "0 4px 16px rgba(124,58,237,0.25)",
+                background: THEME.gradient.brand,
+                boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
               }}
             >
               {isPro && <Sparkles className="w-3.5 h-3.5" />}

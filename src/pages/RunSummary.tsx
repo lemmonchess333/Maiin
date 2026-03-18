@@ -20,7 +20,7 @@ import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
-import { WifiOff, CheckCircle, Trophy } from 'lucide-react';
+import { WifiOff, CheckCircle, Trophy, ChevronLeft } from 'lucide-react';
 
 interface RunData {
   points: GPSPoint[];
@@ -169,7 +169,13 @@ export default function RunSummary() {
 
   return (
     <div className="min-h-screen pb-24 bg-background text-foreground">
-      <div className="text-center pt-8 pb-4 px-6">
+      <div className="px-4 pt-4">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ChevronLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
+      <div className="text-center pb-4 px-6">
         <h1 className="text-xl font-bold text-foreground">
           {(distance || 0) > 200 && (elapsed || 0) > 60
             ? "Great run!"

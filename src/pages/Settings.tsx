@@ -1339,6 +1339,17 @@ export default function Settings() {
           <ChevronRight className="w-4 h-4" />
         </Link>
 
+        <Link
+          to="/terms"
+          className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5" />
+            <span>Terms of Service</span>
+          </div>
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={signOut}

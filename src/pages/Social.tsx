@@ -1,7 +1,7 @@
 import { useSocialFeed } from '../hooks/useSocialFeed';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { searchUsers } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
@@ -9,7 +9,7 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise } from 'lucide-react';
+import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 
@@ -63,6 +63,37 @@ export default function Social() {
     }
   };
 
+  // Pull-to-refresh
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const pullStartY = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => { pullStartY.current = e.touches[0].clientY; };
+  const handleTouchEnd = async (e: React.TouchEvent) => {
+    const diff = e.changedTouches[0].clientY - pullStartY.current;
+    if (diff > 80 && window.scrollY <= 0 && !pullRefreshing) {
+      setPullRefreshing(true);
+      await activeFeed.refresh();
+      setPullRefreshing(false);
+    }
+  };
+
+  // Infinite scroll sentinel
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const { hasMore: feedHasMore, loading: feedLoading, loadMore: feedLoadMore } = activeFeed;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && feedHasMore && !feedLoading) {
+          feedLoadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [feedHasMore, feedLoading, feedLoadMore]);
+
   const handleShareInvite = async () => {
     const text = "I'm tracking my lifts and runs on Tropos. Join me and let's compete!";
     if (navigator.share) {
@@ -110,7 +141,7 @@ export default function Social() {
 
       {/* ========== FEED TAB ========== */}
       {tab === 'feed' && (
-        <>
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {/* Feed sub-tabs: Following | Discover */}
           <div className="flex gap-2">
             {(['following', 'discover'] as FeedSubTab[]).map(st => (
@@ -143,7 +174,13 @@ export default function Social() {
 
           {feedSubTab === 'following' && <LeaderboardCard challenge="weekly_hybrid" />}
 
-          {activeFeed.items.length > 0 && (
+          {pullRefreshing && (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            </div>
+          )}
+
+          {activeFeed.items.length > 0 && !pullRefreshing && (
             <button onClick={activeFeed.refresh}
               aria-label="Refresh feed"
               className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
@@ -165,12 +202,15 @@ export default function Social() {
             ))}
           </div>
 
-          {activeFeed.loading && <p className="text-xs text-muted-foreground text-center animate-pulse">Loading...</p>}
+          {activeFeed.loading && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
+          {/* Infinite scroll sentinel */}
           {activeFeed.hasMore && !activeFeed.loading && activeFeed.items.length > 0 && (
-            <button onClick={activeFeed.loadMore} className="w-full py-2 text-xs font-medium" style={{ color: THEME.brand }}>
-              Load more
-            </button>
+            <div ref={sentinelRef} className="h-1" aria-hidden="true" />
           )}
 
           {!activeFeed.loading && activeFeed.items.length === 0 && (
@@ -197,7 +237,7 @@ export default function Social() {
               )}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* ========== PROGRESS TAB ========== */}

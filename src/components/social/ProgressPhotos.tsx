@@ -210,7 +210,13 @@ export default function ProgressPhotos() {
                 <span className="text-[10px] text-muted-foreground mt-1">{photo.date}</span>
               </div>
             ) : decryptedUrls[photo.id] ? (
-              <img src={decryptedUrls[photo.id]} className="w-full h-full object-cover" alt="" />
+              <img
+                src={decryptedUrls[photo.id]}
+                className="w-full h-full object-cover"
+                alt=""
+                loading="lazy"
+                onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
             ) : (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
                 <Lock size={16} className="text-muted-foreground" />
@@ -225,7 +231,15 @@ export default function ProgressPhotos() {
         <div className="flex gap-2 mt-4">
           {selected.map(id => (
             <div key={id} className="flex-1 aspect-[3/4] rounded-xl overflow-hidden">
-              {decryptedUrls[id] && <img src={decryptedUrls[id]} className="w-full h-full object-cover" alt="" />}
+              {decryptedUrls[id] && (
+                <img
+                  src={decryptedUrls[id]}
+                  className="w-full h-full object-cover"
+                  alt=""
+                  loading="lazy"
+                  onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
             </div>
           ))}
         </div>

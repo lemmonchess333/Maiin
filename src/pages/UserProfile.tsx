@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { getFollowerCount, getFollowingCount } from '../lib/socialApi';
+import { getFollowerCount, getFollowingCount, blockUser } from '../lib/socialApi';
+import { useAuth } from '../lib/auth';
 import FollowButton from '../components/social/FollowButton';
 import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
 import { Skeleton } from '../components/LoadingSkeleton';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
-import { Flame } from 'lucide-react';
+import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import ReportModal from '../components/social/ReportModal';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [activities, setActivities] = useState<{ id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }[]>([]);
   const [stats, setStats] = useState<{ totalKm: number; totalSessions: number } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
@@ -68,13 +75,46 @@ export default function UserProfile() {
     setStatsLoading(false);
   }, [uid]);
 
+  const isOwnProfile = user?.uid === uid;
+
+  const handleBlock = async () => {
+    if (!user || !uid || !profile) return;
+    if (!window.confirm(`Block ${profile.displayName || 'this user'}? They won't be able to see your activity and you won't see theirs.`)) return;
+    try {
+      await blockUser(user.uid, uid);
+      toast.success(`Blocked ${profile.displayName || 'user'}`);
+      navigate(-1);
+    } catch {
+      toast.error('Failed to block user');
+    }
+  };
+
   if (!profile) return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading...</div>;
 
   return (
     <div className="space-y-4">
+      {/* Back header */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors -mb-2"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Back
+      </button>
+
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold">
-          {(profile.displayName || '?').charAt(0)}
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold overflow-hidden">
+          {profile.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName || 'User avatar'}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0); }}
+            />
+          ) : (
+            (profile.displayName || '?').charAt(0)
+          )}
         </div>
         <div className="flex-1">
           <h1 className="text-lg font-bold">{profile.displayName}</h1>
@@ -83,7 +123,41 @@ export default function UserProfile() {
             <span><strong className="text-foreground">{followingCount}</strong> following</span>
           </div>
         </div>
-        {uid && <FollowButton targetUid={uid} />}
+        <div className="flex items-center gap-2">
+          {uid && <FollowButton targetUid={uid} />}
+          {!isOwnProfile && uid && (
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="More options"
+              >
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
+                    <button
+                      onClick={() => { setShowMenu(false); setShowReport(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Flag className="w-4 h-4" />
+                      Report user
+                    </button>
+                    <button
+                      onClick={() => { setShowMenu(false); handleBlock(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      <Ban className="w-4 h-4" />
+                      Block user
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stat pills */}
@@ -144,6 +218,10 @@ export default function UserProfile() {
           <p className="text-xs text-muted-foreground text-center py-8">No public activities yet</p>
         )}
       </div>
+
+      {showReport && uid && (
+        <ReportModal targetType="user" targetId={uid} onClose={() => setShowReport(false)} />
+      )}
     </div>
   );
 }
