@@ -1,4 +1,5 @@
 import type { UserProfile } from "./auth";
+import type { DayType } from "./types";
 
 export interface DayAdjustment {
   calorieAdjustment: number;
@@ -6,9 +7,6 @@ export interface DayAdjustment {
   proteinMultiplier: number;
   reason: string;
 }
-
-type DayType = "lift" | "run" | "both" | "rest";
-type Phase = string;
 
 const PHASE_PROTEIN_MULTIPLIERS: Record<string, number> = {
   strength: 2.2,
@@ -21,7 +19,7 @@ const PHASE_PROTEIN_MULTIPLIERS: Record<string, number> = {
 
 export function getDayAdjustment(
   dayType: DayType,
-  phase: Phase,
+  phase: string,
   goal?: string
 ): DayAdjustment {
   // Use goal to determine cut behavior; fall back to phase if goal not provided

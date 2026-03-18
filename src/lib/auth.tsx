@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import type { Goal } from "./types";
 
 /* ================================
    USER PROFILE TYPE
@@ -45,7 +46,7 @@ export interface UserProfile {
   lastLogDate: string | null;
   // Goal-based program engine
   program?: {
-    goal: "cut" | "lean bulk" | "recomp";
+    goal: Goal;
     startWeight: number;
     currentPhase: string;
   };
@@ -307,7 +308,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOutUser = async () => {
     await firebaseSignOut(auth);
     setProfile(null);
-    syncDarkMode(false);
+    // Remove dark mode preference so next user gets their own setting from Firestore
+    document.documentElement.classList.remove("dark");
+    localStorage.removeItem('tropos-dark-mode');
   };
 
   const updateProfile = async (data: Partial<UserProfile>) => {

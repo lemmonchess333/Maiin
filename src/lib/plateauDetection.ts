@@ -3,7 +3,9 @@
    Extracted from AdaptiveSummary.tsx
    ───────────────────────────────────────────── */
 
-export type PhaseMode = "lean bulk" | "cut" | "recomp" | "strength peak";
+import type { Phase } from "./types";
+
+export type PhaseMode = Phase;
 
 export const phaseConfig: Record<
   PhaseMode,

@@ -146,6 +146,16 @@ export function useGPS(elapsedSeconds = 0) {
     setState((s) => ({ ...s, isTracking: false }));
   }, []);
 
+  // Clean up watchPosition on unmount to prevent memory/battery leak
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, []);
+
   const getPoints = useCallback(() => pointsRef.current, []);
 
   return { ...state, preWarm, start, stop, getPoints };

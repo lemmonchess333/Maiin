@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeMerge } from "@/lib/offlineQueue";
+import { parseDailyLog } from "@/lib/firestoreGuards";
 import {
   startOfWeek,
   endOfWeek,
@@ -50,10 +51,9 @@ export function useDailyLogs() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as DailyLog[];
+        const data = snapshot.docs.map((d) =>
+          parseDailyLog(d.id, d.data())
+        ) as DailyLog[];
         setLogs(data);
         setLoading(false);
       },
