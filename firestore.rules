@@ -23,11 +23,36 @@ service cloud.firestore {
       return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
     }
 
+    // When adding new fields to UserProfile in src/lib/auth.tsx,
+    // also add them here to allow client writes.
+    function allowedUserFields() {
+      return [
+        'uid', 'displayName', 'email', 'athleteType', 'weightKg', 'heightCm',
+        'weeklyWorkoutsTarget', 'weeklyMealsTarget', 'preferredWeightUnit',
+        'preferredHeightUnit', 'darkMode', 'onboardingComplete', 'trialExpiresAt',
+        'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId',
+        'currentStreak', 'lastLogDate', 'program', 'tdeeBase',
+        'aiCalorieAdjustment', 'targetCalories', 'targetProtein', 'targetCarbs',
+        'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
+        'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',
+        'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
+        'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
+        'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
+        'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
+        'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes',
+        'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
+        'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
+        'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId'
+      ];
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free';
       allow update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged();
       allow delete: if isOwner(uid);
     }
