@@ -411,7 +411,9 @@ export default function Onboarding() {
       const code = (err as { code?: string })?.code;
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {
-        toast.error("Save failed — please try again. If this persists, contact support.");
+        toast.error("Save failed — your data couldn't be saved due to a permissions issue. Please try again or contact support.");
+      } else if (code === "unavailable" || code === "deadline-exceeded") {
+        toast.error("Network issue — please check your connection and try again.");
       } else {
         toast.error(`Save failed: ${code || "unknown"} — ${msg}`);
       }
