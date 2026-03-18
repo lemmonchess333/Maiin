@@ -370,17 +370,32 @@ export default function Onboarding() {
       const filtered = applyInjuryFilters(matched, injuriesForSave);
       const fitnessGoal = goalToFitnessGoal(primaryGoal);
       const programState = templateToProgramState(filtered, fitnessGoal);
+
+      // Write program state first
       const programRef = doc(db, "users", user.uid, "programState", "current");
-      await setDoc(programRef, programState);
+      try {
+        await setDoc(programRef, programState);
+      } catch (e) {
+        console.error("programState write failed:", e);
+        throw e;
+      }
 
       // Update profile last — this updates local state and triggers router transition
-      await updateProfile(data as Partial<UserProfile>);
+      try {
+        await updateProfile(data as Partial<UserProfile>);
+      } catch (e) {
+        console.error("profile update failed:", e);
+        throw e;
+      }
     } catch (err) {
       console.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code;
-      toast.error(code === "permission-denied"
-        ? "Permission denied — please sign out and back in."
-        : "Something went wrong. Please try again.");
+      const msg = (err as { message?: string })?.message || String(err);
+      if (code === "permission-denied") {
+        toast.error("Permission denied — please sign out and back in.");
+      } else {
+        toast.error(`Save failed: ${code || "unknown"} — ${msg}`);
+      }
     } finally {
       setSaving(false);
     }
