@@ -29,9 +29,9 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(100, Math.round(v)));
 }
 
-/** Safe ratio — avoids division by zero, returns 0 if baseline is 0 */
+/** Safe ratio — avoids division by zero, returns neutral 1.0 if baseline is 0 */
 function safeRatio(current: number, baseline: number): number {
-  if (baseline <= 0) return current > 0 ? 1.2 : 0;
+  if (baseline <= 0) return current > 0 ? 1.0 : 0;
   return current / baseline;
 }
 

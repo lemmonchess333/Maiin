@@ -96,7 +96,7 @@ describe("calculateAdaptiveTDEE", () => {
   });
 
   it("returns medium confidence with moderate data", () => {
-    const weights = Array.from({ length: 5 }, (_, i) => ({
+    const weights = Array.from({ length: 8 }, (_, i) => ({
       date: `2026-01-${String(i + 1).padStart(2, "0")}`,
       weight: 80,
     }));
@@ -109,7 +109,7 @@ describe("calculateAdaptiveTDEE", () => {
   });
 
   it("sets correct target weight change per goal", () => {
-    const weights = Array.from({ length: 5 }, (_, i) => ({
+    const weights = Array.from({ length: 10 }, (_, i) => ({
       date: `2026-01-${String(i + 1).padStart(2, "0")}`,
       weight: 80,
     }));

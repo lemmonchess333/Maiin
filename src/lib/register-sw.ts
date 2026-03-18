@@ -8,10 +8,12 @@ export function registerServiceWorker() {
         .then((registration) => {
           console.log("SW registered:", registration.scope);
 
-          // Check for updates every 60 minutes
-          setInterval(() => {
-            registration.update().catch(() => {});
-          }, 60 * 60 * 1000);
+          // Check for updates when page becomes visible (avoids leaked interval)
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+              registration.update().catch(() => {});
+            }
+          });
 
           registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;

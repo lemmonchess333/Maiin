@@ -136,12 +136,15 @@ export function calculateAdaptiveMacros(
   const adjustedCalories = Math.round((baseCalories + adjustment) * config.calorieMultiplier);
   const protein = Math.round(bw * config.proteinRatio);
   const fats = Math.round((adjustedCalories * config.fatRatio) / 9);
-  const carbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);
+  const rawCarbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);
+  const carbs = Math.max(rawCarbs, 50);
+  // Recalculate calories to stay consistent when carbs are clamped
+  const finalCalories = carbs !== rawCarbs ? protein * 4 + carbs * 4 + fats * 9 : adjustedCalories;
 
   return {
-    calories: adjustedCalories,
+    calories: finalCalories,
     protein,
-    carbs: Math.max(carbs, 50),
+    carbs,
     fat: fats,
   };
 }

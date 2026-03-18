@@ -54,6 +54,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
   const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [chipText, setChipText] = useState('');
   const activity = feedItem.activity;
 
   const handleKudos = async () => {
@@ -290,6 +291,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
             )}
           </button>
           <button onClick={() => setShowComments(!showComments)}
+            aria-label="Toggle comments"
             className="flex items-center gap-1.5 text-muted-foreground active:scale-90 transition-transform">
             <MessageCircle className="w-5 h-5" />
             {(activity?.commentCount ?? 0) > 0 && (
@@ -298,6 +300,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           </button>
           {onShare && (
             <button onClick={() => onShare(feedItem)}
+              aria-label="Share activity"
               className="ml-auto text-muted-foreground active:scale-90 transition-transform">
               <Share2 className="w-5 h-5" />
             </button>
@@ -325,10 +328,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
             {chips.map((chip) => (
               <button
                 key={chip}
-                onClick={() => {
-                  const input = document.querySelector<HTMLInputElement>(`[data-comment-input="${feedItem.activityId}"]`);
-                  if (input) { input.value = chip; input.dispatchEvent(new Event('input', { bubbles: true })); }
-                }}
+                onClick={() => setChipText(chip)}
                 className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors active:scale-95"
                 style={{ background: `${THEME.brand}15`, color: THEME.brand }}
               >
@@ -338,7 +338,7 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
           </div>
         )}
 
-        {showComments && <CommentSection activityId={feedItem.activityId} activityAuthorId={activity?.authorId} />}
+        {showComments && <CommentSection activityId={feedItem.activityId} activityAuthorId={activity?.authorId} prefillText={chipText} onPrefillConsumed={() => setChipText('')} />}
       </div>
 
       <style>{`

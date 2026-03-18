@@ -9,7 +9,7 @@ interface Comment {
   createdAt?: { toDate?: () => Date };
 }
 
-export default function CommentSection({ activityId, activityAuthorId }: { activityId: string; activityAuthorId?: string }) {
+export default function CommentSection({ activityId, activityAuthorId, prefillText, onPrefillConsumed }: { activityId: string; activityAuthorId?: string; prefillText?: string; onPrefillConsumed?: () => void }) {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState('');
@@ -18,6 +18,13 @@ export default function CommentSection({ activityId, activityAuthorId }: { activ
   useEffect(() => {
     getComments(activityId).then(setComments);
   }, [activityId]);
+
+  useEffect(() => {
+    if (prefillText) {
+      setText(prefillText);
+      onPrefillConsumed?.();
+    }
+  }, [prefillText, onPrefillConsumed]);
 
   const handleSend = async () => {
     if (!user || !text.trim()) return;

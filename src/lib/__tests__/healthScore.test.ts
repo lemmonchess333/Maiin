@@ -70,6 +70,42 @@ describe("calculateHealthScore", () => {
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.score).toBeGreaterThanOrEqual(0);
   });
+
+  it("handles zero calorie target without division by zero", () => {
+    const result = calculateHealthScore(
+      { calories: 500, protein: 50, fiber: 10, sugar: 20, sodium: 1000, mealCount: 2 },
+      { ...defaultTargets, calories: 0 }
+    );
+    expect(result.score).not.toBeNaN();
+    expect(result.score).toBeGreaterThanOrEqual(0);
+  });
+
+  it("handles zero protein target without division by zero", () => {
+    const result = calculateHealthScore(
+      { calories: 2000, protein: 100, fiber: 10, sugar: 20, sodium: 1000, mealCount: 2 },
+      { ...defaultTargets, protein: 0 }
+    );
+    expect(result.score).not.toBeNaN();
+    expect(result.score).toBeGreaterThanOrEqual(0);
+  });
+
+  it("handles zero water target without division by zero", () => {
+    const result = calculateHealthScore(
+      { calories: 2000, protein: 150, fiber: 30, sugar: 40, sodium: 2000, mealCount: 3 },
+      defaultTargets,
+      { workoutsToday: 0, waterGlasses: 5, waterTarget: 0, steps: 5000, stepsTarget: 10000 }
+    );
+    expect(result.score).not.toBeNaN();
+  });
+
+  it("handles zero steps target without division by zero", () => {
+    const result = calculateHealthScore(
+      { calories: 2000, protein: 150, fiber: 30, sugar: 40, sodium: 2000, mealCount: 3 },
+      defaultTargets,
+      { workoutsToday: 0, waterGlasses: 5, waterTarget: 8, steps: 5000, stepsTarget: 0 }
+    );
+    expect(result.score).not.toBeNaN();
+  });
 });
 
 describe("getScoreColor", () => {

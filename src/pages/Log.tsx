@@ -162,19 +162,23 @@ export default function Log() {
     } else {
       // Add
       if (!user) return;
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        foodName: meal.foodName,
-        items: meal.items ?? [],
-        totalCalories: meal.totalCalories ?? 0,
-        totalProtein: meal.totalProtein ?? 0,
-        totalCarbs: meal.totalCarbs ?? 0,
-        totalFat: meal.totalFat ?? 0,
-        confidence: "database",
-        createdAt: Timestamp.now(),
-      });
-      setSelectedCommonIds((prev) => new Set(prev).add(key));
-      toast.success(`${meal.foodName} added`);
+      try {
+        await addDoc(collection(db, "users", user.uid, "meals"), {
+          date: selectedDate,
+          foodName: meal.foodName,
+          items: meal.items ?? [],
+          totalCalories: meal.totalCalories ?? 0,
+          totalProtein: meal.totalProtein ?? 0,
+          totalCarbs: meal.totalCarbs ?? 0,
+          totalFat: meal.totalFat ?? 0,
+          confidence: "database",
+          createdAt: Timestamp.now(),
+        });
+        setSelectedCommonIds((prev) => new Set(prev).add(key));
+        toast.success(`${meal.foodName} added`);
+      } catch {
+        toast.error("Failed to save. Please try again.");
+      }
     }
   };
 
@@ -310,27 +314,31 @@ export default function Log() {
     const food = offDrawerFood;
     if (!user || !food) return;
     const s = servings;
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: food.name,
-      items: [{
-        name: food.name,
-        portionSize: s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
-        calories: Math.round(food.calories * s),
-        protein: Math.round(food.protein * s),
-        carbs: Math.round(food.carbs * s),
-        fat: Math.round(food.fat * s),
-      }],
-      totalCalories: Math.round(food.calories * s),
-      totalProtein: Math.round(food.protein * s),
-      totalCarbs: Math.round(food.carbs * s),
-      totalFat: Math.round(food.fat * s),
-      confidence: "database",
-      createdAt: Timestamp.now(),
-    });
-    await addFavourite({ ...food, source: "search" });
-    setOffDrawerFood(null);
-    toast.success(`${food.name} added!`);
+    try {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: food.name,
+        items: [{
+          name: food.name,
+          portionSize: s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
+          calories: Math.round(food.calories * s),
+          protein: Math.round(food.protein * s),
+          carbs: Math.round(food.carbs * s),
+          fat: Math.round(food.fat * s),
+        }],
+        totalCalories: Math.round(food.calories * s),
+        totalProtein: Math.round(food.protein * s),
+        totalCarbs: Math.round(food.carbs * s),
+        totalFat: Math.round(food.fat * s),
+        confidence: "database",
+        createdAt: Timestamp.now(),
+      });
+      await addFavourite({ ...food, source: "search" });
+      setOffDrawerFood(null);
+      toast.success(`${food.name} added!`);
+    } catch {
+      toast.error("Failed to save. Please try again.");
+    }
   };
 
   const handleNLParse = async () => {
@@ -386,27 +394,31 @@ export default function Log() {
     const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
     const totalFat = items.reduce((s, i) => s + i.fat, 0);
 
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: items.map((i) => i.name).join(", "),
-      items: items.map((i) => ({
-        name: i.name,
-        portionSize: "1 serving",
-        calories: i.calories,
-        protein: i.protein,
-        carbs: i.carbs,
-        fat: i.fat,
-      })),
-      totalCalories,
-      totalProtein,
-      totalCarbs,
-      totalFat,
-      confidence,
-      createdAt: Timestamp.now(),
-    });
-    setNlInput("");
+    try {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: items.map((i) => i.name).join(", "),
+        items: items.map((i) => ({
+          name: i.name,
+          portionSize: "1 serving",
+          calories: i.calories,
+          protein: i.protein,
+          carbs: i.carbs,
+          fat: i.fat,
+        })),
+        totalCalories,
+        totalProtein,
+        totalCarbs,
+        totalFat,
+        confidence,
+        createdAt: Timestamp.now(),
+      });
+      setNlInput("");
+      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
+    } catch {
+      toast.error("Failed to save. Please try again.");
+    }
     setNlParsing(false);
-    toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
   };
 
   const handleDeleteMeal = (mealId: string, foodName: string) => {
@@ -422,22 +434,26 @@ export default function Log() {
 
   const handleQuickRelog = async (fav: { name: string; calories: number; protein: number; carbs: number; fat: number; fiber?: number; sugar?: number; sodium?: number; servingSize: string }) => {
     if (!user) return;
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: fav.name,
-      items: [{ name: fav.name, portionSize: fav.servingSize, calories: fav.calories, protein: fav.protein, carbs: fav.carbs, fat: fav.fat, fiber: fav.fiber, sugar: fav.sugar, sodium: fav.sodium }],
-      totalCalories: fav.calories,
-      totalProtein: fav.protein,
-      totalCarbs: fav.carbs,
-      totalFat: fav.fat,
-      totalFiber: fav.fiber || undefined,
-      totalSugar: fav.sugar || undefined,
-      totalSodium: fav.sodium || undefined,
-      confidence: "favourite",
-      createdAt: Timestamp.now(),
-    });
-    await addFavourite({ ...fav, source: "manual" });
-    toast.success(`${fav.name} added!`);
+    try {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: fav.name,
+        items: [{ name: fav.name, portionSize: fav.servingSize, calories: fav.calories, protein: fav.protein, carbs: fav.carbs, fat: fav.fat, fiber: fav.fiber, sugar: fav.sugar, sodium: fav.sodium }],
+        totalCalories: fav.calories,
+        totalProtein: fav.protein,
+        totalCarbs: fav.carbs,
+        totalFat: fav.fat,
+        totalFiber: fav.fiber || undefined,
+        totalSugar: fav.sugar || undefined,
+        totalSodium: fav.sodium || undefined,
+        confidence: "favourite",
+        createdAt: Timestamp.now(),
+      });
+      await addFavourite({ ...fav, source: "manual" });
+      toast.success(`${fav.name} added!`);
+    } catch {
+      toast.error("Failed to save. Please try again.");
+    }
   };
 
   // Quick-add meals from user history or defaults
@@ -467,18 +483,22 @@ export default function Log() {
   const handleQuickMealAdd = async (meal: typeof DEFAULT_QUICK_MEALS[0]) => {
     if (!user || quickAdding) return;
     setQuickAdding(meal.name);
-    await addDoc(collection(db, "users", user.uid, "meals"), {
-      date: selectedDate,
-      foodName: meal.name,
-      items: [{ name: meal.name, portionSize: "1 serving", calories: meal.cal, protein: meal.pro, carbs: meal.carb, fat: meal.fat }],
-      totalCalories: meal.cal,
-      totalProtein: meal.pro,
-      totalCarbs: meal.carb,
-      totalFat: meal.fat,
-      confidence: "quick-add",
-      createdAt: Timestamp.now(),
-    });
-    toast.success(`${meal.name} added!`);
+    try {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: meal.name,
+        items: [{ name: meal.name, portionSize: "1 serving", calories: meal.cal, protein: meal.pro, carbs: meal.carb, fat: meal.fat }],
+        totalCalories: meal.cal,
+        totalProtein: meal.pro,
+        totalCarbs: meal.carb,
+        totalFat: meal.fat,
+        confidence: "quick-add",
+        createdAt: Timestamp.now(),
+      });
+      toast.success(`${meal.name} added!`);
+    } catch {
+      toast.error("Failed to save. Please try again.");
+    }
     setQuickAdding(null);
   };
 
@@ -541,13 +561,15 @@ export default function Log() {
       </motion.div>
 
       {/* Tabs — Workout / Food */}
-      <motion.div variants={itemVariant} className="flex gap-1 bg-muted rounded-xl p-1">
+      <motion.div variants={itemVariant} className="flex gap-1 bg-muted rounded-xl p-1" role="tablist">
         {([
           { key: "workout" as const, label: "Workout", Icon: Dumbbell },
           { key: "food" as const, label: "Food", Icon: UtensilsCrossed },
         ]).map(({ key, label, Icon }) => (
           <motion.button
             key={key}
+            role="tab"
+            aria-selected={activeTab === key}
             whileTap={{ scale: 0.97 }}
             onClick={() => { haptic(); setActiveTab(key); }}
             className={cn(
@@ -745,6 +767,7 @@ export default function Log() {
                 }}
                 placeholder="Describe what you ate…"
                 rows={1}
+                maxLength={500}
                 className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               {/* Unified dropdown: AI Suggestions + Database results */}

@@ -116,7 +116,7 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
         km: currentKm,
         time: splitTime,
         pace: calculatePace(1000, splitTime),
-        paceSeconds: splitTime,
+        paceSeconds: paceAsNumber(1000, splitTime),
         elevationGain: Math.round(elevGain),
         elevationLoss: Math.round(elevLoss),
       });

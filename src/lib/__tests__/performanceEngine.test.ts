@@ -6,6 +6,8 @@ import {
   computeLiftLoadScore,
   computeRunLoadScore,
   computeRecoveryScore,
+  computeAdherenceScore,
+  computePerformanceIndex,
   computeLoadBand,
   shouldRecommendDeload,
 } from "../performanceEngine";
@@ -178,11 +180,11 @@ describe("computeLiftLoadScore", () => {
     expect(computeLiftLoadScore(agg, bl)).toBe(100);
   });
 
-  it("handles zero baseline with non-zero current (safeRatio returns 1.2)", () => {
+  it("handles zero baseline with non-zero current (safeRatio returns 1.0)", () => {
     const agg = makeAgg({ liftTonnage: 5000, liftHardSets: 10, liftSessions: 2 });
     const bl = makeBaseline({ liftTonnage: 0, liftHardSets: 0 });
-    // safeRatio returns 1.2 for both → raw = 1.2 → clamp(1.2*67) = clamp(80.4) = 80
-    expect(computeLiftLoadScore(agg, bl)).toBe(80);
+    // safeRatio returns 1.0 for both → raw = 1.0 → clamp(1.0*67) = 67
+    expect(computeLiftLoadScore(agg, bl)).toBe(67);
   });
 });
 
@@ -402,5 +404,59 @@ describe("shouldRecommendDeload", () => {
 
   it("returns false when all conditions are fine", () => {
     expect(shouldRecommendDeload(60, 60, 60, 50)).toBe(false);
+  });
+});
+
+// ── computeAdherenceScore ──────────────────
+
+describe("computeAdherenceScore", () => {
+  it("returns 50 when no targets or data available", () => {
+    const agg = makeAgg({ liftSessions: 0, runSessions: 0, mealDaysLogged: 0, avgDailyCalories: 0, avgDailyProtein: 0 });
+    expect(computeAdherenceScore(agg, 0, null, null)).toBe(50);
+  });
+
+  it("scores workout adherence when target > 0", () => {
+    const agg = makeAgg({ liftSessions: 3, runSessions: 1 });
+    const score = computeAdherenceScore(agg, 4, null, null);
+    // 4/4 = 1.0 ratio → 100
+    expect(score).toBe(100);
+  });
+
+  it("caps workout ratio at 1.2", () => {
+    const agg = makeAgg({ liftSessions: 5, runSessions: 3 });
+    // 8/4 = 2.0, capped to 1.2 → 120, but only workout factor → 100 clamped
+    expect(computeAdherenceScore(agg, 4, null, null)).toBe(100);
+  });
+
+  it("handles null calorie and protein targets gracefully", () => {
+    const agg = makeAgg();
+    const score = computeAdherenceScore(agg, 4, null, null);
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
+  });
+});
+
+// ── computePerformanceIndex ────────────────
+
+describe("computePerformanceIndex", () => {
+  it("returns valid doc for all-zero aggregates", () => {
+    const zeroAgg = makeAgg({
+      liftTonnage: 0, liftHardSets: 0, liftSessions: 0,
+      runKm: 0, runLongKm: 0, runSessions: 0, runQualityCount: 0,
+      mealDaysLogged: 0, avgDailyCalories: 0, avgDailyProtein: 0,
+      bwCurrent7dAvg: null, bwPrevious7dAvg: null,
+    });
+    const doc = computePerformanceIndex(zeroAgg, [], {});
+    expect(doc.performanceIndex).toBeGreaterThanOrEqual(0);
+    expect(doc.performanceIndex).toBeLessThanOrEqual(100);
+    expect(doc.confidence).toBe("low");
+  });
+
+  it("returns valid doc with no prior weeks", () => {
+    const agg = makeAgg();
+    const doc = computePerformanceIndex(agg, [], { weeklyWorkoutsTarget: 4 });
+    expect(doc.performanceIndex).toBeGreaterThanOrEqual(0);
+    expect(doc.insight.title).toBeDefined();
+    expect(doc.insight.bullets.length).toBeGreaterThan(0);
   });
 });
