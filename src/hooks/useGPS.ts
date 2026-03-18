@@ -39,6 +39,8 @@ export function useGPS(elapsedSeconds = 0) {
   const kalmanRef = useRef(new KalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
+  const elapsedRef = useRef(elapsedSeconds);
+  useEffect(() => { elapsedRef.current = elapsedSeconds; }, [elapsedSeconds]);
 
   // Check geolocation permission on mount
   useEffect(() => {
@@ -83,8 +85,8 @@ export function useGPS(elapsedSeconds = 0) {
 
     const options: PositionOptions = {
       enableHighAccuracy: true,
-      maximumAge: elapsedSeconds > 1800 ? 3000 : 0,
-      timeout: elapsedSeconds > 1800 ? 15000 : 12000,
+      maximumAge: elapsedRef.current > 1800 ? 3000 : 0,
+      timeout: elapsedRef.current > 1800 ? 15000 : 12000,
     };
 
     watchIdRef.current = navigator.geolocation.watchPosition(
@@ -134,7 +136,7 @@ export function useGPS(elapsedSeconds = 0) {
     );
 
     setState((s) => ({ ...s, isTracking: true }));
-  }, [elapsedSeconds]);
+  }, []);
 
   const stop = useCallback(() => {
     if (watchIdRef.current !== null) {

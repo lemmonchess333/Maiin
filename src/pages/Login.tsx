@@ -202,6 +202,7 @@ export default function Login() {
               setIsSignUp(!isSignUp);
               setError("");
             }}
+            aria-pressed={isSignUp}
             className="text-primary font-medium hover:underline"
           >
             {isSignUp ? "Sign In" : "Sign Up"}

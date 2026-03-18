@@ -63,8 +63,27 @@ export function calculateAdaptiveTDEE(
 ): TDEECalculation {
   const targetWeightChange = getTargetWeeklyChange(goal);
 
-  // Need at least 2 weeks of data
+  // Need at least 2 weeks of data with overlapping date ranges
   if (weightLogs.length < 4 || calorieLogs.length < 7) {
+    return {
+      estimatedTDEE: currentTargets.calories,
+      adjustedCalories: currentTargets.calories,
+      adjustedProtein: currentTargets.protein,
+      adjustedCarbs: currentTargets.carbs,
+      adjustedFat: currentTargets.fat,
+      confidence: "low",
+      weeklyWeightChange: 0,
+      targetWeightChange,
+    };
+  }
+
+  // Verify weight and calorie logs overlap in time (at least 7 days)
+  const weightDates = weightLogs.map(w => new Date(w.date).getTime());
+  const calDates = calorieLogs.map(c => new Date(c.date).getTime());
+  const overlapStart = Math.max(Math.min(...weightDates), Math.min(...calDates));
+  const overlapEnd = Math.min(Math.max(...weightDates), Math.max(...calDates));
+  const overlapDays = (overlapEnd - overlapStart) / 86400000;
+  if (overlapDays < 7) {
     return {
       estimatedTDEE: currentTargets.calories,
       adjustedCalories: currentTargets.calories,

@@ -7,7 +7,7 @@ export type Meal = {
 };
 
 export function calculateDailyTotals(meals: Meal[]) {
-  return meals.reduce(
+  const totals = meals.reduce(
     (acc, meal) => {
       acc.calories += meal.calories;
       acc.protein += meal.protein;
@@ -17,4 +17,9 @@ export function calculateDailyTotals(meals: Meal[]) {
     },
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
+  totals.calories = Math.round(totals.calories);
+  totals.protein = Math.round(totals.protein);
+  totals.carbs = Math.round(totals.carbs);
+  totals.fat = Math.round(totals.fat);
+  return totals;
 }

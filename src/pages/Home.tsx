@@ -38,18 +38,18 @@ function haptic(ms = 10) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
 }
 
-function computeStreak(wd: string[]): number {
-  if (!wd.length) return 0;
-  const u = [...new Set(wd)].sort().reverse();
-  const t = format(new Date(), "yyyy-MM-dd");
-  const y = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
-  if (u[0] !== t && u[0] !== y) return 0;
-  let s = 1;
-  for (let i = 1; i < u.length; i++) {
-    if ((new Date(u[i-1]).getTime() - new Date(u[i]).getTime()) / 86400000 === 1) s++;
+function computeStreak(workoutDates: string[]): number {
+  if (!workoutDates.length) return 0;
+  const uniqueDates = [...new Set(workoutDates)].sort().reverse();
+  const today = format(new Date(), "yyyy-MM-dd");
+  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
+  let streak = 1;
+  for (let i = 1; i < uniqueDates.length; i++) {
+    if ((new Date(uniqueDates[i-1]).getTime() - new Date(uniqueDates[i]).getTime()) / 86400000 === 1) streak++;
     else break;
   }
-  return s;
+  return streak;
 }
 
 function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
@@ -58,18 +58,20 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
 }) {
-  const today = new Date();
-  const sow = new Date(today);
-  sow.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  const days = Array.from({ length: 7 }, function(_, i) {
-    const d = new Date(sow); d.setDate(sow.getDate() + i);
-    const k = format(d, "yyyy-MM-dd");
-    const data = dayMap.get(k);
-    const isToday = k === format(today, "yyyy-MM-dd");
-    const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
-    const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
-    return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
-  });
+  const days = useMemo(() => {
+    const today = new Date();
+    const sow = new Date(today);
+    sow.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    return Array.from({ length: 7 }, function(_, i) {
+      const d = new Date(sow); d.setDate(sow.getDate() + i);
+      const k = format(d, "yyyy-MM-dd");
+      const data = dayMap.get(k);
+      const isToday = k === format(today, "yyyy-MM-dd");
+      const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
+      const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
+      return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
+    });
+  }, [dayMap, schedule, selectedDate]);
   const tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
   return (
     <div className="flex items-center justify-between px-1">
@@ -81,10 +83,10 @@ function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
           st = { backgroundColor: THEME.brand };
         } else if (day.isToday) {
           cls += " text-foreground";
-          st = { border: "2px dashed #9333ea" };
+          st = { border: `2px dashed ${THEME.brand}` };
         } else {
           cls += " text-muted-foreground";
-          st = { border: "2px dashed #d8b4fe" };
+          st = { border: `2px dashed ${THEME.brandLight}` };
         }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
