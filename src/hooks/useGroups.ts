@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, addDoc, serverTimestamp, increment, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
+import { parseGroup } from '@/lib/firestoreGuards';
 
 export interface Group {
   id: string;
@@ -35,7 +36,7 @@ export function useGroups() {
   const fetchGroups = useCallback(async () => {
     try {
       const snap = await getDocs(query(collection(db, 'groups'), orderBy('memberCount', 'desc')));
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Group));
+      const list = snap.docs.map(d => (parseGroup(d.id, d.data()) as Group));
 
       // If no groups exist, seed defaults
       if (list.length === 0) {
@@ -48,7 +49,7 @@ export function useGroups() {
         }
         // Re-fetch after seeding
         const snap2 = await getDocs(query(collection(db, 'groups'), orderBy('memberCount', 'desc')));
-        setGroups(snap2.docs.map(d => ({ id: d.id, ...d.data() } as Group)));
+        setGroups(snap2.docs.map(d => (parseGroup(d.id, d.data()) as Group)));
       } else {
         setGroups(list);
       }
@@ -80,21 +81,41 @@ export function useGroups() {
 
   const joinGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
-    await setDoc(doc(db, 'groups', groupId, 'members', user.uid), {
-      joinedAt: serverTimestamp(),
-    });
-    await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(1) });
+    // Optimistic update
+    const prevGroupIds = new Set(myGroupIds);
+    const prevGroups = [...groups];
     setMyGroupIds(prev => new Set([...prev, groupId]));
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: g.memberCount + 1 } : g));
-  }, [user]);
+    try {
+      await setDoc(doc(db, 'groups', groupId, 'members', user.uid), {
+        joinedAt: serverTimestamp(),
+      });
+      await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(1) });
+    } catch (e) {
+      // Rollback on failure
+      setMyGroupIds(prevGroupIds);
+      setGroups(prevGroups);
+      throw e;
+    }
+  }, [user, myGroupIds, groups]);
 
   const leaveGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
-    await deleteDoc(doc(db, 'groups', groupId, 'members', user.uid));
-    await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(-1) });
+    // Optimistic update
+    const prevGroupIds = new Set(myGroupIds);
+    const prevGroups = [...groups];
     setMyGroupIds(prev => { const s = new Set(prev); s.delete(groupId); return s; });
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: Math.max(0, g.memberCount - 1) } : g));
-  }, [user]);
+    try {
+      await deleteDoc(doc(db, 'groups', groupId, 'members', user.uid));
+      await updateDoc(doc(db, 'groups', groupId), { memberCount: increment(-1) });
+    } catch (e) {
+      // Rollback on failure
+      setMyGroupIds(prevGroupIds);
+      setGroups(prevGroups);
+      throw e;
+    }
+  }, [user, myGroupIds, groups]);
 
   const createGroup = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;

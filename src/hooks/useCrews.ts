@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
+import { parseCrew } from '@/lib/firestoreGuards';
 
 export interface Crew {
   id: string;
@@ -34,7 +35,7 @@ export function useCrews() {
   const fetchCrews = useCallback(async () => {
     try {
       const snap = await getDocs(query(collection(db, 'groups'), orderBy('memberCount', 'desc')));
-      let list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Crew));
+      let list = snap.docs.map(d => (parseCrew(d.id, d.data()) as Crew));
 
       // Seed defaults if no default crews exist
       const hasDefaults = list.some(c => c.type === 'default');
@@ -47,7 +48,7 @@ export function useCrews() {
           });
         }
         const snap2 = await getDocs(query(collection(db, 'groups'), orderBy('memberCount', 'desc')));
-        list = snap2.docs.map(d => ({ id: d.id, ...d.data() } as Crew));
+        list = snap2.docs.map(d => (parseCrew(d.id, d.data()) as Crew));
       }
 
       setCrews(list);
@@ -65,29 +66,48 @@ export function useCrews() {
   const joinCrew = useCallback(async (crewId: string) => {
     if (!user?.uid) return;
 
-    // Leave current crew first (one crew per user)
+    // Snapshot for rollback
+    const prevCrews = [...crews];
+
+    // Optimistic: leave current crew first (one crew per user)
     if (currentCrewId && currentCrewId !== crewId) {
-      await deleteDoc(doc(db, 'groups', currentCrewId, 'members', user.uid));
-      await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
       setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
     }
-
-    await setDoc(doc(db, 'groups', crewId, 'members', user.uid), {
-      joinedAt: serverTimestamp(),
-      displayName: profile?.displayName || 'Athlete',
-    });
-    await updateDoc(doc(db, 'groups', crewId), { memberCount: increment(1) });
-    await updateProfile({ crewId });
     setCrews(prev => prev.map(c => c.id === crewId ? { ...c, memberCount: c.memberCount + 1 } : c));
-  }, [user, currentCrewId, profile?.displayName, updateProfile]);
+
+    try {
+      if (currentCrewId && currentCrewId !== crewId) {
+        await deleteDoc(doc(db, 'groups', currentCrewId, 'members', user.uid));
+        await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
+      }
+      await setDoc(doc(db, 'groups', crewId, 'members', user.uid), {
+        joinedAt: serverTimestamp(),
+        displayName: profile?.displayName || 'Athlete',
+      });
+      await updateDoc(doc(db, 'groups', crewId), { memberCount: increment(1) });
+      await updateProfile({ crewId });
+    } catch (e) {
+      setCrews(prevCrews);
+      throw e;
+    }
+  }, [user, currentCrewId, crews, profile?.displayName, updateProfile]);
 
   const leaveCrew = useCallback(async () => {
     if (!user?.uid || !currentCrewId) return;
-    await deleteDoc(doc(db, 'groups', currentCrewId, 'members', user.uid));
-    await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
-    await updateProfile({ crewId: undefined });
+
+    // Snapshot for rollback
+    const prevCrews = [...crews];
     setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
-  }, [user, currentCrewId, updateProfile]);
+
+    try {
+      await deleteDoc(doc(db, 'groups', currentCrewId, 'members', user.uid));
+      await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
+      await updateProfile({ crewId: undefined });
+    } catch (e) {
+      setCrews(prevCrews);
+      throw e;
+    }
+  }, [user, currentCrewId, crews, updateProfile]);
 
   const createCrew = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;

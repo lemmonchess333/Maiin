@@ -96,8 +96,10 @@ export function calculateAdaptiveTDEE(
     };
   }
 
-  // Recent 14 days of calorie data
-  const recentCalories = calorieLogs.slice(0, 14);
+  // Recent 14 days of calorie data — sort descending to ensure most recent first
+  const recentCalories = [...calorieLogs]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 14);
   const avgDailyCalories =
     recentCalories.reduce((s, m) => s + m.calories, 0) / Math.max(recentCalories.length, 1);
 
