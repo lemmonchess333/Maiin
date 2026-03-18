@@ -39,7 +39,7 @@ service cloud.firestore {
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
-        'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes',
+        'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes', 'lastActiveAt',
         'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId'
