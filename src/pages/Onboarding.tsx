@@ -312,6 +312,9 @@ export default function Onboarding() {
     if (!user) return;
     setSaving(true);
     try {
+      // Force-refresh auth token to ensure Firestore rules see current claims
+      await user.getIdToken(true);
+
       // Build injuries array for Firestore
       const injuriesForSave = injuries.includes("other") && otherInjuryText.trim()
         ? [...injuries.filter(i => i !== "other"), otherInjuryText.trim()]
@@ -392,7 +395,7 @@ export default function Onboarding() {
       const code = (err as { code?: string })?.code;
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {
-        toast.error("Permission denied — please sign out and back in.");
+        toast.error("Save failed — please try again. If this persists, contact support.");
       } else {
         toast.error(`Save failed: ${code || "unknown"} — ${msg}`);
       }

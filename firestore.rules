@@ -52,7 +52,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free';
       allow update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly(allowedUserFields())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged();
       allow delete: if isOwner(uid);
     }
