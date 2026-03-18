@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
@@ -321,6 +321,22 @@ export default function Onboarding() {
         : injuries;
 
       const data: Record<string, unknown> = {
+        // When profile doc doesn't exist (edge case: initial creation failed),
+        // include required default fields so Firestore create rule passes
+        ...(profile ? {} : {
+          uid: user.uid,
+          displayName: user.displayName || "",
+          email: user.email || "",
+          subscriptionTier: "free",
+          trialExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          currentStreak: 0,
+          lastLogDate: null,
+          darkMode: false,
+          weeklyWorkoutsTarget: 4,
+          weeklyMealsTarget: 10,
+          athleteType: "Lifter",
+          createdAt: serverTimestamp(),
+        }),
         gender,
         ageRange,
         heightCm,
