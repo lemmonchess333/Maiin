@@ -58,7 +58,7 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
-    // User subcollections — meals, workouts, runs, weights
+    // User subcollections — meals, workouts, runs, weights, water, bodyweight
     match /users/{uid}/meals/{doc} {
       allow read, write: if isOwner(uid);
     }
@@ -69,6 +69,12 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
     match /users/{uid}/weights/{doc} {
+      allow read, write: if isOwner(uid);
+    }
+    match /users/{uid}/waterLog/{doc} {
+      allow read, write: if isOwner(uid);
+    }
+    match /users/{uid}/bodyweightLogs/{doc} {
       allow read, write: if isOwner(uid);
     }
     match /users/{uid}/programState/{doc} {
