@@ -140,7 +140,7 @@ export default function UserProfile() {
               </button>
               {showMenu && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <div className="fixed inset-0 z-10" role="button" tabIndex={0} aria-label="Close menu" onClick={() => setShowMenu(false)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowMenu(false); }} />
                   <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
                     <button
                       onClick={() => { setShowMenu(false); setShowReport(true); }}

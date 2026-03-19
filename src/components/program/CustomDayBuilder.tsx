@@ -126,22 +126,25 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <label className="text-[10px] text-muted-foreground">Sets</label>
+                            <label htmlFor={`custom-sets-${i}`} className="text-[10px] text-muted-foreground">Sets</label>
                             <input
+                              id={`custom-sets-${i}`}
                               type="number"
                               value={ex.sets}
                               onChange={(e) => updateField(i, "sets", Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
                               className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
                             />
-                            <label className="text-[10px] text-muted-foreground">Reps</label>
+                            <label htmlFor={`custom-reps-${i}`} className="text-[10px] text-muted-foreground">Reps</label>
                             <input
+                              id={`custom-reps-${i}`}
                               type="number"
                               value={ex.reps}
                               onChange={(e) => updateField(i, "reps", Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
                               className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
                             />
-                            <label className="text-[10px] text-muted-foreground">kg</label>
+                            <label htmlFor={`custom-weight-${i}`} className="text-[10px] text-muted-foreground">kg</label>
                             <input
+                              id={`custom-weight-${i}`}
                               type="number"
                               value={ex.weight || ""}
                               placeholder="BW"

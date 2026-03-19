@@ -86,8 +86,9 @@ export default function ProfileSection({
       />
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-sm text-muted-foreground">Weight (kg)</label>
+          <label htmlFor="profile-weight" className="text-sm text-muted-foreground">Weight (kg)</label>
           <input
+            id="profile-weight"
             type="number"
             value={weightKg}
             onChange={(e) => setWeightKg(Number(e.target.value))}
@@ -96,8 +97,9 @@ export default function ProfileSection({
           <p className="text-[10px] text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground">Height (cm)</label>
+          <label htmlFor="profile-height" className="text-sm text-muted-foreground">Height (cm)</label>
           <input
+            id="profile-height"
             type="number"
             value={heightCm}
             onChange={(e) => setHeightCm(Number(e.target.value))}

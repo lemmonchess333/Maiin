@@ -713,8 +713,9 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] text-muted-foreground">Weight (kg)</label>
+                      <label htmlFor="log-weight" className="text-[10px] text-muted-foreground">Weight (kg)</label>
                       <input
+                        id="log-weight"
                         type="number"
                         value={logWeight}
                         onChange={(e) => setLogWeight(e.target.value)}
@@ -722,8 +723,9 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] text-muted-foreground">Reps</label>
+                      <label htmlFor="log-reps" className="text-[10px] text-muted-foreground">Reps</label>
                       <input
+                        id="log-reps"
                         type="number"
                         value={logReps}
                         onChange={(e) => setLogReps(e.target.value)}

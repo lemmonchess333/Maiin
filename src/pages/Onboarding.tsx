@@ -894,6 +894,7 @@ export default function Onboarding() {
                         className="overflow-hidden mt-2 ml-10"
                       >
                         <input
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
                           type="text"
                           value={otherInjuryText}
