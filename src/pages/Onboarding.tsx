@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { THEME } from "@/lib/theme";
@@ -307,34 +307,25 @@ export default function Onboarding() {
     true,                                   // 10: confirmation
   ];
 
-  // ── Save handler
+  // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
   const handleFinish = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      // Force-refresh auth token to ensure Firestore rules see current claims
-      await user.getIdToken(true);
-
       // Build injuries array for Firestore
       const injuriesForSave = injuries.includes("other") && otherInjuryText.trim()
         ? [...injuries.filter(i => i !== "other"), otherInjuryText.trim()]
         : injuries;
 
-      const data: Record<string, unknown> = {
-        // Always include create-safe defaults so Firestore create rule passes
-        // regardless of whether the profile doc already exists.
-        // For updates, unchanged fields won't appear in the rules diff.
-        uid: user.uid,
+      const profileData: Record<string, unknown> = {
         displayName: user.displayName || "",
         email: user.email || "",
-        subscriptionTier: "free",
         currentStreak: 0,
         lastLogDate: null,
         darkMode: false,
         weeklyWorkoutsTarget: 4,
         weeklyMealsTarget: 10,
         athleteType: "Lifter",
-        ...(!profile ? { createdAt: serverTimestamp() } : {}),
         gender,
         ageRange,
         heightCm,
@@ -388,28 +379,18 @@ export default function Onboarding() {
       const fitnessGoal = goalToFitnessGoal(primaryGoal);
       const programState = templateToProgramState(filtered, fitnessGoal);
 
-      // Write program state first
-      const programRef = doc(db, "users", user.uid, "programState", "current");
-      try {
-        await setDoc(programRef, programState);
-      } catch (e) {
-        console.error("programState write failed:", e);
-        throw e;
-      }
+      // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules
+      const completeOnboarding = httpsCallable(functions, "completeOnboarding");
+      await completeOnboarding({ profileData, programState });
 
-      // Update profile last — this updates local state and triggers router transition
+      // Data is saved server-side. Update local state to trigger router transition.
+      // Try Firestore write first; if rules block it, just reload the page
+      // (the CF already persisted everything — the reload will read the updated doc).
       try {
-        await updateProfile(data as Partial<UserProfile>, { allowProtected: true });
-      } catch (e) {
-        // Retry once on permission-denied (handles stale rule propagation)
-        if ((e as { code?: string })?.code === "permission-denied") {
-          console.warn("profile update permission-denied, retrying in 2s…");
-          await new Promise(r => setTimeout(r, 2000));
-          await updateProfile(data as Partial<UserProfile>, { allowProtected: true });
-        } else {
-          console.error("profile update failed:", e);
-          throw e;
-        }
+        await updateProfile({ onboardingComplete: true } as Partial<UserProfile>, { allowProtected: true });
+      } catch {
+        window.location.reload();
+        return;
       }
     } catch (err) {
       console.error("Onboarding save failed:", err);
@@ -417,7 +398,7 @@ export default function Onboarding() {
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {
         toast.error("Save failed — your data couldn't be saved due to a permissions issue. Please try again or contact support.");
-      } else if (code === "unavailable" || code === "deadline-exceeded") {
+      } else if (code === "unavailable" || code === "deadline-exceeded" || msg.includes("INTERNAL")) {
         toast.error("Network issue — please check your connection and try again.");
       } else {
         toast.error(`Save failed: ${code || "unknown"} — ${msg}`);

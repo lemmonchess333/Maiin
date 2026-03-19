@@ -8,6 +8,7 @@ import {
   connectFirestoreEmulator,
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
@@ -40,6 +41,7 @@ try {
 export const db = db_;
 
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
 // Connect to emulators in development
 if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true") {

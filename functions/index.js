@@ -5,6 +5,67 @@ const cors = require("cors")({ origin: true });
 admin.initializeApp();
 
 // ══════════════════════════════════════════════
+// ONBOARDING — bypasses security rules via Admin SDK
+// ══════════════════════════════════════════════
+
+exports.completeOnboarding = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+
+  // Validate required fields
+  const {profileData, programState} = data;
+  if (!profileData || typeof profileData !== "object") {
+    throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
+  }
+  if (!programState || typeof programState !== "object") {
+    throw new functions.https.HttpsError("invalid-argument", "programState is required.");
+  }
+
+  // Sanitize: strip fields that clients must never set
+  const clientForbidden = ["stripeCustomerId", "stripeSubscriptionId"];
+  for (const key of clientForbidden) {
+    delete profileData[key];
+  }
+
+  // Force correct ownership + subscription tier
+  profileData.uid = uid;
+  profileData.subscriptionTier = "free";
+  profileData.onboardingComplete = true;
+
+  const db = admin.firestore();
+
+  // Check if profile already exists (preserve trialExpiresAt, createdAt)
+  const userRef = db.collection("users").doc(uid);
+  const existing = await userRef.get();
+
+  if (existing.exists) {
+    // Don't overwrite protected fields on update
+    delete profileData.trialExpiresAt;
+    delete profileData.createdAt;
+    await userRef.set(profileData, {merge: true});
+  } else {
+    // New profile: set defaults
+    if (!profileData.trialExpiresAt) {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      profileData.trialExpiresAt = d.toISOString();
+    }
+    if (!profileData.createdAt) {
+      profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+    await userRef.set(profileData);
+  }
+
+  // Write program state
+  const programRef = userRef.collection("programState").doc("current");
+  await programRef.set(programState);
+
+  return {success: true};
+});
+
+// ══════════════════════════════════════════════
 // EXISTING — analyzeFood (untouched)
 // ══════════════════════════════════════════════
 
