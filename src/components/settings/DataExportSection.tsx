@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import type { User } from "firebase/auth";

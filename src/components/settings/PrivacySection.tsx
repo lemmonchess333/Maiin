@@ -20,7 +20,6 @@ import type { Crew } from "@/hooks/useCrews";
 
 interface PrivacySectionProps {
   user: User | null;
-  profile: UserProfile;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<void>;
   defaultVisibility: "public" | "followers" | "private";
   setDefaultVisibility: (v: "public" | "followers" | "private") => void;
@@ -38,14 +37,13 @@ interface PrivacySectionProps {
   newZoneRadius: number;
   setNewZoneRadius: (v: number) => void;
   defaultCrews: Crew[];
-  currentCrew: Crew | undefined;
+  currentCrew: Crew | null;
   joinCrew: (crewId: string) => Promise<void>;
   leaveCrew: () => Promise<void>;
 }
 
 export default function PrivacySection({
   user,
-  profile,
   updateProfile,
   defaultVisibility,
   setDefaultVisibility,

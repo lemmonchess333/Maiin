@@ -30,6 +30,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import TrainingCalendar from "./TrainingCalendar";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -85,6 +86,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const settingsPanelRef = useFocusTrap<HTMLDivElement>(showSettings);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
 
@@ -94,6 +96,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
     exIndex: number;
     exercise: ProgramExercise;
   } | null>(null);
+  const exerciseDrawerRef = useFocusTrap<HTMLDivElement>(!!drawerExercise);
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
 
@@ -586,6 +589,9 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               className="fixed inset-0 bg-black/40 z-40"
             />
             <motion.div
+              ref={exerciseDrawerRef}
+              role="dialog"
+              aria-modal="true"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -785,6 +791,9 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               className="fixed inset-0 bg-black/40 z-[1000]"
             />
             <motion.div
+              ref={settingsPanelRef}
+              role="dialog"
+              aria-modal="true"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}

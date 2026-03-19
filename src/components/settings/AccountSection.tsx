@@ -13,6 +13,7 @@ import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } f
 import { deleteAccount } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface AccountSectionProps {
   user: User | null;
@@ -27,6 +28,7 @@ export default function AccountSection({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const deleteModalRef = useFocusTrap<HTMLDivElement>(showDeleteModal);
 
   return (
     <>
@@ -109,7 +111,7 @@ export default function AccountSection({
             className="fixed inset-0 bg-black/50 z-[1000]"
             onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
           />
-          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+          <div ref={deleteModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-destructive">Delete Account</h3>
             <p className="text-sm text-muted-foreground">
               This will permanently delete your account and all associated data including workouts, meals, runs, and social activity. This action cannot be undone.

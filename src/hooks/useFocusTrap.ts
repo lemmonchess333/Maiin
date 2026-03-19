@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-export function useFocusTrap<T extends HTMLElement = HTMLDivElement>() {
+export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(enabled = true) {
   const ref = useRef<T>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const el = ref.current;
     if (!el) return;
 
@@ -38,7 +40,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>() {
       document.removeEventListener('keydown', handleKeyDown);
       previouslyFocused?.focus?.();
     };
-  }, []);
+  }, [enabled]);
 
   return ref;
 }

@@ -1,4 +1,3 @@
-import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Flame, Zap, Dumbbell, Leaf, ChevronRight } from "lucide-react";

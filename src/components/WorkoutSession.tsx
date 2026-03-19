@@ -16,6 +16,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 
 function playChime() {

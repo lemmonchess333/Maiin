@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
-import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import AccordionSection from "@/components/AccordionSection";

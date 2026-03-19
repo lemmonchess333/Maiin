@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
 type FeedSubTab = 'following' | 'discover';
@@ -68,6 +69,9 @@ export default function Social() {
   const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; crewId?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const contactModalRef = useFocusTrap<HTMLDivElement>(showContactModal);
+  const leaveCrewRef = useFocusTrap<HTMLDivElement>(!!leavingCrewId);
+  const createCrewRef = useFocusTrap<HTMLDivElement>(showCreateGroup);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const handleSearch = useCallback(async (q?: string) => {
@@ -391,7 +395,7 @@ export default function Social() {
           {showContactModal && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
-              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
+              <div ref={contactModalRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="text-center space-y-3 py-4">
                   <Smartphone className="w-10 h-10 text-primary mx-auto" />
@@ -455,7 +459,7 @@ export default function Social() {
           {leavingCrewId && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
-              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
+              <div ref={leaveCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <p className="text-base font-semibold text-foreground">Leave crew?</p>
                 <p className="text-sm text-muted-foreground">You can rejoin this crew later.</p>
@@ -481,7 +485,7 @@ export default function Social() {
           {showCreateGroup && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
-              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
+              <div ref={createCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
                 <input type="text" placeholder="Crew name" value={newGroupName}
