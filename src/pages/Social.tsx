@@ -1,6 +1,7 @@
 import { useSocialFeed } from '../hooks/useSocialFeed';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
+import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { searchUsers } from '../lib/socialApi';
@@ -17,15 +18,29 @@ type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
 type FeedSubTab = 'following' | 'discover';
 type FeedFilter = 'all' | 'highlights';
 
+// Icon map for crew icons (#18)
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  dumbbell: Dumbbell,
+  footprints: Footprints,
+  zap: Zap,
+  target: Target,
+  flame: Flame,
+  salad: Salad,
+  person: PersonStanding,
+  medal: Medal,
+  sunrise: Sunrise,
+};
+
 export default function Social() {
   const { user, profile } = useAuth();
+  const blockedUsers = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('following');
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
 
-  // Feed hooks
-  const followingFeed = useSocialFeed(feedFilter === 'highlights');
-  const discoverFeed = useDiscoverFeed();
+  // Feed hooks — discover only fetches when active (#7)
+  const followingFeed = useSocialFeed(feedFilter === 'highlights', blockedUsers);
+  const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
   // Crews
@@ -34,6 +49,10 @@ export default function Social() {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [newGroupIcon, setNewGroupIcon] = useState('');
+  const [creatingCrew, setCreatingCrew] = useState(false);
+
+  // Leave crew modal (#19)
+  const [leavingCrewId, setLeavingCrewId] = useState<string | null>(null);
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,36 +82,61 @@ export default function Social() {
     }
   };
 
-  // Pull-to-refresh
+  // Pull-to-refresh with iOS conflict fix (#9)
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const pullStartY = useRef(0);
-  const handleTouchStart = (e: React.TouchEvent) => { pullStartY.current = e.touches[0].clientY; };
+  const isSwiping = useRef(false);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    pullStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  };
+
+  useEffect(() => {
+    const el = feedContainerRef.current;
+    if (!el) return;
+    const handler = (e: TouchEvent) => {
+      const diff = e.touches[0].clientY - pullStartY.current;
+      if (diff > 0 && window.scrollY <= 0) {
+        isSwiping.current = true;
+        e.preventDefault();
+      }
+    };
+    el.addEventListener('touchmove', handler, { passive: false });
+    return () => el.removeEventListener('touchmove', handler);
+  }, []);
+
   const handleTouchEnd = async (e: React.TouchEvent) => {
     const diff = e.changedTouches[0].clientY - pullStartY.current;
-    if (diff > 80 && window.scrollY <= 0 && !pullRefreshing) {
+    if (diff > 80 && isSwiping.current && !pullRefreshing) {
       setPullRefreshing(true);
       await activeFeed.refresh();
       setPullRefreshing(false);
     }
+    isSwiping.current = false;
   };
 
-  // Infinite scroll sentinel
+  // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { hasMore: feedHasMore, loading: feedLoading, loadMore: feedLoadMore } = activeFeed;
+  const feedLoadMoreRef = useRef(activeFeed.loadMore);
+  feedLoadMoreRef.current = activeFeed.loadMore;
+  const { hasMore: feedHasMore, loading: feedLoading } = activeFeed;
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && feedHasMore && !feedLoading) {
-          feedLoadMore();
+        if (entry.isIntersecting) {
+          feedLoadMoreRef.current();
         }
       },
       { rootMargin: '200px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [feedHasMore, feedLoading, feedLoadMore]);
+  }, [feedHasMore, feedLoading]);
 
   const handleShareInvite = async () => {
     const text = "I'm tracking my lifts and runs on Tropos. Join me and let's compete!";
@@ -141,7 +185,7 @@ export default function Social() {
 
       {/* ========== FEED TAB ========== */}
       {tab === 'feed' && (
-        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <div ref={feedContainerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {/* Feed sub-tabs: Following | Discover */}
           <div className="flex gap-2">
             {(['following', 'discover'] as FeedSubTab[]).map(st => (
@@ -192,6 +236,15 @@ export default function Social() {
             <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
               <p className="text-xs text-destructive">{followingFeed.error}</p>
               <button onClick={followingFeed.refresh}
+                className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
+            </div>
+          )}
+
+          {/* Discover feed error (#12) */}
+          {feedSubTab === 'discover' && discoverFeed.error && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+              <p className="text-xs text-destructive">{discoverFeed.error}</p>
+              <button onClick={discoverFeed.refresh}
                 className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
             </div>
           )}
@@ -296,12 +349,18 @@ export default function Social() {
                 ))}
               </div>
             )}
+            {/* No search results state (#20) */}
+            {searchQuery.trim() && !searching && searchResults.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No users found for &ldquo;{searchQuery.trim()}&rdquo;
+              </p>
+            )}
           </div>
 
-          {/* Section 3: Suggested People */}
+          {/* Section 3: Suggested People (#16) */}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested people</p>
-            {profile?.crewId ? (
+            {profile?.crewId && currentCrew ? (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
                 People from your crew will appear here as more athletes join.
               </p>
@@ -347,9 +406,15 @@ export default function Social() {
             <div className="space-y-2">
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
+                const IconComp = ICON_MAP[crew.icon];
                 return (
                   <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <span className="text-2xl">{crew.icon}</span>
+                    {/* Crew icon — render Lucide component if available (#18) */}
+                    {IconComp ? (
+                      <IconComp size={24} className="text-muted-foreground" />
+                    ) : (
+                      <span className="text-2xl">{crew.icon}</span>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{crew.name}</p>
                       <p className="text-[10px] text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
@@ -357,7 +422,7 @@ export default function Social() {
                     <button
                       onClick={() => {
                         if (isMember) {
-                          if (window.confirm('Leave this crew? You can rejoin later.')) leaveCrew();
+                          setLeavingCrewId(crew.id);
                         } else {
                           joinCrew(crew.id);
                         }
@@ -378,7 +443,33 @@ export default function Social() {
             </button>
           </div>
 
-          {/* Create Crew Modal */}
+          {/* Leave Crew Confirmation Modal (#19) */}
+          {leavingCrewId && (
+            <>
+              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
+              <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'rgba(15,15,20,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                <p className="text-base font-semibold text-foreground">Leave crew?</p>
+                <p className="text-sm text-muted-foreground">You can rejoin this crew later.</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setLeavingCrewId(null)}
+                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm">
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    await leaveCrew();
+                    setLeavingCrewId(null);
+                    toast.success('Left crew');
+                  }}
+                    className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm">
+                    Leave
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Create Crew Modal (#10 — error handling + loading) */}
           {showCreateGroup && (
             <>
               <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
@@ -411,17 +502,24 @@ export default function Social() {
                 </div>
                 <button
                   onClick={async () => {
-                    if (newGroupName.trim()) {
+                    if (!newGroupName.trim() || creatingCrew) return;
+                    setCreatingCrew(true);
+                    try {
                       await createCrew(newGroupName, newGroupDesc, newGroupIcon || 'dumbbell');
                       setShowCreateGroup(false);
                       setNewGroupName('');
                       setNewGroupDesc('');
                       setNewGroupIcon('');
+                      toast.success('Crew created!');
+                    } catch {
+                      toast.error('Failed to create crew. Please try again.');
+                    } finally {
+                      setCreatingCrew(false);
                     }
                   }}
-                  disabled={!newGroupName.trim()}
+                  disabled={!newGroupName.trim() || creatingCrew}
                   className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50">
-                  Create Crew
+                  {creatingCrew ? 'Creating...' : 'Create Crew'}
                 </button>
               </div>
             </>

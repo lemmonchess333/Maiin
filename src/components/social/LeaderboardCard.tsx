@@ -1,7 +1,7 @@
 import { Footprints, Dumbbell, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
-import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 interface LeaderboardEntry {
@@ -87,10 +87,8 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
         const raw = await buildLeaderboard(user.uid, challenge);
         const named = await Promise.all(raw.map(async (e) => {
           try {
-            const snap = await getDocs(
-              query(collection(db, 'users'), where('uid', '==', e.uid), limit(1))
-            );
-            const name = snap.docs[0]?.data()?.displayName || 'Athlete';
+            const snap = await getDoc(doc(db, 'users', e.uid));
+            const name = snap.exists() ? (snap.data().displayName || 'Athlete') : 'Athlete';
             return { ...e, name };
           } catch {
             return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' };

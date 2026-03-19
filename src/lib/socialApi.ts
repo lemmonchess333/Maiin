@@ -216,14 +216,26 @@ export async function addComment(
   }
 }
 
-export async function getComments(activityId: string, limitCount = 20) {
-  const q = query(
+export async function getComments(activityId: string, limitCount = 20, afterDoc?: DocumentSnapshot) {
+  let q = query(
     collection(db, 'comments', activityId, 'items'),
     orderBy('createdAt', 'desc'),
     limit(limitCount)
   );
+  if (afterDoc) {
+    q = query(
+      collection(db, 'comments', activityId, 'items'),
+      orderBy('createdAt', 'desc'),
+      startAfter(afterDoc),
+      limit(limitCount)
+    );
+  }
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return {
+    comments: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1] as DocumentSnapshot | undefined,
+    hasMore: snap.docs.length >= limitCount,
+  };
 }
 
 // ============================================
@@ -285,14 +297,34 @@ export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapsh
 // User Search
 // ============================================
 export async function searchUsers(queryStr: string, limitCount = 10) {
-  const q = query(
+  // Search with the original input
+  const q1 = query(
     collection(db, 'users'),
     where('displayName', '>=', queryStr),
     where('displayName', '<=', queryStr + '\uf8ff'),
     limit(limitCount)
   );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  // Also search with first letter capitalized to handle case mismatch
+  const capitalized = queryStr.charAt(0).toUpperCase() + queryStr.slice(1).toLowerCase();
+  const q2 = query(
+    collection(db, 'users'),
+    where('displayName', '>=', capitalized),
+    where('displayName', '<=', capitalized + '\uf8ff'),
+    limit(limitCount)
+  );
+
+  const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+  const seen = new Set<string>();
+  const results: { uid: string; [key: string]: unknown }[] = [];
+  for (const snap of [snap1, snap2]) {
+    for (const d of snap.docs) {
+      if (!seen.has(d.id)) {
+        seen.add(d.id);
+        results.push({ uid: d.id, ...d.data() });
+      }
+    }
+  }
+  return results.slice(0, limitCount);
 }
 
 export async function searchUsersByEmail(email: string, limitCount = 10) {
@@ -326,7 +358,7 @@ export async function writeNotification(targetUserId: string, data: {
 // Batch fetch activities + kudos status
 // Replaces N individual reads in ActivityCard
 // ============================================
-export async function batchGetActivities(activityIds: string[]): Promise<Record<string, Record<string, unknown>>> {
+export async function fetchActivitiesByIds(activityIds: string[]): Promise<Record<string, Record<string, unknown>>> {
   if (activityIds.length === 0) return {};
   // Firestore 'in' queries max 30 per batch
   const chunks: string[][] = [];
@@ -416,12 +448,10 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
 export async function deleteAccount(uid: string): Promise<void> {
   const authedUid = getAuthUid();
   if (uid !== authedUid) throw new Error('Identity mismatch');
-  const batch = writeBatch(db);
 
-  // Delete user profile
-  batch.delete(doc(db, 'users', uid));
+  // Collect all document refs to delete
+  const allRefs: ReturnType<typeof doc>[] = [doc(db, 'users', uid)];
 
-  // Batch-delete subcollections we know about
   const subcollections = [
     { parent: 'feeds', sub: 'items' },
     { parent: 'notifications', sub: 'items' },
@@ -432,16 +462,21 @@ export async function deleteAccount(uid: string): Promise<void> {
 
   for (const { parent, sub } of subcollections) {
     const snap = await getDocs(collection(db, parent, uid, sub));
-    snap.docs.forEach(d => batch.delete(d.ref));
+    snap.docs.forEach(d => allRefs.push(d.ref));
   }
 
-  // Delete user's activities
   const activitiesSnap = await getDocs(
     query(collection(db, 'activities'), where('authorId', '==', uid))
   );
-  activitiesSnap.docs.forEach(d => batch.delete(d.ref));
+  activitiesSnap.docs.forEach(d => allRefs.push(d.ref));
 
-  await batch.commit();
+  // Chunk into batches of 450 (safe under Firestore's 500 limit)
+  for (let i = 0; i < allRefs.length; i += 450) {
+    const chunk = allRefs.slice(i, i + 450);
+    const batch = writeBatch(db);
+    chunk.forEach(r => batch.delete(r));
+    await batch.commit();
+  }
 
   // Delete Firebase Auth account
   const currentUser = auth.currentUser;

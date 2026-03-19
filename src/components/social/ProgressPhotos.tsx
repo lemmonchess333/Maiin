@@ -35,6 +35,23 @@ export default function ProgressPhotos() {
   const [selected, setSelected] = useState<string[]>([]);
   const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const keyRef = useRef<CryptoKey | null>(null);
+
+  // Helper to cache encryption key (#14)
+  const getOrDeriveKey = useCallback(async (uid: string): Promise<CryptoKey> => {
+    if (keyRef.current) return keyRef.current;
+    const key = await getEncryptionKey(uid);
+    keyRef.current = key;
+    return key;
+  }, []);
+
+  // Revoke object URLs on unmount to prevent memory leaks (#13)
+  useEffect(() => {
+    return () => {
+      Object.values(decryptedUrls).forEach(url => URL.revokeObjectURL(url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadPhotos = useCallback(async () => {
     if (!user) return;
@@ -50,7 +67,7 @@ export default function ProgressPhotos() {
     if (photos.length === 0 || !user) return;
 
     const autoDecrypt = async () => {
-      const key = await getEncryptionKey(user.uid);
+      const key = await getOrDeriveKey(user.uid);
 
       for (const photo of photos.slice(0, 6)) {
         if (decryptedUrls[photo.id]) continue;
@@ -84,7 +101,7 @@ export default function ProgressPhotos() {
 
   const decryptPhoto = useCallback(async (photo: typeof photos[0]) => {
     if (!user || decryptedUrls[photo.id]) return;
-    const key = await getEncryptionKey(user.uid);
+    const key = await getOrDeriveKey(user.uid);
     const storageRef = ref(storage, photo.storagePath);
     const url = await getDownloadURL(storageRef);
     const response = await fetch(url);
@@ -94,7 +111,7 @@ export default function ProgressPhotos() {
     const blob = new Blob([decrypted], { type: 'image/webp' });
     const objectUrl = URL.createObjectURL(blob);
     setDecryptedUrls(prev => ({ ...prev, [photo.id]: objectUrl }));
-  }, [user, decryptedUrls]);
+  }, [user, decryptedUrls, getOrDeriveKey]);
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!user || !e.target.files?.[0]) return;
@@ -109,7 +126,7 @@ export default function ProgressPhotos() {
       canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
 
-      const key = await getEncryptionKey(user.uid);
+      const key = await getOrDeriveKey(user.uid);
       const { encrypted, iv } = await encryptBlob(await blob.arrayBuffer(), key);
 
       const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
@@ -139,7 +156,7 @@ export default function ProgressPhotos() {
       toast.error('Upload failed. Please try again.');
     }
     setLoading(false);
-  }, [user, loadPhotos, isPrivate]);
+  }, [user, loadPhotos, isPrivate, getOrDeriveKey]);
 
   return (
     <div className="space-y-4">

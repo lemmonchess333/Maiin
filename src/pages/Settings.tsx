@@ -37,7 +37,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
-import { deleteAccount } from "@/lib/socialApi";
+import { deleteAccount, getBlockedUsers, unblockUser } from "@/lib/socialApi";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useProgram } from "@/features/program/useProgram";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -120,6 +122,9 @@ export default function Settings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [blockedUsersList, setBlockedUsersList] = useState<{ uid: string; displayName: string }[]>([]);
+  const [blockedUsersLoading, setBlockedUsersLoading] = useState(false);
+  const [blockedUsersLoaded, setBlockedUsersLoaded] = useState(false);
 
   // Restructure warning modal state
   const [showRestructureModal, setShowRestructureModal] = useState(false);
@@ -292,9 +297,19 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground">Customize your experience</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Settings</h1>
+          <p className="text-sm text-muted-foreground">Customize your experience</p>
+        </div>
+        {user && (
+          <button
+            onClick={() => navigate(`/user/${user.uid}`)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+          >
+            View Profile
+          </button>
+        )}
       </div>
 
       {/* Dev: Force Pro toggle — only in dev mode */}
@@ -1290,6 +1305,68 @@ export default function Settings() {
           >
             <Plus className="w-3.5 h-3.5" /> Add Current Location
           </button>
+        </div>
+
+        {/* Blocked Users (#25) */}
+        <div className="p-4 rounded-lg bg-muted space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Blocked Users</p>
+                <p className="text-[10px] text-muted-foreground">Manage users you&apos;ve blocked</p>
+              </div>
+            </div>
+            {!blockedUsersLoaded && (
+              <button
+                onClick={async () => {
+                  if (!user) return;
+                  setBlockedUsersLoading(true);
+                  try {
+                    const ids = await getBlockedUsers(user.uid);
+                    const users = await Promise.all(ids.map(async (uid) => {
+                      const snap = await getDoc(doc(db, 'users', uid));
+                      return { uid, displayName: snap.exists() ? (snap.data().displayName || 'User') : 'Deleted user' };
+                    }));
+                    setBlockedUsersList(users);
+                    setBlockedUsersLoaded(true);
+                  } catch {
+                    toast.error('Failed to load blocked users');
+                  } finally {
+                    setBlockedUsersLoading(false);
+                  }
+                }}
+                disabled={blockedUsersLoading}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-card text-foreground"
+              >
+                {blockedUsersLoading ? '...' : 'Show'}
+              </button>
+            )}
+          </div>
+          {blockedUsersLoaded && (
+            blockedUsersList.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">You haven&apos;t blocked anyone</p>
+            ) : (
+              <div className="space-y-2">
+                {blockedUsersList.map(bu => (
+                  <div key={bu.uid} className="flex items-center justify-between p-2.5 rounded-lg bg-card">
+                    <span className="text-xs font-medium text-foreground">{bu.displayName}</span>
+                    <button
+                      onClick={async () => {
+                        if (!user) return;
+                        await unblockUser(user.uid, bu.uid);
+                        setBlockedUsersList(prev => prev.filter(u => u.uid !== bu.uid));
+                        toast.success(`Unblocked ${bu.displayName}`);
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    >
+                      Unblock
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
         </div>
       </AccordionSection>
 

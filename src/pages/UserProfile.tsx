@@ -30,7 +30,9 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (!uid) return;
-    getDoc(doc(db, 'users', uid)).then(snap => {
+    setStatsLoading(true);
+
+    const profilePromise = getDoc(doc(db, 'users', uid)).then(snap => {
       if (snap.exists()) setProfile({ uid: snap.id, ...snap.data() });
     });
     getFollowerCount(uid).then(setFollowers);
@@ -43,7 +45,7 @@ export default function UserProfile() {
       orderBy('createdAt', 'desc'),
       limit(10)
     );
-    getDocs(q).then(snap => {
+    const activitiesPromise = getDocs(q).then(snap => {
       const acts = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }));
       setActivities(acts);
 
@@ -58,7 +60,7 @@ export default function UserProfile() {
     });
 
     // Fetch badges from streaks data
-    getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
+    const badgesPromise = getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
       if (snap.exists()) {
         const data = snap.data();
         setStreak(data.currentStreak ?? 0);
@@ -72,7 +74,9 @@ export default function UserProfile() {
       }
     }).catch(() => {});
 
-    setStatsLoading(false);
+    Promise.all([profilePromise, activitiesPromise, badgesPromise]).finally(() => {
+      setStatsLoading(false);
+    });
   }, [uid]);
 
   const isOwnProfile = user?.uid === uid;

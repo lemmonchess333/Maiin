@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getFeed, batchGetActivities, batchGetKudos } from '../lib/socialApi';
+import { getFeed, fetchActivitiesByIds, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
 
@@ -45,7 +45,7 @@ export interface FeedItem {
   challengeMilestone?: string;
 }
 
-export function useSocialFeed(highlightsOnly = false) {
+export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export function useSocialFeed(highlightsOnly = false) {
       // Single batched read for all activities + kudos
       const activityIds = feedItems.map(i => i.activityId);
       const [activityMap, kudosMap] = await Promise.all([
-        batchGetActivities(activityIds),
+        fetchActivitiesByIds(activityIds),
         batchGetKudos(activityIds, user.uid),
       ]);
 
@@ -88,6 +88,11 @@ export function useSocialFeed(highlightsOnly = false) {
         badgeEarned: (actData(item.activityId)?.badgeEarned as string) || item.badgeEarned,
         challengeMilestone: (actData(item.activityId)?.challengeMilestone as string) || item.challengeMilestone,
       }));
+
+      // Filter out blocked users
+      if (blockedUsers && blockedUsers.size > 0) {
+        enriched = enriched.filter(item => !blockedUsers.has(item.authorId));
+      }
 
       if (highlightsOnly) {
         enriched = enriched.filter(item =>
@@ -110,7 +115,7 @@ export function useSocialFeed(highlightsOnly = false) {
       setError(e instanceof Error ? e.message : 'Failed to load feed');
     }
     setLoading(false);
-  }, [user, highlightsOnly]);
+  }, [user, highlightsOnly, blockedUsers]);
 
   useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
 
