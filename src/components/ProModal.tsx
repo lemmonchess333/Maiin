@@ -44,7 +44,7 @@ const FEATURE_HEROES: Record<string, {
         </div>
         {/* Lock overlay */}
         <div className="absolute inset-0 flex items-center justify-center rounded-xl"
-          style={{ background: 'rgba(15,15,20,0.5)' }}>
+          style={{ background: 'var(--glass-bg)' }}>
           <div className="flex flex-col items-center gap-1">
             <Sparkles className="w-7 h-7" style={{ color: THEME.brand }} />
             <p className="text-xs font-semibold text-white">Unlock your score</p>
@@ -68,7 +68,7 @@ const FEATURE_HEROES: Record<string, {
           ))}
         </div>
         <div className="absolute inset-0 flex items-center justify-center rounded-xl"
-          style={{ background: 'rgba(15,15,20,0.5)' }}>
+          style={{ background: 'var(--glass-bg)' }}>
           <div className="flex flex-col items-center gap-1">
             <Brain className="w-7 h-7" style={{ color: THEME.teal }} />
             <p className="text-xs font-semibold text-white">Unlock insights</p>
@@ -96,7 +96,7 @@ const FEATURE_HEROES: Record<string, {
           </div>
         </div>
         <div className="absolute inset-0 flex items-center justify-center rounded-xl"
-          style={{ background: 'rgba(15,15,20,0.5)' }}>
+          style={{ background: 'var(--glass-bg)' }}>
           <div className="flex flex-col items-center gap-1">
             <Utensils className="w-7 h-7" style={{ color: THEME.warning }} />
             <p className="text-xs font-semibold text-white">Unlock AI logging</p>
@@ -163,7 +163,7 @@ export default function ProModal({ onClose, feature }: Props) {
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl max-h-[92vh] overflow-y-auto safe-area-pb"
-        style={{ background: '#141419', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--surface-solid)', borderTop: '1px solid var(--glass-border)' }}
       >
         <div className="max-w-md mx-auto p-5 space-y-5">
           {/* Handle */}
@@ -171,14 +171,14 @@ export default function ProModal({ onClose, feature }: Props) {
 
           {/* Close */}
           <button onClick={onClose} className="absolute top-6 right-5 p-1.5 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.08)' }}>
+            style={{ background: 'var(--glass-border)' }}>
             <X className="w-4 h-4 text-white/60" />
           </button>
 
           {/* Hero */}
           <div className="text-center space-y-1 pt-1">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-              style={{ background: 'rgba(255,255,255,0.06)' }}>
+              style={{ background: 'var(--glass-border)' }}>
               {hero.icon}
             </div>
             <h2 id="pro-modal-title" className="text-xl font-bold text-white">{hero.title}</h2>

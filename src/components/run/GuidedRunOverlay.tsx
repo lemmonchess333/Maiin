@@ -36,7 +36,7 @@ export default function GuidedRunOverlay({
     );
   }
 
-  const segColor = currentSegment ? getSegmentColor(currentSegment.type) : "#8b5cf6";
+  const segColor = currentSegment ? getSegmentColor(currentSegment.type) : "#7C6EF6";
 
   return (
     <div className="mx-4 mb-3 rounded-2xl overflow-hidden"

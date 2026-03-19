@@ -29,6 +29,7 @@ export default function Layout() {
       </a>
 
       {/* Offline / back-online banner */}
+      <div aria-live="polite">
       <AnimatePresence>
         {!isOnline && (
           <motion.div
@@ -61,6 +62,7 @@ export default function Layout() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       <main id="main-content" className="max-w-md mx-auto px-4 py-6">
         <motion.div

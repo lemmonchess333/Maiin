@@ -44,7 +44,7 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
         particleCount: 100,
         spread: 70,
         origin: { y: 0.4 },
-        colors: [tierColor, "#8b5cf6", "#fbbf24", "#34d399"],
+        colors: [tierColor, "#7C6EF6", "#fbbf24", "#34d399"],
       }));
       playChime();
 

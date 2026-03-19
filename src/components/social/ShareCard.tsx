@@ -40,7 +40,7 @@ export interface ShareCardData {
 
 const THEME_STYLES: Record<ShareCardTheme, { bg: string; text: string; muted: string; accent: string }> = {
   dark: { bg: '#0a0a0f', text: '#ffffff', muted: 'rgba(255,255,255,0.4)', accent: '#a78bfa' },
-  light: { bg: '#ffffff', text: '#1a1a2e', muted: 'rgba(0,0,0,0.4)', accent: '#8b5cf6' },
+  light: { bg: '#ffffff', text: '#1a1a2e', muted: 'rgba(0,0,0,0.4)', accent: '#7C6EF6' },
   transparent: { bg: 'transparent', text: '#ffffff', muted: 'rgba(255,255,255,0.4)', accent: '#a78bfa' },
 };
 

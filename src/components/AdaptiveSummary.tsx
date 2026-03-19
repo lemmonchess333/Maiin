@@ -436,7 +436,7 @@ export function AdaptiveSummary({
 
   // Light tint tracks so the “grey/heavy” feeling disappears
   const trackTints = {
-    workouts: "#8b5cf6", // premium purple tint
+    workouts: "#7C6EF6", // premium purple tint
     meals: macroColors.protein, // blue tint matches your protein card
   };
 

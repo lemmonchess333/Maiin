@@ -27,7 +27,7 @@ export function useNotificationBubble() {
 const VARIANT_CONFIG: Record<BubbleVariant, { icon: typeof Trophy; color: string; bg: string; border: string }> = {
   pr: { icon: Trophy, color: "#ffd700", bg: "rgba(255, 215, 0, 0.08)", border: "rgba(255, 215, 0, 0.15)" },
   complete: { icon: CheckCircle, color: "#14b8a6", bg: "rgba(20, 184, 166, 0.08)", border: "rgba(20, 184, 166, 0.15)" },
-  generic: { icon: Bell, color: "#8b5cf6", bg: "rgba(139, 92, 246, 0.08)", border: "rgba(139, 92, 246, 0.15)" },
+  generic: { icon: Bell, color: "#7C6EF6", bg: "rgba(124, 110, 246, 0.08)", border: "rgba(124, 110, 246, 0.15)" },
 };
 
 export function NotificationBubbleProvider({ children }: { children: React.ReactNode }) {

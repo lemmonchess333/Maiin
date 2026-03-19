@@ -227,7 +227,7 @@ export default function Social() {
           {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" /></div>}
 
           {pullRefreshing && (
-            <div className="flex items-center justify-center py-2">
+            <div className="flex items-center justify-center py-2" aria-live="polite">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
             </div>
           )}
@@ -241,7 +241,7 @@ export default function Social() {
           )}
 
           {feedSubTab === 'following' && followingFeed.error && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
               <p className="text-xs text-destructive">{followingFeed.error}</p>
               <button onClick={followingFeed.refresh}
                 className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
@@ -250,7 +250,7 @@ export default function Social() {
 
           {/* Discover feed error — show ONLY error card, hide empty state (#12) */}
           {feedSubTab === 'discover' && discoverFeed.error && !discoverFeed.loading && (
-            <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+            <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
               <p className="text-xs text-destructive">{discoverFeed.error}</p>
               <button onClick={discoverFeed.refresh}
                 className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
@@ -264,7 +264,7 @@ export default function Social() {
           </div>
 
           {activeFeed.loading && (
-            <div className="flex items-center justify-center py-4">
+            <div className="flex items-center justify-center py-4" aria-live="polite">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             </div>
           )}
@@ -276,7 +276,7 @@ export default function Social() {
 
           {/* Empty state — only show on SUCCESS + NO RESULTS, never when there's an error */}
           {!activeFeed.loading && activeFeed.items.length === 0 && !activeFeed.error && (
-            <div className="mt-6">
+            <div className="mt-6" aria-live="polite">
               {feedSubTab === 'discover' ? (
                 <EmptyState
                   icon={<Globe size={28} />}
@@ -357,7 +357,7 @@ export default function Social() {
             )}
             {/* No search results state (#20) */}
             {searchQuery.trim() && !searching && searchResults.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
+              <p className="text-xs text-muted-foreground text-center py-4" aria-live="polite">
                 No users found for &ldquo;{searchQuery.trim()}&rdquo;
               </p>
             )}
@@ -382,7 +382,7 @@ export default function Social() {
             <p className="text-[15px] font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
               className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
-              style={{ borderLeft: '3px solid rgba(139, 92, 246, 0.5)' }}>
+              style={{ borderLeft: '3px solid rgba(124, 110, 246, 0.5)' }}>
               Sync Contacts
             </button>
           </div>
@@ -446,7 +446,7 @@ export default function Social() {
 
             <button onClick={() => setShowCreateGroup(true)}
               className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-              style={{ background: 'rgba(139, 92, 246, 0.03)' }}>
+              style={{ background: 'rgba(124, 110, 246, 0.03)' }}>
               + Create a Crew
             </button>
           </div>

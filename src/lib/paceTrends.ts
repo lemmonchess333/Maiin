@@ -76,8 +76,8 @@ export function calculatePaceTrend(
     return {
       trend: "consistent",
       label: "Steady",
-      color: "#8b5cf6",
-      bgColor: "rgba(139, 92, 246, 0.15)",
+      color: "#7C6EF6",
+      bgColor: "rgba(124, 110, 246, 0.15)",
     };
   }
 

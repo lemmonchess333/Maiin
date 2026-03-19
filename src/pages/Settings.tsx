@@ -616,7 +616,7 @@ export default function Settings() {
               style={{
                 width: "100%",
                 padding: "14px",
-                background: "#8b5cf6",
+                background: "#7C6EF6",
                 color: "white",
                 borderRadius: 12,
                 fontWeight: 700,

@@ -4,14 +4,14 @@
 ============================================================= */
 
 :root {
-  /* Brand Colors */
+  /* Brand Colors — unified around #7C6EF6 */
   --ds-purple-50:  #f5f3ff;
   --ds-purple-100: #ede9fe;
   --ds-purple-200: #ddd6fe;
-  --ds-purple-400: #a78bfa;
-  --ds-purple-500: #8b5cf6;
-  --ds-purple-600: #7c3aed;
-  --ds-purple-700: #6d28d9;
+  --ds-purple-400: #9B90F8;
+  --ds-purple-500: #7C6EF6;
+  --ds-purple-600: #6358D4;
+  --ds-purple-700: #4A42B2;
 
   --ds-orange-400: #fb923c;
   --ds-orange-500: #f97316;
@@ -37,7 +37,7 @@
   /* Shadows */
   --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
   --ds-shadow-elevated: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-  --ds-shadow-purple-glow: 0 4px 20px rgba(139, 92, 246, 0.35);
+  --ds-shadow-purple-glow: 0 4px 20px rgba(124, 110, 246, 0.35);
   --ds-shadow-orange-glow: 0 4px 20px rgba(249, 115, 22, 0.35);
   --ds-shadow-green-glow: 0 4px 16px rgba(34, 197, 94, 0.30);
 

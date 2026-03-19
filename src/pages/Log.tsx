@@ -27,6 +27,7 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
+import { parseVoiceInput, formatParsedItems } from "@/lib/voiceFoodParser";
 import {
   Dumbbell,
   UtensilsCrossed,
@@ -43,6 +44,7 @@ import {
   Footprints,
   Sparkles,
   Plus,
+  Mic,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -99,6 +101,46 @@ export default function Log() {
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
+
+  // Voice input state
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => {
+      setIsListening(false);
+      toast.error("Could not capture voice. Please try again.");
+    };
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      const parsed = parseVoiceInput(transcript);
+      const text = parsed.length > 0 ? formatParsedItems(parsed) : transcript;
+      setNlInput((prev) => (prev ? prev + ", " + text : text));
+      setSuggestionsActive(true);
+    };
+
+    recognition.start();
+  };
 
   // OpenFoodFacts search state
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
@@ -778,8 +820,21 @@ export default function Log() {
                 placeholder="Describe what you ate…"
                 rows={1}
                 maxLength={500}
-                className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                aria-label={isListening ? "Stop listening" : "Voice input"}
+                className={cn(
+                  "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90",
+                  isListening
+                    ? "text-red-500 bg-red-500/10 animate-pulse"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                )}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
               {/* Unified dropdown: AI Suggestions + Database results */}
               {showSuggestions && (
                 <div

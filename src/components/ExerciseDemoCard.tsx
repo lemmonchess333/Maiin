@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, memo } from "react";
 import { Drawer } from "vaul";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
+function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
   const [demo, setDemo] = useState<ExerciseDemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -101,7 +101,7 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                       data={highlightData}
                       style={{ width: "140px", padding: "0" }}
                       type="anterior"
-                      highlightedColors={["#8b5cf6", "#c4b5fd"]}
+                      highlightedColors={["#7C6EF6", "#c4b5fd"]}
                     />
                     <p className="text-[9px] text-muted-foreground text-center mt-1">Front</p>
                   </div>
@@ -111,7 +111,7 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
                         data={highlightData}
                         style={{ width: "140px", padding: "0" }}
                         type="posterior"
-                        highlightedColors={["#8b5cf6", "#c4b5fd"]}
+                        highlightedColors={["#7C6EF6", "#c4b5fd"]}
                       />
                       <p className="text-[9px] text-muted-foreground text-center mt-1">Back</p>
                     </div>
@@ -189,3 +189,5 @@ export default function ExerciseDemoCard({ exerciseName, open, onClose }: Props)
     </Drawer.Root>
   );
 }
+
+export default memo(ExerciseDemoCard);
