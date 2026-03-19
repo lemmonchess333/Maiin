@@ -136,11 +136,14 @@ function RoutePrefetcher() {
     const prefetches = PREFETCH_MAP[location.pathname];
     if (!prefetches) return;
 
-    const id = requestIdleCallback(() => {
+    const rIC = window.requestIdleCallback ?? ((cb: IdleRequestCallback) => window.setTimeout(cb, 1) as unknown as number);
+    const cIC = window.cancelIdleCallback ?? ((id: number) => window.clearTimeout(id));
+
+    const id = rIC(() => {
       prefetches.forEach(load => load().catch(() => {}));
     });
 
-    return () => cancelIdleCallback(id);
+    return () => cIC(id);
   }, [location.pathname]);
 
   return null;
