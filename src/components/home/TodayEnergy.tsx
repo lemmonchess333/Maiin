@@ -105,9 +105,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                 </div>
               )}
               {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ opacity: 0.6 }}>
+                  <p className="text-[11px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
+                  <p className="text-[9px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
                 </div>
               )}
             </Link>
