@@ -205,7 +205,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -313,9 +313,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('tropos-dark-mode');
   };
 
-  const updateProfile = async (data: Partial<UserProfile>) => {
+  const PROTECTED_FIELDS = ["subscriptionTier", "stripeCustomerId", "stripeSubscriptionId", "trialExpiresAt"] as const;
+
+  const updateProfile = async (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => {
     if (!user) return;
-    await setDoc(doc(db, "users", user.uid), data, { merge: true });
+    let writeData = data;
+    if (!options?.allowProtected) {
+      writeData = Object.fromEntries(
+        Object.entries(data).filter(([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key))
+      ) as Partial<UserProfile>;
+    }
+    await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
     setProfile((prev) => {
       const updated = prev ? { ...prev, ...data } : null;
       if (updated && "darkMode" in data) {

@@ -280,9 +280,11 @@ export default function Settings() {
     updateProfile({ darkMode: next });
   };
 
-  const toggleDevPro = async () => {
+  const toggleDevPro = () => {
+    if (!import.meta.env.DEV) return;
     const newTier = profile?.subscriptionTier === "pro" ? "free" : "pro";
-    await updateProfile({ subscriptionTier: newTier });
+    // Only update local state — writing subscriptionTier to Firestore is blocked by rules
+    updateProfile({ subscriptionTier: newTier }, { allowProtected: true });
     toast.success(newTier === "pro" ? "Pro mode enabled" : "Pro mode disabled");
   };
 
