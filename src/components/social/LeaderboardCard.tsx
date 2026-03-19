@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
 import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { THEME } from '../../lib/theme';
 
 interface LeaderboardEntry {
   uid: string;
@@ -105,10 +106,10 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   const { title, unit, icon } = challengeLabels[challenge];
 
   return (
-    <div className="p-4 rounded-2xl bg-card">
+    <div className="p-5 rounded-2xl" style={{ background: `linear-gradient(135deg, ${THEME.brand}08, ${THEME.brandLight}12)`, boxShadow: 'var(--ds-shadow-purple-glow)', border: `1px solid ${THEME.brand}20` }}>
       <div className="flex items-center gap-2 mb-3">
-        {icon === 'footprints' ? <Footprints size={16} className='text-green-500' /> : icon === 'dumbbell' ? <Dumbbell size={16} className='text-purple-500' /> : <Zap size={16} className='text-amber-500' />}
-        <h3 className="text-sm font-semibold">{title}</h3>
+        {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: '#F59E0B' }} />}
+        <h3 className="text-sm font-bold">{title}</h3>
         <span className="ml-auto text-[10px] text-muted-foreground">This Week</span>
       </div>
 
