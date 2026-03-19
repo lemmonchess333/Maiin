@@ -468,12 +468,15 @@ export default function Home() {
       </section>
 
       {!isPro && !proUpsellDismissed && (
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card text-center space-y-1 relative">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card text-center space-y-2 relative">
           <button onClick={function() { setProUpsellDismissed(true); }} aria-label="Dismiss" className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted transition-colors">
             <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
-          <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
+          <p className="text-xs text-muted-foreground mb-2">From just &pound;2.99/mo</p>
+          <button onClick={function() { navigate("/Maiin/settings"); }} className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+            Upgrade to Pro
+          </button>
         </motion.div>
       )}
 

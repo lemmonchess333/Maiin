@@ -38,7 +38,7 @@ export function ProGate({ children, feature, preview }: Props) {
           <Lock className="w-5 h-5 text-muted-foreground" />
           <button
             onClick={() => setShowPaywall(true)}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:opacity-90 transition-opacity"
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-lg hover:opacity-90 transition-opacity"
           >
             Unlock with Pro
           </button>
