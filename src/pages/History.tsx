@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -479,6 +479,15 @@ export default function History() {
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
+
+              {nutrition.avgCalories === 0 && (
+                <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-1">
+                  <p className="text-sm text-muted-foreground">Log meals to see your nutrition trends here.</p>
+                  <Link to="/Maiin/log" state={{ tab: 'food' }} className="text-sm font-medium text-primary hover:underline">
+                    Log a meal →
+                  </Link>
+                </div>
+              )}
             </section>
           )}
         </>
