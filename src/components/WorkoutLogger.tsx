@@ -288,10 +288,11 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground flex items-center gap-1">
+                      <label htmlFor={`cardio-duration-${exIndex}`} className="text-xs text-muted-foreground flex items-center gap-1">
                         <Timer className="w-3 h-3" /> Duration (min)
                       </label>
                       <input
+                        id={`cardio-duration-${exIndex}`}
                         type="number"
                         value={exercise.durationMinutes || ""}
                         onChange={(e) =>
@@ -301,8 +302,9 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">Distance (km)</label>
+                      <label htmlFor={`cardio-distance-${exIndex}`} className="text-xs text-muted-foreground">Distance (km)</label>
                       <input
+                        id={`cardio-distance-${exIndex}`}
                         type="number"
                         step="0.1"
                         value={exercise.distanceKm || ""}
@@ -314,7 +316,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Intensity (optional)</label>
+                    <span className="text-xs text-muted-foreground">Intensity (optional)</span>
                     <div className="flex gap-2">
                       {(["low", "moderate", "high"] as const).map((level) => (
                         <button

@@ -565,9 +565,11 @@ export default function Settings() {
         <>
           <div
             className="fixed inset-0 bg-black/50 z-[1000]"
+            role="button" tabIndex={0} aria-label="Close dialog"
             onClick={() => {
               setShowRestructureModal(false);
             }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowRestructureModal(false); }}
           />
           <div ref={restructureModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>

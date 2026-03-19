@@ -106,7 +106,9 @@ export default function RunBottomSheet({
       {/* Tap map to re-expand */}
       {!isExpanded && (
         <div className="fixed inset-0 z-30" style={{ bottom: `${SNAPS[snapIdx] * 100}vh` }}
-          onClick={() => { setSnapIdx(2); haptic('light'); }} />
+          role="button" tabIndex={0} aria-label="Expand bottom sheet"
+          onClick={() => { setSnapIdx(2); haptic('light'); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setSnapIdx(2); haptic('light'); } }} />
       )}
 
       <div className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
@@ -120,9 +122,11 @@ export default function RunBottomSheet({
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+          role="button" tabIndex={0} aria-label="Drag to resize"
           onMouseDown={e => dragStart(e.clientY)} onMouseUp={e => dragEnd(e.clientY)}
           onTouchStart={e => dragStart(e.touches[0].clientY)}
           onTouchEnd={e => dragEnd(e.changedTouches[0].clientY)}
+          onKeyDown={e => { if (e.key === 'ArrowUp' && snapIdx < 2) { setSnapIdx((s) => (s + 1) as 0|1|2); haptic('light'); } else if (e.key === 'ArrowDown' && snapIdx > 0) { setSnapIdx((s) => (s - 1) as 0|1|2); haptic('light'); } }}
         >
           <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.18)' }} />
         </div>

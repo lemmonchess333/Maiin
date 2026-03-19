@@ -150,15 +150,15 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     { label: 'Rest (s)', field: 'restDuration' as const, value: intervalConfig.restDuration, min: 10, max: 300, step: 10 },
                   ].map((f) => (
                     <div key={f.field}>
-                      <label className="text-[10px] text-muted-foreground">{f.label}</label>
-                      <input type="number" min={f.min} max={f.max} step={f.step} value={f.value}
+                      <label htmlFor={`interval-${f.field}`} className="text-[10px] text-muted-foreground">{f.label}</label>
+                      <input id={`interval-${f.field}`} type="number" min={f.min} max={f.max} step={f.step} value={f.value}
                         onChange={(e) => updateConfig({ intervals: { ...intervalConfig, [f.field]: Number(e.target.value) } })}
                         className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
                     </div>
                   ))}
                   <div>
-                    <label className="text-[10px] text-muted-foreground">Target pace (/km)</label>
-                    <input type="text" placeholder="4:30"
+                    <label htmlFor="interval-target-pace" className="text-[10px] text-muted-foreground">Target pace (/km)</label>
+                    <input id="interval-target-pace" type="text" placeholder="4:30"
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
                       onChange={(e) => {
                         const [m, s] = e.target.value.split(':').map(Number);

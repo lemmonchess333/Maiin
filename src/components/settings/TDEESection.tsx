@@ -73,8 +73,9 @@ export default function TDEESection({
         {showTDEE && (
           <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">
             <div>
-              <label className="text-sm text-muted-foreground">Age</label>
+              <label htmlFor="tdee-age" className="text-sm text-muted-foreground">Age</label>
               <input
+                id="tdee-age"
                 type="number"
                 value={age}
                 onChange={(e) => setAge(Number(e.target.value) || 25)}
@@ -83,7 +84,7 @@ export default function TDEESection({
             </div>
 
             <div>
-              <label className="text-sm text-muted-foreground">Activity Level</label>
+              <span className="text-sm text-muted-foreground">Activity Level</span>
               <div className="mt-1 space-y-1">
                 {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(([key, label]) => (
                   <button
@@ -224,13 +225,14 @@ export default function TDEESection({
           )}
             {/* Manual calorie override */}
             <div className="mt-3 pt-3 border-t border-border/50">
-              <label className="text-sm text-muted-foreground">
+              <label htmlFor="tdee-custom-target" className="text-sm text-muted-foreground">
                 Custom daily target (optional)
               </label>
               <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">
                 Leave blank to use your calculated TDEE of {tdee.targetCalories} cal
               </p>
               <input
+                id="tdee-custom-target"
                 type="number"
                 value={profile?.customCalorieTarget ?? ""}
                 onChange={(e) => {

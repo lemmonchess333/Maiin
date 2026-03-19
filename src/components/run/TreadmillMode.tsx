@@ -18,9 +18,10 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm text-white/50">Distance covered</label>
+        <label htmlFor="treadmill-distance" className="text-sm text-white/50">Distance covered</label>
         <div className="flex items-center gap-2">
           <input
+            id="treadmill-distance"
             type="number"
             step={0.01}
             min={0}
