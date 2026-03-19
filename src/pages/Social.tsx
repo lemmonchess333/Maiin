@@ -248,9 +248,9 @@ export default function Social() {
             </div>
           )}
 
-          {/* Discover feed error (#12) */}
-          {feedSubTab === 'discover' && discoverFeed.error && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+          {/* Discover feed error — show ONLY error card, hide empty state (#12) */}
+          {feedSubTab === 'discover' && discoverFeed.error && !discoverFeed.loading && (
+            <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
               <p className="text-xs text-destructive">{discoverFeed.error}</p>
               <button onClick={discoverFeed.refresh}
                 className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
@@ -274,7 +274,8 @@ export default function Social() {
             <div ref={sentinelRef} className="h-1" aria-hidden="true" />
           )}
 
-          {!activeFeed.loading && activeFeed.items.length === 0 && (
+          {/* Empty state — only show on SUCCESS + NO RESULTS, never when there's an error */}
+          {!activeFeed.loading && activeFeed.items.length === 0 && !activeFeed.error && (
             <div className="mt-6">
               {feedSubTab === 'discover' ? (
                 <EmptyState
@@ -306,7 +307,7 @@ export default function Social() {
 
       {/* ========== FIND TAB ========== */}
       {tab === 'find' && (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {/* Section 1: Invite */}
           <div className="p-4 rounded-2xl bg-card text-center space-y-3">
             <UserPlus className="w-8 h-8 text-primary mx-auto" />
@@ -323,18 +324,18 @@ export default function Social() {
 
           {/* Section 2: Search */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground">Search by name</p>
-            <div className="flex gap-2">
+            <p className="text-[15px] font-semibold text-foreground">Search by name</p>
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 placeholder="Search by name..."
                 value={searchQuery}
                 onChange={e => handleSearchInputChange(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
-                className="flex-1 h-11 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="flex-1 h-12 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <button onClick={() => handleSearch()} disabled={searching || !searchQuery.trim()}
-                className="h-11 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                className="h-12 w-12 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 shrink-0">
                 {searching ? '...' : 'Go'}
               </button>
             </div>
@@ -364,7 +365,7 @@ export default function Social() {
 
           {/* Section 3: Suggested People (#16) */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">Suggested people</p>
+            <p className="text-[15px] font-semibold text-foreground">Suggested people</p>
             {profile?.crewId && currentCrew ? (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
                 People from your crew will appear here as more athletes join.
@@ -378,9 +379,10 @@ export default function Social() {
 
           {/* Section 4: Contact Sync Stub */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground">Find friends from contacts</p>
+            <p className="text-[15px] font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
-              className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
+              className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
+              style={{ borderLeft: '3px solid rgba(139, 92, 246, 0.5)' }}>
               Sync Contacts
             </button>
           </div>
@@ -407,7 +409,7 @@ export default function Social() {
 
           {/* Crews Section */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground">Crews</p>
+            <p className="text-[15px] font-semibold text-foreground">Crews</p>
             <div className="space-y-2">
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
@@ -443,7 +445,8 @@ export default function Social() {
             </div>
 
             <button onClick={() => setShowCreateGroup(true)}
-              className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+              className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              style={{ background: 'rgba(139, 92, 246, 0.03)' }}>
               + Create a Crew
             </button>
           </div>

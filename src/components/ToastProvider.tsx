@@ -35,6 +35,7 @@ export function ToastProvider() {
       `}</style>
       <Toaster
         position="top-center"
+        offset="env(safe-area-inset-top, 54px)"
         toastOptions={{
           style: {
             borderRadius: "16px",
