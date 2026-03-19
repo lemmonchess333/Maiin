@@ -328,7 +328,6 @@ export default function Onboarding() {
         displayName: user.displayName || "",
         email: user.email || "",
         subscriptionTier: "free",
-        trialExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         currentStreak: 0,
         lastLogDate: null,
         darkMode: false,
