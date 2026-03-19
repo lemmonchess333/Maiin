@@ -644,10 +644,10 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                   </div>
 
                   <div className="bg-muted rounded-lg p-2">
-                    <p className="text-lg font-bold text-foreground">
-                      {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "BW"}
+                    <p className={`font-bold text-foreground ${drawerExercise.exercise.weight > 0 ? 'text-lg' : 'text-sm'}`}>
+                      {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "Bodyweight"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">kg</p>
+                    <p className="text-[10px] text-muted-foreground">{drawerExercise.exercise.weight > 0 ? "kg" : ""}</p>
                   </div>
                 </div>
 
@@ -673,7 +673,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                       </div>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="text-foreground font-medium">
-                          {last.weight > 0 ? `${last.weight}kg` : "BW"}
+                          {last.weight > 0 ? `${last.weight}kg` : "Bodyweight"}
                         </span>
                         <span className="text-muted-foreground">·</span>
                         <span className="text-foreground">
@@ -746,17 +746,19 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     </p>
                   )}
 
-                  {/* Plate Calculator Toggle */}
-                  <button
-                    onClick={() => setShowPlateCalc(!showPlateCalc)}
-                    className="flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-1"
-                  >
-                    <Calculator className="w-3.5 h-3.5" />
-                    {showPlateCalc ? "Hide" : "Plate"} Calculator
-                  </button>
+                  {/* Plate Calculator Toggle — hidden for bodyweight exercises */}
+                  {drawerExercise.exercise.weight > 0 && (
+                    <button
+                      onClick={() => setShowPlateCalc(!showPlateCalc)}
+                      className="flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-1"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                      {showPlateCalc ? "Hide" : "Plate"} Calculator
+                    </button>
+                  )}
                 </div>
 
-                {showPlateCalc && (
+                {showPlateCalc && drawerExercise.exercise.weight > 0 && (
                   <PlateCalculator weight={Number(logWeight) || drawerExercise.exercise.weight || 20} onClose={() => setShowPlateCalc(false)} />
                 )}
 
