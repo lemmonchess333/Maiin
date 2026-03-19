@@ -181,6 +181,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
   // Stall detection
   const [stallExercise, setStallExercise] = useState<{name: string, weight: number} | null>(null);
+  const stallModalRef = useFocusTrap<HTMLDivElement>(!!stallExercise);
 
   // Undo last set
   const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
@@ -441,7 +442,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         {stallExercise && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
             <div className="absolute inset-0 bg-black/40" onClick={() => setStallExercise(null)} />
-            <div className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full bg-card/95 backdrop-blur-xl border border-border/50" style={{
+            <div ref={stallModalRef} role="dialog" aria-modal="true" className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full bg-card/95 backdrop-blur-xl border border-border/50" style={{
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             }}>
               <h3 className="text-lg font-bold text-foreground">Plateau detected</h3>
