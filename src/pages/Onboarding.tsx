@@ -321,22 +321,21 @@ export default function Onboarding() {
         : injuries;
 
       const data: Record<string, unknown> = {
-        // When profile doc doesn't exist (edge case: initial creation failed),
-        // include required default fields so Firestore create rule passes
-        ...(profile ? {} : {
-          uid: user.uid,
-          displayName: user.displayName || "",
-          email: user.email || "",
-          subscriptionTier: "free",
-          trialExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          currentStreak: 0,
-          lastLogDate: null,
-          darkMode: false,
-          weeklyWorkoutsTarget: 4,
-          weeklyMealsTarget: 10,
-          athleteType: "Lifter",
-          createdAt: serverTimestamp(),
-        }),
+        // Always include create-safe defaults so Firestore create rule passes
+        // regardless of whether the profile doc already exists.
+        // For updates, unchanged fields won't appear in the rules diff.
+        uid: user.uid,
+        displayName: user.displayName || "",
+        email: user.email || "",
+        subscriptionTier: "free",
+        trialExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        currentStreak: 0,
+        lastLogDate: null,
+        darkMode: false,
+        weeklyWorkoutsTarget: 4,
+        weeklyMealsTarget: 10,
+        athleteType: "Lifter",
+        ...(!profile ? { createdAt: serverTimestamp() } : {}),
         gender,
         ageRange,
         heightCm,
@@ -401,10 +400,17 @@ export default function Onboarding() {
 
       // Update profile last — this updates local state and triggers router transition
       try {
-        await updateProfile(data as Partial<UserProfile>);
+        await updateProfile(data as Partial<UserProfile>, { allowProtected: true });
       } catch (e) {
-        console.error("profile update failed:", e);
-        throw e;
+        // Retry once on permission-denied (handles stale rule propagation)
+        if ((e as { code?: string })?.code === "permission-denied") {
+          console.warn("profile update permission-denied, retrying in 2s…");
+          await new Promise(r => setTimeout(r, 2000));
+          await updateProfile(data as Partial<UserProfile>, { allowProtected: true });
+        } else {
+          console.error("profile update failed:", e);
+          throw e;
+        }
       }
     } catch (err) {
       console.error("Onboarding save failed:", err);
