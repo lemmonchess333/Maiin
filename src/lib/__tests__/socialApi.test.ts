@@ -44,7 +44,7 @@ import {
   followUser, unfollowUser, isFollowing,
   getFollowerCount, getFollowingCount,
   toggleKudos, hasGivenKudos,
-  batchGetActivities, batchGetKudos,
+  fetchActivitiesByIds, batchGetKudos,
   blockUser, unblockUser, isBlocked, getBlockedUsers,
 } from '../socialApi';
 
@@ -130,9 +130,9 @@ describe('hasGivenKudos', () => {
   });
 });
 
-describe('batchGetActivities', () => {
+describe('fetchActivitiesByIds', () => {
   it('returns empty object for empty input', async () => {
-    const result = await batchGetActivities([]);
+    const result = await fetchActivitiesByIds([]);
     expect(result).toEqual({});
   });
 
@@ -142,14 +142,14 @@ describe('batchGetActivities', () => {
       id: 'act1',
       data: () => ({ type: 'workout' }),
     });
-    const result = await batchGetActivities(['act1']);
+    const result = await fetchActivitiesByIds(['act1']);
     expect(result.act1).toBeDefined();
     expect(result.act1.type).toBe('workout');
   });
 
   it('skips non-existent activities', async () => {
     mockGetDoc.mockResolvedValue({ exists: () => false, id: 'act1' });
-    const result = await batchGetActivities(['act1']);
+    const result = await fetchActivitiesByIds(['act1']);
     expect(Object.keys(result)).toHaveLength(0);
   });
 });

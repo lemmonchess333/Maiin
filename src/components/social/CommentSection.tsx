@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../lib/auth';
 import { getComments, addComment } from '../../lib/socialApi';
+import { getTimeAgo } from '../../lib/timeAgo';
+import type { DocumentSnapshot } from 'firebase/firestore';
 
 interface Comment {
   id: string;
@@ -14,9 +16,15 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
 
   useEffect(() => {
-    getComments(activityId).then(setComments);
+    getComments(activityId).then(result => {
+      setComments(result.comments as Comment[]);
+      lastDocRef.current = result.lastDoc;
+      setHasMore(result.hasMore);
+    });
   }, [activityId]);
 
   const [prevPrefill, setPrevPrefill] = useState(prefillText);
@@ -26,31 +34,52 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
     onPrefillConsumed?.();
   }
 
+  const handleLoadMore = async () => {
+    if (!lastDocRef.current) return;
+    const result = await getComments(activityId, 20, lastDocRef.current);
+    setComments(prev => [...prev, ...(result.comments as Comment[])]);
+    lastDocRef.current = result.lastDoc;
+    setHasMore(result.hasMore);
+  };
+
   const handleSend = async () => {
     if (!user || !text.trim()) return;
     setSending(true);
     await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId);
     setText('');
-    const updated = await getComments(activityId);
-    setComments(updated);
+    const result = await getComments(activityId);
+    setComments(result.comments as Comment[]);
+    lastDocRef.current = result.lastDoc;
+    setHasMore(result.hasMore);
     setSending(false);
   };
 
   return (
     <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
-      {comments.map((c) => (
-        <div key={c.id} className="flex gap-2">
-          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
-            {(c.authorName || '?').charAt(0)}
+      {comments.map((c) => {
+        const timeAgo = c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : '';
+        return (
+          <div key={c.id} className="flex gap-2">
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
+              {(c.authorName || '?').charAt(0)}
+            </div>
+            <div>
+              <p className="text-xs">
+                <span className="font-semibold">{c.authorName}</span>{' '}
+                <span className="text-muted-foreground">{c.text}</span>
+                {timeAgo && <span className="text-[10px] text-muted-foreground ml-1">{timeAgo}</span>}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs">
-              <span className="font-semibold">{c.authorName}</span>{' '}
-              <span className="text-muted-foreground">{c.text}</span>
-            </p>
-          </div>
-        </div>
-      ))}
+        );
+      })}
+
+      {hasMore && (
+        <button onClick={handleLoadMore}
+          className="text-xs text-primary font-medium hover:underline">
+          Load more comments
+        </button>
+      )}
 
       <div className="flex gap-2">
         <input value={text} onChange={e => setText(e.target.value)}

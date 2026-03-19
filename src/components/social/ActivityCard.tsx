@@ -8,14 +8,7 @@ import { THEME } from '../../lib/theme';
 import { MessageCircle, Dumbbell, Footprints, Trophy, Mountain, Share2, Target, MoreHorizontal, Flag, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 
-function getTimeAgo(date: Date): string {
-  const s = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  if (s < 604800) return `${Math.floor(s / 86400)}d ago`;
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-}
+import { getTimeAgo } from '../../lib/timeAgo';
 
 function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   const lats = preview.map(p => p.lat);
@@ -278,18 +271,20 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
 
         {/* Actions */}
         <div className="flex items-center gap-5 pt-2.5 border-t border-border/40">
-          <button onClick={handleKudos}
-            aria-label={liked ? "Remove kudos" : "Give kudos"}
-            className="flex items-center gap-1.5 transition-transform"
-            style={kudosAnimating ? { animation: 'kudos-pop 0.4s ease-out' } : undefined}>
-            <Dumbbell size={16} style={{ filter: liked ? "none" : "grayscale(1) opacity(0.5)" }} />
+          <div className="flex items-center gap-1.5">
+            <button onClick={handleKudos}
+              aria-label={liked ? "Remove kudos" : "Give kudos"}
+              className="transition-transform"
+              style={kudosAnimating ? { animation: 'kudos-pop 0.4s ease-out' } : undefined}>
+              <Dumbbell size={16} style={{ filter: liked ? "none" : "grayscale(1) opacity(0.5)" }} />
+            </button>
             {kudosCount > 0 && (
-              <button onClick={(e) => { e.stopPropagation(); handleShowKudosList(); }}
+              <button onClick={handleShowKudosList}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {kudosCount}
               </button>
             )}
-          </button>
+          </div>
           <button onClick={() => setShowComments(!showComments)}
             aria-label="Toggle comments"
             className="flex items-center gap-1.5 text-muted-foreground active:scale-90 transition-transform">
@@ -340,14 +335,6 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
 
         {showComments && <CommentSection activityId={feedItem.activityId} activityAuthorId={activity?.authorId} prefillText={chipText} onPrefillConsumed={() => setChipText('')} />}
       </div>
-
-      <style>{`
-        @keyframes kudos-pop {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.4); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
 
       {/* Report Modal */}
       {showReport && (
