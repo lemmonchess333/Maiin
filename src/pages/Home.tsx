@@ -70,7 +70,30 @@ export default function Home() {
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
   const [proUpsellDismissed, setProUpsellDismissed] = useState(false);
+  const [showTrialNotif, setShowTrialNotif] = useState(false);
+  const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
   const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
+
+  // Dismissible trial notification — once per session
+  useEffect(function() {
+    if (isInTrial && !sessionStorage.getItem('trialNotifShown')) {
+      setShowTrialNotif(true);
+      sessionStorage.setItem('trialNotifShown', 'true');
+      const t = setTimeout(function() { setShowTrialNotif(false); }, 3000);
+      return function() { clearTimeout(t); };
+    }
+  }, [isInTrial]);
+
+  // One-time trial expiry modal
+  useEffect(function() {
+    if (!profile) return;
+    if (!isInTrial && profile.trialExpiresAt && !profile.trialExpiryPromptShown) {
+      const expiresAt = new Date(profile.trialExpiresAt);
+      if (expiresAt.getTime() < Date.now()) {
+        setShowTrialExpiredModal(true);
+      }
+    }
+  }, [profile, isInTrial]);
 
   const schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
@@ -338,15 +361,34 @@ export default function Home() {
         </motion.div>
       </header>
 
-      {isInTrial && (
-        <motion.div variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } } }} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <Sparkles className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">Pro Trial &mdash; {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left</p>
-            <p className="text-xs text-muted-foreground">Full access to all features.</p>
-          </div>
-        </motion.div>
-      )}
+      {/* Dismissible trial drop-down notification */}
+      <AnimatePresence>
+        {showTrialNotif && isInTrial && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            onClick={trialDaysLeft <= 1 ? function() { setShowTrialNotif(false); navigate("/Maiin/settings"); } : undefined}
+            className={cn(
+              "flex items-center gap-3 px-4 py-2.5 rounded-b-xl bg-primary/10 shadow-md",
+              trialDaysLeft <= 1 && "cursor-pointer"
+            )}
+          >
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+            <p className="text-sm font-medium text-foreground flex-1">
+              {trialDaysLeft <= 0
+                ? "Last day of your Pro trial"
+                : trialDaysLeft === 1
+                ? "Pro trial ends tomorrow \u2014 upgrade to keep Pro features"
+                : `Pro trial \u2014 ${trialDaysLeft} days remaining`}
+            </p>
+            <button onClick={function(e) { e.stopPropagation(); setShowTrialNotif(false); }} className="p-1 rounded-full hover:bg-muted transition-colors" aria-label="Dismiss">
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* First-time coach marks */}
       {showCoachMarks && (
@@ -426,12 +468,15 @@ export default function Home() {
       </section>
 
       {!isPro && !proUpsellDismissed && (
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card text-center space-y-1 relative">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card text-center space-y-2 relative">
           <button onClick={function() { setProUpsellDismissed(true); }} aria-label="Dismiss" className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted transition-colors">
             <X className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
-          <p className="text-xs text-muted-foreground">Upgrade to Pro &mdash; from just &pound;2.99/mo</p>
+          <p className="text-xs text-muted-foreground mb-2">From just &pound;2.99/mo</p>
+          <button onClick={function() { navigate("/Maiin/settings"); }} className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+            Upgrade to Pro
+          </button>
         </motion.div>
       )}
 
@@ -460,6 +505,45 @@ export default function Home() {
       </AnimatePresence>
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
+
+      {/* Trial expired — one-time prompt */}
+      <AnimatePresence>
+        {showTrialExpiredModal && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); }} />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto rounded-2xl bg-card p-6 space-y-4 shadow-xl border border-border/50"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <p className="text-base font-semibold text-foreground">Your free trial has ended</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Upgrade to Pro to keep access to AI logging, the Performance Engine, and adaptive macros.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  Maybe later
+                </button>
+                <button
+                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); navigate("/Maiin/settings"); }}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                >
+                  Upgrade
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

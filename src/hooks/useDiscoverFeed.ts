@@ -68,9 +68,8 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       lastDocRef.current = result.lastDoc;
       setHasMore(rawItems.length === 20);
     } catch (e) {
-      console.error('Discover feed error:', e);
-      const msg = e instanceof Error ? e.message : '';
-      setError(msg.toLowerCase().includes('index') ? 'Unable to load public activities. Please try again later.' : (msg || 'Failed to load discover feed'));
+      console.warn('Discover feed error (silenced):', e);
+      // Don't surface errors to the UI — let the empty state handle it
     }
     setLoading(false);
   }, [user, enabled, blockedUsers]);

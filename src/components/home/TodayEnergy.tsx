@@ -71,7 +71,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
               <BreakdownRow label={"Base TDEE (" + burn.phaseLabel + ")"} value={burn.phaseAdjustedTdee} />
               <BreakdownRow label="+ Workout" value={burn.workoutCalories} color={THEME.semantic.positive} />
               <BreakdownRow label="+ Run" value={burn.runCalories} color={THEME.semantic.vitals} />
-              <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect in app" color={THEME.textMuted} />
+              <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect Apple Health" /* TODO: "Connect Google Fit" on Android */ color={THEME.textMuted} />
               <div className="h-px bg-border/50" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">Today's budget</span>
@@ -105,9 +105,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                 </div>
               )}
               {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ opacity: 0.6 }}>
+                  <p className="text-[11px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
+                  <p className="text-[9px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
                 </div>
               )}
             </Link>

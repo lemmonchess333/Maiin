@@ -236,7 +236,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
           <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
             <Dumbbell className="w-8 h-8 text-muted-foreground/30" />
           </div>
-          <p className="text-sm text-muted-foreground/60 text-center">Add exercises to build your workout</p>
+          <p className="text-sm text-muted-foreground/60 text-center">Your workout is empty — tap + Add Exercise below to get started.</p>
         </div>
       )}
 

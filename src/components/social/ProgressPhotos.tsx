@@ -174,7 +174,7 @@ export default function ProgressPhotos() {
       console.log('[UPLOAD] 5. Creating Firebase Storage reference:', path);
       try {
         await withTimeout(
-          uploadBytes(ref(storage, path), new Uint8Array(encrypted)),
+          uploadBytes(ref(storage, path), new Uint8Array(encrypted), { contentType: 'image/webp' }),
           25000
         );
         console.log('[UPLOAD] 6. Upload complete');
@@ -225,11 +225,6 @@ export default function ProgressPhotos() {
     } catch (err) {
       console.error('[UPLOAD] Upload failed:', err);
       setUploadError(true);
-      toast.error(
-        err instanceof Error && err.message === 'Upload timed out'
-          ? 'Upload timed out. Please try again.'
-          : 'Upload failed. Please try again.'
-      );
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

@@ -1,5 +1,6 @@
 import SessionCard from './SessionCard';
 import { THEME } from '@/lib/theme';
+import { Check } from 'lucide-react';
 
 interface TrainingSession {
   id: string;
@@ -41,6 +42,9 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
     return entry?.type || null;
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="space-y-2">
       {weekDays.map((day) => {
@@ -48,6 +52,9 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
         const scheduledType = getScheduledType(day.date);
         const isLiftDay = scheduledType === 'lift';
         const isRunDay = scheduledType === 'run';
+        const isPast = new Date(day.date + 'T00:00:00') < today && !day.isToday;
+        const hasCompletedActivity = daySessions.some((s) => s.status === 'completed');
+        const isRestDay = !isLiftDay && !isRunDay;
         return (
           <div
             key={day.date}
@@ -57,14 +64,25 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold ${day.isToday ? 'text-purple-600' : (!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
+                <span className={`text-xs font-semibold ${day.isToday ? 'text-purple-600' : (isPast && isRestDay && !hasCompletedActivity) ? 'text-muted-foreground/50' : (!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>
                   {day.label}
                 </span>
-                <span className={`text-xs ${(!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{day.dayNum}</span>
-                {daySessions.length === 0 && isLiftDay && (
+                <span className={`text-xs ${(isPast && isRestDay && !hasCompletedActivity) ? 'text-muted-foreground/50' : (!isLiftDay && !isRunDay && daySessions.length === 0) ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{day.dayNum}</span>
+                {/* Completed: show checkmark in sport colour instead of dot */}
+                {isPast && hasCompletedActivity && isLiftDay && (
+                  <Check className="w-3.5 h-3.5" style={{ color: THEME.calendar.liftDay }} strokeWidth={3} />
+                )}
+                {isPast && hasCompletedActivity && isRunDay && (
+                  <Check className="w-3.5 h-3.5" style={{ color: THEME.calendar.runDay }} strokeWidth={3} />
+                )}
+                {isPast && hasCompletedActivity && isRestDay && (
+                  <Check className="w-3.5 h-3.5 text-primary" strokeWidth={3} />
+                )}
+                {/* Scheduled but not completed (or future): show dot */}
+                {!(isPast && hasCompletedActivity) && daySessions.length === 0 && isLiftDay && (
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: THEME.calendar.liftDay }} title="Lift day" />
                 )}
-                {daySessions.length === 0 && isRunDay && (
+                {!(isPast && hasCompletedActivity) && daySessions.length === 0 && isRunDay && (
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: THEME.calendar.runDay }} title="Run day" />
                 )}
               </div>

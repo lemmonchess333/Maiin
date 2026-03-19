@@ -57,6 +57,7 @@ export interface UserProfileSubscription {
   subscriptionTier: "free" | "pro";
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  trialExpiryPromptShown?: boolean;
 }
 
 /** User preferences and settings */
