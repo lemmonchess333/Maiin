@@ -416,7 +416,7 @@ export default function History() {
                                 <>
                                   <PRBadge isNew={pr.isAllTimeBest} />
                                   <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                                    style={{ background: `${THEME.lifting}20`, color: THEME.lifting }}>
+                                    style={{ background: THEME.brand, color: '#fff' }}>
                                     NEW
                                   </span>
                                 </>
