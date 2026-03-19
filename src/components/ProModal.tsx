@@ -6,6 +6,7 @@ import { THEME } from "@/lib/theme";
 import { X, Sparkles, TrendingUp, Zap, BarChart2, Utensils, Brain, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const PLANS = [
   { id: "monthly" as const, label: "Monthly", price: "£2.99", period: "/mo" },
@@ -131,6 +132,7 @@ export default function ProModal({ onClose, feature }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState<PlanId | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("yearly");
+  const focusTrapRef = useFocusTrap<HTMLDivElement>();
 
   const handleCheckout = async (plan: PlanId) => {
     if (!user) return;
@@ -157,6 +159,7 @@ export default function ProModal({ onClose, feature }: Props) {
         onClick={onClose} className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
       />
       <motion.div
+        ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="pro-modal-title"

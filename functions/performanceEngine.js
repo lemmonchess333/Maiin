@@ -349,6 +349,7 @@ return { lift, run };
 - @returns {{ ok, weekKey, performanceIndex, confidence, loadBand }}
   */
   async function computeAndWritePerformanceForUser(uid, weekKeyOverride) {
+  try {
   const targetWeekKey = weekKeyOverride || getWeekKey(new Date());
 
 // Window: target week + BASELINE_WEEKS prior + 1 extra week for bodyweight prev avg
@@ -446,6 +447,10 @@ await db
 .set(perfDoc, { merge: true });
 
 return { ok: true, weekKey: targetWeekKey, performanceIndex: pi, confidence, loadBand };
+  } catch (error) {
+    console.error("computeAndWritePerformanceForUser error:", { uid, weekKeyOverride, message: error.message, stack: error.stack });
+    throw error;
+  }
 }
 
 // ── Cooldown lock ────────────────────────────
@@ -456,6 +461,7 @@ return { ok: true, weekKey: targetWeekKey, performanceIndex: pi, confidence, loa
 - Simple timestamp check — no transactions needed at this scale.
   */
   async function acquireCooldownLock(uid) {
+  try {
   const lockRef = db.collection("users").doc(uid).collection("_engine").doc("performanceLock");
   const lockSnap = await lockRef.get();
 
@@ -477,6 +483,10 @@ lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
 }, { merge: true });
 
 return true;
+  } catch (error) {
+    console.error("acquireCooldownLock error:", { uid, message: error.message, stack: error.stack });
+    throw error;
+  }
 }
 
 async function releaseLock(uid, ok, error) {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import type { EarnedBadge } from "./badges";
 import { TIER_COLORS } from "./badges";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface BadgeEarnedModalProps {
   badge: EarnedBadge | null;
@@ -75,7 +76,7 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
             style={{
-              background: "rgba(15, 15, 20, 0.92)",
+              background: "var(--glass-bg)",
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
               border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
