@@ -446,8 +446,7 @@ export default function Social() {
             </div>
 
             <button onClick={() => setShowCreateGroup(true)}
-              className="w-full py-3 rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
-              style={{ background: 'rgba(124, 110, 246, 0.03)' }}>
+              className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               + Create a Crew
             </button>
           </div>
