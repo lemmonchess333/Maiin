@@ -5,6 +5,8 @@ import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 import { Camera, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { THEME } from '../../lib/theme';
+import { EmptyState } from '../EmptyState';
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
@@ -187,24 +189,20 @@ export default function ProgressPhotos() {
         </button>
       </div>
 
-      {loading && <p className="text-xs text-muted-foreground animate-pulse">Encrypting & uploading...</p>}
+      {loading && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <Loader2 size={16} className="animate-spin text-primary shrink-0" />
+          <p className="text-xs text-foreground font-medium">Encrypting & uploading your photo...</p>
+        </div>
+      )}
 
       {!loading && photos.length === 0 && (
-        <div className="text-center py-10 space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
-            <Camera className="w-7 h-7 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-semibold text-foreground">Track your transformation</p>
-          <p className="text-xs text-muted-foreground max-w-[240px] mx-auto">
-            Take a front, side, and back photo each week to see your progress over time.
-          </p>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-1 text-xs px-5 py-2.5 rounded-full bg-purple-500 text-white font-medium active:scale-95 transition-transform"
-          >
-            + Add Photo
-          </button>
-        </div>
+        <EmptyState
+          icon={<Camera size={28} />}
+          title="Track your transformation"
+          description="Take a front, side, and back photo each week to see your progress over time."
+          accentColor={THEME.brand}
+        />
       )}
 
       <div className="grid grid-cols-3 gap-2">

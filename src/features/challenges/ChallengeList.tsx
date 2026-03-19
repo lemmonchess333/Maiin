@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { useChallenges } from "./useChallenges";
 import { ChallengeCard } from "./ChallengeCard";
 import { Trophy } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { THEME } from "@/lib/theme";
+import { toast } from "sonner";
 
 export function ChallengeList() {
   const { myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge } = useChallenges();
+  const [notifyRequested, setNotifyRequested] = useState(
+    () => !!localStorage.getItem('tropos_challenge_notify')
+  );
 
   if (loading) {
     return (
@@ -55,15 +62,27 @@ export function ChallengeList() {
       )}
 
       {myChallenges.length === 0 && availableChallenges.length === 0 && (
-        <div className="text-center py-12 space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto">
-            <Trophy className="w-6 h-6 text-purple-500" />
-          </div>
-          <p className="text-sm font-semibold text-foreground">Challenges coming soon</p>
-          <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
-            Compete on weekly distance, volume, and hybrid score with the people you follow.
-          </p>
-        </div>
+        <>
+          <EmptyState
+            icon={<Trophy size={28} />}
+            title="Challenges coming soon"
+            description="Compete on weekly distance, volume, and hybrid score with the people you follow."
+            accentColor={THEME.brand}
+            action={notifyRequested ? undefined : {
+              label: 'Notify me when challenges launch',
+              onClick: () => {
+                localStorage.setItem('tropos_challenge_notify', '1');
+                setNotifyRequested(true);
+                toast.success("You'll be notified when challenges launch!");
+              },
+            }}
+          />
+          {notifyRequested && (
+            <p className="text-xs text-center text-muted-foreground -mt-6">
+              You&apos;ll be notified!
+            </p>
+          )}
+        </>
       )}
     </div>
   );

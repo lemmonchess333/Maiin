@@ -10,13 +10,14 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2 } from 'lucide-react';
+import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
+import { EmptyState } from '../components/EmptyState';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
 type FeedSubTab = 'following' | 'discover';
-type FeedFilter = 'all' | 'highlights';
 
 // Icon map for crew icons (#18)
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -36,10 +37,18 @@ export default function Social() {
   const blockedUsers = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('following');
-  const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
+
+  // Crew banner dismiss state
+  const [crewBannerDismissed, setCrewBannerDismissed] = useState(
+    () => !!localStorage.getItem('tropos_crew_banner_dismissed')
+  );
+  const dismissCrewBanner = () => {
+    setCrewBannerDismissed(true);
+    localStorage.setItem('tropos_crew_banner_dismissed', '1');
+  };
 
   // Feed hooks — discover only fetches when active (#7)
-  const followingFeed = useSocialFeed(feedFilter === 'highlights', blockedUsers);
+  const followingFeed = useSocialFeed(false, blockedUsers);
   const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
@@ -153,20 +162,35 @@ export default function Social() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Activity</h1>
+        <h1 className="text-lg font-bold">Social</h1>
       </div>
 
-      {/* Crew banner if no crew */}
-      {!profile?.crewId && tab === 'feed' && (
-        <button onClick={() => setTab('find')}
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-purple-200 dark:border-purple-900/40 text-left">
-          <Users className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
-            <p className="text-[10px] text-muted-foreground">Browse crews</p>
-          </div>
-        </button>
-      )}
+      {/* Crew banner if no crew — dismissible */}
+      <AnimatePresence>
+        {!profile?.crewId && tab === 'feed' && !crewBannerDismissed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-purple-200 dark:border-purple-900/40"
+              style={{ background: 'rgba(124, 110, 246, 0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+              <button onClick={() => setTab('find')} className="flex items-center gap-3 flex-1 text-left">
+                <Users className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
+                  <p className="text-[10px] text-muted-foreground">Browse crews</p>
+                </div>
+              </button>
+              <button onClick={dismissCrewBanner} className="p-1 text-muted-foreground hover:text-foreground transition-colors" aria-label="Dismiss">
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab bar */}
       <div className="flex gap-1 p-1 rounded-xl bg-muted">
@@ -198,22 +222,6 @@ export default function Social() {
                 {st === 'following' ? 'Following' : 'Discover'}
               </button>
             ))}
-
-            {/* Filter toggle on Following */}
-            {feedSubTab === 'following' && (
-              <div className="ml-auto flex gap-1">
-                {(['all', 'highlights'] as FeedFilter[]).map(f => (
-                  <button key={f} onClick={() => setFeedFilter(f)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-medium transition-colors ${
-                      feedFilter === f
-                        ? 'bg-foreground/10 text-foreground'
-                        : 'text-muted-foreground'
-                    }`}>
-                    {f === 'all' ? 'All' : 'Highlights'}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {feedSubTab === 'following' && <LeaderboardCard challenge="weekly_hybrid" />}
@@ -267,28 +275,23 @@ export default function Social() {
           )}
 
           {!activeFeed.loading && activeFeed.items.length === 0 && (
-            <div className="text-center py-16 space-y-3">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: `linear-gradient(135deg, ${THEME.brand}15, ${THEME.brandLight}10)` }}>
-                {feedSubTab === 'discover' ? <Globe size={32} className="text-muted-foreground" /> : <Hand size={32} className="text-muted-foreground" />}
-              </div>
-              <p className="text-sm font-bold text-foreground">
-                {feedSubTab === 'discover' ? 'No public activities yet' : 'No activity yet'}
-              </p>
-              <p className="text-xs text-muted-foreground max-w-[220px] mx-auto">
-                {feedSubTab === 'discover'
-                  ? "Be the first to share! Your workouts will appear here when set to Public."
-                  : feedFilter === 'highlights'
-                    ? "No highlights yet. Keep training — your achievements will show up here."
-                    : "Follow people to see their workouts and runs here"}
-              </p>
-              {feedSubTab === 'following' && feedFilter === 'all' && (
-                <button onClick={() => setTab('find')}
-                  className="mt-2 text-xs px-5 py-2.5 rounded-full text-white font-medium active:scale-[0.97] transition-transform"
-                  style={{ backgroundColor: THEME.brand }}>
-                  Find People
-                </button>
-              )}
-            </div>
+            feedSubTab === 'discover' ? (
+              <EmptyState
+                icon={<Globe size={28} />}
+                title="No public activities yet"
+                description="Be the first to share! Your workouts will appear here when set to Public."
+                accentColor={THEME.brand}
+                action={{ label: 'Log a Workout', href: '/Maiin/log' }}
+              />
+            ) : (
+              <EmptyState
+                icon={<Hand size={28} />}
+                title="No activity yet"
+                description="Follow people to see their workouts and runs here"
+                accentColor={THEME.brand}
+                action={{ label: 'Find People', onClick: () => setTab('find') }}
+              />
+            )
           )}
         </div>
       )}
@@ -318,7 +321,7 @@ export default function Social() {
 
           {/* Section 2: Search */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search by name</p>
+            <p className="text-xs font-semibold text-muted-foreground">Search by name</p>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -326,10 +329,10 @@ export default function Social() {
                 value={searchQuery}
                 onChange={e => handleSearchInputChange(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
-                className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="flex-1 h-11 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <button onClick={() => handleSearch()} disabled={searching || !searchQuery.trim()}
-                className="px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                className="h-11 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
                 {searching ? '...' : 'Go'}
               </button>
             </div>
@@ -359,7 +362,7 @@ export default function Social() {
 
           {/* Section 3: Suggested People (#16) */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Suggested people</p>
+            <p className="text-xs font-semibold text-muted-foreground">Suggested people</p>
             {profile?.crewId && currentCrew ? (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
                 People from your crew will appear here as more athletes join.
@@ -373,7 +376,7 @@ export default function Social() {
 
           {/* Section 4: Contact Sync Stub */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Find friends from contacts</p>
+            <p className="text-xs font-semibold text-muted-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
               className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors">
               Sync Contacts
@@ -402,7 +405,7 @@ export default function Social() {
 
           {/* Crews Section */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Crews</p>
+            <p className="text-xs font-semibold text-muted-foreground">Crews</p>
             <div className="space-y-2">
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
