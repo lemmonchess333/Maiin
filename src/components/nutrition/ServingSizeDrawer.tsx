@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Drawer } from "vaul";
 import { Plus, Minus } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -12,10 +12,11 @@ interface Props {
 
 export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
   const [servings, setServings] = useState(1);
-
-  useEffect(() => {
+  const [prevFood, setPrevFood] = useState(food);
+  if (prevFood !== food) {
+    setPrevFood(food);
     setServings(1);
-  }, [food]);
+  }
 
   if (!food) return null;
 

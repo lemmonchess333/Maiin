@@ -54,15 +54,12 @@ export function useSocialFeed(highlightsOnly = false) {
   const [hasMore, setHasMore] = useState(true);
 
   // Reset cursor and items when user changes to prevent cross-user data leaks
-  const prevUserRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    if (user?.uid !== prevUserRef.current) {
-      prevUserRef.current = user?.uid;
-      lastDocRef.current = undefined;
-      setItems([]);
-      setHasMore(true);
-    }
-  }, [user?.uid]);
+  const [prevUserId, setPrevUserId] = useState<string | undefined>(undefined);
+  if (user?.uid !== prevUserId) {
+    setPrevUserId(user?.uid);
+    setItems([]);
+    setHasMore(true);
+  }
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;

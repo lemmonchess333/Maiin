@@ -248,24 +248,34 @@ export default function Log() {
   }, [nlInput]);
   const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0);
 
-  // OpenFoodFacts search triggered alongside AI suggestions
-  useEffect(() => {
-    if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
-
+  // Derive whether OFF search should be active
+  const offSearchQuery = useMemo(() => {
     const parts = nlInput.split(/,/);
     const lastPart = (parts[parts.length - 1] || "").trim();
+    return lastPart.length >= 2 && suggestionsActive ? lastPart : null;
+  }, [nlInput, suggestionsActive]);
 
-    if (lastPart.length < 2 || !suggestionsActive) {
+  // Clear results immediately when query becomes invalid (during render)
+  const [prevOffQuery, setPrevOffQuery] = useState(offSearchQuery);
+  if (offSearchQuery !== prevOffQuery) {
+    setPrevOffQuery(offSearchQuery);
+    if (offSearchQuery === null) {
       setOffResults([]);
       setOffLoading(false);
-      return;
     }
+  }
+
+  // OpenFoodFacts search triggered when query is valid
+  useEffect(() => {
+    if (!offSearchQuery) return;
+
+    if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
 
     offDebounceRef.current = setTimeout(async () => {
       setOffLoading(true);
       try {
         const res = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(lastPart)}&search_simple=1&action=process&json=1&page_size=4&fields=product_name,brands,nutriments,serving_size&lc=en&countries_tags_contains=en`
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(offSearchQuery)}&search_simple=1&action=process&json=1&page_size=4&fields=product_name,brands,nutriments,serving_size&lc=en&countries_tags_contains=en`
         );
         const data = await res.json();
         const products: OFFResult[] = (data.products || [])
@@ -289,7 +299,7 @@ export default function Log() {
     return () => {
       if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
     };
-  }, [nlInput, suggestionsActive]);
+  }, [offSearchQuery]);
 
   const handleSuggestionSelect = (suggestion: FoodSuggestion) => {
     // Replace the last segment with the selected suggestion
