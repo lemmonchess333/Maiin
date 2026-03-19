@@ -201,8 +201,9 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               </div>
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Steps</p>
             </div>
-            <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>\u2014</p>
-            <p className="text-[11px] mt-1" style={{ color: THEME.text.muted }}>Connect in app</p>
+            <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>—</p>
+            {/* TODO: Use "Connect Google Fit" on Android when platform detection is available */}
+            <p className="text-[11px] mt-1" style={{ color: THEME.text.muted }}>Connect Apple Health</p>
           </div>
         </div>
       </motion.div>
