@@ -5,6 +5,12 @@
  * Adjusts macro targets weekly to keep users on track for their goal.
  */
 
+import {
+  resolveProteinMultiplier,
+  FAT_CALORIE_FRACTION,
+  WEEKLY_WEIGHT_TARGET,
+} from "./macroConstants";
+
 export interface TDEECalculation {
   estimatedTDEE: number;
   adjustedCalories: number;
@@ -27,17 +33,7 @@ interface CalorieLog {
 }
 
 function getTargetWeeklyChange(goal: string): number {
-  switch (goal) {
-    case "lean bulk":
-    case "bulk":
-      return 0.3; // +0.3 kg/week
-    case "cut":
-      return -0.5; // -0.5 kg/week
-    case "maintain":
-    case "recomp":
-    default:
-      return 0;
-  }
+  return WEEKLY_WEIGHT_TARGET[goal] ?? 0;
 }
 
 export function linearTrend(weights: WeightLog[]): number {
@@ -60,6 +56,7 @@ export function calculateAdaptiveTDEE(
   goal: string,
   currentTargets: { calories: number; protein: number; carbs: number; fat: number },
   weightKg: number,
+  phase?: string,
 ): TDEECalculation {
   const targetWeightChange = getTargetWeeklyChange(goal);
 
@@ -118,11 +115,12 @@ export function calculateAdaptiveTDEE(
   const targetDailyDelta = (targetWeightChange * 7700) / 7;
   const adjustedCalories = Math.round(estimatedTDEE + targetDailyDelta);
 
-  // Distribute macros
+  // Distribute macros — use centralized protein multiplier
   const bw = Math.max(weightKg, 50);
-  const proteinGrams = Math.round(bw * 2.0);
+  const proteinMultiplier = resolveProteinMultiplier(phase, goal);
+  const proteinGrams = Math.round(bw * proteinMultiplier);
   const proteinCals = proteinGrams * 4;
-  const fatCals = Math.round(adjustedCalories * 0.25);
+  const fatCals = Math.round(adjustedCalories * FAT_CALORIE_FRACTION);
   const fatGrams = Math.round(fatCals / 9);
   const carbCals = Math.max(adjustedCalories - proteinCals - fatCals, 200);
   const carbGrams = Math.round(carbCals / 4);

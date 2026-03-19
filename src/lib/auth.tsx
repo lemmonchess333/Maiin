@@ -20,87 +20,100 @@ import { auth, db } from "./firebase";
 import type { Goal } from "./types";
 
 /* ================================
-   USER PROFILE TYPE
+   USER PROFILE TYPE — decomposed into sub-interfaces
 ================================ */
 
-export interface UserProfile {
+/** Core identity fields */
+export interface UserProfileCore {
   uid: string;
   displayName: string;
   email: string;
+  onboardingComplete: boolean;
+}
+
+/** Physical attributes and fitness metrics */
+export interface UserProfileFitness {
   athleteType: string;
   weightKg: number;
   heightCm: number;
   weeklyWorkoutsTarget: number;
   weeklyMealsTarget: number;
-  preferredWeightUnit: "kg" | "lbs";
-  preferredHeightUnit: "cm" | "ft";
-  darkMode: boolean;
-  onboardingComplete: boolean;
-  // Trial & subscription
-  trialExpiresAt: string | null;
-  subscriptionTier: "free" | "pro";
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-  // Streak
   currentStreak: number;
   lastLogDate: string | null;
-  // Goal-based program engine
+  goal?: string;
+  age?: number;
+  sex?: "male" | "female";
+  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
   program?: {
     goal: Goal;
     startWeight: number;
     currentPhase: string;
   };
-  // Macro targets
+}
+
+/** Subscription and payment fields */
+export interface UserProfileSubscription {
+  trialExpiresAt: string | null;
+  subscriptionTier: "free" | "pro";
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+}
+
+/** User preferences and settings */
+export interface UserProfilePreferences {
+  preferredWeightUnit: "kg" | "lbs";
+  preferredHeightUnit: "cm" | "ft";
+  darkMode: boolean;
+  autoRestTimer?: boolean;
+  defaultRestSeconds?: number;
+  audioCues?: boolean;
+  enableRolloverCalories?: boolean;
+}
+
+/** Nutrition targets */
+export interface UserProfileNutrition {
   tdeeBase?: number;
   aiCalorieAdjustment?: number;
   targetCalories?: number;
   targetProtein?: number;
   targetCarbs?: number;
   targetFat?: number;
-  goal?: string;
-  // Workout preferences
-  autoRestTimer?: boolean;
-  defaultRestSeconds?: number;
-  // Social & privacy
-  defaultVisibility?: "public" | "followers" | "private";
-  autoPostRuns?: boolean;
-  autoPostWorkouts?: boolean;
-  audioCues?: boolean;
-  // Run scheduling
-  runMode?: "freeform" | "structured" | "race_prep";
-  weeklyRunDaysTarget?: number;
-  raceGoal?: {
-    distance: "5k" | "10k" | "half" | "marathon";
-    targetDate: string;
-  };
-  // Weekly schedule
-  weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
-  weeklyRunsTarget?: number;
-  // TDEE computation persistence
-  age?: number;
-  sex?: "male" | "female";
-  activityLevel?: "sedentary" | "light" | "moderate" | "active" | "very_active";
-  // Macro targets (legacy)
+  customCalorieTarget?: number;
   macroTargets?: {
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
   };
-  // Micronutrient targets
   targetFiber?: number;
   targetSugar?: number;
   targetSodium?: number;
-  // Water tracking
   targetWaterGlasses?: number;
-  // Rollover calories (Pro)
-  enableRolloverCalories?: boolean;
-  // Auto-post social
+}
+
+/** Social and privacy settings */
+export interface UserProfileSocial {
+  defaultVisibility?: "public" | "followers" | "private";
+  autoPostRuns?: boolean;
+  autoPostWorkouts?: boolean;
   autoPostBadges?: boolean;
-  customCalorieTarget?: number;
-  // Crew
   crewId?: string;
-  // Onboarding quiz (program generation)
+}
+
+/** Run and schedule configuration */
+export interface UserProfileRunning {
+  runMode?: "freeform" | "structured" | "race_prep";
+  weeklyRunDaysTarget?: number;
+  weeklyRunsTarget?: number;
+  raceGoal?: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
+  weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
+}
+
+/** Onboarding quiz answers */
+export interface UserProfileOnboarding {
   ageRange?: "16-24" | "25-34" | "35-44" | "45-54" | "55+";
   primaryGoal?: "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
   experience?: "beginner" | "intermediate" | "advanced";
@@ -111,6 +124,17 @@ export interface UserProfile {
   injuries?: string[];
   gender?: "male" | "female" | "unspecified";
 }
+
+/** Full UserProfile — intersection of all sub-interfaces */
+export interface UserProfile extends
+  UserProfileCore,
+  UserProfileFitness,
+  UserProfileSubscription,
+  UserProfilePreferences,
+  UserProfileNutrition,
+  UserProfileSocial,
+  UserProfileRunning,
+  UserProfileOnboarding {}
 
 /* ================================
    HELPERS

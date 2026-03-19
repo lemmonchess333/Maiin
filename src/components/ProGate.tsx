@@ -1,5 +1,6 @@
 import { useState, type ReactNode, lazy, Suspense } from "react";
 import { useSubscription } from "@/lib/subscription";
+import { useAuth } from "@/lib/auth";
 import { Lock } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 
@@ -12,8 +13,16 @@ interface Props {
 }
 
 export function ProGate({ children, feature, preview }: Props) {
+  const { loading } = useAuth();
   const { isPro } = useSubscription();
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // Show skeleton while auth is still loading to prevent flash of wrong content
+  if (loading) {
+    return (
+      <div className="animate-pulse rounded-2xl bg-muted/50 h-32 w-full" aria-hidden="true" />
+    );
+  }
 
   if (isPro) {
     return <>{children}</>;

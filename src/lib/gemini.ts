@@ -3,6 +3,23 @@
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
+// Rate limiting: max 3 calls per 60 seconds per client
+const MAX_CALLS_PER_MINUTE = 3;
+const callTimestamps: number[] = [];
+
+function isRateLimited(): boolean {
+  const now = Date.now();
+  // Remove timestamps older than 60 seconds
+  while (callTimestamps.length > 0 && now - callTimestamps[0] > 60_000) {
+    callTimestamps.shift();
+  }
+  return callTimestamps.length >= MAX_CALLS_PER_MINUTE;
+}
+
+function recordCall(): void {
+  callTimestamps.push(Date.now());
+}
+
 export interface GeminiResponse {
   text: string;
   error?: string;
@@ -15,6 +32,15 @@ export async function askGemini(prompt: string): Promise<GeminiResponse> {
       error: "Gemini API key not configured. Add VITE_GEMINI_API_KEY to .env",
     };
   }
+
+  if (isRateLimited()) {
+    return {
+      text: "",
+      error: "Rate limit reached. Please wait a moment before trying again.",
+    };
+  }
+
+  recordCall();
 
   try {
     const response = await fetch(

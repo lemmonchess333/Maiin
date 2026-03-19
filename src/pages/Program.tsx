@@ -320,30 +320,32 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
         </button>
       </div>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Program</h1>
-          <p className="text-xs text-muted-foreground">
-            {programState.splitType === "ppl" ? "Push / Pull / Legs" : "Upper / Lower"}
-          </p>
+      <header>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Program</h1>
+            <p className="text-xs text-muted-foreground">
+              {programState.splitType === "ppl" ? "Push / Pull / Legs" : "Upper / Lower"}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => !locked && setShowSettings(true)}
+              disabled={locked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+            >
+              <Settings2 className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => handleRegenerate()}
+              disabled={regenerating || locked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+            >
+              <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => !locked && setShowSettings(true)}
-            disabled={locked}
-            className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
-          >
-            <Settings2 className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <button
-            onClick={() => handleRegenerate()}
-            disabled={regenerating || locked}
-            className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
-          >
-            <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
-          </button>
-        </div>
-      </div>
+      </header>
 
       {/* Phase + Week Header */}
       <div className="bg-card rounded-2xl overflow-hidden">
@@ -406,6 +408,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       )}
 
       {/* Workout Day Cards */}
+      <section aria-label="Workout days">
       <div className="space-y-2">
         {displayWorkouts.map((day, dayIndex) => {
           const dayType = day.dayName?.toLowerCase() ?? '';
@@ -576,6 +579,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           );
         })}
       </div>
+      </section>
 
       {/* Exercise Detail Drawer */}
       <AnimatePresence>

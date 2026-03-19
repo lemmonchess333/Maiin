@@ -21,7 +21,7 @@ function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
     `${((p.lon - minLon) / rLon) * 188 + 6},${(1 - (p.lat - minLat) / rLat) * 68 + 6}`
   ).join(' ');
   return (
-    <svg viewBox="0 0 200 80" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 200 80" className="w-full h-full" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Run route map">
       <polyline fill="none" stroke={THEME.running} strokeWidth="2.5"
         strokeLinecap="round" strokeLinejoin="round" points={pts} />
     </svg>
@@ -107,7 +107,8 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         {/* Author row */}
         <div className="flex items-center gap-3 mb-3">
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-            style={{ background: avatarBg, color: avatarColor }}>
+            style={{ background: avatarBg, color: avatarColor }}
+            role="img" aria-label={`${feedItem.authorName}'s avatar`}>
             {feedItem.authorName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">

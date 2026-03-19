@@ -282,7 +282,9 @@ export default function History() {
 
   return (
     <div className="space-y-4 pt-2">
-      <h1 className="text-lg font-bold text-foreground">Analytics</h1>
+      <header>
+        <h1 className="text-lg font-bold text-foreground">Analytics</h1>
+      </header>
 
       <FilterPills filter={filter} setFilter={setFilter} />
 
@@ -309,7 +311,7 @@ export default function History() {
           )}
 
           {(filter === "all" || filter === "running") && (
-            <>
+            <section aria-label="Running analytics">
               {filter === "all" && (
                 <p
                   className="text-xs font-semibold uppercase tracking-wider"
@@ -357,11 +359,11 @@ export default function History() {
                 </p>
               )}
               <RunningHistorySection />
-            </>
+            </section>
           )}
 
           {(filter === "all" || filter === "lifting") && (
-            <>
+            <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
                   className="text-xs font-semibold uppercase tracking-wider mt-4"
@@ -440,11 +442,11 @@ export default function History() {
                   </div>
                 )}
               </div>
-            </>
+            </section>
           )}
 
           {(filter === "all" || filter === "nutrition") && (
-            <>
+            <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
                   className="text-xs font-semibold uppercase tracking-wider mt-4"
@@ -477,7 +479,7 @@ export default function History() {
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
-            </>
+            </section>
           )}
         </>
       )}

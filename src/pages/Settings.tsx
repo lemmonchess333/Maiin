@@ -262,20 +262,22 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Settings</h1>
-          <p className="text-sm text-muted-foreground">Customize your experience</p>
+      <header>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Settings</h1>
+            <p className="text-sm text-muted-foreground">Customize your experience</p>
+          </div>
+          {user && (
+            <button
+              onClick={() => navigate(`/user/${user.uid}`)}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            >
+              View Profile
+            </button>
+          )}
         </div>
-        {user && (
-          <button
-            onClick={() => navigate(`/user/${user.uid}`)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
-          >
-            View Profile
-          </button>
-        )}
-      </div>
+      </header>
 
       {/* Dev: Force Pro toggle — only in dev mode */}
       {import.meta.env.DEV && (
@@ -314,6 +316,7 @@ export default function Settings() {
       )}
 
       {/* Current plan & trial banner */}
+      <section aria-label="Your plan">
       <div className="bg-card rounded-2xl border-l-4 border-purple-500 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Crown className="w-4 h-4 text-primary" />
@@ -347,6 +350,7 @@ export default function Settings() {
           </div>
         </div>
       </div>
+      </section>
 
       {/* Upgrade section — shown when not on paid Pro */}
       {tier !== "pro" && (
@@ -445,6 +449,7 @@ export default function Settings() {
 
       {/* Profile & Goals */}
       {visibleTab === "profile" && (
+      <section aria-label="Profile and training">
       <>
         <ProfileSection
           profile={profile}
@@ -475,10 +480,12 @@ export default function Settings() {
           handleSave={handleSave}
         />
       </>
+      </section>
       )}
 
       {/* Training Setup — merged into Profile & Training tab */}
       {visibleTab === "profile" && (
+      <section aria-label="Training setup">
       <>
         <TDEESection
           profile={profile}
@@ -497,10 +504,12 @@ export default function Settings() {
         {/* Shoe Mileage Tracker */}
         <ShoesSection />
       </>
+      </section>
       )}
 
       {/* Preferences */}
       {visibleTab === "prefs" && (
+      <section aria-label="Preferences">
       <>
         <PreferencesSection
           profile={profile}
@@ -519,6 +528,7 @@ export default function Settings() {
           updateReminders={updateReminders}
         />
       </>
+      </section>
       )}
 
       {/* Social & Privacy — merged into Account tab */}

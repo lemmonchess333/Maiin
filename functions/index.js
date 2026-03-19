@@ -369,6 +369,47 @@ exports.dailyPerformanceRefresh = functions.pubsub
     return null;
   });
 
+// ══════════════════════════════════════════════
+// CHALLENGE AUTO-PROGRESS HELPER
+// ══════════════════════════════════════════════
+
+async function syncChallengeProgress(uid, metric, incrementBy) {
+  try {
+    const challengesSnap = await db.collection("challenges").get();
+    const now = new Date();
+
+    for (const doc of challengesSnap.docs) {
+      const challenge = doc.data();
+      // Only update active challenges matching this metric
+      const endDate = challenge.endDate && challenge.endDate.toDate
+        ? challenge.endDate.toDate()
+        : null;
+      if (endDate && endDate < now) continue;
+      if (challenge.metric !== metric) continue;
+
+      // Check if user is a participant
+      const participantRef = db.collection("challenges").doc(doc.id)
+        .collection("participants").doc(uid);
+      const participantSnap = await participantRef.get();
+      if (!participantSnap.exists()) continue;
+
+      const current = participantSnap.data().currentValue || 0;
+      const newValue = current + incrementBy;
+
+      // Compute tier
+      const tiers = challenge.tiers || {};
+      let tierAchieved = null;
+      if (newValue >= (tiers.gold || Infinity)) tierAchieved = "gold";
+      else if (newValue >= (tiers.silver || Infinity)) tierAchieved = "silver";
+      else if (newValue >= (tiers.bronze || Infinity)) tierAchieved = "bronze";
+
+      await participantRef.set({ currentValue: newValue, tierAchieved }, { merge: true });
+    }
+  } catch (err) {
+    console.error(`syncChallengeProgress: error for ${uid}/${metric}:`, err.message);
+  }
+}
+
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions.firestore
@@ -382,6 +423,14 @@ exports.onWorkoutCreated = functions.firestore
         { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true },
       );
+
+      // Auto-progress workout_count challenges
+      await syncChallengeProgress(uid, "workout_count", 1);
+
+      // Auto-progress total_volume challenges (if volume data available)
+      if (data.totalVolume) {
+        await syncChallengeProgress(uid, "total_volume", data.totalVolume);
+      }
 
       if (data.date) {
         const workoutWeek = getWeekKey(new Date(data.date + "T00:00:00Z"));
@@ -425,6 +474,12 @@ exports.onRunCreated = functions.firestore
         { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true },
       );
+
+      // Auto-progress km-based challenges
+      const distanceKm = data.distanceKm || (data.distance ? data.distance / 1000 : 0);
+      if (distanceKm > 0) {
+        await syncChallengeProgress(uid, "total_km", Math.round(distanceKm * 100) / 100);
+      }
 
       if (data.completedAt) {
         const runDate = data.completedAt.toDate ? data.completedAt.toDate() : new Date(data.completedAt);

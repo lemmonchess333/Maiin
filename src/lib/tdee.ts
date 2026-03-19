@@ -3,6 +3,8 @@
  * Provides macro recommendations based on fitness goal.
  */
 
+import { GOAL_PROTEIN, GOAL_CALORIE_OFFSET, DEFAULT_PROTEIN_MULTIPLIER, FAT_CALORIE_FRACTION } from "./macroConstants";
+
 export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
 export type FitnessGoal = "cut" | "recomp" | "lean bulk";
 
@@ -49,24 +51,9 @@ export function calculateTDEE(
   const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + sexOffset);
   const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 
-  // Goal-based adjustments
-  let deficit = 0;
-  let proteinMultiplier = 2.0; // g per kg bodyweight
-
-  switch (goal) {
-    case "cut":
-      deficit = -500; // ~0.5kg/week loss
-      proteinMultiplier = 2.2; // Higher protein to preserve muscle
-      break;
-    case "lean bulk":
-      deficit = 300; // Modest surplus
-      proteinMultiplier = 1.8;
-      break;
-    case "recomp":
-      deficit = 0;
-      proteinMultiplier = 2.0;
-      break;
-  }
+  // Goal-based adjustments from centralized constants
+  const deficit = GOAL_CALORIE_OFFSET[goal] ?? 0;
+  const proteinMultiplier = GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
 
   const targetCalories = tdee + deficit;
 
@@ -74,8 +61,7 @@ export function calculateTDEE(
   const protein = Math.round(proteinMultiplier * weightKg);
   const proteinCals = protein * 4;
 
-  // Fat: 25% of target calories
-  const fatCals = Math.round(targetCalories * 0.25);
+  const fatCals = Math.round(targetCalories * FAT_CALORIE_FRACTION);
   const fat = Math.round(fatCals / 9);
 
   // Carbs: remainder

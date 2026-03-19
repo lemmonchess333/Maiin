@@ -557,12 +557,14 @@ export default function Log() {
   return (
     <motion.div className="space-y-6" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
-      <motion.div variants={itemVariant}>
-        <h1 className="text-xl font-bold text-foreground">Log Activity</h1>
-        <p className="text-sm text-muted-foreground">
-          Record your daily progress
-        </p>
-      </motion.div>
+      <header>
+        <motion.div variants={itemVariant}>
+          <h1 className="text-xl font-bold text-foreground">Log Activity</h1>
+          <p className="text-sm text-muted-foreground">
+            Record your daily progress
+          </p>
+        </motion.div>
+      </header>
 
       {/* Date Switcher */}
       <motion.div variants={itemVariant} className="flex items-center justify-between rounded-2xl p-3"
@@ -638,6 +640,7 @@ export default function Log() {
 
       {/* Workout Tab */}
       {activeTab === "workout" && (
+        <section aria-label="Workout logging">
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Start a run link */}
           <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform"
@@ -670,10 +673,12 @@ export default function Log() {
             <WorkoutLogger date={selectedDate} onSaved={handleWorkoutSaved} />
           </Suspense>
         </motion.div>
+        </section>
       )}
 
       {/* Food Tab */}
       {activeTab === "food" && (
+        <section aria-label="Food logging">
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
@@ -1006,6 +1011,7 @@ export default function Log() {
             onConfirm={handleOFFConfirm}
           />
         </motion.div>
+        </section>
       )}
 
     </motion.div>
