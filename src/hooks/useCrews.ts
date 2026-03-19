@@ -90,7 +90,7 @@ export function useCrews() {
       setCrews(prevCrews);
       throw e;
     }
-  }, [user, currentCrewId, crews, profile?.displayName, updateProfile]);
+  }, [user, currentCrewId, crews, profile, updateProfile]);
 
   const leaveCrew = useCallback(async () => {
     if (!user?.uid || !currentCrewId) return;

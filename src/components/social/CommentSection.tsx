@@ -19,12 +19,12 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
     getComments(activityId).then(setComments);
   }, [activityId]);
 
-  useEffect(() => {
-    if (prefillText) {
-      setText(prefillText);
-      onPrefillConsumed?.();
-    }
-  }, [prefillText, onPrefillConsumed]);
+  const [prevPrefill, setPrevPrefill] = useState(prefillText);
+  if (prefillText && prefillText !== prevPrefill) {
+    setPrevPrefill(prefillText);
+    setText(prefillText);
+    onPrefillConsumed?.();
+  }
 
   const handleSend = async () => {
     if (!user || !text.trim()) return;
