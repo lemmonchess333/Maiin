@@ -3,7 +3,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
-import { Camera, Lock, Loader2 } from 'lucide-react';
+import { Camera, Lock, Loader2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../../lib/theme';
 import { EmptyState } from '../EmptyState';
@@ -27,6 +27,13 @@ async function decryptBlob(encrypted: ArrayBuffer, key: CryptoKey, iv: Uint8Arra
   return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as unknown as BufferSource }, key, encrypted);
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Upload timed out')), ms)),
+  ]);
+}
+
 export default function ProgressPhotos() {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<{ id: string; date: string; storagePath: string; iv: number[] }[]>([]);
@@ -36,8 +43,10 @@ export default function ProgressPhotos() {
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
+  const [uploadError, setUploadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const keyRef = useRef<CryptoKey | null>(null);
+  const pendingFileRef = useRef<File | null>(null);
 
   // Helper to cache encryption key (#14)
   const getOrDeriveKey = useCallback(async (uid: string): Promise<CryptoKey> => {
@@ -115,50 +124,72 @@ export default function ProgressPhotos() {
     setDecryptedUrls(prev => ({ ...prev, [photo.id]: objectUrl }));
   }, [user, decryptedUrls, getOrDeriveKey]);
 
-  const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !e.target.files?.[0]) return;
+  const uploadFile = useCallback(async (file: File) => {
+    if (!user) return;
     setLoading(true);
+    setUploadError(false);
     try {
-      const file = e.target.files[0];
-      const bitmap = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1920 / bitmap.width, 1920 / bitmap.height, 1);
-      canvas.width = bitmap.width * scale;
-      canvas.height = bitmap.height * scale;
-      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
+      await withTimeout(async function doUpload() {
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1920 / bitmap.width, 1920 / bitmap.height, 1);
+        canvas.width = bitmap.width * scale;
+        canvas.height = bitmap.height * scale;
+        canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
 
-      const key = await getOrDeriveKey(user.uid);
-      const { encrypted, iv } = await encryptBlob(await blob.arrayBuffer(), key);
+        const key = await getOrDeriveKey(user.uid);
+        const { encrypted, iv } = await encryptBlob(await blob.arrayBuffer(), key);
 
-      const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
-      await uploadBytes(ref(storage, path), new Uint8Array(encrypted));
+        const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
+        await uploadBytes(ref(storage, path), new Uint8Array(encrypted));
 
-      const docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
-        storagePath: path,
-        iv: Array.from(iv),
-        date: new Date().toISOString().split('T')[0],
-        visibility: isPrivate ? 'private' : 'public',
-        createdAt: Timestamp.now(),
-      });
-      await loadPhotos();
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
+          storagePath: path,
+          iv: Array.from(iv),
+          date: new Date().toISOString().split('T')[0],
+          visibility: isPrivate ? 'private' : 'public',
+          createdAt: Timestamp.now(),
+        });
+        await loadPhotos();
 
-      // Auto-decrypt newly uploaded photo
-      const newUrl = await getDownloadURL(ref(storage, path));
-      const encResponse = await fetch(newUrl);
-      const encBuffer = await encResponse.arrayBuffer();
-      const decryptedData = await decryptBlob(encBuffer, key, iv);
-      const decBlob = new Blob([decryptedData], { type: 'image/webp' });
-      const objectUrl = URL.createObjectURL(decBlob);
-      setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
+        // Auto-decrypt newly uploaded photo
+        const newUrl = await getDownloadURL(ref(storage, path));
+        const encResponse = await fetch(newUrl);
+        const encBuffer = await encResponse.arrayBuffer();
+        const decryptedData = await decryptBlob(encBuffer, key, iv);
+        const decBlob = new Blob([decryptedData], { type: 'image/webp' });
+        const objectUrl = URL.createObjectURL(decBlob);
+        setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
 
-      toast.success('Photo uploaded!');
+        toast.success('Photo uploaded!');
+      }(), 30000);
     } catch (err) {
       console.error('Upload failed:', err);
-      toast.error('Upload failed. Please try again.');
+      setUploadError(true);
+      toast.error(
+        err instanceof Error && err.message === 'Upload timed out'
+          ? 'Upload timed out. Please try again.'
+          : 'Upload failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    setLoading(false);
   }, [user, loadPhotos, isPrivate, getOrDeriveKey]);
+
+  const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    pendingFileRef.current = file;
+    await uploadFile(file);
+  }, [user, uploadFile]);
+
+  const retryUpload = useCallback(async () => {
+    if (!pendingFileRef.current) return;
+    setUploadError(false);
+    await uploadFile(pendingFileRef.current);
+  }, [uploadFile]);
 
   return (
     <div className="space-y-4">
@@ -196,7 +227,18 @@ export default function ProgressPhotos() {
         </div>
       )}
 
-      {!loading && photos.length === 0 && (
+      {uploadError && !loading && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+          <p className="text-xs text-destructive">Upload failed. Please try again.</p>
+          <button onClick={retryUpload}
+            className="flex items-center gap-1 text-xs font-medium text-destructive ml-2 shrink-0">
+            <RotateCcw size={12} />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {photos.length === 0 && (
         <EmptyState
           icon={<Camera size={28} />}
           title="Track your transformation"

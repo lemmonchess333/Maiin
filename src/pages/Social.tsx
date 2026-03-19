@@ -10,7 +10,7 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Hand, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
+import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -209,7 +209,7 @@ export default function Social() {
 
       {/* ========== FEED TAB ========== */}
       {tab === 'feed' && (
-        <div ref={feedContainerRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <div ref={feedContainerRef} className="!mt-3" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {/* Feed sub-tabs: Following | Discover */}
           <div className="flex gap-2">
             {(['following', 'discover'] as FeedSubTab[]).map(st => (
@@ -224,7 +224,7 @@ export default function Social() {
             ))}
           </div>
 
-          {feedSubTab === 'following' && <LeaderboardCard challenge="weekly_hybrid" />}
+          {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" /></div>}
 
           {pullRefreshing && (
             <div className="flex items-center justify-center py-2">
@@ -275,23 +275,25 @@ export default function Social() {
           )}
 
           {!activeFeed.loading && activeFeed.items.length === 0 && (
-            feedSubTab === 'discover' ? (
-              <EmptyState
-                icon={<Globe size={28} />}
-                title="No public activities yet"
-                description="Be the first to share! Your workouts will appear here when set to Public."
-                accentColor={THEME.brand}
-                action={{ label: 'Log a Workout', href: '/Maiin/log' }}
-              />
-            ) : (
-              <EmptyState
-                icon={<Hand size={28} />}
-                title="No activity yet"
-                description="Follow people to see their workouts and runs here"
-                accentColor={THEME.brand}
-                action={{ label: 'Find People', onClick: () => setTab('find') }}
-              />
-            )
+            <div className="mt-6">
+              {feedSubTab === 'discover' ? (
+                <EmptyState
+                  icon={<Globe size={28} />}
+                  title="No public activities yet"
+                  description="Be the first to share! Your workouts will appear here when set to Public."
+                  accentColor={THEME.brand}
+                  action={{ label: 'Log a Workout', href: '/Maiin/log' }}
+                />
+              ) : (
+                <EmptyState
+                  icon={<Users size={28} />}
+                  title="No activity yet"
+                  description="Follow people to see their workouts and runs here"
+                  accentColor={THEME.brand}
+                  action={{ label: 'Find People', onClick: () => setTab('find') }}
+                />
+              )}
+            </div>
           )}
         </div>
       )}
