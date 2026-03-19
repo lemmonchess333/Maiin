@@ -338,13 +338,13 @@ export default function Settings() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">
-              {tier === "pro" ? "Pro" : isInTrial ? "Pro Trial" : "Free"}
+              {tier === "pro" ? "Pro" : isInTrial ? "Pro trial active" : "Free"}
             </p>
             <p className="text-xs text-muted-foreground">
               {tier === "pro"
                 ? "Full access to all features"
                 : isInTrial
-                ? `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} remaining — upgrade to keep Pro!`
+                ? `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
                 : "Basic features — upgrade for full access"}
             </p>
           </div>
