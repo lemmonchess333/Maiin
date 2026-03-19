@@ -109,7 +109,12 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
     <div className="p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(168,85,247,0.08))', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 2px 12px rgba(139,92,246,0.1)' }}>
       <div className="flex items-center gap-2 mb-3">
         {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: '#8B5CF6' }} />}
-        <h3 className="text-sm font-bold">{title}</h3>
+        <div className="flex-1">
+          <h3 className="text-sm font-bold">{title}</h3>
+          {challenge === 'weekly_hybrid' && (
+            <p className="text-[10px] text-muted-foreground">Lifting volume + running distance this week</p>
+          )}
+        </div>
         <span className="ml-auto text-[10px] text-muted-foreground">This Week</span>
       </div>
 
