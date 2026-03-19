@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import type { EarnedBadge } from "./badges";
 import { TIER_COLORS } from "./badges";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface BadgeEarnedModalProps {
   badge: EarnedBadge | null;
@@ -34,48 +35,46 @@ function playChime() {
   }
 }
 
-export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
+function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismiss: () => void }) {
   const autoDismissRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
-    if (badge) {
-      const tierColor = TIER_COLORS[badge.tier];
-      lazyConfetti().then(confetti => confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.4 },
-        colors: [tierColor, "#8b5cf6", "#fbbf24", "#34d399"],
-      }));
-      playChime();
+    const tierColor = TIER_COLORS[badge.tier];
+    lazyConfetti().then(confetti => confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.4 },
+      colors: [tierColor, "#7C6EF6", "#fbbf24", "#34d399"],
+    }));
+    playChime();
 
-      autoDismissRef.current = setTimeout(onDismiss, 3500);
-      return () => clearTimeout(autoDismissRef.current);
-    }
+    autoDismissRef.current = setTimeout(onDismiss, 3500);
+    return () => clearTimeout(autoDismissRef.current);
   }, [badge, onDismiss]);
 
   return (
-    <AnimatePresence>
-      {badge && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center px-6"
-          style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={onDismiss}
-        >
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Badge earned: ${badge.name}`}
-            initial={{ scale: 0.3, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.5, opacity: 0 }}
-            transition={{ type: "spring", damping: 15, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center px-6"
+      style={{ background: "rgba(0,0,0,0.7)" }}
+      onClick={onDismiss}
+    >
+      <motion.div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Badge earned: ${badge.name}`}
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.5, opacity: 0 }}
+        transition={{ type: "spring", damping: 15, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
             className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
             style={{
-              background: "rgba(15, 15, 20, 0.92)",
+              background: "var(--glass-bg)",
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
               border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
@@ -130,7 +129,13 @@ export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
             </button>
           </motion.div>
         </motion.div>
-      )}
+  );
+}
+
+export function BadgeEarnedModal({ badge, onDismiss }: BadgeEarnedModalProps) {
+  return (
+    <AnimatePresence>
+      {badge && <BadgeEarnedContent badge={badge} onDismiss={onDismiss} />}
     </AnimatePresence>
   );
 }

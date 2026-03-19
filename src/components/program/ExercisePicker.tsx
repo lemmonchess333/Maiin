@@ -157,14 +157,14 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
                   height: 34,
                   borderRadius: 10,
                   backgroundColor: selectedIds.has(exercise.id)
-                    ? '#7c3aed'
+                    ? '#6358D4'
                     : 'rgba(124,58,237,0.08)',
                 }}
               >
                 {selectedIds.has(exercise.id) ? (
                   <Check className="w-4 h-4 text-white" />
                 ) : (
-                  <Plus className="w-4 h-4" style={{ color: '#7c3aed' }} />
+                  <Plus className="w-4 h-4" style={{ color: '#6358D4' }} />
                 )}
               </button>
             </div>
@@ -186,7 +186,7 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
             onClick={handleAddSelected}
             className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
             style={{
-              backgroundColor: '#7c3aed',
+              backgroundColor: '#6358D4',
               borderRadius: 16,
               boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
             }}

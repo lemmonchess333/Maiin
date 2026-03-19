@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useAuth } from '../../lib/auth';
 import { toggleKudos, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
 import CommentSection from './CommentSection';
@@ -37,7 +37,7 @@ function formatDur(seconds: number): string {
 const RUN_CHIPS = ['Nice run!', 'Great pace!', 'Keep it up!'];
 const LIFT_CHIPS = ['Great lift!', 'Beast mode!', 'Strong work!'];
 
-export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (item: FeedItem) => void }) {
+function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (item: FeedItem) => void }) {
   const { user, profile } = useAuth();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
@@ -347,3 +347,5 @@ export default function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem
     </div>
   );
 }
+
+export default memo(ActivityCard);

@@ -36,6 +36,7 @@ export function ToastProvider() {
       <Toaster
         position="top-center"
         offset="env(safe-area-inset-top, 54px)"
+        aria-live="polite"
         toastOptions={{
           style: {
             borderRadius: "16px",

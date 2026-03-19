@@ -26,7 +26,7 @@ const SEGMENT_COLORS: Record<SegmentType, string> = {
   easy: "#22c55e",
   moderate: "#3b82f6",
   hard: "#ef4444",
-  recovery: "#8b5cf6",
+  recovery: "#7C6EF6",
   cooldown: "#06b6d4",
 };
 

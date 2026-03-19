@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { THEME } from '../../lib/theme';
 import { calculatePace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { GPSPoint, Split } from '../../lib/gps';
 
 interface RunBottomSheetProps {
@@ -81,6 +82,7 @@ export default function RunBottomSheet({
 }: RunBottomSheetProps) {
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const stopConfirmRef = useFocusTrap<HTMLDivElement>(showStopConfirm);
   const dragY = useRef<number | null>(null);
   const isExpanded = snapIdx === 2;
 
@@ -280,7 +282,7 @@ export default function RunBottomSheet({
       {/* Stop confirmation modal */}
       {showStopConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="stop-run-title" className="mx-6 p-6 rounded-2xl w-full max-w-sm" style={{ background: THEME.surface, border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div ref={stopConfirmRef} role="dialog" aria-modal="true" aria-labelledby="stop-run-title" className="mx-6 p-6 rounded-2xl w-full max-w-sm" style={{ background: THEME.surface, border: '1px solid rgba(255,255,255,0.1)' }}>
             <h3 id="stop-run-title" className="text-lg font-bold text-white text-center mb-4">End run?</h3>
             <div className="flex justify-around mb-6">
               <div className="text-center">

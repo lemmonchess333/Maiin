@@ -243,7 +243,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     aria-checked={config[setting.key]}
                     aria-label={setting.label}
                     className="w-11 h-6 rounded-full transition-colors relative"
-                    style={{ background: config[setting.key] ? '#8b5cf6' : 'rgba(255,255,255,0.1)' }}
+                    style={{ background: config[setting.key] ? '#7C6EF6' : 'rgba(255,255,255,0.1)' }}
                   >
                     <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                       style={{ transform: config[setting.key] ? 'translateX(20px)' : 'translateX(2px)' }} />
@@ -260,7 +260,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                       aria-checked={config.paceAlerts}
                       aria-label="Pace alerts"
                       className="w-11 h-6 rounded-full transition-colors relative"
-                      style={{ background: config.paceAlerts ? '#8b5cf6' : 'rgba(255,255,255,0.1)' }}
+                      style={{ background: config.paceAlerts ? '#7C6EF6' : 'rgba(255,255,255,0.1)' }}
                     >
                       <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                         style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />

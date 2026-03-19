@@ -14,55 +14,64 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
   }
   const uid = context.auth.uid;
 
-  // Validate required fields
-  const {profileData, programState} = data;
-  if (!profileData || typeof profileData !== "object") {
-    throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
-  }
-  if (!programState || typeof programState !== "object") {
-    throw new functions.https.HttpsError("invalid-argument", "programState is required.");
-  }
-
-  // Sanitize: strip fields that clients must never set
-  const clientForbidden = ["stripeCustomerId", "stripeSubscriptionId"];
-  for (const key of clientForbidden) {
-    delete profileData[key];
-  }
-
-  // Force correct ownership + subscription tier
-  profileData.uid = uid;
-  profileData.subscriptionTier = "free";
-  profileData.onboardingComplete = true;
-
-  const db = admin.firestore();
-
-  // Check if profile already exists (preserve trialExpiresAt, createdAt)
-  const userRef = db.collection("users").doc(uid);
-  const existing = await userRef.get();
-
-  if (existing.exists) {
-    // Don't overwrite protected fields on update
-    delete profileData.trialExpiresAt;
-    delete profileData.createdAt;
-    await userRef.set(profileData, {merge: true});
-  } else {
-    // New profile: set defaults
-    if (!profileData.trialExpiresAt) {
-      const d = new Date();
-      d.setDate(d.getDate() + 7);
-      profileData.trialExpiresAt = d.toISOString();
+  try {
+    // Validate required fields
+    const {profileData, programState} = data;
+    if (!profileData || typeof profileData !== "object") {
+      throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
     }
-    if (!profileData.createdAt) {
-      profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    if (!programState || typeof programState !== "object") {
+      throw new functions.https.HttpsError("invalid-argument", "programState is required.");
     }
-    await userRef.set(profileData);
+
+    // Sanitize: strip fields that clients must never set
+    const clientForbidden = ["stripeCustomerId", "stripeSubscriptionId"];
+    for (const key of clientForbidden) {
+      delete profileData[key];
+    }
+
+    // Force correct ownership + subscription tier
+    profileData.uid = uid;
+    profileData.subscriptionTier = "free";
+    profileData.onboardingComplete = true;
+
+    const db = admin.firestore();
+
+    // Check if profile already exists (preserve trialExpiresAt, createdAt)
+    const userRef = db.collection("users").doc(uid);
+    const existing = await userRef.get();
+
+    if (existing.exists) {
+      // Don't overwrite protected fields on update
+      delete profileData.trialExpiresAt;
+      delete profileData.createdAt;
+      await userRef.set(profileData, {merge: true});
+    } else {
+      // New profile: set defaults
+      if (!profileData.trialExpiresAt) {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        profileData.trialExpiresAt = d.toISOString();
+      }
+      if (!profileData.createdAt) {
+        profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      }
+      await userRef.set(profileData);
+    }
+
+    // Write program state
+    const programRef = userRef.collection("programState").doc("current");
+    await programRef.set(programState);
+
+    return {success: true};
+  } catch (err) {
+    // Re-throw HttpsError as-is (validation errors, etc.)
+    if (err instanceof functions.https.HttpsError) {
+      throw err;
+    }
+    console.error("completeOnboarding error:", { uid, message: err.message, stack: err.stack });
+    throw new functions.https.HttpsError("internal", "Failed to complete onboarding.");
   }
-
-  // Write program state
-  const programRef = userRef.collection("programState").doc("current");
-  await programRef.set(programState);
-
-  return {success: true};
 });
 
 // ══════════════════════════════════════════════
@@ -274,39 +283,43 @@ exports.weeklyPerformanceRollup = functions.pubsub
   .schedule("15 23 * * 0")
   .timeZone("Europe/London")
   .onRun(async () => {
-    console.log("weeklyPerformanceRollup: starting");
-
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-    let usersSnap;
     try {
-      usersSnap = await db.collection("users")
-        .where("lastActiveAt", ">=", cutoffTs)
-        .get();
-    } catch (_) {
-      console.log("weeklyPerformanceRollup: lastActiveAt query failed, computing for all users");
-      usersSnap = await db.collection("users").get();
+      console.log("weeklyPerformanceRollup: starting");
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db.collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (_) {
+        console.log("weeklyPerformanceRollup: lastActiveAt query failed, computing for all users");
+        usersSnap = await db.collection("users").get();
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(`weeklyPerformanceRollup: computing for ${uids.length} users`);
+
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              await computeAndWritePerformanceForUser(uid, null);
+            } catch (err) {
+              console.error(`weeklyPerformanceRollup: failed for ${uid}:`, err.message);
+            }
+          }),
+        );
+      }
+
+      console.log("weeklyPerformanceRollup: done");
+    } catch (err) {
+      console.error("weeklyPerformanceRollup: fatal error:", { message: err.message, stack: err.stack });
     }
-
-    const uids = usersSnap.docs.map((d) => d.id);
-    console.log(`weeklyPerformanceRollup: computing for ${uids.length} users`);
-
-    for (let i = 0; i < uids.length; i += 10) {
-      const batch = uids.slice(i, i + 10);
-      await Promise.all(
-        batch.map(async (uid) => {
-          try {
-            await computeAndWritePerformanceForUser(uid, null);
-          } catch (err) {
-            console.error(`weeklyPerformanceRollup: failed for ${uid}:`, err.message);
-          }
-        }),
-      );
-    }
-
-    console.log("weeklyPerformanceRollup: done");
     return null;
   });
 
@@ -316,39 +329,43 @@ exports.dailyPerformanceRefresh = functions.pubsub
   .schedule("10 2 * * *")
   .timeZone("Europe/London")
   .onRun(async () => {
-    console.log("dailyPerformanceRefresh: starting");
-
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 14);
-    const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-    let usersSnap;
     try {
-      usersSnap = await db.collection("users")
-        .where("lastActiveAt", ">=", cutoffTs)
-        .get();
-    } catch (_) {
-      console.log("dailyPerformanceRefresh: lastActiveAt query failed, skipping");
-      return null;
+      console.log("dailyPerformanceRefresh: starting");
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 14);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db.collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (_) {
+        console.log("dailyPerformanceRefresh: lastActiveAt query failed, skipping");
+        return null;
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(`dailyPerformanceRefresh: computing for ${uids.length} users`);
+
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              await computeAndWritePerformanceForUser(uid, null);
+            } catch (err) {
+              console.error(`dailyPerformanceRefresh: failed for ${uid}:`, err.message);
+            }
+          }),
+        );
+      }
+
+      console.log("dailyPerformanceRefresh: done");
+    } catch (err) {
+      console.error("dailyPerformanceRefresh: fatal error:", { message: err.message, stack: err.stack });
     }
-
-    const uids = usersSnap.docs.map((d) => d.id);
-    console.log(`dailyPerformanceRefresh: computing for ${uids.length} users`);
-
-    for (let i = 0; i < uids.length; i += 10) {
-      const batch = uids.slice(i, i + 10);
-      await Promise.all(
-        batch.map(async (uid) => {
-          try {
-            await computeAndWritePerformanceForUser(uid, null);
-          } catch (err) {
-            console.error(`dailyPerformanceRefresh: failed for ${uid}:`, err.message);
-          }
-        }),
-      );
-    }
-
-    console.log("dailyPerformanceRefresh: done");
     return null;
   });
 
@@ -358,35 +375,39 @@ exports.onWorkoutCreated = functions.firestore
   .document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
-    const data = snap.data();
+    try {
+      const data = snap.data();
 
-    await db.collection("users").doc(uid).set(
-      { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
-      { merge: true },
-    );
+      await db.collection("users").doc(uid).set(
+        { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true },
+      );
 
-    if (data.date) {
-      const workoutWeek = getWeekKey(new Date(data.date + "T00:00:00Z"));
-      const currentWeek = getWeekKey(new Date());
-      if (workoutWeek !== currentWeek) {
-        console.log(`onWorkoutCreated: skipping recompute for ${uid}, workout in week ${workoutWeek} (current: ${currentWeek})`);
+      if (data.date) {
+        const workoutWeek = getWeekKey(new Date(data.date + "T00:00:00Z"));
+        const currentWeek = getWeekKey(new Date());
+        if (workoutWeek !== currentWeek) {
+          console.log(`onWorkoutCreated: skipping recompute for ${uid}, workout in week ${workoutWeek} (current: ${currentWeek})`);
+          return null;
+        }
+      }
+
+      const canRun = await acquireCooldownLock(uid);
+      if (!canRun) {
+        console.log(`onWorkoutCreated: cooldown active for ${uid}, skipping`);
         return null;
       }
-    }
 
-    const canRun = await acquireCooldownLock(uid);
-    if (!canRun) {
-      console.log(`onWorkoutCreated: cooldown active for ${uid}, skipping`);
-      return null;
-    }
-
-    try {
-      await computeAndWritePerformanceForUser(uid, null);
-      await releaseLock(uid, true);
-      console.log(`onWorkoutCreated: computed performance for ${uid}`);
+      try {
+        await computeAndWritePerformanceForUser(uid, null);
+        await releaseLock(uid, true);
+        console.log(`onWorkoutCreated: computed performance for ${uid}`);
+      } catch (err) {
+        await releaseLock(uid, false, err.message);
+        console.error(`onWorkoutCreated: compute error for ${uid}:`, err.message);
+      }
     } catch (err) {
-      await releaseLock(uid, false, err.message);
-      console.error(`onWorkoutCreated: error for ${uid}:`, err.message);
+      console.error("onWorkoutCreated: fatal error:", { uid, message: err.message, stack: err.stack });
     }
     return null;
   });
@@ -397,36 +418,40 @@ exports.onRunCreated = functions.firestore
   .document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
-    const data = snap.data();
+    try {
+      const data = snap.data();
 
-    await db.collection("users").doc(uid).set(
-      { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
-      { merge: true },
-    );
+      await db.collection("users").doc(uid).set(
+        { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true },
+      );
 
-    if (data.completedAt) {
-      const runDate = data.completedAt.toDate ? data.completedAt.toDate() : new Date(data.completedAt);
-      const runWeek = getWeekKey(runDate);
-      const currentWeek = getWeekKey(new Date());
-      if (runWeek !== currentWeek) {
-        console.log(`onRunCreated: skipping recompute for ${uid}, run in week ${runWeek} (current: ${currentWeek})`);
+      if (data.completedAt) {
+        const runDate = data.completedAt.toDate ? data.completedAt.toDate() : new Date(data.completedAt);
+        const runWeek = getWeekKey(runDate);
+        const currentWeek = getWeekKey(new Date());
+        if (runWeek !== currentWeek) {
+          console.log(`onRunCreated: skipping recompute for ${uid}, run in week ${runWeek} (current: ${currentWeek})`);
+          return null;
+        }
+      }
+
+      const canRun = await acquireCooldownLock(uid);
+      if (!canRun) {
+        console.log(`onRunCreated: cooldown active for ${uid}, skipping`);
         return null;
       }
-    }
 
-    const canRun = await acquireCooldownLock(uid);
-    if (!canRun) {
-      console.log(`onRunCreated: cooldown active for ${uid}, skipping`);
-      return null;
-    }
-
-    try {
-      await computeAndWritePerformanceForUser(uid, null);
-      await releaseLock(uid, true);
-      console.log(`onRunCreated: computed performance for ${uid}`);
+      try {
+        await computeAndWritePerformanceForUser(uid, null);
+        await releaseLock(uid, true);
+        console.log(`onRunCreated: computed performance for ${uid}`);
+      } catch (err) {
+        await releaseLock(uid, false, err.message);
+        console.error(`onRunCreated: compute error for ${uid}:`, err.message);
+      }
     } catch (err) {
-      await releaseLock(uid, false, err.message);
-      console.error(`onRunCreated: error for ${uid}:`, err.message);
+      console.error("onRunCreated: fatal error:", { uid, message: err.message, stack: err.stack });
     }
     return null;
   });

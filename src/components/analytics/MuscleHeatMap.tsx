@@ -39,8 +39,8 @@ const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
 };
 
 const LOW_COLOR = "#c4b5fd";
-const MID_COLOR = "#8b5cf6";
-const HIGH_COLOR = "#7c3aed";
+const MID_COLOR = "#7C6EF6";
+const HIGH_COLOR = "#6358D4";
 
 function getLegendDotColor(sets: number): string {
   if (sets <= 30) return LOW_COLOR;
@@ -91,7 +91,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
           <Model
             data={exerciseData}
             style={{ width: 140 }}
-            highlightedColors={["#c4b5fd", "#8b5cf6", "#7c3aed"]}
+            highlightedColors={["#c4b5fd", "#7C6EF6", "#6358D4"]}
             bodyColor="#e8e8f0"
             type="anterior"
           />
@@ -99,7 +99,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
           <Model
             data={exerciseData}
             style={{ width: 140 }}
-            highlightedColors={["#c4b5fd", "#8b5cf6", "#7c3aed"]}
+            highlightedColors={["#c4b5fd", "#7C6EF6", "#6358D4"]}
             bodyColor="#e8e8f0"
             type="posterior"
           />

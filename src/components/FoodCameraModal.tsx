@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { X, Image as ImageIcon } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 type CaptureMode = "food" | "label";
 type TabMode = "food" | "barcode" | "label";
@@ -43,6 +44,7 @@ export default function FoodCameraModal({
   onBarcodeDetected,
   loading,
 }: Props) {
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -240,7 +242,7 @@ export default function FoodCameraModal({
   const disableShutter = loading || busy || tab === "barcode";
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Food camera" className="fixed inset-0 z-[60] bg-black">
+    <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Food camera" className="fixed inset-0 z-[60] bg-black">
       {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button

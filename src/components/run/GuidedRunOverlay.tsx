@@ -36,11 +36,11 @@ export default function GuidedRunOverlay({
     );
   }
 
-  const segColor = currentSegment ? getSegmentColor(currentSegment.type) : "#8b5cf6";
+  const segColor = currentSegment ? getSegmentColor(currentSegment.type) : "#7C6EF6";
 
   return (
     <div className="mx-4 mb-3 rounded-2xl overflow-hidden"
-      style={{ background: "rgba(15,15,20,0.8)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border)" }}>
       {/* Overall progress bar */}
       <div className="h-1 bg-white/5">
         <div className="h-full transition-all duration-1000" style={{ width: `${totalProgress * 100}%`, background: segColor }} />

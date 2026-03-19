@@ -3,6 +3,7 @@ import { reportContent, type ReportReason } from '../../lib/socialApi';
 import { useAuth } from '../../lib/auth';
 import { toast } from 'sonner';
 import { X, Flag } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 const REASONS: { value: ReportReason; label: string }[] = [
   { value: 'spam', label: 'Spam or misleading' },
@@ -22,6 +23,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
   const [sending, setSending] = useState(false);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>();
 
   const handleSubmit = async () => {
     if (!user || !reason) return;
@@ -41,6 +43,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
     <>
       <div className="fixed inset-0 bg-black/50 z-[1000]" onClick={onClose} aria-hidden="true" />
       <div
+        ref={focusTrapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
