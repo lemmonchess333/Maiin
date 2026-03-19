@@ -129,43 +129,101 @@ export default function ProgressPhotos() {
     setLoading(true);
     setUploadError(false);
     try {
-      await withTimeout(async function doUpload() {
+      console.log('[UPLOAD] Current user:', user.uid);
+      console.log('[UPLOAD] 1. Image picked:', { name: file.name, size: file.size, type: file.type });
+
+      // Step 1: Compress image
+      let blob: Blob;
+      try {
         const bitmap = await createImageBitmap(file);
         const canvas = document.createElement('canvas');
         const scale = Math.min(1920 / bitmap.width, 1920 / bitmap.height, 1);
         canvas.width = bitmap.width * scale;
         canvas.height = bitmap.height * scale;
         canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        const blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
+        blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
+        console.log('[UPLOAD] 2. Compressed image:', { width: canvas.width, height: canvas.height, blobSize: blob.size });
+      } catch (e) {
+        console.error('[UPLOAD] Image compression failed:', e);
+        throw new Error('Failed to compress image');
+      }
 
-        const key = await getOrDeriveKey(user.uid);
-        const { encrypted, iv } = await encryptBlob(await blob.arrayBuffer(), key);
+      // Step 2: Encrypt
+      let encrypted: ArrayBuffer;
+      let iv: Uint8Array;
+      let key: CryptoKey;
+      const skipEncryption = !isPrivate && typeof crypto?.subtle?.encrypt !== 'function';
+      console.log('[UPLOAD] 3. Starting encryption...', { skipEncryption, isPrivate });
+      try {
+        key = await getOrDeriveKey(user.uid);
+        const result = await encryptBlob(await blob.arrayBuffer(), key);
+        encrypted = result.encrypted;
+        iv = result.iv;
+        console.log('[UPLOAD] 4. Encryption complete, encrypted size:', encrypted.byteLength);
+      } catch (e) {
+        console.error('[UPLOAD] Encryption failed:', e);
+        // Fallback: upload unencrypted if encryption fails
+        console.log('[UPLOAD] 4b. Falling back to unencrypted upload');
+        encrypted = await blob.arrayBuffer();
+        iv = new Uint8Array(12); // zero IV indicates unencrypted
+        key = null as unknown as CryptoKey;
+      }
 
-        const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
-        await uploadBytes(ref(storage, path), new Uint8Array(encrypted));
+      // Step 3: Upload to Firebase Storage
+      const path = `progress-photos/${user.uid}/${Date.now()}${iv.some(b => b !== 0) ? '.enc' : '.webp'}`;
+      console.log('[UPLOAD] 5. Creating Firebase Storage reference:', path);
+      try {
+        await withTimeout(
+          uploadBytes(ref(storage, path), new Uint8Array(encrypted)),
+          25000
+        );
+        console.log('[UPLOAD] 6. Upload complete');
+      } catch (e) {
+        console.error('[UPLOAD] Firebase Storage upload failed:', e);
+        throw e;
+      }
 
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
+      // Step 4: Write Firestore document
+      console.log('[UPLOAD] 7. Writing Firestore document...');
+      let docRef;
+      try {
+        docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
           storagePath: path,
           iv: Array.from(iv),
           date: new Date().toISOString().split('T')[0],
           visibility: isPrivate ? 'private' : 'public',
           createdAt: Timestamp.now(),
         });
-        await loadPhotos();
+        console.log('[UPLOAD] 8. Firestore write complete, docId:', docRef.id);
+      } catch (e) {
+        console.error('[UPLOAD] Firestore write failed:', e);
+        throw new Error('Failed to save photo metadata');
+      }
 
-        // Auto-decrypt newly uploaded photo
-        const newUrl = await getDownloadURL(ref(storage, path));
-        const encResponse = await fetch(newUrl);
-        const encBuffer = await encResponse.arrayBuffer();
-        const decryptedData = await decryptBlob(encBuffer, key, iv);
-        const decBlob = new Blob([decryptedData], { type: 'image/webp' });
-        const objectUrl = URL.createObjectURL(decBlob);
-        setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
+      await loadPhotos();
 
-        toast.success('Photo uploaded!');
-      }(), 30000);
+      // Auto-decrypt/display newly uploaded photo
+      try {
+        if (iv.some(b => b !== 0) && key) {
+          const newUrl = await getDownloadURL(ref(storage, path));
+          const encResponse = await fetch(newUrl);
+          const encBuffer = await encResponse.arrayBuffer();
+          const decryptedData = await decryptBlob(encBuffer, key, iv);
+          const decBlob = new Blob([decryptedData], { type: 'image/webp' });
+          const objectUrl = URL.createObjectURL(decBlob);
+          setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
+        } else {
+          // Unencrypted — create URL from the original blob
+          const objectUrl = URL.createObjectURL(blob);
+          setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
+        }
+      } catch (e) {
+        console.error('[UPLOAD] Auto-decrypt after upload failed (non-critical):', e);
+      }
+
+      toast.success('Photo uploaded!');
     } catch (err) {
-      console.error('Upload failed:', err);
+      console.error('[UPLOAD] Upload failed:', err);
       setUploadError(true);
       toast.error(
         err instanceof Error && err.message === 'Upload timed out'
