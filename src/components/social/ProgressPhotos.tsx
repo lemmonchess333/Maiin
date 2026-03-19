@@ -328,8 +328,9 @@ export default function ProgressPhotos() {
               <img
                 src={decryptedUrls[photo.id]}
                 className="w-full h-full object-cover"
-                alt=""
+                alt={`Progress from ${photo.date}`}
                 loading="lazy"
+                decoding="async"
                 onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : (
@@ -350,7 +351,7 @@ export default function ProgressPhotos() {
                 <img
                   src={decryptedUrls[id]}
                   className="w-full h-full object-cover"
-                  alt=""
+                  alt={`Progress from ${photos.find(p => p.id === id)?.date || 'unknown date'}`}
                   loading="lazy"
                   onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }}
                 />

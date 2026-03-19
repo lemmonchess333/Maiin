@@ -275,66 +275,68 @@ export default function Home() {
     <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2.5">
-            <svg width="34" height="34" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-              <defs>
-                <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor={THEME.brandLight}/>
-                  <stop offset="100%" stopColor={THEME.brand}/>
-                </linearGradient>
-              </defs>
-              <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
-              <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
-            </svg>
-            <span className="text-xl font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
-          </div>
-          <span className="text-sm text-muted-foreground mt-0.5">
-            {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <motion.div key={streak}
-            initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
-            animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
-            className={cn("relative flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
-            {/* Glow behind flame on streak extension */}
-            <AnimatePresence>
-              {streakJustExtended && (
-                <motion.div
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: "radial-gradient(circle, rgba(249,115,22,0.4) 0%, transparent 70%)" }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1.3 }}
-                  exit={{ opacity: 0, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                />
-              )}
-            </AnimatePresence>
-            <motion.span
-              animate={
-                streakJustExtended
-                  ? { opacity: 1, scale: [1, 1.3, 1] }
-                  : streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
-              }
-              transition={
-                streakJustExtended
-                  ? { duration: 0.5 }
-                  : streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
-              }
-            >
-              <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
-            </motion.span>
-            <span className={cn("text-sm font-bold relative z-10", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
-              {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
+      <header>
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2.5">
+              <svg width="34" height="34" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                <defs>
+                  <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={THEME.brandLight}/>
+                    <stop offset="100%" stopColor={THEME.brand}/>
+                  </linearGradient>
+                </defs>
+                <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
+                <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
+              </svg>
+              <span className="text-xl font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
+            </div>
+            <span className="text-sm text-muted-foreground mt-0.5">
+              {programState ? "Week " + programState.weekNumber + " \u00B7 " + programState.currentPhase + " phase" : "Let's put in work today."}
             </span>
-          </motion.div>
-          <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
-            <SettingsIcon aria-hidden="true" className="w-5 h-5 text-muted-foreground" />
-          </Link>
-        </div>
-      </motion.div>
+          </div>
+          <div className="flex items-center gap-2">
+            <motion.div key={streak}
+              initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
+              animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
+              className={cn("relative flex items-center gap-1 px-2.5 py-1 rounded-full", streak > 0 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-muted")}>
+              {/* Glow behind flame on streak extension */}
+              <AnimatePresence>
+                {streakJustExtended && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: "radial-gradient(circle, rgba(249,115,22,0.4) 0%, transparent 70%)" }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1.3 }}
+                    exit={{ opacity: 0, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                )}
+              </AnimatePresence>
+              <motion.span
+                animate={
+                  streakJustExtended
+                    ? { opacity: 1, scale: [1, 1.3, 1] }
+                    : streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
+                }
+                transition={
+                  streakJustExtended
+                    ? { duration: 0.5 }
+                    : streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
+                }
+              >
+                <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+              </motion.span>
+              <span className={cn("text-sm font-bold relative z-10", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
+                {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
+              </span>
+            </motion.div>
+            <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
+              <SettingsIcon aria-hidden="true" className="w-5 h-5 text-muted-foreground" />
+            </Link>
+          </div>
+        </motion.div>
+      </header>
 
       {isInTrial && (
         <motion.div variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } } }} className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
@@ -403,21 +405,25 @@ export default function Home() {
         )}
       </motion.div>
 
-      {(snapData.ls > 0 || snapData.rs > 0 || snapData.lt > 0 || snapData.rk > 0) && (
+      <section aria-label="Weekly snapshot">
+        {(snapData.ls > 0 || snapData.rs > 0 || snapData.lt > 0 || snapData.rk > 0) && (
+          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+            <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
+          </motion.div>
+        )}
+
+        {perfDoc && perfDoc.insight && (
+          <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
+        )}
+      </section>
+
+      <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-          <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
+          <SectionErrorBoundary sectionName="today-intake">
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} />
+          </SectionErrorBoundary>
         </motion.div>
-      )}
-
-      {perfDoc && perfDoc.insight && (
-        <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
-      )}
-
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <SectionErrorBoundary sectionName="today-intake">
-          <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} />
-        </SectionErrorBoundary>
-      </motion.div>
+      </section>
 
       {!isPro && !proUpsellDismissed && (
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-3 rounded-2xl bg-card text-center space-y-1 relative">

@@ -55,7 +55,7 @@ export default function RunDashboard() {
         <p className="text-[11px] text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
         <div className="flex items-center gap-5">
           <div className="relative inline-flex items-center justify-center shrink-0">
-            <svg className="progress-ring" viewBox="0 0 80 80" width="80" height="80">
+            <svg className="progress-ring" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label={`Weekly distance progress: ${weeklyKm.toFixed(1)} of ${goalKm} km`}>
               <circle className="progress-ring__bg" cx="40" cy="40" r="34" />
               <circle className="progress-ring__fill" cx="40" cy="40" r="34"
                 style={{ '--pct': pct } as React.CSSProperties} />

@@ -1,5 +1,5 @@
-import { Component, type ReactNode, lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Component, type ReactNode, lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
@@ -117,6 +117,36 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 }
 
 /* ================================
+   ROUTE PREFETCHING
+================================ */
+
+// Map of current route → likely next routes to prefetch
+const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
+  "/": [() => import("@/pages/Log"), () => import("@/pages/Program")],
+  "/log": [() => import("@/pages/Home"), () => import("@/pages/History")],
+  "/program": [() => import("@/pages/Home"), () => import("@/pages/Log")],
+  "/social": [() => import("@/pages/Home")],
+  "/history": [() => import("@/pages/Home"), () => import("@/pages/Settings")],
+};
+
+function RoutePrefetcher() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const prefetches = PREFETCH_MAP[location.pathname];
+    if (!prefetches) return;
+
+    const id = requestIdleCallback(() => {
+      prefetches.forEach(load => load().catch(() => {}));
+    });
+
+    return () => cancelIdleCallback(id);
+  }, [location.pathname]);
+
+  return null;
+}
+
+/* ================================
    ROUTES
 ================================ */
 
@@ -161,6 +191,7 @@ function AppRoutes() {
   // Fully authenticated
   return (
     <Suspense fallback={<PageLoader />}>
+      <RoutePrefetcher />
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />

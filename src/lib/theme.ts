@@ -32,7 +32,7 @@ export const THEME = {
 
   // Text
   textPrimary: '#E8E8ED',
-  textSecondary: 'rgba(255,255,255,0.55)',
+  textSecondary: 'rgba(255,255,255,0.72)',
   textMuted: 'rgba(255,255,255,0.25)',
 
   // Light mode text helpers
@@ -54,7 +54,7 @@ export const THEME = {
   },
 
   // Unified icon background
-  iconBg: 'rgba(124, 110, 246, 0.06)',  // barely-there brand tint
+  iconBg: 'rgba(124, 110, 246, 0.12)',  // brand tint — increased for WCAG contrast
 
   // Charts
   chartGrid: 'rgba(255,255,255,0.06)',

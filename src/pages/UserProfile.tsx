@@ -114,6 +114,7 @@ export default function UserProfile() {
               alt={profile.displayName || 'User avatar'}
               className="w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0); }}
             />
           ) : (

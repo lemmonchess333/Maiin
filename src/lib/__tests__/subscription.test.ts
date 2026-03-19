@@ -73,6 +73,79 @@ describe('getSubscriptionInfo', () => {
     expect(info.tier).toBe('pro');
     expect(info.isInTrial).toBe(false);
   });
+
+  it('trial expiry at exact midnight boundary is expired', () => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    // Set trial to expire at start of today (already passed)
+    const info = getSubscriptionInfo(makeProfile({
+      trialExpiresAt: now.toISOString(),
+    }));
+    expect(info.isPro).toBe(false);
+    expect(info.isInTrial).toBe(false);
+  });
+
+  it('trial expiring 1ms ago is expired', () => {
+    const justExpired = new Date(Date.now() - 1);
+    const info = getSubscriptionInfo(makeProfile({
+      trialExpiresAt: justExpired.toISOString(),
+    }));
+    expect(info.isPro).toBe(false);
+    expect(info.trialDaysLeft).toBe(0);
+  });
+
+  it('trial expiring 1ms from now is still active', () => {
+    const almostExpired = new Date(Date.now() + 1);
+    const info = getSubscriptionInfo(makeProfile({
+      trialExpiresAt: almostExpired.toISOString(),
+    }));
+    expect(info.isPro).toBe(true);
+    expect(info.isInTrial).toBe(true);
+    expect(info.trialDaysLeft).toBe(1);
+  });
+
+  it('lapsed pro (subscriptionTier free, no trial) is free', () => {
+    const info = getSubscriptionInfo(makeProfile({
+      subscriptionTier: 'free',
+      trialExpiresAt: new Date(Date.now() - 86400000).toISOString(),
+    }));
+    expect(info.isPro).toBe(false);
+    expect(info.tier).toBe('free');
+    expect(info.features).toEqual(featureAccess.free);
+  });
+
+  it('handles malformed trialExpiresAt gracefully', () => {
+    const info = getSubscriptionInfo(makeProfile({
+      trialExpiresAt: 'not-a-date',
+    }));
+    // NaN date comparisons should result in free tier
+    expect(info.isPro).toBe(false);
+  });
+
+  it('transition: free → trial → pro → lapsed states are correct', () => {
+    // Free user
+    const free = getSubscriptionInfo(makeProfile({ subscriptionTier: 'free' }));
+    expect(free.isPro).toBe(false);
+
+    // Trial active
+    const future = new Date(Date.now() + 7 * 86400000);
+    const trial = getSubscriptionInfo(makeProfile({ trialExpiresAt: future.toISOString() }));
+    expect(trial.isPro).toBe(true);
+    expect(trial.isInTrial).toBe(true);
+
+    // Pro subscriber
+    const pro = getSubscriptionInfo(makeProfile({ subscriptionTier: 'pro' }));
+    expect(pro.isPro).toBe(true);
+    expect(pro.isInTrial).toBe(false);
+
+    // Lapsed (was pro, now free, trial expired)
+    const lapsed = getSubscriptionInfo(makeProfile({
+      subscriptionTier: 'free',
+      trialExpiresAt: new Date(Date.now() - 86400000).toISOString(),
+    }));
+    expect(lapsed.isPro).toBe(false);
+    expect(lapsed.isInTrial).toBe(false);
+  });
 });
 
 describe('pricing constants', () => {

@@ -1,5 +1,6 @@
 import type { UserProfile } from "./auth";
 import type { DayType } from "./types";
+import { resolveProteinMultiplier } from "./macroConstants";
 
 export interface DayAdjustment {
   calorieAdjustment: number;
@@ -8,25 +9,13 @@ export interface DayAdjustment {
   reason: string;
 }
 
-const PHASE_PROTEIN_MULTIPLIERS: Record<string, number> = {
-  strength: 2.2,
-  hypertrophy: 2.0,
-  deload: 1.8,
-  race_prep: 1.6,
-  cut: 2.4,
-  base: 2.0,
-};
-
 export function getDayAdjustment(
   dayType: DayType,
   phase: string,
   goal?: string
 ): DayAdjustment {
-  // Use goal to determine cut behavior; fall back to phase if goal not provided
   const isCut = goal === "cut" || (!goal && phase === "cut");
-  // Protein multiplier: prefer phase-specific, but if goal is "cut" use cut multiplier
-  const proteinKey = isCut ? "cut" : phase;
-  const proteinMultiplier = PHASE_PROTEIN_MULTIPLIERS[proteinKey] || 2.0;
+  const proteinMultiplier = resolveProteinMultiplier(isCut ? "cut" : phase, goal);
 
   switch (dayType) {
     case "lift": {

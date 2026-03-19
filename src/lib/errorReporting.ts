@@ -1,9 +1,11 @@
 /**
  * Lightweight client-side error monitoring for Tropos.
  * Captures unhandled errors and promise rejections with context.
- * Stores recent errors in memory for debugging; can be extended
- * to send to an external service.
+ * Stores recent errors in memory and logs critical errors to Firestore.
  */
+
+import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from './firebase';
 
 export interface ErrorReport {
   message: string;
@@ -17,6 +19,37 @@ export interface ErrorReport {
 
 const MAX_STORED_ERRORS = 50;
 const errorBuffer: ErrorReport[] = [];
+
+/** Error types that warrant Firestore persistence */
+const CRITICAL_TYPES = new Set<string>(['network', 'component']);
+const CRITICAL_KEYWORDS = ['payment', 'auth', 'subscription', 'stripe', 'firestore'];
+
+let _currentUid: string | null = null;
+
+/** Set the current user ID for Firestore error logging */
+export function setErrorReportingUid(uid: string | null): void {
+  _currentUid = uid;
+}
+
+function isCritical(report: ErrorReport): boolean {
+  if (CRITICAL_TYPES.has(report.type)) return true;
+  const msg = report.message.toLowerCase();
+  return CRITICAL_KEYWORDS.some(kw => msg.includes(kw));
+}
+
+async function persistToFirestore(report: ErrorReport): Promise<void> {
+  if (!_currentUid) return;
+  try {
+    const errorsCol = collection(db, 'users', _currentUid, 'errors');
+    const errDoc = doc(errorsCol);
+    await setDoc(errDoc, {
+      ...report,
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    // Silently fail — don't create error loops
+  }
+}
 
 function createReport(
   message: string,
@@ -44,6 +77,10 @@ export function captureError(
   errorBuffer.push(report);
   if (errorBuffer.length > MAX_STORED_ERRORS) {
     errorBuffer.splice(0, errorBuffer.length - MAX_STORED_ERRORS);
+  }
+  // Persist critical errors to Firestore
+  if (isCritical(report)) {
+    persistToFirestore(report);
   }
 }
 

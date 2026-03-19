@@ -165,9 +165,11 @@ export default function Social() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Social</h1>
-      </div>
+      <header>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold">Social</h1>
+        </div>
+      </header>
 
       {/* Crew banner if no crew — dismissible */}
       <AnimatePresence>
@@ -213,6 +215,7 @@ export default function Social() {
 
       {/* ========== FEED TAB ========== */}
       {tab === 'feed' && (
+        <section aria-label="Activity feed">
         <div ref={feedContainerRef} className="!mt-3" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {/* Feed sub-tabs: Following | Discover */}
           <div className="flex gap-2">
@@ -301,6 +304,7 @@ export default function Social() {
             </div>
           )}
         </div>
+        </section>
       )}
 
       {/* ========== PROGRESS TAB ========== */}
@@ -311,6 +315,7 @@ export default function Social() {
 
       {/* ========== FIND TAB ========== */}
       {tab === 'find' && (
+        <section aria-label="Find people">
         <div className="space-y-6">
           {/* Section 1: Invite */}
           <div className="p-4 rounded-2xl bg-card text-center space-y-3">
@@ -537,6 +542,7 @@ export default function Social() {
             </>
           )}
         </div>
+        </section>
       )}
     </div>
   );
