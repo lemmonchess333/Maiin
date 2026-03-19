@@ -255,14 +255,7 @@ export default function Social() {
             </div>
           )}
 
-          {/* Discover feed error — show ONLY error card, hide empty state (#12) */}
-          {feedSubTab === 'discover' && discoverFeed.error && !discoverFeed.loading && (
-            <div className="mt-4 flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
-              <p className="text-xs text-destructive">{discoverFeed.error}</p>
-              <button onClick={discoverFeed.refresh}
-                className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
-            </div>
-          )}
+          {/* Discover feed errors are silenced — empty state handles both no-data and error */}
 
           <div className="space-y-3">
             {activeFeed.items.map(item => (
@@ -281,16 +274,15 @@ export default function Social() {
             <div ref={sentinelRef} className="h-1" aria-hidden="true" />
           )}
 
-          {/* Empty state — only show on SUCCESS + NO RESULTS, never when there's an error */}
-          {!activeFeed.loading && activeFeed.items.length === 0 && !activeFeed.error && (
+          {/* Empty state — show when no results (including silenced errors) */}
+          {!activeFeed.loading && activeFeed.items.length === 0 && (
             <div className="mt-6" aria-live="polite">
               {feedSubTab === 'discover' ? (
                 <EmptyState
                   icon={<Globe size={28} />}
-                  title="No public activities yet"
-                  description="Be the first to share! Your workouts will appear here when set to Public."
+                  title="Be the first to share"
+                  description="Complete a workout or run, and it'll show up here for others to see."
                   accentColor={THEME.brand}
-                  action={{ label: 'Log a Workout', href: '/Maiin/log' }}
                 />
               ) : (
                 <EmptyState
