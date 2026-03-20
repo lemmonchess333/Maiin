@@ -93,7 +93,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
             transition={{ duration: 0.15 }}
           >
             <Link to="/log" state={{ tab: 'food' }} className="block relative">
-              <div className={cn("flex items-center justify-around px-4 py-4", calories === 0 && "opacity-30")}>
+              <div className={cn("flex items-center justify-around px-4 py-4", calories === 0 && "opacity-50")}>
                 <MacroRing value={protein} target={tProt} color={THEME.semantic.hydration} label="Protein" unit="g" />
                 <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.semantic.activity} label="Carbs" unit="g" />
                 <MacroRing value={estimatedFat} target={tFat} color={THEME.semantic.nutrition} label="Fat" unit="g" />
@@ -105,10 +105,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                 </div>
               )}
               {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ opacity: 0.6 }}>
-                  <p className="text-[11px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Pick up where you left off</p>
-                  <p className="text-[9px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to log today's meals</p>
-                </div>
+                <p className="text-center text-[10px] font-medium pb-1" style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}>
+                  Tap to log today's meals
+                </p>
               )}
             </Link>
           </motion.div>

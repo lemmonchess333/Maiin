@@ -203,8 +203,8 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   onClick={() => updateConfig({ target: { type: t, value: t === 'distance' ? 5 : t === 'time' ? 1800 : t === 'pace' ? 330 : undefined } })}
                   className="flex-1 py-2 rounded-xl text-xs font-medium transition-all"
                   style={config.target.type === t
-                    ? { background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.4)' }
-                    : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }
+                    ? { background: 'rgba(139,92,246,0.15)', color: '#7C6EF6', border: '1px solid rgba(139,92,246,0.4)' }
+                    : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
                   }>
                   {t === 'none' ? 'None' : t === 'distance' ? 'Distance' : t === 'time' ? 'Time' : 'Pace'}
                 </button>
@@ -243,7 +243,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     aria-checked={config[setting.key]}
                     aria-label={setting.label}
                     className="w-11 h-6 rounded-full transition-colors relative"
-                    style={{ background: config[setting.key] ? '#7C6EF6' : 'rgba(255,255,255,0.1)' }}
+                    style={{ background: config[setting.key] ? '#7C6EF6' : 'rgba(0,0,0,0.1)' }}
                   >
                     <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                       style={{ transform: config[setting.key] ? 'translateX(20px)' : 'translateX(2px)' }} />
@@ -260,7 +260,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                       aria-checked={config.paceAlerts}
                       aria-label="Pace alerts"
                       className="w-11 h-6 rounded-full transition-colors relative"
-                      style={{ background: config.paceAlerts ? '#7C6EF6' : 'rgba(255,255,255,0.1)' }}
+                      style={{ background: config.paceAlerts ? '#7C6EF6' : 'rgba(0,0,0,0.1)' }}
                     >
                       <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                         style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />
@@ -312,10 +312,10 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   onClick={() => { updateConfig({ activityType: at.type }); setShowTypeSheet(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors active:scale-[0.98]"
                   style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
-                  {IC && <IC size={18} className={isActive ? 'text-purple-300' : 'text-white/40'} />}
+                  {IC && <IC size={18} className={isActive ? 'text-purple-500' : 'text-muted-foreground'} />}
                   <div>
-                    <p className="text-sm font-medium" style={{ color: isActive ? '#c4b5fd' : 'rgba(255,255,255,0.7)' }}>{at.label}</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{at.description}</p>
+                    <p className="text-sm font-medium" style={{ color: isActive ? '#7C6EF6' : 'var(--color-foreground)' }}>{at.label}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>
                   </div>
                 </button>
               );

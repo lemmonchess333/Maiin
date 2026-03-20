@@ -20,7 +20,8 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
       const isToday = k === format(today, "yyyy-MM-dd");
       const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
       const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
-      return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
+      const isPast = !isToday && k < format(today, "yyyy-MM-dd");
+      return { date: d, key: k, isToday: isToday, isPast: isPast, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
     });
   }, [dayMap, schedule, selectedDate]);
   const tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
@@ -35,6 +36,9 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
         } else if (day.isToday) {
           cls += " text-foreground";
           st = { border: `2px dashed ${THEME.brand}` };
+        } else if (day.isPast && day.sType === 'rest' && !day.hasActivity) {
+          cls += " text-muted-foreground";
+          st = { border: '1px solid rgba(0,0,0,0.06)' };
         } else {
           cls += " text-muted-foreground";
           st = { border: `2px dashed ${THEME.brandLight}` };

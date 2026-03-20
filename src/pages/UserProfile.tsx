@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getFollowerCount, getFollowingCount, blockUser } from '../lib/socialApi';
@@ -118,7 +118,7 @@ export default function UserProfile() {
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0); }}
             />
           ) : (
-            (profile.displayName || '?').charAt(0)
+            (profile.displayName || '?').charAt(0).toUpperCase()
           )}
         </div>
         <div className="flex-1">
@@ -219,7 +219,23 @@ export default function UserProfile() {
             createdAt: a.createdAt,
           } as FeedItem} />
         ))}
-        {activities.length === 0 && (
+        {activities.length === 0 && isOwnProfile && !statsLoading && (
+          <div className="text-center py-10 px-6 space-y-3">
+            <p className="text-sm font-medium text-foreground">Your profile is looking quiet</p>
+            <p className="text-xs text-muted-foreground max-w-[260px] mx-auto">
+              Complete a workout or run to share your first activity. Turn on auto-posting in Settings to share automatically.
+            </p>
+            <div className="flex justify-center gap-3 pt-1">
+              <Link to="/log" className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">
+                Log a workout
+              </Link>
+              <Link to="/settings" className="px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold">
+                Settings
+              </Link>
+            </div>
+          </div>
+        )}
+        {activities.length === 0 && !isOwnProfile && !statsLoading && (
           <p className="text-xs text-muted-foreground text-center py-8">No public activities yet</p>
         )}
       </div>
