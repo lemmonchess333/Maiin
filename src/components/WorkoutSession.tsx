@@ -10,6 +10,10 @@ import {
   Dumbbell,
   Trophy,
   ChevronRight,
+  Clock,
+  Share2,
+  Target,
+  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
@@ -17,6 +21,9 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import ShareCard from "@/components/social/ShareCard";
+import { generateAndShare } from "@/lib/shareCardGenerator";
+import { getVolumeComparison } from "@/lib/funComparisons";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 
 function playChime() {
@@ -106,6 +113,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     )
   );
   const [showRPE, setShowRPE] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+  const sessionStartRef = useRef(0);
+  useEffect(() => { sessionStartRef.current = Date.now(); }, []);
 
   // All-time best weights for PR detection (declared before useEffect that references them)
   const [allTimeBests, setAllTimeBests] = useState<Record<string, number>>({});
@@ -178,6 +189,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
 
   // Stall detection
   const [stallExercise, setStallExercise] = useState<{name: string, weight: number} | null>(null);
@@ -328,6 +340,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       await onLogExercise(dayIndex, currentExIndex, set.reps, set.weight);
 
       if (isLastExercise) {
+        setSessionDurationMinutes(Math.round((Date.now() - sessionStartRef.current) / 60000));
         setSessionComplete(true);
       } else {
         // Move to next exercise
@@ -411,38 +424,207 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
   // Session complete screen
   if (sessionComplete) {
+    const durationDisplay = sessionDurationMinutes >= 60
+      ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
+      : `${sessionDurationMinutes}m`;
+
+    const totalVolume = setLogs.flat()
+      .filter(s => s.completed && s.type !== 'warmup')
+      .reduce((sum, s) => sum + (s.weight * s.reps), 0);
+
+    const totalVolumeDisplay = totalVolume >= 1000
+      ? `${(totalVolume / 1000).toFixed(1)}k`
+      : `${Math.round(totalVolume)}`;
+
+    const prCount = firedPRs.size;
+    const prNames = Array.from(firedPRs);
+
+    const exerciseSummary = day.exercises.map((ex, exIdx) => {
+      const logs = setLogs[exIdx].filter(s => s.completed);
+      const workingSets = logs.filter(s => s.type !== 'warmup');
+      const bestSet = workingSets.length > 0
+        ? workingSets.reduce((best, s) =>
+            (s.weight * s.reps > best.weight * best.reps) ? s : best, workingSets[0])
+        : null;
+      return {
+        name: ex.name,
+        setsCompleted: workingSets.length,
+        totalSets: ex.sets,
+        bestWeight: bestSet?.weight || 0,
+        bestReps: bestSet?.reps || 0,
+        isPR: firedPRs.has(ex.name),
+      };
+    }).filter(e => e.setsCompleted > 0);
+
+    const funComparison = getVolumeComparison(totalVolume);
+
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center p-6 text-center safe-area-pb"
+        className="fixed inset-0 z-50 bg-background overflow-y-auto safe-area-pb"
       >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", delay: 0.2 }}
-        >
-          <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-        </motion.div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Workout Complete!</h2>
-        <p className="text-muted-foreground mb-1">{day.dayName}</p>
-        <p className="text-sm text-muted-foreground mb-8">
-          {totalSetsCompleted} sets logged across {day.exercises.length} exercises
-        </p>
-        <button
-          onClick={handleFinish}
-          disabled={completing}
-          className="w-full max-w-xs py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform"
-        >
-          {completing ? "Saving..." : "Mark Day Complete"}
-        </button>
-        <button
-          onClick={onClose}
-          className="mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Close without marking complete
-        </button>
+        <div className="max-w-md mx-auto px-5 py-8 space-y-6">
 
+          {/* Hero Section */}
+          <motion.div
+            className="text-center space-y-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+            >
+              <Trophy className="w-14 h-14 text-yellow-500 mx-auto" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-foreground">Workout Complete</h2>
+            <p className="text-sm text-muted-foreground">{day.dayName} · {day.dayType}</p>
+          </motion.div>
+
+          {/* Stat Cards Row */}
+          <motion.div
+            className="grid grid-cols-3 gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {/* Duration */}
+            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+              <Clock className="w-4 h-4 mx-auto" style={{ color: THEME.text.muted }} />
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground">{durationDisplay}</p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Duration</p>
+            </div>
+
+            {/* Volume */}
+            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+              <Dumbbell className="w-4 h-4 mx-auto" style={{ color: THEME.lifting }} />
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalVolumeDisplay}<span className="text-xs font-normal" style={{ color: THEME.text.muted }}>kg</span></p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Volume</p>
+            </div>
+
+            {/* Sets */}
+            <div className="p-4 rounded-2xl bg-card text-center space-y-1">
+              <Target className="w-4 h-4 mx-auto" style={{ color: THEME.semantic.positive }} />
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalSetsCompleted}</p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Sets</p>
+            </div>
+          </motion.div>
+
+          {/* PR Banner — only if PRs were hit */}
+          {prCount > 0 && (
+            <motion.div
+              className="p-4 rounded-2xl text-center space-y-2"
+              style={{
+                background: `linear-gradient(135deg, ${THEME.brand}15 0%, ${THEME.semantic.positive}10 100%)`,
+                border: `1px solid ${THEME.brand}30`,
+              }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Zap className="w-5 h-5" style={{ color: THEME.brand }} />
+                <p className="text-sm font-bold text-foreground">
+                  {prCount} Personal Record{prCount > 1 ? "s" : ""}!
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {prNames.join(", ")}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Fun Comparison */}
+          {funComparison && (
+            <motion.p
+              className="text-center text-xs font-medium"
+              style={{ color: THEME.text.muted }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              {funComparison}
+            </motion.p>
+          )}
+
+          {/* Exercise Breakdown */}
+          <motion.div
+            className="rounded-2xl bg-card overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="px-4 pt-4 pb-2">
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: THEME.text.muted }}>
+                Exercises
+              </p>
+            </div>
+            <div className="divide-y divide-border/30">
+              {exerciseSummary.map((ex, i) => (
+                <motion.div
+                  key={ex.name}
+                  className="flex items-center justify-between px-4 py-3"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + i * 0.05 }}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {ex.isPR && (
+                      <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.brand }} fill={THEME.brand} />
+                    )}
+                    <p className="text-sm text-foreground truncate">{ex.name}</p>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-sm font-mono tabular-nums font-semibold" style={{ color: THEME.lifting }}>
+                      {ex.bestWeight > 0 ? `${ex.bestWeight}kg × ${ex.bestReps}` : `${ex.bestReps} reps`}
+                    </p>
+                    <p className="text-[10px]" style={{ color: THEME.text.muted }}>
+                      {ex.setsCompleted}/{ex.totalSets} sets
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Action Buttons */}
+          <motion.div
+            className="space-y-3 pt-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <button
+              onClick={handleFinish}
+              disabled={completing}
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.97] transition-transform"
+            >
+              {completing ? "Saving..." : "Save Workout"}
+            </button>
+
+            {/* Share Button */}
+            <button
+              onClick={() => setShowShareCard(true)}
+              className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Workout
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+            >
+              Close without saving
+            </button>
+          </motion.div>
+
+        </div>
+
+        {/* Stall detection modal — keep existing */}
         {stallExercise && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
             <div className="absolute inset-0 bg-black/40" role="button" tabIndex={0} aria-label="Close modal" onClick={() => setStallExercise(null)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setStallExercise(null); }} />
@@ -482,6 +664,56 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             </div>
           </div>
         )}
+
+        {/* Share Card Modal */}
+        <AnimatePresence>
+          {showShareCard && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowShareCard(false)}
+                className="fixed inset-0 bg-black/50 z-50"
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card safe-area-pb"
+              >
+                <div className="max-w-md mx-auto p-5 space-y-4">
+                  <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                  <ShareCard ref={shareRef} data={{
+                    type: 'workout',
+                    userName: profile?.displayName || 'Athlete',
+                    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    exerciseCount: exerciseSummary.length,
+                    totalVolume: totalVolume,
+                    prsHit: prCount,
+                  }} />
+                  <div className="flex gap-3">
+                    {(['dark', 'light', 'transparent'] as const).map((theme) => (
+                      <button
+                        key={theme}
+                        onClick={() => {
+                          const node = shareRef.current;
+                          if (node) {
+                            generateAndShare(node, day.dayName, theme);
+                          }
+                        }}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-medium capitalize border border-border/50"
+                      >
+                        {theme}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   }
