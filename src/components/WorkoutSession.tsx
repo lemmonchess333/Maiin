@@ -163,32 +163,50 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         return updated;
       });
 
-      // Build multi-rep-range PR map from history
-      // TODO: persist PR map to Firestore (users/{uid}/stats/prMap) for complete history beyond 50 sessions
-      const history = snap.docs.map(d => {
-        const data = d.data();
-        return {
-          date: data.date as string,
-          exercises: (data.exercises || []).map((ex: { exerciseName: string; sets: { weightKg: number; reps: number }[] }) => ({
-            exerciseName: ex.exerciseName,
-            sets: (ex.sets || []).map(s => ({ weightKg: s.weightKg || 0, reps: s.reps || 0 })),
-          })),
-        };
-      });
-      setPrMap(buildPRMap(history));
-
-      // Count sessions per exercise for 3-session minimum filter
-      const counts: Record<string, number> = {};
-      for (const w of history) {
-        const seen = new Set<string>();
-        for (const ex of w.exercises) {
-          if (!seen.has(ex.exerciseName)) {
-            counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
-            seen.add(ex.exerciseName);
+      // Load persisted PR map, or build from history if not available
+      let prMapLoaded = false;
+      try {
+        const { doc: fbDoc, getDoc: fbGetDoc } = await import('firebase/firestore');
+        const prMapDoc = await fbGetDoc(fbDoc(db, "users", user.uid, "stats", "prMap"));
+        if (prMapDoc.exists()) {
+          const data = prMapDoc.data();
+          setPrMap(data.map as PRMap);
+          if (data.sessionCounts) {
+            setSessionCounts(data.sessionCounts as Record<string, number>);
+            prMapLoaded = true;
           }
         }
+      } catch {
+        // Fall through to rebuild from history
       }
-      setSessionCounts(counts);
+
+      if (!prMapLoaded) {
+        // Fall back to building from last 50 workouts
+        const history = snap.docs.map(d => {
+          const data = d.data();
+          return {
+            date: data.date as string,
+            exercises: (data.exercises || []).map((ex: { exerciseName: string; sets: { weightKg: number; reps: number }[] }) => ({
+              exerciseName: ex.exerciseName,
+              sets: (ex.sets || []).map(s => ({ weightKg: s.weightKg || 0, reps: s.reps || 0 })),
+            })),
+          };
+        });
+        setPrMap(buildPRMap(history));
+
+        // Count sessions per exercise for 3-session minimum filter
+        const counts: Record<string, number> = {};
+        for (const w of history) {
+          const seen = new Set<string>();
+          for (const ex of w.exercises) {
+            if (!seen.has(ex.exerciseName)) {
+              counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
+              seen.add(ex.exerciseName);
+            }
+          }
+        }
+        setSessionCounts(counts);
+      }
     };
 
     fetchPreviousWeights();
@@ -444,6 +462,22 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const handleFinish = async () => {
     setCompleting(true);
     await onCompleteDay(dayIndex);
+
+    // Persist PR map to Firestore for history beyond 50-session window
+    if (user?.uid && Object.keys(prMap).length > 0) {
+      try {
+        const { doc: fbDoc, setDoc } = await import('firebase/firestore');
+        const { Timestamp } = await import('firebase/firestore');
+        await setDoc(fbDoc(db, "users", user.uid, "stats", "prMap"), {
+          map: prMap,
+          sessionCounts,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+      } catch {
+        // Non-critical — map can be rebuilt from history
+      }
+    }
+
     setCompleting(false);
     onClose();
   };

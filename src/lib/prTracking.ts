@@ -3,8 +3,8 @@
  * Buckets: 1RM, 3RM, 5RM, 8RM, 10RM+
  * Only fires after the user has ≥3 sessions with that exercise.
  *
- * TODO: persist PR map to Firestore (users/{uid}/stats/prMap)
- * for complete history beyond the 50-session fetch window.
+ * PR map is persisted to Firestore (users/{uid}/stats/prMap)
+ * after each workout for complete history beyond the 50-session window.
  */
 
 export type RepBucket = '1rm' | '3rm' | '5rm' | '8rm' | '10rm';
