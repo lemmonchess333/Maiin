@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useMotionValue, useTransform, animate, type MotionValue } from "framer-motion";
+import { useReducedMotion } from "./useReducedMotion";
 
 /**
  * Animates a number from 0 to target on mount.
@@ -16,6 +17,7 @@ export function useCountUp(
   }
 ): MotionValue<string> {
   const { sessionKey, duration = 0.6, decimals = 0, suffix = "" } = options || {};
+  const prefersReducedMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
   const display = useTransform(motionValue, (v) => {
     const rounded = decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
@@ -39,7 +41,7 @@ export function useCountUp(
       sessionStorage.setItem(key, "1");
     }
 
-    if (hasAnimated.current) {
+    if (hasAnimated.current || prefersReducedMotion) {
       motionValue.set(target);
       return;
     }
@@ -51,7 +53,7 @@ export function useCountUp(
     });
 
     return () => controls.stop();
-  }, [target, motionValue, duration, sessionKey]);
+  }, [target, motionValue, duration, sessionKey, prefersReducedMotion]);
 
   return display;
 }
