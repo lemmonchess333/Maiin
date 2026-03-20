@@ -12,8 +12,9 @@ function haptic(ms = 10) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
 }
 
-export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false }: {
+export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge }: {
   calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
+  postWorkoutNudge?: { type: "lift" | "run" | "both"; proteinRemaining: number } | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
@@ -93,6 +94,14 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
             transition={{ duration: 0.15 }}
           >
             <Link to="/log" state={{ tab: 'food' }} className="block relative">
+              {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
+                <p className="text-[10px] font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
+                  {postWorkoutNudge.type === "run"
+                    ? "Post-run — refuel with carbs + protein soon"
+                    : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`
+                  }
+                </p>
+              )}
               <div className={cn("flex items-center justify-around px-4 py-4", calories === 0 && "opacity-50")}>
                 <MacroRing value={protein} target={tProt} color={THEME.semantic.hydration} label="Protein" unit="g" />
                 <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.semantic.activity} label="Carbs" unit="g" />

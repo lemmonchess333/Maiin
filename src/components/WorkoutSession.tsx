@@ -20,6 +20,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket } from "@/lib/prTracking";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import ShareCard from "@/components/social/ShareCard";
 import { generateAndShare } from "@/lib/shareCardGenerator";
@@ -118,17 +119,18 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const sessionStartRef = useRef(0);
   useEffect(() => { sessionStartRef.current = Date.now(); }, []);
 
-  // All-time best weights for PR detection (declared before useEffect that references them)
-  const [allTimeBests, setAllTimeBests] = useState<Record<string, number>>({});
-  const [firedPRs, setFiredPRs] = useState<Set<string>>(new Set());
+  // Multi-rep-range PR tracking
+  const [prMap, setPrMap] = useState<PRMap>({});
+  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
+  const [firedPRs, setFiredPRs] = useState<Map<string, RepBucket[]>>(new Map());
 
-  // Pre-fill weights/reps from most recent previous session
+  // Pre-fill weights/reps from most recent previous session + build PR map
   useEffect(() => {
     if (!user?.uid || !day.exercises.length) return;
 
     const fetchPreviousWeights = async () => {
       const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(20)));
+      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(50)));
 
       const prevWeights: Record<string, { weight: number; reps: number }[]> = {};
 
@@ -161,19 +163,32 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         return updated;
       });
 
-      // Build all-time bests for PR detection
-      const bests: Record<string, number> = {};
-      snap.docs.forEach((d) => {
+      // Build multi-rep-range PR map from history
+      // TODO: persist PR map to Firestore (users/{uid}/stats/prMap) for complete history beyond 50 sessions
+      const history = snap.docs.map(d => {
         const data = d.data();
-        (data.exercises || []).forEach((ex: { exerciseName: string; sets?: { weightKg?: number }[] }) => {
-          const name = ex.exerciseName;
-          (ex.sets || []).forEach((s) => {
-            const w = s.weightKg || 0;
-            if (w > (bests[name] || 0)) bests[name] = w;
-          });
-        });
+        return {
+          date: data.date as string,
+          exercises: (data.exercises || []).map((ex: { exerciseName: string; sets: { weightKg: number; reps: number }[] }) => ({
+            exerciseName: ex.exerciseName,
+            sets: (ex.sets || []).map(s => ({ weightKg: s.weightKg || 0, reps: s.reps || 0 })),
+          })),
+        };
       });
-      setAllTimeBests(bests);
+      setPrMap(buildPRMap(history));
+
+      // Count sessions per exercise for 3-session minimum filter
+      const counts: Record<string, number> = {};
+      for (const w of history) {
+        const seen = new Set<string>();
+        for (const ex of w.exercises) {
+          if (!seen.has(ex.exerciseName)) {
+            counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
+            seen.add(ex.exerciseName);
+          }
+        }
+      }
+      setSessionCounts(counts);
     };
 
     fetchPreviousWeights();
@@ -314,17 +329,28 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
     haptic(100);
 
-    // PR detection: check if current weight exceeds all-time best
+    // Multi-rep-range PR detection
     const exName = currentExercise.name;
-    if (set.weight > 0 && set.weight > (allTimeBests[exName] || 0) && !firedPRs.has(exName)) {
-      setFiredPRs((prev) => new Set(prev).add(exName));
-      setAllTimeBests((prev) => ({ ...prev, [exName]: set.weight }));
+    const prBucket = checkSetPR(exName, set.weight, set.reps, prMap, sessionCounts, 3);
+    const alreadyFired = firedPRs.get(exName) || [];
+    if (prBucket && !alreadyFired.includes(prBucket)) {
+      setFiredPRs((prev) => {
+        const updated = new Map(prev);
+        updated.set(exName, [...(prev.get(exName) || []), prBucket]);
+        return updated;
+      });
+      setPrMap((prev) => {
+        const updated = { ...prev };
+        if (!updated[exName]) updated[exName] = { '1rm': null, '3rm': null, '5rm': null, '8rm': null, '10rm': null };
+        updated[exName] = { ...updated[exName], [prBucket]: { weight: set.weight, reps: set.reps, date: new Date().toISOString().split('T')[0] } };
+        return updated;
+      });
       lazyConfetti().then(confetti => {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         setTimeout(() => confetti({ particleCount: 30, spread: 90, origin: { y: 0.65 }, startVelocity: 15 }), 200);
       });
       haptic(50);
-      toast.success(`New PR! ${set.weight}kg on ${exName}`);
+      toast.success(`New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`);
     }
 
     // Track for undo
@@ -436,8 +462,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       ? `${(totalVolume / 1000).toFixed(1)}k`
       : `${Math.round(totalVolume)}`;
 
-    const prCount = firedPRs.size;
-    const prNames = Array.from(firedPRs);
+    const prDetails = Array.from(firedPRs.entries()).flatMap(([name, buckets]) =>
+      buckets.map(bucket => ({ name, label: repBucketLabel(bucket) }))
+    );
+    const prCount = prDetails.length;
 
     const exerciseSummary = day.exercises.map((ex, exIdx) => {
       const logs = setLogs[exIdx].filter(s => s.completed);
@@ -453,6 +481,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         bestWeight: bestSet?.weight || 0,
         bestReps: bestSet?.reps || 0,
         isPR: firedPRs.has(ex.name),
+        prLabels: (firedPRs.get(ex.name) || []).map(b => repBucketLabel(b)),
       };
     }).filter(e => e.setsCompleted > 0);
 
@@ -531,9 +560,13 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                   {prCount} Personal Record{prCount > 1 ? "s" : ""}!
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {prNames.join(", ")}
-              </p>
+              <div className="space-y-0.5">
+                {prDetails.map(pr => (
+                  <p key={`${pr.name}-${pr.label}`} className="text-xs text-muted-foreground">
+                    {pr.name} — {pr.label}
+                  </p>
+                ))}
+              </div>
             </motion.div>
           )}
 
@@ -573,7 +606,12 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {ex.isPR && (
-                      <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.brand }} fill={THEME.brand} />
+                      <>
+                        <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.brand }} fill={THEME.brand} />
+                        {ex.prLabels.map(label => (
+                          <span key={label} className="text-[9px] font-medium" style={{ color: THEME.brand }}>{label}</span>
+                        ))}
+                      </>
                     )}
                     <p className="text-sm text-foreground truncate">{ex.name}</p>
                   </div>
