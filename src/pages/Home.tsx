@@ -430,7 +430,7 @@ export default function Home() {
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-foreground">Welcome to Tropos!</p>
-            <button onClick={dismissCoachMarks} className="p-1 rounded-lg hover:bg-muted"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            <button onClick={dismissCoachMarks} aria-label="Dismiss welcome message" className="p-1 rounded-lg hover:bg-muted"><X className="w-3.5 h-3.5 text-muted-foreground" /></button>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -529,7 +529,7 @@ export default function Home() {
                 </div>
                 <div className="flex gap-3">
                   <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
+                  <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} aria-label="Save weight" className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
                     {weightSaving ? "..." : "Log"}
                   </button>
                 </div>
