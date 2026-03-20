@@ -562,7 +562,7 @@ export default function Settings() {
       )}
 
       <p className="text-center text-xs text-muted-foreground">
-        Tropos v1.1.0
+        Tropos v{__APP_VERSION__}
       </p>
 
       {/* Restructure Warning Modal */}
