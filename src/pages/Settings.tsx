@@ -1,12 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
-import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { calculateTDEE } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   User,
@@ -61,9 +60,10 @@ export default function Settings() {
   const navigate = useNavigate();
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
-  const { checkout, loading: checkoutLoading, error: checkoutError } = useStripeCheckout();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
   const [visibleTab, setVisibleTab] = useState<"profile" | "prefs" | "account">("profile");
+  const [showProModal, setShowProModal] = useState(false);
+  const ProModal = lazy(() => import("@/components/ProModal"));
   const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
@@ -394,12 +394,10 @@ export default function Settings() {
             {PLANS.map((plan) => (
               <button
                 key={plan.id}
-                onClick={() => checkout(plan.id)}
-                disabled={checkoutLoading !== null}
+                onClick={() => setShowProModal(true)}
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-xl border transition-all",
-                  "bg-card border-border/50 hover:border-primary/50",
-                  checkoutLoading === plan.id && "opacity-50"
+                  "bg-card border-border/50 hover:border-primary/50"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -418,15 +416,12 @@ export default function Settings() {
                   )}
                 </div>
                 <p className="text-sm font-semibold text-foreground">
-                  {checkoutLoading === plan.id ? "..." : plan.price}
+                  {plan.price}
                 </p>
               </button>
             ))}
           </div>
 
-          {checkoutError && (
-            <p className="text-xs text-red-500 text-center">{checkoutError}</p>
-          )}
         </div>
       )}
 
@@ -616,6 +611,13 @@ export default function Settings() {
           </div>
         </>
       )}
+      <AnimatePresence>
+        {showProModal && (
+          <Suspense fallback={null}>
+            <ProModal onClose={() => setShowProModal(false)} />
+          </Suspense>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
