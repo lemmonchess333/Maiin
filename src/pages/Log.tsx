@@ -251,7 +251,7 @@ export default function Log() {
       : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
     const today = getTodaySchedule(schedule);
     return (today?.type || "rest") as DayType;
-  }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
+  }, [profile]);
 
   const adjustedTargets = useMemo(() => {
     if (!profile) return null;
