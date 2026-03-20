@@ -14,7 +14,7 @@ interface TroposNotification {
   data?: Record<string, unknown>;
 }
 
-const DEFAULT_ICON = '/Maiin/icons/icon-192x192.png';
+const DEFAULT_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
 
 export function isNotificationSupported(): boolean {
   return 'Notification' in window;

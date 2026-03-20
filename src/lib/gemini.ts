@@ -1,5 +1,13 @@
 // Gemini AI integration
 // Add VITE_GEMINI_API_KEY to your .env file to enable AI features
+//
+// SECURITY WARNING: The API key is bundled into the client JS and visible
+// to anyone who inspects the page source. To limit exposure:
+//   1. Restrict the key to the Gemini API only in Google Cloud Console
+//   2. Add HTTP referrer restrictions (your domain + localhost)
+//   3. Set a daily quota cap to limit abuse
+// TODO (v1.2): Proxy Gemini calls through a Cloud Function so the key
+// is never exposed to the client.
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 

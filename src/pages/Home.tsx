@@ -369,7 +369,7 @@ export default function Home() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -80, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            onClick={trialDaysLeft <= 1 ? function() { setShowTrialNotif(false); navigate("/Maiin/settings"); } : undefined}
+            onClick={trialDaysLeft <= 1 ? function() { setShowTrialNotif(false); navigate("/settings"); } : undefined}
             className={cn(
               "flex items-center gap-3 px-4 py-2.5 rounded-b-xl bg-primary/10 shadow-md",
               trialDaysLeft <= 1 && "cursor-pointer"
@@ -474,7 +474,7 @@ export default function Home() {
           </button>
           <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
           <p className="text-xs text-muted-foreground mb-2">From just &pound;2.99/mo</p>
-          <button onClick={function() { navigate("/Maiin/settings"); }} className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+          <button onClick={function() { navigate("/settings"); }} className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
             Upgrade to Pro
           </button>
         </motion.div>
@@ -534,7 +534,7 @@ export default function Home() {
                   Maybe later
                 </button>
                 <button
-                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); navigate("/Maiin/settings"); }}
+                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); navigate("/settings"); }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   Upgrade

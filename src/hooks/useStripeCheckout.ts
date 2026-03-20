@@ -37,8 +37,8 @@ export function useStripeCheckout() {
           priceId: PRICE_IDS[plan],
           uid: user.uid,
           email: user.email,
-          successUrl: `${window.location.origin}/Maiin/settings?checkout=success`,
-          cancelUrl: `${window.location.origin}/Maiin/settings?checkout=cancelled`,
+          successUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=success`,
+          cancelUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=cancelled`,
         }),
       });
 
