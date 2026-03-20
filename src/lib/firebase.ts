@@ -41,6 +41,9 @@ try {
 export const db = db_;
 
 export const storage = getStorage(app);
+if (!firebaseConfig.storageBucket) {
+  console.warn('[Firebase] VITE_FIREBASE_STORAGE_BUCKET is not set — file uploads will fail.');
+}
 export const functions = getFunctions(app);
 
 // Connect to emulators in development

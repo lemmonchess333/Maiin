@@ -170,6 +170,7 @@ export default function ProgressPhotos() {
       }
 
       // Step 3: Upload to Firebase Storage
+      // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
       const path = `progress-photos/${user.uid}/${Date.now()}${iv.some(b => b !== 0) ? '.enc' : '.webp'}`;
       console.log('[UPLOAD] 5. Creating Firebase Storage reference:', path);
       try {
