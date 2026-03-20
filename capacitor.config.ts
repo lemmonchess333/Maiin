@@ -12,14 +12,14 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#6358D4",
+      backgroundColor: "#7C6EF6",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
       splashImmersive: true,
     },
     StatusBar: {
       style: "DARK",
-      backgroundColor: "#6358D4",
+      backgroundColor: "#7C6EF6",
     },
   },
   ios: {
@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
     scheme: "Tropos",
   },
   android: {
-    backgroundColor: "#6358D4",
+    backgroundColor: "#7C6EF6",
   },
 };
 

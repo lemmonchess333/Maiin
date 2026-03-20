@@ -6,7 +6,7 @@
   "scope": "/Maiin/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "theme_color": "#7C6EF6",
   "orientation": "portrait",
   "categories": ["health", "fitness", "lifestyle"],
   "icons": [
