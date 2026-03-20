@@ -9,6 +9,7 @@ import { getScoreColor } from "@/lib/healthScore";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
+import WaterBubbles from "@/components/home/WaterBubbles";
 
 function haptic(ms = 10) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
@@ -130,16 +131,31 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
             )}
           </Link>
           {/* Water with fill-from-bottom */}
-          <div className="relative overflow-hidden p-3 rounded-xl" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="relative overflow-hidden p-3 rounded-xl" style={{
+            backgroundColor: THEME.neutral[100],
+            boxShadow: waterGlasses > 0
+              ? 'inset 0 -4px 12px rgba(78, 173, 204, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+              : undefined
+          }}>
             {/* Fill-from-bottom gradient */}
             <motion.div
               className="absolute inset-x-0 bottom-0 pointer-events-none"
-              style={{ background: `linear-gradient(0deg, ${THEME.semantic.hydration}40 0%, ${THEME.semantic.hydration}14 100%)` }}
+              style={{
+                background: waterGlasses > 0
+                  ? 'linear-gradient(0deg, rgba(30, 120, 155, 0.35) 0%, rgba(58, 153, 186, 0.22) 40%, rgba(78, 195, 220, 0.12) 100%)'
+                  : 'transparent'
+              }}
               initial={{ height: 0 }}
               animate={{ height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
               transition={{ type: "spring", stiffness: 120, damping: 14 }}
             >
-              {waterGlasses > 0 && <WaterWave width={160} splash={rippleKey} />}
+              {waterGlasses > 0 && (
+                <WaterWave
+                  width={160}
+                  fillPercent={Math.min((waterGlasses / waterTarget) * 100, 100)}
+                  splash={rippleKey}
+                />
+              )}
             </motion.div>
             {/* Ripple on add */}
             <AnimatePresence>
@@ -155,6 +171,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
                 />
               )}
             </AnimatePresence>
+            {waterGlasses > 2 && <WaterBubbles />}
             <div className="relative z-10">
               <div className="flex items-center gap-2.5 mb-2">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
