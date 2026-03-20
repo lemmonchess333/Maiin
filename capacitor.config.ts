@@ -1,6 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
+  // WARNING: Changing appId requires updating APPLE_PRODUCT_IDS in
+  // src/lib/purchaseProvider.ts and re-registering in App Store Connect.
   appId: "com.adaptivefit.app",
   appName: "Tropos",
   webDir: "dist",

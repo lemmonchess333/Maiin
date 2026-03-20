@@ -26,6 +26,9 @@ function isNativeIOS(): boolean {
 }
 
 // Apple IAP product IDs — configure these in App Store Connect
+// WARNING: These must match the bundle ID in capacitor.config.ts (appId)
+// and the product IDs registered in App Store Connect. If you change the
+// bundle ID, update these product ID prefixes accordingly.
 const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
   monthly: 'com.adaptivefit.app.pro.monthly',
   yearly: 'com.adaptivefit.app.pro.yearly',
