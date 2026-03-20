@@ -96,42 +96,47 @@ export default function RunSummary() {
       intervalData,
       runConfig,
     };
-    // Firestore queues the write offline automatically via IndexedDB persistence
-    await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
+    try {
+      // Firestore queues the write offline automatically via IndexedDB persistence
+      await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
-    if (isOnline && shareToFeed) {
-      await postActivity({
-        authorId: user.uid,
-        authorName: profile?.displayName || 'Athlete',
-        type: 'run',
-        visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
-        runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
-        distance,
-        duration: elapsed,
-        avgPace,
-        elevationGain,
-        calories,
-        crewId: profile?.crewId,
-        routePreview:
-          points.length > 20
-            ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
-            : points.map((p) => ({ lat: p.lat, lon: p.lon })),
-      });
-    }
-
-    // Update shoe mileage if a shoe was selected
-    if (runConfig?.shoeId) {
-      const alert = await updateMileage(runConfig.shoeId, distance / 1000);
-      if (alert === 'replace') {
-        toast.error('Time for new shoes! This pair has exceeded its recommended mileage.', { duration: 5000 });
-      } else if (alert === 'warning') {
-        toast.warning('Your shoes are at 85% of their recommended mileage. Start looking for a replacement!', { duration: 5000 });
+      if (isOnline && shareToFeed) {
+        await postActivity({
+          authorId: user.uid,
+          authorName: profile?.displayName || 'Athlete',
+          type: 'run',
+          visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
+          runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
+          distance,
+          duration: elapsed,
+          avgPace,
+          elevationGain,
+          calories,
+          crewId: profile?.crewId,
+          routePreview:
+            points.length > 20
+              ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
+              : points.map((p) => ({ lat: p.lat, lon: p.lon })),
+        });
       }
-    }
 
-    setSaved(true);
-    // Short delay so user sees the confirmation, then go home
-    setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
+      // Update shoe mileage if a shoe was selected
+      if (runConfig?.shoeId) {
+        const alert = await updateMileage(runConfig.shoeId, distance / 1000);
+        if (alert === 'replace') {
+          toast.error('Time for new shoes! This pair has exceeded its recommended mileage.', { duration: 5000 });
+        } else if (alert === 'warning') {
+          toast.warning('Your shoes are at 85% of their recommended mileage. Start looking for a replacement!', { duration: 5000 });
+        }
+      }
+
+      setSaved(true);
+      // Short delay so user sees the confirmation, then go home
+      setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
+    } catch (error) {
+      console.error('[RunSave] Failed:', error);
+      toast.error('Failed to save run. Please try again.');
+    }
   };
 
   const handleShare = async () => {
