@@ -14,7 +14,7 @@ export function useWaterLog() {
   const { user, profile } = useAuth();
   const [glasses, setGlasses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const skipNextSnapshot = useRef(false);
 
   const today = format(new Date(), "yyyy-MM-dd");
