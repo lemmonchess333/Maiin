@@ -56,7 +56,17 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
     : "rgba(58, 153, 186, 0.14)";
 
   if (prefersReducedMotion) {
-    const staticPath = buildPath(0, 1, 1);
+    const amp = 3;
+    let staticPath = "M 0 " + height;
+    for (let i = 0; i <= points; i++) {
+      const x = (i / points) * width;
+      const norm = i / points;
+      const y1 = Math.sin(norm * Math.PI * 3) * amp;
+      const y2 = Math.sin(norm * Math.PI * 5.3) * amp * 0.4;
+      const y = y1 + y2 + height / 2;
+      staticPath += " L " + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    staticPath += " L " + width + " " + height + " Z";
     return (
       <svg
         width={width}
