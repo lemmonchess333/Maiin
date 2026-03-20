@@ -39,6 +39,9 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
         } else if (day.isPast && day.sType === 'rest' && !day.hasActivity) {
           cls += " text-muted-foreground";
           st = { border: '1px solid rgba(0,0,0,0.06)' };
+        } else if (day.isPast && !day.hasActivity && day.sType !== 'rest') {
+          cls += " text-muted-foreground";
+          st = { border: `2px dashed ${THEME.brandLight}`, opacity: 0.4 };
         } else {
           cls += " text-muted-foreground";
           st = { border: `2px dashed ${THEME.brandLight}` };
