@@ -30,9 +30,9 @@ function isNativeIOS(): boolean {
 // and the product IDs registered in App Store Connect. If you change the
 // bundle ID, update these product ID prefixes accordingly.
 const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
-  monthly: 'com.adaptivefit.app.pro.monthly',
-  yearly: 'com.adaptivefit.app.pro.yearly',
-  lifetime: 'com.adaptivefit.app.pro.lifetime',
+  monthly: 'com.tropos.app.pro.monthly',
+  yearly: 'com.tropos.app.pro.yearly',
+  lifetime: 'com.tropos.app.pro.lifetime',
 };
 
 // IAP store interface (cordova-plugin-purchase or similar)
