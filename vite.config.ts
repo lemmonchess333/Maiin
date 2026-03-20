@@ -16,7 +16,7 @@ export default defineConfig({
   },
   build: {
     minify: "esbuild",
-    sourcemap: true,
+    sourcemap: false,
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
     chunkSizeWarningLimit: 1100,
 
