@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { format } from "date-fns";
 
@@ -75,13 +76,18 @@ export function useStreaks() {
     const totalDays = streakData.totalActiveDays + 1;
 
     const ref = doc(db, "users", user.uid, "streaks", "data");
-    await setDoc(ref, {
-      currentStreak: newStreak,
-      longestStreak: longest,
-      lastActiveDate: today,
-      totalActiveDays: totalDays,
-      badges: streakData.badges,
-    }, { merge: true });
+    try {
+      await setDoc(ref, {
+        currentStreak: newStreak,
+        longestStreak: longest,
+        lastActiveDate: today,
+        totalActiveDays: totalDays,
+        badges: streakData.badges,
+      }, { merge: true });
+    } catch (error) {
+      console.error('[Streaks] Save failed:', error);
+      toast.error('Failed to save streak');
+    }
   }, [user, streakData]);
 
   const awardBadge = useCallback(async (badgeId: string) => {
@@ -96,9 +102,13 @@ export function useStreaks() {
     );
 
     const ref = doc(db, "users", user.uid, "streaks", "data");
-    await setDoc(ref, { badges: updatedBadges }, { merge: true });
-
-    setNewBadge({ ...badge, earnedAt: now });
+    try {
+      await setDoc(ref, { badges: updatedBadges }, { merge: true });
+      setNewBadge({ ...badge, earnedAt: now });
+    } catch (error) {
+      console.error('[Streaks] Badge save failed:', error);
+      toast.error('Failed to save badge');
+    }
   }, [user, streakData.badges]);
 
   const checkStreakBadges = useCallback(async () => {

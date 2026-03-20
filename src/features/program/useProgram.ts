@@ -153,8 +153,14 @@ export function useProgram() {
       const clean = Object.fromEntries(
         Object.entries({ ...state, updatedAt: Date.now() }).filter(([, v]) => v !== undefined),
       );
-      await setDoc(ref, clean);
-      setProgramState(state);
+      try {
+        await setDoc(ref, clean);
+        setProgramState(state);
+      } catch (error) {
+        console.error('[Program] Save failed:', error);
+        toast.error('Failed to save programme changes');
+        throw error;
+      }
     },
     [user],
   );

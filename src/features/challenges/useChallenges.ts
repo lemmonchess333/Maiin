@@ -6,6 +6,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 export type ChallengeTier = "bronze" | "silver" | "gold";
 
@@ -221,20 +222,30 @@ export function useChallenges() {
 
   const joinChallenge = useCallback(async (challengeId: string) => {
     if (!user) return;
-    const profileSnap = await getDoc(doc(db, "users", user.uid));
-    const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
-    await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
-      currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
-    });
-    await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
-    setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
+    try {
+      const profileSnap = await getDoc(doc(db, "users", user.uid));
+      const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
+      await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+        currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
+      });
+      await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
+      setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
+    } catch (error) {
+      console.error('[Challenges] Join failed:', error);
+      toast.error('Failed to join challenge');
+    }
   }, [user]);
 
   const leaveChallenge = useCallback(async (challengeId: string) => {
     if (!user) return;
-    await deleteDoc(doc(db, "challenges", challengeId, "participants", user.uid));
-    await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
-    setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
+    try {
+      await deleteDoc(doc(db, "challenges", challengeId, "participants", user.uid));
+      await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
+      setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
+    } catch (error) {
+      console.error('[Challenges] Leave failed:', error);
+      toast.error('Failed to leave challenge');
+    }
   }, [user]);
 
   const updateProgress = useCallback(async (challengeId: string, newValue: number) => {
@@ -242,13 +253,18 @@ export function useChallenges() {
     const ch = challenges.find(c => c.id === challengeId);
     if (!ch) return;
     const tier = computeTier(newValue, ch.tiers);
-    await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
-      currentValue: newValue, tierAchieved: tier,
-    }, { merge: true });
-    setMyProgress(prev => ({
-      ...prev,
-      [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
-    }));
+    try {
+      await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+        currentValue: newValue, tierAchieved: tier,
+      }, { merge: true });
+      setMyProgress(prev => ({
+        ...prev,
+        [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
+      }));
+    } catch (error) {
+      console.error('[Challenges] Progress update failed:', error);
+      toast.error('Failed to update challenge progress');
+    }
   }, [user, challenges]);
 
   const myChallenges = challenges.filter(c => !!myProgress[c.id]);
