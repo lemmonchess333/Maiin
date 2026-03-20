@@ -32,7 +32,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import WeeklySnapshotCompact from "@/components/home/WeeklySnapshotCompact";
+import HybridBalanceCard from "@/components/home/HybridBalanceCard";
 import InsightStrip from "@/components/home/InsightStrip";
 import TodayEnergy from "@/components/home/TodayEnergy";
 
@@ -100,6 +100,12 @@ export default function Home() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
     return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
+
+  const targetSessions = useMemo(function() {
+    const liftTarget = schedule.filter(function(d) { return d.type === "lift" || d.type === "both"; }).length;
+    const runTarget = schedule.filter(function(d) { return d.type === "run" || d.type === "both"; }).length;
+    return { lift: liftTarget, run: runTarget };
+  }, [schedule]);
 
   const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
   const streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
@@ -474,11 +480,14 @@ export default function Home() {
       </motion.div>
 
       <section aria-label="Weekly snapshot">
-        {(snapData.ls > 0 || snapData.rs > 0 || snapData.lt > 0 || snapData.rk > 0) && (
-          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-            <WeeklySnapshotCompact liftSessions={snapData.ls} runSessions={snapData.rs} liftTonnage={snapData.lt} runKm={snapData.rk} adherenceScore={snapData.ad} />
-          </motion.div>
-        )}
+        <HybridBalanceCard
+          liftSessions={snapData.ls}
+          runSessions={snapData.rs}
+          liftTonnage={snapData.lt}
+          runKm={snapData.rk}
+          targetLiftSessions={targetSessions.lift}
+          targetRunSessions={targetSessions.run}
+        />
 
         {perfDoc && perfDoc.insight && (
           <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
