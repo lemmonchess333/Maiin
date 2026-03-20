@@ -679,7 +679,7 @@ export default function Log() {
       {/* Food Tab */}
       {activeTab === "food" && (
         <section aria-label="Food logging">
-        <motion.div variants={itemVariant} className="space-y-4">
+        <motion.div variants={itemVariant} className="space-y-4 pb-28">
           {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
             <div className="grid grid-cols-4 gap-2 text-center">
@@ -696,6 +696,9 @@ export default function Log() {
                   {safeNum(dailyTotals.calories)}
                 </p>
                 <p className="text-[10px] mt-1">cal</p>
+                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.calories}15` }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.calories / (profile?.targetCalories || 2200)) * 100)}%`, backgroundColor: macroColors.calories, opacity: 0.6 }} />
+                </div>
               </div>
 
               {/* Protein */}
@@ -711,6 +714,9 @@ export default function Log() {
                   {safeNum(dailyTotals.protein)}g
                 </p>
                 <p className="text-[10px] mt-1">protein</p>
+                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.protein}15` }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.protein / (profile?.targetProtein || 160)) * 100)}%`, backgroundColor: macroColors.protein, opacity: 0.6 }} />
+                </div>
               </div>
 
               {/* Carbs */}
@@ -726,6 +732,9 @@ export default function Log() {
                   {safeNum(dailyTotals.carbs)}g
                 </p>
                 <p className="text-[10px] mt-1">carbs</p>
+                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.carbs}15` }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.carbs / (profile?.targetCarbs || 250)) * 100)}%`, backgroundColor: macroColors.carbs, opacity: 0.6 }} />
+                </div>
               </div>
 
               {/* Fat */}
@@ -741,6 +750,9 @@ export default function Log() {
                   {safeNum(dailyTotals.fat)}g
                 </p>
                 <p className="text-[10px] mt-1">fat</p>
+                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.fat}15` }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.fat / (profile?.targetFat || 70)) * 100)}%`, backgroundColor: macroColors.fat, opacity: 0.6 }} />
+                </div>
               </div>
             </div>
           </div>
