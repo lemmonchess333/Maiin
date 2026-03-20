@@ -53,6 +53,9 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { tint } from "@/lib/colorUtils";
+import { getAdjustedTargets } from "@/lib/phaseNutrition";
+import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
+import type { DayType } from "@/lib/types";
 
 // Quick-add default meals (moved from ManualFoodLogger)
 const DEFAULT_QUICK_MEALS = [
@@ -241,11 +244,25 @@ export default function Log() {
     fat: THEME.semantic.nutrition,
   };
 
+  // Day-type-aware nutrition targets
+  const todayDayType = useMemo(() => {
+    const schedule = profile?.weekSchedule && profile.weekSchedule.length === 7
+      ? profile.weekSchedule
+      : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
+    const today = getTodaySchedule(schedule);
+    return (today?.type || "rest") as DayType;
+  }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
+
+  const adjustedTargets = useMemo(() => {
+    if (!profile) return null;
+    return getAdjustedTargets(profile, todayDayType);
+  }, [profile, todayDayType]);
+
   const macroTargets = {
-    calories: profile?.targetCalories || 2200,
-    protein: profile?.targetProtein || 160,
-    carbs: profile?.targetCarbs || 250,
-    fat: profile?.targetFat || 70,
+    calories: adjustedTargets?.calories || profile?.targetCalories || 2200,
+    protein: adjustedTargets?.protein || profile?.targetProtein || 160,
+    carbs: adjustedTargets?.carbs || profile?.targetCarbs || 250,
+    fat: adjustedTargets?.fat || profile?.targetFat || 70,
   };
 
   // Auto-save daily log when workouts or meals change
@@ -696,6 +713,27 @@ export default function Log() {
       {activeTab === "food" && (
         <section aria-label="Food logging">
         <motion.div variants={itemVariant} className="space-y-4 pb-28">
+          {/* Day-type annotation pill */}
+          {adjustedTargets && todayDayType !== "rest" && (
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                style={{
+                  backgroundColor: todayDayType === "lift" ? `${THEME.lifting}15` : todayDayType === "run" ? `${THEME.running}15` : `${THEME.lifting}15`,
+                  color: todayDayType === "lift" ? THEME.lifting : todayDayType === "run" ? THEME.running : THEME.lifting,
+                }}
+              >
+                {todayDayType === "lift" ? <Dumbbell className="w-3 h-3" /> : todayDayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>}
+                {adjustedTargets.annotation}
+              </span>
+            </div>
+          )}
+          {adjustedTargets && todayDayType === "rest" && (
+            <p className="text-[10px] mb-2" style={{ color: THEME.text.muted }}>
+              Rest day targets
+            </p>
+          )}
+
           {/* Daily Totals */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
             <div className="grid grid-cols-4 gap-2 text-center">
