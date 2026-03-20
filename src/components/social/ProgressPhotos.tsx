@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { Camera, Lock, Loader2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../../lib/theme';
+import { logger } from '../../lib/logger';
 import { EmptyState } from '../EmptyState';
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
@@ -129,8 +130,8 @@ export default function ProgressPhotos() {
     setLoading(true);
     setUploadError(false);
     try {
-      console.log('[UPLOAD] Current user:', user.uid);
-      console.log('[UPLOAD] 1. Image picked:', { name: file.name, size: file.size, type: file.type });
+      logger.log('[UPLOAD] Current user:', user.uid);
+      logger.log('[UPLOAD] 1. Image picked:', { name: file.name, size: file.size, type: file.type });
 
       // Step 1: Compress image
       let blob: Blob;
@@ -142,9 +143,9 @@ export default function ProgressPhotos() {
         canvas.height = bitmap.height * scale;
         canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
         blob = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), 'image/webp', 0.8));
-        console.log('[UPLOAD] 2. Compressed image:', { width: canvas.width, height: canvas.height, blobSize: blob.size });
+        logger.log('[UPLOAD] 2. Compressed image:', { width: canvas.width, height: canvas.height, blobSize: blob.size });
       } catch (e) {
-        console.error('[UPLOAD] Image compression failed:', e);
+        logger.error('[UPLOAD] Image compression failed:', e);
         throw new Error('Failed to compress image');
       }
 
@@ -153,17 +154,17 @@ export default function ProgressPhotos() {
       let iv: Uint8Array;
       let key: CryptoKey;
       const skipEncryption = !isPrivate && typeof crypto?.subtle?.encrypt !== 'function';
-      console.log('[UPLOAD] 3. Starting encryption...', { skipEncryption, isPrivate });
+      logger.log('[UPLOAD] 3. Starting encryption...', { skipEncryption, isPrivate });
       try {
         key = await getOrDeriveKey(user.uid);
         const result = await encryptBlob(await blob.arrayBuffer(), key);
         encrypted = result.encrypted;
         iv = result.iv;
-        console.log('[UPLOAD] 4. Encryption complete, encrypted size:', encrypted.byteLength);
+        logger.log('[UPLOAD] 4. Encryption complete, encrypted size:', encrypted.byteLength);
       } catch (e) {
-        console.error('[UPLOAD] Encryption failed:', e);
+        logger.error('[UPLOAD] Encryption failed:', e);
         // Fallback: upload unencrypted if encryption fails
-        console.log('[UPLOAD] 4b. Falling back to unencrypted upload');
+        logger.log('[UPLOAD] 4b. Falling back to unencrypted upload');
         encrypted = await blob.arrayBuffer();
         iv = new Uint8Array(12); // zero IV indicates unencrypted
         key = null as unknown as CryptoKey;
@@ -172,20 +173,20 @@ export default function ProgressPhotos() {
       // Step 3: Upload to Firebase Storage
       // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
       const path = `progress-photos/${user.uid}/${Date.now()}${iv.some(b => b !== 0) ? '.enc' : '.webp'}`;
-      console.log('[UPLOAD] 5. Creating Firebase Storage reference:', path);
+      logger.log('[UPLOAD] 5. Creating Firebase Storage reference:', path);
       try {
         await withTimeout(
           uploadBytes(ref(storage, path), new Uint8Array(encrypted), { contentType: 'image/webp' }),
           25000
         );
-        console.log('[UPLOAD] 6. Upload complete');
+        logger.log('[UPLOAD] 6. Upload complete');
       } catch (e) {
-        console.error('[UPLOAD] Firebase Storage upload failed:', e);
+        logger.error('[UPLOAD] Firebase Storage upload failed:', e);
         throw e;
       }
 
       // Step 4: Write Firestore document
-      console.log('[UPLOAD] 7. Writing Firestore document...');
+      logger.log('[UPLOAD] 7. Writing Firestore document...');
       let docRef;
       try {
         docRef = await addDoc(collection(db, 'users', user.uid, 'progressPhotos'), {
@@ -195,9 +196,9 @@ export default function ProgressPhotos() {
           visibility: isPrivate ? 'private' : 'public',
           createdAt: Timestamp.now(),
         });
-        console.log('[UPLOAD] 8. Firestore write complete, docId:', docRef.id);
+        logger.log('[UPLOAD] 8. Firestore write complete, docId:', docRef.id);
       } catch (e) {
-        console.error('[UPLOAD] Firestore write failed:', e);
+        logger.error('[UPLOAD] Firestore write failed:', e);
         throw new Error('Failed to save photo metadata');
       }
 
@@ -219,12 +220,12 @@ export default function ProgressPhotos() {
           setDecryptedUrls(prev => ({ ...prev, [docRef.id]: objectUrl }));
         }
       } catch (e) {
-        console.error('[UPLOAD] Auto-decrypt after upload failed (non-critical):', e);
+        logger.error('[UPLOAD] Auto-decrypt after upload failed (non-critical):', e);
       }
 
       toast.success('Photo uploaded!');
     } catch (err) {
-      console.error('[UPLOAD] Upload failed:', err);
+      logger.error('[UPLOAD] Upload failed:', err);
       setUploadError(true);
     } finally {
       setLoading(false);

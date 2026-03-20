@@ -5,6 +5,9 @@ import path from "path";
 
 export default defineConfig({
   base: "/Maiin/",
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.1.0'),
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -13,7 +16,7 @@ export default defineConfig({
   },
   build: {
     minify: "esbuild",
-    sourcemap: true,
+    sourcemap: false,
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
     chunkSizeWarningLimit: 1100,
 

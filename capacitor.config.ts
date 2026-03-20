@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   // WARNING: Changing appId requires updating APPLE_PRODUCT_IDS in
   // src/lib/purchaseProvider.ts and re-registering in App Store Connect.
-  appId: "com.adaptivefit.app",
+  appId: "com.tropos.app",
   appName: "Tropos",
   webDir: "dist",
   server: {
@@ -12,14 +12,14 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#6358D4",
+      backgroundColor: "#7C6EF6",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
       splashImmersive: true,
     },
     StatusBar: {
       style: "DARK",
-      backgroundColor: "#6358D4",
+      backgroundColor: "#7C6EF6",
     },
   },
   ios: {
@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
     scheme: "Tropos",
   },
   android: {
-    backgroundColor: "#6358D4",
+    backgroundColor: "#7C6EF6",
   },
 };
 

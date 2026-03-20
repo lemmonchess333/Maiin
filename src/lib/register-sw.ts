@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { logger } from "./logger";
 
 export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
@@ -6,7 +7,7 @@ export function registerServiceWorker() {
       navigator.serviceWorker
         .register(`${import.meta.env.BASE_URL}sw.js`)
         .then((registration) => {
-          console.log("SW registered:", registration.scope);
+          logger.log("SW registered:", registration.scope);
 
           // Check for updates when page becomes visible (avoids leaked interval)
           document.addEventListener("visibilitychange", () => {
@@ -36,7 +37,7 @@ export function registerServiceWorker() {
           });
         })
         .catch((error) => {
-          console.log("SW registration failed:", error);
+          logger.log("SW registration failed:", error);
         });
     });
   }

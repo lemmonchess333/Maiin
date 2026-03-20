@@ -5,6 +5,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const tabs = [
   { to: "/", icon: Home, label: "Home" },
@@ -19,6 +20,7 @@ export default function Layout() {
   const hideNav = location.pathname === '/run';
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div className="min-h-screen bg-background transition-colors pb-20">
@@ -104,12 +106,12 @@ export default function Layout() {
                   <>
                     <motion.div
                       className="relative"
-                      whileTap={{ scale: 0.85 }}
+                      whileTap={prefersReducedMotion ? undefined : { scale: 0.85 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                     >
                       <motion.div
                         initial={false}
-                        animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                        animate={!prefersReducedMotion && isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
                       >
                         <Icon
@@ -125,11 +127,15 @@ export default function Layout() {
                       )}
                       {/* Active indicator dot */}
                       {isActive && (
-                        <motion.div
-                          layoutId="tab-indicator"
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
+                        prefersReducedMotion ? (
+                          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                        ) : (
+                          <motion.div
+                            layoutId="tab-indicator"
+                            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        )
                       )}
                     </motion.div>
                     <span className="text-[11px] font-medium tracking-wide">{tab.label}</span>

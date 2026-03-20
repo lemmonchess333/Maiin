@@ -1,12 +1,12 @@
 {
   "name": "Tropos",
   "short_name": "Tropos",
-  "description": "Track your fitness progress, crush your goals",
+  "description": "The fitness app for hybrid athletes who lift and run. Smart training programmes, nutrition tracking, and performance analytics.",
   "start_url": "/Maiin/",
   "scope": "/Maiin/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "theme_color": "#7C6EF6",
   "orientation": "portrait",
   "categories": ["health", "fitness", "lifestyle"],
   "icons": [

@@ -156,6 +156,17 @@ function RoutePrefetcher() {
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
 
+  // Flush offline queue on startup if already online
+  useEffect(() => {
+    if (user && navigator.onLine) {
+      import('@/lib/offlineQueue').then(({ flushQueue }) => {
+        import('@/lib/firebase').then(({ db }) => {
+          flushQueue(db).catch(() => {});
+        });
+      });
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading application">

@@ -125,7 +125,8 @@ if (typeof window !== "undefined") {
     const { db } = await import("@/lib/firebase");
     const count = await flushQueue(db);
     if (count > 0) {
-      console.log(`[OfflineQueue] Flushed ${count} queued writes`);
+      const { logger } = await import("@/lib/logger");
+    logger.log(`[OfflineQueue] Flushed ${count} queued writes`);
     }
   });
 }

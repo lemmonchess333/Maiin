@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, onSnapshot, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -14,6 +14,8 @@ export function useWaterLog() {
   const { user, profile } = useAuth();
   const [glasses, setGlasses] = useState(0);
   const [loading, setLoading] = useState(true);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const skipNextSnapshot = useRef(false);
 
   const today = format(new Date(), "yyyy-MM-dd");
   const target = profile?.targetWaterGlasses || 8;
@@ -27,6 +29,11 @@ export function useWaterLog() {
 
     const ref = doc(db, "users", user.uid, "waterLog", today);
     const unsub = onSnapshot(ref, (snap) => {
+      if (skipNextSnapshot.current) {
+        skipNextSnapshot.current = false;
+        setLoading(false);
+        return;
+      }
       if (snap.exists()) {
         setGlasses(snap.data().glasses || 0);
       } else {
@@ -35,34 +42,47 @@ export function useWaterLog() {
       setLoading(false);
     });
 
-    return unsub;
+    return () => {
+      unsub();
+      clearTimeout(saveTimeout.current);
+    };
   }, [user, today]);
 
+  const debouncedSave = useCallback(
+    (newGlasses: number) => {
+      if (!user) return;
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = setTimeout(() => {
+        const ref = doc(db, "users", user.uid, "waterLog", today);
+        skipNextSnapshot.current = true;
+        setDoc(ref, {
+          glasses: newGlasses,
+          targetGlasses: target,
+          updatedAt: Timestamp.now(),
+        }).catch(() => { skipNextSnapshot.current = false; });
+      }, 500);
+    },
+    [user, today, target]
+  );
+
   const logWater = useCallback(
-    async (amount = 1) => {
+    (amount = 1) => {
       if (!user) return;
       const newGlasses = glasses + amount;
-      const ref = doc(db, "users", user.uid, "waterLog", today);
-      await setDoc(ref, {
-        glasses: newGlasses,
-        targetGlasses: target,
-        updatedAt: Timestamp.now(),
-      });
+      setGlasses(newGlasses);
+      debouncedSave(newGlasses);
     },
-    [user, glasses, today, target]
+    [user, glasses, debouncedSave]
   );
 
   const setWaterAmount = useCallback(
-    async (amount: number) => {
+    (amount: number) => {
       if (!user) return;
-      const ref = doc(db, "users", user.uid, "waterLog", today);
-      await setDoc(ref, {
-        glasses: Math.max(0, amount),
-        targetGlasses: target,
-        updatedAt: Timestamp.now(),
-      });
+      const newGlasses = Math.max(0, amount);
+      setGlasses(newGlasses);
+      debouncedSave(newGlasses);
     },
-    [user, today, target]
+    [user, debouncedSave]
   );
 
   return {

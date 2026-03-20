@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronRight, Dumbbell, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Props {
   liftSessions: number;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function HybridBalanceCard({ liftSessions, runSessions, liftTonnage, runKm, targetLiftSessions, targetRunSessions }: Props) {
+  const prefersReducedMotion = useReducedMotion();
   const totalSessions = liftSessions + runSessions;
   if (totalSessions === 0 && liftTonnage === 0 && runKm === 0) {
     return (
@@ -84,18 +86,18 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
               <motion.div
                 className="h-full"
                 style={{ backgroundColor: THEME.lifting, borderRadius: runPct > 0 ? '9999px 0 0 9999px' : '9999px' }}
-                initial={{ width: 0 }}
+                initial={prefersReducedMotion ? { width: `${liftPct}%` } : { width: 0 }}
                 animate={{ width: `${liftPct}%` }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut", delay: 0.2 }}
               />
             )}
             {runPct > 0 && (
               <motion.div
                 className="h-full"
                 style={{ backgroundColor: THEME.running, borderRadius: liftPct > 0 ? '0 9999px 9999px 0' : '9999px' }}
-                initial={{ width: 0 }}
+                initial={prefersReducedMotion ? { width: `${runPct}%` } : { width: 0 }}
                 animate={{ width: `${runPct}%` }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut", delay: 0.3 }}
               />
             )}
           </div>
