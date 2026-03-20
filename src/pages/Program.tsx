@@ -395,6 +395,35 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
         </div>
       </div>
 
+      {/* Phase explanation card — contextual based on current prescription */}
+      {!isViewingHistory && !locked && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.2 }}
+          className="mx-4 mb-3 p-3 rounded-xl text-xs space-y-1"
+          style={{
+            backgroundColor: prescription.deload ? `${THEME.lifting}08` : `${THEME.success}08`,
+            borderLeft: `3px solid ${prescription.deload ? THEME.lifting : THEME.success}`,
+          }}
+        >
+          <p className="font-semibold text-foreground">
+            {prescription.deload
+              ? "Recovery Week"
+              : `Week ${displayWeekNumber} — ${prescription.intensityMultiplier > 1 ? "Intensity building" : "Base volume"}`
+            }
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            {prescription.deload
+              ? "Volume reduced to ~70%. Focus on form and recovery — your body adapts and grows during rest, not just during training."
+              : prescription.intensityMultiplier > 1.05
+              ? `Intensity at ${Math.round(prescription.intensityMultiplier * 100)}% of baseline. Progressive overload in action — small increases compound over time.`
+              : "Building your base volume. Consistent effort now sets up bigger gains in the coming weeks."
+            }
+          </p>
+        </motion.div>
+      )}
+
       {/* Advance Week Button */}
       {allComplete && !isViewingHistory && !locked && (
         <button
