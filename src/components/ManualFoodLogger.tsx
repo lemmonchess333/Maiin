@@ -7,7 +7,6 @@ import { THEME } from "@/lib/theme";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import { format } from "date-fns";
 import { Drawer } from "vaul";
 
@@ -64,12 +63,6 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
 
       setSaved(true);
       toast.success("Meal logged!");
-
-      lazyConfetti().then(confetti => confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-      }));
 
       setTimeout(() => {
         setSaved(false);

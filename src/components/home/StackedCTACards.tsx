@@ -2,6 +2,7 @@ import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
 import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   prevHealthScore: number | null;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
+  const healthDisplay = useCountUp(healthScore ?? 0, { sessionKey: "health", duration: 0.8 });
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
   const tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
@@ -124,7 +126,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
             </div>
             {healthScore != null ? (
               <p className="text-[28px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
-                {healthScore}
+                <motion.span>{healthDisplay}</motion.span>
               </p>
             ) : (
               <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>--</p>

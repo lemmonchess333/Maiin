@@ -1,15 +1,24 @@
 import { THEME } from "@/lib/theme";
 import { Target } from "lucide-react";
 import { formatVolume, formatStat } from "@/utils/formatters";
+import { motion } from "framer-motion";
+import { useCountUp } from "@/hooks/useCountUp";
 
 export default function WeeklySnapshotCompact({ liftSessions, runSessions, liftTonnage, runKm, adherenceScore }: {
   liftSessions: number; runSessions: number; liftTonnage: number; runKm: number; adherenceScore: number | null;
 }) {
   const allZero = liftSessions === 0 && runSessions === 0 && liftTonnage === 0 && runKm === 0 && adherenceScore == null;
   const vol = formatVolume(liftTonnage);
-  const stats = [
-    { label: "Sessions", value: formatStat(liftSessions + runSessions), color: THEME.brand },
-    { label: "Volume", value: vol.value + (vol.unit ? " " + vol.unit : ""), color: THEME.lifting },
+  const totalSessions = liftSessions + runSessions;
+  const sessionsDisplay = useCountUp(totalSessions, { sessionKey: "sessions", duration: 0.5 });
+  const volumeDisplay = useCountUp(liftTonnage, {
+    sessionKey: "volume",
+    duration: 0.7,
+    decimals: liftTonnage >= 1000 ? 1 : 0,
+    suffix: liftTonnage >= 1000 ? "k" : "",
+  });
+  const volumeUnit = liftTonnage >= 1000 ? "" : vol.unit ? " " + vol.unit : "";
+  const staticStats = [
     { label: "Distance", value: runKm > 0 ? runKm.toFixed(1) + "km" : "\u2014", color: THEME.running },
     { label: "Adherence", value: adherenceScore != null ? adherenceScore + "%" : "\u2014", color: THEME.success },
   ];
@@ -24,7 +33,19 @@ export default function WeeklySnapshotCompact({ liftSessions, runSessions, liftT
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-2">
-          {stats.map(function(s) {
+          <div className="text-center p-2 rounded-xl" style={{ background: THEME.brand + "10" }}>
+            <p className="text-base font-bold font-mono tabular-nums leading-none" style={{ color: THEME.brand }}>
+              {totalSessions > 0 ? <motion.span>{sessionsDisplay}</motion.span> : formatStat(totalSessions)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Sessions</p>
+          </div>
+          <div className="text-center p-2 rounded-xl" style={{ background: THEME.lifting + "10" }}>
+            <p className="text-base font-bold font-mono tabular-nums leading-none" style={{ color: THEME.lifting }}>
+              {liftTonnage > 0 ? <><motion.span>{volumeDisplay}</motion.span>{volumeUnit}</> : vol.value + (vol.unit ? " " + vol.unit : "")}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1 leading-tight">Volume</p>
+          </div>
+          {staticStats.map(function(s) {
             return (
               <div key={s.label} className="text-center p-2 rounded-xl" style={{ background: s.color + "10" }}>
                 <p className="text-base font-bold font-mono tabular-nums leading-none" style={{ color: s.color }}>{s.value}</p>

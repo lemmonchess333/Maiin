@@ -166,6 +166,15 @@ export default function Log() {
     return isNaN(num) || value == null ? 0 : num;
   };
 
+  function glowStyle(current: number, target: number, color: string): React.CSSProperties {
+    const ratio = Math.min(1, current / (target || 1));
+    const spread = Math.round(ratio * 85);
+    const opacity = Math.round(ratio * 0.18 * 255).toString(16).padStart(2, '0');
+    return {
+      background: `radial-gradient(circle at 50% 28%, ${color}${opacity} 0%, transparent ${spread}%)`,
+    };
+  }
+
   // Common meals: ranked by frequency, toggle to add/remove
   const commonMeals = useMemo(() => {
     const freq = new Map<string, { count: number; meal: typeof meals[0] }>();
@@ -230,6 +239,13 @@ export default function Log() {
     protein: THEME.semantic.hydration,
     carbs: THEME.semantic.activity,
     fat: THEME.semantic.nutrition,
+  };
+
+  const macroTargets = {
+    calories: profile?.targetCalories || 2200,
+    protein: profile?.targetProtein || 160,
+    carbs: profile?.targetCarbs || 250,
+    fat: profile?.targetFat || 70,
   };
 
   // Auto-save daily log when workouts or meals change
@@ -685,73 +701,85 @@ export default function Log() {
             <div className="grid grid-cols-4 gap-2 text-center">
               {/* Calories */}
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
                 style={{
                   backgroundColor: tint(macroColors.calories, 0.06),
                   color: macroColors.calories,
                 }}
               >
-                <Flame className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.calories)}
-                </p>
-                <p className="text-[10px] mt-1">cal</p>
-                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.calories}15` }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.calories / (profile?.targetCalories || 2200)) * 100)}%`, backgroundColor: macroColors.calories, opacity: 0.6 }} />
+                <div className="absolute inset-0 pointer-events-none transition-opacity duration-700" style={glowStyle(dailyTotals.calories, macroTargets.calories, macroColors.calories)} />
+                <div className="relative z-10">
+                  <Flame className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="stat-tile__value tabular-nums">
+                    {safeNum(dailyTotals.calories)}
+                  </p>
+                  <p className="text-[10px] mt-1">cal</p>
+                  <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.calories}15` }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.calories / macroTargets.calories) * 100)}%`, backgroundColor: macroColors.calories, opacity: 0.6 }} />
+                  </div>
                 </div>
               </div>
 
               {/* Protein */}
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
                 style={{
                   backgroundColor: tint(macroColors.protein, 0.06),
                   color: macroColors.protein,
                 }}
               >
-                <Beef className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.protein)}g
-                </p>
-                <p className="text-[10px] mt-1">protein</p>
-                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.protein}15` }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.protein / (profile?.targetProtein || 160)) * 100)}%`, backgroundColor: macroColors.protein, opacity: 0.6 }} />
+                <div className="absolute inset-0 pointer-events-none transition-opacity duration-700" style={glowStyle(dailyTotals.protein, macroTargets.protein, macroColors.protein)} />
+                <div className="relative z-10">
+                  <Beef className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="stat-tile__value tabular-nums">
+                    {safeNum(dailyTotals.protein)}g
+                  </p>
+                  <p className="text-[10px] mt-1">protein</p>
+                  <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.protein}15` }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.protein / macroTargets.protein) * 100)}%`, backgroundColor: macroColors.protein, opacity: 0.6 }} />
+                  </div>
                 </div>
               </div>
 
               {/* Carbs */}
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
                 style={{
                   backgroundColor: tint(macroColors.carbs, 0.06),
                   color: macroColors.carbs,
                 }}
               >
-                <Wheat className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.carbs)}g
-                </p>
-                <p className="text-[10px] mt-1">carbs</p>
-                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.carbs}15` }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.carbs / (profile?.targetCarbs || 250)) * 100)}%`, backgroundColor: macroColors.carbs, opacity: 0.6 }} />
+                <div className="absolute inset-0 pointer-events-none transition-opacity duration-700" style={glowStyle(dailyTotals.carbs, macroTargets.carbs, macroColors.carbs)} />
+                <div className="relative z-10">
+                  <Wheat className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="stat-tile__value tabular-nums">
+                    {safeNum(dailyTotals.carbs)}g
+                  </p>
+                  <p className="text-[10px] mt-1">carbs</p>
+                  <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.carbs}15` }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.carbs / macroTargets.carbs) * 100)}%`, backgroundColor: macroColors.carbs, opacity: 0.6 }} />
+                  </div>
                 </div>
               </div>
 
               {/* Fat */}
               <div
-                className="min-w-0 rounded-xl p-3 shadow-sm"
+                className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
                 style={{
                   backgroundColor: tint(macroColors.fat, 0.06),
                   color: macroColors.fat,
                 }}
               >
-                <Cookie className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums">
-                  {safeNum(dailyTotals.fat)}g
-                </p>
-                <p className="text-[10px] mt-1">fat</p>
-                <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.fat}15` }}>
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.fat / (profile?.targetFat || 70)) * 100)}%`, backgroundColor: macroColors.fat, opacity: 0.6 }} />
+                <div className="absolute inset-0 pointer-events-none transition-opacity duration-700" style={glowStyle(dailyTotals.fat, macroTargets.fat, macroColors.fat)} />
+                <div className="relative z-10">
+                  <Cookie className="w-5 h-5 mx-auto mb-1.5" />
+                  <p className="stat-tile__value tabular-nums">
+                    {safeNum(dailyTotals.fat)}g
+                  </p>
+                  <p className="text-[10px] mt-1">fat</p>
+                  <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.fat}15` }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.fat / macroTargets.fat) * 100)}%`, backgroundColor: macroColors.fat, opacity: 0.6 }} />
+                  </div>
                 </div>
               </div>
             </div>
