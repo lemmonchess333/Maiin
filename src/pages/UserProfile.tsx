@@ -17,7 +17,7 @@ export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string } | null>(null);
+  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string; email?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
@@ -115,10 +115,10 @@ export default function UserProfile() {
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0); }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || profile.email || '?').charAt(0).toUpperCase(); }}
             />
           ) : (
-            (profile.displayName || '?').charAt(0).toUpperCase()
+            (profile.displayName || profile.email || '?').charAt(0).toUpperCase()
           )}
         </div>
         <div className="flex-1">
