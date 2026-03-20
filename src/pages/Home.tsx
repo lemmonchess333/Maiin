@@ -27,6 +27,7 @@ import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useCountUp } from "@/hooks/useCountUp";
 
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
@@ -102,6 +103,7 @@ export default function Home() {
 
   const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
   const streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
+  const streakDisplay = useCountUp(streak, { sessionKey: "streak", duration: 0.5 });
 
   useEffect(function() {
     if (profile && streak !== profile.currentStreak) updateProfile({ currentStreak: streak });
@@ -351,7 +353,7 @@ export default function Home() {
                 <Flame className={cn("w-3.5 h-3.5", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
               </motion.span>
               <span className={cn("text-sm font-bold relative z-10", streak > 0 ? "text-orange-500" : "text-muted-foreground")}>
-                {streak >= 1000 ? Math.floor(streak / 100) / 10 + "k" : streak}
+                <motion.span>{streakDisplay}</motion.span>
               </span>
             </motion.div>
             <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">

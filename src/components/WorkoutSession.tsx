@@ -307,7 +307,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     if (set.weight > 0 && set.weight > (allTimeBests[exName] || 0) && !firedPRs.has(exName)) {
       setFiredPRs((prev) => new Set(prev).add(exName));
       setAllTimeBests((prev) => ({ ...prev, [exName]: set.weight }));
-      lazyConfetti().then(confetti => confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } }));
+      lazyConfetti().then(confetti => {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 30, spread: 90, origin: { y: 0.65 }, startVelocity: 15 }), 200);
+      });
+      haptic(50);
       toast.success(`New PR! ${set.weight}kg on ${exName}`);
     }
 

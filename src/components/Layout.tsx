@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { Home, PlusCircle, BarChart3, Dumbbell, Users, WifiOff, Check } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 
 const tabs = [
   { to: "/", icon: Home, label: "Home" },
@@ -78,6 +79,7 @@ export default function Layout() {
       {/* Bottom tab bar */}
       {!hideNav && (
       <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30">
+        <LayoutGroup>
         <div className="max-w-md mx-auto flex" role="tablist">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -88,7 +90,7 @@ export default function Layout() {
                 to={tab.to}
                 end={tab.to === "/"}
                 aria-label={tab.label}
-                onClick={tab.to === "/social" ? markSeen : undefined}
+                onClick={() => { haptic('light'); if (tab.to === "/social") markSeen(); }}
                 className={({ isActive }) =>
                   cn(
                     "flex-1 flex flex-col items-center gap-1 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]",
@@ -100,17 +102,36 @@ export default function Layout() {
               >
                 {({ isActive }) => (
                   <>
-                    <div className="relative">
-                      <Icon aria-hidden="true" className={cn("w-5 h-5", isActive && "ds-tab-active-icon")} />
+                    <motion.div
+                      className="relative"
+                      whileTap={{ scale: 0.85 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                      >
+                        <Icon
+                          aria-hidden="true"
+                          className={cn("w-5 h-5", isActive && "ds-tab-active-icon")}
+                          fill={isActive ? "currentColor" : "none"}
+                          strokeWidth={isActive ? 2 : 1.75}
+                        />
+                      </motion.div>
                       {/* Notification badge */}
                       {hasBadge && (
                         <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive" />
                       )}
                       {/* Active indicator dot */}
                       {isActive && (
-                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                        <motion.div
+                          layoutId="tab-indicator"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
                       )}
-                    </div>
+                    </motion.div>
                     <span className="text-[11px] font-medium tracking-wide">{tab.label}</span>
                   </>
                 )}
@@ -118,6 +139,7 @@ export default function Layout() {
             );
           })}
         </div>
+        </LayoutGroup>
       </nav>
       )}
     </div>

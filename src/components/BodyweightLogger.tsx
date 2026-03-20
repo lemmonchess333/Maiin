@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
+import { haptic } from "@/lib/haptic";
 
 interface WeightLog {
   id: string;
@@ -110,13 +110,7 @@ export default function BodyweightLogger() {
       setWeight("");
       setSaved(true);
 
-      // Light confetti on successful log
-      lazyConfetti().then(confetti => confetti({
-        particleCount: 60,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ["#f59e0b", "#fbbf24"],
-      }));
+      haptic('success');
 
       setTimeout(() => setSaved(false), 1800);
     } catch (error) {
