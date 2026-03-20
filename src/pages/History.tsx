@@ -419,6 +419,7 @@ export default function History() {
                                     style={{ background: THEME.brand, color: '#fff' }}>
                                     NEW
                                   </span>
+                                  <span className="text-[9px] text-muted-foreground ml-1">{pr.reps}RM</span>
                                 </>
                               )}
                               <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
