@@ -52,7 +52,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
                 Try again
               </button>
               <button
-                onClick={() => { window.location.href = '/Maiin/'; }}
+                onClick={() => { window.location.href = import.meta.env.BASE_URL; }}
                 className="px-4 py-2.5 rounded-xl text-sm font-medium text-white"
                 style={{ background: THEME.teal }}>
                 Go home

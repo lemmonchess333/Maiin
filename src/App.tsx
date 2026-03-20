@@ -223,7 +223,7 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter basename="/Maiin/">
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <NotificationBubbleProvider>
             <ToastProvider />

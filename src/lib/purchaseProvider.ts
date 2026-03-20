@@ -99,8 +99,8 @@ async function purchaseWithStripe(
         priceId: PRICE_IDS[plan],
         uid,
         email,
-        successUrl: `${window.location.origin}/Maiin/settings?checkout=success`,
-        cancelUrl: `${window.location.origin}/Maiin/settings?checkout=cancelled`,
+        successUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=success`,
+        cancelUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=cancelled`,
       }),
     });
 
