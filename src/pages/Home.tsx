@@ -222,6 +222,30 @@ export default function Home() {
     return Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000);
   }, [meals]);
 
+  // Post-workout nutrition nudge — shows for 2h after a workout
+  const postWorkoutNudge = useMemo(function() {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const todayWorkouts = workouts.filter(function(w) { return w.date === todayStr; });
+    if (todayWorkouts.length === 0) return null;
+
+    const latest = todayWorkouts.reduce(function(a, b) {
+      return (b.createdAt?.toMillis?.() || 0) > (a.createdAt?.toMillis?.() || 0) ? b : a;
+    });
+
+    const createdMs = latest.createdAt?.toMillis?.() || Date.now();
+    const minutesSince = Math.round((Date.now() - createdMs) / 60000);
+    if (minutesSince > 120) return null;
+
+    const hasLift = latest.exercises.some(function(e) { return e.category !== "cardio"; });
+    const hasRun = latest.exercises.some(function(e) { return e.category === "cardio"; });
+    const type = hasLift && hasRun ? "both" : hasRun ? "run" : "lift";
+
+    const bw = profile?.weightKg || 70;
+    const proteinRemaining = Math.max(0, Math.round(bw * 0.4) - dailyProt);
+
+    return { type: type as "lift" | "run" | "both", proteinRemaining: proteinRemaining };
+  }, [workouts, profile?.weightKg, dailyProt]);
+
   useEffect(function() {
     if (!user?.uid) return;
     getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(30))).then(function(snap) {
@@ -464,7 +488,7 @@ export default function Home() {
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
           <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} />
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} />
           </SectionErrorBoundary>
         </motion.div>
       </section>
