@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { calculateHealthScore, getScoreColor, getScoreLabel } from "../healthScore";
+import { THEME } from "../theme";
 
 describe("calculateHealthScore", () => {
   const defaultTargets = {
@@ -110,23 +111,23 @@ describe("calculateHealthScore", () => {
 
 describe("getScoreColor", () => {
   it("returns green for scores >= 80", () => {
-    expect(getScoreColor(80)).toBe("#34D399");
-    expect(getScoreColor(100)).toBe("#34D399");
+    expect(getScoreColor(80)).toBe(THEME.success);
+    expect(getScoreColor(100)).toBe(THEME.success);
   });
 
   it("returns yellow for scores 60-79", () => {
-    expect(getScoreColor(60)).toBe("#FFB547");
-    expect(getScoreColor(79)).toBe("#FFB547");
+    expect(getScoreColor(60)).toBe(THEME.warning);
+    expect(getScoreColor(79)).toBe(THEME.warning);
   });
 
   it("returns orange for scores 40-59", () => {
-    expect(getScoreColor(40)).toBe("#f97316");
-    expect(getScoreColor(59)).toBe("#f97316");
+    expect(getScoreColor(40)).toBe(THEME.semantic.nutrition);
+    expect(getScoreColor(59)).toBe(THEME.semantic.nutrition);
   });
 
   it("returns red for scores < 40", () => {
-    expect(getScoreColor(39)).toBe("#EF4444");
-    expect(getScoreColor(0)).toBe("#EF4444");
+    expect(getScoreColor(39)).toBe(THEME.danger);
+    expect(getScoreColor(0)).toBe(THEME.danger);
   });
 });
 
