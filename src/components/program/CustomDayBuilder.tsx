@@ -99,7 +99,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
   return (
     <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
+        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[90vh] overflow-y-auto bg-background safe-area-pb">
           <div className="max-w-md mx-auto p-5 space-y-4">
             <div className="w-10 h-1 rounded-full bg-border mx-auto" />

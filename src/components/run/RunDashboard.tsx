@@ -51,7 +51,7 @@ export default function RunDashboard() {
   return (
     <div className="space-y-4">
       {/* Weekly distance with progress ring */}
-      <div className="p-5 rounded-2xl bg-card shadow-sm">
+      <div className="p-5 rounded-2xl bg-card">
         <p className="text-[11px] text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
         <div className="flex items-center gap-5">
           <div className="relative inline-flex items-center justify-center shrink-0">

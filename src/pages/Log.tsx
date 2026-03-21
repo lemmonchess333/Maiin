@@ -984,7 +984,7 @@ export default function Log() {
               onClick={() => { haptic(); handleNLParse(); }}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-[14px] text-[15px] font-bold transition-all text-white flex items-center justify-center gap-1.5",
+                "w-full py-3 rounded-xl text-[15px] font-bold transition-all text-white flex items-center justify-center gap-1.5",
                 (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
               style={{

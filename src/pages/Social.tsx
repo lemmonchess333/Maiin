@@ -391,7 +391,7 @@ export default function Social() {
           {/* Contact Sync Modal */}
           {showContactModal && (
             <>
-              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
+              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
               <div ref={contactModalRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="text-center space-y-3 py-4">
@@ -454,7 +454,7 @@ export default function Social() {
           {/* Leave Crew Confirmation Modal (#19) */}
           {leavingCrewId && (
             <>
-              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
+              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
               <div ref={leaveCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <p className="text-base font-semibold text-foreground">Leave crew?</p>
@@ -480,7 +480,7 @@ export default function Social() {
           {/* Create Crew Modal (#10 — error handling + loading) */}
           {showCreateGroup && (
             <>
-              <div className="fixed inset-0 bg-black/40 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
+              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
               <div ref={createCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--glass-border)' }}>
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
