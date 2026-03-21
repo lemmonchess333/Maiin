@@ -23,7 +23,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
   return (
     <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Drawer.Content
           aria-labelledby="serving-drawer-title"
           className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[50vh] flex flex-col"
@@ -90,7 +90,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             {/* Log Food button */}
             <button
               onClick={() => onConfirm(servings)}
-              className="w-full py-3 rounded-[14px] text-[15px] font-bold text-white mt-4"
+              className="w-full py-3 rounded-xl text-[15px] font-bold text-white mt-4"
               style={{
                 background: THEME.gradient.brand,
                 boxShadow: "0 4px 16px rgba(124,110,246,0.25)",

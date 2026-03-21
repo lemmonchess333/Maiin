@@ -619,7 +619,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeDrawer}
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-black/50 z-40"
             />
             <motion.div
               ref={exerciseDrawerRef}
@@ -825,7 +825,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSettings(false)}
-              className="fixed inset-0 bg-black/40 z-[1000]"
+              className="fixed inset-0 bg-black/50 z-[1000]"
             />
             <motion.div
               ref={settingsPanelRef}

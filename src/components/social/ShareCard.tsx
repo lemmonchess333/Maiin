@@ -1,6 +1,7 @@
 import { Footprints, Dumbbell, Trophy, Flame } from 'lucide-react';
 import { forwardRef } from 'react';
 import { getDistanceComparison, getVolumeComparison } from '@/lib/funComparisons';
+import { THEME } from '@/lib/theme';
 
 export type ShareCardTheme = 'dark' | 'light' | 'transparent';
 
@@ -122,7 +123,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
               )}
               {!hidden.has('prs') && (data.prsHit || 0) > 0 && (
                 <div className="text-center">
-                  <p className="text-5xl font-bold flex items-center gap-2" style={{ color: "#facc15" }}><Trophy size={40} /> {data.prsHit}</p>
+                  <p className="text-5xl font-bold flex items-center gap-2" style={{ color: THEME.warning }}><Trophy size={40} /> {data.prsHit}</p>
                   <p className="text-lg" style={{ color: s.muted }}>PRs</p>
                 </div>
               )}
@@ -139,14 +140,14 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             <p className="text-5xl font-bold">{data.badgeName}</p>
             <p className="text-2xl mt-2" style={{ color: s.muted }}>{data.badgeDescription}</p>
           </div>
-          <p className="text-3xl font-bold" style={{ color: '#facc15' }}>Badge Earned!</p>
+          <p className="text-3xl font-bold" style={{ color: THEME.warning }}>Badge Earned!</p>
         </div>
       )}
 
       {/* PR card */}
       {data.type === 'pr' && (
         <div className="text-center space-y-6">
-          <Trophy size={80} className="mb-4" style={{ color: "#facc15" }} />
+          <Trophy size={80} className="mb-4" style={{ color: THEME.warning }} />
           <p className="text-4xl font-bold">{data.exerciseName}</p>
           <div className="flex items-center justify-center gap-8">
             <div className="text-center">
@@ -155,7 +156,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             </div>
             <p className="text-4xl" style={{ color: s.muted }}>→</p>
             <div className="text-center">
-              <p className="text-6xl font-bold font-mono" style={{ color: '#facc15' }}>{data.newWeight}kg</p>
+              <p className="text-6xl font-bold font-mono" style={{ color: THEME.warning }}>{data.newWeight}kg</p>
               <p className="text-lg" style={{ color: s.muted }}>NEW PR</p>
             </div>
           </div>
@@ -169,25 +170,25 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
           <div className="grid grid-cols-2 gap-12">
             {!hidden.has('sessions') && (
               <div className="text-center">
-                <p className="text-6xl font-bold font-mono" style={{ color: '#6C7CFF' }}>{data.weekSessions || 0}</p>
+                <p className="text-6xl font-bold font-mono" style={{ color: THEME.brand }}>{data.weekSessions || 0}</p>
                 <p className="text-xl" style={{ color: s.muted }}>sessions</p>
               </div>
             )}
             {!hidden.has('distance') && (
               <div className="text-center">
-                <p className="text-6xl font-bold font-mono" style={{ color: '#FF6B6B' }}>{data.weekKm?.toFixed(1) || '0'}km</p>
+                <p className="text-6xl font-bold font-mono" style={{ color: THEME.running }}>{data.weekKm?.toFixed(1) || '0'}km</p>
                 <p className="text-xl" style={{ color: s.muted }}>distance</p>
               </div>
             )}
             {!hidden.has('tonnage') && (
               <div className="text-center">
-                <p className="text-6xl font-bold font-mono" style={{ color: '#34D399' }}>{data.weekTonnage ? (data.weekTonnage / 1000).toFixed(1) + 't' : '0'}</p>
+                <p className="text-6xl font-bold font-mono" style={{ color: THEME.success }}>{data.weekTonnage ? (data.weekTonnage / 1000).toFixed(1) + 't' : '0'}</p>
                 <p className="text-xl" style={{ color: s.muted }}>tonnage</p>
               </div>
             )}
             {!hidden.has('streak') && (
               <div className="text-center">
-                <p className="text-6xl font-bold font-mono flex items-center gap-2" style={{ color: '#f97316' }}><Flame size={48} /> {data.weekStreak || 0}</p>
+                <p className="text-6xl font-bold font-mono flex items-center gap-2" style={{ color: THEME.semantic.nutrition }}><Flame size={48} /> {data.weekStreak || 0}</p>
                 <p className="text-xl" style={{ color: s.muted }}>streak</p>
               </div>
             )}
@@ -199,7 +200,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {data.type === 'streak' && (
         <div className="text-center space-y-6">
           <Flame size={120} style={{ color: "#f97316" }} />
-          <p className="text-8xl font-bold font-mono" style={{ color: '#f97316' }}>{data.streakCount}</p>
+          <p className="text-8xl font-bold font-mono" style={{ color: THEME.semantic.nutrition }}>{data.streakCount}</p>
           <p className="text-3xl" style={{ color: s.muted }}>day streak</p>
         </div>
       )}

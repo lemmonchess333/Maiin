@@ -1,4 +1,5 @@
 import { Footprints, Dumbbell } from 'lucide-react';
+import { THEME } from '@/lib/theme';
 
 interface SessionCardProps {
   type: 'run' | 'lift';
@@ -11,7 +12,7 @@ interface SessionCardProps {
 export default function SessionCard({ type, title, status, onStart, onSkip }: SessionCardProps) {
   return (
     <div
-      className={`flex items-center gap-3 p-2 rounded-lg mb-1 ${
+      className={`flex items-center gap-3 p-2 rounded-xl mb-1 ${
         status === 'completed'
           ? 'bg-green-50 dark:bg-green-950/10'
           : status === 'skipped'
@@ -19,18 +20,18 @@ export default function SessionCard({ type, title, status, onStart, onSkip }: Se
             : 'bg-muted/30'
       }`}
     >
-      {type === 'run' ? <Footprints size={16} className="text-green-500" /> : <Dumbbell size={16} className="text-purple-500" />}
+      {type === 'run' ? <Footprints size={16} style={{ color: THEME.running }} /> : <Dumbbell size={16} style={{ color: THEME.lifting }} />}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate">{title}</p>
       </div>
       {status === 'completed' ? (
-        <span className="text-green-500 text-sm font-bold bg-green-100 dark:bg-green-900/30 rounded-full w-6 h-6 flex items-center justify-center">✓</span>
+        <span className="text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center" style={{ color: THEME.success, backgroundColor: THEME.success + '18' }}>✓</span>
       ) : (
         <div className="flex gap-1">
-          <button onClick={onStart} className="text-[10px] px-2 py-1 rounded bg-purple-500 text-white">
+          <button onClick={onStart} className="text-[10px] px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: THEME.brand }}>
             Start
           </button>
-          <button onClick={onSkip} className="text-[10px] px-2 py-1 rounded bg-muted text-muted-foreground">
+          <button onClick={onSkip} className="text-[10px] px-2.5 py-1 rounded-lg bg-muted text-muted-foreground">
             Skip
           </button>
         </div>

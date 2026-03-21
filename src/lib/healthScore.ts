@@ -1,3 +1,5 @@
+import { THEME } from './theme';
+
 export interface ScoreBreakdown {
   workouts: number;
   nutrition: number;
@@ -96,10 +98,10 @@ export function calculateHealthScore(
 }
 
 export function getScoreColor(score: number): string {
-  if (score >= 80) return "#34D399";
-  if (score >= 60) return "#FFB547";
-  if (score >= 40) return "#f97316";
-  return "#EF4444";
+  if (score >= 80) return THEME.success;
+  if (score >= 60) return THEME.warning;
+  if (score >= 40) return THEME.semantic.nutrition;
+  return THEME.danger;
 }
 
 export function getScoreLabel(score: number): string {

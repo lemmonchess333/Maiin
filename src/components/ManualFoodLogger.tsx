@@ -83,7 +83,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
   return (
     <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[60vh] flex flex-col">
           <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6">
             {/* Drag handle */}
@@ -140,7 +140,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
                 className={cn(
-                  "w-full py-3.5 rounded-[14px] font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-5",
+                  "w-full py-3.5 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-5",
                   saved
                     ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
                     : "text-white active:scale-95",

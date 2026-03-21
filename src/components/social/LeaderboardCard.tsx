@@ -106,9 +106,9 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   const { title, unit, icon } = challengeLabels[challenge];
 
   return (
-    <div className="p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(168,85,247,0.08))', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(139,92,246,0.2)', boxShadow: '0 2px 12px rgba(139,92,246,0.1)' }}>
+    <div className="p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(124,110,246,0.15), rgba(124,110,246,0.08))', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(124,110,246,0.2)', boxShadow: '0 2px 12px rgba(124,110,246,0.1)' }}>
       <div className="flex items-center gap-2 mb-3">
-        {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: '#8B5CF6' }} />}
+        {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: THEME.brand }} />}
         <div className="flex-1">
           <h3 className="text-sm font-bold">{title}</h3>
           {challenge === 'weekly_hybrid' && (
