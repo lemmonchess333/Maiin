@@ -100,132 +100,127 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         </MotionLink>
       </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-        className="p-4 rounded-2xl bg-card">
-        <div className="grid grid-cols-2 gap-3">
-          {/* Health Score with heartbeat */}
-          <Link to="/history?tab=health" onClick={function() { haptic(); }} className="p-3 rounded-xl bg-card active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: THEME.iconBg }}
-              >
-                <motion.div
-                  animate={
-                    healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
-                      ? (healthScore >= 70 && prevHealthScore < 70
-                        ? { scale: [1, 1.3, 0.95, 1.2, 1] }
-                        : { scale: [1, 1.25, 1] })
-                      : { scale: 1 }
-                  }
-                  transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
-                >
-                  <Heart className="w-4 h-4" style={{ color: THEME.semantic.vitals }} />
-                </motion.div>
-              </div>
-              <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health</p>
-            </div>
-            {healthScore != null ? (
-              <>
-              <p className="text-[28px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
-                <motion.span>{healthDisplay}</motion.span>
-              </p>
-              <p className="text-[11px] font-medium mt-1" style={{ color: getScoreColor(healthScore), opacity: 0.8 }}>
-                {getScoreLabel(healthScore)}
-              </p>
-              </>
-            ) : (
-              <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>--</p>
-            )}
-          </Link>
-          {/* Water with fill-from-bottom */}
-          <div className="relative overflow-hidden p-3 rounded-xl" style={{
-            backgroundColor: THEME.neutral[100],
-            boxShadow: waterGlasses > 0
-              ? 'inset 0 -4px 12px rgba(78, 173, 204, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
-              : undefined
-          }}>
-            {/* Fill-from-bottom gradient */}
-            <motion.div
-              className="absolute inset-x-0 bottom-0 pointer-events-none"
-              style={{
-                background: waterGlasses > 0
-                  ? 'linear-gradient(0deg, rgba(30, 120, 155, 0.35) 0%, rgba(58, 153, 186, 0.22) 40%, rgba(78, 195, 220, 0.12) 100%)'
-                  : 'transparent'
-              }}
-              initial={{ height: 0 }}
-              animate={{ height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
-              transition={{ type: "spring", stiffness: 120, damping: 14 }}
+        className="space-y-3">
+        {/* Health Score — hero card, full-width */}
+        <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: THEME.iconBg }}
             >
-              {waterGlasses > 0 && (
-                <WaterWave
-                  width={160}
-                  fillPercent={Math.min((waterGlasses / waterTarget) * 100, 100)}
-                  splash={rippleKey}
-                />
-              )}
-            </motion.div>
-            {/* Ripple on add */}
-            <AnimatePresence>
-              {rippleKey > 0 && (
-                <motion.div
-                  key={rippleKey}
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ background: `radial-gradient(circle at 50% 80%, ${THEME.semantic.hydration}4D, transparent 70%)` }}
-                  initial={{ opacity: 1, scale: 0.5 }}
-                  animate={{ opacity: 0, scale: 1.5 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                />
-              )}
-            </AnimatePresence>
-            {waterGlasses > 2 && <WaterBubbles />}
-            <div className="relative z-10">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
-                  <Droplets className="w-4 h-4" style={{ color: THEME.semantic.hydration }} />
+              <motion.div
+                animate={
+                  healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
+                    ? (healthScore >= 70 && prevHealthScore < 70
+                      ? { scale: [1, 1.3, 0.95, 1.2, 1] }
+                      : { scale: [1, 1.25, 1] })
+                    : { scale: 1 }
+                }
+                transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
+              >
+                <Heart className="w-5 h-5" style={{ color: THEME.semantic.vitals }} />
+              </motion.div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+              {healthScore != null ? (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-[36px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
+                    <motion.span>{healthDisplay}</motion.span>
+                  </p>
+                  <p className="text-sm font-medium" style={{ color: getScoreColor(healthScore), opacity: 0.8 }}>
+                    {getScoreLabel(healthScore)}
+                  </p>
                 </div>
-                <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</p>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-[32px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-[11px] font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
-                <div className="flex items-center gap-1">
-                  <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
-                    <Minus className="w-3 h-3" style={{ color: THEME.semantic.hydration }} />
-                  </button>
-                  <button onClick={function(e) { e.stopPropagation(); haptic(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
-                    <Plus className="w-3 h-3" style={{ color: THEME.semantic.hydration }} />
-                  </button>
-                </div>
-              </div>
+              ) : (
+                <p className="text-[36px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>--</p>
+              )}
             </div>
           </div>
-          {/* Weight with 7d trend */}
-          <div className="p-3 rounded-xl" style={{ backgroundColor: THEME.neutral[100] }}>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
+        </Link>
+        {/* Water — full-width interactive card */}
+        <div className="relative overflow-hidden p-4 rounded-2xl bg-card" style={{
+          boxShadow: waterGlasses > 0
+            ? 'inset 0 -4px 12px rgba(78, 173, 204, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            : undefined
+        }}>
+          {/* Fill-from-bottom gradient */}
+          <motion.div
+            className="absolute inset-x-0 bottom-0 pointer-events-none"
+            style={{
+              background: waterGlasses > 0
+                ? 'linear-gradient(0deg, rgba(30, 120, 155, 0.35) 0%, rgba(58, 153, 186, 0.22) 40%, rgba(78, 195, 220, 0.12) 100%)'
+                : 'transparent'
+            }}
+            initial={{ height: 0 }}
+            animate={{ height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%" }}
+            transition={{ type: "spring", stiffness: 120, damping: 14 }}
+          >
+            {waterGlasses > 0 && (
+              <WaterWave
+                width={320}
+                fillPercent={Math.min((waterGlasses / waterTarget) * 100, 100)}
+                splash={rippleKey}
+              />
+            )}
+          </motion.div>
+          {/* Ripple on add */}
+          <AnimatePresence>
+            {rippleKey > 0 && (
+              <motion.div
+                key={rippleKey}
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(circle at 50% 80%, ${THEME.semantic.hydration}4D, transparent 70%)` }}
+                initial={{ opacity: 1, scale: 0.5 }}
+                animate={{ opacity: 0, scale: 1.5 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              />
+            )}
+          </AnimatePresence>
+          {waterGlasses > 2 && <WaterBubbles />}
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
+              <Droplets className="w-5 h-5" style={{ color: THEME.semantic.hydration }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</p>
+              <p className="text-[28px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-[11px] font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-8 h-8 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
+                <Minus className="w-3.5 h-3.5" style={{ color: THEME.semantic.hydration }} />
+              </button>
+              <button onClick={function(e) { e.stopPropagation(); haptic(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("w-8 h-8 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
+                <Plus className="w-3.5 h-3.5" style={{ color: THEME.semantic.hydration }} />
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Weight & Steps — compact 2-col */}
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={function() { haptic(); onLogWeight(); }} className="p-3 rounded-xl text-left active:scale-[0.97] transition-transform" style={{ backgroundColor: THEME.neutral[100] }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
                 <Scale className="w-4 h-4" style={{ color: THEME.semantic.activity }} />
               </div>
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Weight</p>
-              <button onClick={function(e) { e.stopPropagation(); haptic(); onLogWeight(); }} aria-label="Log weight" className="w-7 h-7 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0 ml-auto" style={{ backgroundColor: THEME.iconBg }}>
-                <Plus className="w-3.5 h-3.5" style={{ color: THEME.semantic.activity }} />
-              </button>
             </div>
             <div className="flex items-baseline gap-1">
-              <p className="text-[28px] font-extrabold leading-none text-foreground">
+              <p className="text-2xl font-extrabold leading-none text-foreground">
                 {lastWeight ? lastWeight : "\u2014"}
               </p>
-              {lastWeight && <span className="text-[14px]" style={{ color: THEME.text.muted }}>{weightUnit === "lbs" ? "lb" : weightUnit}</span>}
+              {lastWeight && <span className="text-xs" style={{ color: THEME.text.muted }}>{weightUnit === "lbs" ? "lb" : weightUnit}</span>}
             </div>
-          </div>
-          {/* Steps */}
+          </button>
           <div className="p-3 rounded-xl" style={{ backgroundColor: THEME.neutral[100] }}>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
                 <Footprints className="w-4 h-4" style={{ color: THEME.semantic.positive }} />
               </div>
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Steps</p>
             </div>
-            <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>—</p>
+            <p className="text-2xl font-extrabold leading-none" style={{ color: THEME.text.muted }}>—</p>
             {/* TODO: Use "Connect Google Fit" on Android when platform detection is available */}
             <p className="text-[11px] mt-1" style={{ color: THEME.text.muted }}>Connect Apple Health</p>
           </div>
