@@ -111,8 +111,8 @@ export default function ProfileSection({
       >
         <RefreshCw className="w-4 h-4 text-primary" />
         <div className="flex-1 text-left">
-          <p className="text-sm font-medium">Retake quiz</p>
-          <p className="text-[11px] text-muted-foreground">Re-run the onboarding quiz and get a new program</p>
+          <p className="text-sm font-medium">Reconfigure programme</p>
+          <p className="text-[11px] text-muted-foreground">Re-run setup to generate a new training plan and targets</p>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </motion.button>

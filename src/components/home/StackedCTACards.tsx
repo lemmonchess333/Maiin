@@ -6,7 +6,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
 import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getScoreColor } from "@/lib/healthScore";
+import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
@@ -88,7 +88,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
         <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: 'rgba(124, 110, 246, 0.06)' }}>
           <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(124, 110, 246, 0.12)' }}><Dumbbell className="w-5 h-5" style={{ color: '#7C6EF6' }} /></div>
-          <span className="text-xs font-semibold text-foreground">Log Workout</span>
+          <span className="text-xs font-semibold text-foreground">Quick Log</span>
         </MotionLink>
         <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl flex flex-col items-center gap-2 transition-transform" style={{ backgroundColor: 'rgba(232, 99, 122, 0.06)' }}>
           <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(232, 99, 122, 0.12)' }}><Activity className="w-5 h-5" style={{ color: '#E8637A' }} /></div>
@@ -125,9 +125,14 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health</p>
             </div>
             {healthScore != null ? (
+              <>
               <p className="text-[28px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
                 <motion.span>{healthDisplay}</motion.span>
               </p>
+              <p className="text-[10px] font-medium mt-1" style={{ color: getScoreColor(healthScore), opacity: 0.8 }}>
+                {getScoreLabel(healthScore)}
+              </p>
+              </>
             ) : (
               <p className="text-[28px] font-extrabold leading-none" style={{ color: THEME.text.muted }}>--</p>
             )}

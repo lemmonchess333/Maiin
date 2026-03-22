@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
@@ -36,6 +36,7 @@ import HybridBalanceCard from "@/components/home/HybridBalanceCard";
 import InsightStrip from "@/components/home/InsightStrip";
 import TodayEnergy from "@/components/home/TodayEnergy";
 
+const ProModal = lazy(() => import("@/components/ProModal"));
 
 function computeStreak(workoutDates: string[]): number {
   if (!workoutDates.length) return 0;
@@ -70,20 +71,9 @@ export default function Home() {
   const weightSheetRef = useFocusTrap<HTMLDivElement>(showWeightSheet);
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
-  const [proUpsellDismissed, setProUpsellDismissed] = useState(false);
-  const [showTrialNotif, setShowTrialNotif] = useState(false);
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
+  const [showProModal, setShowProModal] = useState(false);
   const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
-
-  // Dismissible trial notification — once per session
-  useEffect(function() {
-    if (isInTrial && !sessionStorage.getItem('trialNotifShown')) {
-      setShowTrialNotif(true);
-      sessionStorage.setItem('trialNotifShown', 'true');
-      const t = setTimeout(function() { setShowTrialNotif(false); }, 3000);
-      return function() { clearTimeout(t); };
-    }
-  }, [isInTrial]);
 
   // One-time trial expiry modal
   useEffect(function() {
@@ -393,34 +383,32 @@ export default function Home() {
         </motion.div>
       </header>
 
-      {/* Dismissible trial drop-down notification */}
-      <AnimatePresence>
-        {showTrialNotif && isInTrial && (
-          <motion.div
-            initial={{ y: -80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -80, opacity: 0 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            onClick={trialDaysLeft <= 1 ? function() { setShowTrialNotif(false); navigate("/settings"); } : undefined}
-            className={cn(
-              "flex items-center gap-3 px-4 py-2.5 rounded-b-xl bg-primary/10 shadow-md",
-              trialDaysLeft <= 1 && "cursor-pointer"
-            )}
-          >
-            <Sparkles className="w-4 h-4 text-primary shrink-0" />
-            <p className="text-sm font-medium text-foreground flex-1">
-              {trialDaysLeft <= 0
-                ? "Last day of your Pro trial"
-                : trialDaysLeft === 1
-                ? "Pro trial ends tomorrow \u2014 upgrade to keep Pro features"
-                : `Pro trial \u2014 ${trialDaysLeft} days remaining`}
-            </p>
-            <button onClick={function(e) { e.stopPropagation(); setShowTrialNotif(false); }} className="p-1 rounded-full hover:bg-muted transition-colors" aria-label="Dismiss">
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Persistent trial / upgrade strip */}
+      {isInTrial && (
+        <button
+          onClick={function() { if (trialDaysLeft <= 2) { setShowProModal(true); } else { navigate("/settings"); } }}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left transition-colors",
+            trialDaysLeft <= 2 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-primary/8"
+          )}
+        >
+          <Sparkles className={cn("w-3.5 h-3.5 shrink-0", trialDaysLeft <= 2 ? "text-orange-500" : "text-primary")} />
+          <span className={cn("text-xs font-medium flex-1", trialDaysLeft <= 2 ? "text-orange-700 dark:text-orange-400" : "text-foreground")}>
+            {trialDaysLeft <= 1 ? "Trial ends tomorrow \u2014 subscribe to keep Pro" : trialDaysLeft === 2 ? "Last 2 days of trial" : `Pro trial \u00B7 ${trialDaysLeft} days left`}
+          </span>
+          <span className={cn("text-xs font-medium", trialDaysLeft <= 2 ? "text-orange-600 dark:text-orange-400" : "text-primary")}>Subscribe &rarr;</span>
+        </button>
+      )}
+      {!isPro && !isInTrial && profile?.trialExpiresAt && (
+        <button
+          onClick={function() { setShowProModal(true); }}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left bg-primary/8 transition-colors"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-xs font-medium text-foreground flex-1">Upgrade to Pro</span>
+          <span className="text-xs font-medium text-primary">See plans &rarr;</span>
+        </button>
+      )}
 
       {/* First-time coach marks */}
       {showCoachMarks && (
@@ -502,18 +490,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {!isPro && !proUpsellDismissed && (
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="p-4 rounded-2xl bg-card text-center space-y-2 relative">
-          <button onClick={function() { setProUpsellDismissed(true); }} aria-label="Dismiss" className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted transition-colors">
-            <X className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
-          <p className="text-sm font-medium text-foreground">Unlock AI Photo Logging &amp; Performance Engine</p>
-          <p className="text-xs text-muted-foreground mb-2">From just &pound;2.99/mo</p>
-          <button onClick={function() { navigate("/settings"); }} className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity">
-            Upgrade to Pro
-          </button>
-        </motion.div>
-      )}
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
@@ -559,7 +535,7 @@ export default function Home() {
                 <p className="text-base font-semibold text-foreground">Your free trial has ended</p>
               </div>
               <p className="text-sm text-muted-foreground">
-                Upgrade to Pro to keep access to AI logging, the Performance Engine, and adaptive macros.
+                Your 7-day trial is over. Subscribe to keep AI photo logging, adaptive macros, and performance insights.
               </p>
               <div className="flex gap-3">
                 <button
@@ -577,6 +553,15 @@ export default function Home() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ProModal for trial/upgrade strip */}
+      <AnimatePresence>
+        {showProModal && (
+          <Suspense fallback={null}>
+            <ProModal onClose={function() { setShowProModal(false); }} />
+          </Suspense>
         )}
       </AnimatePresence>
     </motion.div>
