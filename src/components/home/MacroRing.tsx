@@ -40,7 +40,7 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
           <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
             {Math.round(value)}{unit}
           </span>
-          {done && <span className="text-[8px]" style={{ color: THEME.success }}>&#10003;</span>}
+          {done && <span className="text-[11px]" style={{ color: THEME.success }}>&#10003;</span>}
         </div>
         {/* Completion flash overlay */}
         {flashKey > 0 && (

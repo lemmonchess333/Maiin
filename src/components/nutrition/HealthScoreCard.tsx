@@ -58,7 +58,7 @@ export function HealthScoreCard() {
           <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
           {score != null ? (
             <div className="flex items-center gap-2">
-              <p className="text-[28px] font-extrabold leading-none" style={{ color: scoreColor }}>
+              <p className="text-[32px] font-extrabold leading-none" style={{ color: scoreColor }}>
                 {score}
               </p>
               <p className="text-xs text-muted-foreground">{getScoreLabel(score)}</p>
@@ -111,7 +111,7 @@ export function HealthScoreCard() {
                       }}
                     />
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-mono w-8 text-right">
+                  <span className="text-[11px] text-muted-foreground font-mono w-8 text-right">
                     {item.pts}/{item.max}
                   </span>
                 </div>

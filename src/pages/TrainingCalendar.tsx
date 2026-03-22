@@ -263,7 +263,7 @@ export default function TrainingCalendar() {
                       >
                         <IconComp className="w-5 h-5 text-primary" />
                         <p className="text-xs font-semibold mt-1 text-foreground">{t.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{t.estimatedDuration} min</p>
+                        <p className="text-[11px] text-muted-foreground">{t.estimatedDuration} min</p>
                       </button>
                     );
                   })}
@@ -282,7 +282,7 @@ export default function TrainingCalendar() {
                       >
                         <Dumbbell className="w-5 h-5 text-primary" />
                         <p className="text-xs font-semibold mt-1 text-foreground">{day.dayName}</p>
-                        <p className="text-[10px] text-muted-foreground">{day.exercises.length} exercises</p>
+                        <p className="text-[11px] text-muted-foreground">{day.exercises.length} exercises</p>
                       </button>
                     );
                   })}

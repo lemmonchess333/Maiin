@@ -13,7 +13,7 @@ export default function InsightStrip({ title, bullet, loadBand }: { title: strin
           <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{bullet}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
-          <span className="text-[10px] text-primary font-medium">Details</span>
+          <span className="text-[11px] text-primary font-medium">Details</span>
           <ChevronRight className="w-3.5 h-3.5 text-primary" />
         </div>
       </motion.div>

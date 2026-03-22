@@ -114,10 +114,10 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
                   className="w-2 h-2 rounded-full"
                   style={{ background: getLegendDotColor(sets) }}
                 />
-                <span className="text-[10px] text-muted-foreground font-medium">
+                <span className="text-[11px] text-muted-foreground font-medium">
                   {group}
                 </span>
-                <span className="text-[10px]" style={{ color: "#9ca3af" }}>
+                <span className="text-[11px]" style={{ color: "#9ca3af" }}>
                   {sets} sets
                 </span>
               </div>

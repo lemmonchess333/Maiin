@@ -43,7 +43,7 @@ export function ProGate({ children, feature, preview }: Props) {
             Unlock with Pro
           </button>
           {feature && (
-            <p className="text-[10px] text-muted-foreground">{feature}</p>
+            <p className="text-[11px] text-muted-foreground">{feature}</p>
           )}
         </div>
       </div>

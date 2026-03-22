@@ -34,7 +34,7 @@ const FEATURE_HEROES: Record<string, {
             {[42, 55, 61, 58, 70, 74, 68].map((v, i) => (
               <div key={i} className="flex flex-col items-center gap-1">
                 <div className="w-6 rounded-t-sm" style={{ height: v * 0.8, background: THEME.brand, opacity: 0.7 }} />
-                <span className="text-[8px] text-muted-foreground">W{i + 1}</span>
+                <span className="text-[11px] text-muted-foreground">W{i + 1}</span>
               </div>
             ))}
           </div>
@@ -91,7 +91,7 @@ const FEATURE_HEROES: Record<string, {
             {[['P', '42g', THEME.teal], ['C', '58g', THEME.brand], ['F', '12g', THEME.warning]].map(([l, v, c]) => (
               <div key={String(l)} className="flex-1 text-center p-2 rounded-lg" style={{ background: `${c}18` }}>
                 <p className="text-xs font-bold" style={{ color: String(c) }}>{v}</p>
-                <p className="text-[9px] text-muted-foreground">{l}</p>
+                <p className="text-[11px] text-muted-foreground">{l}</p>
               </div>
             ))}
           </div>
@@ -239,7 +239,7 @@ export default function ProModal({ onClose, feature }: Props) {
                     <div className="text-left">
                       <p className="text-sm font-medium text-white">{plan.label}</p>
                       {plan.badge && (
-                        <span className="text-[10px] font-medium" style={{ color: THEME.teal }}>{plan.badge}</span>
+                        <span className="text-[11px] font-medium" style={{ color: THEME.teal }}>{plan.badge}</span>
                       )}
                     </div>
                   </div>

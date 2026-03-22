@@ -28,10 +28,10 @@ export default function SessionCard({ type, title, status, onStart, onSkip }: Se
         <span className="text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center" style={{ color: THEME.success, backgroundColor: THEME.success + '18' }}>✓</span>
       ) : (
         <div className="flex gap-1">
-          <button onClick={onStart} className="text-[10px] px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: THEME.brand }}>
+          <button onClick={onStart} className="text-[11px] px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: THEME.brand }}>
             Start
           </button>
-          <button onClick={onSkip} className="text-[10px] px-2.5 py-1 rounded-lg bg-muted text-muted-foreground">
+          <button onClick={onSkip} className="text-[11px] px-2.5 py-1 rounded-lg bg-muted text-muted-foreground">
             Skip
           </button>
         </div>

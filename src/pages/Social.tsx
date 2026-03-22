@@ -187,7 +187,7 @@ export default function Social() {
                 <Users className="w-5 h-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
-                  <p className="text-[10px] text-muted-foreground">Browse crews</p>
+                  <p className="text-[11px] text-muted-foreground">Browse crews</p>
                 </div>
               </button>
               <button onClick={dismissCrewBanner} className="p-1 text-muted-foreground hover:text-foreground transition-colors" aria-label="Dismiss">
@@ -349,7 +349,7 @@ export default function Social() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
-                      {u.crewId && <p className="text-[10px] text-muted-foreground">Crew member</p>}
+                      {u.crewId && <p className="text-[11px] text-muted-foreground">Crew member</p>}
                     </div>
                     <FollowButton targetUid={u.uid} />
                   </div>
@@ -425,7 +425,7 @@ export default function Social() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground">{crew.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
+                      <p className="text-[11px] text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
                     </div>
                     <button
                       onClick={() => {
