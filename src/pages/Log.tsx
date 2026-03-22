@@ -620,10 +620,7 @@ export default function Log() {
             <p className="text-sm font-medium text-foreground">
               {isToday
                 ? "Today"
-                : format(new Date(selectedDate + "T12:00:00"), "EEE, MMM d")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(selectedDate + "T12:00:00"), "MMMM d, yyyy")}
+                : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
             </p>
           </div>
         </button>

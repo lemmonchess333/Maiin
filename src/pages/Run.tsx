@@ -415,6 +415,7 @@ export default function Run() {
             isPaused={phase === 'paused'}
             onResume={handleResume}
             onStop={() => { haptic('success'); finishRun(); }}
+            onDiscard={() => { timer.pause(); gps.stop(); wakeLock.release(); navigate('/'); }}
             intervalDisplay={runConfig?.activityType === 'intervals' ? <IntervalDisplay state={intervals.state} /> : undefined}
             weightKg={profile?.weightKg || 70}
           />

@@ -13,8 +13,6 @@ import {
   ChevronUp,
   CheckCircle2,
   Dumbbell,
-  ClipboardList,
-  CalendarDays,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
@@ -31,7 +29,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
-import TrainingCalendar from "./TrainingCalendar";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
@@ -62,10 +59,10 @@ function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
 
 export default function Program() {
   const { features } = useSubscription();
-  return <ProgramInner locked={!features.phaseModes} />;
+  return <ProgramInner phaseLocked={!features.phaseModes} />;
 }
 
-function ProgramInner({ locked = false }: { locked?: boolean }) {
+function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const {
     programState,
     prescription,
@@ -103,7 +100,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
   // Save feedback states
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
   const [showPlateCalc, setShowPlateCalc] = useState(false);
-  const [programView, setProgramView] = useState<'program' | 'calendar'>('program');
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
 
@@ -148,28 +144,6 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
     return (
       <div className="p-6 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (programView === 'calendar') {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center bg-muted rounded-xl p-1 mb-1">
-          <button
-            onClick={() => setProgramView('program')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5"
-          >
-            <ClipboardList className="w-4 h-4" /> Programme
-          </button>
-          <button
-            onClick={() => setProgramView('calendar')}
-            className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm flex items-center justify-center gap-1.5"
-          >
-            <CalendarDays className="w-4 h-4" /> Calendar
-          </button>
-        </div>
-        <TrainingCalendar />
       </div>
     );
   }
@@ -295,30 +269,16 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
   return (
     <div className="space-y-4">
-      {locked && (
+      {phaseLocked && (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
           <Lock className="w-4 h-4 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground">Preview Mode</p>
-            <p className="text-[10px] text-muted-foreground">Upgrade to Pro in Settings to start workouts and track progression</p>
+            <p className="text-xs font-semibold text-foreground">Phase Modes Locked</p>
+            <p className="text-[10px] text-muted-foreground">Upgrade to Pro for advanced periodisation and AI adjustments</p>
           </div>
         </div>
       )}
 
-      <div className="flex items-center bg-muted rounded-xl p-1">
-        <button
-          onClick={() => setProgramView('program')}
-          className="flex-1 py-2 rounded-lg text-sm font-medium bg-card text-foreground shadow-sm flex items-center justify-center gap-1.5"
-        >
-          <ClipboardList className="w-4 h-4" /> Programme
-        </button>
-        <button
-          onClick={() => setProgramView('calendar')}
-          className="flex-1 py-2 rounded-lg text-sm font-medium text-muted-foreground flex items-center justify-center gap-1.5"
-        >
-          <CalendarDays className="w-4 h-4" /> Calendar
-        </button>
-      </div>
       {/* Header */}
       <header>
         <div className="flex items-center justify-between">
@@ -330,16 +290,16 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => !locked && setShowSettings(true)}
-              disabled={locked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+              onClick={() => !phaseLocked && setShowSettings(true)}
+              disabled={phaseLocked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
             >
               <Settings2 className="w-4 h-4 text-muted-foreground" />
             </button>
             <button
               onClick={() => handleRegenerate()}
-              disabled={regenerating || locked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+              disabled={regenerating || phaseLocked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
             >
               <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
             </button>
@@ -373,6 +333,11 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
         </div>
+        {!canGoBack && !canGoForward && (
+          <p className="text-[10px] text-muted-foreground text-center mt-1">
+            Complete all sessions to advance to Week {displayWeekNumber + 1}
+          </p>
+        )}
 
         <div className="flex items-center justify-center gap-2 px-4 pb-3">
           <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-medium border-primary/30 text-primary">
@@ -396,7 +361,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       </div>
 
       {/* Phase explanation card — contextual based on current prescription */}
-      {!isViewingHistory && !locked && (
+      {!isViewingHistory && !phaseLocked && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
@@ -425,7 +390,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       )}
 
       {/* Advance Week Button */}
-      {allComplete && !isViewingHistory && !locked && (
+      {allComplete && !isViewingHistory && !phaseLocked && (
         <button
           onClick={handleAdvanceWeek}
           disabled={advancing}
@@ -571,7 +536,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     </DndContext>
 
                     {/* Edit Day */}
-                    {!day.completed && !isViewingHistory && !locked && (
+                    {!day.completed && !isViewingHistory && (
                       <button
                         onClick={() => setEditingDayIndex(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted/50 text-foreground text-xs font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
@@ -581,7 +546,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     )}
 
                     {/* Start Workout Session */}
-                    {!day.completed && !locked && (
+                    {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
@@ -592,7 +557,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     )}
 
                     {/* Complete Day button */}
-                    {!day.completed && !locked && (
+                    {!day.completed && (
                       <button
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
@@ -793,15 +758,15 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
                 <button
                   onClick={handleLogExercise}
-                  disabled={savingState !== "idle" || locked}
+                  disabled={savingState !== "idle" || phaseLocked}
                   className={cn(
                     "w-full py-3 rounded-xl text-sm font-medium transition-all",
                     savingState !== "saved" && "bg-primary text-primary-foreground hover:opacity-90",
-                    (savingState === "saving" || locked) && "opacity-50 cursor-not-allowed"
+                    (savingState === "saving" || phaseLocked) && "opacity-50 cursor-not-allowed"
                   )}
                   style={savingState === "saved" ? { backgroundColor: THEME.success, color: "#fff" } : undefined}
                 >
-                  {locked
+                  {phaseLocked
                     ? "Upgrade to Pro"
                     : savingState === "saving"
                     ? "Saving..."

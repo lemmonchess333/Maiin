@@ -24,7 +24,6 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
       return { date: d, key: k, isToday: isToday, isPast: isPast, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
     });
   }, [dayMap, schedule, selectedDate]);
-  const tc = function(t: string) { return t === "lift" ? THEME.lifting : t === "run" ? THEME.running : t === "both" ? THEME.lifting : "transparent"; };
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
@@ -44,13 +43,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
             <span className="text-[10px] text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>{day.date.getDate()}</div>
-            {day.hasActivity ? (
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            ) : day.sType !== "rest" ? (
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tc(day.sType) }} />
-            ) : (
-              <div className="w-1.5 h-1.5" />
-            )}
+            <div className="w-1.5 h-1.5" />
           </button>
         );
       })}

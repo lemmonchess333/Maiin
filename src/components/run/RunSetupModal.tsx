@@ -213,6 +213,44 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           </div>
         )}
 
+        {/* Target value inputs */}
+        {config.target.type !== 'none' && config.activityType !== 'intervals' && config.activityType !== 'treadmill' && (
+          <div className="p-4 rounded-xl border border-border space-y-2 bg-card">
+            {config.target.type === 'distance' && (
+              <div>
+                <label htmlFor="target-distance" className="text-[10px] text-muted-foreground">Distance (km)</label>
+                <input id="target-distance" type="number" step="0.5" min="0.5" max="100"
+                  value={config.target.value ? config.target.value / 1000 : 5}
+                  onChange={(e) => updateConfig({ target: { type: 'distance', value: Number(e.target.value) * 1000 } })}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+              </div>
+            )}
+            {config.target.type === 'time' && (
+              <div>
+                <label htmlFor="target-time" className="text-[10px] text-muted-foreground">Duration (minutes)</label>
+                <input id="target-time" type="number" step="5" min="5" max="300"
+                  value={config.target.value ? Math.round(config.target.value / 60) : 30}
+                  onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+              </div>
+            )}
+            {config.target.type === 'pace' && (
+              <div>
+                <label htmlFor="target-pace" className="text-[10px] text-muted-foreground">Target pace (/km)</label>
+                <input id="target-pace" type="text" placeholder="5:30"
+                  defaultValue={config.target.value ? `${Math.floor(config.target.value / 60)}:${String(config.target.value % 60).padStart(2, '0')}` : '5:30'}
+                  onChange={(e) => {
+                    const [m, s] = e.target.value.split(':').map(Number);
+                    if (Number.isFinite(m) && Number.isFinite(s)) {
+                      updateConfig({ target: { type: 'pace', value: m * 60 + s } });
+                    }
+                  }}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Advanced settings — collapsed by default */}
         <button
           onClick={() => setShowAdvanced(v => !v)}

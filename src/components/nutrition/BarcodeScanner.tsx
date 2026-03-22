@@ -30,6 +30,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
   const [servings, setServings] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [manualBarcode, setManualBarcode] = useState("");
 
   const fetchProduct = useCallback(async (barcode: string) => {
     setLoading(true);
@@ -100,8 +101,16 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
 
     initScanner();
 
+    const timeout = setTimeout(() => {
+      if (!cancelled && scanning && !product && !error) {
+        setError("Scanner timed out. Try entering the barcode manually below.");
+        setScanning(false);
+      }
+    }, 10000);
+
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
       // Stop any active video streams
       if (videoEl?.srcObject) {
         (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop());
@@ -152,6 +161,24 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               <p className="text-xs text-white/70">Point camera at barcode</p>
             </div>
           </motion.div>
+        )}
+
+        {/* Manual barcode entry - shown during scanning and on error */}
+        {(scanning || error) && !loading && !product && (
+          <div className="mt-3">
+            <div className="flex gap-2">
+              <input type="text" inputMode="numeric" pattern="[0-9]*"
+                placeholder="Enter barcode manually"
+                value={manualBarcode}
+                onChange={(e) => setManualBarcode(e.target.value)}
+                className="flex-1 px-3 py-2.5 rounded-xl bg-muted border border-border text-sm" />
+              <button onClick={() => { if (manualBarcode.trim()) { setScanning(false); setError(null); fetchProduct(manualBarcode.trim()); } }}
+                disabled={!manualBarcode.trim()}
+                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                Look up
+              </button>
+            </div>
+          </div>
         )}
 
         {loading && (
