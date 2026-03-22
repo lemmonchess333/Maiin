@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -6,7 +7,9 @@ import {
   RefreshCw,
   Footprints,
   Check,
+  Flag,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
@@ -36,6 +39,7 @@ interface ProfileSectionProps {
   navigate: (path: string, opts?: { state?: Record<string, unknown> }) => void;
   programState: ProgramState | null;
   overrideRunDay: (dayIndex: number, templateId: string) => void;
+  refreshRunSchedule: () => Promise<void>;
 }
 
 export default function ProfileSection({
@@ -57,7 +61,43 @@ export default function ProfileSection({
   navigate,
   programState,
   overrideRunDay,
+  refreshRunSchedule,
 }: ProfileSectionProps) {
+  const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
+  const [raceTargetDate, setRaceTargetDate] = useState("");
+  const [savingRaceGoal, setSavingRaceGoal] = useState(false);
+
+  const handleSaveRaceGoal = async () => {
+    if (!raceTargetDate) {
+      toast.error("Please select a target date");
+      return;
+    }
+    const target = new Date(raceTargetDate);
+    const now = new Date();
+    if (target < now) {
+      toast.error("Target date is in the past");
+      return;
+    }
+    const weeksAway = Math.round((target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    if (weeksAway < 3) {
+      toast.error("Target date must be at least 3 weeks away");
+      return;
+    }
+    setSavingRaceGoal(true);
+    try {
+      await updateProfile({
+        runMode: "race_prep",
+        raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
+      });
+      await refreshRunSchedule();
+      toast.success("Race plan created!");
+    } catch {
+      toast.error("Failed to save race goal");
+    } finally {
+      setSavingRaceGoal(false);
+    }
+  };
+
   return (
     <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile & Goals" subtitle="Name, body stats, weekly schedule" defaultOpen>
       {/* Retake Onboarding Quiz */}
@@ -241,6 +281,51 @@ export default function ProfileSection({
                   ? "Auto-assigns run templates to your run days"
                   : "Follows a race training plan"}
             </p>
+
+            {/* Race goal setup form — shown when race_prep selected but no goal yet */}
+            {profile?.runMode === "race_prep" && !programState?.runPlan?.raceGoal && (
+              <div className="p-3 rounded-xl bg-card space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Flag className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-medium text-foreground">Set Your Race Goal</span>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Distance</label>
+                  <div className="flex gap-1.5 mt-1">
+                    {(["5k", "10k", "half", "marathon"] as const).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setRaceDistance(d)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                          raceDistance === d
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Target Date</label>
+                  <input
+                    type="date"
+                    value={raceTargetDate}
+                    onChange={(e) => setRaceTargetDate(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveRaceGoal}
+                  disabled={savingRaceGoal || !raceTargetDate}
+                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                >
+                  {savingRaceGoal ? "Creating plan..." : "Create Race Plan"}
+                </button>
+              </div>
+            )}
 
             {/* Race prep details */}
             {profile?.runMode === "race_prep" && programState?.runPlan?.raceGoal && (

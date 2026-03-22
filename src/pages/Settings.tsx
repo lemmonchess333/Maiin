@@ -30,6 +30,7 @@ import PreferencesSection from "@/components/settings/PreferencesSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
+import AIAdjustmentsSection from "@/components/settings/AIAdjustmentsSection";
 
 const PLANS = [
   {
@@ -465,6 +466,7 @@ export default function Settings() {
           navigate={navigate}
           programState={programState}
           overrideRunDay={overrideRunDay}
+          refreshRunSchedule={refreshRunSchedule}
         />
 
         {/* Unsaved changes warning + save button */}
@@ -494,6 +496,14 @@ export default function Settings() {
           setTrainingPhase={setTrainingPhase}
           tdee={tdee}
           updateProfile={updateProfile}
+        />
+
+        {/* AI Adjustments — Pro feature */}
+        <AIAdjustmentsSection
+          profile={profile}
+          isPro={isPro}
+          updateProfile={updateProfile}
+          onUpgrade={() => setShowProModal(true)}
         />
 
         {/* Shoe Mileage Tracker */}

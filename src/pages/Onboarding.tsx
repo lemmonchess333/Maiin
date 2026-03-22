@@ -45,6 +45,8 @@ type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
 type Equipment = "full_gym" | "home_gym" | "minimal";
 type PreferredSplit = "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto";
 type RunFrequency = "regular" | "occasional" | "none";
+type RunMode = "freeform" | "structured" | "race_prep";
+type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 /* ============================
    HELPERS
@@ -222,6 +224,13 @@ export default function Onboarding() {
 
   // ── Step 8: Run frequency
   const [runFrequency, setRunFrequency] = useState<RunFrequency>("occasional");
+  const [runMode, setRunMode] = useState<RunMode>("freeform");
+  const [weeklyRunDays, setWeeklyRunDays] = useState(2);
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
+  const [raceTargetDate, setRaceTargetDate] = useState("");
+
+  // ── Step 8.5: Meals target
+  const [mealsTarget, setMealsTarget] = useState(10);
 
   // ── Step 9: Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
@@ -302,7 +311,7 @@ export default function Onboarding() {
     true,                                   // 5: days per week
     true,                                   // 6: equipment
     !isSplitDisabled(preferredSplit),        // 7: preferred split
-    true,                                   // 8: run frequency
+    runFrequency === "none" || (daysPerWeek + weeklyRunDays <= 7 && (runMode !== "race_prep" || raceTargetDate !== "")), // 8: run frequency + mode
     injuries.length > 0,                    // 9: injuries (must select at least one, including "none")
     true,                                   // 10: confirmation
   ];
@@ -317,14 +326,18 @@ export default function Onboarding() {
         ? [...injuries.filter(i => i !== "other"), otherInjuryText.trim()]
         : injuries;
 
+      const effectiveRunDays = runFrequency === "none" ? 0 : (runMode === "freeform" ? (runFrequency === "regular" ? 3 : 1) : weeklyRunDays);
+
       const profileData: Record<string, unknown> = {
         displayName: user.displayName || "",
         email: user.email || "",
         currentStreak: 0,
         lastLogDate: null,
         darkMode: false,
-        weeklyWorkoutsTarget: 4,
-        weeklyMealsTarget: 10,
+        weeklyWorkoutsTarget: daysPerWeek,
+        weeklyMealsTarget: mealsTarget,
+        weeklyRunsTarget: effectiveRunDays,
+        weeklyRunDaysTarget: effectiveRunDays,
         athleteType: "Lifter",
         gender,
         ageRange,
@@ -338,6 +351,10 @@ export default function Onboarding() {
         equipment,
         preferredSplit,
         runFrequency,
+        runMode: runFrequency === "none" ? "freeform" : runMode,
+        ...(runMode === "race_prep" && runFrequency !== "none" && raceTargetDate
+          ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
+          : {}),
         injuries: injuriesForSave,
         onboardingComplete: true,
         // TDEE targets
@@ -828,24 +845,143 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 8 — Run Frequency
+             STEP 8 — Run Frequency + Mode
           ════════════════════════════════ */}
           {step === 8 && (
-            <div className="space-y-2">
-              {([
-                { id: "regular" as RunFrequency, label: "Regular runner", desc: "3+ runs per week", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
-                { id: "occasional" as RunFrequency, label: "Occasional runner", desc: "1 – 2 runs per week", icon: <Footprints size={22} style={{ color: THEME.warning }} /> },
-                { id: "none" as RunFrequency, label: "I don't run", desc: "Lifting only, no cardio programming", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
-              ]).map(opt => (
-                <OptionCard
-                  key={opt.id}
-                  selected={runFrequency === opt.id}
-                  onSelect={() => setRunFrequency(opt.id)}
-                  icon={opt.icon}
-                  label={opt.label}
-                  desc={opt.desc}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                {([
+                  { id: "regular" as RunFrequency, label: "Regular runner", desc: "3+ runs per week", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
+                  { id: "occasional" as RunFrequency, label: "Occasional runner", desc: "1 – 2 runs per week", icon: <Footprints size={22} style={{ color: THEME.warning }} /> },
+                  { id: "none" as RunFrequency, label: "I don't run", desc: "Lifting only, no cardio programming", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
+                ]).map(opt => (
+                  <OptionCard
+                    key={opt.id}
+                    selected={runFrequency === opt.id}
+                    onSelect={() => {
+                      setRunFrequency(opt.id);
+                      if (opt.id === "none") {
+                        setRunMode("freeform");
+                        setWeeklyRunDays(0);
+                      } else if (opt.id === "occasional") {
+                        setWeeklyRunDays(Math.min(2, 7 - daysPerWeek));
+                      } else {
+                        setWeeklyRunDays(Math.min(3, 7 - daysPerWeek));
+                      }
+                    }}
+                    icon={opt.icon}
+                    label={opt.label}
+                    desc={opt.desc}
+                  />
+                ))}
+              </div>
+
+              {/* Run mode sub-questions — only if they run */}
+              {runFrequency !== "none" && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>
+                    How should we schedule your runs?
+                  </p>
+                  <div className="space-y-2">
+                    {([
+                      { id: "freeform" as RunMode, label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
+                      { id: "structured" as RunMode, label: "Structured", desc: "Auto-assign run types to your run days" },
+                      { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodised plan for a specific race" },
+                    ]).map(opt => (
+                      <OptionCard
+                        key={opt.id}
+                        selected={runMode === opt.id}
+                        onSelect={() => setRunMode(opt.id)}
+                        icon={<Target size={20} style={{ color: THEME.running }} />}
+                        label={opt.label}
+                        desc={opt.desc}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Run days slider for structured/race_prep */}
+                  {runMode !== "freeform" && (
+                    <div>
+                      <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        Run days per week ({weeklyRunDays})
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max={Math.max(1, 7 - daysPerWeek)}
+                        value={weeklyRunDays}
+                        onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                        className="w-full accent-primary"
+                      />
+                      {daysPerWeek + weeklyRunDays > 7 && (
+                        <p className="text-[10px] text-red-400 mt-1">
+                          Total training days ({daysPerWeek} lift + {weeklyRunDays} run = {daysPerWeek + weeklyRunDays}) exceeds 7. Reduce run or lift days.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Race prep: distance + target date */}
+                  {runMode === "race_prep" && (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          Race distance
+                        </p>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map((d) => (
+                            <button
+                              key={d}
+                              onClick={() => setRaceDistance(d)}
+                              className="py-2 rounded-lg text-xs font-medium transition-all"
+                              style={{
+                                background: raceDistance === d ? THEME.running : "rgba(255,255,255,0.06)",
+                                color: raceDistance === d ? "#000" : "rgba(255,255,255,0.5)",
+                              }}
+                            >
+                              {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                          Target date
+                        </p>
+                        <input
+                          type="date"
+                          value={raceTargetDate}
+                          onChange={(e) => setRaceTargetDate(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                          style={{
+                            background: "rgba(255,255,255,0.08)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            color: THEME.textPrimary,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Meals target */}
+              <div className="pt-2">
+                <p className="text-xs font-medium mb-2" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Weekly meal logging target ({mealsTarget})
+                </p>
+                <input
+                  type="range"
+                  min="0"
+                  max="21"
+                  value={mealsTarget}
+                  onChange={(e) => setMealsTarget(Number(e.target.value))}
+                  className="w-full accent-primary"
                 />
-              ))}
+                <p className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  {mealsTarget === 0 ? "No meal tracking" : `${mealsTarget} meals per week`}
+                </p>
+              </div>
             </div>
           )}
 
@@ -930,7 +1066,8 @@ export default function Onboarding() {
                 { label: "Your plan", value: splitLabel(preferredSplit), color: THEME.teal },
                 { label: "Schedule", value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`, color: THEME.brand },
                 { label: "Setup", value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`, color: THEME.lifting },
-                { label: "Running", value: runFreqLabel(runFrequency), color: THEME.running },
+                { label: "Running", value: runFrequency === "none" ? "No running" : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`, color: THEME.running },
+                { label: "Meal tracking", value: mealsTarget === 0 ? "Off" : `${mealsTarget} meals/week`, color: THEME.teal },
                 { label: "Metrics", value: `${displayHeight} · ${displayWeight}`, color: THEME.warning },
                 {
                   label: "Daily targets",
@@ -946,7 +1083,7 @@ export default function Onboarding() {
                   className="flex items-start gap-3 py-3"
                   style={{
                     borderBottom:
-                      i < 5 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                      i < 6 ? "1px solid rgba(255,255,255,0.06)" : "none",
                   }}
                 >
                   <div
@@ -1020,6 +1157,8 @@ export default function Onboarding() {
           {step === 1 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
           {step === 2 && 'Enter your height and weight to continue'}
           {step === 7 && 'This split requires more training days'}
+          {step === 8 && daysPerWeek + weeklyRunDays > 7 && `Reduce run days — total exceeds 7 (${daysPerWeek} lift + ${weeklyRunDays} run)`}
+          {step === 8 && runMode === 'race_prep' && !raceTargetDate && 'Select a target race date'}
           {step === 9 && injuries.length === 0 && 'Select at least one option (or "None")'}
         </p>
       )}
