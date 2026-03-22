@@ -57,7 +57,7 @@ export default function GuidedRunOverlay({
         </div>
 
         {/* Instruction */}
-        <p className="text-xs text-white/60">{currentSegment?.instruction}</p>
+        <p className="text-xs text-white/70">{currentSegment?.instruction}</p>
 
         {/* Segment progress bar */}
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -69,8 +69,8 @@ export default function GuidedRunOverlay({
 
         {/* Up next */}
         {nextSegment && (
-          <p className="text-[10px] text-white/40">
-            Up next: <span className="text-white/60 font-medium">{nextSegment.label}</span> — {formatTime(nextSegment.durationSeconds)}
+          <p className="text-[10px] text-white/50">
+            Up next: <span className="text-white/70 font-medium">{nextSegment.label}</span> — {formatTime(nextSegment.durationSeconds)}
           </p>
         )}
       </div>

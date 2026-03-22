@@ -13,12 +13,12 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
   return (
     <div className="space-y-6 px-6">
       <div className="text-center">
-        <p className="text-[10px] text-white/30 uppercase tracking-widest">Treadmill Run</p>
+        <p className="text-[10px] text-white/50 uppercase tracking-widest">Treadmill Run</p>
         <p className="text-6xl font-mono tabular-nums font-bold mt-2">{formatTime(elapsed)}</p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="treadmill-distance" className="text-sm text-white/50">Distance covered</label>
+        <label htmlFor="treadmill-distance" className="text-sm text-white/60">Distance covered</label>
         <div className="flex items-center gap-2">
           <input
             id="treadmill-distance"
@@ -30,7 +30,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
             placeholder="0.00"
             className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl font-mono"
           />
-          <span className="text-white/50 text-sm">km</span>
+          <span className="text-white/60 text-sm">km</span>
         </div>
       </div>
 

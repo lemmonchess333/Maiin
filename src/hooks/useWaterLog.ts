@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { doc, onSnapshot, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -17,7 +17,7 @@ export function useWaterLog() {
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const skipNextSnapshot = useRef(false);
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
   const target = profile?.targetWaterGlasses || 8;
 
   useEffect(() => {

@@ -220,7 +220,7 @@ export default function RunSummary() {
           <WifiOff size={20} className="text-amber-400" />
           <div>
             <p className="font-medium text-amber-400 text-xs">You're offline</p>
-            <p className="text-xs text-white/50 mt-0.5">Run will sync automatically when you reconnect</p>
+            <p className="text-xs text-white/60 mt-0.5">Run will sync automatically when you reconnect</p>
           </div>
         </div>
       )}

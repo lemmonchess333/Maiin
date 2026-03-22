@@ -174,7 +174,8 @@ export default function ProModal({ onClose, feature }: Props) {
 
           {/* Close */}
           <button onClick={onClose} className="absolute top-6 right-5 p-1.5 rounded-lg"
-            style={{ background: 'var(--glass-border)' }}>
+            style={{ background: 'var(--glass-border)' }}
+            aria-label="Close">
             <X className="w-4 h-4 text-white/60" />
           </button>
 
@@ -185,7 +186,7 @@ export default function ProModal({ onClose, feature }: Props) {
               {hero.icon}
             </div>
             <h2 id="pro-modal-title" className="text-xl font-bold text-white">{hero.title}</h2>
-            <p className="text-sm text-white/50">{hero.tagline}</p>
+            <p className="text-sm text-white/70">{hero.tagline}</p>
           </div>
 
           {/* Feature-specific blurred preview */}
@@ -243,7 +244,7 @@ export default function ProModal({ onClose, feature }: Props) {
                     </div>
                   </div>
                   <p className="text-sm font-semibold text-white">
-                    {plan.price}<span className="text-white/40 text-xs">{plan.period}</span>
+                    {plan.price}<span className="text-white/60 text-xs">{plan.period}</span>
                   </p>
                 </button>
               );
@@ -262,16 +263,16 @@ export default function ProModal({ onClose, feature }: Props) {
 
           {/* Subscription terms (App Store Guideline 3.1.2(c)) */}
           <div className="text-center space-y-1 pb-1">
-            <p className="text-[11px] text-white/30">
+            <p className="text-[11px] text-white/50">
               {selectedPlan === 'lifetime'
                 ? 'One-time purchase. No recurring charges.'
                 : `Subscription auto-renews ${selectedPlan === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period.`}
             </p>
-            <p className="text-[11px] text-white/30">
+            <p className="text-[11px] text-white/50">
               {selectedPlan !== 'lifetime' && 'Manage or cancel anytime in your device settings. '}
               No hidden fees.
             </p>
-            <button onClick={handleRestore} className="text-[11px] text-white/40 underline">
+            <button onClick={handleRestore} className="text-[11px] text-white/60 underline">
               Restore purchases
             </button>
           </div>

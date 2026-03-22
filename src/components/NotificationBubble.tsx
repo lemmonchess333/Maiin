@@ -43,15 +43,18 @@ export function NotificationBubbleProvider({ children }: { children: React.React
     if (!bubble) return;
     const start = Date.now();
     const duration = 4000;
+    let rafId: number;
+    let cancelled = false;
     const frame = () => {
+      if (cancelled) return;
       const elapsed = Date.now() - start;
       const remaining = Math.max(0, 1 - elapsed / duration);
       setProgress(remaining);
-      if (remaining > 0) requestAnimationFrame(frame);
+      if (remaining > 0) rafId = requestAnimationFrame(frame);
       else setBubble(null);
     };
-    const raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    rafId = requestAnimationFrame(frame);
+    return () => { cancelled = true; cancelAnimationFrame(rafId); };
   }, [bubble]);
 
   const config = bubble ? VARIANT_CONFIG[bubble.variant] : VARIANT_CONFIG.generic;
@@ -103,7 +106,7 @@ export function NotificationBubbleProvider({ children }: { children: React.React
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{bubble.title}</p>
                 {bubble.subtitle && (
-                  <p className="text-xs text-white/50 truncate">{bubble.subtitle}</p>
+                  <p className="text-xs text-white/60 truncate">{bubble.subtitle}</p>
                 )}
               </div>
             </div>

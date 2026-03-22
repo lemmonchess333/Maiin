@@ -66,6 +66,16 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* Glassmorphism fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(1px)) {
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.95);
+  }
+  .dark {
+    --glass-bg: rgba(15, 15, 20, 0.95);
+  }
+}
+
 /* Safe area padding for bottom nav (iPhone notch) */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);

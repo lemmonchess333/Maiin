@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, addDoc, serverTimestamp, increment, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
@@ -79,11 +79,16 @@ export function useGroups() {
     load();
   }, [fetchGroups, fetchMyGroups]);
 
+  const myGroupIdsRef = useRef(myGroupIds);
+  myGroupIdsRef.current = myGroupIds;
+  const groupsRef = useRef(groups);
+  groupsRef.current = groups;
+
   const joinGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
     // Optimistic update
-    const prevGroupIds = new Set(myGroupIds);
-    const prevGroups = [...groups];
+    const prevGroupIds = new Set(myGroupIdsRef.current);
+    const prevGroups = groupsRef.current;
     setMyGroupIds(prev => new Set([...prev, groupId]));
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: g.memberCount + 1 } : g));
     try {
@@ -97,13 +102,13 @@ export function useGroups() {
       setGroups(prevGroups);
       throw e;
     }
-  }, [user, myGroupIds, groups]);
+  }, [user]);
 
   const leaveGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
     // Optimistic update
-    const prevGroupIds = new Set(myGroupIds);
-    const prevGroups = [...groups];
+    const prevGroupIds = new Set(myGroupIdsRef.current);
+    const prevGroups = groupsRef.current;
     setMyGroupIds(prev => { const s = new Set(prev); s.delete(groupId); return s; });
     setGroups(prev => prev.map(g => g.id === groupId ? { ...g, memberCount: Math.max(0, g.memberCount - 1) } : g));
     try {
@@ -115,7 +120,7 @@ export function useGroups() {
       setGroups(prevGroups);
       throw e;
     }
-  }, [user, myGroupIds, groups]);
+  }, [user]);
 
   const createGroup = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;
