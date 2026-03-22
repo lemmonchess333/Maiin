@@ -14,6 +14,7 @@ interface RunBottomSheetProps {
   isPaused: boolean;
   onResume: () => void;
   onStop: () => void;
+  onDiscard?: () => void;
   intervalDisplay?: ReactNode;
   weightKg: number;
 }
@@ -77,7 +78,7 @@ function KmProgress({ distance }: { distance: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RunBottomSheet({
   elapsed, distance, points, formatTime,
-  onPause, onLock, isPaused, onResume, onStop,
+  onPause, onLock, isPaused, onResume, onStop, onDiscard,
   intervalDisplay, weightKg,
 }: RunBottomSheetProps) {
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
@@ -308,6 +309,13 @@ export default function RunBottomSheet({
                 style={{ background: '#EF4444' }}>
                 End Run
               </button>
+              {onDiscard && (
+                <button onClick={() => { setShowStopConfirm(false); onDiscard(); }}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm"
+                  style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  Discard Run
+                </button>
+              )}
               <button onClick={() => setShowStopConfirm(false)}
                 className="w-full py-3.5 rounded-xl font-semibold text-sm"
                 style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>

@@ -62,10 +62,10 @@ function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
 
 export default function Program() {
   const { features } = useSubscription();
-  return <ProgramInner locked={!features.phaseModes} />;
+  return <ProgramInner phaseLocked={!features.phaseModes} />;
 }
 
-function ProgramInner({ locked = false }: { locked?: boolean }) {
+function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const {
     programState,
     prescription,
@@ -295,7 +295,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
   return (
     <div className="space-y-4">
-      {locked && (
+      {phaseLocked && (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
           <Lock className="w-4 h-4 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
@@ -330,16 +330,16 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => !locked && setShowSettings(true)}
-              disabled={locked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+              onClick={() => !phaseLocked && setShowSettings(true)}
+              disabled={phaseLocked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
             >
               <Settings2 className="w-4 h-4 text-muted-foreground" />
             </button>
             <button
               onClick={() => handleRegenerate()}
-              disabled={regenerating || locked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", locked && "opacity-40")}
+              disabled={regenerating || phaseLocked}
+              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
             >
               <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
             </button>
@@ -396,7 +396,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       </div>
 
       {/* Phase explanation card — contextual based on current prescription */}
-      {!isViewingHistory && !locked && (
+      {!isViewingHistory && !phaseLocked && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
@@ -425,7 +425,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
       )}
 
       {/* Advance Week Button */}
-      {allComplete && !isViewingHistory && !locked && (
+      {allComplete && !isViewingHistory && !phaseLocked && (
         <button
           onClick={handleAdvanceWeek}
           disabled={advancing}
@@ -571,7 +571,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     </DndContext>
 
                     {/* Edit Day */}
-                    {!day.completed && !isViewingHistory && !locked && (
+                    {!day.completed && !isViewingHistory && (
                       <button
                         onClick={() => setEditingDayIndex(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted/50 text-foreground text-xs font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
@@ -581,7 +581,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     )}
 
                     {/* Start Workout Session */}
-                    {!day.completed && !locked && (
+                    {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
                         className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
@@ -592,7 +592,7 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
                     )}
 
                     {/* Complete Day button */}
-                    {!day.completed && !locked && (
+                    {!day.completed && (
                       <button
                         onClick={() => completeWorkoutDay(dayIndex)}
                         className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
@@ -793,15 +793,15 @@ function ProgramInner({ locked = false }: { locked?: boolean }) {
 
                 <button
                   onClick={handleLogExercise}
-                  disabled={savingState !== "idle" || locked}
+                  disabled={savingState !== "idle" || phaseLocked}
                   className={cn(
                     "w-full py-3 rounded-xl text-sm font-medium transition-all",
                     savingState !== "saved" && "bg-primary text-primary-foreground hover:opacity-90",
-                    (savingState === "saving" || locked) && "opacity-50 cursor-not-allowed"
+                    (savingState === "saving" || phaseLocked) && "opacity-50 cursor-not-allowed"
                   )}
                   style={savingState === "saved" ? { backgroundColor: THEME.success, color: "#fff" } : undefined}
                 >
-                  {locked
+                  {phaseLocked
                     ? "Upgrade to Pro"
                     : savingState === "saving"
                     ? "Saving..."
