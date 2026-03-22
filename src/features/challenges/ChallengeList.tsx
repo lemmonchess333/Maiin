@@ -26,7 +26,7 @@ export function ChallengeList() {
     <div className="space-y-4">
       {myChallenges.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Your Challenges
           </p>
           {myChallenges.map((ch) => (
@@ -45,7 +45,7 @@ export function ChallengeList() {
 
       {availableChallenges.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Available
           </p>
           {availableChallenges.map((ch) => (

@@ -13,7 +13,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
   return (
     <div className="space-y-6 px-6">
       <div className="text-center">
-        <p className="text-[10px] text-white/50 uppercase tracking-widest">Treadmill Run</p>
+        <p className="text-[11px] text-white/50 uppercase tracking-widest">Treadmill Run</p>
         <p className="text-6xl font-mono tabular-nums font-bold mt-2">{formatTime(elapsed)}</p>
       </div>
 

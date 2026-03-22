@@ -501,7 +501,7 @@ export default function Onboarding() {
         }}
       >
         <p
-          className="text-[9px] uppercase tracking-wider mb-2"
+          className="text-[11px] uppercase tracking-wider mb-2"
           style={{ color: "rgba(255,255,255,0.4)" }}
         >
           {label}
@@ -526,7 +526,7 @@ export default function Onboarding() {
           </button>
         </div>
         {unit && (
-          <p className="text-[9px] mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
+          <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
             {unit}
           </p>
         )}
@@ -572,7 +572,7 @@ export default function Onboarding() {
           className="flex-1 overflow-y-auto"
         >
           <p
-            className="text-[10px] uppercase tracking-widest mb-2"
+            className="text-[11px] uppercase tracking-widest mb-2"
             style={{ color: "rgba(255,255,255,0.4)" }}
           >
             Step {step + 1} of {TOTAL_STEPS}
@@ -785,7 +785,7 @@ export default function Onboarding() {
                   >
                     {d}
                   </span>
-                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>
                     days
                   </span>
                 </button>
@@ -914,7 +914,7 @@ export default function Onboarding() {
                         className="w-full accent-primary"
                       />
                       {daysPerWeek + weeklyRunDays > 7 && (
-                        <p className="text-[10px] text-red-400 mt-1">
+                        <p className="text-[11px] text-red-400 mt-1">
                           Total training days ({daysPerWeek} lift + {weeklyRunDays} run = {daysPerWeek + weeklyRunDays}) exceeds 7. Reduce run or lift days.
                         </p>
                       )}
@@ -925,7 +925,7 @@ export default function Onboarding() {
                   {runMode === "race_prep" && (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        <p className="text-[11px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
                           Race distance
                         </p>
                         <div className="grid grid-cols-4 gap-1.5">
@@ -945,7 +945,7 @@ export default function Onboarding() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        <p className="text-[11px] uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
                           Target date
                         </p>
                         <input
@@ -978,7 +978,7 @@ export default function Onboarding() {
                   onChange={(e) => setMealsTarget(Number(e.target.value))}
                   className="w-full accent-primary"
                 />
-                <p className="text-[10px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
                   {mealsTarget === 0 ? "No meal tracking" : `${mealsTarget} meals per week`}
                 </p>
               </div>
@@ -1092,7 +1092,7 @@ export default function Onboarding() {
                   />
                   <div>
                     <p
-                      className="text-[10px] uppercase tracking-wider"
+                      className="text-[11px] uppercase tracking-wider"
                       style={{ color: "rgba(255,255,255,0.35)" }}
                     >
                       {row.label}

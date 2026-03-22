@@ -54,7 +54,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
               <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
               <p className="text-[11px] text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
             </div>
@@ -75,7 +75,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
               <p className="text-sm font-semibold text-foreground">{runLabel}</p>
               <p className="text-[11px] text-muted-foreground truncate">{runDesc}</p>
             </div>
@@ -129,7 +129,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               <p className="text-[28px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
                 <motion.span>{healthDisplay}</motion.span>
               </p>
-              <p className="text-[10px] font-medium mt-1" style={{ color: getScoreColor(healthScore), opacity: 0.8 }}>
+              <p className="text-[11px] font-medium mt-1" style={{ color: getScoreColor(healthScore), opacity: 0.8 }}>
                 {getScoreLabel(healthScore)}
               </p>
               </>
@@ -187,7 +187,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
                 <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</p>
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-[28px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-[10px] font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
+                <p className="text-[32px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-[11px] font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
                 <div className="flex items-center gap-1">
                   <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("w-6 h-6 rounded-full flex items-center justify-center active:scale-[0.93] transition-transform flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>
                     <Minus className="w-3 h-3" style={{ color: THEME.semantic.hydration }} />

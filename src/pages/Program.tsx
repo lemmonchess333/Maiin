@@ -54,7 +54,7 @@ function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
   const dir = getProgressionDirection(ex);
   if (dir === "stable") return null;
   const color = dir === "up" ? THEME.success : dir === "down" ? THEME.danger : undefined;
-  return <><span className="text-[10px]">&middot;</span><span className="font-medium" style={color ? { color } : undefined}>{label}</span></>;
+  return <><span className="text-[11px]">&middot;</span><span className="font-medium" style={color ? { color } : undefined}>{label}</span></>;
 }
 
 export default function Program() {
@@ -274,7 +274,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <Lock className="w-4 h-4 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground">Phase Modes Locked</p>
-            <p className="text-[10px] text-muted-foreground">Upgrade to Pro for advanced periodisation and AI adjustments</p>
+            <p className="text-[11px] text-muted-foreground">Upgrade to Pro for advanced periodisation and AI adjustments</p>
           </div>
         </div>
       )}
@@ -334,17 +334,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </button>
         </div>
         {!canGoBack && !canGoForward && (
-          <p className="text-[10px] text-muted-foreground text-center mt-1">
+          <p className="text-[11px] text-muted-foreground text-center mt-1">
             Complete all sessions to advance to Week {displayWeekNumber + 1}
           </p>
         )}
 
         <div className="flex items-center justify-center gap-2 px-4 pb-3">
-          <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-medium border-primary/30 text-primary">
+          <span className="px-2.5 py-0.5 rounded-full border text-[11px] font-medium border-primary/30 text-primary">
             {goalLabel(programState.goal)}
           </span>
           <span
-            className="px-2.5 py-0.5 rounded-full border text-[10px] font-medium"
+            className="px-2.5 py-0.5 rounded-full border text-[11px] font-medium"
             style={prescription.deload
               ? { borderColor: `${THEME.lifting}40`, color: THEME.lifting }
               : { borderColor: `${THEME.success}40`, color: THEME.success }
@@ -353,7 +353,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             {prescription.deload ? "Deload" : "Progression"}
           </span>
           {!isViewingHistory && (
-            <span className="px-2.5 py-0.5 rounded-full border border-border text-[10px] font-medium text-muted-foreground">
+            <span className="px-2.5 py-0.5 rounded-full border border-border text-[11px] font-medium text-muted-foreground">
               {completedCount}/{totalDays} done
             </span>
           )}
@@ -428,7 +428,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             {/* Current day label */}
             {isCurrent && (
               <div className="px-3 pt-2 pb-0">
-                <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: sportColor }}>
+                <span className="text-[11px] uppercase tracking-widest font-bold" style={{ color: sportColor }}>
                   Up next
                 </span>
               </div>
@@ -461,13 +461,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <p className="text-[11px] text-muted-foreground truncate">
                   {day.dayName} &middot; {day.exercises.length} exercises
                   {day.isCustom && (
-                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-[9px] font-medium">Custom</span>
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-[11px] font-medium">Custom</span>
                   )}
                 </p>
               </div>
 
               {day.completed && (
-                <span className="text-[9px] font-medium text-green-500 mr-1">Done</span>
+                <span className="text-[11px] font-medium text-green-500 mr-1">Done</span>
               )}
               {expandedDay === dayIndex ? (
                 <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -513,14 +513,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     if (dir === "stable" || baseWeight === ex.weight) {
                                       return (
                                         <>
-                                          <span className="text-[10px]">&middot;</span>
+                                          <span className="text-[11px]">&middot;</span>
                                           <span className="font-mono">{ex.weight}kg</span>
                                         </>
                                       );
                                     }
                                     return (
                                       <>
-                                        <span className="text-[10px]">&middot;</span>
+                                        <span className="text-[11px]">&middot;</span>
                                         <span className="font-mono">{baseWeight}kg</span>
                                         <ProgressionLabel ex={ex} />
                                       </>
@@ -629,19 +629,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         <Plus className="w-3 h-3 text-foreground" />
                       </button>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Sets</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Sets</p>
                   </div>
 
                   <div className="bg-muted rounded-lg p-2">
                     <p className="text-lg font-bold text-foreground">{drawerExercise.exercise.reps}</p>
-                    <p className="text-[10px] text-muted-foreground">Reps</p>
+                    <p className="text-[11px] text-muted-foreground">Reps</p>
                   </div>
 
                   <div className="bg-muted rounded-lg p-2">
                     <p className={`font-bold text-foreground ${drawerExercise.exercise.weight > 0 ? 'text-lg' : 'text-sm'}`}>
                       {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "Bodyweight"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">{drawerExercise.exercise.weight > 0 ? "kg" : ""}</p>
+                    <p className="text-[11px] text-muted-foreground">{drawerExercise.exercise.weight > 0 ? "kg" : ""}</p>
                   </div>
                 </div>
 
@@ -656,7 +656,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-medium text-muted-foreground">Previous Session</p>
                         <span
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          className="text-[11px] font-medium px-2 py-0.5 rounded-full"
                           style={passed
                             ? { backgroundColor: `${THEME.success}18`, color: THEME.success }
                             : { backgroundColor: `${THEME.danger}18`, color: THEME.danger }
@@ -692,7 +692,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         const inc = getProgressionIncrement(drawerExercise.exercise);
                         return (
                           <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                            className="text-[11px] font-medium px-1.5 py-0.5 rounded-full"
                             style={{ backgroundColor: `${THEME.success}18`, color: THEME.success }}
                           >
                             +{inc}kg auto-fill
@@ -701,7 +701,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       }
                       if (lastPerf) {
                         return (
-                          <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                          <span className="text-[11px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                             repeat weight
                           </span>
                         );
@@ -711,7 +711,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label htmlFor="log-weight" className="text-[10px] text-muted-foreground">Weight (kg)</label>
+                      <label htmlFor="log-weight" className="text-[11px] text-muted-foreground">Weight (kg)</label>
                       <input
                         id="log-weight"
                         type="number"
@@ -721,7 +721,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label htmlFor="log-reps" className="text-[10px] text-muted-foreground">Reps</label>
+                      <label htmlFor="log-reps" className="text-[11px] text-muted-foreground">Reps</label>
                       <input
                         id="log-reps"
                         type="number"
@@ -733,7 +733,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
                   {/* Estimated 1RM */}
                   {Number(logWeight) > 0 && Number(logReps) > 0 && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
                       Est. 1RM: <span className="font-semibold text-foreground">
                         {Math.round(Number(logWeight) * (1 + Number(logReps) / 30))}kg
                       </span>
@@ -865,7 +865,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-foreground">Auto Progression</p>
-                      <p className="text-[10px] text-muted-foreground">Adjust weights after logging</p>
+                      <p className="text-[11px] text-muted-foreground">Adjust weights after logging</p>
                     </div>
                     <button
                       onClick={() => updateSettings({ autoProgression: !settings.autoProgression })}
@@ -878,7 +878,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-foreground">Microloading</p>
-                      <p className="text-[10px] text-muted-foreground">+1kg steps for isolations</p>
+                      <p className="text-[11px] text-muted-foreground">+1kg steps for isolations</p>
                     </div>
                     <button
                       onClick={() => updateSettings({ microloading: !settings.microloading })}

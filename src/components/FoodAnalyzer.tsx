@@ -365,7 +365,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
                   </button>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-foreground">{servings}</p>
-                    <p className="text-[10px] text-muted-foreground">servings</p>
+                    <p className="text-[11px] text-muted-foreground">servings</p>
                   </div>
                   <button
                     onClick={() => setServings(servings + 0.5)}

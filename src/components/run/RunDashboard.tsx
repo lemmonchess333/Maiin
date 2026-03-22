@@ -69,7 +69,7 @@ export default function RunDashboard() {
             <div className="flex items-end gap-4">
               <div>
                 <p className="text-2xl font-extrabold tabular-nums text-foreground">{weeklyRunCount}</p>
-                <p className="text-[10px] text-muted-foreground">runs</p>
+                <p className="text-[11px] text-muted-foreground">runs</p>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function RunDashboard() {
                 <p className="text-sm font-semibold text-foreground">
                   {((run.distance || 0) / 1000).toFixed(2)} km
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace ?? 0)}/km
                 </p>
               </div>
@@ -107,7 +107,7 @@ export default function RunDashboard() {
                 <p className="text-sm font-mono tabular-nums text-muted-foreground">
                   {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
                 </p>
-                <div className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Timer className="w-3 h-3" />
                   <span>duration</span>
                 </div>

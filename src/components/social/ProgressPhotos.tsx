@@ -319,7 +319,7 @@ export default function ProgressPhotos() {
             {decrypting.has(photo.id) ? (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
                 <Loader2 size={16} className="text-muted-foreground animate-spin" />
-                <span className="text-[10px] text-muted-foreground mt-1">{photo.date}</span>
+                <span className="text-[11px] text-muted-foreground mt-1">{photo.date}</span>
               </div>
             ) : decryptedUrls[photo.id] ? (
               <img
@@ -333,7 +333,7 @@ export default function ProgressPhotos() {
             ) : (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
                 <Lock size={16} className="text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground mt-1">{photo.date}</span>
+                <span className="text-[11px] text-muted-foreground mt-1">{photo.date}</span>
               </div>
             )}
           </button>

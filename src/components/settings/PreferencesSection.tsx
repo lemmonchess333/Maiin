@@ -38,7 +38,7 @@ export default function PreferencesSection({
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Auto-start rest timer</p>
-            <p className="text-[10px] text-muted-foreground">Timer starts after completing a set</p>
+            <p className="text-[11px] text-muted-foreground">Timer starts after completing a set</p>
           </div>
           <button
             onClick={async () => {

@@ -69,7 +69,7 @@ export default function GuidedRunOverlay({
 
         {/* Up next */}
         {nextSegment && (
-          <p className="text-[10px] text-white/50">
+          <p className="text-[11px] text-white/50">
             Up next: <span className="text-white/70 font-medium">{nextSegment.label}</span> — {formatTime(nextSegment.durationSeconds)}
           </p>
         )}

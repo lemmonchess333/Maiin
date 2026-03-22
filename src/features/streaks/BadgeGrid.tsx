@@ -15,15 +15,15 @@ export function BadgeGrid() {
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
           <p className="text-2xl font-bold text-orange-500">{streakData.currentStreak}</p>
-          <p className="text-[10px] text-muted-foreground">Current Streak</p>
+          <p className="text-[11px] text-muted-foreground">Current Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
           <p className="text-2xl font-bold text-primary">{streakData.longestStreak}</p>
-          <p className="text-[10px] text-muted-foreground">Longest Streak</p>
+          <p className="text-[11px] text-muted-foreground">Longest Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
           <p className="text-2xl font-bold text-foreground">{earnedBadges.length}</p>
-          <p className="text-[10px] text-muted-foreground">Badges Earned</p>
+          <p className="text-[11px] text-muted-foreground">Badges Earned</p>
         </div>
       </div>
 
@@ -34,7 +34,7 @@ export function BadgeGrid() {
 
         return (
           <div key={cat} className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {CATEGORY_LABELS[cat]}
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -76,17 +76,17 @@ export function BadgeGrid() {
                       {earned ? badge.icon : <Lock className="w-5 h-5 text-muted-foreground/30" />}
                     </div>
                     <p className={cn(
-                      "text-[10px] font-medium leading-tight",
+                      "text-[11px] font-medium leading-tight",
                       earned ? "text-foreground" : "text-muted-foreground/50"
                     )}>
                       {badge.name}
                     </p>
                     {earned ? (
-                      <p className="text-[9px] mt-0.5" style={{ color: tierColor }}>
+                      <p className="text-[11px] mt-0.5" style={{ color: tierColor }}>
                         {new Date(badge.earnedAt!).toLocaleDateString()}
                       </p>
                     ) : (
-                      <p className="text-[9px] text-muted-foreground/40 mt-0.5 line-clamp-2">
+                      <p className="text-[11px] text-muted-foreground/40 mt-0.5 line-clamp-2">
                         {badge.description}
                       </p>
                     )}

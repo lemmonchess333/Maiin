@@ -67,27 +67,27 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
           <span className="text-xs font-semibold text-foreground">
             {(run.distance / 1000).toFixed(2)} km
           </span>
-          <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
+          <span className="text-[11px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
             {activityLabel[run.activityType] || 'Run'}
           </span>
           {trend.label && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full"
               style={{ color: trend.color, background: trend.bgColor }}>
               {trend.label}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-muted-foreground">{formatDuration(run.duration)}</span>
-          <span className="text-[10px] text-muted-foreground">{formatPace(run.avgPace)}/km</span>
+          <span className="text-[11px] text-muted-foreground">{formatDuration(run.duration)}</span>
+          <span className="text-[11px] text-muted-foreground">{formatPace(run.avgPace)}/km</span>
           {run.elevationGain > 0 && (
-            <span className="text-[10px] text-muted-foreground">↑{run.elevationGain}m</span>
+            <span className="text-[11px] text-muted-foreground">↑{run.elevationGain}m</span>
           )}
         </div>
       </div>
 
       <div className="flex-shrink-0 text-right">
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           {run.completedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
         </p>
         <svg className="w-3.5 h-3.5 text-muted-foreground/40 ml-auto mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,11 +132,11 @@ export default function RunningHistorySection() {
             <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
               {(runs.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(1)}
             </p>
-            <p className="text-[10px] text-muted-foreground">total km</p>
+            <p className="text-[11px] text-muted-foreground">total km</p>
           </div>
           <div className="p-3 rounded-xl bg-card border border-border text-center">
             <p className="text-lg font-bold font-mono tabular-nums">{runs.length}</p>
-            <p className="text-[10px] text-muted-foreground">total runs</p>
+            <p className="text-[11px] text-muted-foreground">total runs</p>
           </div>
           <div className="p-3 rounded-xl bg-card border border-border text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-purple-500">
@@ -146,7 +146,7 @@ export default function RunningHistorySection() {
                 return formatPace(Math.min(...paces));
               })()}
             </p>
-            <p className="text-[10px] text-muted-foreground">best pace</p>
+            <p className="text-[11px] text-muted-foreground">best pace</p>
           </div>
         </div>
       )}

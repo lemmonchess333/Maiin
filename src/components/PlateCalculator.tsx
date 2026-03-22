@@ -67,7 +67,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
         </button>
         <div className="flex-1 text-center">
           <p className="text-2xl font-bold text-foreground tabular-nums">{weight}kg</p>
-          <p className="text-[10px] text-muted-foreground">Bar: {BAR_WEIGHT}kg</p>
+          <p className="text-[11px] text-muted-foreground">Bar: {BAR_WEIGHT}kg</p>
         </div>
         <button
           onClick={() => setWeight((w) => w + 2.5)}

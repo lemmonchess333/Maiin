@@ -78,12 +78,12 @@ export default function CalorieBalanceChart() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
           Calorie Balance
         </p>
         <div className="flex items-center gap-2">
           <span
-            className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+            className="text-[11px] px-2 py-0.5 rounded-full font-medium"
             style={{
               backgroundColor: THEME.brand + "18",
               color: THEME.brand,
@@ -91,11 +91,11 @@ export default function CalorieBalanceChart() {
           >
             {phaseLabel}
           </span>
-          <span className="text-[10px] text-muted-foreground">14 days</span>
+          <span className="text-[11px] text-muted-foreground">14 days</span>
         </div>
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-[11px] text-muted-foreground">
         BMR + workout burn − food intake
       </p>
 
@@ -152,7 +152,7 @@ export default function CalorieBalanceChart() {
 
       <div className="flex items-center justify-around pt-1 border-t border-border/30">
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground">Avg daily</p>
+          <p className="text-[11px] text-muted-foreground">Avg daily</p>
           <p
             className="text-sm font-bold font-mono tabular-nums"
             style={{ color: getBalanceColor(avgBalance, goal) }}
@@ -162,7 +162,7 @@ export default function CalorieBalanceChart() {
           </p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-muted-foreground">Deficit days</p>
+          <p className="text-[11px] text-muted-foreground">Deficit days</p>
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {deficitDays} / {data.length}
           </p>

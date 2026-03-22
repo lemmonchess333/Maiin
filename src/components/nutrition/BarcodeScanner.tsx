@@ -237,25 +237,25 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   <p className="text-sm font-bold text-orange-500">
                     {Math.round(product.calories * servings)}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">cal</p>
+                  <p className="text-[11px] text-muted-foreground">cal</p>
                 </div>
                 <div className="rounded-lg bg-blue-500/10 p-2">
                   <p className="text-sm font-bold text-blue-500">
                     {Math.round(product.protein * servings)}g
                   </p>
-                  <p className="text-[10px] text-muted-foreground">protein</p>
+                  <p className="text-[11px] text-muted-foreground">protein</p>
                 </div>
                 <div className="rounded-lg bg-amber-500/10 p-2">
                   <p className="text-sm font-bold text-amber-500">
                     {Math.round(product.carbs * servings)}g
                   </p>
-                  <p className="text-[10px] text-muted-foreground">carbs</p>
+                  <p className="text-[11px] text-muted-foreground">carbs</p>
                 </div>
                 <div className="rounded-lg bg-purple-500/10 p-2">
                   <p className="text-sm font-bold text-purple-500">
                     {Math.round(product.fat * servings)}g
                   </p>
-                  <p className="text-[10px] text-muted-foreground">fat</p>
+                  <p className="text-[11px] text-muted-foreground">fat</p>
                 </div>
               </div>
 
@@ -277,7 +277,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               </button>
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{servings}</p>
-                <p className="text-[10px] text-muted-foreground">servings</p>
+                <p className="text-[11px] text-muted-foreground">servings</p>
               </div>
               <button
                 onClick={() => setServings(servings + 0.5)}

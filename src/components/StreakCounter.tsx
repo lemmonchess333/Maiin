@@ -57,7 +57,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
       </div>
 
       {/* Subtle streak badge */}
-      <div className="px-3 py-1 text-[10px] font-mono font-bold tracking-widest bg-orange-500 text-white rounded-full self-start">
+      <div className="px-3 py-1 text-[11px] font-mono font-bold tracking-widest bg-orange-500 text-white rounded-full self-start">
         <Flame size={12} className="inline" /> HOT
       </div>
     </motion.div>

@@ -82,7 +82,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         <div className="flex items-center justify-between">
           <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>This Week</p>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
+            <span className="text-[11px] font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         </div>
 
         {/* Stats row — sessions + volume/distance */}
-        <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center justify-between text-[11px]">
           <div className="flex items-center gap-1.5">
             <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />
             <span className="text-muted-foreground">

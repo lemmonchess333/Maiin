@@ -82,12 +82,12 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   <h3 className="text-lg font-bold text-foreground">{demo.name}</h3>
                   <div className="flex gap-2 mt-1.5">
                     {demo.category && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                         {demo.category}
                       </span>
                     )}
                     {demo.equipment && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
                         {demo.equipment}
                       </span>
                     )}
@@ -103,7 +103,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                       type="anterior"
                       highlightedColors={["#7C6EF6", "#c4b5fd"]}
                     />
-                    <p className="text-[9px] text-muted-foreground text-center mt-1">Front</p>
+                    <p className="text-[11px] text-muted-foreground text-center mt-1">Front</p>
                   </div>
                   {showPosterior && (
                     <div>
@@ -113,7 +113,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                         type="posterior"
                         highlightedColors={["#7C6EF6", "#c4b5fd"]}
                       />
-                      <p className="text-[9px] text-muted-foreground text-center mt-1">Back</p>
+                      <p className="text-[11px] text-muted-foreground text-center mt-1">Back</p>
                     </div>
                   )}
                 </div>
@@ -122,9 +122,9 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                 <div className="space-y-1.5">
                   {demo.primaryMuscles.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[10px] text-muted-foreground font-medium mr-1">Primary:</span>
+                      <span className="text-[11px] text-muted-foreground font-medium mr-1">Primary:</span>
                       {demo.primaryMuscles.map((m) => (
-                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        <span key={m} className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                           {m}
                         </span>
                       ))}
@@ -132,9 +132,9 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   )}
                   {demo.secondaryMuscles.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[10px] text-muted-foreground font-medium mr-1">Secondary:</span>
+                      <span className="text-[11px] text-muted-foreground font-medium mr-1">Secondary:</span>
                       {demo.secondaryMuscles.map((m) => (
-                        <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                        <span key={m} className="text-[11px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
                           {m}
                         </span>
                       ))}

@@ -150,14 +150,14 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     { label: 'Rest (s)', field: 'restDuration' as const, value: intervalConfig.restDuration, min: 10, max: 300, step: 10 },
                   ].map((f) => (
                     <div key={f.field}>
-                      <label htmlFor={`interval-${f.field}`} className="text-[10px] text-muted-foreground">{f.label}</label>
+                      <label htmlFor={`interval-${f.field}`} className="text-[11px] text-muted-foreground">{f.label}</label>
                       <input id={`interval-${f.field}`} type="number" min={f.min} max={f.max} step={f.step} value={f.value}
                         onChange={(e) => updateConfig({ intervals: { ...intervalConfig, [f.field]: Number(e.target.value) } })}
                         className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
                     </div>
                   ))}
                   <div>
-                    <label htmlFor="interval-target-pace" className="text-[10px] text-muted-foreground">Target pace (/km)</label>
+                    <label htmlFor="interval-target-pace" className="text-[11px] text-muted-foreground">Target pace (/km)</label>
                     <input id="interval-target-pace" type="text" placeholder="4:30"
                       className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
                       onChange={(e) => {
@@ -218,7 +218,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <div className="p-4 rounded-xl border border-border space-y-2 bg-card">
             {config.target.type === 'distance' && (
               <div>
-                <label htmlFor="target-distance" className="text-[10px] text-muted-foreground">Distance (km)</label>
+                <label htmlFor="target-distance" className="text-[11px] text-muted-foreground">Distance (km)</label>
                 <input id="target-distance" type="number" step="0.5" min="0.5" max="100"
                   value={config.target.value ? config.target.value / 1000 : 5}
                   onChange={(e) => updateConfig({ target: { type: 'distance', value: Number(e.target.value) * 1000 } })}
@@ -227,7 +227,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             )}
             {config.target.type === 'time' && (
               <div>
-                <label htmlFor="target-time" className="text-[10px] text-muted-foreground">Duration (minutes)</label>
+                <label htmlFor="target-time" className="text-[11px] text-muted-foreground">Duration (minutes)</label>
                 <input id="target-time" type="number" step="5" min="5" max="300"
                   value={config.target.value ? Math.round(config.target.value / 60) : 30}
                   onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
@@ -236,7 +236,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             )}
             {config.target.type === 'pace' && (
               <div>
-                <label htmlFor="target-pace" className="text-[10px] text-muted-foreground">Target pace (/km)</label>
+                <label htmlFor="target-pace" className="text-[11px] text-muted-foreground">Target pace (/km)</label>
                 <input id="target-pace" type="text" placeholder="5:30"
                   defaultValue={config.target.value ? `${Math.floor(config.target.value / 60)}:${String(config.target.value % 60).padStart(2, '0')}` : '5:30'}
                   onChange={(e) => {
@@ -353,7 +353,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   {IC && <IC size={18} className={isActive ? 'text-purple-500' : 'text-muted-foreground'} />}
                   <div>
                     <p className="text-sm font-medium" style={{ color: isActive ? '#7C6EF6' : 'var(--color-foreground)' }}>{at.label}</p>
-                    <p className="text-[10px]" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>
+                    <p className="text-[11px]" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>
                   </div>
                 </button>
               );
