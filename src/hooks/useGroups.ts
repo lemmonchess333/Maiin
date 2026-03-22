@@ -80,9 +80,9 @@ export function useGroups() {
   }, [fetchGroups, fetchMyGroups]);
 
   const myGroupIdsRef = useRef(myGroupIds);
-  myGroupIdsRef.current = myGroupIds;
+  useEffect(() => { myGroupIdsRef.current = myGroupIds; }, [myGroupIds]);
   const groupsRef = useRef(groups);
-  groupsRef.current = groups;
+  useEffect(() => { groupsRef.current = groups; }, [groups]);
 
   const joinGroup = useCallback(async (groupId: string) => {
     if (!user?.uid) return;
