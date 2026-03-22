@@ -31,6 +31,7 @@ import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
 
+
 const PLANS = [
   {
     id: "monthly" as const,
@@ -465,6 +466,7 @@ export default function Settings() {
           navigate={navigate}
           programState={programState}
           overrideRunDay={overrideRunDay}
+          refreshRunSchedule={refreshRunSchedule}
         />
 
         {/* Unsaved changes warning + save button */}
