@@ -115,6 +115,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   );
   const [showRPE, setShowRPE] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>({});
   const shareRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
   useEffect(() => { sessionStartRef.current = Date.now(); }, []);
@@ -866,6 +867,13 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
               {currentExercise.lastPerformance.weight > 0 ? ` @ ${currentExercise.lastPerformance.weight}kg` : " @ Bodyweight"}
             </div>
           )}
+          <input
+            type="text"
+            placeholder="Notes (e.g. Level 8, 6.0 incline)"
+            value={exerciseNotes[currentExIndex] || ""}
+            onChange={(e) => setExerciseNotes(prev => ({ ...prev, [currentExIndex]: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60 mt-2"
+          />
         </div>
 
         {/* Rest Timer - circular */}
