@@ -176,14 +176,14 @@ export default function RunDetail() {
         </div>
 
         {/* Secondary stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-2xl bg-card text-center">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-3 rounded-xl bg-card text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.elevationGain ?? 0}m
             </p>
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-0.5">Elevation Gain</p>
           </div>
-          <div className="p-3 rounded-2xl bg-card text-center">
+          <div className="p-3 rounded-xl bg-card text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.splits?.length ?? 0}
             </p>

@@ -320,7 +320,7 @@ export default function History() {
                   Running
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <StatCard
                   label="Weekly Distance"
                   value={formatDistance(runningTotals.runDistance)}
@@ -366,13 +366,13 @@ export default function History() {
             <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
-                  className="text-xs font-semibold uppercase tracking-wider mt-4"
+                  className="text-sm font-semibold uppercase tracking-wider mt-4"
                   style={{ color: THEME.lifting }}
                 >
                   Lifting
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <StatCard
                   label="Weekly Volume"
                   value={formatVolume(liftingData.liftVolume).value}
@@ -396,7 +396,7 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
-              <div className="rounded-2xl bg-card overflow-hidden"
+              <div className="rounded-xl bg-card overflow-hidden"
                 style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
                   <Trophy size={16} className="text-amber-500" />
@@ -450,13 +450,13 @@ export default function History() {
             <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
-                  className="text-xs font-semibold uppercase tracking-wider mt-4"
+                  className="text-sm font-semibold uppercase tracking-wider mt-4"
                   style={{ color: THEME.success }}
                 >
                   Nutrition
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}
