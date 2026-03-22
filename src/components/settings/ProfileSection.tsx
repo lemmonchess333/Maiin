@@ -289,8 +289,8 @@ export default function ProfileSection({
                   <Flag className="w-4 h-4 text-primary" />
                   <span className="text-xs font-medium text-foreground">Set Your Race Goal</span>
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Distance</label>
+                <fieldset>
+                  <legend className="text-[10px] text-muted-foreground uppercase tracking-wider">Distance</legend>
                   <div className="flex gap-1.5 mt-1">
                     {(["5k", "10k", "half", "marathon"] as const).map((d) => (
                       <button
@@ -307,10 +307,11 @@ export default function ProfileSection({
                       </button>
                     ))}
                   </div>
-                </div>
+                </fieldset>
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Target Date</label>
+                  <label htmlFor="race-target-date" className="text-[10px] text-muted-foreground uppercase tracking-wider">Target Date</label>
                   <input
+                    id="race-target-date"
                     type="date"
                     value={raceTargetDate}
                     onChange={(e) => setRaceTargetDate(e.target.value)}
