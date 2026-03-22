@@ -116,6 +116,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
         (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop());
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanning, fetchProduct]);
 
   const handleConfirm = () => {

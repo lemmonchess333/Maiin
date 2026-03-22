@@ -64,7 +64,7 @@ export function useCrews() {
   }, [fetchCrews]);
 
   const crewsRef = useRef(crews);
-  crewsRef.current = crews;
+  useEffect(() => { crewsRef.current = crews; }, [crews]);
 
   const joinCrew = useCallback(async (crewId: string) => {
     if (!user?.uid) return;
