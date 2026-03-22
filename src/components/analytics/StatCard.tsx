@@ -11,7 +11,7 @@ interface StatCardProps {
 }
 
 export default function StatCard({
-  label, value, unit, delta, sparklineData, accentColor = '#7C6EF6', onClick,
+  label, value, unit, delta, sparklineData, accentColor = '#7B72E9', onClick,
 }: StatCardProps) {
   const gradientId = `spark-${label.replace(/\s/g, '-')}`;
   return (

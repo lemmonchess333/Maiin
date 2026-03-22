@@ -1,8 +1,8 @@
 export const macroColors = {
-  calories: "#f97316",
-  protein: "#3b82f6",
-  carbs: "#f59e0b",
-  fat: "#a855f7",
+  calories: "#e87316",
+  protein: "#3b7ee6",
+  carbs: "#e09510",
+  fat: "#9855e0",
 };
 
 export function tint(hex: string, opacity = 0.12) {

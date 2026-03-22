@@ -32,12 +32,12 @@
 /* ─── START RUN BUTTON — PULSE GLOW ────────────────────────── */
 @keyframes ds-run-pulse {
   0%, 100% {
-    box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35),
-                0 0 0 0 rgba(249, 115, 22, 0);
+    box-shadow: 0 4px 16px rgba(232, 115, 22, 0.22),
+                0 0 0 0 rgba(232, 115, 22, 0);
   }
   50% {
-    box-shadow: 0 6px 28px rgba(249, 115, 22, 0.5),
-                0 0 0 8px rgba(249, 115, 22, 0.08);
+    box-shadow: 0 6px 22px rgba(232, 115, 22, 0.32),
+                0 0 0 6px rgba(232, 115, 22, 0.06);
   }
 }
 
@@ -63,7 +63,7 @@
 }
 
 .dark .ds-skeleton {
-  background: linear-gradient(90deg, #1c1c24 0px, #2a2a35 40%, #1c1c24 80%);
+  background: linear-gradient(90deg, #1a1a1f 0px, #242429 40%, #1a1a1f 80%);
   background-size: 600px;
 }
 

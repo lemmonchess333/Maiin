@@ -5,7 +5,7 @@ interface VolumeChartProps {
   accentColor?: string;
 }
 
-export default function VolumeChart({ data, accentColor = '#6C7CFF' }: VolumeChartProps) {
+export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeChartProps) {
   if (data.length === 0) return null;
 
   return (
