@@ -60,9 +60,12 @@ export function useGuidedRun(workout: GuidedRunWorkout | null, isRunning: boolea
     init();
   }, [workout]);
 
-  // Tick
+  // Tick — use ref for isComplete to avoid re-creating interval on state change
+  const isCompleteRef = useRef(false);
+  isCompleteRef.current = state.isComplete;
+
   useEffect(() => {
-    if (!workout || !isRunning || state.isComplete) {
+    if (!workout || !isRunning || isCompleteRef.current) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
@@ -121,7 +124,7 @@ export function useGuidedRun(workout: GuidedRunWorkout | null, isRunning: boolea
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [workout, isRunning, state.isComplete, totalDuration]);
+  }, [workout, isRunning, totalDuration]);
 
   return state;
 }

@@ -130,7 +130,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               </button>
               {showMenu && (
                 <>
-                  <div className="fixed inset-0 z-10" role="presentation" onClick={() => setShowMenu(false)} />
+                  <div className="fixed inset-0 z-10" role="presentation" aria-hidden="true" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
                     <button
                       onClick={() => { setShowMenu(false); setShowReport(true); }}

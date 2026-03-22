@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getDiscoverFeed, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
@@ -6,6 +6,10 @@ import type { FeedItem, ActivityData } from './useSocialFeed';
 
 export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
   const { user } = useAuth();
+  // Stabilize blockedUsers reference by serializing to a key
+  const blockedKey = useMemo(() => blockedUsers ? [...blockedUsers].sort().join(',') : '', [blockedUsers]);
+  const blockedRef = useRef(blockedUsers);
+  blockedRef.current = blockedUsers;
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +60,9 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       }
 
       // Filter out blocked users (#1)
-      if (blockedUsers && blockedUsers.size > 0) {
-        feedItems = feedItems.filter(item => !blockedUsers.has(item.authorId));
+      const blocked = blockedRef.current;
+      if (blocked && blocked.size > 0) {
+        feedItems = feedItems.filter(item => !blocked.has(item.authorId));
       }
 
       if (refresh) {
@@ -72,7 +77,8 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       // Don't surface errors to the UI — let the empty state handle it
     }
     setLoading(false);
-  }, [user, enabled, blockedUsers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, enabled, blockedKey]);
 
   useEffect(() => {
     if (!enabled) return;

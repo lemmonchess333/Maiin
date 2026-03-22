@@ -229,13 +229,13 @@ export default function Run() {
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
         </div>
-        <p className="text-5xl font-mono tabular-nums text-white/20 font-bold">{timer.formatTime(timer.elapsed)}</p>
-        <p className="text-2xl font-mono tabular-nums text-white/12 mt-3">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
+        <p className="text-5xl font-mono tabular-nums text-white/40 font-bold">{timer.formatTime(timer.elapsed)}</p>
+        <p className="text-2xl font-mono tabular-nums text-white/30 mt-3">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
         <div className="mt-12 flex flex-col items-center gap-2">
-          <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M4 12h16M12 4v16" /></svg>
+          <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><path d="M4 12h16M12 4v16" /></svg>
           </div>
-          <p className="text-white/20 text-xs animate-pulse">Double-tap to unlock</p>
+          <p className="text-white/40 text-xs animate-pulse">Double-tap to unlock</p>
         </div>
       </div>
     );

@@ -16,18 +16,19 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
   const phase = useMotionValue(0);
   const ampRef = useRef(3);
 
+  // Splash effect — use exponential decay via RAF instead of 40ms setInterval
   useEffect(function () {
     ampRef.current = 8;
-    const decay = setInterval(function () {
-      ampRef.current = Math.max(ampRef.current * 0.9, 3);
-      if (ampRef.current <= 3.1) clearInterval(decay);
-    }, 40);
-    return function () { clearInterval(decay); };
   }, [splash]);
 
+  // Single RAF loop that drives both phase and amplitude decay
   useAnimationFrame(function (time) {
     if (prefersReducedMotion) return;
     phase.set(time * 0.001);
+    // Decay amplitude toward resting value
+    if (ampRef.current > 3.1) {
+      ampRef.current = Math.max(ampRef.current * 0.98, 3);
+    }
   });
 
   const height = 24;
@@ -97,7 +98,6 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
 
       <WavePath
         phase={phase}
-        height={height}
         freqMult={0.6}
         ampMult={0.7}
         fill={backColor}
@@ -106,7 +106,6 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
 
       <WavePath
         phase={phase}
-        height={height}
         freqMult={1.0}
         ampMult={1.0}
         fill={surfaceColor}
@@ -130,7 +129,7 @@ function WavePath({
   phase, height, freqMult, ampMult, fill, buildPath, clipHeight
 }: {
   phase: ReturnType<typeof useMotionValue<number>>;
-  height: number;
+  height?: number;
   freqMult: number;
   ampMult: number;
   fill: string;
@@ -138,9 +137,13 @@ function WavePath({
   clipHeight?: number;
 }) {
   const pathRef = useRef<SVGPathElement>(null);
+  const lastUpdateRef = useRef(0);
 
-  useAnimationFrame(function () {
+  // Throttle DOM writes to ~30fps instead of 60fps
+  useAnimationFrame(function (time) {
     if (!pathRef.current) return;
+    if (time - lastUpdateRef.current < 33) return; // ~30fps
+    lastUpdateRef.current = time;
     pathRef.current.setAttribute("d", buildPath(phase.get(), freqMult, ampMult));
   });
 
@@ -148,7 +151,7 @@ function WavePath({
     <path
       ref={pathRef}
       fill={fill}
-      style={clipHeight ? { clipPath: "inset(0 0 " + (height - clipHeight) + "px 0)", willChange: "transform" } : { willChange: "transform" }}
+      style={clipHeight && height ? { clipPath: "inset(0 0 " + (height - clipHeight) + "px 0)", willChange: "transform" } : { willChange: "transform" }}
     />
   );
 }

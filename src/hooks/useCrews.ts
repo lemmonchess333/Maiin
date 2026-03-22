@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection, getDocs, query, orderBy, doc, setDoc, deleteDoc,
   addDoc, serverTimestamp, increment, updateDoc,
@@ -63,11 +63,14 @@ export function useCrews() {
     load();
   }, [fetchCrews]);
 
+  const crewsRef = useRef(crews);
+  crewsRef.current = crews;
+
   const joinCrew = useCallback(async (crewId: string) => {
     if (!user?.uid) return;
 
     // Snapshot for rollback
-    const prevCrews = [...crews];
+    const prevCrews = crewsRef.current;
 
     // Optimistic: leave current crew first (one crew per user)
     if (currentCrewId && currentCrewId !== crewId) {
@@ -90,13 +93,13 @@ export function useCrews() {
       setCrews(prevCrews);
       throw e;
     }
-  }, [user, currentCrewId, crews, profile, updateProfile]);
+  }, [user, currentCrewId, profile, updateProfile]);
 
   const leaveCrew = useCallback(async () => {
     if (!user?.uid || !currentCrewId) return;
 
     // Snapshot for rollback
-    const prevCrews = [...crews];
+    const prevCrews = crewsRef.current;
     setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
 
     try {
@@ -107,7 +110,7 @@ export function useCrews() {
       setCrews(prevCrews);
       throw e;
     }
-  }, [user, currentCrewId, crews, updateProfile]);
+  }, [user, currentCrewId, updateProfile]);
 
   const createCrew = useCallback(async (name: string, description: string, icon: string) => {
     if (!user?.uid) return;
