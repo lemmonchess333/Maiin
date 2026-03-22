@@ -1,39 +1,39 @@
 // Dark mode colour system — used as enhancement for dark mode toggle
 // Accent colours are used in both light and dark themes
 export const THEME = {
-  // Dark mode backgrounds (only applied when .dark is active)
-  bg: '#0F0F14',
-  surface: '#1C1C24',
-  elevated: '#2A2A35',
+  // Dark mode backgrounds — warm neutrals, not cold blue-black
+  bg: '#121214',
+  surface: '#1A1A1F',
+  elevated: '#242429',
 
-  // Accent colours (sport-specific — used in both light & dark)
-  running: '#E8637A',
-  runningLight: '#F08A9B',
-  lifting: '#7C6EF6',
-  liftingLight: '#9B90F8',
-  brand: '#7C6EF6',
-  brandLight: '#9B90F8',
+  // Accent colours (sport-specific — desaturated for calm dark mode)
+  running: '#D4637A',
+  runningLight: '#E08A9B',
+  lifting: '#7B72E9',
+  liftingLight: '#9590E0',
+  brand: '#7B72E9',
+  brandLight: '#9590E0',
 
-  // Semantic — harmonised hues (same saturation/brightness band)
+  // Semantic — harmonised hues, calmer saturation
   semantic: {
-    activity: '#7C6EF6',   // purple — weight, brand, lifting
-    hydration: '#4EADCC',  // teal — water
-    vitals: '#E8637A',     // coral — health, heart rate, recovery
-    nutrition: '#ED8B4E',  // warm orange — food, calories, macros
-    positive: '#4ECC7A',   // green — positive states (streak, PR)
-    negative: '#E8637A',   // shares coral — negative states, alerts
+    activity: '#7B72E9',   // purple — weight, brand, lifting
+    hydration: '#52A3BD',  // teal — water
+    vitals: '#D4637A',     // coral — health, heart rate, recovery
+    nutrition: '#D9884E',  // warm orange — food, calories, macros
+    positive: '#4DB872',   // green — positive states (streak, PR)
+    negative: '#D4637A',   // shares coral — negative states, alerts
   },
 
   // Legacy semantic (kept for compatibility)
-  success: '#4ECC7A',
-  warning: '#ED8B4E',
-  danger: '#E8637A',
-  teal: '#4EADCC',
+  success: '#4DB872',
+  warning: '#D9884E',
+  danger: '#D4637A',
+  teal: '#52A3BD',
 
-  // Text
-  textPrimary: '#E8E8ED',
-  textSecondary: 'rgba(255,255,255,0.72)',
-  textMuted: 'rgba(255,255,255,0.25)',
+  // Text — softer contrast, not harsh white
+  textPrimary: '#E0E0E5',
+  textSecondary: 'rgba(255,255,255,0.60)',
+  textMuted: 'rgba(255,255,255,0.22)',
 
   // Light mode text helpers
   text: {
@@ -49,24 +49,24 @@ export const THEME = {
 
   // Calendar dot colours — only TWO, ever
   calendar: {
-    liftDay: '#7C6EF6',    // purple dot = lift day (matches lifting)
-    runDay: '#E8637A',      // coral dot = run day (matches running)
+    liftDay: '#7B72E9',    // purple dot = lift day (matches lifting)
+    runDay: '#D4637A',      // coral dot = run day (matches running)
   },
 
   // Unified icon background
-  iconBg: 'rgba(124, 110, 246, 0.12)',  // brand tint — increased for WCAG contrast
+  iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
   // Charts
-  chartGrid: 'rgba(255,255,255,0.06)',
-  chartTooltipBg: '#2A2A35',
+  chartGrid: 'rgba(255,255,255,0.05)',
+  chartTooltipBg: '#242429',
 
   // Pace colours (for splits — used in both themes)
-  paceFast: '#4ECC7A',
-  paceOnTarget: '#7C6EF6',
-  paceSlow: '#E8637A',
-  // Gradient helpers
+  paceFast: '#4DB872',
+  paceOnTarget: '#7B72E9',
+  paceSlow: '#D4637A',
+  // Gradient helpers — subtler transitions
   gradient: {
-    brand: 'linear-gradient(135deg, #9B90F8, #7C6EF6)',
-    brandCta: 'linear-gradient(135deg, #7C6EF6, #4EADCC)',
+    brand: 'linear-gradient(135deg, #9590E0, #7B72E9)',
+    brandCta: 'linear-gradient(135deg, #7B72E9, #52A3BD)',
   },
 } as const;

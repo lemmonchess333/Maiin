@@ -41,7 +41,7 @@ export interface ShareCardData {
 
 const THEME_STYLES: Record<ShareCardTheme, { bg: string; text: string; muted: string; accent: string }> = {
   dark: { bg: '#0a0a0f', text: '#ffffff', muted: 'rgba(255,255,255,0.4)', accent: '#a78bfa' },
-  light: { bg: '#ffffff', text: '#1a1a2e', muted: 'rgba(0,0,0,0.4)', accent: '#7C6EF6' },
+  light: { bg: '#ffffff', text: '#1a1a2e', muted: 'rgba(0,0,0,0.4)', accent: '#7B72E9' },
   transparent: { bg: 'transparent', text: '#ffffff', muted: 'rgba(255,255,255,0.4)', accent: '#a78bfa' },
 };
 
@@ -199,7 +199,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
       {/* Streak card */}
       {data.type === 'streak' && (
         <div className="text-center space-y-6">
-          <Flame size={120} style={{ color: "#f97316" }} />
+          <Flame size={120} style={{ color: "#e87316" }} />
           <p className="text-8xl font-bold font-mono" style={{ color: THEME.semantic.nutrition }}>{data.streakCount}</p>
           <p className="text-3xl" style={{ color: s.muted }}>day streak</p>
         </div>

@@ -75,7 +75,7 @@ export function WeeklyDayFill({ dayMap, workoutsTarget = 4 }: Props) {
         label="Calories Met"
         done={stats.caloriesDaysMet}
         total={7}
-        color="#f97316"
+        color="#e87316"
         bgColor="#ffedd5"
       />
       <ProgressBar

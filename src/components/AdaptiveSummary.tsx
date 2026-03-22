@@ -428,7 +428,7 @@ export function AdaptiveSummary({
   const showApplyButton = isPro && plateau.calorieAdjust !== 0;
 
   const macroColors = {
-    calories: "#f97316",
+    calories: "#e87316",
     protein: "#3b82f6",
     carbs: "#f59e0b",
     fat: "#a855f6",
@@ -436,7 +436,7 @@ export function AdaptiveSummary({
 
   // Light tint tracks so the “grey/heavy” feeling disappears
   const trackTints = {
-    workouts: "#7C6EF6", // premium purple tint
+    workouts: "#7B72E9", // premium purple tint
     meals: macroColors.protein, // blue tint matches your protein card
   };
 

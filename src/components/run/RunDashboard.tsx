@@ -120,7 +120,7 @@ export default function RunDashboard() {
       {recentRuns.length === 0 && (
         <div className="text-center py-12 space-y-3 ds-fade-up">
           <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
+            style={{ background: 'linear-gradient(135deg, #f5f4fe, #eceafe)' }}>
             <Footprints size={36} className="text-green-500" />
           </div>
           <p className="text-sm font-bold text-foreground">No runs yet</p>

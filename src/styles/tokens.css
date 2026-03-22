@@ -4,25 +4,25 @@
 ============================================================= */
 
 :root {
-  /* Brand Colors — unified around #7C6EF6 */
-  --ds-purple-50:  #f5f3ff;
-  --ds-purple-100: #ede9fe;
-  --ds-purple-200: #ddd6fe;
-  --ds-purple-400: #9B90F8;
-  --ds-purple-500: #7C6EF6;
-  --ds-purple-600: #6358D4;
-  --ds-purple-700: #4A42B2;
+  /* Brand Colors — unified around #7B72E9 */
+  --ds-purple-50:  #f5f4fe;
+  --ds-purple-100: #eceafe;
+  --ds-purple-200: #d9d5fa;
+  --ds-purple-400: #9590E0;
+  --ds-purple-500: #7B72E9;
+  --ds-purple-600: #6560C8;
+  --ds-purple-700: #4E4AA8;
 
-  --ds-orange-400: #fb923c;
-  --ds-orange-500: #f97316;
-  --ds-orange-600: #ea580c;
+  --ds-orange-400: #f0923c;
+  --ds-orange-500: #e87316;
+  --ds-orange-600: #d6580c;
 
   /* Semantic Colors */
-  --ds-success:    #22c55e;
+  --ds-success:    #22b558;
   --ds-success-bg: #f0fdf4;
-  --ds-warning:    #f59e0b;
+  --ds-warning:    #e59a0b;
   --ds-warning-bg: #fffbeb;
-  --ds-error:      #ef4444;
+  --ds-error:      #e04040;
   --ds-error-bg:   #fef2f2;
 
   /* Typography — wider scale for stronger hierarchy */
@@ -34,12 +34,12 @@
   --ds-text-small:   0.8125rem;  /* 13px — secondary text */
   --ds-text-micro:   0.6875rem;  /* 11px — labels, captions (accessibility floor) */
 
-  /* Shadows */
-  --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  --ds-shadow-elevated: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-  --ds-shadow-purple-glow: 0 4px 20px rgba(124, 110, 246, 0.35);
-  --ds-shadow-orange-glow: 0 4px 20px rgba(249, 115, 22, 0.35);
-  --ds-shadow-green-glow: 0 4px 16px rgba(34, 197, 94, 0.30);
+  /* Shadows — subtle, not neon */
+  --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+  --ds-shadow-elevated: 0 8px 28px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  --ds-shadow-purple-glow: 0 4px 16px rgba(123, 114, 233, 0.22);
+  --ds-shadow-orange-glow: 0 4px 16px rgba(232, 115, 22, 0.22);
+  --ds-shadow-green-glow: 0 4px 14px rgba(34, 184, 88, 0.20);
 
   /* Font Weights */
   --ds-fw-regular:  400;

@@ -70,8 +70,8 @@ const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
 const TYPE_COLORS: Record<SetType, string> = {
   working: "#a3a3a3",
   warmup: "#ca8a04",
-  dropset: "#9333ea",
-  failure: "#dc2626",
+  dropset: "#8833d0",
+  failure: "#d42828",
 };
 
 const TYPE_LABELS: Record<SetType, string> = {

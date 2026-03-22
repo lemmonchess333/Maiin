@@ -24,7 +24,7 @@
 }
 
 .dark .bottom-nav-frost {
-  background: rgba(15, 15, 20, 0.82);
+  background: rgba(18, 18, 20, 0.85);
 }
 
 /* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */
@@ -51,8 +51,8 @@
 .feature-btn:active { transform: scale(0.98); }
 
 .dark .feature-btn {
-  background: rgba(124, 110, 246, 0.08);
-  border-color: rgba(124, 110, 246, 0.2);
+  background: rgba(123, 114, 233, 0.06);
+  border-color: rgba(123, 114, 233, 0.14);
   color: var(--ds-purple-400);
 }
 
@@ -65,7 +65,7 @@
 
 /* ─── QUOTE CARD — Gradient version ─────────────────────────── */
 .quote-card {
-  background: linear-gradient(135deg, #7C6EF6 0%, #6358D4 50%, #6d28d9 100%);
+  background: linear-gradient(135deg, #7B72E9 0%, #6560C8 50%, #5B4DB8 100%);
   color: white;
   border-radius: 0.75rem;
   padding: 1.25rem;

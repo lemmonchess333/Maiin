@@ -101,7 +101,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                       data={highlightData}
                       style={{ width: "140px", padding: "0" }}
                       type="anterior"
-                      highlightedColors={["#7C6EF6", "#c4b5fd"]}
+                      highlightedColors={["#7B72E9", "#b8b0e8"]}
                     />
                     <p className="text-[11px] text-muted-foreground text-center mt-1">Front</p>
                   </div>
@@ -111,7 +111,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                         data={highlightData}
                         style={{ width: "140px", padding: "0" }}
                         type="posterior"
-                        highlightedColors={["#7C6EF6", "#c4b5fd"]}
+                        highlightedColors={["#7B72E9", "#b8b0e8"]}
                       />
                       <p className="text-[11px] text-muted-foreground text-center mt-1">Back</p>
                     </div>

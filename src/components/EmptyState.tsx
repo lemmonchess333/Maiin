@@ -13,7 +13,7 @@ interface EmptyStateProps {
   accentColor?: string;
 }
 
-export function EmptyState({ icon, title, description, action, accentColor = '#7C6EF6' }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, accentColor = '#7B72E9' }: EmptyStateProps) {
   return (
     <div className="text-center py-12 px-6 space-y-4" role="status">
       <div

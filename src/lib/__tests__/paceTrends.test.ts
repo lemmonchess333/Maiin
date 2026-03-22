@@ -127,7 +127,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("consistent");
       expect(result.label).toBe("Steady");
-      expect(result.color).toBe("#7C6EF6");
+      expect(result.color).toBe("#7B72E9");
     });
 
     it("returns consistent when pace matches recent average exactly", () => {

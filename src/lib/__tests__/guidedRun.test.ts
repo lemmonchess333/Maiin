@@ -8,12 +8,12 @@ import {
 describe("getSegmentColor", () => {
   it("returns correct color for each segment type", () => {
     const expected: Record<SegmentType, string> = {
-      warmup: "#f59e0b",
-      easy: "#22c55e",
-      moderate: "#3b82f6",
-      hard: "#ef4444",
-      recovery: "#7C6EF6",
-      cooldown: "#06b6d4",
+      warmup: "#e09510",
+      easy: "#22b558",
+      moderate: "#3b7ee6",
+      hard: "#e04040",
+      recovery: "#7B72E9",
+      cooldown: "#06a8c8",
     };
 
     for (const [type, color] of Object.entries(expected)) {

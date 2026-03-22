@@ -203,7 +203,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   onClick={() => updateConfig({ target: { type: t, value: t === 'distance' ? 5 : t === 'time' ? 1800 : t === 'pace' ? 330 : undefined } })}
                   className="flex-1 py-2 rounded-xl text-xs font-medium transition-all"
                   style={config.target.type === t
-                    ? { background: 'rgba(139,92,246,0.15)', color: '#7C6EF6', border: '1px solid rgba(139,92,246,0.4)' }
+                    ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
                     : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
                   }>
                   {t === 'none' ? 'None' : t === 'distance' ? 'Distance' : t === 'time' ? 'Time' : 'Pace'}
@@ -281,7 +281,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                     aria-checked={config[setting.key]}
                     aria-label={setting.label}
                     className="w-11 h-6 rounded-full transition-colors relative"
-                    style={{ background: config[setting.key] ? '#7C6EF6' : 'rgba(0,0,0,0.1)' }}
+                    style={{ background: config[setting.key] ? '#7B72E9' : 'rgba(0,0,0,0.1)' }}
                   >
                     <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                       style={{ transform: config[setting.key] ? 'translateX(20px)' : 'translateX(2px)' }} />
@@ -298,7 +298,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                       aria-checked={config.paceAlerts}
                       aria-label="Pace alerts"
                       className="w-11 h-6 rounded-full transition-colors relative"
-                      style={{ background: config.paceAlerts ? '#7C6EF6' : 'rgba(0,0,0,0.1)' }}
+                      style={{ background: config.paceAlerts ? '#7B72E9' : 'rgba(0,0,0,0.1)' }}
                     >
                       <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                         style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />
@@ -332,7 +332,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         <button
           onClick={() => onStart(config)}
           className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] transition-transform"
-          style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+          style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
         >
           {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
         </button>
@@ -352,7 +352,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
                   {IC && <IC size={18} className={isActive ? 'text-purple-500' : 'text-muted-foreground'} />}
                   <div>
-                    <p className="text-sm font-medium" style={{ color: isActive ? '#7C6EF6' : 'var(--color-foreground)' }}>{at.label}</p>
+                    <p className="text-sm font-medium" style={{ color: isActive ? '#7B72E9' : 'var(--color-foreground)' }}>{at.label}</p>
                     <p className="text-[11px]" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>
                   </div>
                 </button>

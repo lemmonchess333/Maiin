@@ -45,7 +45,7 @@ function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismis
       particleCount: 100,
       spread: 70,
       origin: { y: 0.4 },
-      colors: [tierColor, "#7C6EF6", "#fbbf24", "#34d399"],
+      colors: [tierColor, "#7B72E9", "#fbbf24", "#34d399"],
     }));
     playChime();
 
