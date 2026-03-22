@@ -12,6 +12,7 @@ import {
   Zap,
   Crown,
   Sparkles,
+  Check,
 } from "lucide-react";
 import { useProgram } from "@/features/program/useProgram";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
@@ -33,27 +34,9 @@ import AccountSection from "@/components/settings/AccountSection";
 
 
 const PLANS = [
-  {
-    id: "monthly" as const,
-    label: "Monthly",
-    price: "\u00A32.99",
-    period: "/month",
-    badge: null,
-  },
-  {
-    id: "yearly" as const,
-    label: "Yearly",
-    price: "\u00A329.99",
-    period: "/year",
-    badge: "Save 17%",
-  },
-  {
-    id: "lifetime" as const,
-    label: "Lifetime",
-    price: "\u00A399",
-    period: "one-time",
-    badge: "Best value",
-  },
+  { id: "monthly" as const, label: "Monthly", price: "\u00A32.99", period: "/month", badge: null, recommended: false },
+  { id: "yearly" as const, label: "Yearly", price: "\u00A329.99", period: "/year", badge: "Save 17%", recommended: true },
+  { id: "lifetime" as const, label: "Lifetime", price: "\u00A399", period: "one-time", badge: "Best value", recommended: false },
 ];
 
 
@@ -354,7 +337,24 @@ export default function Settings() {
       </section>
 
       {/* Upgrade section — shown when not on paid Pro */}
-      {tier !== "pro" && (
+      {/* Trial-active acknowledgment */}
+      {isInTrial && (
+        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <p className="text-sm font-medium text-foreground">Full Pro access</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} left on your free trial. Subscribe anytime to keep all Pro features.
+          </p>
+          <button onClick={() => setShowProModal(true)} className="text-xs font-medium text-primary">
+            View plans &rarr;
+          </button>
+        </div>
+      )}
+
+      {/* Full upgrade section — shown post-trial for free users */}
+      {tier !== "pro" && !isInTrial && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-foreground">
             Upgrade to Pro
@@ -380,11 +380,12 @@ export default function Settings() {
                   Pro
                 </p>
                 <ul className="space-y-1.5 text-foreground">
-                  <li>Everything in Free +</li>
-                  <li>Unlimited AI photo food logging</li>
-                  <li>Full Performance Engine</li>
-                  <li>AI adaptive macros</li>
-                  <li>Advanced insights</li>
+                  {["Everything in Free +", "Unlimited AI photo food logging", "Full Performance Engine", "AI adaptive macros", "Advanced insights"].map((f) => (
+                    <li key={f} className="flex items-start gap-1.5">
+                      <Check className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -397,10 +398,17 @@ export default function Settings() {
                 key={plan.id}
                 onClick={() => setShowProModal(true)}
                 className={cn(
-                  "w-full flex items-center justify-between p-4 rounded-xl border transition-all",
-                  "bg-card border-border/50 hover:border-primary/50"
+                  "w-full flex items-center justify-between p-4 rounded-xl border transition-all relative",
+                  plan.recommended
+                    ? "bg-primary/5 border-primary ring-1 ring-primary/20"
+                    : "bg-card border-border/50 hover:border-primary/50"
                 )}
               >
+                {plan.recommended && (
+                  <span className="absolute -top-2.5 left-4 text-[9px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
+                    Most popular
+                  </span>
+                )}
                 <div className="flex items-center gap-3">
                   <div className="text-left">
                     <p className="text-sm font-medium text-foreground">

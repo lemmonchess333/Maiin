@@ -36,7 +36,15 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
         className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
         style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
+          <div className="flex items-center gap-2">
+            <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
+            {burn.phase && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.semantic.nutrition + '15', color: THEME.semantic.nutrition }}>
+                {burn.phase === 'lean bulk' ? 'Bulk' : burn.phase === 'cut' ? 'Cut' : 'Recomp'}
+                {burn.phase === 'lean bulk' ? ' · +300' : burn.phase === 'cut' ? ' · −500' : ''}
+              </span>
+            )}
+          </div>
           {expanded
             ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
             : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}

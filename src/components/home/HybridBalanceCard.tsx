@@ -23,7 +23,15 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell className="w-6 h-6 text-purple-500 mx-auto" />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
-          <p className="text-[11px] text-muted-foreground">Log a workout or run to see your hybrid balance</p>
+          <p className="text-[11px] text-muted-foreground">
+            {targetLiftSessions > 0 && targetRunSessions > 0
+              ? `${targetLiftSessions} lift${targetLiftSessions !== 1 ? 's' : ''} · ${targetRunSessions} run${targetRunSessions !== 1 ? 's' : ''} planned`
+              : targetLiftSessions > 0
+              ? `${targetLiftSessions} lift session${targetLiftSessions !== 1 ? 's' : ''} planned`
+              : targetRunSessions > 0
+              ? `${targetRunSessions} run${targetRunSessions !== 1 ? 's' : ''} planned`
+              : 'Log a workout or run to see your hybrid balance'}
+          </p>
         </div>
       </div>
     );

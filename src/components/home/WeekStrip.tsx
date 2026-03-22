@@ -34,17 +34,11 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           cls += " text-white";
           st = { backgroundColor: THEME.brand };
         } else if (day.isToday) {
-          cls += " text-foreground";
-          st = { border: `2px dashed ${THEME.brand}` };
-        } else if (day.isPast && day.sType === 'rest' && !day.hasActivity) {
-          cls += " text-muted-foreground";
-          st = { border: '1px solid rgba(0,0,0,0.06)' };
-        } else if (day.isPast && !day.hasActivity && day.sType !== 'rest') {
-          cls += " text-muted-foreground";
-          st = { border: `2px dashed ${THEME.brandLight}`, opacity: 0.4 };
+          cls += " text-foreground font-semibold";
+          st = { border: `2px solid ${THEME.brand}` };
         } else {
           cls += " text-muted-foreground";
-          st = { border: `2px dashed ${THEME.brandLight}` };
+          st = { backgroundColor: THEME.neutral[100] };
         }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 transition-transform active:scale-[0.93] focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
