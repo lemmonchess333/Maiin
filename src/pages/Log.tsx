@@ -166,8 +166,12 @@ export default function Log() {
   const dailyTotals = getDailyTotals(selectedDate);
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [prevDate, setPrevDate] = useState(selectedDate);
 
-  useEffect(() => { setExpandedGroup(null); }, [selectedDate]);
+  if (prevDate !== selectedDate) {
+    setPrevDate(selectedDate);
+    setExpandedGroup(null);
+  }
 
   const safeNum = (value: unknown): number => {
     const num = Number(value);
@@ -250,17 +254,20 @@ export default function Log() {
   };
 
   // Group today's meals by foodName for compact display
-  const groupedMeals = useMemo(() => {
+  const groupedMeals = (() => {
     const groups = new Map<string, { key: string; foodName: string; meals: typeof todaysMeals; totalCalories: number; totalProtein: number; totalCarbs: number; totalFat: number }>();
     for (const m of todaysMeals) {
       const key = (m.foodName || "Meal").trim().toLowerCase();
       const existing = groups.get(key);
       if (existing) {
-        existing.meals.push(m);
-        existing.totalCalories += safeNum(m.totalCalories);
-        existing.totalProtein += safeNum(m.totalProtein);
-        existing.totalCarbs += safeNum(m.totalCarbs);
-        existing.totalFat += safeNum(m.totalFat);
+        groups.set(key, {
+          ...existing,
+          meals: [...existing.meals, m],
+          totalCalories: existing.totalCalories + safeNum(m.totalCalories),
+          totalProtein: existing.totalProtein + safeNum(m.totalProtein),
+          totalCarbs: existing.totalCarbs + safeNum(m.totalCarbs),
+          totalFat: existing.totalFat + safeNum(m.totalFat),
+        });
       } else {
         groups.set(key, {
           key,
@@ -274,7 +281,7 @@ export default function Log() {
       }
     }
     return Array.from(groups.values());
-  }, [todaysMeals]);
+  })();
 
   // Day-type-aware nutrition targets
   const todayDayType = useMemo(() => {
