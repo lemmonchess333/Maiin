@@ -32,7 +32,7 @@
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
   --radius: 0.5rem;
-  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
 }
@@ -47,7 +47,7 @@
   --muted: 240 3% 15%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 16%;
-  --glass-bg: rgba(18, 18, 20, 0.88);
+  --glass-bg: rgba(18, 18, 20, 0.97);
   --glass-border: rgba(255, 255, 255, 0.06);
   --surface-solid: #161618;
 }
@@ -66,15 +66,6 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* Glassmorphism fallback for browsers without backdrop-filter support */
-@supports not (backdrop-filter: blur(1px)) {
-  :root {
-    --glass-bg: rgba(255, 255, 255, 0.95);
-  }
-  .dark {
-    --glass-bg: rgba(18, 18, 20, 0.96);
-  }
-}
 
 /* Safe area padding for bottom nav (iPhone notch) */
 .safe-area-pb {
