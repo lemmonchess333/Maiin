@@ -63,55 +63,9 @@
 }
 .pressable:active { transform: scale(0.97); }
 
-/* ─── BRAND CTA — solid, confident ─────────────────────────── */
-.brand-cta {
-  background-color: var(--ds-purple-500);
-  color: white;
-  font-weight: 700;
-  border: none;
-  transition: background-color var(--ds-transition-fast), transform 150ms;
-}
-.brand-cta:hover {
-  background-color: var(--ds-purple-600);
-}
-.brand-cta:active {
-  background-color: var(--ds-purple-700);
-  transform: scale(0.97);
-}
-
-/* ─── ACCENT-EDGE CARD — signature left-stripe motif ─────── */
-.accent-edge {
-  position: relative;
-}
-/* Inset stripe — avoids border-radius clipping */
-.accent-edge::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background-color: var(--accent-edge-color, var(--ds-purple-500));
-  z-index: 1;
-}
-/* Subtle card tint — reinforces accent color */
-.accent-edge::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--accent-edge-color, var(--ds-purple-500));
-  opacity: 0.04;
-  pointer-events: none;
-}
-.dark .accent-edge::after {
-  opacity: 0.06;
-}
-
-/* ─── QUOTE CARD — solid brand ─────────────────────────────── */
+/* ─── QUOTE CARD — Gradient version ─────────────────────────── */
 .quote-card {
-  background: var(--ds-purple-500);
+  background: linear-gradient(135deg, #7B72E9 0%, #6560C8 50%, #5B4DB8 100%);
   color: white;
   border-radius: 0.75rem;
   padding: 1.25rem;

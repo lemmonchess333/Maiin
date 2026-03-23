@@ -244,8 +244,8 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       {exercises.map((exercise, exIndex) => (
         <div
           key={exIndex}
-          className={`bg-card rounded-2xl overflow-hidden${expandedExercise === exIndex ? ' accent-edge' : ''}`}
-          style={expandedExercise === exIndex ? { '--accent-edge-color': THEME.lifting } as React.CSSProperties : undefined}
+          className="bg-card rounded-2xl overflow-hidden"
+          style={expandedExercise === exIndex ? { background: `linear-gradient(135deg, ${THEME.lifting}06 0%, transparent 70%)` } : undefined}
         >
           <button
             onClick={() =>
@@ -458,7 +458,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                       ? "text-white"
                       : "bg-muted text-muted-foreground hover:text-foreground"
                   )}
-                  style={selectedCategory === cat ? { backgroundColor: THEME.lifting } : undefined}
+                  style={selectedCategory === cat ? { background: `linear-gradient(135deg, ${THEME.lifting} 0%, ${THEME.liftingLight} 100%)` } : undefined}
                 >
                   {cat}
                 </motion.button>
@@ -553,8 +553,9 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 onClick={() => addMultipleExercises(Array.from(selectedExerciseIds))}
                 className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
                 style={{
-                  backgroundColor: '#7B72E9',
+                  backgroundColor: '#6358D4',
                   borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
                 }}
               >
                 {selectedExerciseIds.size} exercise{selectedExerciseIds.size !== 1 ? 's' : ''} selected — Add to workout

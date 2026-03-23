@@ -59,8 +59,8 @@ export function BadgeGrid() {
                       border: earned
                         ? `1.5px solid ${tierColor}40`
                         : "1px solid rgba(255,255,255,0.05)",
-                      backgroundColor: earned
-                        ? `${tierColor}0A`
+                      backgroundImage: earned
+                        ? `linear-gradient(135deg, ${tierColor}08, transparent 60%)`
                         : undefined,
                     }}
                   >

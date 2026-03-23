@@ -120,7 +120,7 @@ export default function RunDashboard() {
       {recentRuns.length === 0 && (
         <div className="text-center py-12 space-y-3 ds-fade-up">
           <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
-            style={{ backgroundColor: '#f5f4fe' }}>
+            style={{ background: 'linear-gradient(135deg, #f5f4fe, #eceafe)' }}>
             <Footprints size={36} className="text-green-500" />
           </div>
           <p className="text-sm font-bold text-foreground">No runs yet</p>
@@ -129,7 +129,7 @@ export default function RunDashboard() {
           </p>
           <button
             onClick={() => navigate('/log')}
-            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold active:scale-95 transition-all mt-2"
+            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform mt-2"
           >
             Go to Log Tab
             <ArrowRight className="w-4 h-4" />

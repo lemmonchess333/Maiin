@@ -33,8 +33,8 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
       {/* Calorie header -- tappable to expand */}
       <button
         onClick={function() { haptic(); setExpanded(function(e) { return !e; }); }}
-        className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30 accent-edge"
-        style={{ '--accent-edge-color': THEME.semantic.nutrition } as React.CSSProperties}>
+        className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
+        style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
@@ -62,7 +62,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           <motion.div initial={{ width: 0 }} animate={{ width: calPct + "%" }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="h-full rounded-full"
-            style={{ backgroundColor: calPct >= 98 ? THEME.semantic.positive : THEME.semantic.nutrition }} />
+            style={{ background: calPct >= 98 ? THEME.semantic.positive : "linear-gradient(90deg, " + THEME.semantic.nutrition + ", " + THEME.semantic.vitals + ")" }} />
         </div>
       </button>
 

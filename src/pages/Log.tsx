@@ -171,9 +171,10 @@ export default function Log() {
 
   function glowStyle(current: number, target: number, color: string): React.CSSProperties {
     const ratio = Math.min(1, current / (target || 1));
-    const opacity = Math.round(ratio * 0.12 * 255).toString(16).padStart(2, '0');
+    const spread = Math.round(ratio * 85);
+    const opacity = Math.round(ratio * 0.18 * 255).toString(16).padStart(2, '0');
     return {
-      backgroundColor: `${color}${opacity}`,
+      background: `radial-gradient(circle at 50% 28%, ${color}${opacity} 0%, transparent ${spread}%)`,
     };
   }
 
@@ -599,8 +600,8 @@ export default function Log() {
       </header>
 
       {/* Date Switcher */}
-      <motion.div variants={itemVariant} className="flex items-center justify-between rounded-2xl p-3 accent-edge bg-card"
-        style={{ '--accent-edge-color': THEME.brand } as React.CSSProperties}>
+      <motion.div variants={itemVariant} className="flex items-center justify-between rounded-2xl p-3"
+        style={{ background: `linear-gradient(135deg, ${THEME.brand}12 0%, transparent 60%)` }}>
         <button
           onClick={() => { haptic(); changeDate(-1); }}
           aria-label="Previous day"
@@ -672,8 +673,8 @@ export default function Log() {
         <section aria-label="Workout logging">
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Start a run link */}
-          <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform accent-edge bg-card"
-            style={{ '--accent-edge-color': THEME.running } as React.CSSProperties}>
+          <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform"
+            style={{ background: `linear-gradient(135deg, ${THEME.running}12 0%, transparent 60%)` }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
             </div>
@@ -686,8 +687,8 @@ export default function Log() {
 
           {/* Today's workout count badge */}
           {todaysWorkouts.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl accent-edge bg-card"
-              style={{ '--accent-edge-color': THEME.lifting } as React.CSSProperties}>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ background: `linear-gradient(135deg, ${THEME.lifting}10 0%, transparent 60%)` }}>
               <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
               <span className="text-sm font-medium text-foreground">
                 {todaysWorkouts.length} workout{todaysWorkouts.length !== 1 ? "s" : ""} logged today
@@ -731,7 +732,7 @@ export default function Log() {
           )}
 
           {/* Daily Totals */}
-          <div className="rounded-2xl p-4 accent-edge bg-card" style={{ '--accent-edge-color': THEME.semantic.nutrition } as React.CSSProperties}>
+          <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}>
             <div className="grid grid-cols-4 gap-2 text-center">
               {/* Calories */}
               <div
@@ -840,7 +841,7 @@ export default function Log() {
                   style={{
                     width: "180px",
                     padding: "8px 12px",
-                    backgroundColor: `${THEME.semantic.nutrition}0A`,
+                    background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)`,
                   }}
                 >
                   <span className="text-[13px] font-bold text-foreground block truncate">{meal.name}</span>
@@ -883,7 +884,7 @@ export default function Log() {
           )}
 
           {/* Add Food */}
-          <div className="rounded-2xl p-4 bg-card">
+          <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
             <p className="text-[11px] uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
 
             {/* Unified smart input */}
@@ -985,7 +986,8 @@ export default function Log() {
               )}
               style={{
                 marginTop: "12px",
-                backgroundColor: THEME.brand,
+                background: THEME.gradient.brand,
+                boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
               }}
             >
               {isPro && <Sparkles className="w-3.5 h-3.5" />}
@@ -1033,7 +1035,7 @@ export default function Log() {
             <motion.div variants={itemVariant} className="space-y-2">
               <p className="text-[11px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
-                <div key={m.id} className="rounded-2xl px-4 py-3 bg-card">
+                <div key={m.id} className="rounded-2xl px-4 py-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}04 0%, transparent 70%)` }}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>

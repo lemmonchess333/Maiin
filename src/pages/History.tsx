@@ -396,8 +396,8 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
-              <div className="rounded-xl bg-card overflow-hidden accent-edge"
-                style={{ '--accent-edge-color': THEME.lifting } as React.CSSProperties}>
+              <div className="rounded-xl bg-card overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
                   <Trophy size={16} className="text-amber-500" />
                   <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>

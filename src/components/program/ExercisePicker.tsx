@@ -186,8 +186,9 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
             onClick={handleAddSelected}
             className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
             style={{
-              backgroundColor: '#7B72E9',
+              backgroundColor: '#6358D4',
               borderRadius: 16,
+              boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
             }}
           >
             {selectedIds.size} exercise{selectedIds.size !== 1 ? 's' : ''} selected — Add to workout

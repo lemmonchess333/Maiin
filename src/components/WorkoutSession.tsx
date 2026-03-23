@@ -582,7 +582,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             <motion.div
               className="p-4 rounded-2xl text-center space-y-2"
               style={{
-                backgroundColor: `${THEME.semantic.positive}15`,
+                background: `linear-gradient(135deg, ${THEME.brand}15 0%, ${THEME.semantic.positive}10 100%)`,
                 border: `1px solid ${THEME.brand}30`,
               }}
               initial={{ opacity: 0, scale: 0.95 }}
