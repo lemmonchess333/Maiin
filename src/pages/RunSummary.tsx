@@ -260,25 +260,25 @@ export default function RunSummary() {
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
             {(distance / 1000).toFixed(2)}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">km</p>
+          <p className="text-xs text-muted-foreground mt-0.5">km</p>
         </div>
         <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">time</p>
+          <p className="text-xs text-muted-foreground mt-0.5">time</p>
         </div>
         <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">/km pace</p>
+          <p className="text-xs text-muted-foreground mt-0.5">/km pace</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4 mb-4">
         <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.success }}>{calories}</p>
-          <p className="text-[11px] text-muted-foreground">calories</p>
+          <p className="text-xs text-muted-foreground">calories</p>
         </div>
         <div className="p-3 rounded-xl bg-card text-center">
           <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
-          <p className="text-[11px] text-muted-foreground">elevation gain</p>
+          <p className="text-xs text-muted-foreground">elevation gain</p>
         </div>
       </div>
 
@@ -299,7 +299,7 @@ export default function RunSummary() {
           <div className="grid grid-cols-3 gap-2">
             {bestEfforts.map((effort) => (
               <div key={effort.label} className="text-center p-2 rounded-lg bg-muted/50">
-                <p className="text-[11px] text-muted-foreground">{effort.label}</p>
+                <p className="text-xs text-muted-foreground">{effort.label}</p>
                 <p className="text-sm font-bold font-mono tabular-nums">{Math.floor(effort.time / 60)}:{(Math.floor(effort.time) % 60).toString().padStart(2, '0')}</p>
               </div>
             ))}
@@ -348,7 +348,7 @@ export default function RunSummary() {
         <div className="flex items-center justify-between p-3 rounded-xl bg-card">
           <div>
             <p className="text-sm font-medium text-foreground">Share to feed</p>
-            <p className="text-[11px] text-muted-foreground">Post this run to your followers</p>
+            <p className="text-xs text-muted-foreground">Post this run to your followers</p>
           </div>
           <button
             onClick={() => setShareToFeed(v => !v)}

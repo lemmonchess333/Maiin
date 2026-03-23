@@ -714,7 +714,7 @@ export default function Log() {
           {adjustedTargets && todayDayType !== "rest" && (
             <div className="flex items-center gap-2 mb-2">
               <span
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                 style={{
                   backgroundColor: todayDayType === "lift" ? `${THEME.lifting}15` : todayDayType === "run" ? `${THEME.running}15` : `${THEME.lifting}15`,
                   color: todayDayType === "lift" ? THEME.lifting : todayDayType === "run" ? THEME.running : THEME.lifting,
@@ -726,7 +726,7 @@ export default function Log() {
             </div>
           )}
           {adjustedTargets && todayDayType === "rest" && (
-            <p className="text-[11px] mb-2" style={{ color: THEME.text.muted }}>
+            <p className="text-xs mb-2" style={{ color: THEME.text.muted }}>
               Rest day targets
             </p>
           )}
@@ -748,7 +748,7 @@ export default function Log() {
                   <p className="stat-tile__value tabular-nums">
                     {safeNum(dailyTotals.calories)}
                   </p>
-                  <p className="text-[11px] mt-1">cal</p>
+                  <p className="text-xs mt-1">cal</p>
                   <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.calories}15` }}>
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.calories / macroTargets.calories) * 100)}%`, backgroundColor: macroColors.calories, opacity: 0.6 }} />
                   </div>
@@ -769,7 +769,7 @@ export default function Log() {
                   <p className="stat-tile__value tabular-nums">
                     {safeNum(dailyTotals.protein)}g
                   </p>
-                  <p className="text-[11px] mt-1">protein</p>
+                  <p className="text-xs mt-1">protein</p>
                   <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.protein}15` }}>
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.protein / macroTargets.protein) * 100)}%`, backgroundColor: macroColors.protein, opacity: 0.6 }} />
                   </div>
@@ -790,7 +790,7 @@ export default function Log() {
                   <p className="stat-tile__value tabular-nums">
                     {safeNum(dailyTotals.carbs)}g
                   </p>
-                  <p className="text-[11px] mt-1">carbs</p>
+                  <p className="text-xs mt-1">carbs</p>
                   <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.carbs}15` }}>
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.carbs / macroTargets.carbs) * 100)}%`, backgroundColor: macroColors.carbs, opacity: 0.6 }} />
                   </div>
@@ -811,7 +811,7 @@ export default function Log() {
                   <p className="stat-tile__value tabular-nums">
                     {safeNum(dailyTotals.fat)}g
                   </p>
-                  <p className="text-[11px] mt-1">fat</p>
+                  <p className="text-xs mt-1">fat</p>
                   <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ backgroundColor: `${macroColors.fat}15` }}>
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dailyTotals.fat / macroTargets.fat) * 100)}%`, backgroundColor: macroColors.fat, opacity: 0.6 }} />
                   </div>
@@ -822,7 +822,7 @@ export default function Log() {
 
           {/* Quick Add — horizontal scroll row */}
           <div style={{ marginTop: "14px" }}>
-            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
+            <p className="text-xs uppercase tracking-[0.05em] font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
             <div
               className="flex gap-2.5 pb-1 -mx-1 px-1"
               style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
@@ -845,7 +845,7 @@ export default function Log() {
                   }}
                 >
                   <span className="text-[13px] font-bold text-foreground block truncate">{meal.name}</span>
-                  <span className="block text-[11px] text-muted-foreground mt-1">
+                  <span className="block text-xs text-muted-foreground mt-1">
                     ~{meal.cal} kcal
                   </span>
                 </motion.button>
@@ -859,7 +859,7 @@ export default function Log() {
           {/* Common Meals — only shown when no favourites cover them */}
           {commonMeals.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground px-1">Frequently Logged</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground px-1">Frequently Logged</p>
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                 {commonMeals.map((cm, i) => {
                   const key = cm.foodName?.trim().toLowerCase() ?? "";
@@ -885,7 +885,7 @@ export default function Log() {
 
           {/* Add Food */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
-            <p className="text-[11px] uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
+            <p className="text-xs uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
 
             {/* Unified smart input */}
             <div className="relative" style={{ marginTop: "10px" }}>
@@ -954,15 +954,15 @@ export default function Log() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
                               {food.brand && (
-                                <p className="text-[11px] text-muted-foreground truncate">{food.brand}</p>
+                                <p className="text-xs text-muted-foreground truncate">{food.brand}</p>
                               )}
-                              <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                                 <span className="text-orange-500 font-medium">{food.calories} cal</span>
                                 <span>&middot;</span>
                                 <span>P {food.protein}g</span>
                                 <span>C {food.carbs}g</span>
                                 <span>F {food.fat}g</span>
-                                <span className="text-[11px]">per {food.servingSize}</span>
+                                <span className="text-xs">per {food.servingSize}</span>
                               </div>
                             </div>
                             <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
@@ -994,7 +994,7 @@ export default function Log() {
               {nlParsing ? "Analyzing..." : "Log Meal"}
             </motion.button>
             {!isPro && (
-              <p className="text-[11px] text-muted-foreground text-center mt-1">
+              <p className="text-xs text-muted-foreground text-center mt-1">
                 Upgrade to Pro for AI-powered macro estimates
               </p>
             )}
@@ -1005,7 +1005,7 @@ export default function Log() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { haptic(); setScanOpen(!scanOpen); }}
                 className={cn(
-                  "flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border",
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 border",
                   scanOpen
                     ? "bg-primary/10 text-primary border-primary/30"
                     : "bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
@@ -1016,7 +1016,7 @@ export default function Log() {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { haptic(); setManualOpen(true); }}
-                className="flex-1 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
+                className="flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
               >
                 <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
               </motion.button>
@@ -1033,20 +1033,20 @@ export default function Log() {
           {/* Logged Today */}
           {todaysMeals.length > 0 && (
             <motion.div variants={itemVariant} className="space-y-2">
-              <p className="text-[11px] uppercase tracking-widest text-foreground px-1">Logged Today</p>
+              <p className="text-xs uppercase tracking-widest text-foreground px-1">Logged Today</p>
               {todaysMeals.map((m) => (
                 <div key={m.id} className="rounded-2xl px-4 py-3" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}04 0%, transparent 70%)` }}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0 mr-3">
                       <p className="text-sm font-semibold text-foreground truncate">{m.foodName || "Meal"}</p>
                       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}10`, color: macroColors.protein }}>
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.protein}10`, color: macroColors.protein }}>
                           Protein {safeNum(m.totalProtein)}g
                         </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}10`, color: macroColors.carbs }}>
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.carbs}10`, color: macroColors.carbs }}>
                           Carbs {safeNum(m.totalCarbs)}g
                         </span>
-                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}10`, color: macroColors.fat }}>
+                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: `${macroColors.fat}10`, color: macroColors.fat }}>
                           Fat {safeNum(m.totalFat)}g
                         </span>
                       </div>
@@ -1054,7 +1054,7 @@ export default function Log() {
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <p className="text-base font-bold font-mono tabular-nums" style={{ color: THEME.semantic.nutrition }}>
                         {safeNum(m.totalCalories)}
-                        <span className="text-[11px] font-normal text-muted-foreground ml-0.5">cal</span>
+                        <span className="text-xs font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
                       <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 touch-target">
                         <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
@@ -1064,7 +1064,7 @@ export default function Log() {
                   {m.items && m.items.length > 1 && (
                     <div className="mt-2 pt-2 border-t border-border/30 space-y-0.5">
                       {m.items.map((item, i) => (
-                        <p key={i} className="text-[11px] text-muted-foreground">{item.name} · {item.calories} cal</p>
+                        <p key={i} className="text-xs text-muted-foreground">{item.name} · {item.calories} cal</p>
                       ))}
                     </div>
                   )}

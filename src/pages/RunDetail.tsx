@@ -23,7 +23,7 @@ function StatPill({ value, label, color }: { value: string; label: string; color
         style={{ color: color || 'var(--foreground)' }}>
         {value}
       </p>
-      <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-1">{label}</p>
+      <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
@@ -152,7 +152,7 @@ export default function RunDetail() {
         <div>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-0.5">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">
                 {ACTIVITY_LABELS[run.activityType] ?? 'Run'}
               </p>
               <h1 className="text-xl font-bold text-foreground">
@@ -181,13 +181,13 @@ export default function RunDetail() {
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.elevationGain ?? 0}m
             </p>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-0.5">Elevation Gain</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">Elevation Gain</p>
           </div>
           <div className="p-3 rounded-xl bg-card text-center">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.splits?.length ?? 0}
             </p>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-0.5">Splits</p>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">Splits</p>
           </div>
         </div>
 

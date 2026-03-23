@@ -87,12 +87,12 @@ export function AdaptiveTDEECard() {
             <Brain className="w-5 h-5 text-purple-500" />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Adaptive TDEE</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Adaptive TDEE</p>
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold text-foreground">
                 {tdeeResult.estimatedTDEE > 0 ? `${tdeeResult.estimatedTDEE} cal/day` : "Collecting data..."}
               </p>
-              <span className="text-[11px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: confidenceColor + "20", color: confidenceColor }}>
+              <span className="text-xs px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: confidenceColor + "20", color: confidenceColor }}>
                 {tdeeResult.confidence}
               </span>
             </div>
@@ -106,11 +106,11 @@ export function AdaptiveTDEECard() {
               <div className="pt-3 border-t border-border/30 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl bg-muted/50">
-                    <p className="text-[11px] text-muted-foreground">Estimated TDEE</p>
+                    <p className="text-xs text-muted-foreground">Estimated TDEE</p>
                     <p className="text-lg font-bold text-foreground">{tdeeResult.estimatedTDEE}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-muted/50">
-                    <p className="text-[11px] text-muted-foreground">Suggested Target</p>
+                    <p className="text-xs text-muted-foreground">Suggested Target</p>
                     <p className="text-lg font-bold text-primary">{tdeeResult.adjustedCalories}</p>
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export function AdaptiveTDEECard() {
                 )}
 
                 {tdeeResult.confidence === "low" && (
-                  <p className="text-[11px] text-muted-foreground text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Log more meals and weigh-ins for accurate estimates
                   </p>
                 )}

@@ -547,7 +547,7 @@ export function AdaptiveSummary({
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-foreground">Performance Insight</p>
                 <span
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                  className="text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{
                     backgroundColor: tint(phaseAccent, 0.92),
                     color: phaseAccent,
@@ -637,7 +637,7 @@ export function AdaptiveSummary({
                 >
                   <Flame className="w-5 h-5 mx-auto mb-1.5" />
                   <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.calories}</p>
-                  <p className="text-[11px] mt-1">cal</p>
+                  <p className="text-xs mt-1">cal</p>
                 </div>
 
                 <div
@@ -649,7 +649,7 @@ export function AdaptiveSummary({
                 >
                   <Beef className="w-5 h-5 mx-auto mb-1.5" />
                   <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.protein}g</p>
-                  <p className="text-[11px] mt-1">protein</p>
+                  <p className="text-xs mt-1">protein</p>
                 </div>
 
                 <div
@@ -661,7 +661,7 @@ export function AdaptiveSummary({
                 >
                   <Wheat className="w-5 h-5 mx-auto mb-1.5" />
                   <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.carbs}g</p>
-                  <p className="text-[11px] mt-1">carbs</p>
+                  <p className="text-xs mt-1">carbs</p>
                 </div>
 
                 <div
@@ -673,7 +673,7 @@ export function AdaptiveSummary({
                 >
                   <Cookie className="w-5 h-5 mx-auto mb-1.5" />
                   <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.fat}g</p>
-                  <p className="text-[11px] mt-1">fat</p>
+                  <p className="text-xs mt-1">fat</p>
                 </div>
               </div>
             </div>

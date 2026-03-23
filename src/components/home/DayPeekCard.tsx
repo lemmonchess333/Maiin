@@ -33,14 +33,14 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
             <button onClick={onClose} aria-label="Close day details" className="p-2 -m-1.5 rounded-lg hover:bg-muted transition-colors touch-target">
               <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>
           {(hasW || hasM) ? (
-            <div className="flex items-center gap-4 text-[11px]">
+            <div className="flex items-center gap-4 text-xs">
               {hasW && (
                 <div className="flex items-center gap-1.5">
                   <Dumbbell className="w-3.5 h-3.5" style={{ color: THEME.lifting }} />
@@ -62,7 +62,7 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
               )}
             </div>
           ) : (
-            <p className="text-[11px] text-muted-foreground">No activity logged</p>
+            <p className="text-xs text-muted-foreground">No activity logged</p>
           )}
         </div>
       </div>

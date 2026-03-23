@@ -55,10 +55,10 @@ export function HealthScoreCard() {
         </div>
 
         <div className="flex-1 text-left">
-          <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+          <p className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
           {score != null ? (
             <div className="flex items-center gap-2">
-              <p className="text-[32px] font-extrabold leading-none" style={{ color: scoreColor }}>
+              <p className="text-[32px] font-extrabold leading-none font-mono tabular-nums" style={{ color: scoreColor }}>
                 {score}
               </p>
               <p className="text-xs text-muted-foreground">{getScoreLabel(score)}</p>
@@ -101,7 +101,7 @@ export function HealthScoreCard() {
             <div className="pt-3 mt-3 border-t border-border/30 space-y-2">
               {breakdownItems.map((item) => (
                 <div key={item.label} className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground w-20">{item.label}</span>
+                  <span className="text-xs text-muted-foreground w-20">{item.label}</span>
                   <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
@@ -111,7 +111,7 @@ export function HealthScoreCard() {
                       }}
                     />
                   </div>
-                  <span className="text-[11px] text-muted-foreground font-mono w-8 text-right">
+                  <span className="text-xs text-muted-foreground font-mono w-8 text-right">
                     {item.pts}/{item.max}
                   </span>
                 </div>

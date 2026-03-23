@@ -93,7 +93,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
                 <summary className="text-sm font-medium text-foreground cursor-pointer">
                   Show component trace
                 </summary>
-                <pre className="mt-2 text-[11px] leading-snug text-muted-foreground whitespace-pre-wrap break-words">
+                <pre className="mt-2 text-xs leading-snug text-muted-foreground whitespace-pre-wrap break-words">
                   {this.state.componentStack}
                 </pre>
               </details>

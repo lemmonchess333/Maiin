@@ -18,7 +18,7 @@ export default function StatCard({
     <button onClick={onClick}
       className="p-4 rounded-xl bg-card text-left w-full active:scale-[0.98]"
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 70%)` }}>
-      <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-2 text-muted-foreground">{label}</p>
+      <p className="text-xs uppercase tracking-[0.5px] font-medium mb-2 text-muted-foreground">{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-baseline gap-1">
@@ -26,7 +26,7 @@ export default function StatCard({
             {unit && <span className="text-[13px] text-muted-foreground">{unit}</span>}
           </div>
           {delta && (
-            <p className={`text-[11px] mt-1 font-medium flex items-center gap-0.5 ${delta.positive ? 'text-emerald-500' : 'text-red-400'}`}>
+            <p className={`text-xs mt-1 font-medium flex items-center gap-0.5 ${delta.positive ? 'text-emerald-500' : 'text-red-400'}`}>
               <span>{delta.positive ? '↑' : '↓'}</span>
               <span>{delta.value} vs last</span>
             </p>

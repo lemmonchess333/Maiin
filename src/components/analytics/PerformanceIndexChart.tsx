@@ -47,7 +47,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Performance Index</h3>
-        <span className="text-[11px] text-muted-foreground">0–100 · last {data.length}w</span>
+        <span className="text-xs text-muted-foreground">0–100 · last {data.length}w</span>
       </div>
 
       <ResponsiveContainer width="100%" height={180}>
@@ -153,7 +153,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
         ].map((z) => (
           <div key={z.label} className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
-            <span className="text-[11px] text-muted-foreground">{z.label}</span>
+            <span className="text-xs text-muted-foreground">{z.label}</span>
           </div>
         ))}
       </div>

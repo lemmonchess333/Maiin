@@ -9,7 +9,7 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
 
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-[11px]">
+      <div className="flex justify-between text-xs">
         <span className="text-muted-foreground">{Math.round(shoe.totalKm)} km</span>
         <span className="text-muted-foreground">{shoe.maxKm} km</span>
       </div>
@@ -98,7 +98,7 @@ export default function ShoesManager() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">{shoe.name}</p>
-              {shoe.brand && <p className="text-[11px] text-muted-foreground">{shoe.brand}</p>}
+              {shoe.brand && <p className="text-xs text-muted-foreground">{shoe.brand}</p>}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -126,12 +126,12 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest mb-2">Retired</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">Retired</p>
           {retired.map((shoe) => (
             <div key={shoe.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 mb-1 opacity-60">
               <div>
                 <p className="text-xs text-foreground">{shoe.name}</p>
-                <p className="text-[11px] text-muted-foreground">{Math.round(shoe.totalKm)} km logged</p>
+                <p className="text-xs text-muted-foreground">{Math.round(shoe.totalKm)} km logged</p>
               </div>
             </div>
           ))}

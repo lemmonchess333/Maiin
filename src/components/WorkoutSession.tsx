@@ -559,21 +559,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             <div className="p-4 rounded-2xl bg-card text-center space-y-1">
               <Clock className="w-4 h-4 mx-auto" style={{ color: THEME.text.muted }} />
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">{durationDisplay}</p>
-              <p className="text-[11px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Duration</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Duration</p>
             </div>
 
             {/* Volume */}
             <div className="p-4 rounded-2xl bg-card text-center space-y-1">
               <Dumbbell className="w-4 h-4 mx-auto" style={{ color: THEME.lifting }} />
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalVolumeDisplay}<span className="text-xs font-normal" style={{ color: THEME.text.muted }}>kg</span></p>
-              <p className="text-[11px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Volume</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Volume</p>
             </div>
 
             {/* Sets */}
             <div className="p-4 rounded-2xl bg-card text-center space-y-1">
               <Target className="w-4 h-4 mx-auto" style={{ color: THEME.semantic.positive }} />
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalSetsCompleted}</p>
-              <p className="text-[11px] uppercase tracking-wider" style={{ color: THEME.text.muted }}>Sets</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Sets</p>
             </div>
           </motion.div>
 
@@ -644,7 +644,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       <>
                         <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.brand }} fill={THEME.brand} />
                         {ex.prLabels.map(label => (
-                          <span key={label} className="text-[11px] font-medium" style={{ color: THEME.brand }}>{label}</span>
+                          <span key={label} className="text-xs font-medium" style={{ color: THEME.brand }}>{label}</span>
                         ))}
                       </>
                     )}
@@ -654,7 +654,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     <p className="text-sm font-mono tabular-nums font-semibold" style={{ color: THEME.lifting }}>
                       {ex.bestWeight > 0 ? `${ex.bestWeight}kg × ${ex.bestReps}` : `${ex.bestReps} reps`}
                     </p>
-                    <p className="text-[11px]" style={{ color: THEME.text.muted }}>
+                    <p className="text-xs" style={{ color: THEME.text.muted }}>
                       {ex.setsCompleted}/{ex.totalSets} sets
                     </p>
                   </div>
@@ -798,7 +798,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div>
           <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {totalSetsCompleted}/{totalSetsTotal} sets
           </p>
         </div>
@@ -831,7 +831,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors shrink-0",
+                  "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
                   done
                     ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
                     : active
@@ -860,7 +860,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           </p>
           {/* Previous performance hint */}
           {currentExercise?.lastPerformance && (
-            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium"
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
               style={{ background: `${THEME.lifting}18`, color: THEME.lifting }}>
               <ChevronRight className="w-3 h-3" />
               Last: {currentExercise.lastPerformance.sets}×{currentExercise.lastPerformance.reps}
@@ -914,7 +914,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     )}>
                       {formatTime(restSeconds)}
                     </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {isOver ? "GO!" : `/ ${formatTime(restTarget)}`}
                     </p>
                   </div>
@@ -930,7 +930,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     {[60, 90, 120, 180].map((t) => (
                       <button key={t} onClick={() => setRestTarget(t)}
                         className={cn(
-                          "px-2 py-1 rounded text-[11px] font-medium transition-colors",
+                          "px-2 py-1 rounded text-xs font-medium transition-colors",
                           restTarget === t ? "text-white" : "bg-muted text-muted-foreground"
                         )}
                         style={restTarget === t ? { background: THEME.teal } : undefined}
@@ -947,7 +947,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
         {/* Set logging grid */}
         <div className="bg-card rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-muted/50 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             <div className="col-span-2">Set</div>
             <div className="col-span-4">Weight (kg)</div>
             <div className="col-span-4">Reps</div>
@@ -1011,13 +1011,13 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 {/* RPE selector for completed sets */}
                 {showRPE && set.completed && (
                   <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
-                    <span className="text-[11px] text-muted-foreground mr-1 self-center">RPE:</span>
+                    <span className="text-xs text-muted-foreground mr-1 self-center">RPE:</span>
                     {RPE_OPTIONS.map((rpe) => (
                       <button
                         key={rpe}
                         onClick={() => updateSetRPE(currentExIndex, setIdx, rpe)}
                         className={cn(
-                          "text-[11px] px-1.5 py-0.5 rounded transition-colors",
+                          "text-xs px-1.5 py-0.5 rounded transition-colors",
                           set.rpe === rpe
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground hover:text-foreground",
@@ -1038,7 +1038,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         aria-label={`Set type: ${TYPE_LABELS[type]}`}
                         aria-pressed={set.type === type}
                         className={cn(
-                          "flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
+                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all",
                           set.type === type ? "opacity-100 ring-2 ring-current" : "opacity-40"
                         )}
                         style={{ color: TYPE_COLORS[type], backgroundColor: TYPE_COLORS[type] + '15' }}

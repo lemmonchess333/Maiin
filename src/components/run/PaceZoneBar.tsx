@@ -24,7 +24,7 @@ export default function PaceZoneBar({ currentPace, targetPace, tolerance }: Pace
 
   return (
     <div className="mx-4 mt-2">
-      <div className="flex justify-between text-[11px] text-white/50 mb-1">
+      <div className="flex justify-between text-xs text-white/50 mb-1">
         <span>Fast</span>
         <span className="text-white/70 font-medium">{label}</span>
         <span>Slow</span>

@@ -19,11 +19,11 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
   if (totalSessions === 0 && liftTonnage === 0 && runKm === 0) {
     return (
       <div className="p-4 rounded-2xl bg-card">
-        <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-3" style={{ color: THEME.text.muted }}>This Week</p>
+        <p className="text-xs uppercase tracking-[0.5px] font-medium mb-3" style={{ color: THEME.text.muted }}>This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell className="w-6 h-6 mx-auto" style={{ color: THEME.lifting }} />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {targetLiftSessions > 0 && targetRunSessions > 0
               ? `${targetLiftSessions} lift${targetLiftSessions !== 1 ? 's' : ''} · ${targetRunSessions} run${targetRunSessions !== 1 ? 's' : ''} planned`
               : targetLiftSessions > 0
@@ -80,9 +80,9 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>This Week</p>
+          <p className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>This Week</p>
           <div className="flex items-center gap-1">
-            <span className="text-[11px] font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
+            <span className="text-xs font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         </div>
 
         {/* Stats row — sessions + volume/distance */}
-        <div className="flex items-center justify-between text-[11px]">
+        <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
             <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />
             <span className="text-muted-foreground">

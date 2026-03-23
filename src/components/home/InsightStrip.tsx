@@ -13,10 +13,10 @@ export default function InsightStrip({ title, bullet, loadBand }: { title: strin
         <span className="mt-0.5" style={{ color: iconColor }} role="img" aria-label={iconLabel}>{iconEl}</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground">{title}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{bullet}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{bullet}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
-          <span className="text-[11px] text-primary font-medium">Details</span>
+          <span className="text-xs text-primary font-medium">Details</span>
           <ChevronRight className="w-3.5 h-3.5 text-primary" />
         </div>
       </motion.div>

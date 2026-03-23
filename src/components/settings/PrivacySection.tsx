@@ -77,7 +77,7 @@ export default function PrivacySection({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-foreground">Your crew</p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {currentCrew ? `${currentCrew.icon} ${currentCrew.name}` : 'Not in a crew'}
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function PrivacySection({
                 <span className="text-lg">{crew.icon}</span>
                 <div className="flex-1">
                   <p className="font-medium">{crew.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{crew.description}</p>
+                  <p className="text-xs text-muted-foreground">{crew.description}</p>
                 </div>
                 {currentCrew?.id === crew.id && <Check className="w-3.5 h-3.5 text-primary" />}
               </button>
@@ -110,7 +110,7 @@ export default function PrivacySection({
             {currentCrew && (
               <button
                 onClick={async () => { if (!window.confirm('Leave this crew? You can rejoin later.')) return; await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
-                className="w-full text-center text-[11px] text-muted-foreground hover:text-red-400 py-1"
+                className="w-full text-center text-xs text-muted-foreground hover:text-red-400 py-1"
               >
                 Leave crew
               </button>
@@ -122,7 +122,7 @@ export default function PrivacySection({
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
         <div>
           <p className="text-sm text-foreground">Default visibility</p>
-          <p className="text-[11px] text-muted-foreground">Who can see your posts</p>
+          <p className="text-xs text-muted-foreground">Who can see your posts</p>
         </div>
         <select
           value={defaultVisibility}
@@ -142,7 +142,7 @@ export default function PrivacySection({
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
         <div>
           <p className="text-sm text-foreground">Auto-post runs</p>
-          <p className="text-[11px] text-muted-foreground">Share runs to feed automatically</p>
+          <p className="text-xs text-muted-foreground">Share runs to feed automatically</p>
         </div>
         <button
           onClick={async () => {
@@ -159,7 +159,7 @@ export default function PrivacySection({
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
         <div>
           <p className="text-sm text-foreground">Auto-post workouts</p>
-          <p className="text-[11px] text-muted-foreground">Share workouts to feed automatically</p>
+          <p className="text-xs text-muted-foreground">Share workouts to feed automatically</p>
         </div>
         <button
           onClick={async () => {
@@ -176,7 +176,7 @@ export default function PrivacySection({
       <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
         <div>
           <p className="text-sm text-foreground">Audio cues</p>
-          <p className="text-[11px] text-muted-foreground">Voice announcements during runs</p>
+          <p className="text-xs text-muted-foreground">Voice announcements during runs</p>
         </div>
         <button
           onClick={async () => {
@@ -196,7 +196,7 @@ export default function PrivacySection({
           <MapPin className="w-4 h-4 text-primary" />
           <div>
             <p className="text-sm font-medium text-foreground">Privacy Zones</p>
-            <p className="text-[11px] text-muted-foreground">Hide route start/end near saved locations</p>
+            <p className="text-xs text-muted-foreground">Hide route start/end near saved locations</p>
           </div>
         </div>
 
@@ -204,7 +204,7 @@ export default function PrivacySection({
           <div key={z.id} className="flex items-center justify-between p-2.5 rounded-lg bg-card">
             <div>
               <p className="text-xs font-medium text-foreground">{z.name}</p>
-              <p className="text-[11px] text-muted-foreground">{z.radiusMeters}m radius</p>
+              <p className="text-xs text-muted-foreground">{z.radiusMeters}m radius</p>
             </div>
             <button
               onClick={() => removeZone(z.id)}
@@ -261,7 +261,7 @@ export default function PrivacySection({
             <Shield className="w-4 h-4 text-primary" />
             <div>
               <p className="text-sm font-medium text-foreground">Blocked Users</p>
-              <p className="text-[11px] text-muted-foreground">Manage users you&apos;ve blocked</p>
+              <p className="text-xs text-muted-foreground">Manage users you&apos;ve blocked</p>
             </div>
           </div>
           {!blockedUsersLoaded && (

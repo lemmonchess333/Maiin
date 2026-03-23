@@ -18,7 +18,7 @@ export default function NotificationsSection({
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Enable reminders</p>
-            <p className="text-[11px] text-muted-foreground">Get notified when it's time to eat</p>
+            <p className="text-xs text-muted-foreground">Get notified when it's time to eat</p>
           </div>
           <button
             onClick={async () => {
@@ -62,7 +62,7 @@ export default function NotificationsSection({
               <p className="text-xs text-muted-foreground">{mealReminders.timezone}</p>
             </div>
 
-            <p className="text-[11px] text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Notifications work best when installed as an app
             </p>
           </>

@@ -3,6 +3,12 @@
    Reusable component styles
 ============================================================= */
 
+/* ─── STAT NUMBER — mono + tabular-nums for all numeric displays ── */
+.stat-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ─── STAT TILES (Macro cards) ──────────────────────────────── */
 .stat-tile__value {
   font-size: clamp(1.125rem, 4.5vw, 1.625rem);
@@ -13,6 +19,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── BOTTOM NAV — SOLID ───────────────────────────────────── */

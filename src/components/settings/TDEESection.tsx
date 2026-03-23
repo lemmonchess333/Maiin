@@ -107,11 +107,11 @@ export default function TDEESection({
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-muted rounded-lg p-3 text-center">
                 <p className="text-lg font-bold text-foreground">{tdee.bmr}</p>
-                <p className="text-[11px] text-muted-foreground">BMR</p>
+                <p className="text-xs text-muted-foreground">BMR</p>
               </div>
               <div className="bg-muted rounded-lg p-3 text-center">
                 <p className="text-lg font-bold text-foreground">{tdee.tdee}</p>
-                <p className="text-[11px] text-muted-foreground">TDEE</p>
+                <p className="text-xs text-muted-foreground">TDEE</p>
               </div>
             </div>
 
@@ -127,15 +127,15 @@ export default function TDEESection({
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
-                  <p className="text-[11px] text-muted-foreground">Protein</p>
+                  <p className="text-xs text-muted-foreground">Protein</p>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
-                  <p className="text-[11px] text-muted-foreground">Carbs</p>
+                  <p className="text-xs text-muted-foreground">Carbs</p>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
-                  <p className="text-[11px] text-muted-foreground">Fat</p>
+                  <p className="text-xs text-muted-foreground">Fat</p>
                 </div>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function TDEESection({
               )}>
                 {phase.label}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {phase.desc}
               </p>
             </button>
@@ -194,32 +194,32 @@ export default function TDEESection({
         </p>
 
         <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
             Daily targets for {trainingPhase}
           </p>
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
               <p className="text-sm font-bold text-foreground">{tdee.targetCalories}</p>
-              <p className="text-[11px] text-muted-foreground">cal</p>
+              <p className="text-xs text-muted-foreground">cal</p>
             </div>
             <div className="w-px h-6 bg-border/50" />
             <div className="text-center flex-1">
               <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
-              <p className="text-[11px] text-muted-foreground">protein</p>
+              <p className="text-xs text-muted-foreground">protein</p>
             </div>
             <div className="w-px h-6 bg-border/50" />
             <div className="text-center flex-1">
               <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
-              <p className="text-[11px] text-muted-foreground">carbs</p>
+              <p className="text-xs text-muted-foreground">carbs</p>
             </div>
             <div className="w-px h-6 bg-border/50" />
             <div className="text-center flex-1">
               <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
-              <p className="text-[11px] text-muted-foreground">fat</p>
+              <p className="text-xs text-muted-foreground">fat</p>
             </div>
           </div>
           {tdee.deficit !== 0 && (
-            <p className="text-[11px] text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               {tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal vs maintenance
             </p>
           )}
@@ -228,7 +228,7 @@ export default function TDEESection({
               <label htmlFor="tdee-custom-target" className="text-sm text-muted-foreground">
                 Custom daily target (optional)
               </label>
-              <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
                 Leave blank to use your calculated TDEE of {tdee.targetCalories} cal
               </p>
               <input
