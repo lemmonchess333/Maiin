@@ -1010,7 +1010,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 </div>
                 {/* RPE selector for completed sets */}
                 {showRPE && set.completed && (
-                  <div className="flex gap-1 px-4 py-1.5 border-t border-border/20 bg-muted/30">
+                  <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
                     <span className="text-[11px] text-muted-foreground mr-1 self-center">RPE:</span>
                     {RPE_OPTIONS.map((rpe) => (
                       <button
@@ -1030,7 +1030,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 )}
                 {/* Set type buttons for active (non-completed) current set */}
                 {setIdx === currentSetIndex && !set.completed && (
-                  <div className="flex gap-1.5 px-4 py-2 border-t border-border/20">
+                  <div className="flex gap-1.5 px-4 py-2 border-t border-border/30">
                     {(['working', 'warmup', 'dropset', 'failure'] as const).map((type) => (
                       <button
                         key={type}
