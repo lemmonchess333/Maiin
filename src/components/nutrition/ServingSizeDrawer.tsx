@@ -90,7 +90,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             {/* Log Food button */}
             <button
               onClick={() => onConfirm(servings)}
-              className="w-full py-3 rounded-xl text-[15px] font-bold text-white mt-4"
+              className="w-full py-3 rounded-xl text-base font-semibold text-white mt-4"
               style={{
                 background: THEME.gradient.brand,
                 boxShadow: "0 4px 16px rgba(124,110,246,0.25)",

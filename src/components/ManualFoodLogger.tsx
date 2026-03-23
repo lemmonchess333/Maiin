@@ -92,7 +92,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
             {/* Title */}
             <div className="mb-5">
               <p className="text-lg font-bold text-foreground">Log a Meal</p>
-              <p className="text-[13px] text-muted-foreground">Manual entry</p>
+              <p className="text-xs text-muted-foreground">Manual entry</p>
             </div>
 
             {/* Meal name input */}
@@ -101,7 +101,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Meal name (e.g. Chicken & rice)"
-              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-[15px] placeholder:text-muted-foreground"
+              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground"
               style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
             />
 
@@ -114,7 +114,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                 { label: "Fat", value: fat, set: setFat, unit: "g" },
               ].map((field) => (
                 <div key={field.label} className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-[0.05em] font-semibold text-muted-foreground pl-1">
+                  <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1">
                     {field.label} ({field.unit})
                   </label>
                   <input
@@ -140,7 +140,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
                 className={cn(
-                  "w-full py-3.5 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-5",
+                  "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 mt-5",
                   saved
                     ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
                     : "text-white active:scale-95",
