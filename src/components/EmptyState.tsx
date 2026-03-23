@@ -33,7 +33,7 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
         action.href ? (
           <Link
             to={action.href}
-            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95"
             style={{ background: accentColor, color: '#fff' }}
           >
             {action.label}
@@ -41,7 +41,7 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
         ) : (
           <button
             onClick={action.onClick}
-            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95"
             style={{ background: accentColor, color: '#fff' }}
           >
             {action.label}

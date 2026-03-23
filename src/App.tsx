@@ -1,5 +1,6 @@
 import { Component, type ReactNode, lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
@@ -234,14 +235,16 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <AuthProvider>
-          <NotificationBubbleProvider>
-            <ToastProvider />
-            <AppRoutes />
-          </NotificationBubbleProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <AuthProvider>
+            <NotificationBubbleProvider>
+              <ToastProvider />
+              <AppRoutes />
+            </NotificationBubbleProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

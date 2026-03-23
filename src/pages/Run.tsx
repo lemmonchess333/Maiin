@@ -338,7 +338,7 @@ export default function Run() {
               {acquiringSeconds >= 15 && (
                 <button
                   onClick={() => { setPhase('countdown'); setCountdown(3); }}
-                  className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition-transform"
+                  className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
                   style={{ background: THEME.teal, color: '#000' }}>
                   Start without GPS {acc ? `(\u00B1${Math.round(acc)}m)` : ''}
                 </button>

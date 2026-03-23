@@ -35,7 +35,7 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
               <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
-            <button onClick={onClose} aria-label="Close day details" className="p-0.5 rounded hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary">
+            <button onClick={onClose} aria-label="Close day details" className="p-2 -m-1.5 rounded-lg hover:bg-muted transition-colors touch-target">
               <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>

@@ -112,7 +112,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
               />
             </div>
 
@@ -128,7 +128,7 @@ export default function Login() {
                 required
                 minLength={6}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
               />
               <button
                 type="button"

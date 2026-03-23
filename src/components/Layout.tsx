@@ -95,7 +95,7 @@ export default function Layout() {
                 onClick={() => { haptic('light'); if (tab.to === "/social") markSeen(); }}
                 className={({ isActive }) =>
                   cn(
-                    "flex-1 flex flex-col items-center gap-1 py-3 transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]",
+                    "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
                     isActive
                       ? "text-primary"
                       : "text-muted-foreground hover:text-foreground"

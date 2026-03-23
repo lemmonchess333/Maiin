@@ -199,7 +199,7 @@ export default function RunBottomSheet({
                 {/* Lock */}
                 <div className="flex flex-col items-center gap-2">
                   <button onClick={() => { onLock(); haptic('light'); }}
-                    className="w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                    className="w-14 h-14 rounded-full flex items-center justify-center active:scale-90"
                     style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.14)' }}>
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -211,7 +211,7 @@ export default function RunBottomSheet({
                 {/* Pause — big centre */}
                 <div className="flex flex-col items-center gap-2">
                   <button onClick={() => { onPause(); haptic('medium'); }}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88] transition-transform"
+                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
                     style={{ background: 'rgba(255,255,255,0.1)', border: '2.5px solid rgba(255,255,255,0.28)',
                       boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4)' }}>
                     <div className="flex gap-[7px]">
@@ -229,7 +229,7 @@ export default function RunBottomSheet({
               <div className="flex items-center justify-center gap-12 flex-shrink-0">
                 <div className="flex flex-col items-center gap-2">
                   <button onClick={() => setShowStopConfirm(true)}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88] transition-transform"
+                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
                     style={{ background: 'rgba(239,68,68,0.12)', border: '2.5px solid #EF4444' }}>
                     <div style={{ width: 22, height: 22, background: '#EF4444', borderRadius: 5 }} />
                   </button>
@@ -239,7 +239,7 @@ export default function RunBottomSheet({
                 {/* Resume */}
                 <div className="flex flex-col items-center gap-2">
                   <button onClick={() => { onResume(); haptic('medium'); }}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88] transition-transform"
+                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
                     style={{ background: THEME.teal,
                       boxShadow: `0 0 32px ${THEME.teal}60, 0 8px 24px rgba(0,0,0,0.4)` }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
@@ -274,7 +274,7 @@ export default function RunBottomSheet({
             </div>
             <button
               onClick={() => { if (isPaused) { onResume(); } else { onPause(); } haptic('medium'); }}
-              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90"
               style={{ background: isPaused ? THEME.teal : 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.18)' }}>
               {isPaused
                 ? <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6,3 20,12 6,21" /></svg>

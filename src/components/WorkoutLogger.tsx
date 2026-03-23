@@ -298,7 +298,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                         onChange={(e) =>
                           updateCardioField(exIndex, "durationMinutes", Number(e.target.value) || 0)
                         }
-                        className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center"
                       />
                     </div>
                     <div className="space-y-1">
@@ -311,7 +311,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                         onChange={(e) =>
                           updateCardioField(exIndex, "distanceKm", Number(e.target.value) || 0)
                         }
-                        className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center"
                       />
                     </div>
                   </div>
@@ -365,7 +365,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                           onChange={(e) =>
                             updateSet(exIndex, setIndex, "reps", Number(e.target.value))
                           }
-                          className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center"
                         />
                       </div>
                       <div className="col-span-4">
@@ -375,7 +375,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                           onChange={(e) =>
                             updateSet(exIndex, setIndex, "weightKg", Number(e.target.value))
                           }
-                          className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          className="w-full px-3 py-2 rounded-lg bg-muted text-foreground text-sm text-center"
                         />
                       </div>
                       <div className="col-span-2 flex justify-center">
@@ -440,7 +440,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search exercises..."
-                className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted text-foreground text-sm placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -574,7 +574,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             onChange={(e) => setNotes(e.target.value)}
             placeholder="How did the workout feel?"
             rows={2}
-            className="w-full px-4 py-2 rounded-xl bg-muted text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            className="w-full px-4 py-2 rounded-xl bg-muted text-foreground text-sm placeholder:text-muted-foreground resize-none"
           />
         </div>
       )}

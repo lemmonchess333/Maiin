@@ -84,7 +84,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
             value={details}
             onChange={(e) => setDetails(e.target.value)}
             placeholder="Please describe the issue..."
-            className="w-full px-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
             rows={3}
           />
         )}

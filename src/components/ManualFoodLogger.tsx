@@ -101,7 +101,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Meal name (e.g. Chicken & rice)"
-              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-[15px] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-[15px] placeholder:text-muted-foreground"
               style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
             />
 
@@ -124,7 +124,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
                     placeholder="0"
-                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center"
                     style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
                   />
                 </div>

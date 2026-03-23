@@ -449,7 +449,7 @@ export default function Onboarding() {
         onClick={onSelect}
         disabled={disabled}
         className={cn(
-          "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.93]",
+          "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.95]",
           disabled && "opacity-30 pointer-events-none"
         )}
         style={{
@@ -509,7 +509,7 @@ export default function Onboarding() {
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={onDecrement}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.93] transition-transform"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
             style={{ background: "rgba(255,255,255,0.1)" }}
           >
             −
@@ -519,7 +519,7 @@ export default function Onboarding() {
           </span>
           <button
             onClick={onIncrement}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.93] transition-transform"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
             style={{ background: "rgba(255,255,255,0.1)" }}
           >
             +
@@ -773,7 +773,7 @@ export default function Onboarding() {
                       setPreferredSplit("auto");
                     }
                   }}
-                  className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all active:scale-[0.93]"
+                  className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all active:scale-[0.95]"
                   style={{
                     background: daysPerWeek === d ? `${THEME.teal}20` : "rgba(255,255,255,0.05)",
                     border: `1px solid ${daysPerWeek === d ? THEME.teal + "50" : "rgba(255,255,255,0.08)"}`,
@@ -1111,7 +1111,7 @@ export default function Onboarding() {
         {step > 0 && (
           <button
             onClick={() => setStep(s => s - 1)}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97] transition-transform"
+            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
             style={{
               background: "rgba(255,255,255,0.08)",
               color: "rgba(255,255,255,0.6)",

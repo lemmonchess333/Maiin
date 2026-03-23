@@ -315,7 +315,7 @@ export default function Social() {
             <p className="text-sm font-bold text-foreground">Train together</p>
             <p className="text-xs text-muted-foreground">Invite friends to compete on challenges and share workouts</p>
             <button onClick={handleShareInvite}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform">
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97]">
               <div className="flex items-center justify-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Share invite link
@@ -333,7 +333,7 @@ export default function Social() {
                 value={searchQuery}
                 onChange={e => handleSearchInputChange(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
-                className="flex-1 h-12 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="flex-1 h-12 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
               />
               <button onClick={() => handleSearch()} disabled={searching || !searchQuery.trim()}
                 className="h-12 w-12 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 shrink-0">
@@ -486,10 +486,10 @@ export default function Social() {
                 <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
                 <input type="text" placeholder="Crew name" value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
                 <input type="text" placeholder="Description" value={newGroupDesc}
                   onChange={(e) => setNewGroupDesc(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { name: 'dumbbell', Icon: Dumbbell },

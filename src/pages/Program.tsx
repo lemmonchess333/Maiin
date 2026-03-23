@@ -313,7 +313,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <button
             onClick={goBack}
             disabled={!canGoBack}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.93]" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
           >
             <ChevronLeft className="w-4 h-4 text-foreground" />
           </button>
@@ -328,7 +328,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <button
             onClick={goForward}
             disabled={!canGoForward}
-            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.93]" : "opacity-30")}
+            className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
           >
             <ChevronRight className="w-4 h-4 text-foreground" />
           </button>
@@ -549,7 +549,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
-                        className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
+                        className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
                         style={{ background: THEME.gradient.brand }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
@@ -617,14 +617,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     <div className="flex items-center justify-center gap-1">
                       <button
                         onClick={() => handleSetsChange(-1)}
-                        className="w-6 h-6 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors"
+                        className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors touch-target"
                       >
                         <Minus className="w-3 h-3 text-foreground" />
                       </button>
                       <p className="text-lg font-bold text-foreground w-8">{drawerExercise.exercise.sets}</p>
                       <button
                         onClick={() => handleSetsChange(1)}
-                        className="w-6 h-6 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors"
+                        className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors touch-target"
                       >
                         <Plus className="w-3 h-3 text-foreground" />
                       </button>
@@ -717,7 +717,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         type="number"
                         value={logWeight}
                         onChange={(e) => setLogWeight(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
                       />
                     </div>
                     <div className="space-y-1">
@@ -727,7 +727,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         type="number"
                         value={logReps}
                         onChange={(e) => setLogReps(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
                       />
                     </div>
                   </div>

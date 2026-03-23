@@ -288,7 +288,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           </div>
           <button onClick={() => setShowComments(!showComments)}
             aria-label="Toggle comments"
-            className="flex items-center gap-1.5 text-muted-foreground active:scale-90 transition-transform">
+            className="flex items-center gap-1.5 text-muted-foreground active:scale-90">
             <MessageCircle className="w-5 h-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium">{activity!.commentCount}</span>
@@ -297,7 +297,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           {onShare && (
             <button onClick={() => onShare(feedItem)}
               aria-label="Share activity"
-              className="ml-auto text-muted-foreground active:scale-90 transition-transform">
+              className="ml-auto text-muted-foreground active:scale-90">
               <Share2 className="w-5 h-5" />
             </button>
           )}

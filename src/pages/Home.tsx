@@ -376,7 +376,7 @@ export default function Home() {
                 <motion.span>{streakDisplay}</motion.span>
               </span>
             </motion.div>
-            <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg">
+            <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
               <SettingsIcon aria-hidden="true" className="w-5 h-5 text-muted-foreground" />
             </Link>
           </div>
@@ -501,10 +501,10 @@ export default function Home() {
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center justify-between">
                   <p className="text-base font-semibold text-foreground">Log Weight</p>
-                  <button onClick={function() { setShowWeightSheet(false); }} aria-label="Close weight log" className="p-1 rounded hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"><X aria-hidden="true" className="w-4 h-4 text-muted-foreground" /></button>
+                  <button onClick={function() { setShowWeightSheet(false); }} aria-label="Close weight log" className="p-2 -m-1 rounded-lg hover:bg-muted touch-target"><X aria-hidden="true" className="w-4 h-4 text-muted-foreground" /></button>
                 </div>
                 <div className="flex gap-3">
-                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium" />
                   <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} aria-label="Save weight" className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
                     {weightSaving ? "..." : "Log"}
                   </button>

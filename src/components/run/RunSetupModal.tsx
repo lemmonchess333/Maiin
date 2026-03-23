@@ -87,7 +87,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
       <div className="flex-1 overflow-y-auto px-5 py-4 pb-36 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
         {/* Back */}
         <button onClick={onCancel}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground self-start active:scale-95 transition-transform">
+          className="flex items-center gap-1.5 text-sm text-muted-foreground self-start active:scale-95">
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
@@ -331,7 +331,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         style={{ background: 'linear-gradient(to top, var(--color-background) 80%, transparent)' }}>
         <button
           onClick={() => onStart(config)}
-          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] transition-transform"
+          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97]"
           style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
         >
           {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
