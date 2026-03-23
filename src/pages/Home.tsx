@@ -467,6 +467,14 @@ export default function Home() {
         )}
       </motion.div>
 
+      <section aria-label="Today's energy">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+          <SectionErrorBoundary sectionName="today-intake">
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} />
+          </SectionErrorBoundary>
+        </motion.div>
+      </section>
+
       <section aria-label="Weekly snapshot">
         <HybridBalanceCard
           liftSessions={snapData.ls}
@@ -480,14 +488,6 @@ export default function Home() {
         {perfDoc && perfDoc.insight && (
           <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
         )}
-      </section>
-
-      <section aria-label="Today's energy">
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-          <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} />
-          </SectionErrorBoundary>
-        </motion.div>
       </section>
 
 

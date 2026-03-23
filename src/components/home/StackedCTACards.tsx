@@ -6,15 +6,12 @@ import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
 import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
-
-function haptic(ms = 10) {
-  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
-}
 
 export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
@@ -47,8 +44,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/program"); }}
-          className="w-full p-5 rounded-2xl bg-card text-left"
-          style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
+          className="w-full p-5 rounded-2xl bg-card text-left border-l-[3px]"
+          style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)", borderLeftColor: THEME.lifting }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
@@ -68,8 +65,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/run" + templateParam); }}
-          className="w-full p-5 rounded-2xl bg-card text-left"
-          style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
+          className="w-full p-5 rounded-2xl bg-card text-left border-l-[3px]"
+          style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)", borderLeftColor: THEME.running }}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
@@ -86,17 +83,17 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl flex flex-col items-center gap-2" style={{ backgroundColor: 'rgba(123, 114, 233, 0.05)' }}>
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(123, 114, 233, 0.10)' }}><Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /></div>
-          <span className="text-xs font-semibold text-foreground">Quick Log</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: 'rgba(123, 114, 233, 0.05)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(123, 114, 233, 0.10)' }}><Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} /></div>
+          <span className="text-[11px] font-semibold text-foreground">Quick Log</span>
         </MotionLink>
-        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl flex flex-col items-center gap-2" style={{ backgroundColor: 'rgba(212, 99, 122, 0.05)' }}>
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(212, 99, 122, 0.10)' }}><Activity className="w-5 h-5" style={{ color: THEME.running }} /></div>
-          <span className="text-xs font-semibold text-foreground">Start Run</span>
+        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: 'rgba(212, 99, 122, 0.05)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(212, 99, 122, 0.10)' }}><Activity className="w-4 h-4" style={{ color: THEME.running }} /></div>
+          <span className="text-[11px] font-semibold text-foreground">Start Run</span>
         </MotionLink>
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-4 rounded-2xl flex flex-col items-center gap-2" style={{ backgroundColor: 'rgba(217, 136, 78, 0.05)' }}>
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(217, 136, 78, 0.10)' }}><UtensilsCrossed className="w-5 h-5" style={{ color: THEME.semantic.nutrition }} /></div>
-          <span className="text-xs font-semibold text-foreground">Log Food</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: 'rgba(217, 136, 78, 0.05)' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(217, 136, 78, 0.10)' }}><UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} /></div>
+          <span className="text-[11px] font-semibold text-foreground">Log Food</span>
         </MotionLink>
       </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
@@ -122,7 +119,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               </motion.div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+              <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
               {healthScore != null ? (
                 <div className="flex items-baseline gap-2">
                   <p className="text-[36px] font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
@@ -184,7 +181,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               <Droplets className="w-5 h-5" style={{ color: THEME.semantic.hydration }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</p>
+              <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Water</p>
               <p className="text-[28px] font-extrabold leading-none text-foreground">{Math.min(waterGlasses, waterTarget)}<span className="text-[14px] font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-[11px] font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -199,7 +196,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         </div>
         {/* Weight & Steps — compact 2-col */}
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={function() { haptic(); onLogWeight(); }} className="p-3 rounded-xl text-left active:scale-[0.97]" style={{ backgroundColor: THEME.neutral[100] }}>
+          <button onClick={function() { haptic(); onLogWeight(); }} className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
                 <Scale className="w-4 h-4" style={{ color: THEME.semantic.activity }} />
@@ -213,7 +210,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               {lastWeight && <span className="text-xs" style={{ color: THEME.text.muted }}>{weightUnit === "lbs" ? "lb" : weightUnit}</span>}
             </div>
           </button>
-          <div className="p-3 rounded-xl" style={{ backgroundColor: THEME.neutral[100] }}>
+          <div className="p-3 rounded-xl bg-muted">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
                 <Footprints className="w-4 h-4" style={{ color: THEME.semantic.positive }} />
