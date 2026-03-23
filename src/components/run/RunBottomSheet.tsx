@@ -66,7 +66,7 @@ function KmProgress({ distance }: { distance: number }) {
       </p>
       <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
         <div className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${progress * 100}%`, background: `linear-gradient(90deg, ${THEME.teal}, ${THEME.brand})` }} />
+          style={{ width: `${progress * 100}%`, backgroundColor: THEME.brand }} />
       </div>
       <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 28, fontVariantNumeric: 'tabular-nums' }}>
         {next}km
@@ -115,7 +115,7 @@ export default function RunBottomSheet({
       <div className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
           top: sheetTop,
-          background: `linear-gradient(180deg, ${THEME.surface} 0%, ${THEME.bg} 100%)`,
+          backgroundColor: THEME.surface,
           transition: 'top 0.32s cubic-bezier(0.32, 0.72, 0, 1)',
           boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
           borderTop: '1px solid rgba(255,255,255,0.07)',

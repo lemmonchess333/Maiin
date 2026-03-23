@@ -63,9 +63,30 @@
 }
 .pressable:active { transform: scale(0.97); }
 
-/* ─── QUOTE CARD — Gradient version ─────────────────────────── */
+/* ─── BRAND CTA — solid, confident ─────────────────────────── */
+.brand-cta {
+  background-color: var(--ds-purple-500);
+  color: white;
+  font-weight: 700;
+  border: none;
+  transition: background-color var(--ds-transition-fast), transform 150ms;
+}
+.brand-cta:hover {
+  background-color: var(--ds-purple-600);
+}
+.brand-cta:active {
+  background-color: var(--ds-purple-700);
+  transform: scale(0.97);
+}
+
+/* ─── ACCENT-EDGE CARD — signature left-stripe motif ─────── */
+.accent-edge {
+  border-left: 3px solid var(--accent-edge-color, var(--ds-purple-500));
+}
+
+/* ─── QUOTE CARD — solid brand ─────────────────────────────── */
 .quote-card {
-  background: linear-gradient(135deg, #7B72E9 0%, #6560C8 50%, #5B4DB8 100%);
+  background: var(--ds-purple-500);
   color: white;
   border-radius: 0.75rem;
   padding: 1.25rem;

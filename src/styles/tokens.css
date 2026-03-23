@@ -34,12 +34,12 @@
   --ds-text-small:   0.8125rem;  /* 13px — secondary text */
   --ds-text-micro:   0.6875rem;  /* 11px — labels, captions (accessibility floor) */
 
-  /* Shadows — subtle, not neon */
+  /* Shadows — neutral depth, no colored glows */
   --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
   --ds-shadow-elevated: 0 8px 28px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
-  --ds-shadow-purple-glow: 0 4px 16px rgba(123, 114, 233, 0.22);
-  --ds-shadow-orange-glow: 0 4px 16px rgba(232, 115, 22, 0.22);
-  --ds-shadow-green-glow: 0 4px 14px rgba(34, 184, 88, 0.20);
+  --ds-shadow-purple-glow: 0 4px 14px rgba(0, 0, 0, 0.10);
+  --ds-shadow-orange-glow: 0 4px 14px rgba(0, 0, 0, 0.10);
+  --ds-shadow-green-glow: 0 4px 14px rgba(0, 0, 0, 0.10);
 
   /* Font Weights */
   --ds-fw-regular:  400;

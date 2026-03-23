@@ -47,8 +47,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/program"); }}
-          className="w-full p-5 rounded-2xl bg-card text-left"
-          style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)" }}>
+          className="w-full p-5 rounded-2xl bg-card text-left accent-edge"
+          style={{ '--accent-edge-color': THEME.lifting } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
@@ -68,8 +68,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/run" + templateParam); }}
-          className="w-full p-5 rounded-2xl bg-card text-left"
-          style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)" }}>
+          className="w-full p-5 rounded-2xl bg-card text-left accent-edge"
+          style={{ '--accent-edge-color': THEME.running } as React.CSSProperties}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
