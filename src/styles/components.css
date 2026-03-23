@@ -15,16 +15,14 @@
   max-width: 100%;
 }
 
-/* ─── BOTTOM NAV — FROSTED GLASS ────────────────────────────── */
+/* ─── BOTTOM NAV — SOLID ───────────────────────────────────── */
 .bottom-nav-frost {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: var(--surface-solid);
   border-top: 1px solid var(--glass-border);
 }
 
 .dark .bottom-nav-frost {
-  background: rgba(18, 18, 20, 0.85);
+  background: #161618;
 }
 
 /* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */

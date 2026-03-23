@@ -40,7 +40,7 @@ export default function GuidedRunOverlay({
 
   return (
     <div className="mx-4 mb-3 rounded-2xl overflow-hidden"
-      style={{ background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border)" }}>
+      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}>
       {/* Overall progress bar */}
       <div className="h-1 bg-white/5">
         <div className="h-full transition-all duration-1000" style={{ width: `${totalProgress * 100}%`, background: segColor }} />

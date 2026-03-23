@@ -75,8 +75,6 @@ function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismis
             className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
             style={{
               background: "var(--glass-bg)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
               border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
             }}
           >
