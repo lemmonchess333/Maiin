@@ -54,7 +54,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/program"); }}
-          className="w-full p-3 rounded-xl bg-card text-left"
+          className="w-full p-4 rounded-xl bg-card text-left"
           style={{ backgroundColor: THEME.lifting + "08" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
@@ -75,7 +75,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/run" + templateParam); }}
-          className="w-full p-3 rounded-xl bg-card text-left"
+          className="w-full p-4 rounded-xl bg-card text-left"
           style={{ backgroundColor: THEME.running + "08" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
@@ -92,26 +92,6 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
           </div>
         </motion.button>
       )}
-      <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
-          style={{ backgroundColor: THEME.lifting + "0F" }}>
-          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-          <span className="text-micro font-semibold text-foreground">Quick Log</span>
-        </MotionLink>
-        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
-          style={{ backgroundColor: THEME.running + "0F" }}>
-          <Activity className="w-4 h-4" style={{ color: THEME.running }} />
-          <span className="text-micro font-semibold text-foreground">Start Run</span>
-        </MotionLink>
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
-          style={{ backgroundColor: THEME.semantic.nutrition + "0F" }}>
-          <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />
-          <span className="text-micro font-semibold text-foreground">Log Food</span>
-        </MotionLink>
-      </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
         className="space-y-3">
         {/* Health Score — hero card, full-width */}
@@ -238,6 +218,26 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
             <p className="text-xs mt-1" style={{ color: THEME.text.muted }}>Connect Apple Health</p>
           </div>
         </div>
+      </motion.div>
+      <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: THEME.lifting + "0F" }}>
+          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+          <span className="text-micro font-semibold text-foreground">Quick Log</span>
+        </MotionLink>
+        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: THEME.running + "0F" }}>
+          <Activity className="w-4 h-4" style={{ color: THEME.running }} />
+          <span className="text-micro font-semibold text-foreground">Start Run</span>
+        </MotionLink>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: THEME.semantic.nutrition + "0F" }}>
+          <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />
+          <span className="text-micro font-semibold text-foreground">Log Food</span>
+        </MotionLink>
       </motion.div>
     </div>
   );
