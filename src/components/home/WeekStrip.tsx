@@ -37,7 +37,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           st = { border: `2px solid ${THEME.brand}` };
         } else {
           cls += " text-muted-foreground";
-          st = { backgroundColor: THEME.neutral[100] };
+          cls += " bg-muted";
         }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 active:scale-[0.95]">

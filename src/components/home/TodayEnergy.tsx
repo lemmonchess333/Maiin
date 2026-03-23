@@ -4,13 +4,10 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import type { DailyBurn } from "@/utils/dailyBurn";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
-
-function haptic(ms = 10) {
-  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
-}
 
 export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge }: {
   calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
@@ -37,7 +34,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
         style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
+            <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
             {burn.phase && (
               <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.semantic.nutrition + '15', color: THEME.semantic.nutrition }}>
                 {burn.phase === 'lean bulk' ? 'Bulk' : burn.phase === 'cut' ? 'Cut' : 'Recomp'}
