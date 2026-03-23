@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 import { macroRingState } from "@/utils/formatters";
 
 export default function MacroRing({ value, target, color, label, unit = "" }: {
@@ -21,7 +22,7 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
       queueMicrotask(function() {
         setFlashKey(function(k) { return k + 1; });
       });
-      if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(50);
+      haptic('heavy');
     }
   }, [done]);
 
@@ -46,9 +47,10 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
         {flashKey > 0 && (
           <motion.div
             key={flashKey}
-            className="absolute inset-0 rounded-full bg-white pointer-events-none"
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ backgroundColor: THEME.success }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.4, 0] }}
+            animate={{ opacity: [0, 0.3, 0] }}
             transition={{ duration: 0.5 }}
           />
         )}

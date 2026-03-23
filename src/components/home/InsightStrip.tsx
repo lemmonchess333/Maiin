@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Flame, Zap, Dumbbell, Leaf, ChevronRight } from "lucide-react";
+import { THEME } from "@/lib/theme";
 
 export default function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: string; loadBand: string }) {
-  const icon = loadBand === "overreach" ? <Flame size={20} className="text-orange-500" /> : loadBand === "high" ? <Zap size={20} className="text-yellow-500" /> : loadBand === "moderate" ? <Dumbbell size={20} className="text-orange-500" /> : <Leaf size={20} className="text-green-400" />;
+  const iconColor = loadBand === "overreach" ? THEME.danger : loadBand === "high" ? THEME.warning : loadBand === "moderate" ? THEME.lifting : THEME.semantic.positive;
+  const iconEl = loadBand === "overreach" ? <Flame size={20} /> : loadBand === "high" ? <Zap size={20} /> : loadBand === "moderate" ? <Dumbbell size={20} /> : <Leaf size={20} />;
+  const iconLabel = loadBand === "overreach" ? "Overreach — consider a deload" : loadBand === "high" ? "High training load" : loadBand === "moderate" ? "Moderate training load" : "Light training load";
   return (
     <Link to="/history?tab=performance">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="p-4 rounded-2xl bg-card flex items-start gap-3 active:scale-[0.98]">
-        <span className="mt-0.5">{icon}</span>
+        <span className="mt-0.5" style={{ color: iconColor }} role="img" aria-label={iconLabel}>{iconEl}</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground">{title}</p>
           <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{bullet}</p>

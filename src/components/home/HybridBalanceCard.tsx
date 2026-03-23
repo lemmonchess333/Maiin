@@ -21,7 +21,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
       <div className="p-4 rounded-2xl bg-card">
         <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-3" style={{ color: THEME.text.muted }}>This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
-          <Dumbbell className="w-6 h-6 text-purple-500 mx-auto" />
+          <Dumbbell className="w-6 h-6 mx-auto" style={{ color: THEME.lifting }} />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
           <p className="text-[11px] text-muted-foreground">
             {targetLiftSessions > 0 && targetRunSessions > 0
@@ -114,6 +114,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
           <div className="relative h-1">
             <div
               className="absolute w-1 h-3 rounded-full -translate-y-0.5"
+              aria-label={`Target balance: ${targetLiftPct}% lifting, ${100 - targetLiftPct}% running`}
               style={{
                 left: `${targetLiftPct}%`,
                 backgroundColor: THEME.text.muted,
