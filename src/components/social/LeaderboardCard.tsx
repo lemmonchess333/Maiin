@@ -112,10 +112,10 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
         <div className="flex-1">
           <h3 className="text-sm font-bold">{title}</h3>
           {challenge === 'weekly_hybrid' && (
-            <p className="text-[11px] text-muted-foreground">Lifting volume + running distance this week</p>
+            <p className="text-xs text-muted-foreground">Lifting volume + running distance this week</p>
           )}
         </div>
-        <span className="ml-auto text-[11px] text-muted-foreground">This Week</span>
+        <span className="ml-auto text-xs text-muted-foreground">This Week</span>
       </div>
 
       <div className="space-y-2">
@@ -143,7 +143,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
               {entry.uid === user?.uid ? 'You' : entry.name}
             </span>
             <span className="text-sm font-mono tabular-nums font-bold">
-              {entry.value.toLocaleString()} <span className="text-[11px] text-muted-foreground">{unit}</span>
+              {entry.value.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
             </span>
           </div>
         ))}

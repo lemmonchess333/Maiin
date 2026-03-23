@@ -114,7 +114,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                 { label: "Fat", value: fat, set: setFat, unit: "g" },
               ].map((field) => (
                 <div key={field.label} className="space-y-1.5">
-                  <label className="text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground pl-1">
+                  <label className="text-xs uppercase tracking-[0.05em] font-semibold text-muted-foreground pl-1">
                     {field.label} ({field.unit})
                   </label>
                   <input

@@ -12,7 +12,7 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Weekly Volume</h3>
-        <p className="text-[11px] text-muted-foreground">kg lifted</p>
+        <p className="text-xs text-muted-foreground">kg lifted</p>
       </div>
 
       <ResponsiveContainer width="100%" height={140}>

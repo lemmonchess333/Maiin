@@ -24,7 +24,7 @@ function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value
         className="w-2.5 h-2.5 rounded-full border-2 border-background"
         style={{ backgroundColor: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.2)" }}
       />
-      <span className="text-[11px] mt-0.5 font-medium" style={{ color: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.35)" }}>
+      <span className="text-xs mt-0.5 font-medium" style={{ color: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.35)" }}>
         {value}
       </span>
     </div>
@@ -59,7 +59,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">{challenge.name}</p>
-            <p className="text-[11px] text-muted-foreground">{challenge.description}</p>
+            <p className="text-xs text-muted-foreground">{challenge.description}</p>
           </div>
           {currentTier && (
             <div
@@ -72,7 +72,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {timeLeft}
@@ -94,9 +94,9 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             {leaderboard.slice(0, 3).map((p, i) => {
               const tier = computeTier(p.currentValue, challenge.tiers);
               return (
-                <div key={p.uid || i} className="flex items-center gap-2 text-[11px]">
+                <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-right font-medium text-muted-foreground">{i + 1}</span>
-                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold">
+                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                     {(p.displayName || "?").charAt(0)}
                   </div>
                   <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
@@ -163,7 +163,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         {joined && leaderboard.length > 3 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground mx-auto hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-xs text-muted-foreground mx-auto hover:text-foreground transition-colors"
           >
             {expanded ? "Hide" : "Full"} leaderboard
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -184,15 +184,15 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               {leaderboard.map((p, i) => {
                 const tier = computeTier(p.currentValue, challenge.tiers);
                 return (
-                  <div key={p.uid || i} className="flex items-center gap-2 text-[11px]">
+                  <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                     <span className="w-5 text-right font-medium text-muted-foreground">{i + 1}</span>
-                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold">
+                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                       {(p.displayName || "?").charAt(0)}
                     </div>
                     <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
                     <span className="font-medium tabular-nums">{p.currentValue}</span>
                     {tier && (
-                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] + "20", color: TIER_COLORS[tier] }}>
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] + "20", color: TIER_COLORS[tier] }}>
                         {TIER_LABELS[tier]}
                       </span>
                     )}
@@ -209,7 +209,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         <div className="px-4 pb-3">
           <button
             onClick={onLeave}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-red-400 transition-colors mx-auto"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto"
           >
             <LogOut className="w-3 h-3" />
             Leave Challenge

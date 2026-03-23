@@ -90,7 +90,7 @@ export function WeeklyEnergyChart() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Energy Balance
         </p>
         <div className="flex gap-1">
@@ -98,7 +98,7 @@ export function WeeklyEnergyChart() {
             <button
               key={i}
               onClick={() => setWeekOffset(i)}
-              className={`text-[11px] px-2 py-1 rounded-full transition-all ${
+              className={`text-xs px-2 py-1 rounded-full transition-all ${
                 weekOffset === i
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted"
@@ -124,13 +124,13 @@ export function WeeklyEnergyChart() {
       {/* Info subtitle */}
       <div className="flex items-center gap-1.5">
         <Info className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Based on your logged workouts and runs
         </p>
       </div>
 
       {totals.consumed === 0 && (
-        <p className="text-[11px] text-muted-foreground text-center">Log meals to see your energy balance</p>
+        <p className="text-xs text-muted-foreground text-center">Log meals to see your energy balance</p>
       )}
 
       <div className="h-40">

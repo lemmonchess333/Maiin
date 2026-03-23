@@ -92,7 +92,7 @@ export default function WeekView({ weekDays, sessions, weekSchedule, onAdd, onSt
             </div>
 
             {daySessions.length === 0 && (
-              <p className={`text-[11px] italic ${(isLiftDay || isRunDay) ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}>
+              <p className={`text-xs italic ${(isLiftDay || isRunDay) ? 'text-muted-foreground' : 'text-muted-foreground/50'}`}>
                 {isLiftDay ? 'Lift day' : isRunDay ? 'Run day' : 'Rest day'}
               </p>
             )}

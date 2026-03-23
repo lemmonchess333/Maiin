@@ -401,7 +401,7 @@ export default function History() {
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
                   <Trophy size={16} className="text-amber-500" />
                   <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
-                  <span className="text-[11px] text-muted-foreground">This week</span>
+                  <span className="text-xs text-muted-foreground">This week</span>
                 </div>
                 {liftingData.prTimeline.length > 0 ? (
                   <div className="divide-y divide-border/20">
@@ -415,22 +415,22 @@ export default function History() {
                               {pr.isAllTimeBest && (
                                 <>
                                   <PRBadge isNew={pr.isAllTimeBest} />
-                                  <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
                                     style={{ background: '#e87316', color: '#fff' }}>
                                     NEW
                                   </span>
-                                  <span className="text-[11px] text-muted-foreground ml-1">{pr.reps}RM</span>
+                                  <span className="text-xs text-muted-foreground ml-1">{pr.reps}RM</span>
                                 </>
                               )}
                               <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
                             </div>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">{dateLabel}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
                             <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
                               {pr.weight}kg × {pr.reps}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">~{e1rm}kg 1RM</p>
+                            <p className="text-xs text-muted-foreground">~{e1rm}kg 1RM</p>
                           </div>
                         </div>
                       );
@@ -439,7 +439,7 @@ export default function History() {
                 ) : (
                   <div className="px-4 py-6 text-center">
                     <p className="text-xs text-muted-foreground">No lifts logged this week</p>
-                    <p className="text-[11px] text-muted-foreground/60 mt-1">Keep pushing — your best lifts will show here</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">Keep pushing — your best lifts will show here</p>
                   </div>
                 )}
               </div>

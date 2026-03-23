@@ -63,7 +63,7 @@ export function TrendWeight() {
     const d = new Date(entry.date);
     return (
       <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Weight Trend
         </p>
         <p className="text-lg font-bold text-foreground">
@@ -72,7 +72,7 @@ export function TrendWeight() {
         <p className="text-xs text-muted-foreground">
           on {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </p>
-        <p className="text-[11px] text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Log daily for better trend tracking
         </p>
       </div>
@@ -109,7 +109,7 @@ export function TrendWeight() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Weight Trend
         </p>
         <p className="text-xs text-foreground font-medium">

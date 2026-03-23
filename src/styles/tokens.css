@@ -41,7 +41,10 @@
   --ds-shadow-orange-glow: 0 4px 16px rgba(232, 115, 22, 0.22);
   --ds-shadow-green-glow: 0 4px 14px rgba(34, 184, 88, 0.20);
 
-  /* Font Weights */
+  /* Font Weights
+     ─ Use 700 (bold) for section headings, card titles, inline emphasis
+     ─ Use 800 (extrabold) for hero stats, page titles, large numeric displays
+     ─ Never mix both in the same visual level — pick one per heading tier */
   --ds-fw-regular:   400;
   --ds-fw-medium:    500;
   --ds-fw-semibold:  600;

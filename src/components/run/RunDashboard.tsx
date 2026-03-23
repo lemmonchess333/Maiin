@@ -52,7 +52,7 @@ export default function RunDashboard() {
     <div className="space-y-4">
       {/* Weekly distance with progress ring */}
       <div className="p-5 rounded-2xl bg-card">
-        <p className="text-[11px] text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
+        <p className="text-xs text-muted-foreground font-medium tracking-wider uppercase mb-3">This Week</p>
         <div className="flex items-center gap-5">
           <div className="relative inline-flex items-center justify-center shrink-0">
             <svg className="progress-ring" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label={`Weekly distance progress: ${weeklyKm.toFixed(1)} of ${goalKm} km`}>
@@ -69,7 +69,7 @@ export default function RunDashboard() {
             <div className="flex items-end gap-4">
               <div>
                 <p className="text-2xl font-extrabold tabular-nums text-foreground">{weeklyRunCount}</p>
-                <p className="text-[11px] text-muted-foreground">runs</p>
+                <p className="text-xs text-muted-foreground">runs</p>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function RunDashboard() {
                 <p className="text-sm font-semibold text-foreground">
                   {((run.distance || 0) / 1000).toFixed(2)} km
                 </p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace ?? 0)}/km
                 </p>
               </div>
@@ -107,7 +107,7 @@ export default function RunDashboard() {
                 <p className="text-sm font-mono tabular-nums text-muted-foreground">
                   {Math.floor((run.duration || 0) / 60)}:{((run.duration || 0) % 60).toString().padStart(2, '0')}
                 </p>
-                <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <Timer className="w-3 h-3" />
                   <span>duration</span>
                 </div>

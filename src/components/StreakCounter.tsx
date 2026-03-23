@@ -42,7 +42,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
       </motion.div>
 
       <div className="flex-1">
-        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 tracking-tighter">
+        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 tracking-tighter tabular-nums">
           {streak} day streak
         </p>
         <p className="text-xs text-orange-600/80 dark:text-orange-400/80 font-medium">
@@ -57,7 +57,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
       </div>
 
       {/* Subtle streak badge */}
-      <div className="px-3 py-1 text-[11px] font-mono font-bold tracking-widest bg-orange-500 text-white rounded-full self-start">
+      <div className="px-3 py-1 text-xs font-mono font-bold tracking-widest bg-orange-500 text-white rounded-full self-start">
         <Flame size={12} className="inline" /> HOT
       </div>
     </motion.div>

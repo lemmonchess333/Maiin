@@ -117,7 +117,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               {isRun
                 ? <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
                 : <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />}
-              <p className="text-[11px]">{timeAgo}</p>
+              <p className="text-xs">{timeAgo}</p>
             </div>
           </div>
           {/* Report/Block menu */}
@@ -169,20 +169,20 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               <p className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.running }}>
                 {((activity.distance || 0) / 1000).toFixed(2)}
               </p>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">km</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">km</p>
             </div>
             <div>
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                 {typeof activity.avgPace === 'number' ? formatDur(activity.avgPace) : activity.avgPace || '--:--'}
               </p>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">/km</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">/km</p>
             </div>
             {activity.duration && (
               <div>
                 <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                   {formatDur(activity.duration)}
                 </p>
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">time</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">time</p>
               </div>
             )}
             {(activity.elevationGain || 0) > 0 && (
@@ -192,7 +192,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                     {activity.elevationGain}m
                   </p>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">elev</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">elev</p>
                 </div>
               </div>
             )}
@@ -206,7 +206,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             {activity.muscleGroups && (
               <div className="flex flex-wrap gap-1.5">
                 {activity.muscleGroups.map((mg: string) => (
-                  <span key={mg} className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                  <span key={mg} className="text-xs px-2 py-0.5 rounded-full font-medium"
                     style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
                     {mg}
                   </span>
@@ -220,7 +220,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   <p className="text-lg font-bold font-mono tabular-nums leading-none" style={{ color: THEME.lifting }}>
                     {Math.round(activity.totalVolume ?? 0).toLocaleString()}
                   </p>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">kg volume</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">kg volume</p>
                 </div>
               )}
               {(activity.exerciseCount ?? 0) > 0 && (
@@ -228,7 +228,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
                     {activity.exerciseCount}
                   </p>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">exercises</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">exercises</p>
                 </div>
               )}
               {(activity.duration ?? 0) > 0 && (
@@ -236,7 +236,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
                     {Math.round((activity.duration ?? 0) / 60)}
                   </p>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">min</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">min</p>
                 </div>
               )}
             </div>
@@ -306,10 +306,10 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         {/* Kudos list popup */}
         {showKudosList && kudosUsers.length > 0 && (
           <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Props from</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Props from</p>
             {kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-bold text-primary">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                   {u.userName.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-xs font-medium text-foreground">{u.userName}</span>
@@ -325,7 +325,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               <button
                 key={chip}
                 onClick={() => setChipText(chip)}
-                className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors active:scale-95"
+                className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95"
                 style={{ background: `${THEME.brand}15`, color: THEME.brand }}
               >
                 {chip}

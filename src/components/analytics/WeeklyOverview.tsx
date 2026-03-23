@@ -47,7 +47,7 @@ export default function WeeklyOverview({
 
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-4 text-muted-foreground">This Week</p>
+      <p className="text-xs uppercase tracking-[0.5px] font-medium mb-4 text-muted-foreground">This Week</p>
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="flex flex-col items-center gap-2">
@@ -59,7 +59,7 @@ export default function WeeklyOverview({
             </div>
             <div className="text-center">
               <p className="text-base font-bold font-mono tabular-nums text-foreground leading-none">{s.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{s.sub}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
             </div>
           </div>
         ))}

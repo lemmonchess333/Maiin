@@ -36,7 +36,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
             {burn.phase && (
-              <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.semantic.nutrition + '15', color: THEME.semantic.nutrition }}>
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.semantic.nutrition + '15', color: THEME.semantic.nutrition }}>
                 {burn.phase === 'lean bulk' ? 'Bulk' : burn.phase === 'cut' ? 'Cut' : 'Recomp'}
                 {burn.phase === 'lean bulk' ? ' · +300' : burn.phase === 'cut' ? ' · −500' : ''}
               </span>
@@ -52,7 +52,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           </span>
           <span className="text-[13px]" style={{ color: THEME.text.muted }}>/ {tCal.toLocaleString()} kcal</span>
           {caloriesLeft > 0 && (
-            <span className="ml-auto text-[11px] text-muted-foreground">{caloriesLeft} left</span>
+            <span className="ml-auto text-xs text-muted-foreground">{caloriesLeft} left</span>
           )}
         </div>
         <div className="h-2 rounded-full overflow-hidden bg-muted">
@@ -85,7 +85,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                   {burn.dailyBudget.toLocaleString()}
                 </span>
               </div>
-              <Link to="/log" state={{ tab: 'food' }} className="block text-center text-[11px] font-medium pt-1" style={{ color: THEME.brand }}>
+              <Link to="/log" state={{ tab: 'food' }} className="block text-center text-xs font-medium pt-1" style={{ color: THEME.brand }}>
                 View food log &rarr;
               </Link>
             </div>
@@ -100,7 +100,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           >
             <Link to="/log" state={{ tab: 'food' }} className="block relative">
               {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
-                <p className="text-[11px] font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
+                <p className="text-xs font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
                   {postWorkoutNudge.type === "run"
                     ? "Post-run — refuel with carbs + protein soon"
                     : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`
@@ -114,12 +114,12 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
               </div>
               {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-[14px] font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
+                  <p className="text-sm font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
+                  <p className="text-xs mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
                 </div>
               )}
               {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
-                <p className="text-center text-[11px] font-medium pb-1" style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}>
+                <p className="text-center text-xs font-medium pb-1" style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}>
                   Tap to log today's meals
                 </p>
               )}

@@ -5,8 +5,8 @@ export default function BreakdownRow({ label, value, color, placeholder }: {
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="text-[11px] font-semibold font-mono tabular-nums" style={{ color: color || THEME.textPrimary }}>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold font-mono tabular-nums" style={{ color: color || THEME.textPrimary }}>
         {value > 0 ? value.toLocaleString() : (placeholder || "\u2014")}
       </span>
     </div>

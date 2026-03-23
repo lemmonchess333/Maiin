@@ -39,13 +39,13 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
                 <span className="text-sm font-bold" style={{ color: isSelected ? w.color : undefined }}>
                   {w.name}
                 </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
                   style={{ background: `${w.color}20`, color: w.color }}>
                   {w.totalMinutes} min
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{w.description}</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-1">
+              <p className="text-xs text-muted-foreground/60 mt-1">
                 {DIFFICULTY_LABEL[w.difficulty]} · {w.segments.length} segments
               </p>
             </button>

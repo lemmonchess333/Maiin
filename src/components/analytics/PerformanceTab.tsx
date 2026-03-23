@@ -94,7 +94,7 @@ function PIGauge({ score }: { score: number }) {
         <p className="text-xs font-semibold mt-0.5" style={{ color }}>
           {band}
         </p>
-        <p className="text-[11px] text-muted-foreground">Performance Index</p>
+        <p className="text-xs text-muted-foreground">Performance Index</p>
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <p className="text-[11px] text-muted-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-xs font-bold tabular-nums" style={{ color }}>{Math.round(value)}</p>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>

@@ -41,7 +41,7 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
           <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
             {Math.round(value)}{unit}
           </span>
-          {done && <span className="text-[11px]" style={{ color: THEME.success }}>&#10003;</span>}
+          {done && <span className="text-xs" style={{ color: THEME.success }}>&#10003;</span>}
         </div>
         {/* Completion flash overlay */}
         {flashKey > 0 && (
@@ -56,7 +56,7 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
         )}
       </div>
       <div className="text-center">
-        <p className="text-[11px] uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>{label}</p>
+        <p className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>{label}</p>
         <p className="text-[12px]" style={{ color: THEME.text.muted }}>{target}{unit}</p>
       </div>
     </div>

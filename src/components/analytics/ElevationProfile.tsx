@@ -21,7 +21,7 @@ export default function ElevationProfile({ points, accentColor = '#FF6B6B' }: El
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Elevation</h3>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {minAlt}m – {maxAlt}m
         </p>
       </div>

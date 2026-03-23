@@ -30,7 +30,7 @@ export function QuickRelog({ onSelect, onViewAll }: QuickRelogProps) {
         {favourites.length > 5 && onViewAll && (
           <button
             onClick={onViewAll}
-            className="text-[11px] text-primary font-medium flex items-center gap-0.5"
+            className="text-xs text-primary font-medium flex items-center gap-0.5"
           >
             See all <ChevronRight className="w-3 h-3" />
           </button>

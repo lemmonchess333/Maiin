@@ -60,14 +60,14 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
         const timeAgo = c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : '';
         return (
           <div key={c.id} className="flex gap-2">
-            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold shrink-0">
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
               {(c.authorName || '?').charAt(0)}
             </div>
             <div>
               <p className="text-xs">
                 <span className="font-semibold">{c.authorName}</span>{' '}
                 <span className="text-muted-foreground">{c.text}</span>
-                {timeAgo && <span className="text-[11px] text-muted-foreground ml-1">{timeAgo}</span>}
+                {timeAgo && <span className="text-xs text-muted-foreground ml-1">{timeAgo}</span>}
               </p>
             </div>
           </div>

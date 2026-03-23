@@ -36,7 +36,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             <div className="mb-4">
               <p id="serving-drawer-title" className="text-sm font-semibold text-foreground">{food.name}</p>
               {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
-              <p className="text-[11px] text-muted-foreground mt-0.5">per {food.servingSize}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">per {food.servingSize}</p>
             </div>
 
             {/* Macro grid */}
@@ -77,7 +77,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               </button>
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{servings}</p>
-                <p className="text-[11px] text-muted-foreground">servings</p>
+                <p className="text-xs text-muted-foreground">servings</p>
               </div>
               <button
                 onClick={() => setServings(servings + 0.5)}

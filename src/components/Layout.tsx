@@ -138,7 +138,7 @@ export default function Layout() {
                         )
                       )}
                     </motion.div>
-                    <span className="text-[11px] font-medium tracking-wide">{tab.label}</span>
+                    <span className="text-xs font-medium tracking-wide">{tab.label}</span>
                   </>
                 )}
               </NavLink>

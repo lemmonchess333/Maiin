@@ -34,7 +34,7 @@ const FEATURE_HEROES: Record<string, {
             {[42, 55, 61, 58, 70, 74, 68].map((v, i) => (
               <div key={i} className="flex flex-col items-center gap-1">
                 <div className="w-6 rounded-t-sm" style={{ height: v * 0.8, background: THEME.brand, opacity: 0.7 }} />
-                <span className="text-[11px] text-muted-foreground">W{i + 1}</span>
+                <span className="text-xs text-muted-foreground">W{i + 1}</span>
               </div>
             ))}
           </div>
@@ -63,7 +63,7 @@ const FEATURE_HEROES: Record<string, {
         <div className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-white/10 space-y-2"
           style={{ background: `${THEME.teal}12` }}>
           {["Your lift volume is trending up — consider a deload next week", "Running cadence improved 4% vs last month"].map((t, i) => (
-            <div key={i} className="p-2 rounded-lg text-[11px]" style={{ background: `${THEME.teal}18` }}>
+            <div key={i} className="p-2 rounded-lg text-xs" style={{ background: `${THEME.teal}18` }}>
               {t}
             </div>
           ))}
@@ -86,12 +86,12 @@ const FEATURE_HEROES: Record<string, {
       <div className="relative rounded-xl overflow-hidden">
         <div className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-white/10"
           style={{ background: `${THEME.warning}12` }}>
-          <div className="text-[11px] text-muted-foreground mb-2">Detected: Chicken & rice bowl</div>
+          <div className="text-xs text-muted-foreground mb-2">Detected: Chicken & rice bowl</div>
           <div className="flex gap-2">
             {[['P', '42g', THEME.teal], ['C', '58g', THEME.brand], ['F', '12g', THEME.warning]].map(([l, v, c]) => (
               <div key={String(l)} className="flex-1 text-center p-2 rounded-lg" style={{ background: `${c}18` }}>
                 <p className="text-xs font-bold" style={{ color: String(c) }}>{v}</p>
-                <p className="text-[11px] text-muted-foreground">{l}</p>
+                <p className="text-xs text-muted-foreground">{l}</p>
               </div>
             ))}
           </div>
@@ -239,7 +239,7 @@ export default function ProModal({ onClose, feature }: Props) {
                     <div className="text-left">
                       <p className="text-sm font-medium text-white">{plan.label}</p>
                       {plan.badge && (
-                        <span className="text-[11px] font-medium" style={{ color: THEME.teal }}>{plan.badge}</span>
+                        <span className="text-xs font-medium" style={{ color: THEME.teal }}>{plan.badge}</span>
                       )}
                     </div>
                   </div>
@@ -263,16 +263,16 @@ export default function ProModal({ onClose, feature }: Props) {
 
           {/* Subscription terms (App Store Guideline 3.1.2(c)) */}
           <div className="text-center space-y-1 pb-1">
-            <p className="text-[11px] text-white/50">
+            <p className="text-xs text-white/50">
               {selectedPlan === 'lifetime'
                 ? 'One-time purchase. No recurring charges.'
                 : `Subscription auto-renews ${selectedPlan === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period.`}
             </p>
-            <p className="text-[11px] text-white/50">
+            <p className="text-xs text-white/50">
               {selectedPlan !== 'lifetime' && 'Manage or cancel anytime in your device settings. '}
               No hidden fees.
             </p>
-            <button onClick={handleRestore} className="text-[11px] text-white/60 underline">
+            <button onClick={handleRestore} className="text-xs text-white/60 underline">
               Restore purchases
             </button>
           </div>

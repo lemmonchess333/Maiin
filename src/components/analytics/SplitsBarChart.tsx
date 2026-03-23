@@ -24,7 +24,7 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Splits</h3>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           avg {Math.floor(avgPaceSeconds / 60)}:{(Math.floor(avgPaceSeconds) % 60).toString().padStart(2, '0')}/km
         </p>
       </div>
@@ -44,7 +44,7 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
 
       <div className="flex justify-around mt-1">
         {data.map((d, i) => (
-          <p key={i} className={`text-[11px] font-mono tabular-nums ${
+          <p key={i} className={`text-xs font-mono tabular-nums ${
             d.isFast ? 'text-emerald-500' : d.isSlow ? 'text-red-500' : 'text-muted-foreground'
           }`}>
             {d.paceLabel}

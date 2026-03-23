@@ -263,10 +263,10 @@ export default function BodyweightLogger() {
                 transition={{ delay: index * 0.03 }}
                 className="flex-shrink-0 bg-muted/70 border border-border/50 rounded-2xl px-4 py-3 text-center min-w-[68px]"
               >
-                <p className="text-[11px] text-muted-foreground font-medium">
+                <p className="text-xs text-muted-foreground font-medium">
                   {format(new Date(log.date + "T12:00:00"), "dd/MM")}
                 </p>
-                <p className="text-lg font-semibold text-foreground tracking-tight">
+                <p className="text-lg font-semibold text-foreground tracking-tight tabular-nums">
                   {displayWeight(log.weight)}
                 </p>
               </motion.div>

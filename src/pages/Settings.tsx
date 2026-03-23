@@ -364,7 +364,7 @@ export default function Settings() {
           <div className="bg-card rounded-2xl p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="space-y-2">
-                <p className="font-medium text-muted-foreground uppercase tracking-wider text-[11px]">
+                <p className="font-medium text-muted-foreground uppercase tracking-wider text-xs">
                   Free (forever)
                 </p>
                 <ul className="space-y-1.5 text-muted-foreground">
@@ -376,7 +376,7 @@ export default function Settings() {
                 </ul>
               </div>
               <div className="space-y-2">
-                <p className="font-medium text-primary uppercase tracking-wider text-[11px]">
+                <p className="font-medium text-primary uppercase tracking-wider text-xs">
                   Pro
                 </p>
                 <ul className="space-y-1.5 text-foreground">
@@ -405,7 +405,7 @@ export default function Settings() {
                 )}
               >
                 {plan.recommended && (
-                  <span className="absolute -top-2.5 left-4 text-[11px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
+                  <span className="absolute -top-2.5 left-4 text-xs px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
                     Most popular
                   </span>
                 )}
@@ -419,7 +419,7 @@ export default function Settings() {
                     </p>
                   </div>
                   {plan.badge && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                       {plan.badge}
                     </span>
                   )}

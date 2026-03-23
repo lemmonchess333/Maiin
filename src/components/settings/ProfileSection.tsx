@@ -112,7 +112,7 @@ export default function ProfileSection({
         <RefreshCw className="w-4 h-4 text-primary" />
         <div className="flex-1 text-left">
           <p className="text-sm font-medium">Reconfigure programme</p>
-          <p className="text-[11px] text-muted-foreground">Re-run setup to generate a new training plan and targets</p>
+          <p className="text-xs text-muted-foreground">Re-run setup to generate a new training plan and targets</p>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </motion.button>
@@ -134,7 +134,7 @@ export default function ProfileSection({
             onChange={(e) => setWeightKg(Number(e.target.value))}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
-          <p className="text-[11px] text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
         </div>
         <div>
           <label htmlFor="profile-height" className="text-sm text-muted-foreground">Height (cm)</label>
@@ -201,7 +201,7 @@ export default function ProfileSection({
                         : "border-border/50 bg-muted/30"
                     )}
                   >
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {DAY_LABELS[s.day].charAt(0)}
                     </span>
                     {s.type === "both" ? (
@@ -218,7 +218,7 @@ export default function ProfileSection({
                       <div className="w-3 h-3 rounded-full bg-muted" />
                     )}
                     <span
-                      className="text-[11px] font-medium"
+                      className="text-xs font-medium"
                       style={{ color: s.type === "both" ? THEME.lifting : (color || "var(--muted-foreground)") }}
                     >
                       {label}
@@ -227,7 +227,7 @@ export default function ProfileSection({
                 );
               })}
           </div>
-          <p className="text-[11px] text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Tap any day to cycle between Rest &rarr; Lift &rarr; Run &rarr; Both
           </p>
           {hasUnsavedScheduleChanges && (
@@ -274,7 +274,7 @@ export default function ProfileSection({
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {(profile?.runMode ?? "freeform") === "freeform"
                 ? "Pick any run type when you start"
                 : (profile?.runMode ?? "freeform") === "structured"
@@ -290,7 +290,7 @@ export default function ProfileSection({
                   <span className="text-xs font-medium text-foreground">Set Your Race Goal</span>
                 </div>
                 <fieldset>
-                  <legend className="text-[11px] text-muted-foreground uppercase tracking-wider">Distance</legend>
+                  <legend className="text-xs text-muted-foreground uppercase tracking-wider">Distance</legend>
                   <div className="flex gap-1.5 mt-1">
                     {(["5k", "10k", "half", "marathon"] as const).map((d) => (
                       <button
@@ -309,7 +309,7 @@ export default function ProfileSection({
                   </div>
                 </fieldset>
                 <div>
-                  <label htmlFor="race-target-date" className="text-[11px] text-muted-foreground uppercase tracking-wider">Target Date</label>
+                  <label htmlFor="race-target-date" className="text-xs text-muted-foreground uppercase tracking-wider">Target Date</label>
                   <input
                     id="race-target-date"
                     type="date"
@@ -361,7 +361,7 @@ export default function ProfileSection({
             {/* Template overrides per run day */}
             {profile?.runMode && profile.runMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
               <div className="p-3 rounded-xl bg-card space-y-1.5">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
                 {(programState?.runDays ?? []).map((rd) => (
                   <div key={rd.dayIndex} className="flex items-center gap-3 py-1">
                     <span className="text-xs font-medium text-foreground w-8">
