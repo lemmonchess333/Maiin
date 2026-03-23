@@ -657,7 +657,7 @@ export default function Log() {
             whileTap={{ scale: 0.97 }}
             onClick={() => { haptic(); setActiveTab(key); }}
             className={cn(
-              "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+              "flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5",
               activeTab === key
                 ? "bg-card text-foreground shadow-sm"
                 : "text-muted-foreground"

@@ -30,7 +30,7 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
             <div className="flex items-center gap-2 min-w-0">
               {pr.isNew && (
                 <span className="text-[11px] px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                  style={{ background: '#7B72E9', color: '#fff' }}>
+                  style={{ background: '#e87316', color: '#fff' }}>
                   NEW
                 </span>
               )}

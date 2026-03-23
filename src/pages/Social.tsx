@@ -204,8 +204,8 @@ export default function Social() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'
+            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+              tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
             {t === 'feed' ? 'Feed' : t === 'photos' ? 'Progress' : t === 'challenges' ? 'Challenges' : 'Find'}

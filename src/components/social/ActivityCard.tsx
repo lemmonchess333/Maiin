@@ -271,7 +271,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-5 pt-2.5 border-t border-border/40">
+        <div className="flex items-center gap-5 pt-2.5 border-t border-border/30">
           <div className="flex items-center gap-1.5">
             <button onClick={handleKudos}
               aria-label={liked ? "Remove kudos" : "Give kudos"}
