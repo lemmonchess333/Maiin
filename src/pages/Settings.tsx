@@ -356,7 +356,7 @@ export default function Settings() {
       {/* Full upgrade section — shown post-trial for free users */}
       {tier !== "pro" && !isInTrial && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">
+          <p className="text-base font-bold text-foreground">
             Upgrade to Pro
           </p>
 
@@ -375,14 +375,14 @@ export default function Settings() {
                   <li>Simple summaries</li>
                 </ul>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 bg-primary/5 rounded-lg p-2 -m-1">
                 <p className="font-medium text-primary uppercase tracking-wider text-xs">
                   Pro
                 </p>
                 <ul className="space-y-1.5 text-foreground">
                   {["Everything in Free +", "Unlimited AI photo food logging", "Full Performance Engine", "AI adaptive macros", "Advanced insights"].map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
-                      <Check className="w-3 h-3 text-primary mt-0.5 shrink-0" />
+                      <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -400,7 +400,7 @@ export default function Settings() {
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-xl border transition-all relative",
                   plan.recommended
-                    ? "bg-primary/5 border-primary ring-1 ring-primary/20"
+                    ? "bg-primary/10 border-primary ring-2 ring-primary/30"
                     : "bg-card border-border/50 hover:border-primary/50"
                 )}
               >
@@ -419,7 +419,12 @@ export default function Settings() {
                     </p>
                   </div>
                   {plan.badge && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    <span className={cn(
+                      "text-xs px-2 py-0.5 rounded-full font-medium",
+                      plan.id === "lifetime"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "bg-primary/10 text-primary"
+                    )}>
                       {plan.badge}
                     </span>
                   )}
