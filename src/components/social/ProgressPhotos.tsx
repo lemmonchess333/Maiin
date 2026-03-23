@@ -295,9 +295,9 @@ export default function ProgressPhotos() {
 
       {photos.length === 0 && (
         <EmptyState
-          icon={<Camera size={28} />}
+          icon={<Camera size={32} />}
           title="Track your transformation"
-          description="Take a front, side, and back photo each week to see your progress over time."
+          description="Take a front, side, and back photo each week to see your progress over time"
           accentColor={THEME.brand}
         />
       )}
