@@ -279,16 +279,16 @@ export default function Social() {
             <div className="mt-6" aria-live="polite">
               {feedSubTab === 'discover' ? (
                 <EmptyState
-                  icon={<Globe size={28} />}
+                  icon={<Globe size={32} />}
                   title="Be the first to share"
-                  description="Complete a workout or run, and it'll show up here for others to see."
+                  description="Complete a workout or run and it'll appear here for the community"
                   accentColor={THEME.brand}
                 />
               ) : (
                 <EmptyState
-                  icon={<Users size={28} />}
-                  title="No activity yet"
-                  description="Follow people to see their workouts and runs here"
+                  icon={<Users size={32} />}
+                  title="Your feed is empty"
+                  description="Follow athletes to see their workouts, runs, and milestones here"
                   accentColor={THEME.brand}
                   action={{ label: 'Find People', onClick: () => setTab('find') }}
                 />
@@ -369,11 +369,11 @@ export default function Social() {
             <p className="text-small font-semibold text-foreground">Suggested people</p>
             {profile?.crewId && currentCrew ? (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
-                People from your crew will appear here as more athletes join.
+                Suggestions appear as more athletes join your crew
               </p>
             ) : (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
-                Join a crew to see suggestions
+                Suggestions appear as you join crews and follow athletes
               </p>
             )}
           </div>
