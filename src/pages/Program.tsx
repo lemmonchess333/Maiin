@@ -339,7 +339,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </p>
         )}
 
-        <div className="flex items-center justify-center gap-2 px-4 pb-3">
+        <div className="flex items-center justify-center gap-2 px-4 pb-3 -mt-1">
           <span className="px-2.5 py-0.5 rounded-full border text-xs font-medium border-primary/30 text-primary">
             {goalLabel(programState.goal)}
           </span>
@@ -421,14 +421,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             )}
             style={{
               background: isCurrent
-                ? `linear-gradient(135deg, ${sportColor}10 0%, transparent 60%)`
+                ? `linear-gradient(135deg, ${sportColor}18 0%, ${sportColor}08 100%)`
                 : 'var(--card)',
+              borderLeft: isCurrent ? `3px solid ${sportColor}` : undefined,
             }}
           >
             {/* Current day label */}
             {isCurrent && (
-              <div className="px-3 pt-2 pb-0">
-                <span className="text-xs uppercase tracking-widest font-bold" style={{ color: sportColor }}>
+              <div className="px-3 pt-2.5 pb-0">
+                <span className="text-[11px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md"
+                  style={{ color: sportColor, background: `${sportColor}12` }}>
                   Up next
                 </span>
               </div>
@@ -455,7 +457,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
               {/* Day label + type */}
               <div className="flex-1 text-left min-w-0">
-                <p className={cn("text-sm font-semibold", day.completed ? "text-muted-foreground line-through" : "text-foreground")}>
+                <p className={cn("text-sm font-semibold", day.completed ? "text-muted-foreground" : "text-foreground")}>
                   Day {dayIndex + 1}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
