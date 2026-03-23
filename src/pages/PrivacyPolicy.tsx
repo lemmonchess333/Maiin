@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
         </button>
 
         <div>
-          <h1 className="text-xl font-bold text-foreground">Privacy Policy</h1>
+          <h1 className="text-xl font-extrabold text-foreground">Privacy Policy</h1>
           <p className="text-xs text-muted-foreground mt-1">
             Last updated: February 2026
           </p>

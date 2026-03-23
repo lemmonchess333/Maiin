@@ -167,7 +167,7 @@ export default function Social() {
     <div className="space-y-4">
       <header>
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">Social</h1>
+          <h1 className="text-lg font-extrabold">Social</h1>
         </div>
       </header>
 
@@ -242,7 +242,7 @@ export default function Social() {
           {activeFeed.items.length > 0 && !pullRefreshing && (
             <button onClick={activeFeed.refresh}
               aria-label="Refresh feed"
-              className="flex items-center justify-center w-full py-1 text-muted-foreground hover:text-foreground transition-colors">
+              className="flex items-center justify-center w-full py-3 text-muted-foreground hover:text-foreground transition-colors">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           )}

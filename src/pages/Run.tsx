@@ -317,7 +317,7 @@ export default function Run() {
                   transition: 'background 0.3s',
                 }} />
               ))}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 8, fontFamily: 'monospace' }}>
+              <p className="text-micro ml-2 font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {acc ? `\u00B1${Math.round(acc)}m` : '---'}
               </p>
             </div>
@@ -325,7 +325,7 @@ export default function Run() {
             <p className="text-white font-semibold text-lg mb-1">
               {quality === 'strong' || quality === 'good' ? 'GPS locked' : 'Acquiring GPS...'}
             </p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', maxWidth: 260 }}>
+            <p className="text-sm text-center max-w-[260px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
               {quality === 'weak' || quality === 'searching'
                 ? 'Move to an open area away from buildings'
                 : 'Getting accurate signal...'}
@@ -345,7 +345,7 @@ export default function Run() {
               )}
               <button
                 onClick={() => { gps.stop(); setPhase('waiting'); }}
-                style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
+                className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Cancel
               </button>
             </div>

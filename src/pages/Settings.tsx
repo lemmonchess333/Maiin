@@ -249,7 +249,7 @@ export default function Settings() {
       <header>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Settings</h1>
+            <h1 className="text-xl font-extrabold text-foreground">Settings</h1>
             <p className="text-sm text-muted-foreground">Customize your experience</p>
           </div>
           {user && (

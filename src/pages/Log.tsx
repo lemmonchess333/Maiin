@@ -592,7 +592,7 @@ export default function Log() {
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
       <header>
         <motion.div variants={itemVariant}>
-          <h1 className="text-xl font-bold text-foreground">Log Activity</h1>
+          <h1 className="text-xl font-extrabold text-foreground">Log Activity</h1>
           <p className="text-sm text-muted-foreground">
             Record your daily progress
           </p>
