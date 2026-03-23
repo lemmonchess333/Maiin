@@ -142,13 +142,12 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                 className={cn(
                   "w-full py-3.5 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-5",
                   saved
-                    ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
+                    ? "bg-green-500 text-white"
                     : "text-white active:scale-95",
                   (saving || !name.trim()) && !saved && "opacity-50 cursor-not-allowed"
                 )}
                 style={!saved ? {
-                  background: THEME.gradient.brand,
-                  boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
+                  backgroundColor: THEME.brand,
                 } : undefined}
               >
                 {saved ? (

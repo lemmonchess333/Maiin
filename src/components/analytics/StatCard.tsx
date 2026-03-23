@@ -16,8 +16,8 @@ export default function StatCard({
   const gradientId = `spark-${label.replace(/\s/g, '-')}`;
   return (
     <button onClick={onClick}
-      className="p-4 rounded-xl bg-card text-left w-full active:scale-[0.98] transition-transform"
-      style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 70%)` }}>
+      className="p-4 rounded-xl bg-card text-left w-full active:scale-[0.98] transition-transform accent-edge"
+      style={{ '--accent-edge-color': accentColor } as React.CSSProperties}>
       <p className="text-[11px] uppercase tracking-[0.5px] font-medium mb-2 text-muted-foreground">{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">

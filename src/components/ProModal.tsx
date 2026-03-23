@@ -255,8 +255,7 @@ export default function ProModal({ onClose, feature }: Props) {
           <button
             onClick={() => handleCheckout(selectedPlan)}
             disabled={loading !== null}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-opacity disabled:opacity-50"
-            style={{ background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})` }}
+            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all disabled:opacity-50 brand-cta"
           >
             {loading ? "Loading…" : `Start Pro — ${PLANS.find(p => p.id === selectedPlan)?.price}${PLANS.find(p => p.id === selectedPlan)?.period}`}
           </button>

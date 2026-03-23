@@ -214,7 +214,7 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
 
       {/* Footer */}
       <div className="mt-auto w-full space-y-6">
-        <div className="h-1 w-full rounded-full" style={{ background: `linear-gradient(to right, ${s.accent}, #6366f1)` }} />
+        <div className="h-1 w-full rounded-full" style={{ backgroundColor: s.accent }} />
         <p className="text-xl text-center" style={{ color: s.muted }}>{data.userName} · {data.date}</p>
       </div>
     </div>
