@@ -4,7 +4,9 @@ import { useAuth } from "@/lib/auth";
 import { useWorkouts, type WorkoutExercise } from "@/hooks/useWorkouts";
 import { EXERCISE_CATEGORIES, getExercisesByCategory, getExerciseById } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
+import { useProgram } from "@/features/program/useProgram";
+import { haptic } from "@/lib/haptic";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dumbbell,
   Plus,
@@ -17,6 +19,7 @@ import {
   Search,
   Timer,
   Info,
+  Sparkles,
 } from "lucide-react";
 import ExerciseDemoCard from "./ExerciseDemoCard";
 
@@ -38,6 +41,10 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
   const [expandedExercise, setExpandedExercise] = useState<number | null>(null);
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
   const [selectedExerciseIds, setSelectedExerciseIds] = useState<Set<string>>(new Set());
+
+  const { programState, loading: programLoading } = useProgram();
+  const todayWorkout = programState?.workouts?.find(d => !d.completed);
+  const suggestedExercises = todayWorkout?.exercises?.slice(0, 3) ?? [];
 
   const userWeight = profile?.weightKg || 70;
 
@@ -231,14 +238,91 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
       </div>
 
       {/* Empty state */}
-      {exercises.length === 0 && !showPicker && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
-            <Dumbbell className="w-8 h-8 text-muted-foreground/30" />
-          </div>
-          <p className="text-sm text-muted-foreground/60 text-center">Your workout is empty — tap + Add Exercise below to get started.</p>
-        </div>
-      )}
+      <AnimatePresence>
+        {exercises.length === 0 && !showPicker && (
+          <motion.div
+            key="empty-state"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-3"
+          >
+            {/* Programme suggestions */}
+            {suggestedExercises.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 px-1">
+                  <Sparkles className="w-3 h-3" style={{ color: THEME.lifting }} />
+                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>
+                    Today {"\u00B7"} {todayWorkout?.dayName}
+                  </span>
+                </div>
+                {suggestedExercises.map((ex) => (
+                  <motion.button
+                    key={ex.exerciseId}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { haptic(); addMultipleExercises([ex.exerciseId]); }}
+                    className="w-full p-3 rounded-xl text-left flex items-center gap-3"
+                    style={{ backgroundColor: THEME.lifting + "14" }}
+                  >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
+                      <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                      <p className="text-[11px] text-muted-foreground font-mono tabular-nums">{ex.sets} sets &times; {ex.reps} reps</p>
+                    </div>
+                    <div
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold flex-shrink-0"
+                      style={{ backgroundColor: THEME.lifting, color: "white" }}
+                    >
+                      <Plus className="w-3 h-3" />Add
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {/* CTA — adapts based on whether suggestions are shown */}
+            {suggestedExercises.length > 0 ? (
+              /* Secondary browse link when suggestions exist */
+              <button
+                onClick={() => { haptic(); setShowPicker(true); }}
+                className="w-full py-2.5 text-sm font-medium text-center active:scale-[0.97] transition-transform"
+                style={{ color: THEME.brand }}
+              >
+                Browse all exercises
+              </button>
+            ) : (
+              /* Full empty state when no programme */
+              <div className="text-center py-8 px-6 space-y-4">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                  style={{ background: `${THEME.lifting}15`, border: `1px solid ${THEME.lifting}25` }}
+                >
+                  <Dumbbell className="w-7 h-7" style={{ color: THEME.lifting }} />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-sm font-semibold text-foreground">Add exercises to get started</p>
+                  <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
+                    {!programState && !programLoading
+                      ? "Set up a programme for personalised suggestions"
+                      : "Tap below to browse and add exercises"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { haptic(); setShowPicker(true); }}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95"
+                  style={{ background: THEME.lifting, color: "#fff" }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Exercise
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Exercise List */}
       {exercises.map((exercise, exIndex) => (
@@ -404,8 +488,8 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
         </div>
       ))}
 
-      {/* Add Exercise Button */}
-      {!showPicker && (
+      {/* Add Exercise Button — only when exercises already exist */}
+      {!showPicker && exercises.length > 0 && (
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => setShowPicker(true)}
