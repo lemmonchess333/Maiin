@@ -56,8 +56,8 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
         )}
       </div>
       <div className="text-center">
-        <p className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>{label}</p>
-        <p className="text-[12px]" style={{ color: THEME.text.muted }}>{target}{unit}</p>
+        <p className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>{label}</p>
+        <p className="text-micro" style={{ color: THEME.text.muted }}>{target}{unit}</p>
       </div>
     </div>
   );

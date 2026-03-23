@@ -238,14 +238,14 @@ export default function TrainingCalendar() {
 
       <Drawer.Root open={showAddModal && !!selectedDay} onOpenChange={function(o) { if (!o) setShowAddModal(false); }}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[80vh] overflow-y-auto bg-background safe-area-pb">
-            <div className="max-w-md mx-auto p-5 pb-10 space-y-4">
+          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto bg-background safe-area-pb">
+            <div className="max-w-md mx-auto p-4 pb-10 space-y-4">
               <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
               <div className="flex items-center justify-between">
                 <Drawer.Title className="text-base font-semibold text-foreground">Add Session</Drawer.Title>
-                <button onClick={function() { setShowAddModal(false); }} className="p-1 rounded hover:bg-muted">
+                <button onClick={function() { setShowAddModal(false); }} aria-label="Close session modal" className="p-3 -m-1 rounded-lg hover:bg-muted">
                   <XIcon className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>

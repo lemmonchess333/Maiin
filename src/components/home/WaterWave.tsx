@@ -151,7 +151,7 @@ function WavePath({
     <path
       ref={pathRef}
       fill={fill}
-      style={clipHeight && height ? { clipPath: "inset(0 0 " + (height - clipHeight) + "px 0)", willChange: "transform" } : { willChange: "transform" }}
+      style={clipHeight && height ? { clipPath: "inset(0 0 " + (height - clipHeight) + "px 0)", willChange: "auto" } : { willChange: "auto" }}
     />
   );
 }

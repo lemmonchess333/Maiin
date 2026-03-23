@@ -27,7 +27,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
-        let cls = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all";
+        let cls = "size-11 rounded-full flex items-center justify-center text-xs font-medium transition-all";
         let st: React.CSSProperties = {};
         if (day.isSelected) {
           cls += " text-white";

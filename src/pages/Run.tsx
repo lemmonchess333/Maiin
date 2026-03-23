@@ -292,7 +292,7 @@ export default function Run() {
         const acc = gps.gpsAccuracy;
         const quality = gps.signalQuality;
         const bars = quality === 'strong' ? 4 : quality === 'good' ? 3 : quality === 'fair' ? 2 : quality === 'weak' ? 1 : 0;
-        const barColor = quality === 'strong' || quality === 'good' ? '#34D399' : quality === 'fair' ? '#FFB547' : '#EF4444';
+        const barColor = quality === 'strong' || quality === 'good' ? THEME.semantic.positive : quality === 'fair' ? THEME.warning : THEME.semantic.vitals;
         return (
           <div className="flex-1 flex flex-col items-center justify-center px-8" style={{ background: THEME.bg }}>
             {/* Signal rings */}
