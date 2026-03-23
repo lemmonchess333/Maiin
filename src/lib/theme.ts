@@ -64,9 +64,9 @@ export const THEME = {
   paceFast: '#4DB872',
   paceOnTarget: '#7B72E9',
   paceSlow: '#D4637A',
-  // Brand solids (replaces gradient CTAs — intentional, not algorithmic)
+  // Gradient helpers — subtler transitions
   gradient: {
-    brand: '#7B72E9',
-    brandCta: '#7B72E9',
+    brand: 'linear-gradient(135deg, #9590E0, #7B72E9)',
+    brandCta: 'linear-gradient(135deg, #7B72E9, #52A3BD)',
   },
 } as const;

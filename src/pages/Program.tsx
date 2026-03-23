@@ -394,7 +394,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <button
           onClick={handleAdvanceWeek}
           disabled={advancing}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.97] transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           <FastForward className="w-4 h-4" />
           {advancing ? "Advancing..." : "Advance to Next Week"}
@@ -420,8 +420,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               day.completed ? "opacity-70" : ""
             )}
             style={{
-              background: 'var(--card)',
-              borderLeft: isCurrent ? `3px solid ${sportColor}` : undefined,
+              background: isCurrent
+                ? `linear-gradient(135deg, ${sportColor}10 0%, transparent 60%)`
+                : 'var(--card)',
             }}
           >
             {/* Current day label */}
@@ -548,7 +549,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {!day.completed && (
                       <button
                         onClick={() => setSessionDayIndex(dayIndex)}
-                        className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-all flex items-center justify-center gap-2 brand-cta"
+                        className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
+                        style={{ background: THEME.gradient.brand }}
                       >
                         <Play className="w-4 h-4" /> Start Workout
                       </button>
