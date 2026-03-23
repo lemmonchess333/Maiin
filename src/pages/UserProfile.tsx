@@ -122,7 +122,7 @@ export default function UserProfile() {
           )}
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-bold">{profile.displayName}</h1>
+          <h1 className="text-lg font-extrabold">{profile.displayName}</h1>
           <div className="flex gap-4 text-xs text-muted-foreground mt-1">
             <span><strong className="text-foreground">{followers}</strong> followers</span>
             <span><strong className="text-foreground">{followingCount}</strong> following</span>

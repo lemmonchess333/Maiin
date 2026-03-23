@@ -283,7 +283,7 @@ export default function History() {
   return (
     <div className="space-y-4 pt-2">
       <header>
-        <h1 className="text-lg font-bold text-foreground">Analytics</h1>
+        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
       </header>
 
       <FilterPills filter={filter} setFilter={setFilter} />

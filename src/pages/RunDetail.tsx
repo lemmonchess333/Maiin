@@ -155,7 +155,7 @@ export default function RunDetail() {
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">
                 {ACTIVITY_LABELS[run.activityType] ?? 'Run'}
               </p>
-              <h1 className="text-xl font-bold text-foreground">
+              <h1 className="text-xl font-extrabold text-foreground">
                 {(run.distance / 1000).toFixed(2)} km
               </h1>
             </div>

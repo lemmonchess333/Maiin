@@ -283,7 +283,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <header>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Program</h1>
+            <h1 className="text-xl font-extrabold text-foreground">Program</h1>
             <p className="text-xs text-muted-foreground">
               {programState.splitType === "ppl" ? "Push / Pull / Legs" : "Upper / Lower"}
             </p>
@@ -621,7 +621,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       >
                         <Minus className="w-3 h-3 text-foreground" />
                       </button>
-                      <p className="text-lg font-bold text-foreground w-8">{drawerExercise.exercise.sets}</p>
+                      <p className="text-lg font-bold text-foreground w-8 font-mono tabular-nums">{drawerExercise.exercise.sets}</p>
                       <button
                         onClick={() => handleSetsChange(1)}
                         className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors touch-target"
@@ -633,12 +633,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
 
                   <div className="bg-muted rounded-lg p-2">
-                    <p className="text-lg font-bold text-foreground">{drawerExercise.exercise.reps}</p>
+                    <p className="text-lg font-bold text-foreground font-mono tabular-nums">{drawerExercise.exercise.reps}</p>
                     <p className="text-xs text-muted-foreground">Reps</p>
                   </div>
 
                   <div className="bg-muted rounded-lg p-2">
-                    <p className={`font-bold text-foreground ${drawerExercise.exercise.weight > 0 ? 'text-lg' : 'text-sm'}`}>
+                    <p className={`font-bold text-foreground font-mono tabular-nums ${drawerExercise.exercise.weight > 0 ? 'text-lg' : 'text-sm'}`}>
                       {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "Bodyweight"}
                     </p>
                     <p className="text-xs text-muted-foreground">{drawerExercise.exercise.weight > 0 ? "kg" : ""}</p>

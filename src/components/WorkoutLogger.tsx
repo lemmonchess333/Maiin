@@ -253,7 +253,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5 px-1">
                   <Sparkles className="w-3 h-3" style={{ color: THEME.lifting }} />
-                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>
+                  <span className="text-micro uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>
                     Today {"\u00B7"} {todayWorkout?.dayName}
                   </span>
                 </div>
@@ -270,10 +270,10 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono tabular-nums">{ex.sets} sets &times; {ex.reps} reps</p>
+                      <p className="text-micro text-muted-foreground font-mono tabular-nums">{ex.sets} sets &times; {ex.reps} reps</p>
                     </div>
                     <div
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold flex-shrink-0"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-micro font-semibold flex-shrink-0"
                       style={{ backgroundColor: THEME.lifting, color: "white" }}
                     >
                       <Plus className="w-3 h-3" />Add

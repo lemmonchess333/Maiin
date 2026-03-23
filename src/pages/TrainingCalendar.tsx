@@ -213,12 +213,12 @@ export default function TrainingCalendar() {
   return (
     <div className="pb-24 px-4 pt-2 space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={prevWeek} className="p-2 rounded-lg bg-muted text-sm pressable">{"\u2190"}</button>
+        <button onClick={prevWeek} className="p-3 rounded-lg bg-muted text-sm pressable">{"\u2190"}</button>
         <h2 className="text-sm font-bold tracking-tight">
           {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {"\u2013"}{' '}
           {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </h2>
-        <button onClick={nextWeek} className="p-2 rounded-lg bg-muted text-sm pressable">{"\u2192"}</button>
+        <button onClick={nextWeek} className="p-3 rounded-lg bg-muted text-sm pressable">{"\u2192"}</button>
       </div>
 
       <WeekView

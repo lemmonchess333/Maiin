@@ -181,7 +181,7 @@ export default function RunSummary() {
         </button>
       </div>
       <div className="text-center pb-4 px-4">
-        <h1 className="text-xl font-bold text-foreground">
+        <h1 className="text-xl font-extrabold text-foreground">
           {(distance || 0) > 200 && (elapsed || 0) > 60
             ? "Great run!"
             : (distance || 0) > 0

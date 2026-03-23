@@ -16,7 +16,7 @@ export default function TermsOfService() {
         </button>
 
         <div>
-          <h1 className="text-xl font-bold text-foreground">Terms of Service</h1>
+          <h1 className="text-xl font-extrabold text-foreground">Terms of Service</h1>
           <p className="text-xs text-muted-foreground mt-1">
             Last updated: March 2026
           </p>
