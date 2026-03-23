@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
-import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed } from "lucide-react";
+import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
@@ -12,6 +12,15 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
+
+const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  'person-standing': PersonStanding,
+  'zap': Zap,
+  'refresh-cw': RefreshCw,
+  'wind': Wind,
+  'route': Route,
+  'flag': Flag,
+};
 
 export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
@@ -37,26 +46,27 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   const runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
   const runIcon = tmpl?.icon;
   const templateParam = tmpl ? "?template=" + tmpl.id : "";
+  const RunIconComp = runIcon && RUN_ICON_MAP[runIcon] ? RUN_ICON_MAP[runIcon] : Footprints;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {showLift && nextWorkout && (
         <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/program"); }}
-          className="w-full p-5 rounded-2xl bg-card text-left border-l-[3px]"
-          style={{ background: "linear-gradient(135deg, " + THEME.lifting + "12 0%, transparent 60%)", borderLeftColor: THEME.lifting }}>
+          className="w-full p-3 rounded-xl bg-card text-left"
+          style={{ backgroundColor: THEME.lifting + "08" }}>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
-              <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
+              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Lift day</p>
               <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
-              <p className="text-xs text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
+              <p className="text-[10px] text-muted-foreground capitalize">{nextWorkout.dayType} {"\u00B7"} {nextWorkout.exercises.length} exercises</p>
             </div>
-            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.lifting, color: "#fff" }}>
-              <Play className="w-3.5 h-3.5" />Start
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: THEME.lifting, color: "#fff" }}>
+              <Play className="w-3 h-3" />Start
             </div>
           </div>
         </motion.button>
@@ -65,35 +75,41 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
           whileTap={{ scale: 0.97 }}
           onClick={function() { haptic(); navigate("/run" + templateParam); }}
-          className="w-full p-5 rounded-2xl bg-card text-left border-l-[3px]"
-          style={{ background: "linear-gradient(135deg, " + THEME.running + "12 0%, transparent 60%)", borderLeftColor: THEME.running }}>
+          className="w-full p-3 rounded-xl bg-card text-left"
+          style={{ backgroundColor: THEME.running + "08" }}>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
-              {runIcon ? <span className="text-xl">{runIcon}</span> : <Footprints className="w-5 h-5" style={{ color: THEME.running }} />}
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
+              <RunIconComp className="w-4 h-4" style={{ color: THEME.running }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
-              <p className="text-sm font-semibold text-foreground">{runLabel}</p>
-              <p className="text-xs text-muted-foreground truncate">{runDesc}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Today {"\u00B7"} Run day</p>
+              <p className="text-sm font-semibold text-foreground truncate">{runLabel}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{runDesc}</p>
             </div>
-            <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
-              <Play className="w-3.5 h-3.5" />{todayRun?.completed ? "Done" : "Go"}
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: THEME.running, color: "#fff" }}>
+              <Play className="w-3 h-3" />{todayRun?.completed ? "Done" : "Go"}
             </div>
           </div>
         </motion.button>
       )}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: THEME.lifting + '14' }}>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.lifting + '1A' }}><Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} /></div>
-          <span className="text-xs font-semibold text-foreground">Quick Log</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: 'rgba(124, 110, 246, 0.06)' }}>
+          <Dumbbell className="w-3.5 h-3.5" style={{ color: '#7C6EF6' }} />
+          <span className="text-[11px] font-semibold text-foreground">Quick Log</span>
         </MotionLink>
-        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: THEME.running + '14' }}>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.running + '1A' }}><Activity className="w-4 h-4" style={{ color: THEME.running }} /></div>
-          <span className="text-xs font-semibold text-foreground">Start Run</span>
+        <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: 'rgba(232, 99, 122, 0.06)' }}>
+          <Activity className="w-3.5 h-3.5" style={{ color: '#E8637A' }} />
+          <span className="text-[11px] font-semibold text-foreground">Start Run</span>
         </MotionLink>
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }} className="flex-1 p-2.5 rounded-2xl flex flex-col items-center gap-1.5" style={{ backgroundColor: THEME.semantic.nutrition + '14' }}>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.semantic.nutrition + '1A' }}><UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} /></div>
-          <span className="text-xs font-semibold text-foreground">Log Food</span>
+        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-3 min-h-[44px] rounded-xl transition-transform"
+          style={{ backgroundColor: 'rgba(237, 139, 78, 0.06)' }}>
+          <UtensilsCrossed className="w-3.5 h-3.5" style={{ color: '#ED8B4E' }} />
+          <span className="text-[11px] font-semibold text-foreground">Log Food</span>
         </MotionLink>
       </motion.div>
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
