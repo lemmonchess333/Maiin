@@ -325,7 +325,7 @@ export default function Social() {
 
           {/* Section 2: Search */}
           <div className="space-y-3">
-            <p className="text-[15px] font-semibold text-foreground">Search by name</p>
+            <p className="text-small font-semibold text-foreground">Search by name</p>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -366,7 +366,7 @@ export default function Social() {
 
           {/* Section 3: Suggested People (#16) */}
           <div className="space-y-2">
-            <p className="text-[15px] font-semibold text-foreground">Suggested people</p>
+            <p className="text-small font-semibold text-foreground">Suggested people</p>
             {profile?.crewId && currentCrew ? (
               <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
                 People from your crew will appear here as more athletes join.
@@ -380,7 +380,7 @@ export default function Social() {
 
           {/* Section 4: Contact Sync Stub */}
           <div className="space-y-2">
-            <p className="text-[15px] font-semibold text-foreground">Find friends from contacts</p>
+            <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
               className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
               style={{ borderLeft: '3px solid rgba(124, 110, 246, 0.5)' }}>
@@ -410,7 +410,7 @@ export default function Social() {
 
           {/* Crews Section */}
           <div className="space-y-3">
-            <p className="text-[15px] font-semibold text-foreground">Crews</p>
+            <p className="text-small font-semibold text-foreground">Crews</p>
             <div className="space-y-2">
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;

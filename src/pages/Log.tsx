@@ -844,7 +844,7 @@ export default function Log() {
                     background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)`,
                   }}
                 >
-                  <span className="text-[13px] font-bold text-foreground block truncate">{meal.name}</span>
+                  <span className="text-micro font-semibold text-foreground block truncate">{meal.name}</span>
                   <span className="block text-xs text-muted-foreground mt-1">
                     ~{meal.cal} kcal
                   </span>
@@ -981,7 +981,7 @@ export default function Log() {
               onClick={() => { haptic(); handleNLParse(); }}
               disabled={!nlInput.trim() || nlParsing}
               className={cn(
-                "w-full py-3 rounded-xl text-[15px] font-bold transition-all text-white flex items-center justify-center gap-1.5",
+                "w-full py-3 rounded-xl text-small font-semibold transition-all text-white flex items-center justify-center gap-1.5",
                 (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
               )}
               style={{

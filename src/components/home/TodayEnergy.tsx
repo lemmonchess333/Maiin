@@ -47,10 +47,10 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
             : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
-          <span className="text-[28px] font-extrabold font-mono tabular-nums leading-none" style={{ color: THEME.semantic.nutrition }}>
+          <span className="text-h2 font-extrabold font-mono tabular-nums leading-none" style={{ color: THEME.semantic.nutrition }}>
             {(calories || 0).toLocaleString()}
           </span>
-          <span className="text-[13px]" style={{ color: THEME.text.muted }}>/ {tCal.toLocaleString()} kcal</span>
+          <span className="text-micro" style={{ color: THEME.text.muted }}>/ {tCal.toLocaleString()} kcal</span>
           {caloriesLeft > 0 && (
             <span className="ml-auto text-xs text-muted-foreground">{caloriesLeft} left</span>
           )}

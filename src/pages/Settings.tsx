@@ -579,14 +579,14 @@ export default function Settings() {
       {showRestructureModal && pendingLiftDays !== null && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-[1000]"
+            className="fixed inset-0 bg-black/50 z-40"
             role="button" tabIndex={0} aria-label="Close dialog"
             onClick={() => {
               setShowRestructureModal(false);
             }}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowRestructureModal(false); }}
           />
-          <div ref={restructureModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
+          <div ref={restructureModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-card rounded-2xl p-4 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>
             <p className="text-sm text-muted-foreground">
               Changing your training days will restructure your program. Your workout history won&apos;t be affected, but your program will be rebuilt. This cannot be undone.

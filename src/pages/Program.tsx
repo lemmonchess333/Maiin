@@ -394,7 +394,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <button
           onClick={handleAdvanceWeek}
           disabled={advancing}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           <FastForward className="w-4 h-4" />
           {advancing ? "Advancing..." : "Advance to Next Week"}
@@ -596,7 +596,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb bg-background border-t border-border shadow-xl"
             >
-              <div className="max-w-md mx-auto p-5 space-y-3">
+              <div className="max-w-md mx-auto p-4 space-y-3">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
                 <div className="flex items-center justify-between">
@@ -790,7 +790,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSettings(false)}
-              className="fixed inset-0 bg-black/50 z-[1000]"
+              className="fixed inset-0 bg-black/50 z-40"
             />
             <motion.div
               ref={settingsPanelRef}
@@ -800,11 +800,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-[1001] rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
-              style={{ background: "#F5F3F0", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
+              style={{ background: "var(--background)", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="max-w-md mx-auto p-5 space-y-4">
+              <div className="max-w-md mx-auto p-4 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
                 <div className="flex items-center justify-between">
