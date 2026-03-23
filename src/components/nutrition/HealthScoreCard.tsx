@@ -55,10 +55,10 @@ export function HealthScoreCard() {
         </div>
 
         <div className="flex-1 text-left">
-          <p className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+          <p className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
           {score != null ? (
             <div className="flex items-center gap-2">
-              <p className="text-[32px] font-extrabold leading-none font-mono tabular-nums" style={{ color: scoreColor }}>
+              <p className="text-3xl font-extrabold leading-none font-mono tabular-nums" style={{ color: scoreColor }}>
                 {score}
               </p>
               <p className="text-xs text-muted-foreground">{getScoreLabel(score)}</p>

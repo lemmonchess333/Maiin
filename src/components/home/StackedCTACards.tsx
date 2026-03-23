@@ -178,7 +178,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Water</p>
-              <p className="text-[28px] font-extrabold leading-none text-foreground font-mono tabular-nums">{Math.min(waterGlasses, waterTarget)}<span className="text-sm font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-xs font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
+              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">{Math.min(waterGlasses, waterTarget)}<span className="text-sm font-normal" style={{ color: THEME.text.muted }}>/{waterTarget}</span><span className="text-xs font-normal ml-1" style={{ color: THEME.text.muted }}>glasses</span></p>
             </div>
             <div className="flex items-center gap-1.5">
               <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg }}>

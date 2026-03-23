@@ -65,14 +65,14 @@ export function WaterTracker() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Droplets size={16} style={{ color: THEME.semantic.hydration }} />
-            <span className="text-xs uppercase tracking-[0.5px] font-medium" style={{ color: THEME.text.muted }}>Water</span>
+            <span className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>Water</span>
           </div>
           <span className="text-xs text-muted-foreground">{pct}%</span>
         </div>
 
         {/* Big number */}
         <div className="text-center py-2">
-          <p className="text-[32px] font-extrabold tabular-nums leading-tight" style={{ color: THEME.semantic.hydration }}>
+          <p className="text-3xl font-extrabold tabular-nums leading-tight" style={{ color: THEME.semantic.hydration }}>
             {Math.round(glasses * 250)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">

@@ -331,7 +331,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         style={{ background: 'linear-gradient(to top, var(--color-background) 80%, transparent)' }}>
         <button
           onClick={() => onStart(config)}
-          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-bold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97]"
+          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97]"
           style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
         >
           {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}

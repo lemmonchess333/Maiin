@@ -822,7 +822,7 @@ export default function Log() {
 
           {/* Quick Add — horizontal scroll row */}
           <div style={{ marginTop: "14px" }}>
-            <p className="text-xs uppercase tracking-[0.05em] font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
+            <p className="text-xs uppercase tracking-wider font-semibold mb-2" style={{ color: THEME.text.muted }}>Quick Add</p>
             <div
               className="flex gap-2.5 pb-1 -mx-1 px-1"
               style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
@@ -885,7 +885,7 @@ export default function Log() {
 
           {/* Add Food */}
           <div className="rounded-2xl p-4" style={{ background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)` }}>
-            <p className="text-xs uppercase tracking-[0.05em] font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
+            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: THEME.text.muted }}>Add Food</p>
 
             {/* Unified smart input */}
             <div className="relative" style={{ marginTop: "10px" }}>
