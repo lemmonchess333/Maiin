@@ -23,7 +23,14 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
   const estimatedCarbs = Math.round((remaining * 0.62) / 4);
   const estimatedFat = Math.round((remaining * 0.38) / 9);
   const calPct = Math.min((calories / tCal) * 100, 100);
+  const isOverTarget = calories > tCal;
+  const overPct = isOverTarget ? Math.round(((calories - tCal) / tCal) * 100) : 0;
   const caloriesLeft = Math.max(tCal - calories, 0);
+
+  // Distinct macro colors
+  const proteinColor = "#52A3BD"; // teal
+  const carbsColor = "#7B72E9";  // purple
+  const fatColor = "#D9884E";    // orange
 
   return (
     <div className="rounded-2xl bg-card overflow-hidden">
@@ -47,19 +54,21 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
             : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
-          <span className="text-h2 font-extrabold font-mono tabular-nums leading-none" style={{ color: THEME.semantic.nutrition }}>
+          <span className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: isOverTarget ? THEME.warning : THEME.semantic.nutrition }}>
             {(calories || 0).toLocaleString()}
           </span>
           <span className="text-micro" style={{ color: THEME.text.muted }}>/ {tCal.toLocaleString()} kcal</span>
-          {caloriesLeft > 0 && (
+          {isOverTarget ? (
+            <span className="ml-auto text-xs font-medium" style={{ color: THEME.warning }}>+{overPct}% over</span>
+          ) : caloriesLeft > 0 ? (
             <span className="ml-auto text-xs text-muted-foreground">{caloriesLeft} left</span>
-          )}
+          ) : null}
         </div>
         <div className="h-2 rounded-full overflow-hidden bg-muted">
-          <motion.div initial={{ width: 0 }} animate={{ width: calPct + "%" }}
+          <motion.div initial={{ width: 0 }} animate={{ width: (isOverTarget ? 100 : calPct) + "%" }}
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="h-full rounded-full"
-            style={{ background: calPct >= 98 ? THEME.semantic.positive : "linear-gradient(90deg, " + THEME.semantic.nutrition + ", " + THEME.semantic.vitals + ")" }} />
+            style={{ background: isOverTarget ? `linear-gradient(90deg, ${THEME.semantic.nutrition}, ${THEME.warning})` : calPct >= 98 ? THEME.semantic.positive : "linear-gradient(90deg, " + THEME.semantic.nutrition + ", " + THEME.semantic.vitals + ")" }} />
         </div>
       </button>
 
@@ -85,7 +94,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                   {burn.dailyBudget.toLocaleString()}
                 </span>
               </div>
-              <Link to="/log" state={{ tab: 'food' }} className="block text-center text-xs font-medium pt-1" style={{ color: THEME.brand }}>
+              <Link to="/log" state={{ tab: 'food' }} className="inline-flex items-center gap-1 text-xs font-medium pt-1" style={{ color: THEME.brand }}>
                 View food log &rarr;
               </Link>
             </div>
@@ -108,9 +117,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                 </p>
               )}
               <div className={cn("flex items-center justify-around px-4 py-4", calories === 0 && "opacity-50")}>
-                <MacroRing value={protein} target={tProt} color={THEME.semantic.hydration} label="Protein" unit="g" />
-                <MacroRing value={estimatedCarbs} target={tCarbs} color={THEME.semantic.activity} label="Carbs" unit="g" />
-                <MacroRing value={estimatedFat} target={tFat} color={THEME.semantic.nutrition} label="Fat" unit="g" />
+                <MacroRing value={protein} target={tProt} color={proteinColor} label="Protein" unit="g" />
+                <MacroRing value={estimatedCarbs} target={tCarbs} color={carbsColor} label="Carbs" unit="g" />
+                <MacroRing value={estimatedFat} target={tFat} color={fatColor} label="Fat" unit="g" />
               </div>
               {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center">

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { THEME } from "@/lib/theme";
 import { format } from "date-fns";
+import { Check } from "lucide-react";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
 export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: {
@@ -27,7 +28,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
-        let cls = "size-11 rounded-full flex items-center justify-center text-xs font-medium transition-all";
+        let cls = "size-11 rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
         let st: React.CSSProperties = {};
         if (day.isSelected) {
           cls += " text-white";
@@ -35,15 +36,45 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
         } else if (day.isToday) {
           cls += " text-foreground font-semibold";
           st = { border: `2px solid ${THEME.brand}` };
+        } else if (day.isPast && day.hasActivity) {
+          cls += " text-foreground";
+          st = { backgroundColor: THEME.semantic.positive + "18" };
         } else {
           cls += " text-muted-foreground";
           cls += " bg-muted";
         }
+        // Determine dot color based on schedule type
+        const dotColor = day.isPast && day.hasActivity
+          ? THEME.semantic.positive
+          : day.sType === "lift" ? THEME.lifting
+          : day.sType === "run" ? THEME.running
+          : day.sType === "both" ? THEME.brand
+          : undefined;
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1.5 active:scale-[0.95]">
             <span className="text-xs text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
-            <div className={cls} style={st}>{day.date.getDate()}</div>
-            <div className="w-1.5 h-1.5 rounded-full" style={day.hasActivity ? { backgroundColor: THEME.semantic.positive } : undefined} />
+            <div className={cls} style={st}>
+              {day.date.getDate()}
+              {day.isPast && day.hasActivity && !day.isSelected && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ backgroundColor: THEME.semantic.positive }}>
+                  <Check className="w-2 h-2 text-white" strokeWidth={3} />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5">
+              {dotColor && !day.isPast ? (
+                <>
+                  {(day.sType === "both" || day.sType === "lift") && (
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.lifting }} />
+                  )}
+                  {(day.sType === "both" || day.sType === "run") && (
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: THEME.running }} />
+                  )}
+                </>
+              ) : (
+                <div className="w-1.5 h-1.5 rounded-full" />
+              )}
+            </div>
           </button>
         );
       })}
