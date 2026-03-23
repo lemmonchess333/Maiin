@@ -122,7 +122,7 @@ export default function ProfileSection({
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Display name"
-        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
       />
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -132,7 +132,7 @@ export default function ProfileSection({
             type="number"
             value={weightKg}
             onChange={(e) => setWeightKg(Number(e.target.value))}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
           <p className="text-[11px] text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
         </div>
@@ -143,7 +143,7 @@ export default function ProfileSection({
             type="number"
             value={heightCm}
             onChange={(e) => setHeightCm(Number(e.target.value))}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
         </div>
       </div>

@@ -79,7 +79,7 @@ export default function TDEESection({
                 type="number"
                 value={age}
                 onChange={(e) => setAge(Number(e.target.value) || 25)}
-                className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
               />
             </div>
 
@@ -240,7 +240,7 @@ export default function TDEESection({
                   updateProfile({ customCalorieTarget: val || undefined });
                 }}
                 placeholder={String(tdee.targetCalories)}
-                className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
               />
             </div>
         </div>

@@ -363,7 +363,7 @@ export default function RunSummary() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="How did it feel? Any notes about this run..."
           rows={3}
-          className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
         />
 
         <button

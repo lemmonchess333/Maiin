@@ -129,7 +129,7 @@ export default function RunDashboard() {
           </p>
           <button
             onClick={() => navigate('/log')}
-            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 transition-transform mt-2"
+            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 mt-2"
           >
             Go to Log Tab
             <ArrowRight className="w-4 h-4" />

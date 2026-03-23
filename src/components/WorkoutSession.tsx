@@ -673,7 +673,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             <button
               onClick={handleFinish}
               disabled={completing}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.97] transition-transform"
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.97]"
             >
               {completing ? "Saving..." : "Save Workout"}
             </button>
@@ -681,7 +681,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             {/* Share Button */}
             <button
               onClick={() => setShowShareCard(true)}
-              className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] flex items-center justify-center gap-2"
             >
               <Share2 className="w-4 h-4" />
               Share Workout
@@ -987,7 +987,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       aria-label={`Set ${setIdx + 1} weight`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                       disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 placeholder:text-muted-foreground"
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50 placeholder:text-muted-foreground"
                     />
                   </div>
                   <div className="col-span-4">
@@ -997,7 +997,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       aria-label={`Set ${setIdx + 1} reps`}
                       onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                       disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
                     />
                   </div>
                   <div className="col-span-2 flex justify-center">
@@ -1038,7 +1038,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         aria-label={`Set type: ${TYPE_LABELS[type]}`}
                         aria-pressed={set.type === type}
                         className={cn(
-                          "flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all focus-visible:outline-2 focus-visible:outline-primary",
+                          "flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all",
                           set.type === type ? "opacity-100 ring-2 ring-current" : "opacity-40"
                         )}
                         style={{ color: TYPE_COLORS[type], backgroundColor: TYPE_COLORS[type] + '15' }}
@@ -1069,7 +1069,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               onClick={handleUndo}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95 transition-transform"
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Undo last set
             </motion.button>

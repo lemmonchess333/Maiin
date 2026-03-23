@@ -53,7 +53,7 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
   return (
     <button
       onClick={() => navigate(`/run/${run.id}`)}
-      className="w-full text-left p-3 rounded-xl bg-card border border-border flex gap-3 items-center active:scale-[0.98] transition-transform"
+      className="w-full text-left p-3 rounded-xl bg-card border border-border flex gap-3 items-center active:scale-[0.98]"
     >
       <div className="w-16 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50">
         {run.routePreview && run.routePreview.length > 1

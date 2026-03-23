@@ -78,6 +78,51 @@ button, a {
   user-select: none;
 }
 
+/* ─── GLOBAL FOCUS-VISIBLE ─────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+/* Remove outline for mouse/touch, keep for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── SMOOTH TRANSITIONS FOR INTERACTIVE ELEMENTS ─────────── */
+button, [role="button"] {
+  transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── INPUT & FORM FIELD POLISH ──────────────────────────── */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+textarea,
+select {
+  border-radius: var(--radius);
+  transition: border-color var(--ds-transition-fast),
+              box-shadow var(--ds-transition-fast);
+}
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+textarea:focus,
+select:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
+  outline: none;
+}
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.6;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -88,4 +133,17 @@ input[type="range"] {
   height: 6px;
   border-radius: 3px;
   cursor: pointer;
+}
+
+/* ─── TOUCH TARGET MINIMUM ───────────────────────────────── */
+/* Ensure small icon buttons have at least 44px hit area */
+.touch-target {
+  position: relative;
+}
+.touch-target::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  min-width: 44px;
+  min-height: 44px;
 }

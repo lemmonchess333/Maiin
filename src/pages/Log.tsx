@@ -605,7 +605,7 @@ export default function Log() {
         <button
           onClick={() => { haptic(); changeDate(-1); }}
           aria-label="Previous day"
-          className="p-2 rounded-lg hover:bg-muted active:scale-[0.93] transition-all focus-visible:outline-2 focus-visible:outline-primary"
+          className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
         >
           <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
@@ -613,7 +613,7 @@ export default function Log() {
         <button
           onClick={() => dateInputRef.current?.showPicker?.()}
           aria-label="Select date"
-          className="text-center flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-lg"
+          className="text-center flex items-center gap-2"
         >
           <CalendarDays aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
           <div>
@@ -638,7 +638,7 @@ export default function Log() {
         <button
           onClick={() => { haptic(); changeDate(1); }}
           aria-label="Next day"
-          className="p-2 rounded-lg hover:bg-muted active:scale-[0.93] transition-all focus-visible:outline-2 focus-visible:outline-primary"
+          className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
         >
           <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
         </button>
@@ -673,7 +673,7 @@ export default function Log() {
         <section aria-label="Workout logging">
         <motion.div variants={itemVariant} className="space-y-4">
           {/* Start a run link */}
-          <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98] transition-transform"
+          <MotionLink to="/run" whileTap={{ scale: 0.97 }} onClick={() => haptic()} className="flex items-center gap-3 p-3.5 rounded-2xl active:scale-[0.98]"
             style={{ background: `linear-gradient(135deg, ${THEME.running}12 0%, transparent 60%)` }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
               <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
@@ -900,7 +900,7 @@ export default function Log() {
                 placeholder="Describe what you ate…"
                 rows={1}
                 maxLength={500}
-                className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none"
               />
               <button
                 type="button"
@@ -1056,7 +1056,7 @@ export default function Log() {
                         {safeNum(m.totalCalories)}
                         <span className="text-[11px] font-normal text-muted-foreground ml-0.5">cal</span>
                       </p>
-                      <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 focus-visible:outline-2 focus-visible:outline-primary">
+                      <button onClick={() => handleDeleteMeal(m.id, m.foodName || 'Meal')} aria-label={`Delete ${m.foodName || 'meal'}`} className="p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90 touch-target">
                         <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                       </button>
                     </div>
