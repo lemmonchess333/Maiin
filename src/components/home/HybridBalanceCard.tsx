@@ -19,7 +19,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
   if (totalSessions === 0 && liftTonnage === 0 && runKm === 0) {
     return (
       <div className="p-4 rounded-2xl bg-card">
-        <p className="text-xs uppercase tracking-wider font-medium mb-3" style={{ color: THEME.text.muted }}>This Week</p>
+        <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell className="w-6 h-6 mx-auto" style={{ color: THEME.lifting }} />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
@@ -66,9 +66,10 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
     balanceColor = THEME.warning;
   }
 
+  // Volume display — show tonnes for 1000+, otherwise kg
   const volumeDisplay = liftTonnage >= 1000
-    ? `${(liftTonnage / 1000).toFixed(1)}k`
-    : `${Math.round(liftTonnage)}`;
+    ? `${(liftTonnage / 1000).toFixed(1)}t`
+    : `${Math.round(liftTonnage)} kg`;
 
   return (
     <Link to="/history?tab=performance">
@@ -80,7 +81,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>This Week</p>
+          <p className="text-sm font-bold text-foreground">This Week</p>
           <div className="flex items-center gap-1">
             <span className="text-xs font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
@@ -124,21 +125,23 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
           </div>
         </div>
 
-        {/* Stats row — sessions + volume/distance */}
+        {/* Stats row — sessions + volume/distance with labels */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
             <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />
-            <span className="text-muted-foreground font-mono tabular-nums">
-              <span className="font-semibold text-foreground">{liftSessions}</span>/{targetLiftSessions}
-              {liftTonnage > 0 && <span className="ml-1">· {volumeDisplay}kg</span>}
+            <span className="text-muted-foreground">Lifts</span>
+            <span className="font-mono tabular-nums">
+              <span className="font-semibold text-foreground">{liftSessions}</span><span className="text-muted-foreground">/{targetLiftSessions}</span>
             </span>
+            {liftTonnage > 0 && <span className="text-muted-foreground font-mono tabular-nums">· {volumeDisplay}</span>}
           </div>
           <div className="flex items-center gap-1.5">
             <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
-            <span className="text-muted-foreground font-mono tabular-nums">
-              <span className="font-semibold text-foreground">{runSessions}</span>/{targetRunSessions}
-              {runKm > 0 && <span className="ml-1">· {runKm.toFixed(1)}km</span>}
+            <span className="text-muted-foreground">Runs</span>
+            <span className="font-mono tabular-nums">
+              <span className="font-semibold text-foreground">{runSessions}</span><span className="text-muted-foreground">/{targetRunSessions}</span>
             </span>
+            {runKm > 0 && <span className="text-muted-foreground font-mono tabular-nums">· {runKm.toFixed(1)} km</span>}
           </div>
         </div>
       </motion.div>
