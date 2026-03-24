@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
-import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight, Apple } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
+import { getScoreColor, getScoreLabel, type ScoreBreakdown } from "@/lib/healthScore";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
@@ -22,7 +22,7 @@ const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> 
   'flag': Flag,
 };
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore, scoreBreakdown }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -36,9 +36,10 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
   prevHealthScore: number | null;
+  scoreBreakdown?: ScoreBreakdown;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
-  const healthDisplay = useCountUp(healthScore ?? 0, { sessionKey: "health", duration: 0.8 });
+  const healthDisplay = useCountUp(healthScore ?? 0, { sessionKey: "health", duration: 1 });
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
   const tmpl = todayRun ? RUN_TEMPLATES.find(function(t) { return t.id === (todayRun.userOverride || todayRun.templateId); }) : null;
@@ -128,57 +129,100 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
       )}
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
         className="space-y-3">
-        {/* Health Score — hero card with trend */}
+        {/* Health Score — hero card with 270° ring */}
         <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98]">
-          <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 flex-shrink-0">
-              {/* Progress ring around icon */}
-              <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" fill="none" stroke={THEME.text.muted + "15"} strokeWidth="3" />
-                {healthScore != null && (
-                  <circle cx="24" cy="24" r="20" fill="none" stroke={getScoreColor(healthScore)} strokeWidth="3"
-                    strokeDasharray={`${(healthScore / 100) * 125.66} 125.66`}
-                    strokeLinecap="round"
-                    style={{ transition: "stroke-dasharray 0.8s ease-out" }} />
-                )}
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <motion.div
-                  animate={
-                    healthScore != null && prevHealthScore != null && healthScore > prevHealthScore
-                      ? (healthScore >= 70 && prevHealthScore < 70
-                        ? { scale: [1, 1.3, 0.95, 1.2, 1] }
-                        : { scale: [1, 1.25, 1] })
-                      : { scale: 1 }
-                  }
-                  transition={{ duration: healthScore != null && prevHealthScore != null && healthScore >= 70 && prevHealthScore < 70 ? 0.6 : 0.4 }}
-                >
-                  <Heart className="w-5 h-5" style={{ color: "#E74C3C" }} fill="#E74C3C" fillOpacity={0.2} />
-                </motion.div>
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
-              {healthScore != null ? (
-                <div className="flex items-baseline gap-2">
-                  <p className="text-display font-extrabold leading-none" style={{ color: getScoreColor(healthScore) }}>
-                    <motion.span>{healthDisplay}</motion.span>
-                  </p>
-                  <p className="text-sm font-semibold" style={{ color: getScoreColor(healthScore) }}>
-                    {getScoreLabel(healthScore)}
-                  </p>
-                  {scoreDelta != null && scoreDelta !== 0 && (
-                    <span className="flex items-center gap-0.5 text-xs font-medium" style={{ color: scoreDelta > 0 ? THEME.semantic.positive : THEME.semantic.vitals }}>
-                      {scoreDelta > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {scoreDelta > 0 ? "+" : ""}{scoreDelta}
-                    </span>
-                  )}
+          {(() => {
+            const zoneColor = healthScore != null ? getScoreColor(healthScore) : THEME.text.muted;
+            // 270° arc: circumference = 2πr, arc = 270/360 * circumference
+            const radius = 28;
+            const circumference = 2 * Math.PI * radius;
+            const arcLength = (270 / 360) * circumference;
+            const fillLength = healthScore != null ? (healthScore / 100) * arcLength : 0;
+            // Rotate so gap is at bottom center: start at 135° (bottom-left)
+            const startAngle = 135;
+
+            return (
+              <>
+                <div className="flex items-center gap-4">
+                  {/* Ring */}
+                  <div className="relative flex-shrink-0" style={{ width: 72, height: 72 }}>
+                    <svg className="w-full h-full" viewBox="0 0 72 72" style={{ transform: `rotate(${startAngle}deg)` }}>
+                      {/* Background track */}
+                      <circle cx="36" cy="36" r={radius} fill="none"
+                        stroke={zoneColor} strokeOpacity={0.15} strokeWidth="8"
+                        strokeDasharray={`${arcLength} ${circumference}`}
+                        strokeLinecap="round" />
+                      {/* Animated fill */}
+                      {healthScore != null && (
+                        <motion.circle cx="36" cy="36" r={radius} fill="none"
+                          stroke={zoneColor} strokeWidth="8"
+                          strokeDasharray={`${arcLength} ${circumference}`}
+                          strokeLinecap="round"
+                          initial={{ strokeDashoffset: arcLength }}
+                          animate={{ strokeDashoffset: arcLength - fillLength }}
+                          transition={{ duration: 1, ease: "easeOut" }} />
+                      )}
+                    </svg>
+                    {/* Heart icon centered */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Heart className="w-4 h-4" style={{ color: zoneColor }} fill={zoneColor} fillOpacity={0.2} />
+                    </div>
+                  </div>
+                  {/* Score + label */}
+                  <div className="flex-1 min-w-0">
+                    {healthScore != null ? (
+                      <>
+                        <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
+                          <motion.span>{healthDisplay}</motion.span>
+                        </p>
+                        <motion.p
+                          className="text-sm font-medium mt-0.5"
+                          style={{ color: zoneColor, opacity: 0.8 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 0.8 }}
+                          transition={{ delay: 1.2, duration: 0.2 }}
+                        >
+                          {getScoreLabel(healthScore)}
+                        </motion.p>
+                        {/* Trend indicator */}
+                        {scoreDelta != null && scoreDelta !== 0 && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-micro font-medium"
+                              style={{
+                                backgroundColor: (scoreDelta > 0 ? THEME.semantic.positive : THEME.semantic.vitals) + "1A",
+                                color: scoreDelta > 0 ? THEME.semantic.positive : THEME.semantic.vitals,
+                              }}>
+                              {scoreDelta > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                              {scoreDelta > 0 ? "+" : ""}{scoreDelta} from yesterday
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: THEME.text.muted }}>--</p>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-display font-extrabold leading-none" style={{ color: THEME.text.muted }}>--</p>
-              )}
-            </div>
-          </div>
+                {/* Breakdown row */}
+                {scoreBreakdown && (scoreBreakdown.workouts > 0 || scoreBreakdown.nutrition > 0 || scoreBreakdown.water > 0) && (
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/20">
+                    <div className="flex items-center gap-1">
+                      <Dumbbell className="w-3 h-3" style={{ color: THEME.text.muted }} />
+                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.workouts}/35</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Apple className="w-3 h-3" style={{ color: THEME.text.muted }} />
+                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.nutrition}/30</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Droplets className="w-3 h-3" style={{ color: THEME.text.muted }} />
+                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.water}/15</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </Link>
         {/* Water — full-width interactive card */}
         <div className="relative overflow-hidden p-4 rounded-2xl bg-card" style={{
