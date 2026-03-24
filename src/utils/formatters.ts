@@ -28,8 +28,8 @@ export function formatStat(value: number | null | undefined, suffix = ""): strin
   return String(value) + suffix;
 }
 
-/** Calculate macro ring percentage (clamped 0–1) and done state */
+/** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */
 export function macroRingState(value: number, target: number): { pct: number; done: boolean } {
-  const pct = Math.min(value / Math.max(target, 1), 1);
-  return { pct, done: pct >= 0.98 };
+  const pct = Math.min(value / Math.max(target, 1), 1.3);
+  return { pct, done: pct >= 0.90 && pct <= 1.10 };
 }

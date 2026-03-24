@@ -22,10 +22,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
   const remaining = Math.max(calories - proteinCal, 0);
   const estimatedCarbs = Math.round((remaining * 0.62) / 4);
   const estimatedFat = Math.round((remaining * 0.38) / 9);
-  const calPct = Math.min((calories / tCal) * 100, 100);
-  const isOverTarget = calories > tCal;
-  const overPct = isOverTarget ? Math.round(((calories - tCal) / tCal) * 100) : 0;
-  const caloriesLeft = Math.max(tCal - calories, 0);
+  const calPct = (calories / tCal) * 100;
 
   // Distinct macro colors
   const proteinColor = "#52A3BD"; // teal
@@ -54,26 +51,35 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
             : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
-          <span className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: isOverTarget ? THEME.warning : THEME.semantic.nutrition }}>
+          <span className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
             {(calories || 0).toLocaleString()}
           </span>
-          <span className="text-micro" style={{ color: THEME.text.muted }}>/ {tCal.toLocaleString()} kcal</span>
-          {isOverTarget ? (
-            <span className="ml-auto text-xs font-medium" style={{ color: THEME.warning }}>+{overPct}% over</span>
-          ) : caloriesLeft > 0 ? (
-            <span className="ml-auto text-xs text-muted-foreground">{caloriesLeft} left</span>
-          ) : null}
+          <span className="text-micro text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden bg-muted">
-          <motion.div initial={{ width: 0 }} animate={{ width: (isOverTarget ? 100 : calPct) + "%" }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="h-full rounded-full"
-            style={{ background: isOverTarget ? `linear-gradient(90deg, ${THEME.semantic.nutrition}, ${THEME.warning})` : calPct >= 98 ? THEME.semantic.positive : "linear-gradient(90deg, " + THEME.semantic.nutrition + ", " + THEME.semantic.vitals + ")" }} />
-        </div>
+        {(() => {
+          const maxPct = Math.max(100, Math.min(calPct, 130));
+          const barWidth = Math.min((calPct / maxPct) * 100, 100);
+          const tickPos = (100 / maxPct) * 100;
+          return (
+            <div className="relative h-2">
+              <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: barWidth + "%" }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  className="h-full rounded-full"
+                  style={{ background: THEME.semantic.nutrition }} />
+              </div>
+              <div
+                className="absolute top-0 h-full w-0.5 rounded-full"
+                style={{ left: tickPos + "%", backgroundColor: THEME.text.muted }}
+              />
+            </div>
+          );
+        })()}
       </button>
 
-      <AnimatePresence mode="wait">
-        {expanded ? (
+      {/* Expandable breakdown */}
+      <AnimatePresence>
+        {expanded && (
           <motion.div
             key="breakdown"
             initial={{ opacity: 0, height: 0 }}
@@ -99,43 +105,36 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
               </Link>
             </div>
           </motion.div>
-        ) : (
-          <motion.div
-            key="rings"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <Link to="/log" state={{ tab: 'food' }} className="block relative">
-              {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
-                <p className="text-xs font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
-                  {postWorkoutNudge.type === "run"
-                    ? "Post-run — refuel with carbs + protein soon"
-                    : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`
-                  }
-                </p>
-              )}
-              <div className={cn("flex items-center justify-around px-4 py-4", calories === 0 && "opacity-50")}>
-                <MacroRing value={protein} target={tProt} color={proteinColor} label="Protein" unit="g" />
-                <MacroRing value={estimatedCarbs} target={tCarbs} color={carbsColor} label="Carbs" unit="g" />
-                <MacroRing value={estimatedFat} target={tFat} color={fatColor} label="Fat" unit="g" />
-              </div>
-              {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-sm font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
-                  <p className="text-xs mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
-                </div>
-              )}
-              {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
-                <p className="text-center text-xs font-medium pb-1" style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}>
-                  Tap to log today's meals
-                </p>
-              )}
-            </Link>
-          </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Macro rings — always visible */}
+      <Link to="/log" state={{ tab: 'food' }} className="block relative">
+        {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
+          <p className="text-xs font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
+            {postWorkoutNudge.type === "run"
+              ? "Post-run — refuel with carbs + protein soon"
+              : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`
+            }
+          </p>
+        )}
+        <motion.div layout className={cn("flex items-center justify-around px-4 py-3", calories === 0 && "opacity-50")}>
+          <MacroRing value={protein} target={tProt} color={proteinColor} label="Protein" unit="g" />
+          <MacroRing value={estimatedCarbs} target={tCarbs} color={carbsColor} label="Carbs" unit="g" />
+          <MacroRing value={estimatedFat} target={tFat} color={fatColor} label="Fat" unit="g" />
+        </motion.div>
+        {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-sm font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
+            <p className="text-xs mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
+          </div>
+        )}
+        {!mealsLoading && calories === 0 && totalLifetimeMeals > 0 && daysSinceLastMeal >= 3 && (
+          <p className="text-center text-xs font-medium pb-1" style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}>
+            Tap to log today's meals
+          </p>
+        )}
+      </Link>
     </div>
   );
 }
