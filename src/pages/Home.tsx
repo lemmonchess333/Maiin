@@ -145,17 +145,11 @@ export default function Home() {
       {
         calories: todayTotals.calories,
         protein: todayTotals.protein,
-        fiber: todayTotals.fiber,
-        sugar: todayTotals.sugar,
-        sodium: todayTotals.sodium,
         mealCount: todayTotals.mealCount,
       },
       {
         calories: profile?.targetCalories || 2200,
         protein: profile?.targetProtein || 160,
-        fiber: profile?.targetFiber || 30,
-        sugar: profile?.targetSugar || 30,
-        sodium: profile?.targetSodium || 2300,
       },
       {
         workoutsToday: todayWorkoutCount,
@@ -449,7 +443,7 @@ export default function Home() {
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
+            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} scoreBreakdown={healthScoreResult.breakdown} />
         )}
       </motion.div>
 

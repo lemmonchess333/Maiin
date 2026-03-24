@@ -12,17 +12,11 @@ export function calculateHealthScore(
   consumed: {
     calories: number;
     protein: number;
-    fiber: number;
-    sugar: number;
-    sodium: number;
     mealCount: number;
   },
   targets: {
     calories: number;
     protein: number;
-    fiber: number;
-    sugar: number;
-    sodium: number;
   },
   extra?: {
     workoutsToday?: number;
@@ -44,9 +38,13 @@ export function calculateHealthScore(
 
   // --- Workouts (35 pts) ---
   // Rest days: full points automatically (rest IS healthy)
+  // Graduated: 2+ workouts = full credit, 1 workout = partial (no completion status on docs)
   const isRestDay = e.isRestDay ?? false;
-  const hasWorkout = (e.workoutsToday ?? 0) > 0;
-  const workoutScore = hasWorkout || isRestDay ? 35 : 0;
+  const workoutsToday = e.workoutsToday ?? 0;
+  const workoutScore = isRestDay ? 35
+    : workoutsToday >= 2 ? 35
+    : workoutsToday === 1 ? 25
+    : 0;
 
   // --- Nutrition (30 pts) ---
   let nutritionScore = 0;
@@ -98,15 +96,15 @@ export function calculateHealthScore(
 }
 
 export function getScoreColor(score: number): string {
-  if (score >= 80) return THEME.success;
-  if (score >= 60) return THEME.warning;
-  if (score >= 40) return THEME.semantic.nutrition;
-  return THEME.danger;
+  if (score >= 70) return THEME.semantic.positive;
+  if (score >= 50) return THEME.semantic.nutrition;
+  return THEME.semantic.vitals;
 }
 
 export function getScoreLabel(score: number): string {
-  if (score >= 80) return "Excellent";
-  if (score >= 60) return "Good";
-  if (score >= 40) return "Fair";
-  return "Needs Work";
+  if (score >= 85) return "Optimal";
+  if (score >= 70) return "Good";
+  if (score >= 50) return "Building Up";
+  if (score >= 25) return "Getting Started";
+  return "Just Beginning";
 }

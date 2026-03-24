@@ -20,17 +20,11 @@ export function HealthScoreCard() {
       {
         calories: totals.calories,
         protein: totals.protein,
-        fiber: totals.fiber,
-        sugar: totals.sugar,
-        sodium: totals.sodium,
         mealCount: totals.mealCount,
       },
       {
         calories: profile?.targetCalories || 2200,
         protein: profile?.targetProtein || 160,
-        fiber: profile?.targetFiber || 30,
-        sugar: profile?.targetSugar || 30,
-        sodium: profile?.targetSodium || 2300,
       }
     );
   }, [totals, profile]);
