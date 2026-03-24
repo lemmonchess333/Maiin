@@ -29,13 +29,13 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
       <div className="pt-3 pb-1 px-1">
-        <div className="rounded-2xl bg-card p-4 space-y-2">
+        <div className="rounded-2xl bg-card p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
               <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
-            <button onClick={onClose} aria-label="Close day details" className="p-3 -m-1.5 rounded-lg hover:bg-muted transition-colors">
+            <button onClick={onClose} aria-label="Close day details" className="p-2 -m-1 rounded-lg hover:bg-muted transition-colors">
               <X aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
