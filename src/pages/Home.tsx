@@ -66,7 +66,7 @@ export default function Home() {
   const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
   const prevHealthScoreRef = useRef<number | null>(null);
   const prevStreakRef = useRef<number>(0);
-  const [streakJustExtended, setStreakJustExtended] = useState(false);
+  const [_streakJustExtended, setStreakJustExtended] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
   const weightSheetRef = useFocusTrap<HTMLDivElement>(showWeightSheet);
   const [weightInput, setWeightInput] = useState("");
