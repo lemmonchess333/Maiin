@@ -2,17 +2,19 @@ import { useEffect, useRef } from "react";
 import { useMotionValue, useAnimationFrame } from "framer-motion";
 
 interface WaterWaveProps {
-  width: number;
   fillPercent: number;
   splash: number;
 }
+
+const PATH_WIDTH = 400;
 
 const prefersReducedMotion =
   typeof window !== "undefined"
     ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
     : false;
 
-export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps) {
+export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
+  const width = PATH_WIDTH;
   const phase = useMotionValue(0);
   const ampRef = useRef(3);
 
@@ -70,8 +72,10 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
     staticPath += " L " + width + " " + height + " Z";
     return (
       <svg
-        width={width}
+        width="100%"
         height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
         className="absolute inset-x-0 top-0 pointer-events-none"
         style={{ transform: "translateY(-12px)" }}
         aria-hidden="true"
@@ -83,8 +87,10 @@ export default function WaterWave({ width, fillPercent, splash }: WaterWaveProps
 
   return (
     <svg
-      width={width}
+      width="100%"
       height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
       className="absolute inset-x-0 top-0 pointer-events-none"
       style={{ transform: "translateY(-12px)" }}
       aria-hidden="true"
