@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
-import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
@@ -22,7 +22,7 @@ const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> 
   'flag': Flag,
 };
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -33,6 +33,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   lastWeight: string | null;
   weightUnit: string;
   onLogWeight: () => void;
+  lastWeightDate: string;
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
   prevHealthScore: number | null;
@@ -273,7 +274,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         </div>
         {/* Weight & Steps — compact 2-col */}
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={function() { haptic(); onLogWeight(); }} className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted">
+          <button onClick={function() { haptic(); onLogWeight(); }} className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted relative">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: THEME.iconBg }}>
                 <Scale className="w-3.5 h-3.5" style={{ color: THEME.semantic.activity }} />
@@ -286,6 +287,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               </p>
               {lastWeight && <span className="text-xs" style={{ color: THEME.text.muted }}>{weightUnit === "lbs" ? "lb" : weightUnit}</span>}
             </div>
+            <p className="text-micro mt-1" style={{ color: THEME.text.muted }}>{lastWeightDate}</p>
+            <ChevronRight className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: THEME.text.muted }} />
           </button>
           <button onClick={function() { haptic(); }} className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group">
             <div className="flex items-center gap-2 mb-1.5">

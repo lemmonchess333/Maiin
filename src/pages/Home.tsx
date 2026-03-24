@@ -11,10 +11,11 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell, Sparkles, Settings as SettingsIcon, Flame, Footprints, X, Target } from "lucide-react";
+import { Dumbbell, Sparkles, Settings as SettingsIcon, Flame, Footprints, X, Target, Minus, Plus, Check } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
@@ -63,7 +64,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
-  const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string } | null>(null);
+  const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string; rawDate: string | null } | null>(null);
   const prevHealthScoreRef = useRef<number | null>(null);
   const prevStreakRef = useRef<number>(0);
   const [_streakJustExtended, setStreakJustExtended] = useState(false);
@@ -71,6 +72,7 @@ export default function Home() {
   const weightSheetRef = useFocusTrap<HTMLDivElement>(showWeightSheet);
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
+  const [weightSaved, setWeightSaved] = useState(false);
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
@@ -242,7 +244,7 @@ export default function Home() {
       if (snap.empty) {
         if (profile?.weightKg) {
           const w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
-          setLastWeightInfo({ weight: w, date: "From profile" });
+          setLastWeightInfo({ weight: w, date: "From profile", rawDate: null });
         }
         return;
       }
@@ -251,10 +253,31 @@ export default function Home() {
         const sorted = [...entries].sort(function(a, b) { return a.date.localeCompare(b.date); });
         const latest = sorted[sorted.length - 1];
         const w = weightUnit === "lbs" ? (latest.weight * 2.20462).toFixed(1) : latest.weight.toFixed(1);
-        setLastWeightInfo({ weight: w, date: format(new Date(latest.date + "T12:00:00"), "MMM d") });
+        setLastWeightInfo({ weight: w, date: format(new Date(latest.date + "T12:00:00"), "MMM d"), rawDate: latest.date });
       }
     }).catch(function() {});
   }, [user, weightUnit, profile?.weightKg]);
+
+  // Relative time string for weight tile
+  const weightRelativeTime = useMemo(function() {
+    if (!lastWeightInfo) return "Tap to log";
+    if (!lastWeightInfo.rawDate) return "From profile";
+    const now = new Date();
+    const logged = new Date(lastWeightInfo.rawDate + "T12:00:00");
+    const diffMs = now.getTime() - logged.getTime();
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (days <= 0) return "Logged today";
+    if (days === 1) return "Logged yesterday";
+    if (days < 7) return "Logged " + days + "d ago";
+    if (days < 28) return "Logged " + Math.floor(days / 7) + "w ago";
+    return "Logged " + Math.floor(days / 30) + "mo ago";
+  }, [lastWeightInfo]);
+
+  const adjustWeight = function(delta: number) {
+    const current = parseFloat(weightInput) || 0;
+    const next = Math.max(0, current + delta).toFixed(1);
+    setWeightInput(next);
+  };
 
   const handleLogWeight = async function() {
     if (!weightInput || !user) return;
@@ -265,8 +288,10 @@ export default function Home() {
       const today = format(new Date(), "yyyy-MM-dd");
       await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), { date: today, weight: storeW, createdAt: serverTimestamp() });
       const disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
-      setLastWeightInfo({ weight: disp, date: format(new Date(), "MMM d") });
-      setWeightInput(""); setShowWeightSheet(false);
+      setLastWeightInfo({ weight: disp, date: format(new Date(), "MMM d"), rawDate: today });
+      setWeightSaved(true);
+      haptic("success");
+      setTimeout(function() { setWeightSaved(false); setWeightInput(""); setShowWeightSheet(false); }, 500);
     } catch (e) { console.error(e); }
     setWeightSaving(false);
   };
@@ -443,7 +468,7 @@ export default function Home() {
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { setShowWeightSheet(true); }} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
+            weightUnit={weightUnit} onLogWeight={function() { setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
         )}
       </motion.div>
 
@@ -475,7 +500,7 @@ export default function Home() {
       <AnimatePresence>
         {showWeightSheet && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={function() { setShowWeightSheet(false); }} className="fixed inset-0 bg-black/50 z-40" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={function() { if (!weightSaved) { setShowWeightSheet(false); } }} className="fixed inset-0 bg-black/50 z-40" />
             <motion.div ref={weightSheetRef} role="dialog" aria-modal="true" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50">
               <div className="max-w-md mx-auto p-4 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
@@ -483,12 +508,33 @@ export default function Home() {
                   <p className="text-base font-semibold text-foreground">Log Weight</p>
                   <button onClick={function() { setShowWeightSheet(false); }} aria-label="Close weight log" className="p-2 -m-1 rounded-lg hover:bg-muted touch-target"><X aria-hidden="true" className="w-4 h-4 text-muted-foreground" /></button>
                 </div>
-                <div className="flex gap-3">
-                  <input type="number" step="0.1" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-lg font-medium" />
-                  <button onClick={handleLogWeight} disabled={!weightInput || weightSaving} aria-label="Save weight" className={cn("px-6 py-3 rounded-xl font-medium text-sm transition-all", weightInput ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground", (!weightInput || weightSaving) && "opacity-50 cursor-not-allowed")}>
-                    {weightSaving ? "..." : "Log"}
+                {lastWeightInfo && (
+                  <p className="text-micro" style={{ color: THEME.text.muted }}>
+                    Last: {lastWeightInfo.weight} {weightUnit === "lbs" ? "lb" : weightUnit}{lastWeightInfo.rawDate ? " \u00b7 " + weightRelativeTime.replace("Logged ", "") : ""}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <button onClick={function() { haptic(); adjustWeight(-0.1); }} aria-label="Decrease by 0.1" className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform">
+                    <Minus className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                  <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={weightInput} onChange={function(e) { setWeightInput(e.target.value); }} onFocus={function(e) { e.target.select(); }} placeholder={"Weight in " + weightUnit} aria-label={"Body weight in " + weightUnit} className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-xl font-bold font-mono tabular-nums text-center" />
+                  <button onClick={function() { haptic(); adjustWeight(0.1); }} aria-label="Increase by 0.1" className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform">
+                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                 </div>
+                <motion.button onClick={handleLogWeight} disabled={!weightInput || weightSaving || weightSaved} aria-label="Save weight" className={cn("w-full py-3.5 rounded-xl font-semibold text-base transition-all", !weightInput || weightSaving ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "text-white")} style={weightInput && !weightSaving ? { backgroundColor: THEME.brand } : undefined}>
+                  <AnimatePresence mode="wait">
+                    {weightSaved ? (
+                      <motion.span key="saved" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="inline-flex items-center gap-2">
+                        <Check className="w-5 h-5" /> Saved!
+                      </motion.span>
+                    ) : (
+                      <motion.span key="save" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        {weightSaving ? "Saving..." : "Save Weight"}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
               </div>
             </motion.div>
           </>
