@@ -32,8 +32,8 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
         <svg width={size} height={size} style={{ transform: "rotate(-90deg)", position: "absolute", inset: 0 }}>
           <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color + "18"} strokeWidth="4.5" />
           {pct > 0 && (
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={done ? THEME.success : color}
-              strokeWidth="4.5" strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color}
+              strokeWidth="4.5" strokeDasharray={`${circ * Math.min(pct, 1)} ${circ}`} strokeLinecap="round"
               style={{ transition: "stroke-dasharray 0.5s ease" }} />
           )}
         </svg>
@@ -41,14 +41,14 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
           <span className="text-xs font-bold font-mono tabular-nums leading-none text-foreground">
             {Math.round(value)}{unit}
           </span>
-          {done && <span className="text-xs" style={{ color: THEME.success }}>&#10003;</span>}
+          {done && <span className="text-xs" style={{ color }}>&#10003;</span>}
         </div>
         {/* Completion flash overlay */}
         {flashKey > 0 && (
           <motion.div
             key={flashKey}
             className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ backgroundColor: THEME.success }}
+            style={{ backgroundColor: color }}
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 0.3, 0] }}
             transition={{ duration: 0.5 }}
