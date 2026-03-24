@@ -321,7 +321,7 @@ export default function Home() {
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
 
       <header>
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-2 pb-3">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-1 pb-1">
           <div className="flex flex-col">
             <div className="flex items-center gap-2.5">
               <svg width="34" height="34" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
@@ -336,51 +336,29 @@ export default function Home() {
               </svg>
               <span className="text-xl font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-sm text-muted-foreground">
-                {profile?.displayName ? (new Date().getHours() < 12 ? "Good morning, " : new Date().getHours() < 17 ? "Good afternoon, " : "Good evening, ") + profile.displayName.split(" ")[0] : "Let's put in work today."}
+            {programState && (
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5 ml-[46px]">
+                {"Week " + programState.weekNumber + " · " + programState.currentPhase + " phase"}
               </span>
-              {programState && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: THEME.brand + '12', color: THEME.brand }}>
-                  {"Wk " + programState.weekNumber + " · " + programState.currentPhase}
-                </span>
-              )}
-            </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <motion.div key={streak}
-              initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.2 } : undefined}
+              initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.1 } : undefined}
               animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
-              className={cn("relative flex items-center gap-1.5 px-3 py-1.5 rounded-full", streak > 0 ? "" : "bg-muted")}
-              style={streak > 0 ? { background: "linear-gradient(135deg, rgba(251,146,60,0.15) 0%, rgba(249,115,22,0.22) 100%)" } : undefined}>
-              {/* Glow behind flame on streak extension */}
-              <AnimatePresence>
-                {streakJustExtended && (
-                  <motion.div
-                    className="absolute inset-0 rounded-full"
-                    style={{ background: "radial-gradient(circle, rgba(249,115,22,0.45) 0%, transparent 70%)" }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1.3 }}
-                    exit={{ opacity: 0, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  />
-                )}
-              </AnimatePresence>
+              className={cn("flex items-center gap-1 px-2 py-1 rounded-full", streak > 0 ? "" : "bg-muted")}
+              style={streak > 0 ? { background: "rgba(251,146,60,0.06)" } : undefined}>
               <motion.span
                 animate={
-                  streakJustExtended
-                    ? { opacity: 1, scale: [1, 1.3, 1] }
-                    : streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
+                  streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
                 }
                 transition={
-                  streakJustExtended
-                    ? { duration: 0.5 }
-                    : streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
+                  streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
                 }
               >
                 <Flame className={cn("w-4 h-4", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
               </motion.span>
-              <span className={cn("text-sm font-bold relative z-10", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
+              <span className={cn("text-sm font-semibold", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
                 <motion.span>{streakDisplay}</motion.span>
               </span>
             </motion.div>
