@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 const MotionLink = motion.create(Link);
-import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight, Apple } from "lucide-react";
+import { Dumbbell, Play, Footprints, Scale, Heart, Droplets, Plus, Minus, Activity, UtensilsCrossed, Route, PersonStanding, Zap, RefreshCw, Wind, Flag, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { getScoreColor, getScoreLabel, type ScoreBreakdown } from "@/lib/healthScore";
+import { getScoreColor, getScoreLabel } from "@/lib/healthScore";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import WaterWave from "@/components/home/WaterWave";
@@ -22,7 +22,7 @@ const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> 
   'flag': Flag,
 };
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore, scoreBreakdown }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -36,7 +36,6 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   todayRun: ScheduledRunDay | null;
   healthScore: number | null;
   prevHealthScore: number | null;
-  scoreBreakdown?: ScoreBreakdown;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const healthDisplay = useCountUp(healthScore ?? 0, { sessionKey: "health", duration: 1 });
@@ -203,23 +202,6 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
                     )}
                   </div>
                 </div>
-                {/* Breakdown row */}
-                {scoreBreakdown && (scoreBreakdown.workouts > 0 || scoreBreakdown.nutrition > 0 || scoreBreakdown.water > 0) && (
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/20">
-                    <div className="flex items-center gap-1">
-                      <Dumbbell className="w-3 h-3" style={{ color: THEME.text.muted }} />
-                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.workouts}/35</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Apple className="w-3 h-3" style={{ color: THEME.text.muted }} />
-                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.nutrition}/30</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Droplets className="w-3 h-3" style={{ color: THEME.text.muted }} />
-                      <span className="text-micro" style={{ color: THEME.text.muted }}>{scoreBreakdown.water}/15</span>
-                    </div>
-                  </div>
-                )}
               </>
             );
           })()}
