@@ -80,7 +80,7 @@ export default function RunDashboard() {
       <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30">
         <Footprints size={16} className="text-green-500 shrink-0" />
         <p className="text-xs text-muted-foreground dark:text-purple-200">
-          Head to the <strong className="text-purple-600 dark:text-purple-300">Log</strong> tab → <strong className="text-purple-600 dark:text-purple-300">Run</strong> to start your next run
+          Tap <strong className="text-purple-600 dark:text-purple-300">Start Run</strong> below or use the <strong className="text-purple-600 dark:text-purple-300">Programme</strong> tab to begin your next run
         </p>
       </div>
 
@@ -128,10 +128,10 @@ export default function RunDashboard() {
             Track your runs with GPS, pace splits, and route mapping
           </p>
           <button
-            onClick={() => navigate('/log')}
+            onClick={() => navigate('/run')}
             className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 mt-2"
           >
-            Go to Log Tab
+            Start a Run
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
