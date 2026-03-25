@@ -151,9 +151,10 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
                         transition={{ duration: 1.2, ease: "easeOut" }} />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-2xl font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
-                        {healthDisplay}
+                                          <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
+                        <motion.span>{healthDisplay}</motion.span>
                       </p>
+
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
