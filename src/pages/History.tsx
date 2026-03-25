@@ -140,19 +140,16 @@ export default function History() {
       return `${m}:${s.toString().padStart(2, "0")}`;
     };
 
-    // Fastest 1K
     const runs1k = runs.filter((r) => r.distance >= 1000 && r.avgPace > 0);
     const best1k = runs1k.length
       ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
       : null;
 
-    // Fastest 5K
     const runs5k = runs.filter((r) => r.distance >= 5000 && r.avgPace > 0);
     const best5k = runs5k.length
       ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
       : null;
 
-    // Longest Run
     const longestRun = runs.length
       ? runs.reduce((best, r) => (r.distance > best.distance ? r : best))
       : null;
