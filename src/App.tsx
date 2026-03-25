@@ -30,7 +30,6 @@ const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Home = lazyRetry(() => import("@/pages/Home"));
-const Log = lazyRetry(() => import("@/pages/Log"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const Settings = lazyRetry(() => import("@/pages/Settings"));
@@ -71,7 +70,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    // On iPhone you won't reliably see console logs, so store the stack in state.
     console.error("App crash:", error, info.componentStack);
     this.setState({ componentStack: info.componentStack || null });
   }
@@ -88,7 +86,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
               {this.state.error?.message || "An unexpected error occurred."}
             </p>
 
-            {/* This is the key: it tells you which component triggered the crash */}
             {this.state.componentStack && (
               <details className="text-left bg-card border border-border/50 rounded-xl p-3">
                 <summary className="text-sm font-medium text-foreground cursor-pointer">
@@ -122,11 +119,9 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
    ROUTE PREFETCHING
 ================================ */
 
-// Map of current route → likely next routes to prefetch
 const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
   "/": [() => import("@/pages/Food"), () => import("@/pages/Program")],
   "/food": [() => import("@/pages/Home"), () => import("@/pages/History")],
-  "/log": [() => import("@/pages/Home"), () => import("@/pages/History")],
   "/program": [() => import("@/pages/Home"), () => import("@/pages/Food")],
   "/social": [() => import("@/pages/Home")],
   "/history": [() => import("@/pages/Home"), () => import("@/pages/Settings")],
@@ -159,7 +154,6 @@ function RoutePrefetcher() {
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
 
-  // Flush offline queue on startup if already online
   useEffect(() => {
     if (user && navigator.onLine) {
       import('@/lib/offlineQueue').then(({ flushQueue }) => {
@@ -179,7 +173,6 @@ function AppRoutes() {
     );
   }
 
-  // Not logged in
   if (!user) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -192,7 +185,6 @@ function AppRoutes() {
     );
   }
 
-  // Logged in but hasn't completed onboarding
   if (!profile?.onboardingComplete) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -205,7 +197,6 @@ function AppRoutes() {
     );
   }
 
-  // Fully authenticated
   return (
     <Suspense fallback={<PageLoader />}>
       <RoutePrefetcher />
@@ -214,7 +205,6 @@ function AppRoutes() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route element={<Layout />}>
           <Route path="/" element={<RouteErrorBoundary><Home /></RouteErrorBoundary>} />
-          <Route path="/log" element={<RouteErrorBoundary><Log /></RouteErrorBoundary>} />
           <Route path="/food" element={<RouteErrorBoundary><Food /></RouteErrorBoundary>} />
           <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
           <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
@@ -225,6 +215,7 @@ function AppRoutes() {
         </Route>
         <Route path="/run" element={<RouteErrorBoundary><Run /></RouteErrorBoundary>} />
         <Route path="/run-summary" element={<RouteErrorBoundary><RunSummary /></RouteErrorBoundary>} />
+        <Route path="/log" element={<Navigate to="/food" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
