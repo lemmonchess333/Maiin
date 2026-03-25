@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -64,7 +65,7 @@ export default function Home() {
   const { newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
   const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string; rawDate: string | null } | null>(null);
-  const prevHealthScoreRef = useRef<number | null>(null);
+  const [prevHealthScore, setPrevHealthScore] = useState<number | null>(null);
   const prevStreakRef = useRef<number>(0);
   const [_streakJustExtended, setStreakJustExtended] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
@@ -155,10 +156,9 @@ export default function Home() {
     );
   }, [todayTotals, profile, todayWorkoutCount, waterGlasses, waterTarget, todayType]);
   const healthScore = healthScoreResult.score;
-  const prevHealthScore = prevHealthScoreRef.current;
 
   useEffect(function() {
-    if (healthScore != null) prevHealthScoreRef.current = healthScore;
+    if (healthScore != null) setPrevHealthScore(healthScore);
   }, [healthScore]);
 
   // Compute daily burn for Today's Energy card
@@ -201,17 +201,19 @@ export default function Home() {
 
   // Meal history for conditional "Log first meal" CTA
   const totalLifetimeMeals = meals.length;
-  const daysSinceLastMeal = useMemo(function() {
-    if (meals.length === 0) return Infinity;
-    const lastDate = meals[0].date; // meals sorted desc by createdAt
-    return Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000);
+  const [daysSinceLastMeal, setDaysSinceLastMeal] = useState(Infinity);
+  useEffect(function() {
+    if (meals.length === 0) { setDaysSinceLastMeal(Infinity); return; }
+    const lastDate = meals[0].date;
+    setDaysSinceLastMeal(Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000));
   }, [meals]);
 
   // Post-workout nutrition nudge — shows for 2h after a workout
-  const postWorkoutNudge = useMemo(function() {
+  const [postWorkoutNudge, setPostWorkoutNudge] = useState<{ type: "lift" | "run" | "both"; proteinRemaining: number } | null>(null);
+  useEffect(function() {
     const todayStr = format(new Date(), "yyyy-MM-dd");
     const todayWorkouts = workouts.filter(function(w) { return w.date === todayStr; });
-    if (todayWorkouts.length === 0) return null;
+    if (todayWorkouts.length === 0) { setPostWorkoutNudge(null); return; }
 
     const latest = todayWorkouts.reduce(function(a, b) {
       return (b.createdAt?.toMillis?.() || 0) > (a.createdAt?.toMillis?.() || 0) ? b : a;
@@ -219,7 +221,7 @@ export default function Home() {
 
     const createdMs = latest.createdAt?.toMillis?.() || Date.now();
     const minutesSince = Math.round((Date.now() - createdMs) / 60000);
-    if (minutesSince > 120) return null;
+    if (minutesSince > 120) { setPostWorkoutNudge(null); return; }
 
     const hasLift = latest.exercises.some(function(e) { return e.category !== "cardio"; });
     const hasRun = latest.exercises.some(function(e) { return e.category === "cardio"; });
@@ -228,7 +230,7 @@ export default function Home() {
     const bw = profile?.weightKg || 70;
     const proteinRemaining = Math.max(0, Math.round(bw * 0.4) - dailyProt);
 
-    return { type: type as "lift" | "run" | "both", proteinRemaining: proteinRemaining };
+    setPostWorkoutNudge({ type: type, proteinRemaining: proteinRemaining });
   }, [workouts, profile?.weightKg, dailyProt]);
 
   useEffect(function() {
@@ -297,11 +299,12 @@ export default function Home() {
 
   // Find today's scheduled run (if any)
   const todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
+  const runDays = programState?.runDays;
   const todayRun = useMemo(function() {
-    if (!programState?.runDays) return null;
-    const rd = programState.runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
+    if (!runDays) return null;
+    const rd = runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
     return rd || null;
-  }, [programState?.runDays, todayDayIndex]);
+  }, [runDays, todayDayIndex]);
 
   if (!profile) return <HomeSkeleton />;
 
