@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } fro
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
+
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
@@ -33,8 +33,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import HybridBalanceCard from "@/components/home/HybridBalanceCard";
-import InsightStrip from "@/components/home/InsightStrip";
+
 import TodayEnergy from "@/components/home/TodayEnergy";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
@@ -57,7 +56,7 @@ export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
-  const { currentWeek: perfDoc } = usePerformanceWeeks();
+
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState, loading: programLoading } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -92,12 +91,6 @@ export default function Home() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
     return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
-
-  const targetSessions = useMemo(function() {
-    const liftTarget = schedule.filter(function(d) { return d.type === "lift" || d.type === "both"; }).length;
-    const runTarget = schedule.filter(function(d) { return d.type === "run" || d.type === "both"; }).length;
-    return { lift: liftTarget, run: runTarget };
-  }, [schedule]);
 
   const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
   const streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
@@ -310,29 +303,6 @@ export default function Home() {
     return rd || null;
   }, [programState?.runDays, todayDayIndex]);
 
-  const [snapData, setSnapData] = useState({ ls: 0, rs: 0, lt: 0, rk: 0, ad: null as number | null });
-
-  useEffect(function() {
-    if (perfDoc) {
-      const agg = perfDoc.aggregates || { liftSessions: 0, runSessions: 0, liftTonnage: 0, runKm: 0 };
-      setSnapData({ ls: agg.liftSessions || 0, rs: agg.runSessions || 0, lt: agg.liftTonnage || 0, rk: agg.runKm || 0, ad: perfDoc.adherenceScore ?? null });
-      return;
-    }
-    const now = new Date();
-    const ws = new Date(now); ws.setDate(now.getDate() - now.getDay()); ws.setHours(0, 0, 0, 0);
-    const ww = workouts.filter(function(w) { return new Date(w.date) >= ws; });
-    let t = 0;
-    ww.forEach(function(w) { w.exercises?.forEach(function(ex) { ex.sets?.forEach(function(s) { t += (s.weightKg || 0) * (s.reps || 0); }); }); });
-    if (!user?.uid) { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); return; }
-    const startTs = Timestamp.fromDate(ws);
-    const endTs = Timestamp.fromDate(new Date(now.getTime() + 86400000));
-    getDocs(query(collection(db, "users", user.uid, "runs"), where("completedAt", ">=", startTs), where("completedAt", "<=", endTs))).then(function(snap) {
-      let rc = 0; let km = 0;
-      snap.docs.forEach(function(d) { rc++; km += ((d.data().distance || 0) / 1000); });
-      setSnapData({ ls: ww.length, rs: rc, lt: t, rk: Math.round(km * 10) / 10, ad: null });
-    }).catch(function() { setSnapData({ ls: ww.length, rs: 0, lt: t, rk: 0, ad: null }); });
-  }, [perfDoc, workouts, user]);
-
   if (!profile) return <HomeSkeleton />;
 
   return (
@@ -480,20 +450,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section aria-label="Weekly snapshot">
-        <HybridBalanceCard
-          liftSessions={snapData.ls}
-          runSessions={snapData.rs}
-          liftTonnage={snapData.lt}
-          runKm={snapData.rk}
-          targetLiftSessions={targetSessions.lift}
-          targetRunSessions={targetSessions.run}
-        />
-
-        {perfDoc && perfDoc.insight && (
-          <InsightStrip title={perfDoc.insight.title} bullet={perfDoc.insight.bullets[0] || ""} loadBand={perfDoc.loadBand} />
-        )}
-      </section>
 
 
       {/* Weight Log Bottom Sheet */}
