@@ -49,7 +49,6 @@ export default function UserProfile() {
       const acts = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }));
       setActivities(acts);
 
-      // Compute stats from activities
       let totalKm = 0;
       let totalSessions = 0;
       acts.forEach((a) => {
@@ -59,7 +58,6 @@ export default function UserProfile() {
       setStats({ totalKm, totalSessions });
     });
 
-    // Fetch badges from streaks data
     const badgesPromise = getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
       if (snap.exists()) {
         const data = snap.data();
@@ -226,7 +224,7 @@ export default function UserProfile() {
               Complete a workout or run to share your first activity. Turn on auto-posting in Settings to share automatically.
             </p>
             <div className="flex justify-center gap-3 pt-1">
-              <Link to="/log" className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">
+              <Link to="/program" className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">
                 Log a workout
               </Link>
               <Link to="/settings" className="px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold">
