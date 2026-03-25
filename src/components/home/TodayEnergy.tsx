@@ -100,7 +100,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                   {burn.dailyBudget.toLocaleString()}
                 </span>
               </div>
-              <Link to="/log" state={{ tab: 'food' }} className="inline-flex items-center gap-1 text-xs font-medium pt-1" style={{ color: THEME.brand }}>
+              <Link to="/food" className="inline-flex items-center gap-1 text-xs font-medium pt-1" style={{ color: THEME.brand }}>
                 View food log &rarr;
               </Link>
             </div>
@@ -109,7 +109,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
       </AnimatePresence>
 
       {/* Macro rings — always visible */}
-      <Link to="/log" state={{ tab: 'food' }} className="block relative">
+      <Link to="/food" className="block relative">
         {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
           <p className="text-xs font-medium text-center px-4 pt-2" style={{ color: THEME.semantic.nutrition }}>
             {postWorkoutNudge.type === "run"
