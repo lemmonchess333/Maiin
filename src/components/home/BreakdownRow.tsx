@@ -10,7 +10,7 @@ export default function BreakdownRow({ label, value, color, placeholder }: {
         {value === 0 && placeholder && (
           <span className="text-micro text-muted-foreground">{placeholder}</span>
         )}
-        <span className="text-xs font-semibold font-mono tabular-nums" style={{ color: color || THEME.textPrimary }}>
+        <span className="text-xs font-semibold font-mono tabular-nums" style={{ color: value === 0 ? THEME.text.muted : (color || THEME.textPrimary) }}>
           {value > 0 ? value.toLocaleString() : "0"}
         </span>
       </div>
