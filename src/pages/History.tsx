@@ -484,7 +484,7 @@ export default function History() {
               {nutrition.avgCalories === 0 && (
                 <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-1">
                   <p className="text-sm text-muted-foreground">Log meals to see your nutrition trends here.</p>
-                  <Link to="/log" state={{ tab: 'food' }} className="text-sm font-medium text-primary hover:underline">
+                  <Link to="/food" className="text-sm font-medium text-primary hover:underline">
                     Log a meal →
                   </Link>
                 </div>
