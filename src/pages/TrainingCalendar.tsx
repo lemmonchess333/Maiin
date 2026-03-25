@@ -229,9 +229,9 @@ export default function TrainingCalendar() {
           setSelectedDay(date);
           setShowAddModal(true);
         }}
-        onStart={function(session) {
-          if (session.type === 'run') navigate('/log?tab=run');
-          else navigate('/log');
+                onStart={function(session) {
+          if (session.type === 'run') navigate('/run');
+          else navigate('/program');
         }}
         onSkip={function(id) { updateSession(id, { status: 'skipped' }); }}
       />
