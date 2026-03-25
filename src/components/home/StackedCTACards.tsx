@@ -57,21 +57,15 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
 
   return (
     <div className="space-y-2">
-      {/* Quick Action Pills — promoted above hero cards */}
+      {/* Quick Action Pills — 2 pills: Start Run + Log Food */}
       <motion.div key="a" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex gap-2">
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
-          className="flex-1 flex items-center justify-center gap-2 py-3 min-h-[44px] rounded-xl transition-transform"
-          style={{ backgroundColor: THEME.lifting + "18" }}>
-          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-          <span className="text-sm font-semibold text-foreground">Log Lift</span>
-        </MotionLink>
         <MotionLink to="/run" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
           className="flex-1 flex items-center justify-center gap-2 py-3 min-h-[44px] rounded-xl transition-transform"
           style={{ backgroundColor: THEME.running + "18" }}>
           <Activity className="w-4 h-4" style={{ color: THEME.running }} />
           <span className="text-sm font-semibold text-foreground">Start Run</span>
         </MotionLink>
-        <MotionLink to="/log" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
+        <MotionLink to="/food" onClick={function() { haptic(); }} whileTap={{ scale: 0.95 }}
           className="flex-1 flex items-center justify-center gap-2 py-3 min-h-[44px] rounded-xl transition-transform"
           style={{ backgroundColor: THEME.semantic.nutrition + "18" }}>
           <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />
@@ -96,7 +90,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
               <p className="text-micro text-muted-foreground capitalize">{nextWorkout.dayType} · {nextWorkout.exercises.length} exercises</p>
             </div>
             <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm" style={{ backgroundColor: THEME.lifting, color: "white" }}>
-              <Play className="w-3 h-3" fill="white" />Start
+              <Play className="w-3 h-3" fill="white" />View
             </div>
           </div>
         </motion.button>
@@ -132,48 +126,41 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
         {/* Health Score — hero card with 270° ring */}
         <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98]">
           {(() => {
-            const zoneColor = healthScore != null ? getScoreColor(healthScore) : THEME.text.muted;
-            // 270° arc: circumference = 2πr, arc = 270/360 * circumference
-            const radius = 28;
+            const score = healthScore ?? 0;
+            const zoneColor = getScoreColor(score);
+            const radius = 40;
+            const stroke = 7;
             const circumference = 2 * Math.PI * radius;
-            const arcLength = (270 / 360) * circumference;
-            const fillLength = healthScore != null ? (healthScore / 100) * arcLength : 0;
-            // Rotate so gap is at bottom center: start at 135° (bottom-left)
-            const startAngle = 135;
-
+            const arcLength = circumference * 0.75;
+            const offset = arcLength - (arcLength * Math.min(score, 100)) / 100;
             return (
               <>
-                <div className="flex items-center gap-4">
-                  {/* Ring */}
-                  <div className="relative flex-shrink-0" style={{ width: 72, height: 72 }}>
-                    <svg className="w-full h-full" viewBox="0 0 72 72" style={{ transform: `rotate(${startAngle}deg)` }}>
-                      {/* Background track */}
-                      <circle cx="36" cy="36" r={radius} fill="none"
-                        stroke={zoneColor} strokeOpacity={0.15} strokeWidth="8"
-                        strokeDasharray={`${arcLength} ${circumference}`}
-                        strokeLinecap="round" />
-                      {/* Animated fill */}
-                      {healthScore != null && (
-                        <motion.circle cx="36" cy="36" r={radius} fill="none"
-                          stroke={zoneColor} strokeWidth="8"
-                          strokeDasharray={`${arcLength} ${circumference}`}
-                          strokeLinecap="round"
-                          initial={{ strokeDashoffset: arcLength }}
-                          animate={{ strokeDashoffset: arcLength - fillLength }}
-                          transition={{ duration: 1, ease: "easeOut" }} />
-                      )}
+                <div className="flex items-center gap-2 mb-3">
+                  <Heart className="w-4 h-4" style={{ color: zoneColor }} />
+                  <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="relative w-24 h-24 flex-shrink-0">
+                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]">
+                      <circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor + "1A"} strokeWidth={stroke}
+                        strokeDasharray={arcLength + " " + circumference} strokeLinecap="round" />
+                      <motion.circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor} strokeWidth={stroke}
+                        strokeDasharray={arcLength + " " + circumference} strokeLinecap="round"
+                        initial={{ strokeDashoffset: arcLength }}
+                        animate={{ strokeDashoffset: offset }}
+                        transition={{ duration: 1.2, ease: "easeOut" }} />
                     </svg>
-                    {/* Heart icon centered */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Heart className="w-4 h-4" style={{ color: zoneColor }} fill={zoneColor} fillOpacity={0.2} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <p className="text-2xl font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
+                        {healthDisplay}
+                      </p>
                     </div>
                   </div>
-                  {/* Score + label */}
                   <div className="flex-1 min-w-0">
                     {healthScore != null ? (
                       <>
-                        <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
-                          <motion.span>{healthDisplay}</motion.span>
+                        <p className="text-xs" style={{ color: THEME.text.muted }}>
+                          Based on your recent consistency, nutrition, and activity
                         </p>
                         <motion.p
                           className="text-sm font-medium mt-0.5"
