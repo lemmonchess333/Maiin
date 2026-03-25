@@ -31,6 +31,7 @@ const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Log = lazyRetry(() => import("@/pages/Log"));
+const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const Settings = lazyRetry(() => import("@/pages/Settings"));
 const Program = lazyRetry(() => import("@/pages/Program"));
@@ -123,9 +124,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 // Map of current route → likely next routes to prefetch
 const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
-  "/": [() => import("@/pages/Log"), () => import("@/pages/Program")],
+  "/": [() => import("@/pages/Food"), () => import("@/pages/Program")],
+  "/food": [() => import("@/pages/Home"), () => import("@/pages/History")],
   "/log": [() => import("@/pages/Home"), () => import("@/pages/History")],
-  "/program": [() => import("@/pages/Home"), () => import("@/pages/Log")],
+  "/program": [() => import("@/pages/Home"), () => import("@/pages/Food")],
   "/social": [() => import("@/pages/Home")],
   "/history": [() => import("@/pages/Home"), () => import("@/pages/Settings")],
 };
@@ -213,6 +215,7 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/" element={<RouteErrorBoundary><Home /></RouteErrorBoundary>} />
           <Route path="/log" element={<RouteErrorBoundary><Log /></RouteErrorBoundary>} />
+          <Route path="/food" element={<RouteErrorBoundary><Food /></RouteErrorBoundary>} />
           <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
           <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
