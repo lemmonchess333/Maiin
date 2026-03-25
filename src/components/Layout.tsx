@@ -1,16 +1,17 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, PlusCircle, BarChart3, Dumbbell, Users, WifiOff, Check } from "lucide-react";
+import { Home, BarChart3, Dumbbell, Users, WifiOff, Check, UtensilsCrossed } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useEffect } from "react";
 
-const tabs = [
+const tabs: { to: string; icon: typeof Home | null; label: string; elevated?: boolean }[] = [
   { to: "/", icon: Home, label: "Home" },
-  { to: "/log", icon: PlusCircle, label: "Log" },
   { to: "/program", icon: Dumbbell, label: "Program" },
+  { to: "/food", icon: null, label: "Food", elevated: true },
   { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "History" },
 ];
@@ -21,6 +22,25 @@ export default function Layout() {
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
+
+  // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
+  useEffect(() => {
+    const fixDrift = () => {
+      const bar = document.querySelector('nav[data-tab-bar]');
+      if (bar) {
+        const rect = bar.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight + 2) {
+          (bar as HTMLElement).style.bottom = '0px';
+        }
+      }
+    };
+    window.addEventListener('resize', fixDrift);
+    document.addEventListener('visibilitychange', fixDrift);
+    return () => {
+      window.removeEventListener('resize', fixDrift);
+      document.removeEventListener('visibilitychange', fixDrift);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background transition-colors pb-20">
@@ -80,12 +100,68 @@ export default function Layout() {
 
       {/* Bottom tab bar */}
       {!hideNav && (
-      <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30">
+      <nav
+        aria-label="Main navigation"
+        data-tab-bar
+        className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30"
+        style={{ overflow: "visible" }}
+      >
         <LayoutGroup>
-        <div className="max-w-md mx-auto flex" role="tablist">
+        <div className="max-w-md mx-auto flex items-end" role="tablist">
           {tabs.map((tab) => {
-            const Icon = tab.icon;
             const hasBadge = tab.to === "/social" && unreadCount > 0;
+
+            // Elevated centre food button
+            if (tab.elevated) {
+              const isActive = location.pathname === tab.to;
+              return (
+                <NavLink
+                  key={tab.to}
+                  to={tab.to}
+                  aria-label={tab.label}
+                  onClick={() => haptic('light')}
+                  className="flex-1 flex flex-col items-center py-3"
+                >
+                  {/* Elevated circle */}
+                  <motion.div
+                    whileTap={prefersReducedMotion ? undefined : { scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    className="relative -mt-8 mb-1"
+                  >
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{
+                        background: "linear-gradient(135deg, #f07368, #f09060)",
+                        boxShadow: "0 6px 20px rgba(240, 115, 104, 0.25)",
+                      }}
+                    >
+                      <UtensilsCrossed className="w-5 h-5 text-white" />
+                    </div>
+                  </motion.div>
+                  <span className={cn(
+                    "text-xs font-medium tracking-wide",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {tab.label}
+                  </span>
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    prefersReducedMotion ? (
+                      <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />
+                    ) : (
+                      <motion.div
+                        layoutId="tab-indicator"
+                        className="w-1 h-1 rounded-full bg-primary mt-0.5"
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )
+                  )}
+                </NavLink>
+              );
+            }
+
+            // Standard tab
+            const Icon = tab.icon!;
             return (
               <NavLink
                 key={tab.to}
