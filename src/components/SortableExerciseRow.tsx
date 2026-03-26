@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 
@@ -40,7 +40,6 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
     const deltaX = touch.clientX - startRef.current.x;
     const deltaY = touch.clientY - startRef.current.y;
 
-    // Lock direction on first significant movement
     if (!directionLocked.current) {
       if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return;
       directionLocked.current = Math.abs(deltaX) > Math.abs(deltaY) ? "horizontal" : "vertical";
@@ -49,7 +48,6 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
     if (directionLocked.current !== "horizontal") return;
 
     setSwiping(true);
-    // Only allow left swipe (negative delta), cap at -80
     const clamped = Math.max(-80, Math.min(0, deltaX));
     setOffsetX(clamped);
   }, []);
@@ -58,11 +56,9 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
     startRef.current = null;
     directionLocked.current = null;
     setSwiping(false);
-    // Snap: if past threshold, reveal delete; otherwise snap back
     setOffsetX((prev) => (prev < -45 ? -80 : 0));
   }, []);
 
-  // Tap anywhere to dismiss revealed delete panel
   const handleCardClick = useCallback(() => {
     if (offsetX < 0) {
       setOffsetX(0);
@@ -80,7 +76,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative overflow-hidden rounded-[14px] transition-colors",
+        "relative overflow-hidden transition-colors",
         isDragging && "scale-[1.02] shadow-lg opacity-90",
         justDropped && "bg-green-50 dark:bg-green-950/20",
       )}
@@ -89,8 +85,8 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       {onDelete && (
         <button
           onClick={onDelete}
-          className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center rounded-[14px]"
-          style={{ background: "#FF3B30" }}
+          className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
+          style={{ background: "#FF3B30", borderRadius: 10 }}
           aria-label="Delete exercise"
         >
           <Trash2 className="w-5 h-5 text-white" />
@@ -100,26 +96,31 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       {/* Swipeable card content */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="relative flex items-center gap-1 bg-card"
+        className="relative flex items-center"
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? "none" : "transform 0.2s ease",
-          borderRadius: 14,
+          backgroundColor: "#FFFFFF",
+          borderRadius: 10,
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
       >
-        {/* Drag handle */}
+        {/* 2×3 dot grid drag handle */}
         <button
           {...attributes}
           {...listeners}
           onPointerDown={() => haptic("light")}
-          className="touch-none p-2 shrink-0 cursor-grab active:cursor-grabbing"
-          style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}
+          className="touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
+          style={{ width: 28, minHeight: 44 }}
         >
-          <GripVertical className="w-3 h-3" style={{ color: "#9ca3af", opacity: 0.4 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 3px)", gap: 3 }}>
+            {[0, 1, 2, 3, 4, 5].map((j) => (
+              <div key={j} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#8E8E93", opacity: 0.22 }} />
+            ))}
+          </div>
         </button>
         <div className="flex-1 min-w-0">{children}</div>
       </div>

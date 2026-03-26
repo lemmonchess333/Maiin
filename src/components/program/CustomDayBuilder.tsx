@@ -9,7 +9,7 @@ import { normalizeExercise } from "@/features/program/programTypes";
 import type { Exercise } from "@/lib/exercises";
 import { getExerciseById } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
-import { Plus, Dumbbell, Save } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -90,29 +90,42 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
     return getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
   };
 
-  const inputClass = "h-[36px] rounded-lg border border-border/60 bg-card text-center text-[14px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:bg-primary/5 transition-colors";
-
   return (
     <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[90vh] flex flex-col bg-background safe-area-pb">
+        <Drawer.Content
+          className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[90vh] flex flex-col safe-area-pb"
+          style={{ backgroundColor: "#F2F2F7" }}
+        >
           {/* Header */}
           <div className="px-5 pt-5 pb-2">
-            <div className="w-10 h-1 rounded-full bg-border mx-auto mb-4" />
-            <Drawer.Title className="text-base font-semibold text-foreground">
+            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: "#C7C7CC" }} />
+            <Drawer.Title style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>
               Edit {dayName}
             </Drawer.Title>
-            <p className="text-xs text-muted-foreground">
+            <p style={{ fontSize: 13, color: "#8E8E93", marginTop: 2 }}>
               {exercises.length} exercise{exercises.length !== 1 ? "s" : ""} · drag to reorder · swipe to delete
             </p>
           </div>
 
+          {/* S / R / W column headers — single row at sheet level */}
+          {exercises.length > 0 && (
+            <div className="flex px-5 pb-1.5" style={{ paddingLeft: 64 }}>
+              <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>S</span>
+              <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>R</span>
+              <div className="flex-1 flex items-center">
+                <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>W</span>
+                <span style={{ width: 20 }} />
+              </div>
+            </div>
+          )}
+
           {/* Scrollable exercise list + picker */}
-          <div className="flex-1 overflow-y-auto min-h-0 px-5">
+          <div className="flex-1 overflow-y-auto min-h-0 px-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={exercises.map((_, i) => `custom-ex-${i}`)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-1.5">
+                <div className="space-y-4">
                   {exercises.map((ex, i) => {
                     const weightVal = getWeightDisplay(ex);
                     const isBW = isBodyweight(ex);
@@ -125,71 +138,60 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                         justDropped={justDroppedId === `custom-ex-${i}`}
                         onDelete={() => removeExercise(i)}
                       >
-                        <div className="rounded-xl bg-muted px-2.5 py-1.5">
-                          {/* Name row + prev data */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                              <Dumbbell className="w-3.5 h-3.5 text-primary" />
-                            </div>
-                            <p className="text-[13px] font-medium text-foreground truncate flex-1">{ex.name}</p>
+                        <div style={{ backgroundColor: "#FFFFFF", borderRadius: 10, padding: "10px 12px" }}>
+                          {/* Exercise name + prev data */}
+                          <div className="flex items-center gap-2" style={{ marginBottom: 6 }}>
+                            <p className="truncate flex-1" style={{ fontSize: 16, fontWeight: 700, color: "#1C1C1E", lineHeight: 1.2 }}>{ex.name}</p>
                             {prev && (
-                              <span className="text-[10px] text-muted-foreground font-mono tabular-nums shrink-0 opacity-60">
+                              <span className="font-mono tabular-nums shrink-0" style={{ fontSize: 10, color: "#AEAEB2" }}>
                                 prev {prev.sets}×{prev.reps}{prev.weight > 0 ? ` @ ${prev.weight}` : ""}
                               </span>
                             )}
                           </div>
 
-                          {/* S / R / W headers + inputs */}
-                          <div className="flex items-end gap-1.5 mt-1.5 ml-10">
-                            <div className="flex flex-col items-center">
-                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">S</span>
-                              <input
-                                id={`custom-sets-${i}`}
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={ex.sets}
-                                onChange={(e) => {
-                                  const v = parseInt(e.target.value, 10);
-                                  if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
-                                }}
-                                className={cn(inputClass, "w-[40px]")}
-                              />
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">R</span>
-                              <input
-                                id={`custom-reps-${i}`}
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={ex.reps}
-                                onChange={(e) => {
-                                  const v = parseInt(e.target.value, 10);
-                                  if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
-                                }}
-                                className={cn(inputClass, "w-[40px]")}
-                              />
-                            </div>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">W</span>
-                              <div className="flex items-center gap-1">
-                                <input
-                                  id={`custom-weight-${i}`}
-                                  type="text"
-                                  inputMode="decimal"
-                                  pattern="[0-9.]*"
-                                  value={weightVal || ""}
-                                  placeholder={isBW ? "BW" : "0"}
-                                  onChange={(e) => {
-                                    const v = parseFloat(e.target.value);
-                                    updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
-                                  }}
-                                  className={cn(inputClass, "w-[52px] placeholder:text-muted-foreground/50")}
-                                />
-                                <span className="text-[11px] text-muted-foreground">kg</span>
-                              </div>
-                            </div>
+                          {/* Input row */}
+                          <div className="flex items-center" style={{ gap: 6 }}>
+                            <input
+                              id={`custom-sets-${i}`}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={ex.sets}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
+                              }}
+                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                            />
+                            <input
+                              id={`custom-reps-${i}`}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={ex.reps}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
+                              }}
+                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                            />
+                            <input
+                              id={`custom-weight-${i}`}
+                              type="text"
+                              inputMode="decimal"
+                              pattern="[0-9.]*"
+                              value={weightVal || ""}
+                              placeholder={isBW ? "BW" : "0"}
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value);
+                                updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
+                              }}
+                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: weightVal ? "#1C1C1E" : "#AEAEB2" }}
+                            />
+                            <span style={{ fontSize: 12, fontWeight: 500, color: "#AEAEB2", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
                           </div>
                         </div>
                       </SortableExerciseRow>
@@ -200,7 +202,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
             </DndContext>
 
             {showPicker && (
-              <div className="mt-3">
+              <div className="mt-4">
                 <ExercisePicker
                   onSelect={addExercise}
                   onMultiSelect={addMultipleExercises}
@@ -211,11 +213,12 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
           </div>
 
           {/* Footer — always visible */}
-          <div className="px-5 pt-3 pb-5 space-y-3 border-t border-border/50">
+          <div className="px-4 pt-3 pb-5 space-y-3" style={{ backgroundColor: "#F2F2F7" }}>
             {!showPicker && (
               <button
                 onClick={() => setShowPicker(true)}
-                className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
               >
                 <Plus className="w-4 h-4" /> Add Exercise
               </button>
