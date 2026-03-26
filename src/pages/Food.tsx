@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
-import { useWorkouts } from "@/hooks/useWorkouts";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
@@ -77,7 +76,6 @@ interface OFFResult {
 export default function Food() {
   const { user, profile } = useAuth();
   const { saveLog } = useDailyLogs();
-  const { getWorkoutsForDate } = useWorkouts();
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [scanOpen, setScanOpen] = useState(false);
@@ -130,7 +128,6 @@ export default function Food() {
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const todaysWorkouts = getWorkoutsForDate(selectedDate);
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
   const dailyTotals = getDailyTotals(selectedDate);
@@ -278,17 +275,16 @@ export default function Food() {
   };
 
   useEffect(() => {
-    const workoutCount = todaysWorkouts.length;
     const mealCount = todaysMeals.length;
-    if (workoutCount === 0 && mealCount === 0) return;
+    if (mealCount === 0) return;
     saveLog({
       date: selectedDate,
-      workouts: workoutCount,
+      workouts: 0,
       meals: mealCount,
       hasPR: false,
       notes: "",
     });
-  }, [todaysWorkouts.length, todaysMeals.length, selectedDate, saveLog]);
+  }, [todaysMeals.length, selectedDate, saveLog]);
 
   const changeDate = (delta: number) => {
     const d = new Date(selectedDate + "T12:00:00");
