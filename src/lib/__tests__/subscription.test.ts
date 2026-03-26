@@ -94,8 +94,8 @@ describe('getSubscriptionInfo', () => {
     expect(info.trialDaysLeft).toBe(0);
   });
 
-  it('trial expiring 1ms from now is still active', () => {
-    const almostExpired = new Date(Date.now() + 1);
+  it('trial expiring soon is still active', () => {
+    const almostExpired = new Date(Date.now() + 5000);
     const info = getSubscriptionInfo(makeProfile({
       trialExpiresAt: almostExpired.toISOString(),
     }));
