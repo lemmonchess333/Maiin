@@ -7,8 +7,9 @@ import ExercisePicker from "./ExercisePicker";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { normalizeExercise } from "@/features/program/programTypes";
 import type { Exercise } from "@/lib/exercises";
+import { getExerciseById } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
-import { Plus, Trash2, Dumbbell, Save } from "lucide-react";
+import { Plus, Dumbbell, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -25,6 +26,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
   const [showPicker, setShowPicker] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [focusedWeightIdx, setFocusedWeightIdx] = useState<number | null>(null);
 
   const sensors = useSensors(
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
@@ -96,6 +98,20 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
     }
   };
 
+  const getWeightDisplay = (ex: ProgramExercise): number => {
+    if (ex.weight > 0) return ex.weight;
+    if (ex.lastAttemptedWeight > 0) return ex.lastAttemptedWeight;
+    if (ex.lastSuccessfulWeight > 0) return ex.lastSuccessfulWeight;
+    return 0;
+  };
+
+  const getWeightPlaceholder = (ex: ProgramExercise): string => {
+    const isBodyweight = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+    return isBodyweight ? "BW" : "—";
+  };
+
+  const inputClass = "h-[32px] rounded-lg border border-[#E5E5EA] bg-[#F8F8FA] text-center text-[15px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:border-primary focus:bg-primary/5 transition-colors";
+
   return (
     <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <Drawer.Portal>
@@ -110,7 +126,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                   Edit {dayName}
                 </Drawer.Title>
                 <p className="text-xs text-muted-foreground">
-                  {exercises.length} exercises · drag to reorder
+                  {exercises.length} exercise{exercises.length !== 1 ? "s" : ""} · drag to reorder · swipe to delete
                 </p>
               </div>
             </div>
@@ -118,50 +134,93 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
             {/* Exercise List */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={exercises.map((_, i) => `custom-ex-${i}`)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                  {exercises.map((ex, i) => (
-                    <SortableExerciseRow key={`custom-ex-${i}`} id={`custom-ex-${i}`} justDropped={justDroppedId === `custom-ex-${i}`}>
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-card">
-                        <Dumbbell className="w-4 h-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <label htmlFor={`custom-sets-${i}`} className="text-xs text-muted-foreground">Sets</label>
+                <div className="space-y-2.5">
+                  {exercises.map((ex, i) => {
+                    const weightVal = getWeightDisplay(ex);
+                    const placeholder = getWeightPlaceholder(ex);
+                    const isWeightFocused = focusedWeightIdx === i;
+                    const showPlaceholder = !isWeightFocused && weightVal === 0;
+
+                    return (
+                      <SortableExerciseRow
+                        key={`custom-ex-${i}`}
+                        id={`custom-ex-${i}`}
+                        justDropped={justDroppedId === `custom-ex-${i}`}
+                        onDelete={() => removeExercise(i)}
+                      >
+                        <div
+                          className="rounded-[14px] border border-[#E5E5EA] bg-card"
+                          style={{ padding: "14px 12px" }}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                              <Dumbbell className="w-4 h-4 text-primary" />
+                            </div>
+                            <p className="text-sm font-medium text-foreground truncate flex-1">{ex.name}</p>
+                          </div>
+
+                          {/* Compact inline: Sets [4] × Reps [6] @ [50] kg */}
+                          <div className="flex items-center gap-1.5 mt-2.5 ml-[46px]">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sets</span>
                             <input
                               id={`custom-sets-${i}`}
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
                               value={ex.sets}
-                              onChange={(e) => updateField(i, "sets", Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
-                              className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
+                              }}
+                              className={cn(inputClass, "w-[38px]")}
                             />
-                            <label htmlFor={`custom-reps-${i}`} className="text-xs text-muted-foreground">Reps</label>
+                            <span className="text-xs" style={{ color: "#E5E5EA" }}>×</span>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Reps</span>
                             <input
                               id={`custom-reps-${i}`}
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
                               value={ex.reps}
-                              onChange={(e) => updateField(i, "reps", Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
-                              className="w-12 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center"
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
+                              }}
+                              className={cn(inputClass, "w-[38px]")}
                             />
-                            <label htmlFor={`custom-weight-${i}`} className="text-xs text-muted-foreground">kg</label>
-                            <input
-                              id={`custom-weight-${i}`}
-                              type="number"
-                              value={ex.weight || ""}
-                              placeholder="BW"
-                              onChange={(e) => updateField(i, "weight", Math.max(0, Number(e.target.value) || 0))}
-                              className="w-14 px-1.5 py-0.5 rounded bg-muted text-xs text-foreground text-center placeholder:text-muted-foreground"
-                            />
+                            <span className="text-xs" style={{ color: "#E5E5EA" }}>@</span>
+
+                            {/* Weight field with placeholder overlay */}
+                            <div className="relative">
+                              <input
+                                id={`custom-weight-${i}`}
+                                type="text"
+                                inputMode="decimal"
+                                pattern="[0-9.]*"
+                                value={weightVal || ""}
+                                onFocus={() => setFocusedWeightIdx(i)}
+                                onBlur={() => setFocusedWeightIdx(null)}
+                                onChange={(e) => {
+                                  const v = parseFloat(e.target.value);
+                                  updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
+                                }}
+                                className={cn(inputClass, "w-[52px]")}
+                              />
+                              {showPlaceholder && (
+                                <span
+                                  className="absolute inset-0 flex items-center justify-center text-[15px] font-bold font-mono pointer-events-none"
+                                  style={{ color: "#8E8E93", opacity: 0.5 }}
+                                >
+                                  {placeholder}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-muted-foreground">kg</span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => removeExercise(i)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors shrink-0 self-center"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </SortableExerciseRow>
-                  ))}
+                      </SortableExerciseRow>
+                    );
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
@@ -193,7 +252,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
               )}
             >
               <Save className="w-4 h-4" />
-              {saving ? "Saving..." : "Save Custom Day"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </Drawer.Content>
