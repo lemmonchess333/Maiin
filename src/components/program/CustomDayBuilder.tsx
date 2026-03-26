@@ -111,7 +111,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
 
           {/* S / R / W column headers — single row at sheet level */}
           {exercises.length > 0 && (
-            <div className="flex items-center px-4 pb-1.5" style={{ paddingLeft: 48 }}>
+            <div className="flex items-center px-4 pb-1.5" style={{ paddingLeft: 40 }}>
               <div className="flex items-center" style={{ gap: 6 }}>
                 <span style={{ width: 64, textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 0.5, color: "#8E8E93" }}>S</span>
                 <span style={{ width: 64, textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 0.5, color: "#8E8E93" }}>R</span>
@@ -124,7 +124,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
           <div className="flex-1 overflow-y-auto min-h-0 px-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={exercises.map((_, i) => `custom-ex-${i}`)} strategy={verticalListSortingStrategy}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {exercises.map((ex, i) => {
                     const weightVal = getWeightDisplay(ex);
                     const isBW = isBodyweight(ex);
@@ -188,7 +188,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                                 updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
                               }}
                               className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                              style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: weightVal ? "#1C1C1E" : "#AEAEB2" }}
+                              style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: weightVal ? "#1C1C1E" : "#C7C7CC" }}
                             />
                             <span style={{ fontSize: 12, fontWeight: 500, color: "#AEAEB2", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
                           </div>
