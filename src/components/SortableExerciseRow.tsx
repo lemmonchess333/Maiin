@@ -10,9 +10,10 @@ interface Props {
   children: React.ReactNode;
   justDropped?: boolean;
   onDelete?: () => void;
+  showHandle?: boolean;
 }
 
-export default function SortableExerciseRow({ id, children, justDropped, onDelete }: Props) {
+export default function SortableExerciseRow({ id, children, justDropped, onDelete, showHandle = true }: Props) {
   const {
     attributes,
     listeners,
@@ -108,20 +109,22 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
       >
-        {/* 2×3 dot grid drag handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          onPointerDown={() => haptic("light")}
-          className="touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
-          style={{ width: 28, minHeight: 44 }}
-        >
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 3px)", gap: 3 }}>
-            {[0, 1, 2, 3, 4, 5].map((j) => (
-              <div key={j} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#8E8E93", opacity: 0.22 }} />
-            ))}
-          </div>
-        </button>
+        {/* Drag handle — only shown when showHandle is true */}
+        {showHandle && (
+          <button
+            {...attributes}
+            {...listeners}
+            onPointerDown={() => haptic("light")}
+            className="touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
+            style={{ width: 28, minHeight: 44 }}
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 3px)", gap: 3 }}>
+              {[0, 1, 2, 3, 4, 5].map((j) => (
+                <div key={j} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#8E8E93", opacity: 0.22 }} />
+              ))}
+            </div>
+          </button>
+        )}
         <div className="flex-1 min-w-0">{children}</div>
       </div>
     </div>

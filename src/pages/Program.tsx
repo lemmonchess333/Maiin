@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useSubscription } from "@/lib/subscription";
@@ -32,14 +32,22 @@ import {
   Check,
   Footprints,
   Leaf,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Repeat,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
+import type { Exercise } from "@/lib/exercises";
+import { normalizeExercise } from "@/features/program/programTypes";
+import { haptic } from "@/lib/haptic";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
-import CustomDayBuilder from "@/components/program/CustomDayBuilder";
+import ExercisePicker from "@/components/program/ExercisePicker";
 
 /**
  * IMPORTANT:
@@ -107,23 +115,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
 
-  // Inline card editing state
+  // Inline card editing state (S/R only, no weight)
   const [expandedCardIdx, setExpandedCardIdx] = useState<number | null>(null);
-  const [editValues, setEditValues] = useState<{ sets: number; reps: number; weight: number } | null>(null);
+  const [editValues, setEditValues] = useState<{ sets: number; reps: number } | null>(null);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [showAddPicker, setShowAddPicker] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ exIndex: number; x: number; y: number } | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<number | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const expandCard = (idx: number, ex: ProgramExercise) => {
+    if (reorderMode) return;
     if (expandedCardIdx !== null && expandedCardIdx !== idx) {
-      // Collapse current, then expand new after animation
       saveAndCollapseCard(expandedCardIdx);
       setTimeout(() => {
         setExpandedCardIdx(idx);
-        setEditValues({ sets: ex.sets, reps: ex.reps, weight: ex.weight });
+        setEditValues({ sets: ex.sets, reps: ex.reps });
       }, 300);
     } else if (expandedCardIdx === idx) {
       saveAndCollapseCard(idx);
     } else {
       setExpandedCardIdx(idx);
-      setEditValues({ sets: ex.sets, reps: ex.reps, weight: ex.weight });
+      setEditValues({ sets: ex.sets, reps: ex.reps });
     }
   };
 
@@ -135,19 +148,71 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     setEditValues(null);
   };
 
+  // Exercise management helpers (auto-save to Firestore)
+  const removeExFromDay = async (exIndex: number) => {
+    if (!programState || todayWorkoutIndex === null) return;
+    const updated = programState.workouts.map((d, i) =>
+      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
+    );
+    await saveProgram({ ...programState, workouts: updated });
+  };
+
+  const moveExercise = async (exIndex: number, direction: -1 | 1) => {
+    if (!programState || todayWorkoutIndex === null) return;
+    const exercises = [...programState.workouts[todayWorkoutIndex].exercises];
+    const newIdx = exIndex + direction;
+    if (newIdx < 0 || newIdx >= exercises.length) return;
+    [exercises[exIndex], exercises[newIdx]] = [exercises[newIdx], exercises[exIndex]];
+    const updated = programState.workouts.map((d, i) =>
+      i === todayWorkoutIndex ? { ...d, exercises } : d
+    );
+    await saveProgram({ ...programState, workouts: updated });
+    setContextMenu(null);
+  };
+
+  const replaceExercise = async (exIndex: number, newEx: Exercise) => {
+    if (!programState || todayWorkoutIndex === null) return;
+    const old = programState.workouts[todayWorkoutIndex].exercises[exIndex];
+    const replacement = normalizeExercise({
+      name: newEx.name, exerciseId: newEx.id,
+      movementCategory: old.movementCategory, sets: old.sets, reps: old.reps, weight: old.weight,
+    });
+    const updated = programState.workouts.map((d, i) =>
+      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
+    );
+    await saveProgram({ ...programState, workouts: updated });
+    setReplaceTarget(null);
+  };
+
+  const addExercisesToDay = async (exercises: Exercise[]) => {
+    if (!programState || todayWorkoutIndex === null) return;
+    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, movementCategory: "horizontal_push", sets: 3, reps: 10, weight: 0 }));
+    const updated = programState.workouts.map((d, i) =>
+      i === todayWorkoutIndex ? { ...d, exercises: [...d.exercises, ...newExs] } : d
+    );
+    await saveProgram({ ...programState, workouts: updated });
+    setShowAddPicker(false);
+  };
+
+  const handleLongPressStart = (exIndex: number, e: React.TouchEvent) => {
+    if (reorderMode) return;
+    const touch = e.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    longPressTimer.current = setTimeout(() => {
+      haptic("medium");
+      setContextMenu({ exIndex, x, y });
+    }, 500);
+  };
+
+  const handleLongPressCancel = () => {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  };
+
   // Save feedback states
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
   const [showPlateCalc, setShowPlateCalc] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
-  const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
-
-  const handleSaveCustomDay = async (dayIdx: number, exercises: ProgramExercise[], isCustom: boolean) => {
-    if (!programState) return;
-    const updatedWorkouts = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises, isCustom } : d
-    );
-    await saveProgram({ ...programState, workouts: updatedWorkouts });
-  };
 
   const sensors = useSensors(
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
@@ -354,6 +419,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             </p>
           </div>
           <div className="flex items-center gap-1">
+            {reorderMode ? (
+              <button
+                onClick={() => setReorderMode(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                style={{ color: "#7C6BF0" }}
+              >
+                Done
+              </button>
+            ) : (
+              <button
+                onClick={() => { setReorderMode(true); setExpandedCardIdx(null); setEditValues(null); }}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+              >
+                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
             <button
               onClick={() => !phaseLocked && setShowSettings(true)}
               disabled={phaseLocked}
@@ -390,109 +471,112 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 </div>
               </div>
 
-              {/* Exercise cards — tap to expand for inline editing */}
-              <div className="space-y-1.5">
-                {todayWorkout.exercises.map((ex, i) => {
-                  const isExpanded = expandedCardIdx === i;
-                  const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-
-                  return (
-                    <div key={i} className="rounded-xl bg-card overflow-hidden" style={isExpanded ? { borderLeft: "3px solid #7C6BF0", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" } : undefined}>
-                      {/* Card header — always visible */}
-                      <button
-                        onClick={() => expandCard(i, ex)}
-                        className="w-full flex items-center gap-3 p-3 text-left"
-                      >
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                          {!isExpanded && (
-                            <p className="text-xs text-muted-foreground">
-                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                            </p>
-                          )}
-                        </div>
-                        {isExpanded ? (
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#F0EDFD", minWidth: 44, minHeight: 44 }}>
-                            <Check className="w-[18px] h-[18px]" style={{ color: "#7C6BF0" }} />
-                          </div>
-                        ) : (
-                          <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: "#C7C7CC", opacity: 0.3 }} />
-                        )}
-                      </button>
-
-                      {/* Expanded inline editing */}
-                      <AnimatePresence>
-                        {isExpanded && editValues && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1, transition: { height: { duration: 0.25 }, opacity: { duration: 0.15, delay: 0.1 } } }}
-                            exit={{ opacity: 0, height: 0, transition: { opacity: { duration: 0.1 }, height: { duration: 0.2, delay: 0.1 } } }}
-                            className="overflow-hidden"
-                          >
-                            <div className="flex items-end gap-1.5 px-3 pb-3 ml-11">
-                              <div className="flex flex-col items-center">
-                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>S</span>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={editValues.sets}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onChange={(e) => {
-                                    const v = parseInt(e.target.value, 10);
-                                    if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev);
-                                  }}
-                                  className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                  style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                                />
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>R</span>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={editValues.reps}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onChange={(e) => {
-                                    const v = parseInt(e.target.value, 10);
-                                    if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev);
-                                  }}
-                                  className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                  style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                                />
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>W</span>
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    pattern="[0-9.]*"
-                                    value={editValues.weight || ""}
-                                    placeholder={isBW ? "BW" : "0"}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                      const v = parseFloat(e.target.value);
-                                      setEditValues((prev) => prev ? { ...prev, weight: isNaN(v) ? 0 : Math.max(0, v) } : prev);
-                                    }}
-                                    className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                    style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: editValues.weight ? "#1C1C1E" : "#C7C7CC" }}
-                                  />
-                                  <span style={{ fontSize: 12, fontWeight: 500, color: "#C7C7CC", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
-                                </div>
-                              </div>
+              {/* Exercise cards — with swipe-delete, tap-to-expand (S/R), long-press menu */}
+              {reorderMode ? (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(todayWorkoutIndex, event)}>
+                  <SortableContext items={todayWorkout.exercises.map((_, i) => `ex-${todayWorkoutIndex}-${i}`)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-1.5">
+                      {todayWorkout.exercises.map((ex, i) => (
+                        <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} justDropped={justDroppedId === `ex-${todayWorkoutIndex}-${i}`} showHandle={true}>
+                          <div className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                              <p className="text-xs text-muted-foreground">{ex.sets} sets × {ex.reps} reps</p>
+                            </div>
+                          </div>
+                        </SortableExerciseRow>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="space-y-1.5">
+                  {todayWorkout.exercises.map((ex, i) => {
+                    const isExpanded = expandedCardIdx === i;
+                    const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+
+                    return (
+                      <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(i)}>
+                        <div
+                          className="rounded-xl bg-card overflow-hidden"
+                          style={isExpanded ? { borderLeft: "3px solid #7C6BF0", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" } : undefined}
+                          onTouchStart={(e) => handleLongPressStart(i, e)}
+                          onTouchMove={handleLongPressCancel}
+                          onTouchEnd={handleLongPressCancel}
+                        >
+                          <button
+                            onClick={() => expandCard(i, ex)}
+                            className="w-full flex items-center gap-3 p-3 text-left"
+                          >
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                              {!isExpanded && (
+                                <p className="text-xs text-muted-foreground">
+                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                                </p>
+                              )}
+                            </div>
+                            {isExpanded ? (
+                              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#F0EDFD", minWidth: 44, minHeight: 44 }}>
+                                <Check className="w-[18px] h-[18px]" style={{ color: "#7C6BF0" }} />
+                              </div>
+                            ) : (
+                              <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: "#C7C7CC", opacity: 0.3 }} />
+                            )}
+                          </button>
+
+                          <AnimatePresence>
+                            {isExpanded && editValues && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1, transition: { height: { duration: 0.25 }, opacity: { duration: 0.15, delay: 0.1 } } }}
+                                exit={{ opacity: 0, height: 0, transition: { opacity: { duration: 0.1 }, height: { duration: 0.2, delay: 0.1 } } }}
+                                className="overflow-hidden"
+                              >
+                                <div className="flex items-end gap-2 px-3 pb-3 ml-11">
+                                  <div className="flex flex-col items-center">
+                                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>S</span>
+                                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={editValues.sets}
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev); }}
+                                      className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                      style={{ width: 70, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                                    />
+                                  </div>
+                                  <div className="flex flex-col items-center">
+                                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>R</span>
+                                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={editValues.reps}
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev); }}
+                                      className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                      style={{ width: 70, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                                    />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </SortableExerciseRow>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* + Add Exercise */}
+              <button
+                onClick={() => setShowAddPicker(true)}
+                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
+              >
+                <Plus className="w-4 h-4" /> Add Exercise
+              </button>
 
               {/* Begin Workout button */}
               <button
@@ -503,15 +587,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <Play className="w-4 h-4" /> Begin Workout
               </button>
 
-              {/* Edit Day + Skip */}
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={() => setEditingDayIndex(todayWorkoutIndex)}
-                  className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground transition-colors"
-                >
-                  <Pencil className="w-3 h-3" /> Edit Day
-                </button>
-                <span className="text-muted-foreground/30">·</span>
+              {/* Skip Session */}
+              <div className="flex items-center justify-center">
                 <button
                   onClick={() => completeWorkoutDay(todayWorkoutIndex)}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -519,6 +596,36 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   Skip Session
                 </button>
               </div>
+
+              {/* Long-press context menu */}
+              <AnimatePresence>
+                {contextMenu && (
+                  <>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200]" onClick={() => setContextMenu(null)} />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
+                      style={{ top: Math.min(contextMenu.y, window.innerHeight - 220), left: Math.min(contextMenu.x - 80, window.innerWidth - 200), width: 200 }}
+                    >
+                      <button onClick={() => { setReplaceTarget(contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
+                        <Repeat className="w-4 h-4 text-muted-foreground" /> Replace Exercise
+                      </button>
+                      <button onClick={() => { removeExFromDay(contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-500 hover:bg-muted transition-colors border-b border-border/30">
+                        <Trash2 className="w-4 h-4" /> Remove Exercise
+                      </button>
+                      <button onClick={() => moveExercise(contextMenu.exIndex, -1)} disabled={contextMenu.exIndex === 0} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30", contextMenu.exIndex === 0 && "opacity-30 cursor-not-allowed")}>
+                        <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
+                      </button>
+                      <button onClick={() => moveExercise(contextMenu.exIndex, 1)} disabled={contextMenu.exIndex === todayWorkout.exercises.length - 1} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors", contextMenu.exIndex === todayWorkout.exercises.length - 1 && "opacity-30 cursor-not-allowed")}>
+                        <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move Down
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
@@ -876,15 +983,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               </SortableContext>
                             </DndContext>
 
-                            {/* Edit Day */}
-                            {!day.completed && !isViewingHistory && (
-                              <button
-                                onClick={() => setEditingDayIndex(dayIndex)}
-                                className="w-full py-2 rounded-lg bg-muted/50 text-foreground text-xs font-medium hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
-                              >
-                                <Pencil className="w-3.5 h-3.5" /> Edit day
-                              </button>
-                            )}
 
                             {/* Start Workout Session */}
                             {!day.completed && (
@@ -1259,15 +1357,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         />
       )}
 
-      {/* Custom Day Builder */}
-      {editingDayIndex !== null && programState.workouts[editingDayIndex] && (
-        <CustomDayBuilder
+      {/* Exercise Picker — Add mode */}
+      <ExercisePicker
+        open={showAddPicker}
+        headerTitle="Add Exercise"
+        onSelect={(ex) => addExercisesToDay([ex])}
+        onMultiSelect={addExercisesToDay}
+        onClose={() => setShowAddPicker(false)}
+      />
+
+      {/* Exercise Picker — Replace mode */}
+      {replaceTarget !== null && (
+        <ExercisePicker
           open={true}
-          onClose={() => setEditingDayIndex(null)}
-          dayIndex={editingDayIndex}
-          dayName={programState.workouts[editingDayIndex].dayName}
-          exercises={programState.workouts[editingDayIndex].exercises}
-          onSave={handleSaveCustomDay}
+          headerTitle={`Replace ${programState.workouts[todayWorkoutIndex!]?.exercises[replaceTarget]?.name || "Exercise"}`}
+          onSelect={(ex) => replaceExercise(replaceTarget, ex)}
+          onClose={() => setReplaceTarget(null)}
         />
       )}
     </div>

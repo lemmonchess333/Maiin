@@ -25,9 +25,10 @@ interface Props {
   onSelect: (exercise: Exercise) => void;
   onMultiSelect?: (exercises: Exercise[]) => void;
   onClose: () => void;
+  headerTitle?: string;
 }
 
-export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose }: Props) {
+export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose, headerTitle = "Select Exercise" }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(EXERCISE_CATEGORIES[0]);
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
@@ -104,7 +105,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose 
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
-              <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>Select Exercise</p>
+              <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>{headerTitle}</p>
               <button
                 onClick={handleAddSelected}
                 style={{ fontSize: 15, fontWeight: 600, color: "#7C6BF0" }}
