@@ -397,7 +397,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
 
                   return (
-                    <div key={i} className="rounded-xl bg-card overflow-hidden">
+                    <div key={i} className="rounded-xl bg-card overflow-hidden" style={isExpanded ? { borderLeft: "3px solid #7C6BF0", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" } : undefined}>
                       {/* Card header — always visible */}
                       <button
                         onClick={() => expandCard(i, ex)}
@@ -410,14 +410,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
                           {!isExpanded && (
                             <p className="text-xs text-muted-foreground">
-                              {ex.sets} sets × {ex.reps} reps{ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 1 ? ` · ${ex.weight}kg` : ""}
                             </p>
                           )}
                         </div>
                         {isExpanded ? (
-                          <Check className="w-5 h-5 shrink-0" style={{ color: "#7C6BF0" }} />
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#F0EDFD", minWidth: 44, minHeight: 44 }}>
+                            <Check className="w-[18px] h-[18px]" style={{ color: "#7C6BF0" }} />
+                          </div>
                         ) : (
-                          <Pencil className="w-4 h-4 shrink-0" style={{ color: "#C7C7CC" }} />
+                          <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: "#C7C7CC", opacity: 0.3 }} />
                         )}
                       </button>
 
@@ -426,53 +428,63 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         {isExpanded && editValues && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            animate={{ height: "auto", opacity: 1, transition: { height: { duration: 0.25 }, opacity: { duration: 0.15, delay: 0.1 } } }}
+                            exit={{ opacity: 0, height: 0, transition: { opacity: { duration: 0.1 }, height: { duration: 0.2, delay: 0.1 } } }}
                             className="overflow-hidden"
                           >
-                            <div className="flex items-center gap-1.5 px-3 pb-3 ml-11">
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={editValues.sets}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                  const v = parseInt(e.target.value, 10);
-                                  if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev);
-                                }}
-                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                              />
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={editValues.reps}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                  const v = parseInt(e.target.value, 10);
-                                  if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev);
-                                }}
-                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                              />
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                pattern="[0-9.]*"
-                                value={editValues.weight || ""}
-                                placeholder={isBW ? "BW" : "0"}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                  const v = parseFloat(e.target.value);
-                                  setEditValues((prev) => prev ? { ...prev, weight: isNaN(v) ? 0 : Math.max(0, v) } : prev);
-                                }}
-                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: editValues.weight ? "#1C1C1E" : "#C7C7CC" }}
-                              />
-                              <span style={{ fontSize: 12, fontWeight: 500, color: "#C7C7CC", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
+                            <div className="flex items-end gap-1.5 px-3 pb-3 ml-11">
+                              <div className="flex flex-col items-center">
+                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>S</span>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={editValues.sets}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev);
+                                  }}
+                                  className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                  style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                                />
+                              </div>
+                              <div className="flex flex-col items-center">
+                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>R</span>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={editValues.reps}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev);
+                                  }}
+                                  className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                  style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                                />
+                              </div>
+                              <div className="flex flex-col items-center">
+                                <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>W</span>
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9.]*"
+                                    value={editValues.weight || ""}
+                                    placeholder={isBW ? "BW" : "0"}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      const v = parseFloat(e.target.value);
+                                      setEditValues((prev) => prev ? { ...prev, weight: isNaN(v) ? 0 : Math.max(0, v) } : prev);
+                                    }}
+                                    className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                    style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: editValues.weight ? "#1C1C1E" : "#C7C7CC" }}
+                                  />
+                                  <span style={{ fontSize: 12, fontWeight: 500, color: "#C7C7CC", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
+                                </div>
+                              </div>
                             </div>
                           </motion.div>
                         )}
