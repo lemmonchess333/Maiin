@@ -37,39 +37,27 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const oldIdx = exercises.findIndex((_, i) => `custom-ex-${i}` === active.id);
     const newIdx = exercises.findIndex((_, i) => `custom-ex-${i}` === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
-
     setExercises(arrayMove(exercises, oldIdx, newIdx));
     setJustDroppedId(`custom-ex-${newIdx}`);
     setTimeout(() => setJustDroppedId(null), 300);
   };
 
   const addExercise = (exercise: Exercise) => {
-    const newEx = normalizeExercise({
+    setExercises((prev) => [...prev, normalizeExercise({
       name: exercise.name,
       exerciseId: exercise.id,
       movementCategory: "horizontal_push",
-      sets: 3,
-      reps: 10,
-      weight: 0,
-    });
-    setExercises((prev) => [...prev, newEx]);
+      sets: 3, reps: 10, weight: 0,
+    })]);
     setShowPicker(false);
   };
 
   const addMultipleExercises = (exerciseList: Exercise[]) => {
     const newExercises = exerciseList.map((exercise) =>
-      normalizeExercise({
-        name: exercise.name,
-        exerciseId: exercise.id,
-        movementCategory: "horizontal_push",
-        sets: 3,
-        reps: 10,
-        weight: 0,
-      })
+      normalizeExercise({ name: exercise.name, exerciseId: exercise.id, movementCategory: "horizontal_push", sets: 3, reps: 10, weight: 0 })
     );
     setExercises((prev) => [...prev, ...newExercises]);
     setShowPicker(false);
@@ -80,9 +68,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
   };
 
   const updateField = (index: number, field: "sets" | "reps" | "weight", value: number) => {
-    setExercises((prev) =>
-      prev.map((ex, i) => (i === index ? { ...ex, [field]: value } : ex))
-    );
+    setExercises((prev) => prev.map((ex, i) => (i === index ? { ...ex, [field]: value } : ex)));
   };
 
   const handleSave = async () => {
@@ -110,31 +96,29 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
     return isBodyweight ? "BW" : "—";
   };
 
-  const inputClass = "h-[32px] rounded-lg border border-[#E5E5EA] bg-[#F8F8FA] text-center text-[15px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:border-primary focus:bg-primary/5 transition-colors";
+  const inputClass = "h-[32px] rounded-lg border border-transparent bg-card text-center text-[15px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:border-primary focus:bg-primary/5 transition-colors";
 
   return (
     <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[90vh] overflow-y-auto bg-background safe-area-pb">
-          <div className="max-w-md mx-auto p-5 space-y-4">
-            <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl max-h-[90vh] flex flex-col bg-background safe-area-pb">
+          {/* Header — sticky top */}
+          <div className="px-5 pt-5 pb-3">
+            <div className="w-10 h-1 rounded-full bg-border mx-auto mb-4" />
+            <Drawer.Title className="text-base font-semibold text-foreground">
+              Edit {dayName}
+            </Drawer.Title>
+            <p className="text-xs text-muted-foreground">
+              {exercises.length} exercise{exercises.length !== 1 ? "s" : ""} · drag to reorder · swipe to delete
+            </p>
+          </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Drawer.Title className="text-base font-semibold text-foreground">
-                  Edit {dayName}
-                </Drawer.Title>
-                <p className="text-xs text-muted-foreground">
-                  {exercises.length} exercise{exercises.length !== 1 ? "s" : ""} · drag to reorder · swipe to delete
-                </p>
-              </div>
-            </div>
-
-            {/* Exercise List */}
+          {/* Scrollable middle — exercise list + picker */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-5">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={exercises.map((_, i) => `custom-ex-${i}`)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {exercises.map((ex, i) => {
                     const weightVal = getWeightDisplay(ex);
                     const placeholder = getWeightPlaceholder(ex);
@@ -148,10 +132,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                         justDropped={justDroppedId === `custom-ex-${i}`}
                         onDelete={() => removeExercise(i)}
                       >
-                        <div
-                          className="rounded-[14px] border border-[#E5E5EA] bg-card"
-                          style={{ padding: "14px 12px" }}
-                        >
+                        <div className="rounded-xl bg-muted p-2.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                               <Dumbbell className="w-4 h-4 text-primary" />
@@ -160,7 +141,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                           </div>
 
                           {/* Compact inline: Sets [4] × Reps [6] @ [50] kg */}
-                          <div className="flex items-center gap-1.5 mt-2.5 ml-[46px]">
+                          <div className="flex items-center gap-1.5 mt-1.5 ml-[46px]">
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sets</span>
                             <input
                               id={`custom-sets-${i}`}
@@ -174,7 +155,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                               }}
                               className={cn(inputClass, "w-[38px]")}
                             />
-                            <span className="text-xs" style={{ color: "#E5E5EA" }}>×</span>
+                            <span className="text-xs text-muted-foreground">×</span>
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Reps</span>
                             <input
                               id={`custom-reps-${i}`}
@@ -188,9 +169,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                               }}
                               className={cn(inputClass, "w-[38px]")}
                             />
-                            <span className="text-xs" style={{ color: "#E5E5EA" }}>@</span>
-
-                            {/* Weight field with placeholder overlay */}
+                            <span className="text-xs text-muted-foreground">@</span>
                             <div className="relative">
                               <input
                                 id={`custom-weight-${i}`}
@@ -225,14 +204,21 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
               </SortableContext>
             </DndContext>
 
-            {/* Add Exercise */}
-            {showPicker ? (
-              <ExercisePicker
-                onSelect={addExercise}
-                onMultiSelect={addMultipleExercises}
-                onClose={() => setShowPicker(false)}
-              />
-            ) : (
+            {/* Exercise Picker (inside scroll area so it doesn't push buttons off) */}
+            {showPicker && (
+              <div className="mt-3">
+                <ExercisePicker
+                  onSelect={addExercise}
+                  onMultiSelect={addMultipleExercises}
+                  onClose={() => setShowPicker(false)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Footer — sticky bottom, always visible */}
+          <div className="px-5 pt-3 pb-5 space-y-3 border-t border-border/50">
+            {!showPicker && (
               <button
                 onClick={() => setShowPicker(true)}
                 className="w-full py-3 rounded-xl bg-primary/5 border border-primary/20 text-primary font-medium text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2"
@@ -240,8 +226,6 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                 <Plus className="w-4 h-4" /> Add Exercise
               </button>
             )}
-
-            {/* Save */}
             <button
               onClick={handleSave}
               disabled={saving || exercises.length === 0}

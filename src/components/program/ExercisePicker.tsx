@@ -115,7 +115,7 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
       )}
 
       <div
-        className="max-h-64 overflow-y-auto"
+        className="max-h-80 overflow-y-auto"
         style={selectedIds.size > 0 ? { paddingBottom: 8 } : undefined}
       >
         {filteredExercises.map((exercise) => (
