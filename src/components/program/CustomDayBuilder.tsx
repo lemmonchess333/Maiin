@@ -90,7 +90,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
     return getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
   };
 
-  const inputClass = "h-[30px] rounded-lg bg-muted text-center text-[14px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:bg-primary/5 transition-colors";
+  const inputClass = "h-[36px] rounded-lg border border-border/60 bg-card text-center text-[14px] font-bold font-mono tabular-nums text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:bg-primary/5 transition-colors";
 
   return (
     <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -107,18 +107,6 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
               {exercises.length} exercise{exercises.length !== 1 ? "s" : ""} · drag to reorder · swipe to delete
             </p>
           </div>
-
-          {/* Column headers */}
-          {exercises.length > 0 && (
-            <div className="flex items-center px-5 pb-1">
-              {/* Offset for drag handle + icon */}
-              <div className="ml-[100px] flex items-center gap-1.5">
-                <span className="w-[38px] text-center text-[10px] uppercase tracking-wider text-muted-foreground font-medium">S</span>
-                <span className="w-[38px] text-center text-[10px] uppercase tracking-wider text-muted-foreground font-medium">R</span>
-                <span className="w-[52px] text-center text-[10px] uppercase tracking-wider text-muted-foreground font-medium">W</span>
-              </div>
-            </div>
-          )}
 
           {/* Scrollable exercise list + picker */}
           <div className="flex-1 overflow-y-auto min-h-0 px-5">
@@ -137,7 +125,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                         justDropped={justDroppedId === `custom-ex-${i}`}
                         onDelete={() => removeExercise(i)}
                       >
-                        <div className="rounded-xl bg-muted px-2.5 py-2">
+                        <div className="rounded-xl bg-muted px-2.5 py-1.5">
                           {/* Name row + prev data */}
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -151,47 +139,56 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                             )}
                           </div>
 
-                          {/* S / R / W inputs */}
-                          <div className="flex items-center gap-1.5 mt-1.5 ml-10">
-                            <input
-                              id={`custom-sets-${i}`}
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              value={ex.sets}
-                              onChange={(e) => {
-                                const v = parseInt(e.target.value, 10);
-                                if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
-                              }}
-                              className={cn(inputClass, "w-[38px]")}
-                            />
-                            <input
-                              id={`custom-reps-${i}`}
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              value={ex.reps}
-                              onChange={(e) => {
-                                const v = parseInt(e.target.value, 10);
-                                if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
-                              }}
-                              className={cn(inputClass, "w-[38px]")}
-                            />
-                            <div className="flex items-center gap-1">
+                          {/* S / R / W headers + inputs */}
+                          <div className="flex items-end gap-1.5 mt-1.5 ml-10">
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">S</span>
                               <input
-                                id={`custom-weight-${i}`}
+                                id={`custom-sets-${i}`}
                                 type="text"
-                                inputMode="decimal"
-                                pattern="[0-9.]*"
-                                value={weightVal || ""}
-                                placeholder={isBW ? "BW" : "0"}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={ex.sets}
                                 onChange={(e) => {
-                                  const v = parseFloat(e.target.value);
-                                  updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
+                                  const v = parseInt(e.target.value, 10);
+                                  if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
                                 }}
-                                className={cn(inputClass, "w-[52px] placeholder:text-muted-foreground/50")}
+                                className={cn(inputClass, "w-[40px]")}
                               />
-                              <span className="text-[11px] text-muted-foreground">kg</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">R</span>
+                              <input
+                                id={`custom-reps-${i}`}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={ex.reps}
+                                onChange={(e) => {
+                                  const v = parseInt(e.target.value, 10);
+                                  if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
+                                }}
+                                className={cn(inputClass, "w-[40px]")}
+                              />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">W</span>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  id={`custom-weight-${i}`}
+                                  type="text"
+                                  inputMode="decimal"
+                                  pattern="[0-9.]*"
+                                  value={weightVal || ""}
+                                  placeholder={isBW ? "BW" : "0"}
+                                  onChange={(e) => {
+                                    const v = parseFloat(e.target.value);
+                                    updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
+                                  }}
+                                  className={cn(inputClass, "w-[52px] placeholder:text-muted-foreground/50")}
+                                />
+                                <span className="text-[11px] text-muted-foreground">kg</span>
+                              </div>
                             </div>
                           </div>
                         </div>

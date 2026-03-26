@@ -119,7 +119,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
           className="touch-none p-2 shrink-0 cursor-grab active:cursor-grabbing"
           style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}
         >
-          <GripVertical className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} />
+          <GripVertical className="w-3 h-3" style={{ color: "#9ca3af", opacity: 0.4 }} />
         </button>
         <div className="flex-1 min-w-0">{children}</div>
       </div>
