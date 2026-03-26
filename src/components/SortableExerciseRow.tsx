@@ -3,6 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 
 interface Props {
   id: string;
@@ -114,10 +115,11 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
         <button
           {...attributes}
           {...listeners}
+          onPointerDown={() => haptic("light")}
           className="touch-none p-2 shrink-0 cursor-grab active:cursor-grabbing"
           style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}
         >
-          <GripVertical className="w-4 h-4" style={{ color: "#6b7280" }} />
+          <GripVertical className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} />
         </button>
         <div className="flex-1 min-w-0">{children}</div>
       </div>

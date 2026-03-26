@@ -4,7 +4,20 @@ import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { Search, X, Info, Plus, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 import ExerciseDemoCard from "@/components/ExerciseDemoCard";
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Chest: "#D4637A",
+  Back: "#52A3BD",
+  Shoulders: "#D9884E",
+  Biceps: "#7B72E9",
+  Triceps: "#7B72E9",
+  Legs: "#4DB872",
+  Core: "#D9884E",
+  "Full Body": "#7B72E9",
+  Cardio: "#D4637A",
+};
 
 interface Props {
   onSelect: (exercise: Exercise) => void;
@@ -22,9 +35,7 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return EXERCISE_CATEGORIES.flatMap((cat) =>
-        getExercisesByCategory(cat).filter((e) =>
-          e.name.toLowerCase().includes(q)
-        )
+        getExercisesByCategory(cat).filter((e) => e.name.toLowerCase().includes(q))
       );
     }
     return getExercisesByCategory(selectedCategory);
@@ -35,20 +46,18 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
   }, []);
 
   const toggleSelection = (id: string) => {
+    haptic("light");
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
   const handleAddSelected = () => {
     if (onMultiSelect) {
-      const selected = allExercises.filter((e) => selectedIds.has(e.id));
-      onMultiSelect(selected);
+      onMultiSelect(allExercises.filter((e) => selectedIds.has(e.id)));
     } else {
-      // Fallback: add one at a time
       for (const id of selectedIds) {
         const ex = allExercises.find((e) => e.id === id);
         if (ex) onSelect(ex);
@@ -61,8 +70,8 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
       <div className="p-3 border-b border-border/50 flex items-center justify-between">
-        <p className="text-sm font-medium text-foreground">Select Exercise</p>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted">
+        <p className="text-sm font-semibold text-foreground">Select Exercise</p>
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted active:scale-95 transition-transform">
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
@@ -100,16 +109,7 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
       )}
 
       {!searchQuery && (
-        <div
-          style={{
-            padding: '12px 20px 8px',
-            fontSize: 11,
-            fontWeight: 600,
-            color: '#9ca3af',
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.05em',
-          }}
-        >
+        <div className="px-4 pt-3 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
           {selectedCategory} · {filteredExercises.length} exercises
         </div>
       )}
@@ -118,58 +118,57 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
         className="max-h-80 overflow-y-auto"
         style={selectedIds.size > 0 ? { paddingBottom: 8 } : undefined}
       >
-        {filteredExercises.map((exercise) => (
-          <div
-            key={exercise.id}
-            className="flex items-center border-b border-border/30 last:border-0 px-4 py-2.5 transition-colors duration-150"
-            style={
-              selectedIds.has(exercise.id)
-                ? { backgroundColor: 'rgba(124,58,237,0.04)' }
-                : undefined
-            }
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{exercise.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {exercise.muscleGroup} · {exercise.equipment}
-              </p>
-            </div>
+        {filteredExercises.map((exercise) => {
+          const isSelected = selectedIds.has(exercise.id);
+          const catColor = CATEGORY_COLORS[exercise.category] || "#9ca3af";
 
-            <div className="flex items-center gap-2 shrink-0 ml-3">
-              <button
-                onClick={() => setDemoExercise(exercise.name)}
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(0,0,0,0.03)',
-                }}
-              >
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </button>
+          return (
+            <div
+              key={exercise.id}
+              className="flex items-center border-b border-border/30 last:border-0 pr-3 transition-colors duration-150"
+              style={{
+                borderLeft: `3px solid ${catColor}`,
+                paddingLeft: 13,
+                paddingTop: 10,
+                paddingBottom: 10,
+                minHeight: 60,
+                ...(isSelected ? { backgroundColor: "rgba(124,58,237,0.04)" } : {}),
+              }}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-semibold text-foreground leading-tight">{exercise.name}</p>
+                <p className="text-[13px] text-muted-foreground mt-0.5">
+                  {exercise.muscleGroup} · {exercise.equipment}
+                </p>
+              </div>
 
-              <button
-                onClick={() => toggleSelection(exercise.id)}
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 10,
-                  backgroundColor: selectedIds.has(exercise.id)
-                    ? '#6358D4'
-                    : 'rgba(124,58,237,0.08)',
-                }}
-              >
-                {selectedIds.has(exercise.id) ? (
-                  <Check className="w-4 h-4 text-white" />
-                ) : (
-                  <Plus className="w-4 h-4" style={{ color: '#6358D4' }} />
-                )}
-              </button>
+              <div className="flex items-center gap-2 shrink-0 ml-3">
+                <button
+                  onClick={() => { haptic("light"); setDemoExercise(exercise.name); }}
+                  className="w-11 h-11 flex items-center justify-center shrink-0 rounded-[10px] bg-muted active:scale-90 transition-transform"
+                >
+                  <Info className="w-5 h-5 text-muted-foreground" />
+                </button>
+
+                <motion.button
+                  onClick={() => toggleSelection(exercise.id)}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ duration: 0.15 }}
+                  className="w-11 h-11 flex items-center justify-center shrink-0 rounded-[10px] transition-colors duration-150"
+                  style={{
+                    backgroundColor: isSelected ? "#6358D4" : "rgba(124,58,237,0.08)",
+                  }}
+                >
+                  {isSelected ? (
+                    <Check className="w-5 h-5 text-white" />
+                  ) : (
+                    <Plus className="w-5 h-5" style={{ color: "#6358D4" }} />
+                  )}
+                </motion.button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {filteredExercises.length === 0 && (
           <p className="px-4 py-6 text-sm text-muted-foreground text-center">
             No exercises found
@@ -186,12 +185,12 @@ export default function ExercisePicker({ onSelect, onMultiSelect, onClose }: Pro
             onClick={handleAddSelected}
             className="w-full py-3 text-white font-medium text-sm flex items-center justify-center gap-2"
             style={{
-              backgroundColor: '#6358D4',
+              backgroundColor: "#6358D4",
               borderRadius: 16,
-              boxShadow: '0 8px 32px rgba(124,58,237,0.3)',
+              boxShadow: "0 8px 32px rgba(124,58,237,0.3)",
             }}
           >
-            {selectedIds.size} exercise{selectedIds.size !== 1 ? 's' : ''} selected — Add to workout
+            {selectedIds.size} exercise{selectedIds.size !== 1 ? "s" : ""} selected — Add to workout
           </motion.button>
         </div>
       )}
