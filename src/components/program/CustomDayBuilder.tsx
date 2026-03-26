@@ -111,12 +111,11 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
 
           {/* S / R / W column headers — single row at sheet level */}
           {exercises.length > 0 && (
-            <div className="flex px-5 pb-1.5" style={{ paddingLeft: 64 }}>
-              <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>S</span>
-              <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>R</span>
-              <div className="flex-1 flex items-center">
-                <span className="flex-1 text-center" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#8E8E93" }}>W</span>
-                <span style={{ width: 20 }} />
+            <div className="flex items-center px-4 pb-1.5" style={{ paddingLeft: 48 }}>
+              <div className="flex items-center" style={{ gap: 6 }}>
+                <span style={{ width: 64, textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 0.5, color: "#8E8E93" }}>S</span>
+                <span style={{ width: 64, textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 0.5, color: "#8E8E93" }}>R</span>
+                <span style={{ width: 64, textAlign: "center", fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: 0.5, color: "#8E8E93" }}>W</span>
               </div>
             </div>
           )}
@@ -125,7 +124,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
           <div className="flex-1 overflow-y-auto min-h-0 px-4">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={exercises.map((_, i) => `custom-ex-${i}`)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-4">
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {exercises.map((ex, i) => {
                     const weightVal = getWeightDisplay(ex);
                     const isBW = isBodyweight(ex);
@@ -149,7 +148,7 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                             )}
                           </div>
 
-                          {/* Input row */}
+                          {/* Input row — compact fixed-width fields */}
                           <div className="flex items-center" style={{ gap: 6 }}>
                             <input
                               id={`custom-sets-${i}`}
@@ -161,8 +160,8 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                                 const v = parseInt(e.target.value, 10);
                                 if (!isNaN(v)) updateField(i, "sets", Math.max(1, Math.min(20, v)));
                               }}
-                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                              className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
                             />
                             <input
                               id={`custom-reps-${i}`}
@@ -174,8 +173,8 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                                 const v = parseInt(e.target.value, 10);
                                 if (!isNaN(v)) updateField(i, "reps", Math.max(1, Math.min(100, v)));
                               }}
-                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                              className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
                             />
                             <input
                               id={`custom-weight-${i}`}
@@ -188,8 +187,8 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                                 const v = parseFloat(e.target.value);
                                 updateField(i, "weight", isNaN(v) ? 0 : Math.max(0, v));
                               }}
-                              className="flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                              style={{ height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: weightVal ? "#1C1C1E" : "#AEAEB2" }}
+                              className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                              style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: weightVal ? "#1C1C1E" : "#AEAEB2" }}
                             />
                             <span style={{ fontSize: 12, fontWeight: 500, color: "#AEAEB2", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
                           </div>
