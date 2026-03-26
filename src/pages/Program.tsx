@@ -148,6 +148,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     await saveProgram(updatedState);
   };
 
+  // Today's day type from schedule (must be before early return — hooks rule)
+  const todayDayType = useMemo(() => {
+    const schedule = profile?.weekSchedule && profile.weekSchedule.length === 7
+      ? profile.weekSchedule
+      : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
+    const today = getTodaySchedule(schedule);
+    return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
+  }, [profile]);
+
   if (loading || !programState || !prescription) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -166,15 +175,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
-
-  // Today's day type from schedule
-  const todayDayType = useMemo(() => {
-    const schedule = profile?.weekSchedule && profile.weekSchedule.length === 7
-      ? profile.weekSchedule
-      : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
-    const today = getTodaySchedule(schedule);
-    return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
-  }, [profile]);
 
   // Today's workout = first incomplete day (same logic as Home page)
   const todayWorkout = !isViewingHistory
@@ -300,7 +300,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Hero section helpers
   const isLiftToday = todayDayType === "lift" || todayDayType === "both";
-  const isRunToday = todayDayType === "run" || todayDayType === "both";
   const isRestDay = todayDayType === "rest";
 
   return (
