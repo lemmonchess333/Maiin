@@ -29,10 +29,12 @@ import {
   Play,
   Calculator,
   Pencil,
+  Check,
   Footprints,
   Leaf,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getExerciseById } from "@/lib/exercises";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -104,6 +106,34 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const exerciseDrawerRef = useFocusTrap<HTMLDivElement>(!!drawerExercise);
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
+
+  // Inline card editing state
+  const [expandedCardIdx, setExpandedCardIdx] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<{ sets: number; reps: number; weight: number } | null>(null);
+
+  const expandCard = (idx: number, ex: ProgramExercise) => {
+    if (expandedCardIdx !== null && expandedCardIdx !== idx) {
+      // Collapse current, then expand new after animation
+      saveAndCollapseCard(expandedCardIdx);
+      setTimeout(() => {
+        setExpandedCardIdx(idx);
+        setEditValues({ sets: ex.sets, reps: ex.reps, weight: ex.weight });
+      }, 300);
+    } else if (expandedCardIdx === idx) {
+      saveAndCollapseCard(idx);
+    } else {
+      setExpandedCardIdx(idx);
+      setEditValues({ sets: ex.sets, reps: ex.reps, weight: ex.weight });
+    }
+  };
+
+  const saveAndCollapseCard = async (idx: number) => {
+    if (editValues && todayWorkoutIndex !== null) {
+      await updateExercise(todayWorkoutIndex, idx, editValues);
+    }
+    setExpandedCardIdx(null);
+    setEditValues(null);
+  };
 
   // Save feedback states
   const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
@@ -360,24 +390,96 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 </div>
               </div>
 
-              {/* Clean exercise cards — reading mode */}
+              {/* Exercise cards — tap to expand for inline editing */}
               <div className="space-y-1.5">
-                {todayWorkout.exercises.map((ex, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-card"
-                  >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                      <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                {todayWorkout.exercises.map((ex, i) => {
+                  const isExpanded = expandedCardIdx === i;
+                  const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+
+                  return (
+                    <div key={i} className="rounded-xl bg-card overflow-hidden">
+                      {/* Card header — always visible */}
+                      <button
+                        onClick={() => expandCard(i, ex)}
+                        className="w-full flex items-center gap-3 p-3 text-left"
+                      >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                          {!isExpanded && (
+                            <p className="text-xs text-muted-foreground">
+                              {ex.sets} sets × {ex.reps} reps{ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                            </p>
+                          )}
+                        </div>
+                        {isExpanded ? (
+                          <Check className="w-5 h-5 shrink-0" style={{ color: "#7C6BF0" }} />
+                        ) : (
+                          <Pencil className="w-4 h-4 shrink-0" style={{ color: "#C7C7CC" }} />
+                        )}
+                      </button>
+
+                      {/* Expanded inline editing */}
+                      <AnimatePresence>
+                        {isExpanded && editValues && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex items-center gap-1.5 px-3 pb-3 ml-11">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={editValues.sets}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  const v = parseInt(e.target.value, 10);
+                                  if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev);
+                                }}
+                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                              />
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={editValues.reps}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  const v = parseInt(e.target.value, 10);
+                                  if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev);
+                                }}
+                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
+                              />
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                pattern="[0-9.]*"
+                                value={editValues.weight || ""}
+                                placeholder={isBW ? "BW" : "0"}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  const v = parseFloat(e.target.value);
+                                  setEditValues((prev) => prev ? { ...prev, weight: isNaN(v) ? 0 : Math.max(0, v) } : prev);
+                                }}
+                                className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                                style={{ width: 64, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: editValues.weight ? "#1C1C1E" : "#C7C7CC" }}
+                              />
+                              <span style={{ fontSize: 12, fontWeight: 500, color: "#C7C7CC", width: 20, textAlign: "center", flexShrink: 0 }}>kg</span>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {ex.sets} sets × {ex.reps} reps{ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Begin Workout button */}
