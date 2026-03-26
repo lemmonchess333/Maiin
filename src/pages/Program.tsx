@@ -410,7 +410,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
                           {!isExpanded && (
                             <p className="text-xs text-muted-foreground">
-                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 1 ? ` · ${ex.weight}kg` : ""}
+                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
                             </p>
                           )}
                         </div>
