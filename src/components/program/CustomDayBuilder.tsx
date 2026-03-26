@@ -199,29 +199,17 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
                 </div>
               </SortableContext>
             </DndContext>
-
-            {showPicker && (
-              <div className="mt-4">
-                <ExercisePicker
-                  onSelect={addExercise}
-                  onMultiSelect={addMultipleExercises}
-                  onClose={() => setShowPicker(false)}
-                />
-              </div>
-            )}
           </div>
 
           {/* Footer — always visible */}
           <div className="px-4 pt-3 pb-5 space-y-3" style={{ backgroundColor: "#F2F2F7" }}>
-            {!showPicker && (
-              <button
-                onClick={() => setShowPicker(true)}
-                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
-              >
-                <Plus className="w-4 h-4" /> Add Exercise
-              </button>
-            )}
+            <button
+              onClick={() => setShowPicker(true)}
+              className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
+            >
+              <Plus className="w-4 h-4" /> Add Exercise
+            </button>
             <button
               onClick={handleSave}
               disabled={saving || exercises.length === 0}
@@ -236,6 +224,12 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
             </button>
           </div>
         </Drawer.Content>
+        <ExercisePicker
+          open={showPicker}
+          onSelect={addExercise}
+          onMultiSelect={addMultipleExercises}
+          onClose={() => setShowPicker(false)}
+        />
       </Drawer.Portal>
     </Drawer.Root>
   );
