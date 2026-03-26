@@ -91,7 +91,8 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <>
+      <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[100]" />
         <Drawer.Content
@@ -224,13 +225,14 @@ export default function CustomDayBuilder({ open, onClose, dayIndex, dayName, exe
             </button>
           </div>
         </Drawer.Content>
-        <ExercisePicker
-          open={showPicker}
-          onSelect={addExercise}
-          onMultiSelect={addMultipleExercises}
-          onClose={() => setShowPicker(false)}
-        />
       </Drawer.Portal>
     </Drawer.Root>
+    <ExercisePicker
+      open={showPicker}
+      onSelect={addExercise}
+      onMultiSelect={addMultipleExercises}
+      onClose={() => setShowPicker(false)}
+    />
+    </>
   );
 }
