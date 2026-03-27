@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Search, X, Info, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
+import { toast } from "sonner";
 import ExerciseDemoCard from "@/components/ExerciseDemoCard";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -26,13 +27,18 @@ interface Props {
   onMultiSelect?: (exercises: Exercise[]) => void;
   onClose: () => void;
   headerTitle?: string;
+  existingExerciseIds?: string[];
+  onRemoveExercise?: (exerciseId: string) => void;
 }
 
-export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose, headerTitle = "Select Exercise" }: Props) {
+export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose, headerTitle = "Select Exercise", existingExerciseIds, onRemoveExercise }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(EXERCISE_CATEGORIES[0]);
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(existingExerciseIds ?? []));
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  const preExistingIds = useMemo(() => new Set(existingExerciseIds ?? []), [existingExerciseIds]);
 
   const filteredExercises = useMemo(() => {
     if (searchQuery) {
@@ -48,26 +54,53 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
     return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
   }, []);
 
+  const newlySelectedCount = useMemo(() => {
+    return [...selectedIds].filter(id => !preExistingIds.has(id)).length;
+  }, [selectedIds, preExistingIds]);
+
   const toggleSelection = (id: string) => {
     haptic("light");
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    if (preExistingIds.has(id)) {
+      if (selectedIds.has(id)) {
+        onRemoveExercise?.(id);
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+        toast("Removed from workout");
+      } else {
+        setSelectedIds(prev => new Set(prev).add(id));
+      }
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+    }
   };
 
   const handleAddSelected = () => {
-    if (selectedIds.size === 0) { onClose(); return; }
+    const newlySelected = allExercises.filter(e => selectedIds.has(e.id) && !preExistingIds.has(e.id));
+    if (newlySelected.length === 0) { onClose(); return; }
     if (onMultiSelect) {
-      onMultiSelect(allExercises.filter((e) => selectedIds.has(e.id)));
+      onMultiSelect(newlySelected);
     } else {
-      for (const id of selectedIds) {
-        const ex = allExercises.find((e) => e.id === id);
-        if (ex) onSelect(ex);
-      }
+      for (const ex of newlySelected) onSelect(ex);
     }
-    setSelectedIds(new Set());
+    setSelectedIds(new Set(preExistingIds));
+    onClose();
+  };
+
+  const handleClose = () => {
+    if (newlySelectedCount >= 2) {
+      setShowDiscardConfirm(true);
+    } else {
+      setSelectedIds(new Set(preExistingIds));
+      onClose();
+    }
+  };
+
+  const confirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    setSelectedIds(new Set(preExistingIds));
     onClose();
   };
 
@@ -75,7 +108,6 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="picker-backdrop"
             initial={{ opacity: 0 }}
@@ -84,10 +116,9 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             transition={{ duration: 0.2 }}
             className="fixed inset-0"
             style={{ zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }}
-            onClick={onClose}
+            onClick={handleClose}
           />
 
-          {/* Full-screen modal panel */}
           <motion.div
             key="picker-modal"
             initial={{ y: "100%" }}
@@ -97,22 +128,42 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             className="fixed inset-0 flex flex-col"
             style={{ zIndex: 9999, backgroundColor: "#FFFFFF" }}
           >
-            {/* Header bar */}
+            {/* Header bar — X left, title centre, no Done */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 safe-area-pt">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-muted"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
               <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>{headerTitle}</p>
-              <button
-                onClick={handleAddSelected}
-                style={{ fontSize: 15, fontWeight: 600, color: "#7C6BF0" }}
-              >
-                Done
-              </button>
+              <div style={{ width: 32 }} />
             </div>
+
+            {/* Discard confirmation */}
+            <AnimatePresence>
+              {showDiscardConfirm && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden px-4 pb-3"
+                >
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
+                    <p className="text-sm text-foreground">Discard {newlySelectedCount} selections?</p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setShowDiscardConfirm(false)} className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card">
+                        Keep Browsing
+                      </button>
+                      <button onClick={confirmDiscard} className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-50 rounded-lg">
+                        Discard
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Search */}
             <div className="px-4 pb-2">
@@ -154,7 +205,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
               </div>
             )}
 
-            {/* Exercise list — fills remaining space */}
+            {/* Exercise list */}
             <div className="flex-1 overflow-y-auto min-h-0">
               {filteredExercises.map((exercise) => {
                 const isSelected = selectedIds.has(exercise.id);
@@ -214,8 +265,8 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
               )}
             </div>
 
-            {/* Batch selection bar */}
-            {selectedIds.size > 0 && (
+            {/* Batch selection bar — only shows newly selected count */}
+            {newlySelectedCount > 0 && (
               <div className="p-4 safe-area-pb" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
                 <motion.button
                   initial={{ y: 10, opacity: 0 }}
@@ -229,7 +280,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                     boxShadow: "0 8px 32px rgba(124,58,237,0.3)",
                   }}
                 >
-                  {selectedIds.size} exercise{selectedIds.size !== 1 ? "s" : ""} selected — Add to workout
+                  {newlySelectedCount} exercise{newlySelectedCount !== 1 ? "s" : ""} selected — Add to workout
                 </motion.button>
               </div>
             )}

@@ -28,8 +28,6 @@ import {
   FastForward,
   Play,
   Calculator,
-  Pencil,
-  Check,
   Footprints,
   Leaf,
   ArrowUpDown,
@@ -48,6 +46,7 @@ import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, 
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
+import ExerciseDemoCard from "@/components/ExerciseDemoCard";
 
 /**
  * IMPORTANT:
@@ -115,44 +114,31 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [logReps, setLogReps] = useState("");
   const [logWeight, setLogWeight] = useState("");
 
-  // Inline card editing state (S/R only, no weight)
-  const [expandedCardIdx, setExpandedCardIdx] = useState<number | null>(null);
-  const [editValues, setEditValues] = useState<{ sets: number; reps: number } | null>(null);
+  // Exercise card state — read-only, tap opens info sheet
+  const [demoExercise, setDemoExercise] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ exIndex: number; x: number; y: number } | null>(null);
   const [replaceTarget, setReplaceTarget] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const expandCard = (idx: number, ex: ProgramExercise) => {
-    if (reorderMode) return;
-    if (expandedCardIdx !== null && expandedCardIdx !== idx) {
-      saveAndCollapseCard(expandedCardIdx);
-      setTimeout(() => {
-        setExpandedCardIdx(idx);
-        setEditValues({ sets: ex.sets, reps: ex.reps });
-      }, 300);
-    } else if (expandedCardIdx === idx) {
-      saveAndCollapseCard(idx);
-    } else {
-      setExpandedCardIdx(idx);
-      setEditValues({ sets: ex.sets, reps: ex.reps });
-    }
-  };
-
-  const saveAndCollapseCard = async (idx: number) => {
-    if (editValues && todayWorkoutIndex !== null) {
-      await updateExercise(todayWorkoutIndex, idx, editValues);
-    }
-    setExpandedCardIdx(null);
-    setEditValues(null);
-  };
-
   // Exercise management helpers (auto-save to Firestore)
   const removeExFromDay = async (exIndex: number) => {
     if (!programState || todayWorkoutIndex === null) return;
     const updated = programState.workouts.map((d, i) =>
       i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
+    );
+    await saveProgram({ ...programState, workouts: updated });
+  };
+
+  const removeExFromDayById = async (exerciseId: string) => {
+    if (!programState || todayWorkoutIndex === null) return;
+    const exercises = programState.workouts[todayWorkoutIndex].exercises;
+    // Remove only the last instance to handle duplicates safely
+    const lastIdx = exercises.map(ex => ex.exerciseId).lastIndexOf(exerciseId);
+    if (lastIdx === -1) return;
+    const updated = programState.workouts.map((d, i) =>
+      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
   };
@@ -429,7 +415,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </button>
             ) : (
               <button
-                onClick={() => { setReorderMode(true); setExpandedCardIdx(null); setEditValues(null); }}
+                onClick={() => setReorderMode(true)}
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
@@ -471,98 +457,55 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 </div>
               </div>
 
-              {/* Exercise cards — with swipe-delete, tap-to-expand (S/R), long-press menu */}
+              {/* Exercise cards — read-only, tap for info, swipe to delete, long-press menu */}
               {reorderMode ? (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(todayWorkoutIndex, event)}>
                   <SortableContext items={todayWorkout.exercises.map((_, i) => `ex-${todayWorkoutIndex}-${i}`)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-1.5">
-                      {todayWorkout.exercises.map((ex, i) => (
-                        <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} justDropped={justDroppedId === `ex-${todayWorkoutIndex}-${i}`} showHandle={true}>
-                          <div className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                      {todayWorkout.exercises.map((ex, i) => {
+                        const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+                        return (
+                          <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} justDropped={justDroppedId === `ex-${todayWorkoutIndex}-${i}`} showHandle={true}>
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                                <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                              <p className="text-xs text-muted-foreground">{ex.sets} sets × {ex.reps} reps</p>
-                            </div>
-                          </div>
-                        </SortableExerciseRow>
-                      ))}
+                          </SortableExerciseRow>
+                        );
+                      })}
                     </div>
                   </SortableContext>
                 </DndContext>
               ) : (
                 <div className="space-y-1.5">
                   {todayWorkout.exercises.map((ex, i) => {
-                    const isExpanded = expandedCardIdx === i;
                     const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-
                     return (
                       <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(i)}>
-                        <div
-                          className="rounded-xl bg-card overflow-hidden"
-                          style={isExpanded ? { borderLeft: "3px solid #7C6BF0", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" } : undefined}
+                        <button
+                          onClick={() => setDemoExercise(ex.name)}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left"
                           onTouchStart={(e) => handleLongPressStart(i, e)}
                           onTouchMove={handleLongPressCancel}
                           onTouchEnd={handleLongPressCancel}
                         >
-                          <button
-                            onClick={() => expandCard(i, ex)}
-                            className="w-full flex items-center gap-3 p-3 text-left"
-                          >
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                              {!isExpanded && (
-                                <p className="text-xs text-muted-foreground">
-                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                                </p>
-                              )}
-                            </div>
-                            {isExpanded ? (
-                              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#F0EDFD", minWidth: 44, minHeight: 44 }}>
-                                <Check className="w-[18px] h-[18px]" style={{ color: "#7C6BF0" }} />
-                              </div>
-                            ) : (
-                              <Pencil className="w-3.5 h-3.5 shrink-0" style={{ color: "#C7C7CC", opacity: 0.3 }} />
-                            )}
-                          </button>
-
-                          <AnimatePresence>
-                            {isExpanded && editValues && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1, transition: { height: { duration: 0.25 }, opacity: { duration: 0.15, delay: 0.1 } } }}
-                                exit={{ opacity: 0, height: 0, transition: { opacity: { duration: 0.1 }, height: { duration: 0.2, delay: 0.1 } } }}
-                                className="overflow-hidden"
-                              >
-                                <div className="flex items-end gap-2 px-3 pb-3 ml-11">
-                                  <div className="flex flex-col items-center">
-                                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>S</span>
-                                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={editValues.sets}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, sets: Math.max(1, Math.min(20, v)) } : prev); }}
-                                      className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                      style={{ width: 70, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                                    />
-                                  </div>
-                                  <div className="flex flex-col items-center">
-                                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase" as const, color: "#8E8E93", marginBottom: 4 }}>R</span>
-                                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={editValues.reps}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onChange={(e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setEditValues((prev) => prev ? { ...prev, reps: Math.max(1, Math.min(100, v)) } : prev); }}
-                                      className="focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-                                      style={{ width: 70, height: 34, borderRadius: 6, backgroundColor: "#E5E5EA", border: "none", textAlign: "center", fontSize: 15, fontWeight: 500, color: "#1C1C1E" }}
-                                    />
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                            <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                            </p>
+                          </div>
+                        </button>
                       </SortableExerciseRow>
                     );
                   })}
@@ -577,25 +520,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               >
                 <Plus className="w-4 h-4" /> Add Exercise
               </button>
-
-              {/* Begin Workout button */}
-              <button
-                onClick={() => setSessionDayIndex(todayWorkoutIndex)}
-                className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-                style={{ background: THEME.gradient.brand }}
-              >
-                <Play className="w-4 h-4" /> Begin Workout
-              </button>
-
-              {/* Skip Session */}
-              <div className="flex items-center justify-center">
-                <button
-                  onClick={() => completeWorkoutDay(todayWorkoutIndex)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Skip Session
-                </button>
-              </div>
 
               {/* Long-press context menu */}
               <AnimatePresence>
@@ -626,6 +550,25 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </>
                 )}
               </AnimatePresence>
+
+              {/* Sticky Begin Workout + Skip Session */}
+              <div className="sticky bottom-0 z-10 -mx-4 px-4 pt-3 pb-4 safe-area-pb" style={{ boxShadow: "0 -1px 4px rgba(0,0,0,0.06)", backgroundColor: "var(--background)" }}>
+                <button
+                  onClick={() => setSessionDayIndex(todayWorkoutIndex)}
+                  className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
+                  style={{ background: THEME.gradient.brand }}
+                >
+                  <Play className="w-4 h-4" /> Begin Workout
+                </button>
+                <div className="flex items-center justify-center mt-2">
+                  <button
+                    onClick={() => completeWorkoutDay(todayWorkoutIndex)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Skip Session
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1361,9 +1304,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <ExercisePicker
         open={showAddPicker}
         headerTitle="Add Exercise"
+        existingExerciseIds={todayWorkout?.exercises.map(ex => ex.exerciseId) ?? []}
         onSelect={(ex) => addExercisesToDay([ex])}
         onMultiSelect={addExercisesToDay}
         onClose={() => setShowAddPicker(false)}
+        onRemoveExercise={removeExFromDayById}
       />
 
       {/* Exercise Picker — Replace mode */}
@@ -1375,6 +1320,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           onClose={() => setReplaceTarget(null)}
         />
       )}
+
+      {/* Exercise Info Half-Sheet */}
+      <ExerciseDemoCard
+        exerciseName={demoExercise ?? ""}
+        open={demoExercise !== null}
+        onClose={() => setDemoExercise(null)}
+      />
     </div>
   );
 }
