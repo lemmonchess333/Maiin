@@ -1105,10 +1105,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <div className="fixed inset-0" style={{ zIndex: 9990 }} onClick={() => setTypePopover(null)} />
             <div
-              className="fixed bg-card rounded-xl shadow-lg border border-border/50"
+              className="fixed bg-card rounded-2xl shadow-lg border border-border/50"
               style={{
                 zIndex: 9991,
-                width: 140,
+                width: 160,
                 left: popoverPosRef.current.left,
                 ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
                   ? { bottom: window.innerHeight - popoverPosRef.current.top + 4 }
@@ -1119,11 +1119,15 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 <button
                   key={type}
                   onClick={() => { setSetType(currentExIndex, typePopover, type); setTypePopover(null); haptic(10); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-foreground hover:bg-muted transition-colors"
                 >
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: TYPE_COLORS[type] }}>
-                    {type === "working" ? "·" : TYPE_LABELS[type].charAt(0)}
-                  </div>
+                  {type === "working" ? (
+                    <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: TYPE_COLORS[type] }}>
+                      {TYPE_LABELS[type].charAt(0)}
+                    </div>
+                  )}
                   {TYPE_LABELS[type]}
                 </button>
               ))}
