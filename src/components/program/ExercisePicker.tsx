@@ -1,13 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
-import { Search, X, Info, Plus, Check } from "lucide-react";
+import { Search, X, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
-import { toast } from "sonner";
-import ExerciseDemoCard from "@/components/ExerciseDemoCard";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Chest: "#D4637A",
@@ -21,6 +19,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   Cardio: "#D4637A",
 };
 
+const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
+
 interface Props {
   open: boolean;
   onSelect: (exercise: Exercise) => void;
@@ -33,25 +33,25 @@ interface Props {
 
 export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose, headerTitle = "Select Exercise", existingExerciseIds, onRemoveExercise }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>(EXERCISE_CATEGORIES[0]);
-  const [demoExercise, setDemoExercise] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(existingExerciseIds ?? []));
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const preExistingIds = useMemo(() => new Set(existingExerciseIds ?? []), [existingExerciseIds]);
 
   const filteredExercises = useMemo(() => {
+    const getAll = () => EXERCISE_CATEGORIES.flatMap(cat => getExercisesByCategory(cat));
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return EXERCISE_CATEGORIES.flatMap((cat) =>
-        getExercisesByCategory(cat).filter((e) => e.name.toLowerCase().includes(q))
-      );
+      return getAll().filter(e => e.name.toLowerCase().includes(q));
     }
+    if (selectedCategory === "All") return getAll();
     return getExercisesByCategory(selectedCategory);
   }, [searchQuery, selectedCategory]);
 
   const allExercises = useMemo(() => {
-    return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
+    return EXERCISE_CATEGORIES.flatMap(cat => getExercisesByCategory(cat));
   }, []);
 
   const newlySelectedCount = useMemo(() => {
@@ -64,7 +64,6 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
       if (selectedIds.has(id)) {
         onRemoveExercise?.(id);
         setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-        toast("Removed from workout");
       } else {
         setSelectedIds(prev => new Set(prev).add(id));
       }
@@ -104,6 +103,11 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
     onClose();
   };
 
+  const cancelSearch = () => {
+    setSearchQuery("");
+    searchRef.current?.blur();
+  };
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -128,7 +132,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             className="fixed inset-0 flex flex-col"
             style={{ zIndex: 9999, backgroundColor: "#FFFFFF" }}
           >
-            {/* Header bar — X left, title centre, no Done */}
+            {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 safe-area-pt">
               <button
                 onClick={handleClose}
@@ -165,131 +169,152 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
               )}
             </AnimatePresence>
 
-            {/* Search */}
-            <div className="px-4 pb-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            {/* Search bar */}
+            <div className="px-4 pb-2 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8E8E93" }} />
                 <input
+                  ref={searchRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search exercises..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-muted text-foreground text-sm placeholder:text-muted-foreground"
+                  className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground"
+                  style={{ backgroundColor: "#EBEBF0", borderRadius: 10, border: "none" }}
                 />
               </div>
+              <AnimatePresence>
+                {searchQuery && (
+                  <motion.button
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={cancelSearch}
+                    className="text-sm font-medium shrink-0 overflow-hidden"
+                    style={{ color: "#7C6BF0" }}
+                  >
+                    Cancel
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Category pills */}
-            {!searchQuery && (
-              <div className="flex overflow-x-auto gap-1.5 px-4 pb-2" style={{ scrollbarWidth: "none" }}>
-                {EXERCISE_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
-                      selectedCategory === cat
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Filter pills */}
+            <div className="flex overflow-x-auto gap-2 px-4 pb-2" style={{ scrollbarWidth: "none" }}>
+              {ALL_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    "h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap transition-colors shrink-0",
+                    selectedCategory === cat
+                      ? "font-semibold text-white"
+                      : "font-normal"
+                  )}
+                  style={selectedCategory === cat
+                    ? { backgroundColor: "#7C6BF0" }
+                    : { backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43" }
+                  }
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
 
+            {/* Section label */}
             {!searchQuery && (
-              <div className="px-4 pt-1 pb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {selectedCategory} · {filteredExercises.length} exercises
+              <div className="px-4 pt-1 pb-2" style={{ fontSize: 11, fontWeight: 600, color: "#8E8E93", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                {selectedCategory === "All" ? `All · ${filteredExercises.length} exercises` : `${selectedCategory} · ${filteredExercises.length} exercises`}
               </div>
             )}
 
             {/* Exercise list */}
             <div className="flex-1 overflow-y-auto min-h-0">
-              {filteredExercises.map((exercise) => {
+              {filteredExercises.map((exercise, idx) => {
                 const isSelected = selectedIds.has(exercise.id);
                 const catColor = CATEGORY_COLORS[exercise.category] || "#9ca3af";
 
                 return (
-                  <div
-                    key={exercise.id}
-                    className="flex items-center border-b border-border/30 last:border-0 pr-3 transition-colors duration-150"
-                    style={{
-                      borderLeft: `3px solid ${catColor}`,
-                      paddingLeft: 13,
-                      paddingTop: 10,
-                      paddingBottom: 10,
-                      minHeight: 60,
-                      ...(isSelected ? { backgroundColor: "rgba(124,58,237,0.04)" } : {}),
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold text-foreground leading-tight">{exercise.name}</p>
-                      <p className="text-[13px] text-muted-foreground mt-0.5">
-                        {exercise.muscleGroup} · {exercise.equipment}
-                      </p>
-                    </div>
+                  <div key={exercise.id}>
+                    {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+                    <div
+                      onClick={() => toggleSelection(exercise.id)}
+                      className="flex items-center pr-4 transition-colors duration-100 active:bg-[#F2F2F7] cursor-pointer"
+                      style={{
+                        borderLeft: `3px solid ${catColor}`,
+                        paddingLeft: 13,
+                        paddingTop: 12,
+                        paddingBottom: 12,
+                        minHeight: 68,
+                        ...(isSelected ? { backgroundColor: "rgba(124,58,237,0.06)" } : {}),
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E", lineHeight: 1.25 }}>{exercise.name}</p>
+                        <p style={{ fontSize: 13, color: "#AEAEB2", marginTop: 2 }}>
+                          {exercise.muscleGroup} · {exercise.equipment}
+                        </p>
+                      </div>
 
-                    <div className="flex items-center gap-2 shrink-0 ml-3">
-                      <button
-                        onClick={() => { haptic("light"); setDemoExercise(exercise.name); }}
-                        className="w-11 h-11 flex items-center justify-center shrink-0 rounded-[10px] bg-muted active:scale-90 transition-transform"
-                      >
-                        <Info className="w-5 h-5 text-muted-foreground" />
-                      </button>
-
-                      <motion.button
-                        onClick={() => toggleSelection(exercise.id)}
-                        whileTap={{ scale: 0.85 }}
-                        transition={{ duration: 0.15 }}
-                        className="w-11 h-11 flex items-center justify-center shrink-0 rounded-[10px] transition-colors duration-150"
-                        style={{
-                          backgroundColor: isSelected ? "#6358D4" : "rgba(124,58,237,0.08)",
-                        }}
-                      >
-                        {isSelected ? (
-                          <Check className="w-5 h-5 text-white" />
-                        ) : (
-                          <Plus className="w-5 h-5" style={{ color: "#6358D4" }} />
-                        )}
-                      </motion.button>
+                      <div className="shrink-0 ml-3">
+                        <motion.div
+                          initial={false}
+                          animate={{ scale: isSelected ? [0.9, 1] : 1 }}
+                          transition={{ duration: 0.15 }}
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: isSelected ? "#7C6BF0" : "#7C6BF0" }}
+                        >
+                          {isSelected ? (
+                            <Check className="w-4 h-4 text-white" />
+                          ) : (
+                            <Plus className="w-4 h-4 text-white" />
+                          )}
+                        </motion.div>
+                      </div>
                     </div>
+                    {/* Indented divider */}
+                    {idx < filteredExercises.length - 1 && (
+                      <div style={{ height: 0.5, backgroundColor: "#E5E5EA", marginLeft: 20 }} />
+                    )}
                   </div>
                 );
               })}
               {filteredExercises.length === 0 && (
-                <p className="px-4 py-6 text-sm text-muted-foreground text-center">
-                  No exercises found
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                  <Search className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                  <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>No exercises found</p>
+                  <p style={{ fontSize: 14, color: "#AEAEB2", marginTop: 4, textAlign: "center" }}>Try a different search term or browse by muscle group</p>
+                </div>
               )}
             </div>
 
-            {/* Batch selection bar — only shows newly selected count */}
-            {newlySelectedCount > 0 && (
-              <div className="p-4 safe-area-pb" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                <motion.button
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleAddSelected}
-                  className="w-full py-3.5 text-white font-medium text-sm flex items-center justify-center gap-2"
-                  style={{
-                    backgroundColor: "#6358D4",
-                    borderRadius: 16,
-                    boxShadow: "0 8px 32px rgba(124,58,237,0.3)",
-                  }}
+            {/* Batch selection bar */}
+            <AnimatePresence>
+              {newlySelectedCount > 0 && (
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="p-4 safe-area-pb"
+                  style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}
                 >
-                  {newlySelectedCount} exercise{newlySelectedCount !== 1 ? "s" : ""} selected — Add to workout
-                </motion.button>
-              </div>
-            )}
-
-            <ExerciseDemoCard
-              exerciseName={demoExercise ?? ""}
-              open={demoExercise !== null}
-              onClose={() => setDemoExercise(null)}
-            />
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleAddSelected}
+                    className="w-full py-3.5 text-white font-semibold text-[15px] flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor: "#7C6BF0",
+                      borderRadius: 14,
+                      boxShadow: "0 6px 24px rgba(124,107,240,0.3)",
+                    }}
+                  >
+                    {newlySelectedCount} exercise{newlySelectedCount !== 1 ? "s" : ""} selected — Add to workout
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </>
       )}
