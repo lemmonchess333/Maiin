@@ -87,8 +87,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
         <button
           onClick={() => {
             haptic("light");
-            setOffsetX(-window.innerWidth);
-            setTimeout(() => onDelete(), 200);
+            onDelete();
           }}
           className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
           style={{ background: "#FF3B30", borderRadius: 10 }}

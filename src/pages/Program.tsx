@@ -132,8 +132,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     );
     await saveProgram({ ...programState, workouts: updated });
     toast("Exercise removed", {
-      action: { label: "Undo", onClick: () => saveProgram(previousState) },
-      duration: 3000,
+      action: { label: "Undo", onClick: () => { saveProgram(previousState); toast.success("Exercise restored"); } },
+      duration: 4000,
     });
   };
 
