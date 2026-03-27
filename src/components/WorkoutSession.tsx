@@ -878,23 +878,27 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-background to-transparent" />
       </div>
 
+      {/* Exercise name + set counter — always visible above scroll */}
+      <div className="text-center px-4 pt-2 pb-1">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
+          <h2 className="text-lg font-bold text-foreground">{currentExercise?.name}</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
+        </p>
+      </div>
+
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
-        {/* Current exercise header */}
-        <div className="text-center pt-2">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
-            <h2 className="text-lg font-bold text-foreground">{currentExercise?.name}</h2>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
-          </p>
+        {/* Notes input */}
+        <div>
           <input
             type="text"
             placeholder="Notes (e.g. Level 8, 6.0 incline)"
             value={exerciseNotes[currentExIndex] || ""}
             onChange={(e) => setExerciseNotes(prev => ({ ...prev, [currentExIndex]: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60 mt-2"
+            className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60"
           />
         </div>
 
@@ -994,7 +998,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         className={cn(
                           "grid grid-cols-12 gap-1 items-center px-3 py-2.5 border-t border-border/30",
                           setIdx === currentSetIndex && !set.completed && "bg-primary/5",
-                          set.completed && "opacity-60",
+                          set.completed && "opacity-70",
                         )}
                       >
                         <div className="col-span-1 flex justify-center relative">
@@ -1033,11 +1037,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                           <input
                             type="number"
                             value={set.weight || ""}
-                            placeholder={set.weight === 0 ? (isBWExercise ? "BW" : "") : ""}
+                            placeholder={set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""}
                             aria-label={`Set ${setIdx + 1} weight`}
                             onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50 placeholder:text-muted-foreground"
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-[#C7C7CC]"
                           />
                         </div>
                         <div className="col-span-3">
@@ -1047,7 +1051,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                             aria-label={`Set ${setIdx + 1} reps`}
                             onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
@@ -1165,8 +1169,12 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         {/* Prescription hint */}
         {currentExercise && (
           <p className="text-xs text-muted-foreground text-center">
-            Target: {currentExercise.sets}&times;{currentExercise.reps} @{" "}
-            {currentExercise.weight > 0 ? `${currentExercise.weight}kg` : "Bodyweight"}
+            Target: {currentExercise.sets}&times;{currentExercise.reps}
+            {currentExercise.weight > 0
+              ? ` @ ${currentExercise.weight}kg`
+              : getExerciseById(currentExercise.exerciseId)?.equipment === "Bodyweight"
+                ? " @ Bodyweight"
+                : ""}
           </p>
         )}
       </div>
