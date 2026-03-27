@@ -9,7 +9,6 @@ import {
   X,
   Dumbbell,
   Trophy,
-  ChevronRight,
   Clock,
   Share2,
   Target,
@@ -22,6 +21,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket } from "@/lib/prTracking";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { getExerciseById } from "@/lib/exercises";
 import ShareCard from "@/components/social/ShareCard";
 import { generateAndShare } from "@/lib/shareCardGenerator";
 import { getVolumeComparison } from "@/lib/funComparisons";
@@ -117,8 +117,16 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [showShareCard, setShowShareCard] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>({});
   const shareRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
   useEffect(() => { sessionStartRef.current = Date.now(); }, []);
+
+  // Auto-scroll exercise tabs when active exercise changes
+  useEffect(() => {
+    const container = tabsRef.current;
+    const activeBtn = container?.children[currentExIndex] as HTMLElement | undefined;
+    activeBtn?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [currentExIndex]);
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
@@ -832,7 +840,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
       {/* Exercise navigation pills */}
       <div className="relative">
-        <div className="flex gap-1.5 px-4 py-3 overflow-x-auto">
+        <div ref={tabsRef} className="flex gap-1.5 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
             const done = setsForEx.every((s) => s.completed);
@@ -846,20 +854,20 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
+                  "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
                   done
                     ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
                     : active
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground font-bold"
                       : "bg-muted text-muted-foreground",
                 )}
               >
-                {ex.name.length > 15 ? ex.name.slice(0, 15) + "…" : ex.name}
+                {done ? <span className="flex items-center gap-1"><Check className="w-3 h-3" />{ex.name}</span> : ex.name}
               </button>
             );
           })}
         </div>
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-background to-transparent" />
       </div>
 
       {/* Main content area */}
@@ -873,15 +881,6 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           <p className="text-xs text-muted-foreground">
             Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
           </p>
-          {/* Previous performance hint */}
-          {currentExercise?.lastPerformance && (
-            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
-              style={{ background: `${THEME.lifting}18`, color: THEME.lifting }}>
-              <ChevronRight className="w-3 h-3" />
-              Last: {currentExercise.lastPerformance.sets}×{currentExercise.lastPerformance.reps}
-              {currentExercise.lastPerformance.weight > 0 ? ` @ ${currentExercise.lastPerformance.weight}kg` : " @ Bodyweight"}
-            </div>
-          )}
           <input
             type="text"
             placeholder="Notes (e.g. Level 8, 6.0 incline)"
@@ -962,67 +961,93 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
         {/* Set logging grid */}
         <div className="bg-card rounded-2xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            <div className="col-span-2">Set</div>
-            <div className="col-span-4">Weight (kg)</div>
-            <div className="col-span-4">Reps</div>
-            <div className="col-span-2 text-center">Done</div>
-          </div>
-          {currentSets.map((set, setIdx) => {
-            const typeConfig = SET_TYPE_CONFIG[set.type];
+          {(() => {
+            const prev = currentExercise?.lastPerformance;
+            const isBWExercise = currentExercise ? getExerciseById(currentExercise.exerciseId)?.equipment === "Bodyweight" : false;
+            const prevLabel = prev
+              ? (prev.weight > 0 ? `${prev.weight}×${prev.reps}` : isBWExercise ? `BW×${prev.reps}` : "—")
+              : "—";
+            const canFillPrev = prev != null && prev.weight > 0;
+
             return (
-              <div key={setIdx}>
-                <div
-                  className={cn(
-                    "grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-t border-border/30",
-                    setIdx === currentSetIndex && !set.completed && "bg-primary/5",
-                    set.completed && "opacity-60",
-                    typeConfig.bg,
-                  )}
-                >
-                  <div className="col-span-2 flex justify-center">
-                    <button
-                      onClick={() => cycleSetType(currentExIndex, setIdx)}
-                      disabled={set.completed}
-                      className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                        typeConfig.color,
-                        set.type !== "working" ? "border border-current" : "",
-                      )}
-                      title={`Set type: ${set.type}`}
-                    >
-                      {set.type === "working" ? setIdx + 1 : typeConfig.label}
-                    </button>
-                  </div>
-                  <div className="col-span-4">
-                    <input
-                      type="number"
-                      value={set.weight || ""}
-                      placeholder={set.weight === 0 ? "BW" : ""}
-                      aria-label={`Set ${setIdx + 1} weight`}
-                      onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
-                      disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50 placeholder:text-muted-foreground"
-                    />
-                  </div>
-                  <div className="col-span-4">
-                    <input
-                      type="number"
-                      value={set.reps || ""}
-                      aria-label={`Set ${setIdx + 1} reps`}
-                      onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
-                      disabled={set.completed}
-                      className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
-                    />
-                  </div>
-                  <div className="col-span-2 flex justify-center">
-                    {set.completed ? (
-                      <Check className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-border" />
-                    )}
-                  </div>
+              <>
+                <div className="grid grid-cols-12 gap-1 px-3 py-2.5 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="col-span-1">Set</div>
+                  <div className="col-span-2">Prev</div>
+                  <div className="col-span-4">Weight (kg)</div>
+                  <div className="col-span-3">Reps</div>
+                  <div className="col-span-2 text-center">Done</div>
                 </div>
+                {currentSets.map((set, setIdx) => {
+                  const typeConfig = SET_TYPE_CONFIG[set.type];
+                  return (
+                    <div key={setIdx}>
+                      <div
+                        className={cn(
+                          "grid grid-cols-12 gap-1 items-center px-3 py-2.5 border-t border-border/30",
+                          setIdx === currentSetIndex && !set.completed && "bg-primary/5",
+                          set.completed && "opacity-60",
+                          typeConfig.bg,
+                        )}
+                      >
+                        <div className="col-span-1 flex justify-center">
+                          <button
+                            onClick={() => cycleSetType(currentExIndex, setIdx)}
+                            disabled={set.completed}
+                            className={cn(
+                              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
+                              typeConfig.color,
+                              set.type !== "working" ? "border border-current" : "",
+                            )}
+                            title={`Set type: ${set.type}`}
+                          >
+                            {set.type === "working" ? setIdx + 1 : typeConfig.label}
+                          </button>
+                        </div>
+                        <div className="col-span-2">
+                          <button
+                            onClick={() => {
+                              if (canFillPrev && !set.completed && prev) {
+                                haptic(10);
+                                updateSetLog(currentExIndex, setIdx, "weight", prev.weight);
+                                updateSetLog(currentExIndex, setIdx, "reps", prev.reps);
+                              }
+                            }}
+                            disabled={set.completed || !canFillPrev}
+                            className={cn("text-[13px] text-center w-full", canFillPrev && !set.completed ? "text-primary active:opacity-70" : "text-muted-foreground")}
+                          >
+                            {prevLabel}
+                          </button>
+                        </div>
+                        <div className="col-span-4">
+                          <input
+                            type="number"
+                            value={set.weight || ""}
+                            placeholder={set.weight === 0 ? (isBWExercise ? "BW" : "") : ""}
+                            aria-label={`Set ${setIdx + 1} weight`}
+                            onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
+                            disabled={set.completed}
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50 placeholder:text-muted-foreground"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="number"
+                            value={set.reps || ""}
+                            aria-label={`Set ${setIdx + 1} reps`}
+                            onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
+                            disabled={set.completed}
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
+                          />
+                        </div>
+                        <div className="col-span-2 flex justify-center">
+                          {set.completed ? (
+                            <Check className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border-2 border-border" />
+                          )}
+                        </div>
+                      </div>
                 {/* RPE selector for completed sets */}
                 {showRPE && set.completed && (
                   <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
@@ -1064,8 +1089,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                   </div>
                 )}
               </div>
+                    );
+                  })}
+              </>
             );
-          })}
+          })()}
 
           {/* Add Set button */}
           <button
