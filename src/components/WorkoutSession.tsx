@@ -116,6 +116,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [showRPE, setShowRPE] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>({});
+  const [typePopover, setTypePopover] = useState<number | null>(null);
   const shareRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
@@ -310,15 +311,6 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const cycleSetType = (exIdx: number, setIdx: number) => {
-    setSetLogs((prev) => {
-      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      const current = updated[exIdx][setIdx].type;
-      const currentIndex = SET_TYPE_ORDER.indexOf(current);
-      updated[exIdx][setIdx].type = SET_TYPE_ORDER[(currentIndex + 1) % SET_TYPE_ORDER.length];
-      return updated;
-    });
-  };
 
   const setSetType = (exIdx: number, setIdx: number, type: SetType) => {
     setSetLogs((prev) => {
@@ -356,6 +348,20 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       updated[exIdx][setIdx][field] = value;
       return updated;
     });
+  };
+
+  // Complete a specific set inline (from tapping the DONE circle)
+  const completeInlineSet = (setIdx: number) => {
+    if (setIdx === currentSetIndex) {
+      completeSet();
+    } else {
+      haptic(10);
+      setSetLogs(prev => {
+        const updated = prev.map(sets => sets.map(s => ({ ...s })));
+        updated[currentExIndex][setIdx].completed = true;
+        return updated;
+      });
+    }
   };
 
   const completeSet = async () => {
@@ -990,19 +996,39 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                           typeConfig.bg,
                         )}
                       >
-                        <div className="col-span-1 flex justify-center">
+                        <div className="col-span-1 flex justify-center relative">
                           <button
-                            onClick={() => cycleSetType(currentExIndex, setIdx)}
+                            onClick={() => {
+                              if (!set.completed) {
+                                haptic(10);
+                                setTypePopover(typePopover === setIdx ? null : setIdx);
+                              }
+                            }}
                             disabled={set.completed}
                             className={cn(
                               "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
                               typeConfig.color,
-                              set.type !== "working" ? "border border-current" : "",
+                              set.type !== "working" ? "border-2 border-current" : "",
                             )}
+                            style={set.type !== "working" ? { backgroundColor: TYPE_COLORS[set.type] + "20" } : undefined}
                             title={`Set type: ${set.type}`}
                           >
                             {set.type === "working" ? setIdx + 1 : typeConfig.label}
                           </button>
+                          {typePopover === setIdx && !set.completed && (
+                            <div className="absolute left-8 top-0 z-20 bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden" style={{ width: 130 }}>
+                              {SET_TYPE_ORDER.map(type => (
+                                <button
+                                  key={type}
+                                  onClick={(e) => { e.stopPropagation(); setSetType(currentExIndex, setIdx, type); setTypePopover(null); haptic(10); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                >
+                                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: TYPE_COLORS[type] + "30", border: `2px solid ${TYPE_COLORS[type]}` }} />
+                                  {TYPE_LABELS[type]}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="col-span-2">
                           <button
@@ -1042,9 +1068,14 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         </div>
                         <div className="col-span-2 flex justify-center">
                           {set.completed ? (
-                            <Check className="w-5 h-5 text-green-500" />
+                            <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} transition={{ duration: 0.15 }}>
+                              <Check className="w-5 h-5 text-green-500" />
+                            </motion.div>
                           ) : (
-                            <div className="w-5 h-5 rounded-full border-2 border-border" />
+                            <button
+                              onClick={() => completeInlineSet(setIdx)}
+                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
+                            />
                           )}
                         </div>
                       </div>
@@ -1064,26 +1095,6 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                         )}
                       >
                         {rpe}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* Set type buttons for active (non-completed) current set */}
-                {setIdx === currentSetIndex && !set.completed && (
-                  <div className="flex gap-1.5 px-4 py-2 border-t border-border/30">
-                    {(['working', 'warmup', 'dropset', 'failure'] as const).map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setSetType(currentExIndex, setIdx, type)}
-                        aria-label={`Set type: ${TYPE_LABELS[type]}`}
-                        aria-pressed={set.type === type}
-                        className={cn(
-                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                          set.type === type ? "opacity-100 ring-2 ring-current" : "opacity-40"
-                        )}
-                        style={{ color: TYPE_COLORS[type], backgroundColor: TYPE_COLORS[type] + '15' }}
-                      >
-                        {TYPE_LABELS[type]}
                       </button>
                     ))}
                   </div>
@@ -1148,20 +1159,40 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           >
             <Play className="w-4 h-4" /> Ready — Start Next Set
           </button>
-        ) : (
-          <button
-            onClick={completeSet}
-            disabled={!currentSets[currentSetIndex] || currentSets[currentSetIndex]?.completed}
-            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Check className="w-4 h-4" />
-            {currentSetIndex >= currentSets.length - 1 && currentExIndex >= day.exercises.length - 1
-              ? "Finish Last Set"
-              : currentSetIndex >= currentSets.length - 1
-                ? "Complete Exercise"
-                : `Complete Set ${currentSetIndex + 1}`}
-          </button>
-        )}
+        ) : (() => {
+          const allSetsComplete = currentSets.every(s => s.completed);
+          const isLastExercise = currentExIndex >= day.exercises.length - 1;
+
+          if (allSetsComplete && isLastExercise) {
+            return (
+              <button
+                onClick={() => setSessionComplete(true)}
+                className="w-full py-3.5 rounded-xl bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              >
+                <Trophy className="w-4 h-4" /> Finish Workout
+              </button>
+            );
+          }
+          if (allSetsComplete) {
+            return (
+              <button
+                onClick={() => { setCurrentExIndex(prev => prev + 1); setCurrentSetIndex(0); }}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+              >
+                <Play className="w-4 h-4" /> Next Exercise →
+              </button>
+            );
+          }
+          return (
+            <button
+              onClick={completeSet}
+              disabled={!currentSets[currentSetIndex] || currentSets[currentSetIndex]?.completed}
+              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" /> Complete Set {currentSetIndex + 1}
+            </button>
+          );
+        })()}
       </div>
     </div>
   );
