@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
@@ -863,7 +864,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 className={cn(
                   "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
                   done
-                    ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                    ? "bg-green-500 text-white font-medium"
                     : active
                       ? "bg-primary text-primary-foreground font-bold"
                       : "bg-muted text-muted-foreground",
@@ -1098,14 +1099,15 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           </button>
         </div>
 
-        {/* Set type popover — rendered fixed to avoid overflow clipping */}
-        {typePopover !== null && (
+        {/* Set type popover — portal to document.body to escape all parent constraints */}
+        {typePopover !== null && createPortal(
           <>
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div className="fixed inset-0 z-[99]" onClick={() => setTypePopover(null)} />
+            <div className="fixed inset-0" style={{ zIndex: 9990 }} onClick={() => setTypePopover(null)} />
             <div
-              className="fixed z-[100] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
+              className="fixed bg-card rounded-xl shadow-lg border border-border/50"
               style={{
+                zIndex: 9991,
                 width: 140,
                 left: popoverPosRef.current.left,
                 ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
@@ -1126,7 +1128,8 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                 </button>
               ))}
             </div>
-          </>
+          </>,
+          document.body
         )}
 
         {/* Undo last set */}
