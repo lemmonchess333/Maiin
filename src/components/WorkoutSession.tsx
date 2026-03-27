@@ -69,9 +69,9 @@ const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
 
 const TYPE_COLORS: Record<SetType, string> = {
   working: "#a3a3a3",
-  warmup: "#ca8a04",
-  dropset: "#8833d0",
-  failure: "#d42828",
+  warmup: "#FFA94D",
+  dropset: "#B197FC",
+  failure: "#FF6B6B",
 };
 
 const TYPE_LABELS: Record<SetType, string> = {
@@ -117,6 +117,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [showShareCard, setShowShareCard] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>({});
   const [typePopover, setTypePopover] = useState<number | null>(null);
+  const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({ top: 0, left: 0, bottom: 0 });
   const shareRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
@@ -966,7 +967,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         </AnimatePresence>
 
         {/* Set logging grid */}
-        <div className="bg-card rounded-2xl overflow-hidden">
+        <div className="bg-card rounded-2xl">
           {(() => {
             const prev = currentExercise?.lastPerformance;
             const isBWExercise = currentExercise ? getExerciseById(currentExercise.exerciseId)?.equipment === "Bodyweight" : false;
@@ -993,11 +994,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                           "grid grid-cols-12 gap-1 items-center px-3 py-2.5 border-t border-border/30",
                           setIdx === currentSetIndex && !set.completed && "bg-primary/5",
                           set.completed && "opacity-60",
-                          typeConfig.bg,
                         )}
                       >
                         <div className="col-span-1 flex justify-center relative">
                           <button
+                            ref={(el) => { if (typePopover === setIdx && el) { const r = el.getBoundingClientRect(); popoverPosRef.current = { top: r.top, left: r.right + 8, bottom: r.bottom }; } }}
                             onClick={() => {
                               if (!set.completed) {
                                 haptic(10);
@@ -1005,30 +1006,12 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                               }
                             }}
                             disabled={set.completed}
-                            className={cn(
-                              "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                              typeConfig.color,
-                              set.type !== "working" ? "border-2 border-current" : "",
-                            )}
-                            style={set.type !== "working" ? { backgroundColor: TYPE_COLORS[set.type] + "20" } : undefined}
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                            style={set.type !== "working" ? { backgroundColor: TYPE_COLORS[set.type], color: "white" } : undefined}
                             title={`Set type: ${set.type}`}
                           >
                             {set.type === "working" ? setIdx + 1 : typeConfig.label}
                           </button>
-                          {typePopover === setIdx && !set.completed && (
-                            <div className="absolute left-8 top-0 z-20 bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden" style={{ width: 130 }}>
-                              {SET_TYPE_ORDER.map(type => (
-                                <button
-                                  key={type}
-                                  onClick={(e) => { e.stopPropagation(); setSetType(currentExIndex, setIdx, type); setTypePopover(null); haptic(10); }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                                >
-                                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: TYPE_COLORS[type] + "30", border: `2px solid ${TYPE_COLORS[type]}` }} />
-                                  {TYPE_LABELS[type]}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                         <div className="col-span-2">
                           <button
@@ -1114,6 +1097,37 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             + Add Set
           </button>
         </div>
+
+        {/* Set type popover — rendered fixed to avoid overflow clipping */}
+        {typePopover !== null && (
+          <>
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div className="fixed inset-0 z-[99]" onClick={() => setTypePopover(null)} />
+            <div
+              className="fixed z-[100] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
+              style={{
+                width: 140,
+                left: popoverPosRef.current.left,
+                ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
+                  ? { bottom: window.innerHeight - popoverPosRef.current.top + 4 }
+                  : { top: popoverPosRef.current.top }),
+              }}
+            >
+              {SET_TYPE_ORDER.map(type => (
+                <button
+                  key={type}
+                  onClick={() => { setSetType(currentExIndex, typePopover, type); setTypePopover(null); haptic(10); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: TYPE_COLORS[type] }}>
+                    {type === "working" ? "·" : TYPE_LABELS[type].charAt(0)}
+                  </div>
+                  {TYPE_LABELS[type]}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Undo last set */}
         <AnimatePresence>
