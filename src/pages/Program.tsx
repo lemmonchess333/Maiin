@@ -41,6 +41,7 @@ import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
 import { haptic } from "@/lib/haptic";
+import { toast } from "sonner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -125,10 +126,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Exercise management helpers (auto-save to Firestore)
   const removeExFromDay = async (exIndex: number) => {
     if (!programState || todayWorkoutIndex === null) return;
+    const previousState = { ...programState, workouts: programState.workouts.map(d => ({ ...d, exercises: [...d.exercises] })) };
     const updated = programState.workouts.map((d, i) =>
       i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
+    toast("Exercise removed", {
+      action: { label: "Undo", onClick: () => saveProgram(previousState) },
+      duration: 3000,
+    });
   };
 
   const removeExFromDayById = async (exerciseId: string) => {
@@ -452,7 +458,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <div>
                   <p className="text-sm font-bold text-foreground">Today · {todayWorkout.dayName}</p>
                   <p className="text-xs text-muted-foreground">
-                    Day {todayWorkoutIndex + 1} · Week {displayWeekNumber} · {todayWorkout.exercises.length} exercises
+                    Day {todayWorkoutIndex + 1} · Week {displayWeekNumber} · {todayWorkout.exercises.length} exercises · ~{Math.round(todayWorkout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
                   </p>
                 </div>
               </div>

@@ -85,7 +85,11 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       {/* Delete panel behind the card */}
       {onDelete && (
         <button
-          onClick={onDelete}
+          onClick={() => {
+            haptic("light");
+            setOffsetX(-window.innerWidth);
+            setTimeout(() => onDelete(), 200);
+          }}
           className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
           style={{ background: "#FF3B30", borderRadius: 10 }}
           aria-label="Delete exercise"
@@ -100,7 +104,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
         className="relative flex items-center"
         style={{
           transform: `translateX(${offsetX}px)`,
-          transition: swiping ? "none" : "transform 0.2s ease",
+          transition: swiping ? "none" : "transform 0.2s ease-out",
           backgroundColor: "#FFFFFF",
           borderRadius: 10,
         }}
