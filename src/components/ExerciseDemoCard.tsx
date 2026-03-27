@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect, memo } from "react";
 import { Drawer } from "vaul";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
-import { getExerciseDemo, mapMuscles, needsPosterior, type ExerciseDemo } from "@/lib/exerciseDemo";
+import { getExerciseDemo, mapMuscles, needsPosterior, needsAnterior, type ExerciseDemo } from "@/lib/exerciseDemo";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Props {
@@ -37,7 +37,10 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
 
   const primaryMapped = demo ? mapMuscles(demo.primaryMuscles) as Muscle[] : [];
   const secondaryMapped = demo ? mapMuscles(demo.secondaryMuscles) as Muscle[] : [];
-  const showPosterior = needsPosterior([...primaryMapped, ...secondaryMapped]);
+  const allMuscles = [...primaryMapped, ...secondaryMapped];
+  const showFront = needsAnterior(allMuscles);
+  const showBack = needsPosterior(allMuscles);
+  const showBoth = showFront && showBack;
 
   const highlightData: IExerciseData[] = [
     ...(primaryMapped.length > 0
@@ -96,32 +99,34 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   )}
                 </div>
 
-                {/* Muscle diagrams */}
-                <div className="flex justify-center" style={{ gap: 16, marginTop: 24, paddingLeft: 16, paddingRight: 16 }}>
-                  <div>
-                    <Model
-                      data={highlightData}
-                      style={{ maxHeight: 200, width: "auto", padding: "0" }}
-                      type="anterior"
-                      highlightedColors={["#7B72E9", "#b8b0e8"]}
-                    />
-                    <p style={{ fontSize: 12, color: "#8E8E93", textAlign: "center", marginTop: 4 }}>Front</p>
-                  </div>
-                  {showPosterior && (
-                    <div>
+                {/* Muscle diagrams — smart view selection */}
+                <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0, marginTop: 24, paddingLeft: 16, paddingRight: 16 }}>
+                  {(showFront || (!showFront && !showBack)) && (
+                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "100%" }}>
                       <Model
                         data={highlightData}
-                        style={{ maxHeight: 200, width: "auto", padding: "0" }}
+                        style={{ maxHeight: showBoth ? 180 : 240, width: "auto", padding: "0" }}
+                        type="anterior"
+                        highlightedColors={["#7B72E9", "#b8b0e8"]}
+                      />
+                      <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Front</p>
+                    </div>
+                  )}
+                  {showBack && (
+                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "100%" }}>
+                      <Model
+                        data={highlightData}
+                        style={{ maxHeight: showBoth ? 180 : 240, width: "auto", padding: "0" }}
                         type="posterior"
                         highlightedColors={["#7B72E9", "#b8b0e8"]}
                       />
-                      <p style={{ fontSize: 12, color: "#8E8E93", textAlign: "center", marginTop: 4 }}>Back</p>
+                      <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Back</p>
                     </div>
                   )}
                 </div>
 
                 {/* Primary / Secondary muscle pills */}
-                <div style={{ marginTop: 24 }}>
+                <div style={{ marginTop: 16 }}>
                   {demo.primaryMuscles.length > 0 && (
                     <div className="flex flex-wrap items-center" style={{ gap: 8 }}>
                       <span style={{ fontSize: 13, fontWeight: 500, color: "#8E8E93", marginRight: 4 }}>Primary:</span>

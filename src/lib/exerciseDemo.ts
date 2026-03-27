@@ -88,8 +88,13 @@ export function mapMuscles(names: string[]): string[] {
 }
 
 export function needsPosterior(muscles: string[]): boolean {
-  const posterior = new Set(["upper-back", "lower-back", "trapezius", "hamstring", "gluteal", "calves"]);
+  const posterior = new Set(["upper-back", "lower-back", "trapezius", "hamstring", "gluteal", "calves", "back-deltoids"]);
   return muscles.some((m) => posterior.has(m));
+}
+
+export function needsAnterior(muscles: string[]): boolean {
+  const anterior = new Set(["chest", "biceps", "forearm", "front-deltoids", "abs", "obliques", "adductor", "quadriceps", "abductors"]);
+  return muscles.some((m) => anterior.has(m));
 }
 
 // Module-level cache
