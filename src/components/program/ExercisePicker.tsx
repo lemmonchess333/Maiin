@@ -233,7 +233,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                         paddingTop: 12,
                         paddingBottom: 12,
                         minHeight: 68,
-                        ...(isSelected ? { backgroundColor: "rgba(124,58,237,0.06)" } : {}),
+                        ...(isSelected ? { backgroundColor: "rgba(76,175,80,0.06)" } : {}),
                       }}
                     >
                       <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                           animate={{ scale: isSelected ? [0.9, 1] : 1 }}
                           transition={{ duration: 0.15 }}
                           className="w-9 h-9 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: isSelected ? "#7C6BF0" : "#7C6BF0" }}
+                          style={{ backgroundColor: isSelected ? "#4CAF50" : "#7C6BF0" }}
                         >
                           {isSelected ? (
                             <Check className="w-4 h-4 text-white" />
