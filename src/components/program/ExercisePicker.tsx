@@ -7,18 +7,6 @@ import { Search, X, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Chest: "#D4637A",
-  Back: "#52A3BD",
-  Shoulders: "#D9884E",
-  Biceps: "#7B72E9",
-  Triceps: "#7B72E9",
-  Legs: "#4DB872",
-  Core: "#D9884E",
-  "Full Body": "#7B72E9",
-  Cardio: "#D4637A",
-};
-
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
 
 interface Props {
@@ -233,7 +221,6 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             <div className="flex-1 overflow-y-auto min-h-0">
               {filteredExercises.map((exercise, idx) => {
                 const isSelected = selectedIds.has(exercise.id);
-                const catColor = CATEGORY_COLORS[exercise.category] || "#9ca3af";
 
                 return (
                   <div key={exercise.id}>
@@ -242,8 +229,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                       onClick={() => toggleSelection(exercise.id)}
                       className="flex items-center pr-4 transition-colors duration-100 active:bg-[#F2F2F7] cursor-pointer"
                       style={{
-                        borderLeft: `3px solid ${catColor}`,
-                        paddingLeft: 13,
+                        paddingLeft: 16,
                         paddingTop: 12,
                         paddingBottom: 12,
                         minHeight: 68,
@@ -275,7 +261,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                     </div>
                     {/* Indented divider */}
                     {idx < filteredExercises.length - 1 && (
-                      <div style={{ height: 0.5, backgroundColor: "#E5E5EA", marginLeft: 20 }} />
+                      <div style={{ height: 0.5, backgroundColor: "#E5E5EA", marginLeft: 16 }} />
                     )}
                   </div>
                 );
