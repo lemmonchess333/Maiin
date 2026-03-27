@@ -41,7 +41,7 @@ import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
 import { haptic } from "@/lib/haptic";
-import { toast } from "sonner";
+
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
@@ -126,15 +126,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Exercise management helpers (auto-save to Firestore)
   const removeExFromDay = async (exIndex: number) => {
     if (!programState || todayWorkoutIndex === null) return;
-    const previousState = { ...programState, workouts: programState.workouts.map(d => ({ ...d, exercises: [...d.exercises] })) };
     const updated = programState.workouts.map((d, i) =>
       i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
-    toast("Exercise removed", {
-      action: { label: "Undo", onClick: () => { saveProgram(previousState); toast.success("Exercise restored"); } },
-      duration: 4000,
-    });
   };
 
   const removeExFromDayById = async (exerciseId: string) => {
