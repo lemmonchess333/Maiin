@@ -213,6 +213,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     fetchPreviousWeights();
   }, [user?.uid, day.exercises]);
 
+  // Elapsed workout timer
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const formatElapsed = (s: number): string => {
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    if (hrs > 0) return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  };
+
   // Rest timer
   const [restSeconds, setRestSeconds] = useState(0);
   const [restTarget, setRestTarget] = useState(90);
@@ -799,7 +814,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         <div>
           <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
           <p className="text-xs text-muted-foreground">
-            {totalSetsCompleted}/{totalSetsTotal} sets
+            {totalSetsCompleted}/{totalSetsTotal} sets · {formatElapsed(elapsedSeconds)}
           </p>
         </div>
         <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
