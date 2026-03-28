@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { Link } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
@@ -41,7 +40,6 @@ import {
   Sparkles,
   Plus,
   Mic,
-  Scale,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -773,6 +771,77 @@ export default function Food() {
         </div>
       </motion.div>
 
+      {/* Input bar — primary food logging action */}
+      <motion.div variants={itemVariant}>
+        <div className="relative">
+          <textarea
+            value={nlInput}
+            onChange={(e) => setNlInput(e.target.value)}
+            onFocus={() => setSuggestionsActive(true)}
+            onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
+            placeholder="Describe what you ate…"
+            rows={1}
+            maxLength={500}
+            className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none"
+          />
+          <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
+            className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
+            <Mic className="w-4 h-4" />
+          </button>
+          {showSuggestions && (
+            <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
+              {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
+                <button key={`ai-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSuggestionSelect(s)} className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0">
+                  <span className="text-sm font-medium text-foreground">{s.name} — <span className="text-muted-foreground font-normal">{s.serving}</span></span>
+                  <span className="text-xs text-muted-foreground tabular-nums shrink-0">{s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g</span>
+                </button>
+              ))}</div>)}
+              {offResults.length > 0 && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                {offResults.map((food, i) => (
+                  <button key={`off-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleOFFSelect(food)} className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
+                        {food.brand && <p className="text-xs text-muted-foreground truncate">{food.brand}</p>}
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span className="text-orange-500 font-medium">{food.calories} cal</span>
+                          <span>&middot;</span><span>P {food.protein}g</span><span>C {food.carbs}g</span><span>F {food.fat}g</span>
+                          <span className="text-xs">per {food.servingSize}</span>
+                        </div>
+                      </div>
+                      <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
+                    </div>
+                  </button>
+                ))}
+              </motion.div>)}
+            </div>
+          )}
+        </div>
+        <motion.button whileTap={{ scale: 0.97 }} onClick={() => { haptic(); handleNLParse(); }} disabled={!nlInput.trim() || nlParsing}
+          className={cn("w-full py-3 rounded-xl text-sm font-semibold transition-all text-white flex items-center justify-center gap-1.5", (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed")}
+          style={{ marginTop: 10, backgroundColor: "#7C6BF0", boxShadow: "0 4px 16px rgba(124,110,246,0.25)" }}>
+          {isPro && <Sparkles className="w-3.5 h-3.5" />}
+          {nlParsing ? "Analyzing..." : "Log Meal"}
+        </motion.button>
+        <div className="flex gap-2" style={{ marginTop: 8 }}>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setScanOpen(!scanOpen); }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
+            style={{ background: "linear-gradient(135deg, #f07368, #f09060)", boxShadow: "0 2px 10px rgba(240, 115, 104, 0.2)" }}>
+            <ScanBarcode className="w-3.5 h-3.5" /> Scan
+          </motion.button>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setManualOpen(true); }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30">
+            <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
+          </motion.button>
+        </div>
+        {!isPro && <p className="text-xs text-muted-foreground text-center mt-1.5">Upgrade to Pro for AI-powered macro estimates</p>}
+        {scanOpen && (
+          <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
+            <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />
+          </Suspense>
+        )}
+      </motion.div>
+
       {/* Quick Add */}
       <motion.div variants={itemVariant} style={{ marginTop: "14px" }}>
         <p
@@ -847,194 +916,6 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Add Food */}
-      <motion.div
-        variants={itemVariant}
-        className="rounded-2xl p-4"
-        style={{
-          background: `linear-gradient(135deg, ${THEME.semantic.nutrition}06 0%, transparent 70%)`,
-        }}
-      >
-        <p
-          className="text-xs uppercase tracking-wider font-semibold"
-          style={{ color: THEME.text.muted }}
-        >
-          Add Food
-        </p>
-
-        <div className="relative" style={{ marginTop: "10px" }}>
-          <textarea
-            value={nlInput}
-            onChange={(e) => setNlInput(e.target.value)}
-            onFocus={() => setSuggestionsActive(true)}
-            onBlur={() => {
-              setTimeout(() => setSuggestionsActive(false), 200);
-            }}
-            placeholder="Describe what you ate…"
-            rows={1}
-            maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none"
-          />
-          <button
-            type="button"
-            onClick={handleVoiceInput}
-            aria-label={isListening ? "Stop listening" : "Voice input"}
-            className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90",
-              isListening
-                ? "text-red-500 bg-red-500/10 animate-pulse"
-                : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-            )}
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-
-          {showSuggestions && (
-            <div
-              ref={suggestionsRef}
-              className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
-            >
-              {suggestions.length > 0 && (
-                <div>
-                  {suggestions.map((s, i) => (
-                    <button
-                      key={`ai-${i}`}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSuggestionSelect(s)}
-                      className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
-                    >
-                      <span className="text-sm font-medium text-foreground">
-                        {s.name} —{" "}
-                        <span className="text-muted-foreground font-normal">{s.serving}</span>
-                      </span>
-                      <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                        {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {offResults.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {offResults.map((food, i) => (
-                    <button
-                      key={`off-${i}`}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleOFFSelect(food)}
-                      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {food.name}
-                          </p>
-                          {food.brand && (
-                            <p className="text-xs text-muted-foreground truncate">{food.brand}</p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span className="text-orange-500 font-medium">
-                              {food.calories} cal
-                            </span>
-                            <span>&middot;</span>
-                            <span>P {food.protein}g</span>
-                            <span>C {food.carbs}g</span>
-                            <span>F {food.fat}g</span>
-                            <span className="text-xs">per {food.servingSize}</span>
-                          </div>
-                        </div>
-                        <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
-                      </div>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Log Meal */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={() => {
-            haptic();
-            handleNLParse();
-          }}
-          disabled={!nlInput.trim() || nlParsing}
-          className={cn(
-            "w-full py-3 rounded-xl text-small font-semibold transition-all text-white flex items-center justify-center gap-1.5",
-            (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed"
-          )}
-          style={{
-            marginTop: "12px",
-            background: THEME.gradient.brand,
-            boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
-          }}
-        >
-          {isPro && <Sparkles className="w-3.5 h-3.5" />}
-          {nlParsing ? "Analyzing..." : "Log Meal"}
-        </motion.button>
-        {!isPro && (
-          <p className="text-xs text-muted-foreground text-center mt-1">
-            Upgrade to Pro for AI-powered macro estimates
-          </p>
-        )}
-
-        {/* Scan + Manual */}
-        <div className="flex gap-2" style={{ marginTop: "10px" }}>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              haptic();
-              setScanOpen(!scanOpen);
-            }}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
-            style={{
-              background: "linear-gradient(135deg, #f07368, #f09060)",
-              boxShadow: "0 2px 10px rgba(240, 115, 104, 0.2)",
-            }}
-          >
-            <ScanBarcode className="w-3.5 h-3.5" /> Scan
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              haptic();
-              setManualOpen(true);
-            }}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30"
-          >
-            <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
-          </motion.button>
-        </div>
-
-        {/* Log Weight shortcut */}
-        <Link
-          to="/"
-          state={{ openWeight: true }}
-          className="block text-center text-[10px] font-medium mt-3 py-1"
-          style={{ color: THEME.text.muted }}
-        >
-          <Scale className="w-3 h-3 inline-block mr-1" style={{ verticalAlign: "-1px" }} />
-          Log Weight
-        </Link>
-
-        {/* Expanded scan */}
-        {scanOpen && (
-          <Suspense
-            fallback={
-              <div className="py-12 text-center text-muted-foreground text-sm animate-pulse">
-                Loading scanner...
-              </div>
-            }
-          >
-            <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />
-          </Suspense>
-        )}
-      </motion.div>
 
       {/* Logged Today */}
       {todaysMeals.length > 0 && (
