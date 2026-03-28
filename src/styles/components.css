@@ -11,13 +11,11 @@
 
 /* ─── STAT TILES (Macro cards) ──────────────────────────────── */
 .stat-tile__value {
-  font-size: clamp(1.125rem, 4.5vw, 1.625rem);
+  font-size: clamp(1rem, 3.8vw, 1.25rem);
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

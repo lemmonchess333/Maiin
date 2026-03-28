@@ -590,19 +590,6 @@ export default function Food() {
     setQuickAdding(null);
   };
 
-  const dayTypeLabel = useMemo(() => {
-    if (!isToday) return format(new Date(selectedDate + "T12:00:00"), "EEEE, d MMMM");
-    switch (todayDayType) {
-      case "lift":
-        return "Lift day — extra fuel for recovery";
-      case "run":
-        return "Run day — fuel for cardio";
-      case "both":
-        return "Lift + Run day — extra fuel for recovery & cardio";
-      default:
-        return "Rest day";
-    }
-  }, [isToday, selectedDate, todayDayType]);
 
   return (
     <motion.div
@@ -660,7 +647,6 @@ export default function Food() {
       {/* Header */}
       <motion.div variants={itemVariant}>
         <h1 className="text-xl font-extrabold text-foreground">Log Food</h1>
-        <p className="text-sm text-muted-foreground">{dayTypeLabel}</p>
       </motion.div>
 
       {/* Day-type pill */}

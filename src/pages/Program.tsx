@@ -689,12 +689,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                 </div>
                 {!canGoBack && !canGoForward && (
-                  <p className="text-xs text-muted-foreground text-center mt-3">
+                  <p className="text-sm text-gray-400 text-center mt-3">
                     Complete all sessions to advance to Week {displayWeekNumber + 1}
                   </p>
                 )}
 
-                <div className="flex items-center justify-center gap-2 px-4 mt-2">
+                <div className="flex items-center justify-center gap-2 px-4 mt-2 mb-4">
                   <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
                     height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
                     backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
