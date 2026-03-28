@@ -104,8 +104,8 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   )}
                 </div>
 
-                {/* Muscle diagrams — glow + primary/secondary colour differentiation */}
-                <div style={{ backgroundColor: "#F5F5F7", borderRadius: 16, padding: "20px 16px", marginTop: 16, overflow: "visible" }}>
+                {/* Muscle diagrams — primary/secondary colour differentiation */}
+                <div style={{ backgroundColor: "#F5F5F7", borderRadius: 16, padding: "20px 16px", marginTop: 16 }}>
                   <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0 }}>
                     {(showFront || (!showFront && !showBack)) && (
                       <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
@@ -113,7 +113,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                           <Model
                             data={highlightData}
                             style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
-                            svgStyle={{ maxHeight: "100%", maxWidth: "100%", overflow: "visible", filter: "drop-shadow(0 0 4px rgba(124, 107, 240, 0.5)) drop-shadow(0 0 10px rgba(124, 107, 240, 0.25))" }}
+                            svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
                             type="anterior"
                             highlightedColors={["#A78BFA", "#7C6BF0"]}
                           />
@@ -127,7 +127,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                           <Model
                             data={highlightData}
                             style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
-                            svgStyle={{ maxHeight: "100%", maxWidth: "100%", overflow: "visible", filter: "drop-shadow(0 0 4px rgba(124, 107, 240, 0.5)) drop-shadow(0 0 10px rgba(124, 107, 240, 0.25))" }}
+                            svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
                             type="posterior"
                             highlightedColors={["#A78BFA", "#7C6BF0"]}
                           />
