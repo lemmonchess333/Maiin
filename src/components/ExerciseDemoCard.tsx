@@ -31,7 +31,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
 
   useLayoutEffect(() => {
     if (instructionsRef.current) {
-      setOverflows(instructionsRef.current.scrollHeight > 80);
+      setOverflows(instructionsRef.current.scrollHeight > 60);
     }
   }, [demo]);
 
@@ -100,42 +100,44 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                 </div>
 
                 {/* Muscle diagrams — smart view selection with hard overflow constraints */}
-                <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0, marginTop: 24 }}>
-                  {(showFront || (!showFront && !showBack)) && (
-                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
-                      <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
-                        <Model
-                          data={highlightData}
-                          style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
-                          svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
-                          type="anterior"
-                          highlightedColors={["#7B72E9", "#b8b0e8"]}
-                        />
+                <div style={{ backgroundColor: "#F8F8FA", borderRadius: 16, padding: "20px 16px", marginTop: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0 }}>
+                    {(showFront || (!showFront && !showBack)) && (
+                      <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
+                        <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
+                          <Model
+                            data={highlightData}
+                            style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
+                            svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                            type="anterior"
+                            highlightedColors={["#7B72E9", "#b8b0e8"]}
+                          />
+                        </div>
+                        <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 8 }}>Front</p>
                       </div>
-                      <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Front</p>
-                    </div>
-                  )}
-                  {showBack && (
-                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
-                      <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
-                        <Model
-                          data={highlightData}
-                          style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
-                          svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
-                          type="posterior"
-                          highlightedColors={["#7B72E9", "#b8b0e8"]}
-                        />
+                    )}
+                    {showBack && (
+                      <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
+                        <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
+                          <Model
+                            data={highlightData}
+                            style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
+                            svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                            type="posterior"
+                            highlightedColors={["#7B72E9", "#b8b0e8"]}
+                          />
+                        </div>
+                        <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 8 }}>Back</p>
                       </div>
-                      <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Back</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Primary / Secondary muscle pills */}
                 <div style={{ marginTop: 16 }}>
                   {demo.primaryMuscles.length > 0 && (
                     <div className="flex flex-wrap items-center" style={{ gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#8E8E93", marginRight: 4 }}>Primary:</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "#C7C7CC", marginRight: 4 }}>Primary:</span>
                       {demo.primaryMuscles.map((m) => (
                         <span key={m} className="inline-flex items-center whitespace-nowrap" style={{
                           height: 24, paddingLeft: 10, paddingRight: 10, borderRadius: 12,
@@ -148,7 +150,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   )}
                   {demo.secondaryMuscles.length > 0 && (
                     <div className="flex flex-wrap items-center" style={{ gap: 8, marginTop: 12 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "#8E8E93", marginRight: 4 }}>Secondary:</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: "#C7C7CC", marginRight: 4 }}>Secondary:</span>
                       {demo.secondaryMuscles.map((m) => (
                         <span key={m} className="inline-flex items-center whitespace-nowrap" style={{
                           height: 24, paddingLeft: 10, paddingRight: 10, borderRadius: 12,
@@ -168,7 +170,7 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                     <div
                       ref={instructionsRef}
                       className={`relative overflow-hidden transition-all duration-300 ${
-                        overflows && !showInstructions ? "max-h-20" : "max-h-[2000px]"
+                        overflows && !showInstructions ? "max-h-[60px]" : "max-h-[2000px]"
                       }`}
                       style={{ marginTop: 12 }}
                     >
