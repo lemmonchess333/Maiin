@@ -689,12 +689,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                 </div>
                 {!canGoBack && !canGoForward && (
-                  <p className="text-xs text-muted-foreground text-center mt-1">
+                  <p className="text-xs text-muted-foreground text-center mt-3">
                     Complete all sessions to advance to Week {displayWeekNumber + 1}
                   </p>
                 )}
 
-                <div className="flex items-center justify-center gap-2 px-4 pb-3 -mt-1">
+                <div className="flex items-center justify-center gap-2 px-4 mt-2">
                   <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
                     height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
                     backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
@@ -763,11 +763,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               <section aria-label="Workout days">
               <div className="space-y-2">
                 {displayWorkouts.map((day, dayIndex) => {
-                  const dayType = day.dayName?.toLowerCase() ?? '';
-                  const isUpper = dayType.includes('upper') || dayType.includes('push') || dayType.includes('pull');
                   const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
                   const isCurrent = !day.completed && dayIndex === firstIncompleteIndex;
-                  const sportColor = isUpper ? THEME.lifting : THEME.running;
 
                   return (
                   <div
@@ -777,10 +774,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       day.completed ? "opacity-70" : ""
                     )}
                     style={{
-                      background: isCurrent
-                        ? `linear-gradient(135deg, ${sportColor}18 0%, ${sportColor}08 100%)`
-                        : 'var(--card)',
-                      borderLeft: isCurrent ? `3px solid ${sportColor}` : undefined,
+                      background: 'var(--card)',
+                      borderLeft: isCurrent ? '3px solid #7C6BF0' : undefined,
                     }}
                   >
                     {/* Current day label */}
@@ -845,8 +840,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-3 pb-3 space-y-1.5">
-                            {/* Exercise cards — match today view styling */}
+                          <div className="px-3 pb-3 space-y-1">
+                            {/* Exercise preview — compact rows */}
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(dayIndex, e)}>
                               <SortableContext items={day.exercises.map((_, i) => `ex-${dayIndex}-${i}`)} strategy={verticalListSortingStrategy}>
                                 {day.exercises.map((ex, exIndex) => {
@@ -861,17 +856,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     >
                                       <button
                                         onClick={() => setDemoExercise(ex.name)}
-                                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left"
+                                        className="w-full flex items-center gap-2.5 py-2 px-3 text-left"
                                         onTouchStart={(e) => handleLongPressStart(dayIndex, exIndex, e)}
                                         onTouchMove={handleLongPressCancel}
                                         onTouchEnd={handleLongPressCancel}
                                       >
-                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
                                           <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                          <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }} className="truncate">{ex.name}</p>
-                                          <p style={{ fontSize: 14, fontWeight: 400, color: "#8E8E93" }}>
+                                          <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
+                                          <p className="text-xs text-muted-foreground">
                                             {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
                                           </p>
                                         </div>
