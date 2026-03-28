@@ -870,37 +870,67 @@ export default function Food() {
 
 
       {/* Meal-segmented food log */}
-      <motion.div variants={itemVariant} className="space-y-3">
+      <motion.div variants={itemVariant} className="space-y-4">
         {MEAL_ORDER.map((mealKey) => {
           const meals = mealSegmentedMeals[mealKey];
           const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
 
+          // Group duplicate foods within this meal section
+          const grouped = new Map<string, { foodName: string; meals: typeof meals; totalCal: number }>();
+          for (const m of meals) {
+            const key = (m.foodName || "Meal").toLowerCase().trim();
+            const existing = grouped.get(key);
+            if (existing) {
+              existing.meals.push(m);
+              existing.totalCal += safeNum(m.totalCalories);
+            } else {
+              grouped.set(key, { foodName: m.foodName || "Meal", meals: [m], totalCal: safeNum(m.totalCalories) });
+            }
+          }
+          const groupedEntries = Array.from(grouped.values());
+
           return (
             <div key={mealKey}>
               <div className="flex items-center justify-between px-1 mb-1.5">
-                <p className="text-xs font-semibold text-foreground">
-                  {MEAL_LABELS[mealKey]}{meals.length > 0 ? ` · ${mealCals} cal` : ""}
+                <p className="text-sm font-semibold text-foreground">
+                  {MEAL_LABELS[mealKey]}
+                  {meals.length > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground font-mono tabular-nums ml-1.5">
+                      {mealCals} cal
+                    </span>
+                  )}
                 </p>
-                {meals.length === 0 && (
-                  <button onClick={() => { /* scroll to input */ }} className="text-xs text-muted-foreground">+ Add</button>
-                )}
               </div>
-              {meals.length > 0 ? (
-                <div className="space-y-1">
-                  {meals.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-card">
-                      <p className="text-sm text-foreground truncate flex-1 mr-2">{m.foodName || "Meal"}</p>
+              {groupedEntries.length > 0 ? (
+                <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20">
+                  {groupedEntries.map((group) => (
+                    <div key={group.foodName} className="flex items-center justify-between px-3 py-2.5">
+                      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                        <p className="text-sm text-foreground truncate">{group.foodName}</p>
+                        {group.meals.length > 1 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "rgba(124,107,240,0.1)", color: "#7C6BF0" }}>
+                            ×{group.meals.length}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{safeNum(m.totalCalories)} cal</span>
-                        <button onClick={() => handleDeleteMeal(m.id, m.foodName || "Meal")} aria-label={`Delete ${m.foodName}`}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90">
+                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{group.totalCal} cal</span>
+                        <button
+                          onClick={() => handleDeleteMeal(group.meals[group.meals.length - 1].id, group.foodName)}
+                          aria-label={`Delete ${group.foodName}`}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
+                        >
                           <Trash2 aria-hidden="true" className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : null}
+              ) : (
+                <div className="flex items-center justify-center py-3 rounded-xl border border-dashed border-border/50">
+                  <button className="text-xs text-muted-foreground">+ Add</button>
+                </div>
+              )}
             </div>
           );
         })}
