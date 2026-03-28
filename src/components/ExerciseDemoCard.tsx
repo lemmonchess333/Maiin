@@ -99,27 +99,33 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                   )}
                 </div>
 
-                {/* Muscle diagrams — smart view selection */}
-                <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0, marginTop: 24, paddingLeft: 16, paddingRight: 16 }}>
+                {/* Muscle diagrams — smart view selection with hard overflow constraints */}
+                <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0, marginTop: 24 }}>
                   {(showFront || (!showFront && !showBack)) && (
-                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "100%" }}>
-                      <Model
-                        data={highlightData}
-                        style={{ maxHeight: showBoth ? 180 : 240, width: "auto", padding: "0" }}
-                        type="anterior"
-                        highlightedColors={["#7B72E9", "#b8b0e8"]}
-                      />
+                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
+                      <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
+                        <Model
+                          data={highlightData}
+                          style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
+                          svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                          type="anterior"
+                          highlightedColors={["#7B72E9", "#b8b0e8"]}
+                        />
+                      </div>
                       <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Front</p>
                     </div>
                   )}
                   {showBack && (
-                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "100%" }}>
-                      <Model
-                        data={highlightData}
-                        style={{ maxHeight: showBoth ? 180 : 240, width: "auto", padding: "0" }}
-                        type="posterior"
-                        highlightedColors={["#7B72E9", "#b8b0e8"]}
-                      />
+                    <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
+                      <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
+                        <Model
+                          data={highlightData}
+                          style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
+                          svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                          type="posterior"
+                          highlightedColors={["#7B72E9", "#b8b0e8"]}
+                        />
+                      </div>
                       <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 12 }}>Back</p>
                     </div>
                   )}
