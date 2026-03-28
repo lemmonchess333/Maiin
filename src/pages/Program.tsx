@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
-import { getProgressionLabel, getProgressionDirection } from "@/features/program/programEngine";
 import type { ProgramExercise, Goal } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
@@ -21,8 +20,6 @@ import {
   ChevronRight,
   Settings2,
   X,
-  TrendingUp,
-  TrendingDown,
   Minus,
   Plus,
   FastForward,
@@ -57,20 +54,7 @@ import ExerciseDemoCard from "@/components/ExerciseDemoCard";
  * Fix: split into a gate component (subscription only) + inner component (program hook).
  */
 
-function DirectionIcon({ ex }: { ex: ProgramExercise }) {
-  const dir = getProgressionDirection(ex);
-  if (dir === "up") return <TrendingUp className="w-3.5 h-3.5" style={{ color: THEME.success }} />;
-  if (dir === "down") return <TrendingDown className="w-3.5 h-3.5" style={{ color: THEME.danger }} />;
-  return null;
-}
 
-function ProgressionLabel({ ex }: { ex: ProgramExercise }) {
-  const label = getProgressionLabel(ex);
-  const dir = getProgressionDirection(ex);
-  if (dir === "stable") return null;
-  const color = dir === "up" ? THEME.success : dir === "down" ? THEME.danger : undefined;
-  return <><span className="text-xs">&middot;</span><span className="font-medium" style={color ? { color } : undefined}>{label}</span></>;
-}
 
 export default function Program() {
   const { features } = useSubscription();
@@ -119,76 +103,77 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ exIndex: number; x: number; y: number } | null>(null);
-  const [replaceTarget, setReplaceTarget] = useState<number | null>(null);
+  const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ dayIndex: number; exIndex: number; x: number; y: number } | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; exIndex: number } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Exercise management helpers (auto-save to Firestore)
-  const removeExFromDay = async (exIndex: number) => {
-    if (!programState || todayWorkoutIndex === null) return;
+  // Exercise management helpers — accept dayIdx to work on any day (auto-save to Firestore)
+  const removeExFromDay = async (dayIdx: number, exIndex: number) => {
+    if (!programState) return;
     const updated = programState.workouts.map((d, i) =>
-      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
+      i === dayIdx ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
   };
 
-  const removeExFromDayById = async (exerciseId: string) => {
-    if (!programState || todayWorkoutIndex === null) return;
-    const exercises = programState.workouts[todayWorkoutIndex].exercises;
-    // Remove only the last instance to handle duplicates safely
+  const removeExFromDayById = async (dayIdx: number, exerciseId: string) => {
+    if (!programState) return;
+    const exercises = programState.workouts[dayIdx]?.exercises;
+    if (!exercises) return;
     const lastIdx = exercises.map(ex => ex.exerciseId).lastIndexOf(exerciseId);
     if (lastIdx === -1) return;
     const updated = programState.workouts.map((d, i) =>
-      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) } : d
+      i === dayIdx ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
   };
 
-  const moveExercise = async (exIndex: number, direction: -1 | 1) => {
-    if (!programState || todayWorkoutIndex === null) return;
-    const exercises = [...programState.workouts[todayWorkoutIndex].exercises];
+  const moveExercise = async (dayIdx: number, exIndex: number, direction: -1 | 1) => {
+    if (!programState) return;
+    const exercises = [...programState.workouts[dayIdx].exercises];
     const newIdx = exIndex + direction;
     if (newIdx < 0 || newIdx >= exercises.length) return;
     [exercises[exIndex], exercises[newIdx]] = [exercises[newIdx], exercises[exIndex]];
     const updated = programState.workouts.map((d, i) =>
-      i === todayWorkoutIndex ? { ...d, exercises } : d
+      i === dayIdx ? { ...d, exercises } : d
     );
     await saveProgram({ ...programState, workouts: updated });
     setContextMenu(null);
   };
 
-  const replaceExercise = async (exIndex: number, newEx: Exercise) => {
-    if (!programState || todayWorkoutIndex === null) return;
-    const old = programState.workouts[todayWorkoutIndex].exercises[exIndex];
+  const replaceExercise = async (dayIdx: number, exIndex: number, newEx: Exercise) => {
+    if (!programState) return;
+    const old = programState.workouts[dayIdx].exercises[exIndex];
     const replacement = normalizeExercise({
       name: newEx.name, exerciseId: newEx.id,
       movementCategory: old.movementCategory, sets: old.sets, reps: old.reps, weight: old.weight,
     });
     const updated = programState.workouts.map((d, i) =>
-      i === todayWorkoutIndex ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
+      i === dayIdx ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
     );
     await saveProgram({ ...programState, workouts: updated });
     setReplaceTarget(null);
   };
 
-  const addExercisesToDay = async (exercises: Exercise[]) => {
-    if (!programState || todayWorkoutIndex === null) return;
+  const addExercisesToDay = async (dayIdx: number, exercises: Exercise[]) => {
+    if (!programState) return;
     const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, movementCategory: "horizontal_push", sets: 3, reps: 10, weight: 0 }));
     const updated = programState.workouts.map((d, i) =>
-      i === todayWorkoutIndex ? { ...d, exercises: [...d.exercises, ...newExs] } : d
+      i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
     );
     await saveProgram({ ...programState, workouts: updated });
     setShowAddPicker(false);
   };
 
-  const handleLongPressStart = (exIndex: number, e: React.TouchEvent) => {
+  const handleLongPressStart = (dayIdx: number, exIndex: number, e: React.TouchEvent) => {
     if (reorderMode) return;
     const touch = e.touches[0];
     const x = touch.clientX;
     const y = touch.clientY;
     longPressTimer.current = setTimeout(() => {
       haptic("medium");
-      setContextMenu({ exIndex, x, y });
+      setContextMenu({ dayIndex: dayIdx, exIndex, x, y });
     }, 500);
   };
 
@@ -292,29 +277,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (lowerCompound.includes(ex.movementCategory)) return 2.5;
     if (upperCompound.includes(ex.movementCategory)) return 1.25;
     return 0.5; // isolation
-  };
-
-  const openDrawer = (dayIndex: number, exIndex: number, exercise: ProgramExercise) => {
-    setDrawerExercise({ dayIndex, exIndex, exercise });
-
-    // Auto-fill from previous session with progressive overload
-    const lastPerf = exercise.performanceHistory[exercise.performanceHistory.length - 1];
-    if (lastPerf) {
-      const passed = lastPerf.repsCompleted >= lastPerf.repsTarget;
-      if (passed) {
-        // Passed last session — apply progressive overload
-        const increment = getProgressionIncrement(exercise);
-        setLogWeight((lastPerf.weight + increment).toString());
-      } else {
-        // Failed — repeat same weight
-        setLogWeight(lastPerf.weight.toString());
-      }
-      setLogReps(exercise.reps.toString());
-    } else {
-      // No history — use prescription defaults
-      setLogReps(exercise.reps.toString());
-      setLogWeight(exercise.weight.toString());
-    }
   };
 
   const closeDrawer = () => {
@@ -489,11 +451,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   {todayWorkout.exercises.map((ex, i) => {
                     const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
                     return (
-                      <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(i)}>
+                      <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(todayWorkoutIndex!, i)}>
                         <button
                           onClick={() => setDemoExercise(ex.name)}
                           className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left"
-                          onTouchStart={(e) => handleLongPressStart(i, e)}
+                          onTouchStart={(e) => handleLongPressStart(todayWorkoutIndex!, i, e)}
                           onTouchMove={handleLongPressCancel}
                           onTouchEnd={handleLongPressCancel}
                         >
@@ -515,7 +477,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
               {/* + Add Exercise */}
               <button
-                onClick={() => setShowAddPicker(true)}
+                onClick={() => { setAddPickerDayIndex(todayWorkoutIndex); setShowAddPicker(true); }}
                 className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
               >
@@ -535,16 +497,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
                       style={{ top: Math.min(contextMenu.y, window.innerHeight - 220), left: Math.min(contextMenu.x - 80, window.innerWidth - 200), width: 200 }}
                     >
-                      <button onClick={() => { setReplaceTarget(contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
+                      <button onClick={() => { setReplaceTarget({ dayIndex: contextMenu.dayIndex, exIndex: contextMenu.exIndex }); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
                         <Repeat className="w-4 h-4 text-muted-foreground" /> Replace Exercise
                       </button>
-                      <button onClick={() => { removeExFromDay(contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-500 hover:bg-muted transition-colors border-b border-border/30">
+                      <button onClick={() => { removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-500 hover:bg-muted transition-colors border-b border-border/30">
                         <Trash2 className="w-4 h-4" /> Remove Exercise
                       </button>
-                      <button onClick={() => moveExercise(contextMenu.exIndex, -1)} disabled={contextMenu.exIndex === 0} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30", contextMenu.exIndex === 0 && "opacity-30 cursor-not-allowed")}>
+                      <button onClick={() => moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1)} disabled={contextMenu.exIndex === 0} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30", contextMenu.exIndex === 0 && "opacity-30 cursor-not-allowed")}>
                         <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
                       </button>
-                      <button onClick={() => moveExercise(contextMenu.exIndex, 1)} disabled={contextMenu.exIndex === todayWorkout.exercises.length - 1} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors", contextMenu.exIndex === todayWorkout.exercises.length - 1 && "opacity-30 cursor-not-allowed")}>
+                      <button onClick={() => moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1)} disabled={contextMenu.exIndex === (programState.workouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors", contextMenu.exIndex === (programState.workouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1 && "opacity-30 cursor-not-allowed")}>
                         <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move Down
                       </button>
                     </motion.div>
@@ -733,20 +695,23 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 )}
 
                 <div className="flex items-center justify-center gap-2 px-4 pb-3 -mt-1">
-                  <span className="px-2.5 py-0.5 rounded-full border text-xs font-medium border-primary/30 text-primary">
+                  <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
+                    height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
+                    backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
+                  }}>
                     {goalLabel(programState.goal)}
                   </span>
-                  <span
-                    className="px-2.5 py-0.5 rounded-full border text-xs font-medium"
-                    style={prescription.deload
-                      ? { borderColor: `${THEME.lifting}40`, color: THEME.lifting }
-                      : { borderColor: `${THEME.success}40`, color: THEME.success }
-                    }
-                  >
+                  <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
+                    height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
+                    backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43", fontSize: 13, fontWeight: 500,
+                  }}>
                     {prescription.deload ? "Deload" : "Progression"}
                   </span>
                   {!isViewingHistory && (
-                    <span className="px-2.5 py-0.5 rounded-full border border-border text-xs font-medium text-muted-foreground">
+                    <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
+                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
+                      backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#8E8E93", fontSize: 13, fontWeight: 500,
+                    }}>
                       {completedCount}/{totalDays} done
                     </span>
                   )}
@@ -822,7 +787,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {isCurrent && (
                       <div className="px-3 pt-2.5 pb-0">
                         <span className="text-[11px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md"
-                          style={{ color: sportColor, background: `${sportColor}12` }}>
+                          style={{ color: "#7C6BF0", background: "rgba(124, 107, 240, 0.08)" }}>
                           Up next
                         </span>
                       </div>
@@ -839,8 +804,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           <CheckCircle2 className="w-5 h-5 text-green-500" />
                         ) : isCurrent ? (
                           <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                            style={{ borderColor: sportColor }}>
-                            <div className="w-2 h-2 rounded-full" style={{ background: sportColor }} />
+                            style={{ borderColor: "#7C6BF0" }}>
+                            <div className="w-2 h-2 rounded-full" style={{ background: "#7C6BF0" }} />
                           </div>
                         ) : (
                           <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/20" />
@@ -853,7 +818,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           Day {dayIndex + 1}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {day.dayName} &middot; {day.exercises.length} exercises
+                          {day.dayName} &middot; {day.exercises.length} exercises &middot; ~{Math.round(day.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
                           {day.isCustom && (
                             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-xs font-medium">Custom</span>
                           )}
@@ -881,72 +846,77 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           className="overflow-hidden"
                         >
                           <div className="px-3 pb-3 space-y-1.5">
+                            {/* Exercise cards — match today view styling */}
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(dayIndex, e)}>
                               <SortableContext items={day.exercises.map((_, i) => `ex-${dayIndex}-${i}`)} strategy={verticalListSortingStrategy}>
-                                {day.exercises.map((ex, exIndex) => (
-                                  <SortableExerciseRow key={`ex-${dayIndex}-${exIndex}`} id={`ex-${dayIndex}-${exIndex}`} justDropped={justDroppedId === `ex-${dayIndex}-${exIndex}`}>
-                                    <button
-                                      onClick={() => openDrawer(dayIndex, exIndex, ex)}
-                                      className={cn(
-                                        "w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors",
-                                        day.completed ? "bg-muted/30 opacity-60" : "bg-muted/50 hover:bg-muted"
-                                      )}
+                                {day.exercises.map((ex, exIndex) => {
+                                  const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+                                  return (
+                                    <SortableExerciseRow
+                                      key={`ex-${dayIndex}-${exIndex}`}
+                                      id={`ex-${dayIndex}-${exIndex}`}
+                                      justDropped={justDroppedId === `ex-${dayIndex}-${exIndex}`}
+                                      showHandle={reorderMode}
+                                      onDelete={() => removeExFromDay(dayIndex, exIndex)}
                                     >
-                                      <Dumbbell className="w-4 h-4 text-primary shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground truncate">{ex.name}</p>
-                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                          <span>{ex.sets}&times;{ex.reps}</span>
-                                          {ex.weight > 0 && (() => {
-                                            const dir = getProgressionDirection(ex);
-                                            const baseWeight = (dir !== "stable" && ex.lastAttemptedWeight && ex.lastAttemptedWeight > 0)
-                                              ? ex.lastAttemptedWeight
-                                              : ex.weight;
-                                            if (dir === "stable" || baseWeight === ex.weight) {
-                                              return (
-                                                <>
-                                                  <span className="text-xs">&middot;</span>
-                                                  <span className="font-mono">{ex.weight}kg</span>
-                                                </>
-                                              );
-                                            }
-                                            return (
-                                              <>
-                                                <span className="text-xs">&middot;</span>
-                                                <span className="font-mono">{baseWeight}kg</span>
-                                                <ProgressionLabel ex={ex} />
-                                              </>
-                                            );
-                                          })()}
+                                      <button
+                                        onClick={() => setDemoExercise(ex.name)}
+                                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left"
+                                        onTouchStart={(e) => handleLongPressStart(dayIndex, exIndex, e)}
+                                        onTouchMove={handleLongPressCancel}
+                                        onTouchEnd={handleLongPressCancel}
+                                      >
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                                          <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
                                         </div>
-                                      </div>
-                                      {ex.lastPerformance && <DirectionIcon ex={ex} />}
-                                    </button>
-                                  </SortableExerciseRow>
-                                ))}
+                                        <div className="flex-1 min-w-0">
+                                          <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }} className="truncate">{ex.name}</p>
+                                          <p style={{ fontSize: 14, fontWeight: 400, color: "#8E8E93" }}>
+                                            {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    </SortableExerciseRow>
+                                  );
+                                })}
                               </SortableContext>
                             </DndContext>
 
-
-                            {/* Start Workout Session */}
+                            {/* + Add Exercise */}
                             {!day.completed && (
                               <button
-                                onClick={() => setSessionDayIndex(dayIndex)}
-                                className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-                                style={{ background: THEME.gradient.brand }}
+                                onClick={() => { setAddPickerDayIndex(dayIndex); setShowAddPicker(true); }}
+                                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
                               >
-                                <Play className="w-4 h-4" /> Start Workout
+                                <Plus className="w-4 h-4" /> Add Exercise
                               </button>
                             )}
 
-                            {/* Complete Day button */}
-                            {!day.completed && (
-                              <button
-                                onClick={() => completeWorkoutDay(dayIndex)}
-                                className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium hover:bg-muted/80 transition-colors"
-                              >
-                                Skip session
-                              </button>
+                            {/* Conditional buttons based on day status */}
+                            {isCurrent && !day.completed && (
+                              <>
+                                <button
+                                  onClick={() => setSessionDayIndex(dayIndex)}
+                                  className="w-full py-3 mt-1 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
+                                  style={{ background: THEME.gradient.brand }}
+                                >
+                                  <Play className="w-4 h-4" /> Begin Workout
+                                </button>
+                                <div className="flex items-center justify-center">
+                                  <button
+                                    onClick={() => completeWorkoutDay(dayIndex)}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    Skip Session
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                            {day.completed && (
+                              <p style={{ color: "#4CAF50", fontSize: 15, fontWeight: 500, textAlign: "center", padding: "8px 0" }}>
+                                Completed ✓
+                              </p>
                             )}
                           </div>
                         </motion.div>
@@ -1301,23 +1271,23 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         />
       )}
 
-      {/* Exercise Picker — Add mode */}
+      {/* Exercise Picker — Add mode (scoped to addPickerDayIndex) */}
       <ExercisePicker
         open={showAddPicker}
         headerTitle="Add Exercise"
-        existingExerciseIds={todayWorkout?.exercises.map(ex => ex.exerciseId) ?? []}
-        onSelect={(ex) => addExercisesToDay([ex])}
-        onMultiSelect={addExercisesToDay}
-        onClose={() => setShowAddPicker(false)}
-        onRemoveExercise={removeExFromDayById}
+        existingExerciseIds={programState.workouts[addPickerDayIndex ?? todayWorkoutIndex ?? 0]?.exercises.map(ex => ex.exerciseId) ?? []}
+        onSelect={(ex) => addExercisesToDay(addPickerDayIndex ?? todayWorkoutIndex!, [ex])}
+        onMultiSelect={(exs) => addExercisesToDay(addPickerDayIndex ?? todayWorkoutIndex!, exs)}
+        onClose={() => { setShowAddPicker(false); setAddPickerDayIndex(null); }}
+        onRemoveExercise={(id) => removeExFromDayById(addPickerDayIndex ?? todayWorkoutIndex!, id)}
       />
 
       {/* Exercise Picker — Replace mode */}
       {replaceTarget !== null && (
         <ExercisePicker
           open={true}
-          headerTitle={`Replace ${programState.workouts[todayWorkoutIndex!]?.exercises[replaceTarget]?.name || "Exercise"}`}
-          onSelect={(ex) => replaceExercise(replaceTarget, ex)}
+          headerTitle={`Replace ${programState.workouts[replaceTarget.dayIndex]?.exercises[replaceTarget.exIndex]?.name || "Exercise"}`}
+          onSelect={(ex) => replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)}
           onClose={() => setReplaceTarget(null)}
         />
       )}
