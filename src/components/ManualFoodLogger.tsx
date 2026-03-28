@@ -3,7 +3,6 @@ import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { THEME } from "@/lib/theme";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -123,8 +122,8 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                     min="0"
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
-                    placeholder="0"
-                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center"
+                    placeholder={field.unit}
+                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40"
                     style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
                   />
                 </div>
@@ -147,7 +146,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                   (saving || !name.trim()) && !saved && "opacity-50 cursor-not-allowed"
                 )}
                 style={!saved ? {
-                  background: THEME.gradient.brand,
+                  backgroundColor: "#7C6BF0",
                   boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
                 } : undefined}
               >

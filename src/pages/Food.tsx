@@ -85,6 +85,7 @@ export default function Food() {
   const { analyzeFoodText } = useFoodAnalysis();
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -755,6 +756,7 @@ export default function Food() {
       <motion.div variants={itemVariant}>
         <div className="relative">
           <textarea
+            ref={inputRef}
             value={nlInput}
             onChange={(e) => setNlInput(e.target.value)}
             onFocus={() => setSuggestionsActive(true)}
@@ -928,7 +930,7 @@ export default function Food() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-3 rounded-xl border border-dashed border-border/50">
-                  <button className="text-xs text-muted-foreground">+ Add</button>
+                  <button onClick={() => { inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => inputRef.current?.focus(), 300); }} className="text-xs text-muted-foreground">+ Add</button>
                 </div>
               )}
             </div>

@@ -285,7 +285,7 @@ export default function FoodCameraModal({
               onClick={() => setTab("food")}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "food" ? "bg-white text-black" : "bg-black/40 text-white"
+                tab === "food" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
               )}
             >
               Scan Food
@@ -294,7 +294,7 @@ export default function FoodCameraModal({
               onClick={() => setTab("barcode")}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "barcode" ? "bg-white text-black" : "bg-black/40 text-white"
+                tab === "barcode" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
               )}
             >
               Barcode
@@ -303,7 +303,7 @@ export default function FoodCameraModal({
               onClick={() => setTab("label")}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "label" ? "bg-white text-black" : "bg-black/40 text-white"
+                tab === "label" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
               )}
             >
               Food label

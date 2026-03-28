@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
-import type { ProgramExercise, Goal } from "@/features/program/programTypes";
+import type { Goal } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
-import { PlateCalculator } from "@/components/PlateCalculator";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
@@ -20,11 +19,9 @@ import {
   ChevronRight,
   Settings2,
   X,
-  Minus,
   Plus,
   FastForward,
   Play,
-  Calculator,
   Footprints,
   Leaf,
   ArrowUpDown,
@@ -71,7 +68,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     completeWorkoutDay,
     advanceToNextWeek,
     logExercise,
-    updateExercise,
     updateSettings,
     regenerateProgram,
     saveProgram,
@@ -89,15 +85,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
   const [weekExpanded, setWeekExpanded] = useState(false);
 
-  // Exercise drawer state
-  const [drawerExercise, setDrawerExercise] = useState<{
-    dayIndex: number;
-    exIndex: number;
-    exercise: ProgramExercise;
-  } | null>(null);
-  const exerciseDrawerRef = useFocusTrap<HTMLDivElement>(!!drawerExercise);
-  const [logReps, setLogReps] = useState("");
-  const [logWeight, setLogWeight] = useState("");
 
   // Exercise card state — read-only, tap opens info sheet
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
@@ -182,8 +169,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   };
 
   // Save feedback states
-  const [savingState, setSavingState] = useState<"idle" | "saving" | "saved">("idle");
-  const [showPlateCalc, setShowPlateCalc] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -271,47 +256,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   };
 
   // Progression increment based on exercise type
-  const getProgressionIncrement = (ex: ProgramExercise): number => {
-    const lowerCompound = ["knee_dominant", "hip_dominant"];
-    const upperCompound = ["horizontal_push", "vertical_push", "horizontal_pull", "vertical_pull"];
-    if (lowerCompound.includes(ex.movementCategory)) return 2.5;
-    if (upperCompound.includes(ex.movementCategory)) return 1.25;
-    return 0.5; // isolation
-  };
-
-  const closeDrawer = () => {
-    setDrawerExercise(null);
-    setLogReps("");
-    setLogWeight("");
-  };
-
-  const handleLogExercise = async () => {
-    if (!drawerExercise || savingState !== "idle") return;
-    setSavingState("saving");
-    await logExercise(
-      drawerExercise.dayIndex,
-      drawerExercise.exIndex,
-      Number(logReps) || 0,
-      Number(logWeight) || 0
-    );
-    setSavingState("saved");
-    setTimeout(() => {
-      setSavingState("idle");
-      closeDrawer();
-    }, 800);
-  };
-
-  const handleSetsChange = async (delta: number) => {
-    if (!drawerExercise) return;
-    const newSets = Math.max(1, Math.min(10, drawerExercise.exercise.sets + delta));
-    if (newSets === drawerExercise.exercise.sets) return;
-
-    await updateExercise(drawerExercise.dayIndex, drawerExercise.exIndex, { sets: newSets });
-    setDrawerExercise({
-      ...drawerExercise,
-      exercise: { ...drawerExercise.exercise, sets: newSets },
-    });
-  };
 
   // Week navigation
   const canGoBack = history.length > 0;
@@ -924,212 +868,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </section>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Exercise Detail Drawer */}
-      <AnimatePresence>
-        {drawerExercise && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeDrawer}
-              className="fixed inset-0 bg-black/50 z-40"
-            />
-            <motion.div
-              ref={exerciseDrawerRef}
-              role="dialog"
-              aria-modal="true"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto safe-area-pb bg-background border-t border-border shadow-xl"
-            >
-              <div className="max-w-md mx-auto p-4 space-y-3">
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-base font-semibold text-foreground">{drawerExercise.exercise.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {drawerExercise.exercise.movementCategory.replace(/_/g, " ")}
-                    </p>
-                  </div>
-                  <button onClick={closeDrawer} className="p-1 rounded hover:bg-muted">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-
-                {/* Current prescription with adjustable sets */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-muted rounded-lg p-2 relative">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => handleSetsChange(-1)}
-                        className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors touch-target"
-                      >
-                        <Minus className="w-3 h-3 text-foreground" />
-                      </button>
-                      <p className="text-lg font-bold text-foreground w-8 font-mono tabular-nums">{drawerExercise.exercise.sets}</p>
-                      <button
-                        onClick={() => handleSetsChange(1)}
-                        className="w-8 h-8 rounded-full bg-background border border-border/50 flex items-center justify-center hover:bg-muted/80 transition-colors touch-target"
-                      >
-                        <Plus className="w-3 h-3 text-foreground" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sets</p>
-                  </div>
-
-                  <div className="bg-muted rounded-lg p-2">
-                    <p className="text-lg font-bold text-foreground font-mono tabular-nums">{drawerExercise.exercise.reps}</p>
-                    <p className="text-xs text-muted-foreground">Reps</p>
-                  </div>
-
-                  <div className="bg-muted rounded-lg p-2">
-                    <p className={`font-bold text-foreground font-mono tabular-nums ${drawerExercise.exercise.weight > 0 ? 'text-lg' : 'text-sm'}`}>
-                      {drawerExercise.exercise.weight > 0 ? drawerExercise.exercise.weight : "Bodyweight"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{drawerExercise.exercise.weight > 0 ? "kg" : ""}</p>
-                  </div>
-                </div>
-
-                {/* Previous session */}
-                {drawerExercise.exercise.performanceHistory.length > 0 && (() => {
-                  const last = drawerExercise.exercise.performanceHistory[
-                    drawerExercise.exercise.performanceHistory.length - 1
-                  ];
-                  const passed = last.repsCompleted >= last.repsTarget;
-                  return (
-                    <div className="rounded-lg p-3 space-y-1 border border-border bg-muted/30">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium text-muted-foreground">Previous Session</p>
-                        <span
-                          className="text-xs font-medium px-2 py-0.5 rounded-full"
-                          style={passed
-                            ? { backgroundColor: `${THEME.success}18`, color: THEME.success }
-                            : { backgroundColor: `${THEME.danger}18`, color: THEME.danger }
-                          }
-                        >
-                          {passed ? "Pass" : "Fail"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="text-foreground font-medium">
-                          {last.weight > 0 ? `${last.weight}kg` : "Bodyweight"}
-                        </span>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-foreground">
-                          {last.repsCompleted}/{last.repsTarget} reps
-                        </span>
-                        <span className="text-muted-foreground">·</span>
-                        <span className="text-xs text-muted-foreground">{last.date}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Log form */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-xs font-medium text-muted-foreground">Log Performance</p>
-                    {(() => {
-                      const lastPerf = drawerExercise.exercise.performanceHistory[
-                        drawerExercise.exercise.performanceHistory.length - 1
-                      ];
-                      if (lastPerf && lastPerf.repsCompleted >= lastPerf.repsTarget) {
-                        const inc = getProgressionIncrement(drawerExercise.exercise);
-                        return (
-                          <span
-                            className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: `${THEME.success}18`, color: THEME.success }}
-                          >
-                            +{inc}kg auto-fill
-                          </span>
-                        );
-                      }
-                      if (lastPerf) {
-                        return (
-                          <span className="text-xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                            repeat weight
-                          </span>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label htmlFor="log-weight" className="text-xs text-muted-foreground">Weight (kg)</label>
-                      <input
-                        id="log-weight"
-                        type="number"
-                        value={logWeight}
-                        onChange={(e) => setLogWeight(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label htmlFor="log-reps" className="text-xs text-muted-foreground">Reps</label>
-                      <input
-                        id="log-reps"
-                        type="number"
-                        value={logReps}
-                        onChange={(e) => setLogReps(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-                      />
-                    </div>
-                  </div>
-                  {/* Estimated 1RM */}
-                  {Number(logWeight) > 0 && Number(logReps) > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Est. 1RM: <span className="font-semibold text-foreground">
-                        {Math.round(Number(logWeight) * (1 + Number(logReps) / 30))}kg
-                      </span>
-                    </p>
-                  )}
-
-                  {/* Plate Calculator Toggle */}
-                  {drawerExercise.exercise.weight > 0 && (
-                    <button
-                      onClick={() => setShowPlateCalc(!showPlateCalc)}
-                      className="flex items-center gap-1.5 text-xs text-primary hover:underline mt-1"
-                    >
-                      <Calculator className="w-3.5 h-3.5" />
-                      {showPlateCalc ? "Hide" : "Plate"} Calculator
-                    </button>
-                  )}
-                </div>
-
-                {showPlateCalc && drawerExercise.exercise.weight > 0 && (
-                  <PlateCalculator weight={Number(logWeight) || drawerExercise.exercise.weight || 20} onClose={() => setShowPlateCalc(false)} />
-                )}
-
-                <button
-                  onClick={handleLogExercise}
-                  disabled={savingState !== "idle" || phaseLocked}
-                  className={cn(
-                    "w-full py-3 rounded-xl text-sm font-medium transition-all",
-                    savingState !== "saved" && "bg-primary text-primary-foreground hover:opacity-90",
-                    (savingState === "saving" || phaseLocked) && "opacity-50 cursor-not-allowed"
-                  )}
-                  style={savingState === "saved" ? { backgroundColor: THEME.success, color: "#fff" } : undefined}
-                >
-                  {phaseLocked
-                    ? "Upgrade to Pro"
-                    : savingState === "saving"
-                    ? "Saving..."
-                    : savingState === "saved"
-                    ? "Saved!"
-                    : "Save Performance"}
-                </button>
-
-              </div>
-            </motion.div>
-          </>
         )}
       </AnimatePresence>
 
