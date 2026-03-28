@@ -871,25 +871,25 @@ export default function Food() {
       </motion.div>
 
 
-      {/* Meal-segmented food log */}
-      <motion.div variants={itemVariant} className="space-y-4">
-        {MEAL_ORDER.map((mealKey) => {
-          const meals = mealSegmentedMeals[mealKey];
-          const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
+      {/* Meal-segmented food log — only show populated sections */}
+      {todaysMeals.length > 0 && (
+        <motion.div variants={itemVariant} className="space-y-4">
+          {MEAL_ORDER.filter((mealKey) => mealSegmentedMeals[mealKey].length > 0).map((mealKey) => {
+            const meals = mealSegmentedMeals[mealKey];
+            const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
 
-          // Group duplicate foods within this meal section
-          const grouped = new Map<string, { foodName: string; meals: typeof meals; totalCal: number }>();
-          for (const m of meals) {
-            const key = (m.foodName || "Meal").toLowerCase().trim();
-            const existing = grouped.get(key);
-            if (existing) {
-              existing.meals.push(m);
-              existing.totalCal += safeNum(m.totalCalories);
-            } else {
-              grouped.set(key, { foodName: m.foodName || "Meal", meals: [m], totalCal: safeNum(m.totalCalories) });
+            const grouped = new Map<string, { foodName: string; meals: typeof meals; totalCal: number }>();
+            for (const m of meals) {
+              const key = (m.foodName || "Meal").toLowerCase().trim();
+              const existing = grouped.get(key);
+              if (existing) {
+                existing.meals.push(m);
+                existing.totalCal += safeNum(m.totalCalories);
+              } else {
+                grouped.set(key, { foodName: m.foodName || "Meal", meals: [m], totalCal: safeNum(m.totalCalories) });
+              }
             }
-          }
-          const groupedEntries = Array.from(grouped.values());
+            const groupedEntries = Array.from(grouped.values());
 
           return (
             <div key={mealKey}>
@@ -903,7 +903,6 @@ export default function Food() {
                   )}
                 </p>
               </div>
-              {groupedEntries.length > 0 ? (
                 <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20">
                   {groupedEntries.map((group) => (
                     <div key={group.foodName} className="flex items-center justify-between px-3 py-2.5">
@@ -928,15 +927,11 @@ export default function Food() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="flex items-center justify-center py-3 rounded-xl border border-dashed border-border/50">
-                  <button onClick={() => { inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => inputRef.current?.focus(), 300); }} className="text-xs text-muted-foreground">+ Add</button>
-                </div>
-              )}
             </div>
           );
-        })}
-      </motion.div>
+          })}
+        </motion.div>
+      )}
 
       <Suspense fallback={null}>
         <ManualFoodLogger
