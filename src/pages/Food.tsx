@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 function haptic(ms = 10) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
@@ -171,58 +171,6 @@ export default function Food() {
     };
   }
 
-  const commonMeals = useMemo(() => {
-    const freq = new Map<string, { count: number; meal: typeof meals[0] }>();
-    for (const m of meals) {
-      const key = m.foodName?.trim().toLowerCase();
-      if (!key) continue;
-      const existing = freq.get(key);
-      if (existing) {
-        existing.count++;
-      } else {
-        freq.set(key, { count: 1, meal: m });
-      }
-    }
-    return Array.from(freq.values())
-      .filter((v) => v.count >= 3)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6)
-      .map((v) => v.meal);
-  }, [meals]);
-
-  const [selectedCommonIds, setSelectedCommonIds] = useState<Set<string>>(new Set());
-
-  const toggleCommonMeal = async (meal: typeof meals[0]) => {
-    const key = meal.foodName?.trim().toLowerCase() ?? "";
-    if (selectedCommonIds.has(key)) {
-      const added = todaysMeals.find((m) => m.foodName?.trim().toLowerCase() === key);
-      if (added) await deleteMeal(added.id);
-      setSelectedCommonIds((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    } else {
-      if (!user) return;
-      try {
-        await addDoc(collection(db, "users", user.uid, "meals"), {
-          date: selectedDate,
-          foodName: meal.foodName,
-          items: meal.items ?? [],
-          totalCalories: meal.totalCalories ?? 0,
-          totalProtein: meal.totalProtein ?? 0,
-          totalCarbs: meal.totalCarbs ?? 0,
-          totalFat: meal.totalFat ?? 0,
-          confidence: "database",
-          createdAt: Timestamp.now(),
-        });
-        setSelectedCommonIds((prev) => new Set(prev).add(key));
-        toast.success(`${meal.foodName} added`);
-      } catch {
-        toast.error("Failed to save. Please try again.");
-      }
-    }
-  };
 
   const macroColors = {
     calories: THEME.semantic.nutrition,
@@ -580,8 +528,7 @@ export default function Food() {
       {/* Date Switcher */}
       <motion.div
         variants={itemVariant}
-        className="flex items-center justify-between rounded-2xl p-3"
-        style={{ background: `linear-gradient(135deg, ${THEME.brand}12 0%, transparent 60%)` }}
+        className="flex items-center justify-between rounded-xl py-2 px-3"
       >
         <button
           onClick={() => {
@@ -598,8 +545,8 @@ export default function Food() {
           aria-label="Select date"
           className="text-center flex items-center gap-2"
         >
-          <CalendarDays aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">
+          <CalendarDays aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
+          <p className="text-xs font-medium text-foreground">
             {isToday ? "Today" : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
           </p>
         </button>
@@ -628,43 +575,11 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Log Food</h1>
       </motion.div>
 
-      {/* Day-type pill */}
-      {isToday && adjustedTargets && todayDayType !== "rest" && (
-        <motion.div variants={itemVariant} className="flex items-center gap-2">
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-            style={{
-              backgroundColor:
-                todayDayType === "lift"
-                  ? `${THEME.lifting}15`
-                  : todayDayType === "run"
-                    ? `${THEME.running}15`
-                    : `${THEME.lifting}15`,
-              color:
-                todayDayType === "lift"
-                  ? THEME.lifting
-                  : todayDayType === "run"
-                    ? THEME.running
-                    : THEME.lifting,
-            }}
-          >
-            {todayDayType === "lift" ? (
-              <Dumbbell className="w-3 h-3" />
-            ) : todayDayType === "run" ? (
-              <Footprints className="w-3 h-3" />
-            ) : (
-              <>
-                <Dumbbell className="w-3 h-3" />
-                <Footprints className="w-3 h-3" />
-              </>
-            )}
-            {adjustedTargets.annotation}
-          </span>
-        </motion.div>
-      )}
-      {isToday && adjustedTargets && todayDayType === "rest" && (
-        <p className="text-xs" style={{ color: THEME.text.muted }}>
-          Rest day targets
+      {/* Day-type context */}
+      {isToday && adjustedTargets && (
+        <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: todayDayType === "rest" ? THEME.text.muted : todayDayType === "run" ? THEME.running : THEME.lifting }}>
+          {todayDayType !== "rest" && (todayDayType === "lift" ? <Dumbbell className="w-3 h-3" /> : todayDayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>)}
+          {todayDayType === "rest" ? "Rest day targets" : adjustedTargets.annotation}
         </p>
       )}
 
@@ -732,7 +647,8 @@ export default function Food() {
                   {safeNum(value)}
                   {suffix}
                 </p>
-                <p className="text-xs mt-1">{label}</p>
+                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">/ {target}</p>
+                <p className="text-xs mt-0.5">{label}</p>
                 <div
                   className="mt-2 h-1 rounded-full overflow-hidden"
                   style={{ backgroundColor: `${color}15` }}
@@ -752,7 +668,7 @@ export default function Food() {
         </div>
       </motion.div>
 
-      {/* Input bar — primary food logging action */}
+      {/* Input bar + action buttons */}
       <motion.div variants={itemVariant}>
         <div className="relative">
           <textarea
@@ -764,7 +680,7 @@ export default function Food() {
             placeholder="Describe what you ate…"
             rows={1}
             maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none"
+            className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
           />
           <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
             className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
@@ -799,24 +715,36 @@ export default function Food() {
             </div>
           )}
         </div>
-        <motion.button whileTap={{ scale: 0.97 }} onClick={() => { haptic(); handleNLParse(); }} disabled={!nlInput.trim() || nlParsing}
-          className={cn("w-full py-3 rounded-xl text-sm font-semibold transition-all text-white flex items-center justify-center gap-1.5", (!nlInput.trim() || nlParsing) && "opacity-50 cursor-not-allowed")}
-          style={{ marginTop: 10, backgroundColor: "#7C6BF0", boxShadow: "0 4px 16px rgba(124,110,246,0.25)" }}>
-          {isPro && <Sparkles className="w-3.5 h-3.5" />}
-          {nlParsing ? "Analyzing..." : "Log Meal"}
-        </motion.button>
+        {/* Action row: Scan + Manual + Log Meal (appears when text entered) */}
         <div className="flex gap-2" style={{ marginTop: 8 }}>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setScanOpen(!scanOpen); }}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
-            style={{ background: "linear-gradient(135deg, #f07368, #f09060)", boxShadow: "0 2px 10px rgba(240, 115, 104, 0.2)" }}>
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
+            style={{ background: "linear-gradient(135deg, #f07368, #f09060)" }}>
             <ScanBarcode className="w-3.5 h-3.5" /> Scan
           </motion.button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setManualOpen(true); }}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50 hover:border-primary/30">
+            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50">
             <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
           </motion.button>
+          <AnimatePresence>
+            {nlInput.trim() && (
+              <motion.button
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "auto", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { haptic(); handleNLParse(); }}
+                disabled={nlParsing}
+                className={cn("flex-1 py-2 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1 overflow-hidden", nlParsing && "opacity-50")}
+                style={{ backgroundColor: "#7C6BF0" }}
+              >
+                {isPro && <Sparkles className="w-3 h-3" />}
+                {nlParsing ? "..." : "Log Meal"}
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
-        {!isPro && <p className="text-xs text-muted-foreground text-center mt-1.5">Upgrade to Pro for AI-powered macro estimates</p>}
         {scanOpen && (
           <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
             <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />
@@ -853,21 +781,6 @@ export default function Food() {
         <div className="mt-2">
           <QuickRelog onSelect={handleQuickRelog} />
         </div>
-        {commonMeals.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 mt-2" style={{ scrollbarWidth: "none" }}>
-            {commonMeals.map((cm, i) => {
-              const key = cm.foodName?.trim().toLowerCase() ?? "";
-              const isActive = selectedCommonIds.has(key);
-              return (
-                <button key={i} onClick={() => toggleCommonMeal(cm)}
-                  className={cn("shrink-0 px-3 py-2 rounded-full text-xs font-medium border transition-all active:scale-[0.97]",
-                    isActive ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-foreground border-border/50 hover:border-primary/50")}>
-                  {cm.foodName} · {safeNum(cm.totalCalories)} cal
-                </button>
-              );
-            })}
-          </div>
-        )}
       </motion.div>
 
 
@@ -932,6 +845,8 @@ export default function Food() {
           })}
         </motion.div>
       )}
+
+      {!isPro && <p className="text-[10px] text-muted-foreground/60 text-center py-2">Upgrade to Pro for AI-powered macro estimates</p>}
 
       <Suspense fallback={null}>
         <ManualFoodLogger
