@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 function haptic(ms = 10) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
@@ -36,9 +36,9 @@ import {
   Cookie,
   ScanBarcode,
   Footprints,
-  Sparkles,
   Plus,
   Mic,
+  SendHorizontal,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -685,10 +685,19 @@ export default function Food() {
             maxLength={500}
             className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
           />
-          <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
-            className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
-            <Mic className="w-4 h-4" />
-          </button>
+          {nlInput.trim() ? (
+            <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
+              aria-label="Send"
+              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
+              style={{ color: "#7C6BF0" }}>
+              <SendHorizontal className="w-5 h-5" />
+            </button>
+          ) : (
+            <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
+              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
+              <Mic className="w-4 h-4" />
+            </button>
+          )}
           {showSuggestions && (
             <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
               {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
@@ -718,27 +727,8 @@ export default function Food() {
             </div>
           )}
         </div>
-        {/* Log Meal — full width, appears when text entered */}
-        <AnimatePresence>
-          {nlInput.trim() && (
-            <motion.button
-              initial={{ height: 0, opacity: 0, marginTop: 0 }}
-              animate={{ height: "auto", opacity: 1, marginTop: 8 }}
-              exit={{ height: 0, opacity: 0, marginTop: 0 }}
-              transition={{ duration: 0.2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => { haptic(); handleNLParse(); }}
-              disabled={nlParsing}
-              className={cn("w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1.5 overflow-hidden", nlParsing && "opacity-50")}
-              style={{ backgroundColor: "#7C6BF0", boxShadow: "0 4px 16px rgba(124,110,246,0.25)" }}
-            >
-              {isPro && <Sparkles className="w-3.5 h-3.5" />}
-              {nlParsing ? "Analyzing..." : "Log Meal"}
-            </motion.button>
-          )}
-        </AnimatePresence>
         {/* Scan + Manual — full-width side by side */}
-        <div className="flex gap-2" style={{ marginTop: 8 }}>
+        <div className="flex gap-2 transition-opacity duration-200" style={{ marginTop: 8, opacity: nlInput.trim() ? 0.4 : 1 }}>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setScanOpen(!scanOpen); }}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
             style={{ background: "linear-gradient(135deg, #f07368, #f09060)" }}>
