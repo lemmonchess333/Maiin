@@ -145,12 +145,12 @@ export default function Food() {
     if (!createdAt || !createdAt.toDate) return "snacks";
     const hour = createdAt.toDate().getHours();
     if (hour < 11) return "breakfast";
-    if (hour < 14) return "lunch";
+    if (hour < 15) return "lunch";
     if (hour < 17) return "snacks";
     return "dinner";
   };
 
-  const MEAL_ORDER = ["breakfast", "lunch", "dinner", "snacks"] as const;
+  const MEAL_ORDER = ["breakfast", "lunch", "snacks", "dinner"] as const;
   const MEAL_LABELS: Record<string, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snacks: "Snacks" };
 
   const mealSegmentedMeals = useMemo(() => {
@@ -631,7 +631,9 @@ export default function Food() {
                 suffix: "g",
               },
             ] as const
-          ).map(({ key, icon: Icon, value, target, color, label, suffix }) => (
+          ).map(({ key, icon: Icon, value, target, color, label, suffix }) => {
+            const isOver = safeNum(value) > target && target > 0;
+            return (
             <div
               key={key}
               className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
@@ -643,7 +645,7 @@ export default function Food() {
               />
               <div className="relative z-10">
                 <Icon className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums">
+                <p className="stat-tile__value tabular-nums" style={isOver ? { color: "#EF4444" } : undefined}>
                   {Math.round(safeNum(value))}
                   {suffix}
                 </p>
@@ -657,14 +659,15 @@ export default function Food() {
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.min(100, (value / target) * 100)}%`,
-                      backgroundColor: color,
+                      backgroundColor: isOver ? "#EF4444" : color,
                       opacity: 0.6,
                     }}
                   />
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
 
@@ -844,8 +847,34 @@ export default function Food() {
             </div>
           );
           })}
+          {/* Next upcoming empty meal section */}
+          {isToday && (() => {
+            const currentHour = new Date().getHours();
+            const currentMealKey = currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
+            const currentIdx = MEAL_ORDER.indexOf(currentMealKey);
+            const nextEmpty = MEAL_ORDER.find((key, idx) => idx >= currentIdx && mealSegmentedMeals[key].length === 0);
+            if (!nextEmpty) return null;
+            return (
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[nextEmpty]}</p>
+                <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+              </div>
+            );
+          })()}
         </motion.div>
       )}
+
+      {/* Show next upcoming meal when nothing logged yet */}
+      {todaysMeals.length === 0 && isToday && (() => {
+        const currentHour = new Date().getHours();
+        const currentMealKey = currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
+        return (
+          <motion.div variants={itemVariant}>
+            <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[currentMealKey]}</p>
+            <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+          </motion.div>
+        );
+      })()}
 
       {!isPro && <p className="text-[10px] text-muted-foreground/60 text-center py-2">Upgrade to Pro for AI-powered macro estimates</p>}
 
