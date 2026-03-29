@@ -715,35 +715,36 @@ export default function Food() {
             </div>
           )}
         </div>
-        {/* Action row: Scan + Manual + Log Meal (appears when text entered) */}
+        {/* Log Meal — full width, appears when text entered */}
+        <AnimatePresence>
+          {nlInput.trim() && (
+            <motion.button
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: "auto", opacity: 1, marginTop: 8 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              transition={{ duration: 0.2 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { haptic(); handleNLParse(); }}
+              disabled={nlParsing}
+              className={cn("w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1.5 overflow-hidden", nlParsing && "opacity-50")}
+              style={{ backgroundColor: "#7C6BF0", boxShadow: "0 4px 16px rgba(124,110,246,0.25)" }}
+            >
+              {isPro && <Sparkles className="w-3.5 h-3.5" />}
+              {nlParsing ? "Analyzing..." : "Log Meal"}
+            </motion.button>
+          )}
+        </AnimatePresence>
+        {/* Scan + Manual — full-width side by side */}
         <div className="flex gap-2" style={{ marginTop: 8 }}>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setScanOpen(!scanOpen); }}
-            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-white"
             style={{ background: "linear-gradient(135deg, #f07368, #f09060)" }}>
-            <ScanBarcode className="w-3.5 h-3.5" /> Scan
+            <ScanBarcode className="w-4 h-4" /> Scan
           </motion.button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setManualOpen(true); }}
-            className="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50">
-            <UtensilsCrossed className="w-3.5 h-3.5" /> Manual
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50">
+            <UtensilsCrossed className="w-4 h-4" /> Manual
           </motion.button>
-          <AnimatePresence>
-            {nlInput.trim() && (
-              <motion.button
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "auto", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => { haptic(); handleNLParse(); }}
-                disabled={nlParsing}
-                className={cn("flex-1 py-2 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1 overflow-hidden", nlParsing && "opacity-50")}
-                style={{ backgroundColor: "#7C6BF0" }}
-              >
-                {isPro && <Sparkles className="w-3 h-3" />}
-                {nlParsing ? "..." : "Log Meal"}
-              </motion.button>
-            )}
-          </AnimatePresence>
         </div>
         {scanOpen && (
           <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
