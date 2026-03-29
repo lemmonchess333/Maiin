@@ -644,10 +644,10 @@ export default function Food() {
               <div className="relative z-10">
                 <Icon className="w-5 h-5 mx-auto mb-1.5" />
                 <p className="stat-tile__value tabular-nums">
-                  {safeNum(value)}
+                  {Math.round(safeNum(value))}
                   {suffix}
                 </p>
-                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">/ {target}</p>
+                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">/ {Math.round(target)}</p>
                 <p className="text-xs mt-0.5">{label}</p>
                 <div
                   className="mt-2 h-1 rounded-full overflow-hidden"
