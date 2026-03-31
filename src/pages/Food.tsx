@@ -720,7 +720,7 @@ export default function Food() {
             placeholder="Describe what you ate…"
             rows={1}
             maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl bg-card border border-border/60 shadow-sm text-foreground text-sm resize-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+            className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-gray-200 shadow-sm text-foreground text-sm resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
           />
           {nlInput.trim() ? (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
@@ -864,7 +864,7 @@ export default function Food() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{group.totalCal} cal</span>
+                        <span className="text-xs font-mono tabular-nums text-gray-500">{group.totalCal} cal</span>
                         <button
                           onClick={() => handleDeleteMeal(group.meals[group.meals.length - 1].id, group.foodName)}
                           aria-label={`Delete ${group.foodName}`}
@@ -890,7 +890,7 @@ export default function Food() {
                 <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
                 <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
                 {yesterdaySegmented[emptyKey]?.length > 0 && (
-                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-gray-400 mt-1 px-1 flex items-center gap-1">
                     ↻ Copy from yesterday
                   </button>
                 )}
@@ -911,7 +911,7 @@ export default function Food() {
                 <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
                 <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
                 {yesterdaySegmented[emptyKey]?.length > 0 && (
-                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-gray-400 mt-1 px-1 flex items-center gap-1">
                     ↻ Copy from yesterday
                   </button>
                 )}
