@@ -39,6 +39,8 @@ import {
   Plus,
   Mic,
   SendHorizontal,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -709,7 +711,7 @@ export default function Food() {
       </motion.div>
 
       {/* Input bar + action buttons */}
-      <motion.div variants={itemVariant}>
+      <motion.div variants={itemVariant} className="sticky top-0 z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
         <div className="relative">
           <textarea
             ref={inputRef}
@@ -799,7 +801,7 @@ export default function Food() {
               onClick={() => { haptic(); handleQuickMealAdd(meal); }}
               disabled={quickAdding !== null}
               className={cn(
-                "shrink-0 text-left border border-border/50 rounded-xl transition-all active:bg-primary/10",
+                "shrink-0 text-left border border-border/60 border-l-[3px] border-l-orange-300 rounded-xl transition-all active:bg-primary/10",
                 quickAdding !== null && "opacity-60 cursor-not-allowed"
               )}
               style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}
@@ -858,7 +860,7 @@ export default function Food() {
                       <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
                         <p className="text-sm text-foreground truncate">{group.foodName}</p>
                         {group.meals.length > 1 && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "rgba(124,107,240,0.1)", color: "#7C6BF0" }}>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 text-white" style={{ backgroundColor: "#7C6BF0" }}>
                             ×{group.meals.length}
                           </span>
                         )}
@@ -879,23 +881,33 @@ export default function Food() {
             </div>
           );
           })}
-          {/* All elapsed/current empty meal sections */}
+          {/* Elapsed/current empty meal sections — collapsed for past, full for current */}
           {(() => {
             const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
             const currentHour = isToday ? new Date().getHours() : 24;
+            const currentMealKey = !isToday ? null : currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
             return MEAL_ORDER.filter(key =>
               mealSegmentedMeals[key].length === 0 && currentHour >= MEAL_START_HOURS[key]
-            ).map(emptyKey => (
-              <div key={emptyKey}>
-                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
-                {yesterdaySegmented[emptyKey]?.length > 0 && (
-                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-gray-400 mt-1 px-1 flex items-center gap-1">
-                    ↻ Copy from yesterday
-                  </button>
-                )}
-              </div>
-            ));
+            ).map(emptyKey => {
+              const isCurrent = emptyKey === currentMealKey || !isToday;
+              return (
+                <div key={emptyKey}>
+                  {isCurrent ? (
+                    <>
+                      <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
+                      <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                      {yesterdaySegmented[emptyKey]?.length > 0 && (
+                        <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
+                          <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-400 px-1">{MEAL_LABELS[emptyKey]}</p>
+                  )}
+                </div>
+              );
+            });
           })()}
         </motion.div>
       )}
@@ -904,19 +916,29 @@ export default function Food() {
       {todaysMeals.length === 0 && (() => {
         const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
         const currentHour = isToday ? new Date().getHours() : 24;
+        const currentMealKey = !isToday ? null : currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
         return (
           <motion.div variants={itemVariant} className="space-y-3">
-            {MEAL_ORDER.filter(key => currentHour >= MEAL_START_HOURS[key]).map(emptyKey => (
-              <div key={emptyKey}>
-                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
-                {yesterdaySegmented[emptyKey]?.length > 0 && (
-                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-gray-400 mt-1 px-1 flex items-center gap-1">
-                    ↻ Copy from yesterday
-                  </button>
-                )}
-              </div>
-            ))}
+            {MEAL_ORDER.filter(key => currentHour >= MEAL_START_HOURS[key]).map(emptyKey => {
+              const isCurrent = emptyKey === currentMealKey || !isToday;
+              return (
+                <div key={emptyKey}>
+                  {isCurrent ? (
+                    <>
+                      <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
+                      <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                      {yesterdaySegmented[emptyKey]?.length > 0 && (
+                        <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
+                          <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-400 px-1">{MEAL_LABELS[emptyKey]}</p>
+                  )}
+                </div>
+              );
+            })}
           </motion.div>
         );
       })()}
@@ -927,7 +949,12 @@ export default function Food() {
           {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both", rest: "Log your first meal to get started" } as Record<string, string>)[todayDayType] || "Log your first meal to get started"}
         </p>
       ) : (
-        !isPro && todaysMeals.length > 0 && <p className="text-[10px] text-muted-foreground/60 text-center py-2">Upgrade to Pro for AI-powered macro estimates</p>
+        !isPro && todaysMeals.length > 0 && (
+          <div className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
+            <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <p className="text-[11px] font-medium text-muted-foreground">Upgrade to Pro for AI-powered macro estimates</p>
+          </div>
+        )
       )}
 
       <Suspense fallback={null}>
