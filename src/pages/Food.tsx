@@ -720,7 +720,7 @@ export default function Food() {
             placeholder="Describe what you ate…"
             rows={1}
             maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl bg-muted border border-border/50 text-foreground text-sm resize-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+            className="w-full px-4 py-3 pr-11 rounded-xl bg-card border border-border/60 shadow-sm text-foreground text-sm resize-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
           />
           {nlInput.trim() ? (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
@@ -731,7 +731,7 @@ export default function Food() {
             </button>
           ) : (
             <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
-              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
+              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-gray-500 hover:text-primary hover:bg-primary/10")}>
               <Mic className="w-4 h-4" />
             </button>
           )}
@@ -772,7 +772,7 @@ export default function Food() {
             <ScanBarcode className="w-4 h-4" /> Scan
           </motion.button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); setManualOpen(true); }}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted text-muted-foreground border-border/50">
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 border bg-muted/80 text-muted-foreground border-border/60">
             <UtensilsCrossed className="w-4 h-4" /> Manual
           </motion.button>
         </div>
@@ -879,46 +879,56 @@ export default function Food() {
             </div>
           );
           })}
-          {/* Next upcoming empty meal section */}
-          {isToday && (() => {
-            const currentHour = new Date().getHours();
-            const currentMealKey = currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
-            const currentIdx = MEAL_ORDER.indexOf(currentMealKey);
-            const nextEmpty = MEAL_ORDER.find((key, idx) => idx >= currentIdx && mealSegmentedMeals[key].length === 0);
-            if (!nextEmpty) return null;
-            return (
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[nextEmpty]}</p>
+          {/* All elapsed/current empty meal sections */}
+          {(() => {
+            const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
+            const currentHour = isToday ? new Date().getHours() : 24;
+            return MEAL_ORDER.filter(key =>
+              mealSegmentedMeals[key].length === 0 && currentHour >= MEAL_START_HOURS[key]
+            ).map(emptyKey => (
+              <div key={emptyKey}>
+                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
                 <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
-                {yesterdaySegmented[nextEmpty]?.length > 0 && (
-                  <button onClick={() => copyFromYesterday(nextEmpty)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                {yesterdaySegmented[emptyKey]?.length > 0 && (
+                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
                     ↻ Copy from yesterday
                   </button>
                 )}
               </div>
-            );
+            ));
           })()}
         </motion.div>
       )}
 
-      {/* Show next upcoming meal when nothing logged yet */}
-      {todaysMeals.length === 0 && isToday && (() => {
-        const currentHour = new Date().getHours();
-        const currentMealKey = currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
+      {/* Show all elapsed empty meals when nothing logged yet */}
+      {todaysMeals.length === 0 && (() => {
+        const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
+        const currentHour = isToday ? new Date().getHours() : 24;
         return (
-          <motion.div variants={itemVariant}>
-            <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[currentMealKey]}</p>
-            <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
-            {yesterdaySegmented[currentMealKey]?.length > 0 && (
-              <button onClick={() => copyFromYesterday(currentMealKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
-                ↻ Copy from yesterday
-              </button>
-            )}
+          <motion.div variants={itemVariant} className="space-y-3">
+            {MEAL_ORDER.filter(key => currentHour >= MEAL_START_HOURS[key]).map(emptyKey => (
+              <div key={emptyKey}>
+                <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
+                <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                {yesterdaySegmented[emptyKey]?.length > 0 && (
+                  <button onClick={() => copyFromYesterday(emptyKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                    ↻ Copy from yesterday
+                  </button>
+                )}
+              </div>
+            ))}
           </motion.div>
         );
       })()}
 
-      {!isPro && <p className="text-[10px] text-muted-foreground/60 text-center py-2">Upgrade to Pro for AI-powered macro estimates</p>}
+      {/* Training-context nudge or Pro upsell */}
+      {todaysMeals.length === 0 && isToday ? (
+        <p className="text-[13px] text-muted-foreground/60 italic text-center py-2">
+          {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both", rest: "Log your first meal to get started" } as Record<string, string>)[todayDayType] || "Log your first meal to get started"}
+        </p>
+      ) : (
+        !isPro && todaysMeals.length > 0 && <p className="text-[10px] text-muted-foreground/60 text-center py-2">Upgrade to Pro for AI-powered macro estimates</p>
+      )}
 
       <Suspense fallback={null}>
         <ManualFoodLogger
