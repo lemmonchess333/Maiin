@@ -141,7 +141,11 @@ export default function Food() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getMealCategory = (createdAt: any): string => {
+  const getMealCategory = (item: any): string => {
+    // Check explicit meal field first (used by copied items)
+    if (item?.meal && ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)) return item.meal;
+    // Fall back to time-based derivation
+    const createdAt = item?.createdAt || item;
     if (!createdAt || !createdAt.toDate) return "snacks";
     const hour = createdAt.toDate().getHours();
     if (hour < 11) return "breakfast";
@@ -156,11 +160,44 @@ export default function Food() {
   const mealSegmentedMeals = useMemo(() => {
     const segments: Record<string, typeof todaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
     for (const meal of todaysMeals) {
-      const cat = getMealCategory(meal.createdAt);
+      const cat = getMealCategory(meal);
       segments[cat].push(meal);
     }
     return segments;
   }, [todaysMeals]);
+
+  // Yesterday's meals for "Copy from yesterday" feature
+  const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
+  const yesterdayMeals = getMealsForDate(yesterdayDate);
+  const yesterdaySegmented = useMemo(() => {
+    const segments: Record<string, typeof yesterdayMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+    for (const meal of yesterdayMeals) {
+      const cat = getMealCategory(meal);
+      segments[cat].push(meal);
+    }
+    return segments;
+  }, [yesterdayMeals]);
+
+  const copyFromYesterday = async (mealKey: string) => {
+    const items = yesterdaySegmented[mealKey];
+    if (!items.length || !user) return;
+    for (const item of items) {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        meal: mealKey,
+        foodName: item.foodName,
+        items: item.items ?? [],
+        totalCalories: item.totalCalories ?? 0,
+        totalProtein: item.totalProtein ?? 0,
+        totalCarbs: item.totalCarbs ?? 0,
+        totalFat: item.totalFat ?? 0,
+        confidence: "copy",
+        createdAt: Timestamp.now(),
+      });
+    }
+    haptic(15);
+    toast.success(`Copied ${items.length} item${items.length > 1 ? "s" : ""} from yesterday`);
+  };
 
   function glowStyle(current: number, target: number, color: string): React.CSSProperties {
     const ratio = Math.min(1, current / (target || 1));
@@ -800,7 +837,7 @@ export default function Food() {
 
           return (
             <div key={mealKey}>
-              <div className="flex items-center justify-between px-1 mb-1.5">
+              <div className="px-1 mb-1.5">
                 <p className="text-sm font-semibold text-foreground">
                   {MEAL_LABELS[mealKey]}
                   {meals.length > 0 && (
@@ -809,6 +846,11 @@ export default function Food() {
                     </span>
                   )}
                 </p>
+                {meals.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
+                    P: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalProtein), 0))}g · C: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0))}g · F: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalFat), 0))}g
+                  </p>
+                )}
               </div>
                 <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20">
                   {groupedEntries.map((group) => (
@@ -848,6 +890,11 @@ export default function Food() {
               <div>
                 <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[nextEmpty]}</p>
                 <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                {yesterdaySegmented[nextEmpty]?.length > 0 && (
+                  <button onClick={() => copyFromYesterday(nextEmpty)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                    ↻ Copy from yesterday
+                  </button>
+                )}
               </div>
             );
           })()}
@@ -862,6 +909,11 @@ export default function Food() {
           <motion.div variants={itemVariant}>
             <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[currentMealKey]}</p>
             <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+            {yesterdaySegmented[currentMealKey]?.length > 0 && (
+              <button onClick={() => copyFromYesterday(currentMealKey)} className="text-[13px] text-muted-foreground mt-1 px-1 flex items-center gap-1">
+                ↻ Copy from yesterday
+              </button>
+            )}
           </motion.div>
         );
       })()}
