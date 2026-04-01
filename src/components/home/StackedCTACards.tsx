@@ -67,7 +67,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   );
 
   return (
-    <motion.div className="space-y-2" initial="hidden" animate="visible" variants={stagger}>
+    <motion.div className="space-y-3" initial="hidden" animate="visible" variants={stagger}>
       {userSegment === "returning" && (
         <motion.div variants={fadeUp}>
           <AnimatePresence>
