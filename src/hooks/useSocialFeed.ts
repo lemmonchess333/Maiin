@@ -22,6 +22,9 @@ export interface ActivityData {
   badgeEarned?: string;
   challengeMilestone?: string;
   kudosCount?: number;
+  exercises?: { name: string; summary: string }[];
+  prCount?: number;
+  activityTitle?: string;
   [key: string]: unknown;
 }
 

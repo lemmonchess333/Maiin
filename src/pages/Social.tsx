@@ -285,13 +285,32 @@ export default function Social() {
                   accentColor={THEME.brand}
                 />
               ) : (
-                <EmptyState
-                  icon={<Users size={32} />}
-                  title="Your feed is empty"
-                  description="Follow athletes to see their workouts, runs, and milestones here"
-                  accentColor={THEME.brand}
-                  action={{ label: 'Find People', onClick: () => setTab('find') }}
-                />
+                <div className="text-center py-12 px-6 space-y-4">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                    style={{ background: `${THEME.brand}15`, border: `1px solid ${THEME.brand}25` }}
+                  >
+                    <Users size={32} style={{ color: THEME.brand }} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-semibold text-foreground">Your feed is empty</p>
+                    <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
+                      Follow athletes to see their workouts, runs, and milestones here
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setTab('find')}
+                    className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+                  >
+                    Find Friends
+                  </button>
+                  <button
+                    onClick={() => setFeedSubTab('discover')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Or explore the community &rarr;
+                  </button>
+                </div>
               )}
             </div>
           )}

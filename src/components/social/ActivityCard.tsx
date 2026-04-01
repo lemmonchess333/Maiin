@@ -1,11 +1,13 @@
 import { useState, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
-import { toggleKudos, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
-import CommentSection from './CommentSection';
+import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
+import CommentSheet from './CommentSheet';
 import ReportModal from './ReportModal';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
-import { MessageCircle, Dumbbell, Footprints, Trophy, Mountain, Share2, Target, MoreHorizontal, Flag, Ban } from 'lucide-react';
+import { haptic } from '../../lib/haptic';
+import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, Target, Star, MoreHorizontal, Flag, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getTimeAgo } from '../../lib/timeAgo';
@@ -41,40 +43,41 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const { user, profile } = useAuth();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
-  const [showComments, setShowComments] = useState(false);
-  const [kudosAnimating, setKudosAnimating] = useState(false);
+  const [showCommentSheet, setShowCommentSheet] = useState(false);
+  const [flameAnimating, setFlameAnimating] = useState(false);
   const [showKudosList, setShowKudosList] = useState(false);
   const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [chipText, setChipText] = useState('');
   const activity = feedItem.activity;
 
-  const handleKudos = async () => {
-    if (!user) return;
-    // Optimistic UI
-    const willLike = !liked;
-    setLiked(willLike);
-    setKudosCount(c => willLike ? c + 1 : c - 1);
-    // Animate
-    setKudosAnimating(true);
-    setTimeout(() => setKudosAnimating(false), 400);
-    if (navigator.vibrate) navigator.vibrate(30);
+  const activityTitle = (activity?.activityTitle || activity?.workoutName || activity?.runName) as string | undefined;
+  const isRun = feedItem.type === 'run';
+  const isHybrid = !!(activity?.routePreview && (activity.routePreview as { lat: number; lon: number }[]).length > 1 && activity?.exercises && (activity.exercises as unknown[]).length > 0);
 
-    const nowLiked = await toggleKudos(feedItem.activityId, user.uid);
-    // Reconcile if server disagrees
-    if (nowLiked !== willLike) {
-      setLiked(nowLiked);
-      setKudosCount(feedItem.kudosCount ?? 0);
+  const handleHighFive = async () => {
+    if (!user || liked) return; // One-way — can't undo
+    // Optimistic UI
+    setLiked(true);
+    setKudosCount(c => c + 1);
+    // Animate
+    setFlameAnimating(true);
+    setTimeout(() => setFlameAnimating(false), 200);
+    haptic('light');
+
+    const sent = await giveHighFive(feedItem.activityId, user.uid);
+    if (!sent) {
+      // Already given server-side — reconcile
+      setLiked(true);
     }
-    // Notify activity author on kudos give
-    if (nowLiked && activity?.authorId && activity.authorId !== user.uid) {
-      writeNotification(activity.authorId, {
+    // Notify activity author
+    if (sent && activity?.authorId && activity.authorId !== user.uid) {
+      writeNotification(activity.authorId as string, {
         type: 'kudos',
         fromUserId: user.uid,
         fromName: profile?.displayName || 'Someone',
         activityId: feedItem.activityId,
-        message: `${profile?.displayName || 'Someone'} gave you props on your ${feedItem.type}`,
+        message: `${profile?.displayName || 'Someone'} gave you props on ${activityTitle || feedItem.type}`,
       }).catch(() => {});
     }
   };
@@ -87,166 +90,245 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
     setShowKudosList(true);
   };
 
-  const isRun = feedItem.type === 'run';
   const createdAtObj = feedItem.createdAt as { toDate?: () => Date } | undefined;
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : '';
   const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
   const avatarColor = isRun ? THEME.running : THEME.lifting;
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
 
-  return (
-    <div className="bg-card rounded-2xl overflow-hidden">
-      {/* Route thumbnail for runs */}
-      {isRun && activity?.routePreview && activity.routePreview.length > 1 && (
-        <div className="h-28 border-b border-border/50" style={{ background: 'rgba(255,255,255,0.02)' }}>
-          <MiniRoute preview={activity.routePreview} />
+  const exercises = activity?.exercises as { name: string; summary: string }[] | undefined;
+  const prCount = activity?.prCount as number | undefined;
+
+  // Render run content (map + stats)
+  const renderRunContent = (mapHeight = 'h-28') => (
+    <>
+      {activity?.routePreview && (activity.routePreview as { lat: number; lon: number }[]).length > 1 && (
+        <div className={`${mapHeight} border-b border-border/50`} style={{ background: 'rgba(255,255,255,0.02)' }}>
+          <MiniRoute preview={activity.routePreview as { lat: number; lon: number }[]} />
         </div>
       )}
-
-      <div className="p-4">
-        {/* Author row */}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-            style={{ background: avatarBg, color: avatarColor }}
-            role="img" aria-label={`${feedItem.authorName}'s avatar`}>
-            {feedItem.authorName.charAt(0).toUpperCase()}
+      {activity && (
+        <div className="flex gap-5 p-4 pb-0">
+          <div>
+            <p className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.running }}>
+              {((activity.distance || 0) / 1000).toFixed(2)}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">km</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
-            <div className="flex items-center gap-1 text-muted-foreground">
-              {isRun
-                ? <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
-                : <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />}
-              <p className="text-xs">{timeAgo}</p>
+          <div>
+            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+              {typeof activity.avgPace === 'number' ? formatDur(activity.avgPace) : activity.avgPace || '--:--'}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">/km</p>
+          </div>
+          {activity.duration && (
+            <div>
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                {formatDur(activity.duration)}
+              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">time</p>
             </div>
-          </div>
-          {/* Report/Block menu */}
-          {user && activity?.authorId !== user.uid && (
-            <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)}
-                aria-label="More options" aria-expanded={showMenu}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-              </button>
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-10" role="presentation" aria-hidden="true" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
-                    <button
-                      onClick={() => { setShowMenu(false); setShowReport(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Flag className="w-3.5 h-3.5 text-muted-foreground" />
-                      Report activity
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setShowMenu(false);
-                        if (!user || !activity?.authorId) return;
-                        if (!window.confirm("Block this user? They won't be able to see your activities.")) return;
-                        await blockUser(user.uid, activity.authorId);
-                        toast.success(`Blocked ${feedItem.authorName}`);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-                    >
-                      <Ban className="w-3.5 h-3.5" />
-                      Block user
-                    </button>
-                  </div>
-                </>
-              )}
+          )}
+          {(activity.elevationGain || 0) > 0 && (
+            <div className="flex items-start gap-1">
+              <Mountain className="w-3.5 h-3.5 text-muted-foreground mt-1" />
+              <div>
+                <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                  {activity.elevationGain}m
+                </p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">elev</p>
+              </div>
             </div>
           )}
         </div>
+      )}
+    </>
+  );
 
-        {/* Summary line */}
-        <p className="text-xs text-muted-foreground mb-3">{feedItem.summary}</p>
-
-        {/* Run stats */}
-        {isRun && activity && (
-          <div className="flex gap-5 mb-3">
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.running }}>
-                {((activity.distance || 0) / 1000).toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">km</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                {typeof activity.avgPace === 'number' ? formatDur(activity.avgPace) : activity.avgPace || '--:--'}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">/km</p>
-            </div>
-            {activity.duration && (
-              <div>
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                  {formatDur(activity.duration)}
-                </p>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">time</p>
+  // Render workout content (exercises + stats)
+  const renderWorkoutContent = () => (
+    activity && (
+      <div className="space-y-2">
+        {/* Exercise details — top 3 */}
+        {exercises && exercises.length > 0 && (
+          <div className="space-y-1">
+            {exercises.map((ex, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
+                <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Muscle groups */}
+        {activity.muscleGroups && (
+          <div className="flex flex-wrap gap-1.5">
+            {activity.muscleGroups.map((mg: string) => (
+              <span key={mg} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
+                {mg}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Workout volume/duration/PR count */}
+        <div className="flex gap-4">
+          {(activity.totalVolume ?? 0) > 0 && (
+            <div>
+              <p className="text-lg font-bold font-mono tabular-nums leading-none" style={{ color: THEME.lifting }}>
+                {Math.round(activity.totalVolume ?? 0).toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">kg volume</p>
+            </div>
+          )}
+          {(activity.exerciseCount ?? 0) > 0 && (
+            <div>
+              <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
+                {activity.exerciseCount}
+              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">exercises</p>
+            </div>
+          )}
+          {(prCount ?? 0) > 0 && (
+            <div>
+              <div className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                <p className="text-lg font-bold font-mono tabular-nums leading-none text-yellow-500">
+                  {prCount}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">PRs</p>
+            </div>
+          )}
+          {(activity.duration ?? 0) > 0 && (
+            <div>
+              <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
+                {Math.round((activity.duration ?? 0) / 60)}
+              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">min</p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  );
+
+  return (
+    <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+      {/* Hybrid card: map on top (shorter), then divider, then workout content */}
+      {isHybrid ? (
+        <>
+          {renderRunContent('h-[120px]')}
+          <div className="border-b border-border/30 mx-4" />
+          <div className="p-4 pb-0">
+            {/* Author row */}
+            <div className="flex items-center gap-3 mb-2">
+              <Link to={`/user/${feedItem.authorId}`} className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                  style={{ background: `${THEME.brand}20`, color: THEME.brand }}
+                  role="img" aria-label={`${feedItem.authorName}'s avatar`}>
+                  {feedItem.authorName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
+                  <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                </div>
+              </Link>
+              {renderMenuButton()}
+            </div>
+            {activityTitle && <p className="text-sm font-bold text-foreground mb-2">{activityTitle}</p>}
+            <div className="mb-3">{renderWorkoutContent()}</div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Standard run card: map on top */}
+          {isRun && activity?.routePreview && (activity.routePreview as { lat: number; lon: number }[]).length > 1 && (
+            <div className="h-28 border-b border-border/50" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <MiniRoute preview={activity.routePreview as { lat: number; lon: number }[]} />
+            </div>
+          )}
+
+          <div className="p-4">
+            {/* Author row */}
+            <div className="flex items-center gap-3 mb-2">
+              <Link to={`/user/${feedItem.authorId}`} className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                  style={{ background: avatarBg, color: avatarColor }}
+                  role="img" aria-label={`${feedItem.authorName}'s avatar`}>
+                  {feedItem.authorName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    {isRun
+                      ? <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
+                      : <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />}
+                    <p className="text-xs">{timeAgo}</p>
+                  </div>
+                </div>
+              </Link>
+              {renderMenuButton()}
+            </div>
+
+            {/* Activity title */}
+            {activityTitle && <p className="text-sm font-bold text-foreground mb-2">{activityTitle}</p>}
+
+            {/* Summary line (fallback for old activities without title) */}
+            {!activityTitle && feedItem.summary && (
+              <p className="text-xs text-muted-foreground mb-3">{feedItem.summary}</p>
             )}
-            {(activity.elevationGain || 0) > 0 && (
-              <div className="flex items-start gap-1">
-                <Mountain className="w-3.5 h-3.5 text-muted-foreground mt-1" />
+
+            {/* Run stats */}
+            {isRun && activity && (
+              <div className="flex gap-5 mb-3">
+                <div>
+                  <p className="text-xl font-bold font-mono tabular-nums leading-none" style={{ color: THEME.running }}>
+                    {((activity.distance || 0) / 1000).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">km</p>
+                </div>
                 <div>
                   <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-                    {activity.elevationGain}m
+                    {typeof activity.avgPace === 'number' ? formatDur(activity.avgPace) : activity.avgPace || '--:--'}
                   </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">elev</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">/km</p>
                 </div>
+                {activity.duration && (
+                  <div>
+                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                      {formatDur(activity.duration)}
+                    </p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">time</p>
+                  </div>
+                )}
+                {(activity.elevationGain || 0) > 0 && (
+                  <div className="flex items-start gap-1">
+                    <Mountain className="w-3.5 h-3.5 text-muted-foreground mt-1" />
+                    <div>
+                      <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+                        {activity.elevationGain}m
+                      </p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">elev</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Workout stats */}
-        {!isRun && activity && (
-          <div className="space-y-2 mb-3">
-            {/* Muscle groups */}
-            {activity.muscleGroups && (
-              <div className="flex flex-wrap gap-1.5">
-                {activity.muscleGroups.map((mg: string) => (
-                  <span key={mg} className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
-                    {mg}
-                  </span>
-                ))}
-              </div>
+            {/* Workout content */}
+            {!isRun && activity && <div className="mb-3">{renderWorkoutContent()}</div>}
+
+            {!activity && !feedItem.summary && (
+              <p className="text-sm text-muted-foreground mb-3">Activity</p>
             )}
-            {/* Workout volume/duration */}
-            <div className="flex gap-4">
-              {(activity.totalVolume ?? 0) > 0 && (
-                <div>
-                  <p className="text-lg font-bold font-mono tabular-nums leading-none" style={{ color: THEME.lifting }}>
-                    {Math.round(activity.totalVolume ?? 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">kg volume</p>
-                </div>
-              )}
-              {(activity.exerciseCount ?? 0) > 0 && (
-                <div>
-                  <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
-                    {activity.exerciseCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">exercises</p>
-                </div>
-              )}
-              {(activity.duration ?? 0) > 0 && (
-                <div>
-                  <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
-                    {Math.round((activity.duration ?? 0) / 60)}
-                  </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">min</p>
-                </div>
-              )}
-            </div>
           </div>
-        )}
+        </>
+      )}
 
-        {!activity && !feedItem.summary && (
-          <p className="text-sm text-muted-foreground mb-3">Activity</p>
-        )}
-
+      <div className="px-4 pb-4">
         {/* PR Highlight */}
         {(feedItem.prHit || activity?.prHit) && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
@@ -270,14 +352,24 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions — social bar */}
         <div className="flex items-center gap-5 pt-2.5 border-t border-border/30">
           <div className="flex items-center gap-1.5">
-            <button onClick={handleKudos}
-              aria-label={liked ? "Remove kudos" : "Give kudos"}
+            <button
+              onClick={handleHighFive}
+              disabled={liked}
+              aria-label={liked ? "Props given" : "Give props"}
               className="transition-transform"
-              style={kudosAnimating ? { animation: 'kudos-pop 0.4s ease-out' } : undefined}>
-              <Dumbbell size={16} style={{ filter: liked ? "none" : "grayscale(1) opacity(0.5)" }} />
+              style={{
+                transform: flameAnimating ? 'scale(1.3)' : 'scale(1)',
+                transition: 'transform 200ms ease-out',
+              }}
+            >
+              <Flame
+                size={18}
+                className={liked ? 'fill-current' : ''}
+                style={{ color: liked ? '#F59E0B' : 'var(--color-muted-foreground)', opacity: liked ? 1 : 0.5 }}
+              />
             </button>
             {kudosCount > 0 && (
               <button onClick={handleShowKudosList}
@@ -286,10 +378,10 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               </button>
             )}
           </div>
-          <button onClick={() => setShowComments(!showComments)}
-            aria-label="Toggle comments"
-            className="flex items-center gap-1.5 text-muted-foreground active:scale-90">
-            <MessageCircle className="w-5 h-5" />
+          <button onClick={() => setShowCommentSheet(true)}
+            aria-label="View comments"
+            className="flex items-center gap-1.5 text-muted-foreground active:scale-90 transition-transform">
+            <MessageCircle className="w-[18px] h-[18px]" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium">{activity!.commentCount}</span>
             )}
@@ -297,8 +389,8 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           {onShare && (
             <button onClick={() => onShare(feedItem)}
               aria-label="Share activity"
-              className="ml-auto text-muted-foreground active:scale-90">
-              <Share2 className="w-5 h-5" />
+              className="ml-auto text-muted-foreground active:scale-90 transition-transform">
+              <Share2 className="w-[18px] h-[18px]" />
             </button>
           )}
         </div>
@@ -317,25 +409,17 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             ))}
           </div>
         )}
-
-        {/* Quick reply chips */}
-        {showComments && (
-          <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
-            {chips.map((chip) => (
-              <button
-                key={chip}
-                onClick={() => setChipText(chip)}
-                className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95"
-                style={{ background: `${THEME.brand}15`, color: THEME.brand }}
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showComments && <CommentSection activityId={feedItem.activityId} activityAuthorId={activity?.authorId} prefillText={chipText} onPrefillConsumed={() => setChipText('')} />}
       </div>
+
+      {/* Comment bottom sheet */}
+      <CommentSheet
+        activityId={feedItem.activityId}
+        activityAuthorId={activity?.authorId as string | undefined}
+        open={showCommentSheet}
+        onOpenChange={setShowCommentSheet}
+        commentCount={activity?.commentCount}
+        quickChips={chips}
+      />
 
       {/* Report Modal */}
       {showReport && (
@@ -347,6 +431,46 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
       )}
     </div>
   );
+
+  function renderMenuButton() {
+    if (!user || activity?.authorId === user.uid) return null;
+    return (
+      <div className="relative">
+        <button onClick={() => setShowMenu(!showMenu)}
+          aria-label="More options" aria-expanded={showMenu}
+          className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+        </button>
+        {showMenu && (
+          <>
+            <div className="fixed inset-0 z-10" role="presentation" aria-hidden="true" onClick={() => setShowMenu(false)} />
+            <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
+              <button
+                onClick={() => { setShowMenu(false); setShowReport(true); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <Flag className="w-3.5 h-3.5 text-muted-foreground" />
+                Report activity
+              </button>
+              <button
+                onClick={async () => {
+                  setShowMenu(false);
+                  if (!user || !activity?.authorId) return;
+                  if (!window.confirm("Block this user? They won't be able to see your activities.")) return;
+                  await blockUser(user.uid, activity.authorId as string);
+                  toast.success(`Blocked ${feedItem.authorName}`);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
+              >
+                <Ban className="w-3.5 h-3.5" />
+                Block user
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 }
 
 export default memo(ActivityCard);

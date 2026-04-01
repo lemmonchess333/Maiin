@@ -228,11 +228,16 @@ export function useProgram() {
               type: 'workout',
               visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
               workoutName: day.dayName,
+              activityTitle: day.dayName,
               exerciseCount: day.exercises.length,
               totalVolume: tonnage,
               duration: day.exercises.length * 5 * 60, // estimated seconds
               muscleGroups: uniqueCategories,
               crewId: profile?.crewId,
+              exercises: exercises.slice(0, 3).map(ex => ({
+                name: ex.exerciseName,
+                summary: `${ex.sets.length}×${ex.sets[0]?.reps ?? 0}×${ex.sets[0]?.weightKg ?? 0}kg`,
+              })),
             });
           } catch (socialErr) {
             console.warn("Failed to post workout to feed:", socialErr);

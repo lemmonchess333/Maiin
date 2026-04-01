@@ -17,7 +17,7 @@ export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string; email?: string } | null>(null);
+  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string; email?: string; bio?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
@@ -121,6 +121,9 @@ export default function UserProfile() {
         </div>
         <div className="flex-1">
           <h1 className="text-lg font-extrabold">{profile.displayName}</h1>
+          {profile.bio && (
+            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{profile.bio}</p>
+          )}
           <div className="flex gap-4 text-xs text-muted-foreground mt-1">
             <span><strong className="text-foreground">{followers}</strong> followers</span>
             <span><strong className="text-foreground">{followingCount}</strong> following</span>

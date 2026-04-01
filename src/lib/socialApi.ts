@@ -169,6 +169,17 @@ export async function toggleKudos(activityId: string, userId: string): Promise<b
   }
 }
 
+export async function giveHighFive(activityId: string, userId: string): Promise<boolean> {
+  const authedUid = getAuthUid();
+  if (userId !== authedUid) throw new Error('Identity mismatch');
+  const kudosRef = doc(db, 'kudos', activityId, 'users', userId);
+  const snap = await getDoc(kudosRef);
+  if (snap.exists()) return false; // already given, no-op
+  await setDoc(kudosRef, { createdAt: Timestamp.now() });
+  await updateDoc(doc(db, 'activities', activityId), { kudosCount: increment(1) });
+  return true;
+}
+
 export async function hasGivenKudos(activityId: string, userId: string): Promise<boolean> {
   const snap = await getDoc(doc(db, 'kudos', activityId, 'users', userId));
   return snap.exists();
@@ -214,6 +225,15 @@ export async function addComment(
       message: `${authorName} commented on your activity`,
     });
   }
+}
+
+export async function deleteComment(activityId: string, commentId: string): Promise<void> {
+  const authedUid = getAuthUid();
+  const commentRef = doc(db, 'comments', activityId, 'items', commentId);
+  const snap = await getDoc(commentRef);
+  if (!snap.exists() || snap.data().authorId !== authedUid) throw new Error('Not authorized');
+  await deleteDoc(commentRef);
+  await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(-1) });
 }
 
 export async function getComments(activityId: string, limitCount = 20, afterDoc?: DocumentSnapshot) {
