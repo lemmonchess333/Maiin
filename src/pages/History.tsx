@@ -346,7 +346,7 @@ export default function History() {
                   <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
               ) : runs.length === 0 ? (
-                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.running}14`, border: `1px solid ${THEME.running}26` }}>
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.running}14` }}>
                   <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Complete your first run to see running analytics here</p>
