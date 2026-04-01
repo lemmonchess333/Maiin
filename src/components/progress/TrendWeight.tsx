@@ -46,7 +46,9 @@ export function TrendWeight() {
   const data = useMemo(
     () =>
       calculateEMA(
-        entries.map((e) => ({ date: e.date, weight: e.weight }))
+        entries
+          .filter((e) => e.weight > 0)
+          .map((e) => ({ date: e.date, weight: e.weight }))
       ),
     [entries]
   );
@@ -167,12 +169,17 @@ export function TrendWeight() {
                 border: "1px solid var(--border)",
                 borderRadius: 12,
                 fontSize: 12,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                padding: "10px 14px",
               }}
               formatter={(value: unknown, name?: string) => [
                 `${convert(Number(value))} ${unit}`,
                 name === "trend" ? "Trend" : "Actual",
               ]}
-              labelFormatter={(label) => new Date(label).toLocaleDateString()}
+              labelFormatter={(label) => {
+                const d = new Date(label);
+                return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+              }}
             />
 
             {goalDisplay != null && (

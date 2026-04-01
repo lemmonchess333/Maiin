@@ -24,16 +24,16 @@ describe("formatVolume", () => {
     expect(formatVolume(892.7)).toEqual({ value: "893", unit: "kg" });
   });
 
-  it("formats 1000+ with k suffix and no unit", () => {
-    expect(formatVolume(1000)).toEqual({ value: "1.0k", unit: "" });
+  it("formats 1000+ with k suffix and kg unit", () => {
+    expect(formatVolume(1000)).toEqual({ value: "1.0k", unit: "kg" });
   });
 
   it("formats 1500 as 1.5k", () => {
-    expect(formatVolume(1500)).toEqual({ value: "1.5k", unit: "" });
+    expect(formatVolume(1500)).toEqual({ value: "1.5k", unit: "kg" });
   });
 
   it("formats large volumes", () => {
-    expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "" });
+    expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
   });
 });
 
