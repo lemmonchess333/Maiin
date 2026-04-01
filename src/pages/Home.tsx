@@ -169,6 +169,12 @@ export default function Home() {
     const lastDate = meals[0].date;
     setDaysSinceLastMeal(Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000));
   }, [meals]);
+  const userSegment = useMemo(function() {
+    if (totalLifetimeMeals === 0) return "new" as const;
+    if (streak >= 3) return "active" as const;
+    if (streak === 0 && daysSinceLastMeal >= 3) return "returning" as const;
+    return "casual" as const;
+  }, [totalLifetimeMeals, streak, daysSinceLastMeal]);
 
   // Relative time string for weight tile
   const weightRelativeTime = useMemo(function() {
@@ -370,7 +376,7 @@ export default function Home() {
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
+            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} userSegment={userSegment} />
         )}
       </motion.div>
 
