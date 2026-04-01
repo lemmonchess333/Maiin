@@ -85,7 +85,7 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
         <input value={text} onChange={e => setText(e.target.value)}
           data-comment-input={activityId}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Add a comment..." disabled={sending}
+          placeholder="Add a comment..." aria-label="Add a comment" disabled={sending}
           className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border" />
         <button onClick={handleSend} disabled={sending || !text.trim()}
           className="text-xs px-3 py-2 rounded-lg bg-purple-500 text-white font-medium disabled:opacity-40">

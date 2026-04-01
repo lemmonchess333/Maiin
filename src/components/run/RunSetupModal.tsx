@@ -350,7 +350,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   onClick={() => { updateConfig({ activityType: at.type }); setShowTypeSheet(false); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors active:scale-[0.98]"
                   style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
-                  {IC && <IC size={18} className={isActive ? 'text-purple-500' : 'text-muted-foreground'} />}
+                  {IC && <IC className={`w-5 h-5 ${isActive ? 'text-purple-500' : 'text-muted-foreground'}`} />}
                   <div>
                     <p className="text-sm font-medium" style={{ color: isActive ? '#7B72E9' : 'var(--color-foreground)' }}>{at.label}</p>
                     <p className="text-xs" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>

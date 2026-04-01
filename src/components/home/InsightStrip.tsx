@@ -5,7 +5,7 @@ import { THEME } from "@/lib/theme";
 
 export default function InsightStrip({ title, bullet, loadBand }: { title: string; bullet: string; loadBand: string }) {
   const iconColor = loadBand === "overreach" ? THEME.danger : loadBand === "high" ? THEME.warning : loadBand === "moderate" ? THEME.lifting : THEME.semantic.positive;
-  const iconEl = loadBand === "overreach" ? <Flame size={20} /> : loadBand === "high" ? <Zap size={20} /> : loadBand === "moderate" ? <Dumbbell size={20} /> : <Leaf size={20} />;
+  const iconEl = loadBand === "overreach" ? <Flame className="w-5 h-5" /> : loadBand === "high" ? <Zap className="w-5 h-5" /> : loadBand === "moderate" ? <Dumbbell className="w-5 h-5" /> : <Leaf className="w-5 h-5" />;
   const iconLabel = loadBand === "overreach" ? "Overreach — consider a deload" : loadBand === "high" ? "High training load" : loadBand === "moderate" ? "Moderate training load" : "Light training load";
   return (
     <Link to="/history?tab=performance">

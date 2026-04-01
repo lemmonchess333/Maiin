@@ -177,6 +177,7 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
                 onChange={e => setText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 placeholder="Add a comment..."
+                aria-label="Add a comment"
                 disabled={sending}
                 className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
               />

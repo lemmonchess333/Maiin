@@ -78,7 +78,7 @@ export default function RunDashboard() {
 
       {/* Info banner */}
       <div className="flex items-center gap-3 p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30">
-        <Footprints size={16} className="text-green-500 shrink-0" />
+        <Footprints className="w-4 h-4 text-green-500 shrink-0" />
         <p className="text-xs text-muted-foreground dark:text-purple-200">
           Tap <strong className="text-purple-600 dark:text-purple-300">Start Run</strong> below or use the <strong className="text-purple-600 dark:text-purple-300">Programme</strong> tab to begin your next run
         </p>
@@ -93,7 +93,7 @@ export default function RunDashboard() {
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center shrink-0">
-                <Footprints size={16} className="text-green-500" />
+                <Footprints className="w-4 h-4 text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">

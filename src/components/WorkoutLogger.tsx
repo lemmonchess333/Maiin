@@ -467,6 +467,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                           <button
                             onClick={() => removeSet(exIndex, setIndex)}
                             className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500"
+                            aria-label="Remove set"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -511,6 +512,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 setSelectedExerciseIds(new Set());
               }}
               className="p-1 rounded-lg hover:bg-muted"
+              aria-label="Close exercise picker"
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -524,6 +526,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search exercises..."
+                aria-label="Search exercises"
                 className="w-full pl-9 pr-4 py-2 rounded-lg bg-muted text-foreground text-sm placeholder:text-muted-foreground"
               />
             </div>
@@ -657,6 +660,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="How did the workout feel?"
+            aria-label="Workout notes"
             rows={2}
             className="w-full px-4 py-2 rounded-xl bg-muted text-foreground text-sm placeholder:text-muted-foreground resize-none"
           />

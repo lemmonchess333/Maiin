@@ -11,6 +11,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
     <div
       role="status"
       aria-label="Loading"
+      aria-live="polite"
       className={cn(
         "animate-pulse rounded-lg bg-muted dark:bg-muted/60",
         className

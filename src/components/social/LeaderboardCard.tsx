@@ -51,7 +51,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
-        {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: THEME.brand }} />}
+        {icon === 'footprints' ? <Footprints className="w-5 h-5" style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} /> : <Zap className="w-5 h-5" style={{ color: THEME.brand }} />}
         <div className="flex-1">
           <h3 className="text-sm font-bold">{title}</h3>
         </div>

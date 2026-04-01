@@ -58,7 +58,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
           className="p-2.5 rounded-lg hover:bg-muted transition-colors"
           aria-label="Back"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft className="w-5 h-5" />
         </button>
         <h2 className="text-lg font-extrabold">Leaderboard</h2>
       </div>

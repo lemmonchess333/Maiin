@@ -277,7 +277,7 @@ export default function ProgressPhotos() {
 
       {loading && (
         <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <Loader2 size={16} className="animate-spin text-primary shrink-0" />
+          <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
           <p className="text-xs text-foreground font-medium">Encrypting & uploading your photo...</p>
         </div>
       )}
@@ -319,7 +319,7 @@ export default function ProgressPhotos() {
             }`}>
             {decrypting.has(photo.id) ? (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
-                <Loader2 size={16} className="text-muted-foreground animate-spin" />
+                <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
                 <span className="text-xs text-muted-foreground mt-1">{photo.date}</span>
               </div>
             ) : decryptedUrls[photo.id] ? (
@@ -333,7 +333,7 @@ export default function ProgressPhotos() {
               />
             ) : (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
-                <Lock size={16} className="text-muted-foreground" />
+                <Lock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground mt-1">{photo.date}</span>
               </div>
             )}
