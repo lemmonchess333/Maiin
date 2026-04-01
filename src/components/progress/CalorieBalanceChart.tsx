@@ -137,14 +137,17 @@ export default function CalorieBalanceChart() {
               }}
               labelFormatter={(label) => String(label)}
             />
-            <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12}>
-              {data.map((entry) => (
-                <Cell
-                  key={entry.date}
-                  fill={getBalanceColor(entry.balance, goal)}
-                  opacity={0.75}
-                />
-              ))}
+            <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12} minPointSize={2}>
+              {data.map((entry) => {
+                const noData = entry.consumed === 0 && entry.balance !== 0;
+                return (
+                  <Cell
+                    key={entry.date}
+                    fill={noData ? "var(--border)" : getBalanceColor(entry.balance, goal)}
+                    opacity={noData ? 0.4 : 0.75}
+                  />
+                );
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -168,6 +171,16 @@ export default function CalorieBalanceChart() {
           </p>
         </div>
       </div>
+
+      {(goal === "lean bulk" || goal === "cut" || goal === "recomp") && (
+        <p className="text-xs font-medium text-center pt-1" style={{ color: getBalanceColor(avgBalance, goal) }}>
+          {goal === "lean bulk"
+            ? avgBalance > 0 ? "Below surplus target" : "On track for surplus"
+            : goal === "cut"
+              ? avgBalance > 0 ? "On track for deficit" : "Above deficit target"
+              : Math.abs(avgBalance) <= 200 ? "Eating near maintenance" : avgBalance > 0 ? "Slight deficit" : "Slight surplus"}
+        </p>
+      )}
     </div>
   );
 }

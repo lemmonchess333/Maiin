@@ -56,20 +56,23 @@ export default function WeeklyOverview({
     <div className="p-4 rounded-2xl bg-card">
       <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">{rangeLabel}</p>
       <div className="grid grid-cols-3 gap-2">
-        {stats.map((s) => (
-          <div key={s.label} className="flex flex-col items-center gap-2">
-            <div className="relative">
-              <Ring value={s.ringVal} max={s.ringMax} color={s.color} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                {s.icon}
+        {stats.map((s) => {
+          const isEmpty = s.ringVal === 0;
+          return (
+            <div key={s.label} className="flex flex-col items-center gap-2" style={isEmpty ? { opacity: 0.4 } : undefined}>
+              <div className="relative">
+                <Ring value={s.ringVal} max={s.ringMax} color={s.color} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {s.icon}
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-bold font-mono tabular-nums text-foreground leading-none">{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
               </div>
             </div>
-            <div className="text-center">
-              <p className="text-base font-bold font-mono tabular-nums text-foreground leading-none">{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

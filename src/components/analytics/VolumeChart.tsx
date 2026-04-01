@@ -23,10 +23,10 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
             tickFormatter={(v) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth()+1}`; }} />
           <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.2 }} axisLine={false} tickLine={false} width={35}
             tickFormatter={(v) => Number(v) >= 1000 ? `${(Number(v)/1000).toFixed(0)}k` : String(v)} />
-          <Bar dataKey="volume" radius={[4, 4, 0, 0]}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={accentColor}
-                fillOpacity={i === data.length - 1 ? 1 : 0.5} />
+          <Bar dataKey="volume" radius={[4, 4, 0, 0]} minPointSize={2}>
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.volume === 0 ? "var(--border)" : accentColor}
+                fillOpacity={entry.volume === 0 ? 0.4 : i === data.length - 1 ? 1 : 0.5} />
             ))}
           </Bar>
         </BarChart>
