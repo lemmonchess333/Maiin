@@ -212,6 +212,16 @@ export default function Home() {
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
   const handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
+  const closePeek = useCallback(function() { setPeekDate(null); }, []);
+  const weekStripRef = useRef<HTMLDivElement>(null);
+  useEffect(function() {
+    if (!peekDate || !weekStripRef.current) return;
+    const observer = new IntersectionObserver(function(entries) {
+      if (!entries[0].isIntersecting) setPeekDate(null);
+    }, { threshold: 0.1 });
+    observer.observe(weekStripRef.current);
+    return function() { observer.disconnect(); };
+  }, [peekDate]);
   const peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
   const peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
   const nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
@@ -348,7 +358,7 @@ export default function Home() {
         </motion.div>
       )}
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
+      <motion.div ref={weekStripRef} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
         <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
         <AnimatePresence>
           {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
@@ -357,10 +367,10 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
-          <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={navigate}
-            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
+          <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
+            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
+            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} />
         )}
       </motion.div>
 
