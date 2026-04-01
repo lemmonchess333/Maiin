@@ -10,7 +10,8 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
-import { RefreshCw, Share2, Users, UserPlus, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
+import FullLeaderboard from '../components/social/FullLeaderboard';
+import { RefreshCw, Share2, Users, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -38,6 +39,7 @@ export default function Social() {
   const blockedUsers = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('following');
+  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
   const [crewBannerDismissed, setCrewBannerDismissed] = useState(
@@ -198,9 +200,15 @@ export default function Social() {
         )}
       </AnimatePresence>
 
+      {/* Full Leaderboard overlay */}
+      {showFullLeaderboard && (
+        <FullLeaderboard onBack={() => setShowFullLeaderboard(false)} />
+      )}
+
       {/* Tab bar */}
+      {!showFullLeaderboard && (<>
       <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        {(['feed', 'photos', 'challenges', 'find'] as SocialTab[]).map(t => (
+        {(['feed', 'challenges', 'photos', 'find'] as SocialTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -231,7 +239,7 @@ export default function Social() {
             ))}
           </div>
 
-          {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" /></div>}
+          {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} /></div>}
 
           {pullRefreshing && (
             <div className="flex items-center justify-center py-2" aria-live="polite">
@@ -322,17 +330,15 @@ export default function Social() {
       {tab === 'photos' && <ProgressPhotos />}
 
       {/* ========== CHALLENGES TAB ========== */}
-      {tab === 'challenges' && <ChallengeList />}
+      {tab === 'challenges' && <ChallengeList onFindFriends={() => setTab('find')} />}
 
       {/* ========== FIND TAB ========== */}
       {tab === 'find' && (
         <section aria-label="Find people">
         <div className="space-y-6">
-          {/* Section 1: Invite */}
-          <div className="p-4 rounded-2xl bg-card text-center space-y-3">
-            <UserPlus className="w-8 h-8 text-primary mx-auto" />
-            <p className="text-sm font-bold text-foreground">Train together</p>
-            <p className="text-xs text-muted-foreground">Invite friends to compete on challenges and share workouts</p>
+          {/* Section 1: Invite link CTA (simplified) */}
+          <div className="p-3 rounded-xl bg-card border border-border/50">
+            <p className="text-xs text-muted-foreground mb-2">Invite friends to compete and share workouts</p>
             <button onClick={handleShareInvite}
               className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97]">
               <div className="flex items-center justify-center gap-2">
@@ -375,7 +381,6 @@ export default function Social() {
                 ))}
               </div>
             )}
-            {/* No search results state (#20) */}
             {searchQuery.trim() && !searching && searchResults.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-4" aria-live="polite">
                 No users found for &ldquo;{searchQuery.trim()}&rdquo;
@@ -383,21 +388,7 @@ export default function Social() {
             )}
           </div>
 
-          {/* Section 3: Suggested People (#16) */}
-          <div className="space-y-2">
-            <p className="text-small font-semibold text-foreground">Suggested people</p>
-            {profile?.crewId && currentCrew ? (
-              <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
-                Suggestions appear as more athletes join your crew
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground p-4 rounded-xl bg-muted/50 border border-border/30 text-center">
-                Suggestions appear as you join crews and follow athletes
-              </p>
-            )}
-          </div>
-
-          {/* Section 4: Contact Sync Stub */}
+          {/* Section 3: Contact Sync */}
           <div className="space-y-2">
             <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
@@ -405,6 +396,18 @@ export default function Social() {
               style={{ borderLeft: '3px solid rgba(124, 110, 246, 0.5)' }}>
               Sync Contacts
             </button>
+          </div>
+
+          {/* Section 4: Suggested People */}
+          <div className="space-y-2">
+            <p className="text-small font-semibold text-foreground">Suggested people</p>
+            <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+              <p className="text-xs text-muted-foreground">
+                {profile?.crewId && currentCrew
+                  ? 'Suggestions appear as more athletes join your crew'
+                  : 'Suggestions appear as you join crews and follow athletes'}
+              </p>
+            </div>
           </div>
 
           {/* Contact Sync Modal */}
@@ -554,6 +557,7 @@ export default function Social() {
         </div>
         </section>
       )}
+      </>)}
     </div>
   );
 }

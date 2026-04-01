@@ -299,6 +299,7 @@ export default function ProgressPhotos() {
           title="Track your transformation"
           description="Take a front, side, and back photo each week to see your progress over time"
           accentColor={THEME.brand}
+          action={{ label: '+ Add Photo', onClick: () => fileInputRef.current?.click() }}
         />
       )}
 

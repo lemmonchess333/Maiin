@@ -1,75 +1,14 @@
-import { Footprints, Dumbbell, Zap } from 'lucide-react';
+import { Footprints, Dumbbell, Zap, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth';
-import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { THEME } from '../../lib/theme';
+import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
 
-interface LeaderboardEntry {
-  uid: string;
-  name: string;
-  value: number;
-  rank: number;
-}
+const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
-type ChallengeType = 'weekly_distance' | 'weekly_volume' | 'weekly_hybrid';
-
-async function buildLeaderboard(
-  currentUid: string,
-  challenge: ChallengeType
-): Promise<LeaderboardEntry[]> {
-  // Get the current user's following list
-  const followingSnap = await getDocs(collection(db, 'following', currentUid, 'users'));
-  const uids = [currentUid, ...followingSnap.docs.map(d => d.id)];
-
-  const since = new Date();
-  since.setDate(since.getDate() - since.getDay()); // start of this week
-  since.setHours(0, 0, 0, 0);
-  const sinceTs = Timestamp.fromDate(since);
-
-  const entries: { uid: string; value: number }[] = [];
-
-  await Promise.all(uids.map(async (uid) => {
-    let value = 0;
-
-    if (challenge === 'weekly_distance' || challenge === 'weekly_hybrid') {
-      const runsSnap = await getDocs(
-        query(collection(db, 'users', uid, 'runs'),
-          where('completedAt', '>=', sinceTs), orderBy('completedAt'), limit(50))
-      );
-      const km = runsSnap.docs.reduce((s, d) => s + (d.data().distance || 0) / 1000, 0);
-      if (challenge === 'weekly_distance') value = Math.round(km * 10) / 10;
-      else value += km * 100;
-    }
-
-    if (challenge === 'weekly_volume' || challenge === 'weekly_hybrid') {
-      const workoutsSnap = await getDocs(
-        query(collection(db, 'users', uid, 'workouts'),
-          where('date', '>=', since.toISOString().split('T')[0]), orderBy('date'), limit(50))
-      );
-      const kg = workoutsSnap.docs.reduce((s, d) => {
-        return s + (d.data().exercises || []).reduce((es: number, ex: { sets?: { weightKg?: number; reps?: number }[] }) =>
-          es + (ex.sets || []).reduce((ss: number, set: { weightKg?: number; reps?: number }) =>
-            ss + (set.weightKg || 0) * (set.reps || 0), 0), 0);
-      }, 0);
-      if (challenge === 'weekly_volume') value = Math.round(kg);
-      else value += kg * 0.1;
-    }
-
-    entries.push({ uid, value: Math.round(value * 10) / 10 });
-  }));
-
-  return entries
-    .sort((a, b) => b.value - a.value)
-    .map((e, i) => ({
-      uid: e.uid,
-      name: '',  // filled below
-      value: e.value,
-      rank: i + 1,
-    }));
-}
-
-export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { challenge?: ChallengeType }) {
+export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFull }: { challenge?: ChallengeType; onViewFull?: () => void }) {
   const { user } = useAuth();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +17,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
     weekly_distance: { title: 'Weekly Distance', unit: 'km', icon: 'footprints' },
     weekly_volume: { title: 'Weekly Volume', unit: 'kg', icon: 'dumbbell' },
     weekly_hybrid: { title: 'Hybrid Score', unit: 'pts', icon: 'zap' },
+    weekly_workouts: { title: 'Workouts', unit: 'sessions', icon: 'dumbbell' },
   };
 
   useEffect(() => {
@@ -104,51 +44,108 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid' }: { chall
   }, [user, challenge]);
 
   const { title, unit, icon } = challengeLabels[challenge];
+  const top3 = entries.slice(0, 3);
+  const selfEntry = entries.find(e => e.uid === user?.uid);
+  const selfInTop3 = top3.some(e => e.uid === user?.uid);
 
   return (
-    <div className="p-5 rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(124,110,246,0.15), rgba(124,110,246,0.08))', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(124,110,246,0.2)', boxShadow: '0 2px 12px rgba(124,110,246,0.1)' }}>
+    <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         {icon === 'footprints' ? <Footprints size={18} style={{ color: THEME.running }} /> : icon === 'dumbbell' ? <Dumbbell size={18} style={{ color: THEME.lifting }} /> : <Zap size={18} style={{ color: THEME.brand }} />}
         <div className="flex-1">
           <h3 className="text-sm font-bold">{title}</h3>
-          {challenge === 'weekly_hybrid' && (
-            <p className="text-xs text-muted-foreground">Lifting volume + running distance this week</p>
-          )}
         </div>
-        <span className="ml-auto text-xs text-muted-foreground">This Week</span>
+        <span className="text-xs text-muted-foreground">This Week</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {loading && <p className="text-xs text-muted-foreground text-center py-3 animate-pulse">Loading...</p>}
 
         {!loading && entries.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-4">
-            Follow users to see the leaderboard. Compete on distance, volume, or both!
+            Follow athletes to see the leaderboard
           </p>
         )}
 
-        {entries.map(entry => (
-          <div key={entry.uid}
-            className={`flex items-center gap-3 p-2 rounded-lg ${
-              entry.uid === user?.uid ? 'bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800' : ''
-            }`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-              entry.rank === 1 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
-              entry.rank === 2 ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
-              entry.rank === 3 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-muted text-muted-foreground'
-            }`}>
-              {entry.rank}
-            </span>
-            <span className="text-sm font-medium flex-1 truncate">
-              {entry.uid === user?.uid ? 'You' : entry.name}
-            </span>
-            <span className="text-sm font-mono tabular-nums font-bold">
-              {entry.value.toLocaleString()} <span className="text-xs text-muted-foreground">{unit}</span>
-            </span>
-          </div>
-        ))}
+        {!loading && entries.length > 0 && entries.length < 3 && (
+          <>
+            {top3.map(entry => (
+              <div key={entry.uid}
+                className={`flex items-center gap-2.5 p-2 rounded-lg ${
+                  entry.uid === user?.uid ? 'bg-primary/5 border border-primary/15' : ''
+                }`}>
+                <span className="w-5 text-xs font-bold text-center shrink-0"
+                  style={{ color: RANK_COLORS[entry.rank - 1] || undefined }}>
+                  {entry.rank}
+                </span>
+                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                  {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium flex-1 truncate">
+                  {entry.uid === user?.uid ? 'You' : entry.name}
+                </span>
+                <span className="text-sm font-mono tabular-nums font-bold">
+                  {entry.value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{unit}</span>
+                </span>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground text-center pt-2">
+              Follow more athletes to grow the leaderboard
+            </p>
+          </>
+        )}
+
+        {!loading && entries.length >= 3 && (
+          <>
+            {top3.map(entry => (
+              <div key={entry.uid}
+                className={`flex items-center gap-2.5 p-2 rounded-lg ${
+                  entry.uid === user?.uid ? 'bg-primary/5 border border-primary/15' : ''
+                }`}>
+                <span className="w-5 text-xs font-bold text-center shrink-0"
+                  style={{ color: RANK_COLORS[entry.rank - 1] }}>
+                  {entry.rank}
+                </span>
+                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                  {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium flex-1 truncate">
+                  {entry.uid === user?.uid ? 'You' : entry.name}
+                </span>
+                <span className="text-sm font-mono tabular-nums font-bold">
+                  {entry.value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{unit}</span>
+                </span>
+              </div>
+            ))}
+
+            {selfEntry && !selfInTop3 && (
+              <>
+                <div className="flex justify-center py-0.5">
+                  <span className="text-xs text-muted-foreground">···</span>
+                </div>
+                <div className="flex items-center gap-2.5 p-2 rounded-lg bg-primary/5 border border-primary/15">
+                  <span className="w-5 text-xs font-bold text-center shrink-0">{selfEntry.rank}</span>
+                  <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">Y</div>
+                  <span className="text-sm font-medium flex-1 truncate">You</span>
+                  <span className="text-sm font-mono tabular-nums font-bold">
+                    {selfEntry.value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{unit}</span>
+                  </span>
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
 
+      {!loading && entries.length > 0 && onViewFull && (
+        <button
+          onClick={onViewFull}
+          className="flex items-center justify-center gap-1 w-full mt-3 pt-3 border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          See Full Leaderboard
+          <ChevronRight size={14} />
+        </button>
+      )}
     </div>
   );
 }
