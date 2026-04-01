@@ -33,7 +33,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 
 ```
 src/
-├── components/         # Shared UI components
+├── components/         # Shared UI components (87 files total)
 │   ├── analytics/      # Performance charts & stats (12 components)
 │   ├── calendar/       # Training calendar (WeekView, SessionCard)
 │   ├── home/           # Home screen cards & widgets (10 components)
@@ -47,8 +47,9 @@ src/
 │   ├── challenges/     # Challenge system (list, card, hook, tests)
 │   ├── streaks/        # Streaks & badges (hook, grid, modal, tests)
 │   └── program/        # Workout program engine (engine, templates, scheduler)
-├── hooks/              # Custom React hooks (30+)
-├── lib/                # Pure business logic & utilities (60+ modules)
+├── hooks/              # Custom React hooks (31 hooks)
+│   └── __tests__/      # Unit tests for hooks/ (2 test files)
+├── lib/                # Pure business logic & utilities (46 modules)
 │   └── __tests__/      # Unit tests for lib/ (31 test files)
 ├── pages/              # Route-level page components (15 pages)
 ├── styles/             # CSS tokens, component styles, animations
@@ -62,29 +63,32 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase, charts, vendor, maplibre, motion, date-fns
+- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter, stripe
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
+- **Route prefetching:** `PREFETCH_MAP` in App.tsx preloads adjacent pages via `requestIdleCallback`
+- **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app)
+- **App version:** Defined via `__APP_VERSION__` (from package.json, currently 1.1.0)
 
 ## Pages (src/pages/)
 
 | Page | Route | Description |
 |------|-------|-------------|
 | `Home.tsx` | `/` | Main dashboard — WeekStrip, hero cards, energy, insights |
-| `Log.tsx` | `/log` | Food/meal logging with camera, NL parsing, barcode |
+| `Food.tsx` | `/food` | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here) |
 | `History.tsx` | `/history` | Workout & run history with analytics charts |
 | `Program.tsx` | `/program` | Workout program builder & scheduling |
 | `Run.tsx` | `/run` | Active GPS run tracking (full-screen, no nav) |
 | `RunSummary.tsx` | `/run-summary` | Post-run stats & map review |
-| `RunDetail.tsx` | `/run/:id` | Historical run detail view |
+| `RunDetail.tsx` | `/run/:runId` | Historical run detail view |
 | `Social.tsx` | `/social` | Social feed, crews, leaderboards |
-| `UserProfile.tsx` | `/user/:id` | User profile viewing |
-| `TrainingCalendar.tsx` | `/calendar` | Weekly training calendar view |
+| `UserProfile.tsx` | `/user/:uid` | User profile viewing |
+| `TrainingCalendar.tsx` | *(no route)* | Weekly training calendar view (file exists, not routed in App.tsx) |
 | `Settings.tsx` | `/settings` | User settings & preferences |
-| `Onboarding.tsx` | `/onboarding` | Multi-step setup flow |
-| `Login.tsx` | `/login` | Authentication (Email, Google, Apple) |
+| `Onboarding.tsx` | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete) |
+| `Login.tsx` | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated) |
 | `PrivacyPolicy.tsx` | `/privacy` | Legal |
 | `TermsOfService.tsx` | `/terms` | Legal |
 
@@ -117,6 +121,27 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `shareCardGenerator.ts` | Share card image generation (html-to-image) |
 | `analytics.ts` | Analytics computation |
 | `subscription.ts` | Pro subscription handling |
+| `firebase.ts` | Firebase app initialization & Firestore/Auth/Storage exports |
+| `auth.tsx` | AuthProvider, useAuth hook, UserProfile interface |
+| `api.ts` | API client helpers |
+| `haptic.ts` | Haptic feedback utility (Capacitor) |
+| `offlineQueue.ts` | Queues Firestore writes when offline, flushes on reconnect |
+| `errorReporting.ts` | Error reporting utilities |
+| `logger.ts` | Structured logging |
+| `notifications.ts` | Push notification setup |
+| `types.ts` | Shared TypeScript type definitions |
+| `performanceTypes.ts` | Performance engine type definitions |
+| `macroConstants.ts` | Macro/nutrition constants |
+| `colorUtils.ts` | Colour manipulation helpers |
+| `export.ts` | Data export utilities |
+| `exerciseDemo.ts` | Exercise demo/animation data |
+| `firestoreGuards.ts` | Firestore data validation guards |
+| `funComparisons.ts` | Fun stat comparison generators |
+| `purchaseProvider.ts` | In-app purchase provider (Capacitor) |
+| `register-sw.ts` | Service worker registration |
+| `timeAgo.ts` | Relative time formatting |
+| `theme.ts` | THEME object for chart colours & design tokens |
+| `utils.ts` | General utility functions |
 
 ## Feature Modules (src/features/)
 
@@ -169,16 +194,20 @@ Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
-| `analyzeFood` | HTTPS callable | Vertex AI food analysis |
+| `completeOnboarding` | HTTPS callable | Onboarding profile + program setup via Admin SDK (bypasses security rules) |
+| `analyzeFood` | HTTPS request | Vertex AI image-based food analysis |
+| `analyzeFoodText` | HTTPS request | Vertex AI text-based food analysis (Pro feature) |
 | `computePerformanceWeek` | HTTPS callable | Manual performance rollup |
-| `weeklyPerformanceRollup` | Scheduled (Sun 23:15 UTC) | Automated weekly rollup |
-| `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh |
-| `onWorkoutCreated` | Firestore trigger | Post-workout processing |
-| `onRunCreated` | Firestore trigger | Post-run processing |
+| `weeklyPerformanceRollup` | Scheduled (Sun 23:15 UTC) | Automated weekly rollup for active users (30-day window) |
+| `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window) |
+| `onWorkoutCreated` | Firestore trigger | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance |
+| `onRunCreated` | Firestore trigger | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance |
+
+Helper: `syncChallengeProgress()` — auto-updates challenge participant progress (workout_count, total_volume, total_km)
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `activities` (public), `crews`
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `activities` (public), `crews`, `challenges`, `challenges/{id}/participants`
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
@@ -200,7 +229,7 @@ Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 
 ### Unit Tests (Vitest)
 - Config: `vitest.config.ts`, setup: `src/test/setup.ts`
-- 31 test files in `src/lib/__tests__/`, 4 in `src/utils/__tests__/`, plus feature module tests
+- 31 test files in `src/lib/__tests__/`, 4 in `src/utils/__tests__/`, 2 in `src/hooks/__tests__/` (useOnlineStatus, useRunTimer), plus feature module tests (challenges, streaks)
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
 ### E2E Tests (Playwright)
