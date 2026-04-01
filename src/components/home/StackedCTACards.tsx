@@ -7,6 +7,9 @@ import HealthScoreCard from "@/components/home/HealthScoreCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0, 0, 0.2, 1] as const } } };
+
 export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, todayRun, healthScore, prevHealthScore }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
@@ -27,20 +30,29 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   const showRun = todayType === "run" || todayType === "both";
 
   return (
-    <div className="space-y-2">
-      <ActionPills showRun={showRun} />
-      <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
+    <motion.div className="space-y-2" initial="hidden" animate="visible" variants={stagger}>
+      <motion.div variants={fadeUp}>
+        <ActionPills showRun={showRun} />
+      </motion.div>
+      <motion.div variants={fadeUp}>
+        <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
+      </motion.div>
       {showLift && nextWorkout && (
-        <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} />
+        <motion.div variants={fadeUp}>
+          <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} />
+        </motion.div>
       )}
       {showRun && (
-        <RunCTACard todayRun={todayRun} navigate={navigate} />
+        <motion.div variants={fadeUp}>
+          <RunCTACard todayRun={todayRun} navigate={navigate} />
+        </motion.div>
       )}
-      <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-        className="space-y-3">
+      <motion.div variants={fadeUp} className="space-y-3">
         <WaterCard waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={onAddWater} onRemoveWater={onRemoveWater} />
+      </motion.div>
+      <motion.div variants={fadeUp}>
         <WeightStepsTiles lastWeight={lastWeight} weightUnit={weightUnit} onLogWeight={onLogWeight} lastWeightDate={lastWeightDate} />
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

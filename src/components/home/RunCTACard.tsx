@@ -28,8 +28,7 @@ export default function RunCTACard({ todayRun, navigate }: {
   const runKeyMetric = runDesc ? (runDesc.match(/(\d+\.?\d*\s*k(?:m|ilom[ei]t[er]*))/i)?.[1] || runDesc.match(/(\d+\.?\d*\s*mi(?:les?)?)/i)?.[1] || null) : null;
 
   return (
-    <motion.button key="r" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-      whileTap={{ scale: 0.97 }}
+    <motion.button whileTap={{ scale: 0.97 }}
       onClick={function() { haptic(); navigate("/run" + templateParam); }}
       className="w-full p-4 rounded-xl bg-card text-left"
       style={{ backgroundColor: THEME.running + "08" }}>
