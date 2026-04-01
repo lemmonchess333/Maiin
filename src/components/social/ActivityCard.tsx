@@ -82,12 +82,16 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
     }
   };
 
+  const [kudosLoading, setKudosLoading] = useState(false);
+
   const handleShowKudosList = async () => {
     if (kudosCount === 0) return;
     if (showKudosList) { setShowKudosList(false); return; }
+    setShowKudosList(true);
+    setKudosLoading(true);
     const users = await getKudosList(feedItem.activityId);
     setKudosUsers(users);
-    setShowKudosList(true);
+    setKudosLoading(false);
   };
 
   const createdAtObj = feedItem.createdAt as { toDate?: () => Date } | undefined;
@@ -396,10 +400,14 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         </div>
 
         {/* Kudos list popup */}
-        {showKudosList && kudosUsers.length > 0 && (
+        {showKudosList && (
           <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Props from</p>
-            {kudosUsers.map(u => (
+            {kudosLoading ? (
+              <div className="flex items-center justify-center py-2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                   {u.userName.charAt(0).toUpperCase()}
