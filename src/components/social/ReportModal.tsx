@@ -54,7 +54,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
             <Flag className="w-4 h-4 text-destructive" />
             <h3 id="report-modal-title" className="text-base font-semibold text-foreground">Report {targetType}</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted">
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Close">
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>

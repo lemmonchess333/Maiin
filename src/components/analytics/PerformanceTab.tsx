@@ -224,7 +224,7 @@ export default function PerformanceTab() {
         onClick={() => setShowTechnical((v) => !v)}
         className={cn(
           "flex items-center gap-1.5 text-xs font-medium text-muted-foreground",
-          "hover:text-foreground transition-colors w-full justify-center py-1"
+          "hover:text-foreground transition-colors w-full justify-center py-2"
         )}
       >
         {showTechnical ? "Hide technical details" : "Show technical details"}

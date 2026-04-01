@@ -24,10 +24,10 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
   const estimatedFat = Math.round((remaining * 0.38) / 9);
   const calPct = (calories / tCal) * 100;
 
-  // Distinct macro colors
-  const proteinColor = "#E08A9B"; // warm rose — distinct from teal hydration
-  const carbsColor = "#6BA3D6";  // sky blue — distinct from purple brand
-  const fatColor = "#B8A044";    // golden — distinct from orange nutrition
+  // Distinct macro colors from design tokens
+  const proteinColor = THEME.macros.protein;
+  const carbsColor = THEME.macros.carbs;
+  const fatColor = THEME.macros.fat;
 
   return (
     <div className="rounded-2xl bg-card overflow-hidden">

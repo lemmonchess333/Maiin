@@ -1,4 +1,5 @@
 import { db, auth } from './firebase';
+import { logger } from '@/lib/logger';
 import {
   collection, doc, setDoc, deleteDoc, getDocs, getDoc,
   query, orderBy, limit, startAfter, where, increment,
@@ -142,7 +143,7 @@ export async function postActivity(activity: {
     const results = await Promise.allSettled(promises);
     const failed = results.filter(r => r.status === 'rejected');
     if (failed.length > 0) {
-      console.warn(`[postActivity] ${failed.length}/${results.length} feed writes failed`);
+      logger.warn(`[postActivity] ${failed.length}/${results.length} feed writes failed`);
     }
   }
 

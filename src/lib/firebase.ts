@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
+import { logger } from "@/lib/logger";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
@@ -33,7 +34,7 @@ try {
     }),
   });
 } catch (e) {
-  console.warn("Persistent cache unavailable, falling back to memory cache:", e);
+  logger.warn("Persistent cache unavailable, falling back to memory cache:", e);
   db_ = initializeFirestore(app, {
     localCache: memoryLocalCache(),
   });
@@ -42,7 +43,7 @@ export const db = db_;
 
 export const storage = getStorage(app);
 if (!firebaseConfig.storageBucket) {
-  console.warn('[Firebase] VITE_FIREBASE_STORAGE_BUCKET is not set — file uploads will fail.');
+  logger.warn('[Firebase] VITE_FIREBASE_STORAGE_BUCKET is not set — file uploads will fail.');
 }
 export const functions = getFunctions(app);
 

@@ -6,8 +6,6 @@ interface VolumeChartProps {
 }
 
 export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeChartProps) {
-  if (data.length === 0) return null;
-
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
@@ -15,6 +13,11 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
         <p className="text-xs text-muted-foreground">kg lifted</p>
       </div>
 
+      {data.length === 0 ? (
+        <div className="flex items-center justify-center h-[140px]">
+          <p className="text-sm text-muted-foreground">Complete workouts to see your volume trend</p>
+        </div>
+      ) : (
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} barCategoryGap="25%">
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -31,6 +34,7 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }
