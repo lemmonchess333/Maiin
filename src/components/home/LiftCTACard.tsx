@@ -12,7 +12,7 @@ export default function LiftCTACard({ nextWorkout, navigate, muscleGroups }: {
     <motion.button whileTap={{ scale: 0.97 }}
       onClick={function() { haptic(); navigate("/program"); }}
       className="w-full p-4 rounded-xl bg-card text-left"
-      style={{ backgroundColor: THEME.lifting + "14", border: `1px solid ${THEME.lifting}26` }}>
+      style={{ backgroundColor: THEME.lifting + "14" }}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.lifting + "18" }}>
           <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
