@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Council reports (local reference only)
+council-report-*.html
+council-transcript-*.md
