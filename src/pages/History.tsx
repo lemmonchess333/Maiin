@@ -235,10 +235,16 @@ export default function History() {
     recentWorkouts.forEach((w) => {
       w.exercises?.forEach((ex) => {
         const name = ex.exerciseName;
+        const exInfo = EXERCISES.find(e => e.name === name);
+        const isBWExercise = exInfo?.equipment === "Bodyweight";
         ex.sets?.forEach((set) => {
-          if (set.weightKg <= 0) return;
+          if (!isBWExercise && set.weightKg <= 0) return;
           const e1rm = set.weightKg * (1 + set.reps / 30);
-          if (!prMap[name] || e1rm > prMap[name].weight * (1 + prMap[name].reps / 30)) {
+          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
+          const prevScore = prMap[name]
+            ? (isBWExercise && prMap[name].weight === 0 ? prMap[name].reps : prMap[name].weight * (1 + prMap[name].reps / 30))
+            : -1;
+          if (score > prevScore) {
             prMap[name] = {
               weight: set.weightKg,
               reps: set.reps,
@@ -351,7 +357,7 @@ export default function History() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.running }}>
                     <StatCard
                       label="Weekly Distance"
                       value={formatDistance(runningTotals.runDistance)}
@@ -394,7 +400,7 @@ export default function History() {
             <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
-                  className="text-sm font-semibold uppercase tracking-wider mt-4"
+                  className="text-sm font-semibold uppercase tracking-wider mt-6"
                   style={{ color: THEME.lifting }}
                 >
                   Lifting
@@ -410,7 +416,7 @@ export default function History() {
                 </div>
               ) : (
               <>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.lifting }}>
                 <StatCard
                   label="Weekly Volume"
                   value={formatVolume(liftingData.liftVolume).value}
@@ -420,7 +426,7 @@ export default function History() {
                 <StatCard
                   label="Sessions"
                   value={String(liftingData.liftCount)}
-                  unit="/period"
+                  unit={timeRange === "1W" ? "/week" : timeRange === "1M" ? "/month" : timeRange === "3M" ? "/3mo" : timeRange === "6M" ? "/6mo" : "/year"}
                   accentColor={THEME.lifting}
                 />
               </div>
@@ -468,11 +474,11 @@ export default function History() {
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
                             <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                              {isBW && pr.weight === 0 ? "BW" : `${pr.weight}kg`} × {pr.reps}
+                              {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight}kg` : pr.weight > 0 ? `${pr.weight}kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
                             </p>
-                            {!(isBW && pr.weight === 0) && (
+                            {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
                               <p className="text-xs text-muted-foreground">~{e1rm}kg 1RM</p>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       );
@@ -494,7 +500,7 @@ export default function History() {
             <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
-                  className="text-sm font-semibold uppercase tracking-wider mt-4"
+                  className="text-sm font-semibold uppercase tracking-wider mt-6"
                   style={{ color: THEME.success }}
                 >
                   Nutrition
@@ -510,7 +516,7 @@ export default function History() {
                 </div>
               ) : (
               <>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.success }}>
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}

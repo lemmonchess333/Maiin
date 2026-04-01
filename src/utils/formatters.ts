@@ -5,7 +5,7 @@
 /** Format lifting volume for display (e.g. 500 → "500", 1500 → "1.5k") */
 export function formatVolume(kg: number): { value: string; unit: string } {
   if (kg <= 0) return { value: "\u2014", unit: "" };
-  if (kg >= 1000) return { value: (kg / 1000).toFixed(1) + "k", unit: "" };
+  if (kg >= 1000) return { value: (kg / 1000).toFixed(1) + "k", unit: "kg" };
   return { value: String(Math.round(kg)), unit: "kg" };
 }
 
