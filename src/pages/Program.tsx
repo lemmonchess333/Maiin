@@ -321,8 +321,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             {reorderMode ? (
               <button
                 onClick={() => setReorderMode(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                style={{ color: "#7C6BF0" }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
               >
                 Done
               </button>
@@ -378,7 +377,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     Day {todayWorkoutIndex + 1} · Week {displayWeekNumber} · {todayWorkout.exercises.length} exercises · ~{Math.round(todayWorkout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
                   </p>
                   {getDayMuscleGroups(todayWorkout.exercises) && (
-                    <p className="text-xs" style={{ color: "#9CA3AF" }}>{getDayMuscleGroups(todayWorkout.exercises)}</p>
+                    <p className="text-xs text-muted-foreground">{getDayMuscleGroups(todayWorkout.exercises)}</p>
                   )}
                 </div>
               </div>
@@ -441,8 +440,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               {/* + Add Exercise */}
               <button
                 onClick={() => { setAddPickerDayIndex(todayWorkoutIndex); setShowAddPicker(true); }}
-                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
+                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
               >
                 <Plus className="w-4 h-4" /> Add Exercise
               </button>
@@ -565,7 +563,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               {nextUpDayName && (
                 <div className="p-3 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.text.muted}` }}>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">Up Next</p>
-                  <p className="text-sm font-medium mt-0.5" style={{ color: "#888" }}>{nextUpDayName} · {nextUpWorkout?.exercises.length} exercises</p>
+                  <p className="text-sm font-medium mt-0.5 text-foreground">{nextUpDayName} · {nextUpWorkout?.exercises.length} exercises</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Rest helps your muscles grow stronger</p>
                 </div>
               )}
@@ -641,33 +639,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <div className="flex items-center justify-center gap-2 px-1 mt-1 mb-3">
                   <button
                     onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                    className="inline-flex items-center justify-center whitespace-nowrap"
-                    style={{
-                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                      backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
-                      border: "none", cursor: phaseLocked ? "pointer" : "default",
-                    }}
+                    className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full bg-primary text-white text-xs font-semibold", phaseLocked ? "cursor-pointer" : "cursor-default")}
                   >
                     {goalLabel(programState.goal)}
                     {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" />}
                   </button>
                   <button
                     onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                    className="inline-flex items-center justify-center whitespace-nowrap"
-                    style={{
-                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                      backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43", fontSize: 13, fontWeight: 500,
-                      cursor: phaseLocked ? "pointer" : "default",
-                    }}
+                    className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-foreground text-xs font-medium", phaseLocked ? "cursor-pointer" : "cursor-default")}
                   >
                     {prescription.deload ? "Deload" : "Progression"}
-                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" style={{ color: "#8E8E93" }} />}
+                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0 text-muted-foreground" />}
                   </button>
                   {!isViewingHistory && (
-                    <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
-                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                      backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#8E8E93", fontSize: 13, fontWeight: 500,
-                    }}>
+                    <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-muted-foreground text-xs font-medium">
                       {completedCount}/{totalDays} done
                     </span>
                   )}
@@ -746,8 +731,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           <CheckCircle2 className="w-5 h-5 text-green-500" />
                         ) : isCurrent ? (
                           <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                            style={{ borderColor: "#7C6BF0" }}>
-                            <div className="w-2 h-2 rounded-full" style={{ background: "#7C6BF0" }} />
+                            style={{ borderColor: THEME.lifting }}>
+                            <div className="w-2 h-2 rounded-full" style={{ background: THEME.lifting }} />
                           </div>
                         ) : (
                           <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/20" />
@@ -766,7 +751,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           )}
                         </p>
                         {getDayMuscleGroups(day.exercises) && (
-                          <p className="text-xs truncate" style={{ color: "#9CA3AF" }}>{getDayMuscleGroups(day.exercises)}</p>
+                          <p className="text-xs truncate text-muted-foreground">{getDayMuscleGroups(day.exercises)}</p>
                         )}
                       </div>
 
@@ -1099,8 +1084,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7C6BF015" }}>
-                    <Lock className="w-5 h-5" style={{ color: "#7C6BF0" }} />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${THEME.lifting}15` }}>
+                    <Lock className="w-5 h-5" style={{ color: THEME.lifting }} />
                   </div>
                   <div>
                     <p className="text-base font-semibold text-foreground">Upgrade to Pro</p>
