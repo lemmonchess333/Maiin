@@ -28,15 +28,15 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
   const hasM = dailyTotals.mealCount > 0;
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-      <div className="pt-2 pb-1 px-1">
-        <div className="rounded-2xl bg-card px-3 py-2.5 space-y-1.5">
+      <div className="pt-1 pb-0.5 px-1">
+        <div className="rounded-2xl bg-card px-3 py-1.5 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
               <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
-            <button onClick={onClose} aria-label="Close day details" className="p-2 -m-1 rounded-lg hover:bg-muted transition-colors">
-              <X aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
+            <button onClick={onClose} aria-label="Close day details" className="p-1.5 -m-0.5 rounded-lg hover:bg-muted transition-colors">
+              <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>
           {(hasW || hasM) ? (
