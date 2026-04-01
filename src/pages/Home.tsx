@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
+import { useHomeData } from "@/hooks/useHomeData";
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
@@ -20,7 +20,7 @@ import { haptic } from "@/lib/haptic";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
-import { collection, query, where, getDocs, Timestamp, orderBy, limit as fbLimit, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
@@ -64,10 +64,9 @@ export default function Home() {
   const navigate = useNavigate();
   const { newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
-  const [lastWeightInfo, setLastWeightInfo] = useState<{ weight: string; date: string; rawDate: string | null } | null>(null);
   const [prevHealthScore, setPrevHealthScore] = useState<number | null>(null);
   const prevStreakRef = useRef<number>(0);
-  const [_streakJustExtended, setStreakJustExtended] = useState(false);
+  const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
   const weightSheetRef = useFocusTrap<HTMLDivElement>(showWeightSheet);
   const [weightInput, setWeightInput] = useState("");
@@ -83,6 +82,7 @@ export default function Home() {
     if (!isInTrial && profile.trialExpiresAt && !profile.trialExpiryPromptShown) {
       const expiresAt = new Date(profile.trialExpiresAt);
       if (expiresAt.getTime() < Date.now()) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time check on mount
         setShowTrialExpiredModal(true);
       }
     }
@@ -103,31 +103,16 @@ export default function Home() {
 
   useEffect(function() {
     if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
-      setStreakJustExtended(true);
-      const t = setTimeout(function() { setStreakJustExtended(false); }, 800);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from streak change event
+      setStreakBounce(true);
+      const t = setTimeout(function() { setStreakBounce(false); }, 800);
       return function() { clearTimeout(t); };
     }
     prevStreakRef.current = streak;
   }, [streak]);
 
-  const [dailyCal, setDailyCal] = useState(0);
-  const [dailyProt, setDailyProt] = useState(0);
-
-  useEffect(function() {
-    if (!user?.uid) return;
-    (async function() {
-      try {
-        const ts = new Date();
-        ts.setHours(0, 0, 0, 0);
-        const snap = await getDocs(query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", Timestamp.fromDate(ts))));
-        let c = 0; let p = 0;
-        snap.forEach(function(d) { const dd = d.data(); c += dd.totalCalories || dd.calories || 0; p += dd.totalProtein || dd.protein || 0; });
-        setDailyCal(c); setDailyProt(p);
-      } catch (e) { console.error(e); }
-    })();
-  }, [user]);
-
   const weightUnit = profile?.preferredWeightUnit || "kg";
+  const { dailyCal, dailyProt, todayWorkoutCals, todayRunCals, lastWeightInfo, setLastWeightInfo, postWorkoutNudge } = useHomeData(user, profile, workouts, weightUnit);
 
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const todayTotals = getDailyTotals(todayKey);
@@ -158,35 +143,11 @@ export default function Home() {
   const healthScore = healthScoreResult.score;
 
   useEffect(function() {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tracking previous value for animation
     if (healthScore != null) setPrevHealthScore(healthScore);
   }, [healthScore]);
 
-  // Compute daily burn for Today's Energy card
-  const [todayWorkoutCals, setTodayWorkoutCals] = useState(0);
-  const [todayRunCals, setTodayRunCals] = useState(0);
-
-  useEffect(function() {
-    if (!user?.uid) return;
-    const todayStr = format(new Date(), "yyyy-MM-dd");
-    // Workout calories
-    const dayW = workouts.filter(function(w) { return w.date === todayStr; });
-    let wCals = 0;
-    dayW.forEach(function(w) {
-      const mins = w.durationMinutes || 0;
-      wCals += Math.round(((profile?.weightKg || 70) * mins * 5) / 60);
-    });
-    setTodayWorkoutCals(wCals);
-    // Run calories
-    const ts = new Date(); ts.setHours(0, 0, 0, 0);
-    getDocs(query(collection(db, "users", user.uid, "runs"), where("completedAt", ">=", Timestamp.fromDate(ts)))).then(function(snap) {
-      let rCals = 0;
-      snap.docs.forEach(function(d) {
-        const distKm = ((d.data().distance || 0) / 1000);
-        rCals += Math.round((profile?.weightKg || 70) * distKm * 1.036);
-      });
-      setTodayRunCals(rCals);
-    }).catch(function() {});
-  }, [user, workouts, profile?.weightKg]);
+  // Daily burn for Today's Energy card
 
   const dailyBurn = useMemo(function() {
     const wKg = profile?.weightKg || 70;
@@ -203,55 +164,11 @@ export default function Home() {
   const totalLifetimeMeals = meals.length;
   const [daysSinceLastMeal, setDaysSinceLastMeal] = useState(Infinity);
   useEffect(function() {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- time-dependent computation requires useEffect
     if (meals.length === 0) { setDaysSinceLastMeal(Infinity); return; }
     const lastDate = meals[0].date;
     setDaysSinceLastMeal(Math.floor((Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000));
   }, [meals]);
-
-  // Post-workout nutrition nudge — shows for 2h after a workout
-  const [postWorkoutNudge, setPostWorkoutNudge] = useState<{ type: "lift" | "run" | "both"; proteinRemaining: number } | null>(null);
-  useEffect(function() {
-    const todayStr = format(new Date(), "yyyy-MM-dd");
-    const todayWorkouts = workouts.filter(function(w) { return w.date === todayStr; });
-    if (todayWorkouts.length === 0) { setPostWorkoutNudge(null); return; }
-
-    const latest = todayWorkouts.reduce(function(a, b) {
-      return (b.createdAt?.toMillis?.() || 0) > (a.createdAt?.toMillis?.() || 0) ? b : a;
-    });
-
-    const createdMs = latest.createdAt?.toMillis?.() || Date.now();
-    const minutesSince = Math.round((Date.now() - createdMs) / 60000);
-    if (minutesSince > 120) { setPostWorkoutNudge(null); return; }
-
-    const hasLift = latest.exercises.some(function(e) { return e.category !== "cardio"; });
-    const hasRun = latest.exercises.some(function(e) { return e.category === "cardio"; });
-    const type = hasLift && hasRun ? "both" : hasRun ? "run" : "lift";
-
-    const bw = profile?.weightKg || 70;
-    const proteinRemaining = Math.max(0, Math.round(bw * 0.4) - dailyProt);
-
-    setPostWorkoutNudge({ type: type, proteinRemaining: proteinRemaining });
-  }, [workouts, profile?.weightKg, dailyProt]);
-
-  useEffect(function() {
-    if (!user?.uid) return;
-    getDocs(query(collection(db, "users", user.uid, "bodyweightLogs"), orderBy("date", "desc"), fbLimit(30))).then(function(snap) {
-      if (snap.empty) {
-        if (profile?.weightKg) {
-          const w = weightUnit === "lbs" ? (profile.weightKg * 2.20462).toFixed(1) : profile.weightKg.toFixed(1);
-          setLastWeightInfo({ weight: w, date: "From profile", rawDate: null });
-        }
-        return;
-      }
-      const entries = snap.docs.map(function(doc) { const d = doc.data(); return { date: d.date as string, weight: d.weight as number }; }).filter(function(e) { return typeof e.weight === "number"; });
-      if (entries.length > 0) {
-        const sorted = [...entries].sort(function(a, b) { return a.date.localeCompare(b.date); });
-        const latest = sorted[sorted.length - 1];
-        const w = weightUnit === "lbs" ? (latest.weight * 2.20462).toFixed(1) : latest.weight.toFixed(1);
-        setLastWeightInfo({ weight: w, date: format(new Date(latest.date + "T12:00:00"), "MMM d"), rawDate: latest.date });
-      }
-    }).catch(function() {});
-  }, [user, weightUnit, profile?.weightKg]);
 
   // Relative time string for weight tile
   const weightRelativeTime = useMemo(function() {
@@ -276,10 +193,12 @@ export default function Home() {
 
   const handleLogWeight = async function() {
     if (!weightInput || !user) return;
+    const raw = Number(weightInput);
+    if (Number.isNaN(raw) || raw <= 0) return;
+    const storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
+    if (storeW < 20 || storeW > 350) return;
     setWeightSaving(true);
     try {
-      const raw = Number(weightInput);
-      const storeW = weightUnit === "lbs" ? raw / 2.20462 : raw;
       const today = format(new Date(), "yyyy-MM-dd");
       await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), { date: today, weight: storeW, createdAt: serverTimestamp() });
       const disp = weightUnit === "lbs" ? (storeW * 2.20462).toFixed(1) : storeW.toFixed(1);
@@ -336,7 +255,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <motion.div key={streak}
-              initial={[7, 30, 100, 365].includes(streak) ? { scale: 1.1 } : undefined}
+              initial={streakBounce ? { scale: 1.15 } : undefined}
               animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
               className={cn("flex items-center gap-1 px-2 py-1 rounded-full", streak > 0 ? "" : "bg-muted")}
               style={streak > 0 ? { background: "rgba(251,146,60,0.06)" } : undefined}>
