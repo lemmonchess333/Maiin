@@ -9,6 +9,7 @@ interface WeeklyOverviewProps {
   liftVolume: number;
   caloriesBurned: number;
   nutritionAdherence: number;
+  timeRange?: string;
 }
 
 function Ring({ value, max, color, size = 44 }: { value: number; max: number; color: string; size?: number }) {
@@ -25,8 +26,14 @@ function Ring({ value, max, color, size = 44 }: { value: number; max: number; co
 }
 
 export default function WeeklyOverview({
-  runCount, runDistance, liftCount, liftVolume, caloriesBurned, nutritionAdherence,
+  runCount, runDistance, liftCount, liftVolume, caloriesBurned, nutritionAdherence, timeRange,
 }: WeeklyOverviewProps) {
+  const rangeLabel = timeRange === "1W" ? "This Week"
+    : timeRange === "1M" ? "This Month"
+    : timeRange === "3M" ? "Last 3 Months"
+    : timeRange === "6M" ? "Last 6 Months"
+    : timeRange === "1Y" ? "This Year"
+    : "This Week";
   const stats = [
     {
       icon: <Footprints className="w-4 h-4" style={{ color: THEME.running }} />,
@@ -47,7 +54,7 @@ export default function WeeklyOverview({
 
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">This Week</p>
+      <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">{rangeLabel}</p>
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
           <div key={s.label} className="flex flex-col items-center gap-2">
