@@ -4,6 +4,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { THEME } from "@/lib/theme";
+import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
@@ -11,6 +12,7 @@ import PRCard from "@/components/analytics/PRCard";
 import { Footprints, Trophy } from "lucide-react";
 import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
@@ -19,7 +21,6 @@ const RunningHistorySection = lazy(() => import("@/components/run/RunningHistory
 const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
-const WeeklyEnergyChart = lazy(() => import("@/components/progress/WeeklyEnergyChart").then(m => ({ default: m.WeeklyEnergyChart })));
 const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
@@ -106,9 +107,10 @@ export default function History() {
             ? 180
             : 365;
 
-  const { weeklyData, runs } = useRunningStats(rangeDays);
-  const { workouts } = useWorkouts();
-  const { meals } = useMeals();
+  const { weeklyData, runs, loading: runsLoading } = useRunningStats(rangeDays);
+  const { workouts, loading: workoutsLoading } = useWorkouts();
+  const { meals, loading: mealsLoading } = useMeals();
+  const dataLoading = runsLoading || workoutsLoading || mealsLoading;
 
   const runningTotals = useMemo(() => {
     const runCount = weeklyData.reduce(
@@ -234,6 +236,7 @@ export default function History() {
       w.exercises?.forEach((ex) => {
         const name = ex.exerciseName;
         ex.sets?.forEach((set) => {
+          if (set.weightKg <= 0) return;
           const e1rm = set.weightKg * (1 + set.reps / 30);
           if (!prMap[name] || e1rm > prMap[name].weight * (1 + prMap[name].reps / 30)) {
             prMap[name] = {
@@ -274,7 +277,9 @@ export default function History() {
     const avgProtein = days.length
       ? Math.round(days.reduce((sum, d) => sum + d.prot, 0) / days.length)
       : 0;
-    return { avgCalories, avgProtein, adherence: filtered.length ? 78 : 0 };
+    const daysLogged = Object.keys(byDate).length;
+    const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
+    return { avgCalories, avgProtein, adherence };
   }, [meals, rangeDays]);
 
   return (
@@ -295,16 +300,28 @@ export default function History() {
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
           {filter === "all" && (
-            <WeeklyOverview
-              runCount={runningTotals.runCount}
-              runDistance={runningTotals.runDistance}
-              liftCount={liftingData.liftCount}
-              liftVolume={liftingData.liftVolume}
-              caloriesBurned={Math.round(
-                runningTotals.runDistance * 65 + liftingData.liftCount * 200
-              )}
-              nutritionAdherence={nutrition.adherence}
-            />
+            dataLoading ? (
+              <div className="p-4 rounded-2xl bg-card space-y-3">
+                <Skeleton className="h-3 w-20" />
+                <div className="grid grid-cols-3 gap-2">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+              </div>
+            ) : (
+              <WeeklyOverview
+                runCount={runningTotals.runCount}
+                runDistance={runningTotals.runDistance}
+                liftCount={liftingData.liftCount}
+                liftVolume={liftingData.liftVolume}
+                caloriesBurned={Math.round(
+                  runningTotals.runDistance * 65 + liftingData.liftCount * 200
+                )}
+                nutritionAdherence={nutrition.adherence}
+                timeRange={timeRange}
+              />
+            )
           )}
 
           {(filter === "all" || filter === "running") && (
@@ -317,45 +334,59 @@ export default function History() {
                   Running
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-2">
-                <StatCard
-                  label="Weekly Distance"
-                  value={formatDistance(runningTotals.runDistance)}
-                  unit="km"
-                  sparklineData={weeklyData
-                    .map((w) => w.totalDistance)
-                    .slice(-6)}
-                  accentColor={THEME.running}
-                />
-                <StatCard
-                  label="Avg Pace"
-                  value={
-                    runningTotals.avgPace
-                      ? Math.floor(runningTotals.avgPace / 60) +
-                        ":" +
-                        (runningTotals.avgPace % 60)
-                          .toString()
-                          .padStart(2, "0")
-                      : "--:--"
-                  }
-                  unit="/km"
-                  sparklineData={weeklyData
-                    .map((w) => w.avgPace || 0)
-                    .slice(-6)}
-                  accentColor={THEME.running}
-                />
-              </div>
-              <PRCard
-                title="Running PRs"
-                prs={runningPRs}
-                accentColor={THEME.running}
-              />
-              {runs.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-2">
-                  <Footprints size={14} className="text-green-500 inline" /> Complete your first run to set records here
-                </p>
+              {dataLoading ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
+              ) : runs.length === 0 ? (
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.running}0F` }}>
+                  <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Complete your first run to see running analytics here</p>
+                  </div>
+                  <Link to="/run" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ backgroundColor: THEME.running }}>
+                    Start Run
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <StatCard
+                      label="Weekly Distance"
+                      value={formatDistance(runningTotals.runDistance)}
+                      unit="km"
+                      sparklineData={weeklyData
+                        .map((w) => w.totalDistance)
+                        .slice(-6)}
+                      accentColor={THEME.running}
+                    />
+                    <StatCard
+                      label="Avg Pace"
+                      value={
+                        runningTotals.avgPace
+                          ? Math.floor(runningTotals.avgPace / 60) +
+                            ":" +
+                            (runningTotals.avgPace % 60)
+                              .toString()
+                              .padStart(2, "0")
+                          : "--:--"
+                      }
+                      unit="/km"
+                      sparklineData={weeklyData
+                        .map((w) => w.avgPace || 0)
+                        .slice(-6)}
+                      accentColor={THEME.running}
+                    />
+                  </div>
+                  <PRCard
+                    title="Running PRs"
+                    prs={runningPRs}
+                    accentColor={THEME.running}
+                  />
+                  <RunningHistorySection />
+                </>
               )}
-              <RunningHistorySection />
             </section>
           )}
 
@@ -369,6 +400,16 @@ export default function History() {
                   Lifting
                 </p>
               )}
+              {dataLoading ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                  </div>
+                  <ChartSkeleton />
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-2 gap-2">
                 <StatCard
                   label="Weekly Volume"
@@ -405,6 +446,8 @@ export default function History() {
                     {liftingData.prTimeline.map((pr) => {
                       const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
                       const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+                      const exercise = EXERCISES.find(e => e.name === pr.name);
+                      const isBW = exercise?.equipment === "Bodyweight";
                       return (
                         <div key={pr.name} className="flex items-center justify-between px-4 py-3">
                           <div className="min-w-0 flex-1">
@@ -425,9 +468,11 @@ export default function History() {
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
                             <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                              {pr.weight}kg × {pr.reps}
+                              {isBW && pr.weight === 0 ? "BW" : `${pr.weight}kg`} × {pr.reps}
                             </p>
-                            <p className="text-xs text-muted-foreground">~{e1rm}kg 1RM</p>
+                            {!(isBW && pr.weight === 0) && (
+                              <p className="text-xs text-muted-foreground">~{e1rm}kg 1RM</p>
+                            )}
                           </div>
                         </div>
                       );
@@ -440,6 +485,8 @@ export default function History() {
                   </div>
                 )}
               </div>
+              </>
+              )}
             </section>
           )}
 
@@ -453,6 +500,16 @@ export default function History() {
                   Nutrition
                 </p>
               )}
+              {dataLoading ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                  </div>
+                  <ChartSkeleton />
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-2 gap-2">
                 <StatCard
                   label="Avg Calories"
@@ -471,9 +528,6 @@ export default function History() {
               <SectionErrorBoundary sectionName="trend-weight">
                 <TrendWeight />
               </SectionErrorBoundary>
-              <SectionErrorBoundary sectionName="weekly-energy">
-                <WeeklyEnergyChart />
-              </SectionErrorBoundary>
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
@@ -485,6 +539,8 @@ export default function History() {
                     Log a meal →
                   </Link>
                 </div>
+              )}
+              </>
               )}
             </section>
           )}
