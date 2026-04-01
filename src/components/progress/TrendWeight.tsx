@@ -56,7 +56,7 @@ export function TrendWeight() {
   const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   const convert = (v: number) => {
     if (!Number.isFinite(v)) return 0;
-    return unit === "lbs" ? Math.round(v * 2.205 * 10) / 10 : v;
+    return Math.round(v * (unit === "lbs" ? 2.205 : 1) * 10) / 10;
   };
 
   // Single entry: show simple display instead of chart
