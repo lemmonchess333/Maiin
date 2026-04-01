@@ -13,7 +13,7 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, tra
 
 export type UserSegment = "new" | "active" | "returning" | "casual";
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, todayRun, healthScore, prevHealthScore, userSegment }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, todayRun, healthScore, prevHealthScore, userSegment, muscleGroups }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -29,6 +29,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   healthScore: number | null;
   prevHealthScore: number | null;
   userSegment: UserSegment;
+  muscleGroups?: string;
 }) {
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
@@ -46,7 +47,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   );
   const liftCard = showLift && nextWorkout ? (
     <motion.div key="lift" variants={fadeUp}>
-      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} />
+      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} />
     </motion.div>
   ) : null;
   const runCard = showRun ? (

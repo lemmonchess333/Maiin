@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings2,
+  MoreHorizontal,
   X,
   Plus,
   FastForward,
@@ -80,6 +81,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProSheet, setShowProSheet] = useState(false);
+  const [showOverflow, setShowOverflow] = useState(false);
   const settingsPanelRef = useFocusTrap<HTMLDivElement>(showSettings);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
@@ -290,17 +293,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const isLiftToday = todayDayType === "lift" || todayDayType === "both";
   const isRestDay = todayDayType === "rest";
 
+  function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
+    const groups = exercises
+      .map(ex => getExerciseById(ex.exerciseId)?.category)
+      .filter(Boolean);
+    const unique = [...new Set(groups)] as string[];
+    if (unique.length === 0) return "";
+    if (unique.length <= 3) return unique.join(" · ");
+    return unique.slice(0, 3).join(" · ") + " + more";
+  }
+
   return (
     <div className="space-y-4">
-      {phaseLocked && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
-          <Lock className="w-4 h-4 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground">Phase Modes Locked</p>
-            <p className="text-xs text-muted-foreground">Upgrade to Pro for advanced periodisation and AI adjustments</p>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <header>
@@ -329,18 +333,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </button>
             )}
             <button
-              onClick={() => !phaseLocked && setShowSettings(true)}
-              disabled={phaseLocked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
+              onClick={() => setShowOverflow(true)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              style={{ minWidth: 44, minHeight: 44 }}
+              aria-label="More options"
             >
-              <Settings2 className="w-4 h-4 text-muted-foreground" />
-            </button>
-            <button
-              onClick={() => handleRegenerate()}
-              disabled={regenerating || phaseLocked}
-              className={cn("p-2 rounded-lg hover:bg-muted transition-colors", phaseLocked && "opacity-40")}
-            >
-              <RefreshCw className={cn("w-4 h-4 text-muted-foreground", regenerating && "animate-spin")} />
+              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -361,6 +359,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <p className="text-xs text-muted-foreground">
                     Day {todayWorkoutIndex + 1} · Week {displayWeekNumber} · {todayWorkout.exercises.length} exercises · ~{Math.round(todayWorkout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
                   </p>
+                  {getDayMuscleGroups(todayWorkout.exercises) && (
+                    <p className="text-xs" style={{ color: "#9CA3AF" }}>{getDayMuscleGroups(todayWorkout.exercises)}</p>
+                  )}
                 </div>
               </div>
 
@@ -398,7 +399,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(todayWorkoutIndex!, i)}>
                         <button
                           onClick={() => setDemoExercise(ex.name)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left"
+                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
                           onTouchStart={(e) => handleLongPressStart(todayWorkoutIndex!, i, e)}
                           onTouchMove={handleLongPressCancel}
                           onTouchEnd={handleLongPressCancel}
@@ -422,7 +423,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               {/* + Add Exercise */}
               <button
                 onClick={() => { setAddPickerDayIndex(todayWorkoutIndex); setShowAddPicker(true); }}
-                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2"
                 style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
               >
                 <Plus className="w-4 h-4" /> Add Exercise
@@ -461,7 +462,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               {/* Sticky Begin Workout + Skip Session */}
               <div className="sticky bottom-0 z-10 -mx-4 px-4 pt-3 pb-4 safe-area-pb" style={{ boxShadow: "0 -1px 4px rgba(0,0,0,0.06)", backgroundColor: "var(--background)" }}>
                 <button
-                  onClick={() => setSessionDayIndex(todayWorkoutIndex)}
+                  onClick={() => { haptic("light"); setSessionDayIndex(todayWorkoutIndex); }}
                   className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
                   style={{ background: THEME.gradient.brand }}
                 >
@@ -639,18 +640,30 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 )}
 
                 <div className="flex items-center justify-center gap-2 px-4 mt-2 mb-4">
-                  <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
-                    height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                    backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
-                  }}>
+                  <button
+                    onClick={function() { if (phaseLocked) setShowProSheet(true); }}
+                    className="inline-flex items-center justify-center whitespace-nowrap"
+                    style={{
+                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
+                      backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
+                      border: "none", cursor: phaseLocked ? "pointer" : "default",
+                    }}
+                  >
                     {goalLabel(programState.goal)}
-                  </span>
-                  <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
-                    height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                    backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43", fontSize: 13, fontWeight: 500,
-                  }}>
+                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" />}
+                  </button>
+                  <button
+                    onClick={function() { if (phaseLocked) setShowProSheet(true); }}
+                    className="inline-flex items-center justify-center whitespace-nowrap"
+                    style={{
+                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
+                      backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43", fontSize: 13, fontWeight: 500,
+                      cursor: phaseLocked ? "pointer" : "default",
+                    }}
+                  >
                     {prescription.deload ? "Deload" : "Progression"}
-                  </span>
+                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" style={{ color: "#8E8E93" }} />}
+                  </button>
                   {!isViewingHistory && (
                     <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
                       height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
@@ -735,7 +748,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {/* Day Header */}
                     <button
                       onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
-                      className="w-full flex items-center p-3 gap-3"
+                      className="w-full flex items-center p-3 gap-3 active:scale-[0.98] transition-transform"
                     >
                       {/* Completion indicator */}
                       <div className="shrink-0">
@@ -762,6 +775,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-xs font-medium">Custom</span>
                           )}
                         </p>
+                        {getDayMuscleGroups(day.exercises) && (
+                          <p className="text-xs truncate" style={{ color: "#9CA3AF" }}>{getDayMuscleGroups(day.exercises)}</p>
+                        )}
                       </div>
 
                       {day.completed && (
@@ -800,7 +816,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     >
                                       <button
                                         onClick={() => setDemoExercise(ex.name)}
-                                        className="w-full flex items-center gap-2.5 py-2 px-3 text-left"
+                                        className="w-full flex items-center gap-2.5 py-2 px-3 text-left active:scale-[0.97] transition-transform"
                                         onTouchStart={(e) => handleLongPressStart(dayIndex, exIndex, e)}
                                         onTouchMove={handleLongPressCancel}
                                         onTouchEnd={handleLongPressCancel}
@@ -825,7 +841,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                             {!day.completed && (
                               <button
                                 onClick={() => { setAddPickerDayIndex(dayIndex); setShowAddPicker(true); }}
-                                className="w-full py-3 text-center active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2"
                                 style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
                               >
                                 <Plus className="w-4 h-4" /> Add Exercise
@@ -1031,6 +1047,91 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         open={demoExercise !== null}
         onClose={() => setDemoExercise(null)}
       />
+
+      {/* Overflow Menu Sheet */}
+      <AnimatePresence>
+        {showOverflow && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowOverflow(false)} />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
+            >
+              <div className="max-w-md mx-auto p-5 space-y-1">
+                <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
+                <button
+                  onClick={() => {
+                    setShowOverflow(false);
+                    if (phaseLocked) { setShowProSheet(true); } else { setShowSettings(true); }
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                  style={{ minHeight: 44 }}
+                >
+                  <Settings2 className="w-4.5 h-4.5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground flex-1">Programme Settings</span>
+                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOverflow(false);
+                    if (phaseLocked) { setShowProSheet(true); } else { handleRegenerate(); }
+                  }}
+                  disabled={regenerating}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                  style={{ minHeight: 44 }}
+                >
+                  <RefreshCw className={cn("w-4.5 h-4.5 text-muted-foreground", regenerating && "animate-spin")} />
+                  <span className="text-sm font-medium text-foreground flex-1">Refresh Programme</span>
+                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Pro Upsell Sheet — contextual replacement for removed banner */}
+      <AnimatePresence>
+        {showProSheet && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowProSheet(false)} />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
+            >
+              <div className="max-w-md mx-auto p-5 space-y-4">
+                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#7C6BF015" }}>
+                    <Lock className="w-5 h-5" style={{ color: "#7C6BF0" }} />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-foreground">Upgrade to Pro</p>
+                    <p className="text-xs text-muted-foreground">Unlock advanced periodisation and AI adjustments</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setShowProSheet(false); navigate("/settings"); }}
+                  className="w-full py-3 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: THEME.gradient.brand }}
+                >
+                  Learn More
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

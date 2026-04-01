@@ -357,7 +357,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     if (setIdx === currentSetIndex) {
       completeSet();
     } else {
-      haptic(10);
+      haptic(50);
       setSetLogs(prev => {
         const updated = prev.map(sets => sets.map(s => ({ ...s })));
         updated[currentExIndex][setIdx].completed = true;

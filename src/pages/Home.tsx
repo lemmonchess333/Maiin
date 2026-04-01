@@ -6,6 +6,7 @@ import { useHomeData } from "@/hooks/useHomeData";
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
+import { getExerciseById } from "@/lib/exercises";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -231,6 +232,16 @@ export default function Home() {
   const peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
   const peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
   const nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
+  const muscleGroups = useMemo(function() {
+    if (!nextWorkout) return "";
+    const groups = nextWorkout.exercises
+      .map(function(ex) { return getExerciseById((ex as { exerciseId?: string }).exerciseId ?? "")?.category; })
+      .filter(Boolean);
+    const unique = [...new Set(groups)] as string[];
+    if (unique.length === 0) return "";
+    if (unique.length <= 3) return unique.join(" · ");
+    return unique.slice(0, 3).join(" · ") + " + more";
+  }, [nextWorkout]);
 
   // Find today's scheduled run (if any)
   const todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
@@ -376,7 +387,7 @@ export default function Home() {
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} userSegment={userSegment} />
+            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} userSegment={userSegment} muscleGroups={muscleGroups} />
         )}
       </motion.div>
 
