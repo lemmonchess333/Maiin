@@ -12,17 +12,18 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
 }) {
   const healthDisplay = useCountUp(healthScore ?? 0, { sessionKey: "health", duration: 1 });
   const scoreDelta = healthScore != null && prevHealthScore != null ? healthScore - prevHealthScore : null;
+  const hasScore = healthScore != null;
 
   return (
     <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98]">
       {(() => {
-        const score = healthScore ?? 0;
-        const zoneColor = getScoreColor(score);
+        const score = hasScore ? healthScore : 0;
+        const zoneColor = hasScore ? getScoreColor(score) : THEME.text.muted;
         const radius = 40;
         const stroke = 7;
         const circumference = 2 * Math.PI * radius;
         const arcLength = circumference * 0.75;
-        const offset = arcLength - (arcLength * Math.min(score, 100)) / 100;
+        const offset = hasScore ? arcLength - (arcLength * Math.min(score, 100)) / 100 : arcLength;
         return (
           <>
             <div className="flex items-center gap-2 mb-3">
@@ -41,10 +42,9 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
                     transition={{ duration: 1.2, ease: "easeOut" }} />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                      <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
-                    <motion.span>{healthDisplay}</motion.span>
+                  <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: zoneColor }}>
+                    {hasScore ? <motion.span>{healthDisplay}</motion.span> : "--"}
                   </p>
-
                 </div>
               </div>
               <div className="flex-1 min-w-0">
@@ -76,7 +76,9 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
                     )}
                   </>
                 ) : (
-                  <p className="text-display font-extrabold leading-none font-mono tabular-nums" style={{ color: THEME.text.muted }}>--</p>
+                  <p className="text-xs" style={{ color: THEME.text.muted }}>
+                    Log activity to see your health score
+                  </p>
                 )}
               </div>
             </div>
