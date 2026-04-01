@@ -607,8 +607,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {effectiveView === "week" && (
         <div className="space-y-4">
               {/* Phase + Week Header */}
-              <div className="bg-card rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <div className="flex items-center justify-between px-1 py-2">
                   <button
                     onClick={goBack}
                     disabled={!canGoBack}
@@ -633,12 +633,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                 </div>
                 {!canGoBack && !canGoForward && (
-                  <p className="text-sm text-gray-400 text-center mt-3">
+                  <p className="text-xs text-muted-foreground text-center mt-1">
                     Complete all sessions to advance to Week {displayWeekNumber + 1}
                   </p>
                 )}
 
-                <div className="flex items-center justify-center gap-2 px-4 mt-2 mb-4">
+                <div className="flex items-center justify-center gap-2 px-1 mt-1 mb-3">
                   <button
                     onClick={function() { if (phaseLocked) setShowProSheet(true); }}
                     className="inline-flex items-center justify-center whitespace-nowrap"
@@ -717,7 +717,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
               {/* Workout Day Cards */}
               <section aria-label="Workout days">
-              <div className="space-y-2">
+              <div className="bg-card rounded-2xl overflow-hidden divide-y divide-border/20">
                 {displayWorkouts.map((day, dayIndex) => {
                   const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
                   const isCurrent = !day.completed && dayIndex === firstIncompleteIndex;
@@ -726,23 +726,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <div
                     key={dayIndex}
                     className={cn(
-                      "rounded-2xl overflow-hidden transition-all",
+                      "transition-all border-l-2",
                       day.completed ? "opacity-70" : ""
                     )}
                     style={{
-                      background: 'var(--card)',
-                      borderLeft: isCurrent ? '3px solid #7C6BF0' : undefined,
+                      borderLeftColor: isCurrent ? THEME.lifting : day.completed ? "transparent" : `${THEME.lifting}40`,
+                      borderLeftWidth: isCurrent ? 3 : 2,
                     }}
                   >
-                    {/* Current day label */}
-                    {isCurrent && (
-                      <div className="px-3 pt-2.5 pb-0">
-                        <span className="text-[11px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md"
-                          style={{ color: "#7C6BF0", background: "rgba(124, 107, 240, 0.08)" }}>
-                          Up next
-                        </span>
-                      </div>
-                    )}
 
                     {/* Day Header */}
                     <button
@@ -815,7 +806,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     >
                                       <button
                                         onClick={() => setDemoExercise(ex.name)}
-                                        className="w-full flex items-center gap-2.5 py-2 px-3 text-left active:scale-[0.97] transition-transform"
+                                        className="w-full flex items-center gap-2.5 py-2 px-3 text-left active:scale-[0.97] transition-transform bg-muted/30 rounded-xl"
                                         onTouchStart={(e) => handleLongPressStart(dayIndex, exIndex, e)}
                                         onTouchMove={handleLongPressCancel}
                                         onTouchEnd={handleLongPressCancel}
@@ -840,8 +831,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                             {!day.completed && (
                               <button
                                 onClick={() => { setAddPickerDayIndex(dayIndex); setShowAddPicker(true); }}
-                                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2"
-                                style={{ backgroundColor: "#FFFFFF", borderRadius: 10, border: "none", color: "#7C6BF0", fontWeight: 500, fontSize: 15 }}
+                                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                               >
                                 <Plus className="w-4 h-4" /> Add Exercise
                               </button>
@@ -868,7 +858,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               </>
                             )}
                             {day.completed && (
-                              <p style={{ color: "#4CAF50", fontSize: 15, fontWeight: 500, textAlign: "center", padding: "8px 0" }}>
+                              <p className="text-green-500 text-sm font-medium text-center py-2">
                                 Completed ✓
                               </p>
                             )}
