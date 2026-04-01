@@ -8,8 +8,7 @@ export default function LiftCTACard({ nextWorkout, navigate }: {
   navigate: (p: string) => void;
 }) {
   return (
-    <motion.button key="w" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-      whileTap={{ scale: 0.97 }}
+    <motion.button whileTap={{ scale: 0.97 }}
       onClick={function() { haptic(); navigate("/program"); }}
       className="w-full p-4 rounded-xl bg-card text-left"
       style={{ backgroundColor: THEME.lifting + "08" }}>
