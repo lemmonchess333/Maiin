@@ -107,6 +107,7 @@ export default function RunSummary() {
           type: 'run',
           visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
           runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
+          activityTitle: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
           distance,
           duration: elapsed,
           avgPace,
