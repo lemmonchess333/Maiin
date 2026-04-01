@@ -130,8 +130,9 @@ export default function CalorieBalanceChart() {
               }}
               formatter={(value: unknown) => {
                 const v = Number(value);
+                const abs = Math.abs(Math.round(v)).toLocaleString();
                 return [
-                  `${v >= 0 ? "+" : ""}${v} cal`,
+                  `${abs} cal`,
                   v >= 0 ? "Deficit" : "Surplus",
                 ];
               }}
