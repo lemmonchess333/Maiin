@@ -136,7 +136,7 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
                       <button
                         onClick={() => handleDelete(c.id)}
                         disabled={deletingId === c.id}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all shrink-0"
+                        className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all shrink-0"
                         aria-label="Delete comment"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

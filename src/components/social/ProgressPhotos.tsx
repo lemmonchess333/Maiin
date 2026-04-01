@@ -253,12 +253,12 @@ export default function ProgressPhotos() {
         <div className="flex gap-2">
           {photos.length >= 2 && (
             <button onClick={() => { setCompareMode(!compareMode); setSelected([]); }}
-              className={`text-xs px-3 py-1.5 rounded-lg font-medium ${compareMode ? 'bg-blue-500 text-white' : 'bg-muted'}`}>
+              className={`text-xs px-3 py-2 rounded-lg font-medium min-h-[44px] ${compareMode ? 'bg-blue-500 text-white' : 'bg-muted'}`}>
               Compare
             </button>
           )}
           <button onClick={() => fileInputRef.current?.click()}
-            className="text-xs px-3 py-1.5 rounded-lg bg-purple-500 text-white font-medium">
+            className="text-xs px-3 py-2 rounded-lg bg-purple-500 text-white font-medium min-h-[44px]">
             + Add
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import Model, { type IExerciseData } from "react-body-highlighter";
+import { THEME } from "@/lib/theme";
 
 interface MuscleData {
   [group: string]: number;
@@ -38,9 +39,9 @@ const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
   "Traps": ["trapezius"],
 };
 
-const LOW_COLOR = "#b8b0e8";
-const MID_COLOR = "#7B72E9";
-const HIGH_COLOR = "#6560C8";
+const LOW_COLOR = THEME.liftingLight;
+const MID_COLOR = THEME.lifting;
+const HIGH_COLOR = "#6560C8"; // darker lifting shade
 
 function getLegendDotColor(sets: number): string {
   if (sets <= 30) return LOW_COLOR;
@@ -80,7 +81,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
   return (
     <div
       className="p-4 rounded-2xl border border-border/50"
-      style={{ backgroundColor: "#ffffff" }}
+      style={{ backgroundColor: "var(--color-card)" }}
     >
       <h3 className="text-sm font-semibold mb-3 text-foreground">
         Muscle Groups Trained
@@ -91,7 +92,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
           <Model
             data={exerciseData}
             style={{ width: 140 }}
-            highlightedColors={["#b8b0e8", "#7B72E9", "#6560C8"]}
+            highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
             bodyColor="#e8e8f0"
             type="anterior"
           />
@@ -99,7 +100,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
           <Model
             data={exerciseData}
             style={{ width: 140 }}
-            highlightedColors={["#b8b0e8", "#7B72E9", "#6560C8"]}
+            highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
             bodyColor="#e8e8f0"
             type="posterior"
           />
@@ -117,7 +118,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
                 <span className="text-xs text-muted-foreground font-medium">
                   {group}
                 </span>
-                <span className="text-xs" style={{ color: "#9ca3af" }}>
+                <span className="text-xs text-muted-foreground/60">
                   {sets} sets
                 </span>
               </div>

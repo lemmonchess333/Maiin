@@ -1,4 +1,5 @@
 import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
+import { logger } from "@/lib/logger";
 
 interface QueuedWrite {
   id: string;
@@ -27,7 +28,7 @@ function saveQueue(queue: QueuedWrite[]) {
     if (e instanceof DOMException && e.name === "QuotaExceededError") {
       // Drop oldest half and retry
       const trimmed = queue.slice(Math.floor(queue.length / 2));
-      console.warn(`[OfflineQueue] Quota exceeded, dropping ${queue.length - trimmed.length} oldest items`);
+      logger.warn(`[OfflineQueue] Quota exceeded, dropping ${queue.length - trimmed.length} oldest items`);
       try {
         localStorage.setItem(QUEUE_KEY, JSON.stringify(trimmed));
       } catch {

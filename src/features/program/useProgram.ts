@@ -12,6 +12,7 @@ import {
   generateWeekPrescription,
   applyProgression,
 } from "./programEngine";
+import { logger } from "@/lib/logger";
 import {
   scheduleStructuredWeek,
   generateRacePlan,
@@ -240,11 +241,11 @@ export function useProgram() {
               })),
             });
           } catch (socialErr) {
-            console.warn("Failed to post workout to feed:", socialErr);
+            logger.warn("Failed to post workout to feed:", socialErr);
           }
         }
       } catch (err) {
-        console.warn("Failed to sync programme day to workouts:", err);
+        logger.warn("Failed to sync programme day to workouts:", err);
       }
 
       const allDone = updated.workouts.every((d) => d.completed);

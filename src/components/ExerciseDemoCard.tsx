@@ -3,6 +3,7 @@ import { Drawer } from "vaul";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, needsAnterior, type ExerciseDemo } from "@/lib/exerciseDemo";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { THEME } from "@/lib/theme";
 
 interface Props {
   exerciseName: string;
@@ -43,14 +44,12 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
   const showBoth = showFront && showBack;
 
   const highlightData: IExerciseData[] = [
-    // Primary muscles passed twice → frequency 2 → highlightedColors[1] (brighter)
     ...(primaryMapped.length > 0
       ? [
           { name: "Primary1" as const, muscles: primaryMapped },
           { name: "Primary2" as const, muscles: primaryMapped },
         ]
       : []),
-    // Secondary muscles once → frequency 1 → highlightedColors[0] (lighter)
     ...(secondaryMapped.length > 0
       ? [{ name: "Secondary" as const, muscles: secondaryMapped }]
       : []),
@@ -61,9 +60,9 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[102]" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[103] rounded-t-2xl bg-background border-t border-border max-h-[85vh] flex flex-col">
-          <div className="overflow-y-auto flex-1" style={{ padding: "12px 20px 24px" }}>
+          <div className="overflow-y-auto flex-1 px-5 pb-6 pt-3">
             {/* Drag handle */}
-            <div style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: "#D1D1D6", margin: "0 auto" }} />
+            <div className="w-9 h-1 rounded-full bg-border mx-auto" />
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -82,30 +81,25 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
             ) : (
               <div>
                 {/* Exercise name */}
-                <h3 style={{ fontSize: 24, fontWeight: 700, color: "#1C1C1E", marginTop: 20 }}>{demo.name}</h3>
+                <h3 className="text-2xl font-bold text-foreground mt-5">{demo.name}</h3>
 
                 {/* Metadata tags */}
-                <div className="flex items-center" style={{ gap: 8, marginTop: 24 }}>
+                <div className="flex items-center gap-2 mt-6">
                   {demo.category && (
-                    <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
-                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                      backgroundColor: "#7C6BF0", color: "white", fontSize: 13, fontWeight: 600,
-                    }}>
+                    <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-semibold text-white"
+                      style={{ backgroundColor: THEME.lifting }}>
                       {demo.category}
                     </span>
                   )}
                   {demo.equipment && (
-                    <span className="inline-flex items-center justify-center whitespace-nowrap" style={{
-                      height: 28, paddingLeft: 12, paddingRight: 12, borderRadius: 14,
-                      backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43", fontSize: 13, fontWeight: 500,
-                    }}>
+                    <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-medium border-[1.5px] border-border text-foreground/80">
                       {demo.equipment}
                     </span>
                   )}
                 </div>
 
-                {/* Muscle diagrams — primary/secondary colour differentiation */}
-                <div style={{ backgroundColor: "#F5F5F7", borderRadius: 16, padding: "20px 16px", marginTop: 16 }}>
+                {/* Muscle diagrams */}
+                <div className="bg-muted rounded-2xl p-5 mt-4">
                   <div style={{ display: "flex", justifyContent: "center", gap: showBoth ? 16 : 0 }}>
                     {(showFront || (!showFront && !showBack)) && (
                       <div style={{ textAlign: "center", maxWidth: showBoth ? "45%" : "60%", overflow: "hidden" }}>
@@ -115,10 +109,10 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                             style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
                             svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
                             type="anterior"
-                            highlightedColors={["#A78BFA", "#7C6BF0"]}
+                            highlightedColors={[THEME.liftingLight, THEME.lifting]}
                           />
                         </div>
-                        <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 8 }}>Front</p>
+                        <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>Front</p>
                       </div>
                     )}
                     {showBack && (
@@ -129,38 +123,33 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                             style={{ width: showBoth ? "100%" : "160px", height: showBoth ? "180px" : "220px", padding: "0", margin: "0 auto" }}
                             svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
                             type="posterior"
-                            highlightedColors={["#A78BFA", "#7C6BF0"]}
+                            highlightedColors={[THEME.liftingLight, THEME.lifting]}
                           />
                         </div>
-                        <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 8 }}>Back</p>
+                        <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>Back</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Primary / Secondary muscle pills */}
-                <div style={{ marginTop: 16 }}>
+                <div className="mt-4">
                   {demo.primaryMuscles.length > 0 && (
-                    <div className="flex flex-wrap items-center" style={{ gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: "#C7C7CC", marginRight: 4 }}>Primary:</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Primary:</span>
                       {demo.primaryMuscles.map((m) => (
-                        <span key={m} className="inline-flex items-center whitespace-nowrap" style={{
-                          height: 24, paddingLeft: 10, paddingRight: 10, borderRadius: 12,
-                          backgroundColor: "#F0EDFD", color: "#7C6BF0", fontSize: 13, fontWeight: 500,
-                        }}>
+                        <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium"
+                          style={{ backgroundColor: THEME.lifting + "14", color: THEME.lifting }}>
                           {m}
                         </span>
                       ))}
                     </div>
                   )}
                   {demo.secondaryMuscles.length > 0 && (
-                    <div className="flex flex-wrap items-center" style={{ gap: 8, marginTop: 12 }}>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: "#C7C7CC", marginRight: 4 }}>Secondary:</span>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Secondary:</span>
                       {demo.secondaryMuscles.map((m) => (
-                        <span key={m} className="inline-flex items-center whitespace-nowrap" style={{
-                          height: 24, paddingLeft: 10, paddingRight: 10, borderRadius: 12,
-                          backgroundColor: "#F2F2F7", color: "#3C3C43", fontSize: 13, fontWeight: 500,
-                        }}>
+                        <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-muted text-foreground/70">
                           {m}
                         </span>
                       ))}
@@ -170,20 +159,19 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
 
                 {/* Instructions */}
                 {demo.instructions.length > 0 && (
-                  <div style={{ marginTop: 24 }}>
-                    <p style={{ fontSize: 18, fontWeight: 700, color: "#1C1C1E" }}>Instructions</p>
+                  <div className="mt-6">
+                    <p className="text-lg font-bold text-foreground">Instructions</p>
                     <div
                       ref={instructionsRef}
                       className={`relative overflow-hidden transition-all duration-300 ${
                         overflows && !showInstructions ? "max-h-[60px]" : "max-h-[2000px]"
                       }`}
-                      style={{ marginTop: 12 }}
                     >
-                      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div className="flex flex-col gap-4 mt-3">
                         {demo.instructions.map((step, i) => (
-                          <div key={i} style={{ display: "flex", gap: 8 }}>
-                            <span style={{ fontSize: 15, fontWeight: 700, color: "#7C6BF0", flexShrink: 0 }}>{i + 1}.</span>
-                            <p style={{ fontSize: 15, fontWeight: 400, color: "#3C3C43", lineHeight: 1.5 }}>{step}</p>
+                          <div key={i} className="flex gap-2">
+                            <span className="text-[15px] font-bold shrink-0" style={{ color: THEME.lifting }}>{i + 1}.</span>
+                            <p className="text-[15px] text-foreground/80 leading-relaxed">{step}</p>
                           </div>
                         ))}
                       </div>
@@ -194,8 +182,8 @@ function ExerciseDemoCard({ exerciseName, open, onClose }: Props) {
                     {overflows && (
                       <button
                         onClick={() => setShowInstructions(!showInstructions)}
-                        className="flex items-center gap-1"
-                        style={{ marginTop: 8, fontSize: 15, fontWeight: 500, color: "#7C6BF0" }}
+                        className="flex items-center gap-1 mt-2 text-[15px] font-medium"
+                        style={{ color: THEME.lifting }}
                       >
                         {showInstructions ? (
                           <><ChevronUp className="w-4 h-4" /> Hide</>

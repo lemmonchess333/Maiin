@@ -56,6 +56,13 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
+  // Macro colours (nutrition breakdown)
+  macros: {
+    protein: '#E08A9B',  // warm rose — distinct from teal hydration
+    carbs: '#6BA3D6',    // sky blue — distinct from purple brand
+    fat: '#B8A044',      // golden — distinct from orange nutrition
+  },
+
   // Charts
   chartGrid: 'rgba(255,255,255,0.05)',
   chartTooltipBg: '#242429',

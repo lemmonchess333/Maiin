@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getDiscoverFeed, batchGetKudos } from '../lib/socialApi';
+import { logger } from '@/lib/logger';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
 import type { FeedItem, ActivityData } from './useSocialFeed';
@@ -73,7 +74,7 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       lastDocRef.current = result.lastDoc;
       setHasMore(rawItems.length === 20);
     } catch (e) {
-      console.warn('Discover feed error (silenced):', e);
+      logger.warn('Discover feed error (silenced):', e);
       // Don't surface errors to the UI — let the empty state handle it
     }
     setLoading(false);

@@ -55,7 +55,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
       <div className="flex items-center gap-2">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+          className="p-2.5 rounded-lg hover:bg-muted transition-colors"
           aria-label="Back"
         >
           <ChevronLeft size={20} />
