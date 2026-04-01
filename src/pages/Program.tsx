@@ -86,7 +86,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const settingsPanelRef = useFocusTrap<HTMLDivElement>(showSettings);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
-  const [weekExpanded, setWeekExpanded] = useState(false);
+  const [activeView, setActiveView] = useState<"today" | "week">("today");
 
 
   // Exercise card state — read-only, tap opens info sheet
@@ -221,6 +221,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   }
 
   const isViewingHistory = viewingHistoryIndex !== null;
+  // Force week view when browsing history
+  const effectiveView = isViewingHistory ? "week" : activeView;
   const displayWorkouts = isViewingHistory ? (viewedWorkouts ?? []) : programState.workouts;
   const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
 
@@ -344,8 +346,24 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
       </header>
 
+      {/* ═══ VIEW TOGGLE ═══ */}
+      <div className="flex gap-1 p-1 rounded-xl bg-muted">
+        <button onClick={() => { haptic("light"); setActiveView("today"); }}
+          className={cn("flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
+            effectiveView === "today" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          )}>
+          Today
+        </button>
+        <button onClick={() => { haptic("light"); setActiveView("week"); }}
+          className={cn("flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
+            effectiveView === "week" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          )}>
+          Week {displayWeekNumber}
+        </button>
+      </div>
+
       {/* ═══ TODAY'S WORKOUT HERO ═══ */}
-      {!isViewingHistory && (
+      {effectiveView === "today" && !isViewingHistory && (
         <section aria-label="Today's workout">
           {/* LIFT DAY or BOTH DAY — show exercise cards */}
           {isLiftToday && todayWorkout && (
@@ -585,28 +603,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </section>
       )}
 
-      {/* ═══ VIEW FULL WEEK TOGGLE ═══ */}
-      <button
-        onClick={() => setWeekExpanded(!weekExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card active:scale-[0.98] transition-transform"
-      >
-        <span className="text-sm text-muted-foreground font-medium">
-          View full week ({completedCount}/{totalDays} done)
-        </span>
-        <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", weekExpanded && "rotate-180")} />
-      </button>
-
-      {/* ═══ COLLAPSIBLE WEEK CONTENT ═══ */}
-      <AnimatePresence>
-        {weekExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div className="space-y-4">
+      {/* ═══ WEEK VIEW ═══ */}
+      {effectiveView === "week" && (
+        <div className="space-y-4">
               {/* Phase + Week Header */}
               <div className="bg-card rounded-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3">
@@ -882,10 +881,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 })}
               </div>
               </section>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       {/* Settings Panel */}
       <AnimatePresence>
