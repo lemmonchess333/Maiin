@@ -652,7 +652,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0 text-muted-foreground" />}
                   </button>
                   {!isViewingHistory && (
-                    <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-muted-foreground text-xs font-medium">
+                    <span className={cn(
+                      "inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-xs font-medium",
+                      completedCount > 0
+                        ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                        : "border border-border text-muted-foreground"
+                    )}>
                       {completedCount}/{totalDays} done
                     </span>
                   )}
@@ -712,7 +717,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     key={dayIndex}
                     className={cn(
                       "transition-all border-l-2",
-                      day.completed ? "opacity-70" : ""
+                      day.completed ? "opacity-70" : "",
+                      isCurrent ? "bg-[rgba(124,107,240,0.04)]" : ""
                     )}
                     style={{
                       borderLeftColor: isCurrent ? THEME.lifting : day.completed ? "transparent" : `${THEME.lifting}40`,
@@ -728,7 +734,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       {/* Completion indicator */}
                       <div className="shrink-0">
                         {day.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                          <CheckCircle2 className="w-6 h-6 text-green-500" />
                         ) : isCurrent ? (
                           <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                             style={{ borderColor: THEME.lifting }}>
@@ -841,11 +847,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                   </button>
                                 </div>
                               </>
-                            )}
-                            {day.completed && (
-                              <p className="text-green-500 text-sm font-medium text-center py-2">
-                                Completed ✓
-                              </p>
                             )}
                           </div>
                         </motion.div>
