@@ -25,9 +25,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
   const calPct = (calories / tCal) * 100;
 
   // Distinct macro colors
-  const proteinColor = "#52A3BD"; // teal
-  const carbsColor = "#7B72E9";  // purple
-  const fatColor = "#D9884E";    // orange
+  const proteinColor = "#E08A9B"; // warm rose — distinct from teal hydration
+  const carbsColor = "#6BA3D6";  // sky blue — distinct from purple brand
+  const fatColor = "#B8A044";    // golden — distinct from orange nutrition
 
   return (
     <div className="rounded-2xl bg-card overflow-hidden">

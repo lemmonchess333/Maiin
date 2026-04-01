@@ -28,7 +28,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
 
   return (
     <div className="space-y-2">
-      <ActionPills />
+      <ActionPills showRun={showRun} />
+      <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
       {showLift && nextWorkout && (
         <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} />
       )}
@@ -37,7 +38,6 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
       )}
       <motion.div key="qt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
         className="space-y-3">
-        <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
         <WaterCard waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={onAddWater} onRemoveWater={onRemoveWater} />
         <WeightStepsTiles lastWeight={lastWeight} weightUnit={weightUnit} onLogWeight={onLogWeight} lastWeightDate={lastWeightDate} />
       </motion.div>
