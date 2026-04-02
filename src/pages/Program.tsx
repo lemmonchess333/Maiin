@@ -892,7 +892,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     <button onClick={() => setShowSettings(false)} className="text-sm font-medium text-primary">
                       Done
                     </button>
-                    <button onClick={() => setShowSettings(false)} className="p-1 rounded hover:bg-muted">
+                    <button onClick={() => setShowSettings(false)} className="p-1 rounded hover:bg-muted" aria-label="Close settings">
                       <X className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </div>

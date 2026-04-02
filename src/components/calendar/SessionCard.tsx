@@ -20,7 +20,7 @@ export default function SessionCard({ type, title, status, onStart, onSkip }: Se
             : 'bg-muted/30'
       }`}
     >
-      {type === 'run' ? <Footprints size={16} style={{ color: THEME.running }} /> : <Dumbbell size={16} style={{ color: THEME.lifting }} />}
+      {type === 'run' ? <Footprints className="w-4 h-4" style={{ color: THEME.running }} /> : <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate">{title}</p>
       </div>

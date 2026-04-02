@@ -26,7 +26,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="bg-card rounded-2xl p-6 text-center space-y-3" role="alert">
+        <div className="bg-card rounded-2xl p-6 text-center space-y-3" role="alert" aria-live="assertive">
           <p className="text-sm text-muted-foreground">
             This section couldn't load.
           </p>

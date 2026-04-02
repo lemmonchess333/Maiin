@@ -58,7 +58,7 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
       <div className="w-16 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50">
         {run.routePreview && run.routePreview.length > 1
           ? <MiniRoute preview={run.routePreview} />
-          : <div className="w-full h-full flex items-center justify-center"><Footprints size={16} className="text-green-500" /></div>
+          : <div className="w-full h-full flex items-center justify-center"><Footprints className="w-4 h-4 text-green-500" /></div>
         }
       </div>
 

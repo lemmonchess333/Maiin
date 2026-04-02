@@ -370,8 +370,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               }}
             >
               <Flame
-                size={18}
-                className={liked ? 'fill-current' : ''}
+                className={`w-5 h-5 ${liked ? 'fill-current' : ''}`}
                 style={{ color: liked ? '#F59E0B' : 'var(--color-muted-foreground)', opacity: liked ? 1 : 0.5 }}
               />
             </button>

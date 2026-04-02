@@ -719,6 +719,7 @@ export default function Food() {
               onFocus={() => setSuggestionsActive(true)}
               onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
               placeholder="Describe what you ate…"
+              aria-label="Describe what you ate"
               rows={1}
               maxLength={500}
               className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-gray-200 shadow-sm text-foreground text-sm resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"

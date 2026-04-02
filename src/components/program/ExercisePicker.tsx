@@ -167,6 +167,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search exercises..."
+                  aria-label="Search exercises"
                   className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground"
                   style={{ backgroundColor: "#EBEBF0", borderRadius: 10, border: "none" }}
                 />

@@ -363,6 +363,7 @@ export default function RunSummary() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="How did it feel? Any notes about this run..."
+          aria-label="Run notes"
           rows={3}
           className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
         />

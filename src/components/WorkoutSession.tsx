@@ -833,7 +833,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             {totalSetsCompleted}/{totalSetsTotal} sets · {formatElapsed(elapsedSeconds)}
           </p>
         </div>
-        <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors">
+        <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="Close workout">
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
@@ -896,6 +896,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           <input
             type="text"
             placeholder="Notes (e.g. Level 8, 6.0 incline)"
+            aria-label="Exercise notes"
             value={exerciseNotes[currentExIndex] || ""}
             onChange={(e) => setExerciseNotes(prev => ({ ...prev, [currentExIndex]: e.target.value }))}
             className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60"

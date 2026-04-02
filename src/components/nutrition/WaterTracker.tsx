@@ -64,7 +64,7 @@ export function WaterTracker() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Droplets size={16} style={{ color: THEME.semantic.hydration }} />
+            <Droplets className="w-4 h-4" style={{ color: THEME.semantic.hydration }} />
             <span className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>Water</span>
           </div>
           <span className="text-xs text-muted-foreground">{pct}%</span>
@@ -100,14 +100,14 @@ export function WaterTracker() {
             disabled={glasses <= 0}
             className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
           >
-            <Minus size={18} className="text-muted-foreground" />
+            <Minus className="w-5 h-5 text-muted-foreground" />
           </button>
           <button
             onClick={handleAdd}
             className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition-all"
             style={{ backgroundColor: `${THEME.semantic.hydration}26` }}
           >
-            <Plus size={18} style={{ color: THEME.semantic.hydration }} />
+            <Plus className="w-5 h-5" style={{ color: THEME.semantic.hydration }} />
           </button>
         </div>
       </div>

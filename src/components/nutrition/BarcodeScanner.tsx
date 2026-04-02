@@ -131,7 +131,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           <ScanLine className="w-4 h-4 text-primary" />
           Barcode Scanner
         </h3>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted">
+        <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted" aria-label="Close scanner">
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
