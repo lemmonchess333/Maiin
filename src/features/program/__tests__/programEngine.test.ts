@@ -209,6 +209,18 @@ describe("advanceWeek", () => {
     const ex = result.workouts[0].exercises[0];
     expect(ex.sets).toBe(4); // round(4*0.9)=round(3.6)=4
   });
+
+  it("caps week number at 52 and recycles to 1 (L2)", () => {
+    const state = { ...baseProgramState, weekNumber: 52, fatigueScore: 0 };
+    const result = advanceWeek(state);
+    expect(result.weekNumber).toBe(1); // recycled
+  });
+
+  it("does not recycle before 52", () => {
+    const state = { ...baseProgramState, weekNumber: 51, fatigueScore: 0 };
+    const result = advanceWeek(state);
+    expect(result.weekNumber).toBe(52);
+  });
 });
 
 // ── PPL×2 Deep Copy ─────────────────────────────

@@ -465,4 +465,90 @@ describe("computePerformanceIndex", () => {
     expect(doc.insight.title).toBeDefined();
     expect(doc.insight.bullets.length).toBeGreaterThan(0);
   });
+
+  it("does not recommend deload when baseline has <3 weeks (M6)", () => {
+    const agg = makeAgg({ liftTonnage: 30000, liftHardSets: 50 }); // very high load
+    const priorWeeks = [makeAgg(), makeAgg()]; // only 2 weeks of baseline
+    const doc = computePerformanceIndex(agg, priorWeeks, { weeklyWorkoutsTarget: 4 }, 90);
+    expect(doc.baseline.weeksUsed).toBe(2);
+    expect(doc.deloadRecommended).toBe(false); // insufficient baseline
+  });
+
+  it("uses goal-dependent lift/run weights (M3)", () => {
+    const agg = makeAgg({ liftTonnage: 15000, liftHardSets: 30, runKm: 10, runLongKm: 5, runSessions: 1 });
+    const priorWeeks = [makeAgg(), makeAgg(), makeAgg()];
+    const bulkDoc = computePerformanceIndex(agg, priorWeeks, { goal: "lean bulk" });
+    const recompDoc = computePerformanceIndex(agg, priorWeeks, { goal: "recomp" });
+    // Lean bulk weights lifting higher (0.65 vs 0.5), so with higher lift and lower run,
+    // the bulk PI should be higher than recomp PI
+    expect(bulkDoc.performanceIndex).toBeGreaterThanOrEqual(recompDoc.performanceIndex);
+  });
+
+  it("uses goal-aware default workout target (L6)", () => {
+    const agg = makeAgg({ liftSessions: 3, runSessions: 0 });
+    const priorWeeks = [makeAgg(), makeAgg(), makeAgg()];
+    // Cut default = 3 sessions, so 3/3 = 100% adherence
+    const cutDoc = computePerformanceIndex(agg, priorWeeks, { goal: "cut" });
+    // Bulk default = 5 sessions, so 3/5 = 60% adherence
+    const bulkDoc = computePerformanceIndex(agg, priorWeeks, { goal: "lean bulk" });
+    expect(cutDoc.adherenceScore).toBeGreaterThan(bulkDoc.adherenceScore);
+  });
+});
+
+// ── Goal-aware recovery scoring (M2) ────────
+
+describe("computeRecoveryScore — goal-aware", () => {
+  it("rewards expected weight loss on a cut", () => {
+    const agg = makeAgg({
+      bwCurrent7dAvg: 79,
+      bwPrevious7dAvg: 80, // lost 1kg
+      mealDaysLogged: 0,
+      liftSessions: 0,
+      runSessions: 0,
+    });
+    // Cut: 1kg loss is expected → +20
+    expect(computeRecoveryScore(agg, "cut")).toBe(80);
+    // Recomp: 1kg delta is moderate → +10
+    expect(computeRecoveryScore(agg, "recomp")).toBe(70);
+  });
+
+  it("penalizes excessive weight loss even on cut", () => {
+    const agg = makeAgg({
+      bwCurrent7dAvg: 77,
+      bwPrevious7dAvg: 80, // lost 3kg — too fast
+      mealDaysLogged: 0,
+      liftSessions: 0,
+      runSessions: 0,
+    });
+    expect(computeRecoveryScore(agg, "cut")).toBe(45); // 60 - 15
+  });
+
+  it("rewards expected weight gain on lean bulk", () => {
+    const agg = makeAgg({
+      bwCurrent7dAvg: 80.4,
+      bwPrevious7dAvg: 80, // gained 0.4kg
+      mealDaysLogged: 0,
+      liftSessions: 0,
+      runSessions: 0,
+    });
+    // Bulk: 0.4kg gain is expected → +20
+    expect(computeRecoveryScore(agg, "lean bulk")).toBe(80);
+    // Recomp: 0.4kg delta is stable → +20
+    expect(computeRecoveryScore(agg, "recomp")).toBe(80);
+  });
+});
+
+// ── Goal-aware calorie adherence (M5) ───────
+
+describe("computeAdherenceScore — goal-aware calorie tolerance", () => {
+  it("uses ±10% for cuts (tighter)", () => {
+    const agg = makeAgg({ liftSessions: 0, runSessions: 0, mealDaysLogged: 5, avgDailyCalories: 2300 });
+    // 2300/2000 = 1.15 → 15% over target
+    // Cut tolerance = 10% → 1.15 is outside [0.9, 1.1] → penalized
+    const cutScore = computeAdherenceScore(agg, 0, 2000, null, "cut");
+    // Recomp tolerance = 15% → 1.15 is inside [0.85, 1.15] → full marks
+    const recompScore = computeAdherenceScore(agg, 0, 2000, null, "recomp");
+    expect(recompScore).toBe(100);
+    expect(cutScore).toBeLessThan(100);
+  });
 });
