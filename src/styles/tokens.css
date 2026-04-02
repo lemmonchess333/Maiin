@@ -35,25 +35,11 @@
   --ds-text-micro:   0.75rem;    /* 12px — labels, captions (accessibility floor) */
 
   /* Shadows — subtle, not neon */
-  --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.04);
+  --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
   --ds-shadow-elevated: 0 8px 28px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
   --ds-shadow-purple-glow: 0 4px 16px rgba(123, 114, 233, 0.22);
   --ds-shadow-orange-glow: 0 4px 16px rgba(232, 115, 22, 0.22);
   --ds-shadow-green-glow: 0 4px 14px rgba(34, 184, 88, 0.20);
-
-  /* Hero card shadow — pronounced lift */
-  --ds-shadow-hero: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
-
-  /* Semantic colored glows for hero/feature cards */
-  --ds-shadow-health-glow: 0 4px 20px rgba(77, 184, 114, 0.22), 0 1px 3px rgba(0,0,0,0.06);
-  --ds-shadow-water-glow: 0 4px 20px rgba(82, 163, 189, 0.22), 0 1px 3px rgba(0,0,0,0.06);
-  --ds-shadow-nutrition-glow: 0 4px 20px rgba(217, 136, 78, 0.20), 0 1px 3px rgba(0,0,0,0.06);
-  --ds-shadow-lift-glow: 0 4px 16px rgba(123, 114, 233, 0.18), 0 1px 3px rgba(0,0,0,0.06);
-  --ds-shadow-run-glow: 0 4px 16px rgba(212, 99, 122, 0.18), 0 1px 3px rgba(0,0,0,0.06);
-
-  /* CTA button glows */
-  --ds-shadow-cta-lift: 0 4px 14px rgba(123, 114, 233, 0.30);
-  --ds-shadow-cta-run: 0 4px 14px rgba(212, 99, 122, 0.30);
 
   /* Font Weights
      ─ Use 700 (bold) for section headings, card titles, inline emphasis
@@ -75,12 +61,4 @@
 .dark {
   --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.15);
   --ds-shadow-elevated: 0 8px 28px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.20);
-  --ds-shadow-hero: 0 2px 8px rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.20);
-  --ds-shadow-health-glow: 0 4px 20px rgba(77, 184, 114, 0.12), 0 1px 3px rgba(0,0,0,0.20);
-  --ds-shadow-water-glow: 0 4px 20px rgba(82, 163, 189, 0.12), 0 1px 3px rgba(0,0,0,0.20);
-  --ds-shadow-nutrition-glow: 0 4px 20px rgba(217, 136, 78, 0.12), 0 1px 3px rgba(0,0,0,0.20);
-  --ds-shadow-lift-glow: 0 4px 16px rgba(123, 114, 233, 0.10), 0 1px 3px rgba(0,0,0,0.20);
-  --ds-shadow-run-glow: 0 4px 16px rgba(212, 99, 122, 0.10), 0 1px 3px rgba(0,0,0,0.20);
-  --ds-shadow-cta-lift: 0 4px 14px rgba(123, 114, 233, 0.20);
-  --ds-shadow-cta-run: 0 4px 14px rgba(212, 99, 122, 0.20);
 }
