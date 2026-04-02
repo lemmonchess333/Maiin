@@ -60,8 +60,10 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
 
       // Parse pace string "M:SS" → seconds
       const parts = pace.split(':');
-      const currentPaceSec = parts.length === 2
-        ? parseInt(parts[0]) * 60 + parseInt(parts[1])
+      const mins = parseInt(parts[0]);
+      const secs = parseInt(parts[1]);
+      const currentPaceSec = parts.length === 2 && !isNaN(mins) && !isNaN(secs)
+        ? mins * 60 + secs
         : 0;
 
       // Build split comparison phrase

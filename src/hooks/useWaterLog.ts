@@ -45,6 +45,7 @@ export function useWaterLog() {
     return () => {
       unsub();
       clearTimeout(saveTimeout.current);
+      skipNextSnapshot.current = false;
     };
   }, [user, today]);
 
