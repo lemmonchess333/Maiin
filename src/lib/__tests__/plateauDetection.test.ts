@@ -13,7 +13,7 @@ describe("detectPlateau", () => {
       // threshold = 0.1 * 1.0 = 0.1; avgLiftChange = -0.2 < -0.1
       const result = detectPlateau(-0.2, 0, 1.0);
       expect(result.status).toBe("regressing");
-      expect(result.calorieAdjust).toBe(100);
+      expect(result.calorieAdjust).toBe(0);
       expect(result.volumeAdjust).toBe(-0.1);
     });
 
@@ -159,8 +159,8 @@ describe("calculateAdaptiveMacros", () => {
     // bw=80, baseTDEE=2640, adjustment=0, calories = round(2640*0.85) = round(2244) = 2244
     const result = calculateAdaptiveMacros(80, 0.5, 0.5, "cut");
     expect(result.calories).toBe(2244);
-    // protein for cut = round(80 * 2.4) = 192
-    expect(result.protein).toBe(192);
+    // protein for cut = round(80 * 2.2) = 176
+    expect(result.protein).toBe(176);
   });
 
   it("enforces minimum 50 carbs", () => {

@@ -339,7 +339,12 @@ export function generateProgram(
       break;
     case "ppl_x2": {
       const ppl = buildPPL(goal, existingWorkouts);
-      workouts = [...ppl, { ...ppl[2], dayName: "Legs B", completed: false }];
+      workouts = [...ppl, {
+        ...ppl[2],
+        dayName: "Legs B",
+        completed: false,
+        exercises: ppl[2].exercises.map(ex => ({ ...ex })),
+      }];
       break;
     }
     case "ppl_x2_fb": {
@@ -347,8 +352,18 @@ export function generateProgram(
       const fb = buildFullBody(goal, 1, existingWorkouts);
       workouts = [
         ...ppl7,
-        { ...ppl7[2], dayName: "Legs B", completed: false },
-        { ...fb[0], dayName: "Full Body (Recovery)", completed: false },
+        {
+          ...ppl7[2],
+          dayName: "Legs B",
+          completed: false,
+          exercises: ppl7[2].exercises.map(ex => ({ ...ex })),
+        },
+        {
+          ...fb[0],
+          dayName: "Full Body (Recovery)",
+          completed: false,
+          exercises: fb[0].exercises.map(ex => ({ ...ex })),
+        },
       ];
       break;
     }
@@ -388,24 +403,47 @@ export function applyProgression(
 
   const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
+  const isBodyweight = exercise.weight === 0;
+
   if (exercise.progressionType === "double") {
     if (completed) {
-      updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+      // True double progression: accumulate reps until ceiling, then increase weight
+      if (actualReps >= exercise.reps + 2) {
+        if (isBodyweight) {
+          // Bodyweight: progress via rep target increase
+          updated.reps = exercise.reps + 1;
+        } else {
+          // Weighted: increase weight and reset reps to base target
+          updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+          updated.reps = exercise.reps;
+        }
+      }
+      // Otherwise: success recorded but reps still accumulating toward ceiling
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
       updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
 
-      if (updated.consecutiveFailures >= 2) {
-        updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
+      if (updated.consecutiveFailures >= 3) {
+        if (isBodyweight) {
+          // Bodyweight deload: reduce rep target (minimum 4)
+          updated.reps = Math.max(4, exercise.reps - 1);
+        } else {
+          updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
+        }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
       }
     }
   } else {
     if (completed) {
-      if (microloading) {
+      if (isBodyweight) {
+        // Bodyweight linear: increase rep target when exceeding by 2
+        if (actualReps >= exercise.reps + 2) {
+          updated.reps = exercise.reps + 1;
+        }
+      } else if (microloading) {
         updated.weight = exercise.weight + 1;
       } else {
         if (actualReps >= exercise.reps + 2) {
@@ -419,7 +457,11 @@ export function applyProgression(
     } else {
       updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
       if (updated.consecutiveFailures >= 3) {
-        updated.weight = Math.max(0, exercise.weight - 1);
+        if (isBodyweight) {
+          updated.reps = Math.max(4, exercise.reps - 1);
+        } else {
+          updated.weight = Math.max(0, exercise.weight - 1);
+        }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
       }
@@ -475,7 +517,9 @@ export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
     exercises: day.exercises.map((ex) => ({
       ...ex,
       sets: Math.max(2, ex.sets - 1),
-      weight: Math.round((ex.weight * 0.85) * 2) / 2,
+      // Bodyweight exercises (weight=0): reduce sets only, no weight change
+      // Weighted: round to 2.5kg increments (standard plate size)
+      weight: ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
     })),
   }));
 }
@@ -495,9 +539,10 @@ export function advanceWeek(state: ProgramState): ProgramState {
 
   if (prescription.deload) {
     workouts = applyDeload(workouts);
+  } else {
+    // Only apply fatigue on non-deload weeks to avoid double volume reduction
+    workouts = applyFatigue(workouts, state.fatigueScore);
   }
-
-  workouts = applyFatigue(workouts, state.fatigueScore);
 
   return {
     ...state,

@@ -13,7 +13,7 @@ export const PHASE_PROTEIN: Record<string, number> = {
   hypertrophy: 2.0,
   deload: 1.8,
   race_prep: 1.6,
-  cut: 2.4,
+  cut: 2.2,
   base: 2.0,
 };
 
