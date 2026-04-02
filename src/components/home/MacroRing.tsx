@@ -30,7 +30,7 @@ export default function MacroRing({ value, target, color, label, unit = "" }: {
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} style={{ transform: "rotate(-90deg)", position: "absolute", inset: 0 }}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color + "22"} strokeWidth="4.5" />
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color + "18"} strokeWidth="4.5" />
           {pct > 0 && (
             <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color}
               strokeWidth="4.5" strokeDasharray={`${circ * Math.min(pct, 1)} ${circ}`} strokeLinecap="round"

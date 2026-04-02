@@ -15,8 +15,7 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
   const hasScore = healthScore != null;
 
   return (
-    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-5 rounded-2xl bg-card active:scale-[0.98] transition-transform relative overflow-hidden"
-      style={{ boxShadow: hasScore ? `0 4px 20px ${getScoreColor(healthScore!)}36, 0 1px 3px rgba(0,0,0,0.06)` : 'var(--ds-shadow-hero)' }}>
+    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
       {(() => {
         const score = hasScore ? healthScore : 0;
         const zoneColor = hasScore ? getScoreColor(score) : THEME.text.muted;
@@ -27,16 +26,14 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
         const offset = hasScore ? arcLength - (arcLength * Math.min(score, 100)) / 100 : arcLength;
         return (
           <>
-            {/* Radial glow background */}
-            {hasScore && <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at 30% 0%, ${zoneColor}14, transparent 60%)` }} />}
-            <div className="flex items-center gap-2 mb-3 relative">
+            <div className="flex items-center gap-2 mb-3">
               <Heart className="w-4 h-4" style={{ color: zoneColor }} />
-              <p className="text-xs font-semibold" style={{ color: THEME.text.muted }}>Health Score</p>
+              <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
             </div>
             <div className="flex items-center gap-6">
               <div className="relative w-24 h-24 flex-shrink-0">
-                <svg viewBox="0 0 100 100" className={`w-full h-full -rotate-[135deg]${hasScore && score >= 80 ? ' ds-glow-pulse' : ''}`}
-                  style={{ filter: hasScore && score >= 70 ? `drop-shadow(0 0 ${score >= 80 ? '14px' : '10px'} ${zoneColor}${score >= 80 ? '50' : '35'})` : undefined }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]"
+                  style={{ filter: hasScore && score >= 70 ? `drop-shadow(0 0 10px ${zoneColor}35)` : undefined }}>
                   <circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor + "1A"} strokeWidth={stroke}
                     strokeDasharray={arcLength + " " + circumference} strokeLinecap="round" />
                   <motion.circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor} strokeWidth={stroke}
