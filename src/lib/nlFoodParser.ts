@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+
 /**
  * NL food parser — parses natural-language food descriptions
  * into structured macro data using a common food database lookup.
@@ -20,6 +22,7 @@ export interface ParsedFood {
   protein: number;
   carbs: number;
   fat: number;
+  unrecognized?: boolean;
 }
 
 type Macros = { calories: number; protein: number; carbs: number; fat: number; serving: string };
@@ -472,7 +475,8 @@ export function parseFoodText(input: string): ParsedFood[] {
       continue;
     }
 
-    // Unrecognized — return with zero macros
+    // Unrecognized — return with zero macros and flag
+    logger.warn('[nlFoodParser] Unrecognized food:', rest);
     const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
     results.push({
       name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
@@ -480,6 +484,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       protein: 0,
       carbs: 0,
       fat: 0,
+      unrecognized: true,
     });
   }
 
