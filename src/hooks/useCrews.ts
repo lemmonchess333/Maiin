@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection, getDocs, query, orderBy, doc, setDoc, deleteDoc,
   addDoc, serverTimestamp, increment, updateDoc,
@@ -31,6 +31,7 @@ export function useCrews() {
   const [crews, setCrews] = useState<Crew[]>([]);
   const [loading, setLoading] = useState(true);
   const currentCrewId = profile?.crewId;
+  const mutatingRef = useRef(false);
 
   const fetchCrews = useCallback(async () => {
     try {
@@ -64,7 +65,8 @@ export function useCrews() {
   }, [fetchCrews]);
 
   const joinCrew = useCallback(async (crewId: string) => {
-    if (!user?.uid) return;
+    if (!user?.uid || mutatingRef.current) return;
+    mutatingRef.current = true;
 
     // Capture snapshot via functional setState for accurate rollback
     let snapshot: Crew[] = [];
@@ -91,11 +93,14 @@ export function useCrews() {
     } catch (e) {
       setCrews(snapshot);
       throw e;
+    } finally {
+      mutatingRef.current = false;
     }
   }, [user, currentCrewId, profile, updateProfile]);
 
   const leaveCrew = useCallback(async () => {
-    if (!user?.uid || !currentCrewId) return;
+    if (!user?.uid || !currentCrewId || mutatingRef.current) return;
+    mutatingRef.current = true;
 
     let snapshot: Crew[] = [];
     setCrews(prev => {
@@ -110,6 +115,8 @@ export function useCrews() {
     } catch (e) {
       setCrews(snapshot);
       throw e;
+    } finally {
+      mutatingRef.current = false;
     }
   }, [user, currentCrewId, updateProfile]);
 

@@ -20,12 +20,12 @@ async function getEncryptionKey(uid: string): Promise<CryptoKey> {
 
 async function encryptBlob(data: ArrayBuffer, key: CryptoKey) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as unknown as BufferSource }, key, data);
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as unknown as Uint8Array<ArrayBuffer> }, key, data);
   return { encrypted, iv };
 }
 
 async function decryptBlob(encrypted: ArrayBuffer, key: CryptoKey, iv: Uint8Array) {
-  return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as unknown as BufferSource }, key, encrypted);
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as unknown as Uint8Array<ArrayBuffer> }, key, encrypted);
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -253,11 +253,13 @@ export default function ProgressPhotos() {
         <div className="flex gap-2">
           {photos.length >= 2 && (
             <button onClick={() => { setCompareMode(!compareMode); setSelected([]); }}
+              aria-label={compareMode ? 'Exit compare mode' : 'Compare photos'}
               className={`text-xs px-3 py-2 rounded-lg font-medium min-h-[44px] ${compareMode ? 'bg-blue-500 text-white' : 'bg-muted'}`}>
               Compare
             </button>
           )}
           <button onClick={() => fileInputRef.current?.click()}
+            aria-label="Add progress photo"
             className="text-xs px-3 py-2 rounded-lg bg-purple-500 text-white font-medium min-h-[44px]">
             + Add
           </button>
@@ -269,6 +271,9 @@ export default function ProgressPhotos() {
         <span className="text-xs text-muted-foreground">Keep photos private</span>
         <button
           onClick={() => setIsPrivate(v => !v)}
+          aria-label={isPrivate ? 'Make photos public' : 'Make photos private'}
+          role="switch"
+          aria-checked={isPrivate}
           className={`w-9 h-5 rounded-full transition-colors relative ${isPrivate ? 'bg-primary' : 'bg-muted border border-border'}`}
         >
           <div className={`w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm ${isPrivate ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
@@ -286,6 +291,7 @@ export default function ProgressPhotos() {
         <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
           <p className="text-xs text-destructive">Upload failed. Please try again.</p>
           <button onClick={retryUpload}
+            aria-label="Retry photo upload"
             className="flex items-center gap-1 text-xs font-medium text-destructive ml-2 shrink-0">
             <RotateCcw size={12} />
             Retry
@@ -306,6 +312,7 @@ export default function ProgressPhotos() {
       <div className="grid grid-cols-3 gap-2">
         {photos.map(photo => (
           <button key={photo.id}
+            aria-label={`Progress photo from ${photo.date}${compareMode ? ', tap to select for comparison' : ''}`}
             onClick={() => {
               decryptPhoto(photo);
               if (compareMode) {
