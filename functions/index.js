@@ -471,6 +471,132 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 });
 
 // ══════════════════════════════════════════════
+// STRIPE WEBHOOK — subscription lifecycle events
+// ══════════════════════════════════════════════
+
+exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY ||
+    (functions.config().stripe && functions.config().stripe.secret_key);
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ||
+    (functions.config().stripe && functions.config().stripe.webhook_secret);
+
+  if (!stripeKey || !webhookSecret) {
+    console.error("stripeWebhook: Stripe keys not configured");
+    res.status(500).json({ error: "Webhook not configured" });
+    return;
+  }
+
+  const stripe = require("stripe")(stripeKey);
+
+  let event;
+  try {
+    const sig = req.headers["stripe-signature"];
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.error("stripeWebhook: signature verification failed:", err.message);
+    res.status(400).json({ error: "Invalid signature" });
+    return;
+  }
+
+  const dbRef = admin.firestore();
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const firebaseUid = session.metadata?.firebaseUid;
+        if (!firebaseUid) {
+          console.warn("stripeWebhook: checkout.session.completed missing firebaseUid metadata");
+          break;
+        }
+
+        const update = {
+          subscriptionTier: "pro",
+          stripeCustomerId: session.customer,
+        };
+
+        // For subscription mode, store the subscription ID
+        if (session.subscription) {
+          update.stripeSubscriptionId = session.subscription;
+        }
+
+        await dbRef.collection("users").doc(firebaseUid).set(update, { merge: true });
+        console.log(`stripeWebhook: activated pro for ${firebaseUid}`);
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+
+        // Look up user by stripeCustomerId
+        const usersSnap = await dbRef.collection("users")
+          .where("stripeCustomerId", "==", customerId)
+          .limit(1)
+          .get();
+
+        if (usersSnap.empty) {
+          console.warn(`stripeWebhook: no user found for customer ${customerId}`);
+          break;
+        }
+
+        const userDoc = usersSnap.docs[0];
+        const status = subscription.status;
+
+        // Active statuses that grant pro access
+        const activeStatuses = ["active", "trialing"];
+        const tier = activeStatuses.includes(status) ? "pro" : "free";
+
+        await userDoc.ref.set({
+          subscriptionTier: tier,
+          stripeSubscriptionId: subscription.id,
+        }, { merge: true });
+
+        console.log(`stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`);
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+
+        const usersSnap = await dbRef.collection("users")
+          .where("stripeCustomerId", "==", customerId)
+          .limit(1)
+          .get();
+
+        if (usersSnap.empty) {
+          console.warn(`stripeWebhook: no user found for customer ${customerId}`);
+          break;
+        }
+
+        const userDoc = usersSnap.docs[0];
+        await userDoc.ref.set({
+          subscriptionTier: "free",
+          stripeSubscriptionId: admin.firestore.FieldValue.delete(),
+        }, { merge: true });
+
+        console.log(`stripeWebhook: deactivated pro for ${userDoc.id}`);
+        break;
+      }
+
+      default:
+        console.log(`stripeWebhook: unhandled event type ${event.type}`);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error("stripeWebhook: processing error:", err.message);
+    res.status(500).json({ error: "Webhook processing failed" });
+  }
+});
+
+// ══════════════════════════════════════════════
 // PERFORMANCE ENGINE
 // ══════════════════════════════════════════════
 
