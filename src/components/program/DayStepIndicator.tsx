@@ -1,38 +1,49 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { THEME } from "@/lib/theme";
+import { haptic } from "@/lib/haptic";
 import type { WorkoutDay } from "@/features/program/programTypes";
 
 interface DayStepIndicatorProps {
   workouts: WorkoutDay[];
-  expandedDay: number | null;
-  onDayClick: (index: number) => void;
+  selectedIndex: number;
+  onSelect: (index: number) => void;
   firstIncompleteIndex: number;
 }
 
-const GREEN = "#4DB872";
+const GREEN = "#4CAF50";
+const PURPLE = "#7C6BF0";
+const CIRCLE = 32;
+const RING = 42;
 
 export default function DayStepIndicator({
   workouts,
-  expandedDay,
-  onDayClick,
+  selectedIndex,
+  onSelect,
   firstIncompleteIndex,
 }: DayStepIndicatorProps) {
   if (workouts.length === 0) return null;
 
+  const completedCount = workouts.filter(d => d.completed).length;
+  const trackOpacity = completedCount === 0 ? 0.5 : 1;
+
   return (
-    <div className="bg-card rounded-2xl p-3 shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
-      <div className="flex items-center justify-between px-1">
+    <div className="px-2 py-1">
+      {/* Circles + tracks */}
+      <div className="flex items-center justify-between">
         {workouts.map((day, i) => {
           const isCompleted = day.completed;
           const isCurrent = i === firstIncompleteIndex;
-          const isSelected = expandedDay === i;
+          const isSelected = i === selectedIndex;
 
           return (
-            <div key={i} className="flex items-center" style={{ flex: i < workouts.length - 1 ? 1 : undefined }}>
-              {/* Circle */}
+            <div
+              key={i}
+              className="flex items-center"
+              style={{ flex: i < workouts.length - 1 ? 1 : undefined }}
+            >
+              {/* Circle + label column */}
               <button
-                onClick={() => onDayClick(i)}
+                onClick={() => { onSelect(i); haptic("light"); }}
                 className="relative flex flex-col items-center"
                 style={{ minWidth: 44, minHeight: 44, justifyContent: "center" }}
                 aria-label={`Day ${i + 1}: ${day.dayName}${isCompleted ? " (completed)" : isCurrent ? " (current)" : ""}`}
@@ -40,63 +51,62 @@ export default function DayStepIndicator({
                 {/* Selection ring */}
                 {isSelected && (
                   <motion.div
-                    layoutId="step-ring"
+                    layoutId="week-day-ring"
                     className="absolute rounded-full"
                     style={{
-                      width: isCurrent ? 36 : 32,
-                      height: isCurrent ? 36 : 32,
-                      border: `2px solid ${THEME.lifting}`,
-                      opacity: 0.3,
+                      width: RING,
+                      height: RING,
+                      border: `2px solid ${PURPLE}`,
+                      opacity: 0.35,
                     }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
 
-                {/* The dot */}
+                {/* Circle */}
                 {isCompleted ? (
                   <div
                     className="flex items-center justify-center rounded-full"
-                    style={{ width: 24, height: 24, background: GREEN }}
+                    style={{ width: CIRCLE, height: CIRCLE, background: GREEN }}
                   >
-                    <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                    <Check className="w-4 h-4 text-white" strokeWidth={3} />
                   </div>
                 ) : isCurrent ? (
                   <motion.div
                     className="flex items-center justify-center rounded-full"
-                    style={{
-                      width: 28,
-                      height: 28,
-                      border: `2.5px solid ${THEME.lifting}`,
-                      background: `${THEME.lifting}10`,
-                    }}
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ width: CIRCLE, height: CIRCLE, background: PURPLE }}
+                    initial={{ scale: 1 }}
+                    animate={{ scale: [1, 1.12, 1] }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
                   >
-                    <div
-                      className="rounded-full"
-                      style={{ width: 10, height: 10, background: THEME.lifting }}
-                    />
+                    <span className="text-white text-xs font-bold">{i + 1}</span>
                   </motion.div>
                 ) : (
                   <div
-                    className="rounded-full border-2 border-muted-foreground/25"
-                    style={{ width: 24, height: 24 }}
-                  />
+                    className="flex items-center justify-center rounded-full bg-card"
+                    style={{
+                      width: CIRCLE,
+                      height: CIRCLE,
+                      border: "1.5px solid var(--border)",
+                    }}
+                  >
+                    <span className="text-xs text-muted-foreground font-medium">{i + 1}</span>
+                  </div>
                 )}
 
-                {/* Day label */}
-                <span className="text-[10px] text-muted-foreground mt-1 leading-none font-medium">
-                  {i + 1}
+                {/* Session name label */}
+                <span className="text-[11px] text-muted-foreground mt-1.5 leading-none font-medium max-w-[48px] truncate text-center hidden min-[320px]:block">
+                  {day.dayName}
                 </span>
               </button>
 
-              {/* Connecting track */}
+              {/* Track segment */}
               {i < workouts.length - 1 && (
-                <div className="flex-1 mx-0.5">
+                <div className="flex-1 mx-1" style={{ opacity: trackOpacity, transition: "opacity 300ms ease" }}>
                   <div
                     className="h-[2px] rounded-full"
                     style={{
-                      background: isCompleted ? GREEN : "var(--border)",
+                      background: isCompleted ? PURPLE : "var(--border)",
                     }}
                   />
                 </div>
