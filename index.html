@@ -7,6 +7,34 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Tropos" />
+
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://js.stripe.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://basemaps.cartocdn.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com;
+      connect-src 'self'
+        https://*.googleapis.com
+        https://*.firebaseio.com
+        https://*.firebaseapp.com
+        https://*.appspot.com
+        https://*.cloudfunctions.net
+        https://world.openfoodfacts.org
+        https://api.open-meteo.com
+        https://basemaps.cartocdn.com
+        https://*.cartocdn.com
+        https://raw.githubusercontent.com
+        https://js.stripe.com
+        https://api.stripe.com
+        wss://*.firebaseio.com;
+      frame-src https://js.stripe.com https://*.firebaseapp.com;
+      worker-src 'self' blob:;
+      manifest-src 'self';
+      object-src 'none';
+      base-uri 'self';
+    " />
     <meta name="description" content="The fitness app for hybrid athletes who lift and run. Smart training programmes, nutrition tracking, and performance analytics." />
 
     <!-- Open Graph -->
