@@ -92,7 +92,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
               <BreakdownRow label={"Base TDEE (" + burn.phaseLabel + ")"} value={burn.phaseAdjustedTdee} />
               <BreakdownRow label="+ Workout" value={burn.workoutCalories} color={THEME.semantic.positive} />
               <BreakdownRow label="+ Run" value={burn.runCalories} color={THEME.semantic.vitals} />
-              <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect Apple Health" /* TODO: "Connect Google Fit" on Android */ color={THEME.textMuted} />
+              <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect Health App" color={THEME.textMuted} />
               <div className="h-px bg-border/50" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">Today's budget</span>
