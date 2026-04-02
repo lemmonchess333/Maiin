@@ -180,6 +180,8 @@ export function useProgram() {
         workouts: programState.workouts.map((d, i) =>
           i === dayIndex ? { ...d, completed: true, skipped: false } : d,
         ),
+        // Clear next-workout override if completing the overridden day
+        ...(programState.nextWorkoutOverride === dayIndex && { nextWorkoutOverride: undefined }),
       };
 
       await saveProgram(updated);
@@ -269,6 +271,15 @@ export function useProgram() {
       await saveProgram(updated);
     },
     [programState, user, saveProgram],
+  );
+
+  // Set a specific day as the next workout (override default progression)
+  const setNextWorkout = useCallback(
+    async (dayIndex: number) => {
+      if (!programState) return;
+      await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
+    },
+    [programState, saveProgram],
   );
 
   // Manually advance to next week (called from UI)
@@ -573,6 +584,7 @@ export function useProgram() {
     loading,
     completeWorkoutDay,
     skipWorkoutDay,
+    setNextWorkout,
     advanceToNextWeek,
     logExercise,
     updateExercise,

@@ -16,6 +16,7 @@ interface WeekContentCardProps {
   onSkipSession?: () => void;
   onExerciseTap?: (exerciseName: string) => void;
   onDoRetroactiveWorkout?: () => void;
+  onSetAsNextWorkout?: () => void;
   nextWorkoutLabel?: string;
   isViewingHistory?: boolean;
   sessionActive?: boolean;
@@ -41,6 +42,7 @@ export default function WeekContentCard({
   onSkipSession,
   onExerciseTap,
   onDoRetroactiveWorkout,
+  onSetAsNextWorkout,
   nextWorkoutLabel,
   isViewingHistory = false,
   sessionActive = false,
@@ -179,6 +181,19 @@ export default function WeekContentCard({
                   Skip Session
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Action area — future day: set as next workout */}
+          {isFuture && !editMode && !isViewingHistory && onSetAsNextWorkout && (
+            <div className="px-4 pt-1 pb-4">
+              <button
+                onClick={onSetAsNextWorkout}
+                className="w-full text-center text-sm font-medium py-2 active:scale-[0.97] transition-transform"
+                style={{ color: "#7C6BF0" }}
+              >
+                Set as Next Workout &rarr;
+              </button>
             </div>
           )}
 
