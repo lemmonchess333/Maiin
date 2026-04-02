@@ -706,7 +706,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
               {/* Workout Day Cards */}
               <section aria-label="Workout days">
-              <div className="bg-card rounded-2xl overflow-hidden divide-y divide-border/20">
+              <div className="bg-card rounded-2xl overflow-hidden divide-y divide-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
                 {displayWorkouts.map((day, dayIndex) => {
                   const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
                   const isCurrent = !day.completed && dayIndex === firstIncompleteIndex;
@@ -717,7 +717,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     className={cn(
                       "transition-all",
                       isCurrent ? "border-l-[3px]" : "",
-                      day.completed ? "opacity-70" : "",
                       isCurrent ? "bg-[rgba(124,107,240,0.06)]" : ""
                     )}
                     style={{
@@ -729,7 +728,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     {/* Day Header */}
                     <button
                       onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
-                      className="w-full flex items-center p-3 gap-3 active:scale-[0.98] transition-transform"
+                      className={cn("w-full flex items-center gap-3 active:scale-[0.98] transition-transform", isCurrent ? "p-4" : "p-3")}
                     >
                       {/* Completion indicator */}
                       <div className="shrink-0">
@@ -747,11 +746,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
                       {/* Day label + type */}
                       <div className="flex-1 text-left min-w-0">
-                        <p className={cn("text-sm font-semibold", day.completed ? "text-muted-foreground" : "text-foreground")}>
+                        <p className={cn("text-sm", isCurrent ? "font-bold text-foreground" : "font-semibold", day.completed ? "text-muted-foreground" : "text-foreground")}>
                           Day {dayIndex + 1}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {day.dayName} &middot; {day.exercises.length} exercises &middot; ~{Math.round(day.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
+                          <span style={{ color: THEME.lifting }}>{day.dayName}</span> &middot; {day.exercises.slice(0, 3).map(function(ex) { return ex.name; }).join(", ")}{day.exercises.length > 3 ? ` +${day.exercises.length - 3}` : ""}
                           {day.isCustom && (
                             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 text-xs font-medium">Custom</span>
                           )}
