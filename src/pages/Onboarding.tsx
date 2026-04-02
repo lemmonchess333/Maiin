@@ -31,6 +31,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OptionCard from "@/components/onboarding/OptionCard";
+import Stepper from "@/components/onboarding/Stepper";
 import { toast } from "sonner";
 
 /* ============================
@@ -425,114 +427,7 @@ export default function Onboarding() {
     }
   };
 
-  /* ────────────────────────────────
-     OPTION CARD COMPONENT
-  ──────────────────────────────── */
-
-  function OptionCard({
-    selected,
-    onSelect,
-    icon,
-    label,
-    desc,
-    disabled,
-  }: {
-    selected: boolean;
-    onSelect: () => void;
-    icon: React.ReactNode;
-    label: string;
-    desc?: string;
-    disabled?: boolean;
-  }) {
-    return (
-      <button
-        onClick={onSelect}
-        disabled={disabled}
-        className={cn(
-          "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.95]",
-          disabled && "opacity-30 pointer-events-none"
-        )}
-        style={{
-          background: selected ? `${THEME.teal}18` : "rgba(255,255,255,0.05)",
-          border: `1px solid ${selected ? THEME.teal + "50" : "rgba(255,255,255,0.08)"}`,
-        }}
-      >
-        <span className="text-xl flex-shrink-0">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold">{label}</p>
-          {desc && (
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-              {desc}
-            </p>
-          )}
-        </div>
-        {selected && !disabled && (
-          <Check className="w-4 h-4 flex-shrink-0" style={{ color: THEME.teal }} />
-        )}
-      </button>
-    );
-  }
-
-  /* ────────────────────────────────
-     STEPPER COMPONENT
-  ──────────────────────────────── */
-
-  function Stepper({
-    label,
-    value,
-    displayValue,
-    onDecrement,
-    onIncrement,
-    unit,
-  }: {
-    label: string;
-    value: number;
-    displayValue?: string;
-    onDecrement: () => void;
-    onIncrement: () => void;
-    unit?: string;
-  }) {
-    return (
-      <div
-        className="rounded-2xl p-4 text-center"
-        style={{
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <p
-          className="text-xs uppercase tracking-wider mb-2"
-          style={{ color: "rgba(255,255,255,0.4)" }}
-        >
-          {label}
-        </p>
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={onDecrement}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-          >
-            −
-          </button>
-          <span className="text-xl font-bold font-mono tabular-nums min-w-[60px] text-center">
-            {displayValue ?? value}
-          </span>
-          <button
-            onClick={onIncrement}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-          >
-            +
-          </button>
-        </div>
-        {unit && (
-          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.25)" }}>
-            {unit}
-          </p>
-        )}
-      </div>
-    );
-  }
+  // OptionCard and Stepper are now imported from @/components/onboarding/
 
   /* ────────────────────────────────
      RENDER
