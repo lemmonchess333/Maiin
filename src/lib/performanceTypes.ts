@@ -115,6 +115,11 @@ export interface PerformanceWeekDoc {
     title: string;
     bullets: string[];
   };
+
+  planAdjustments?: {
+    lift: string[];
+    run: string[];
+  };
 }
 
 /** Weights for PI formula */

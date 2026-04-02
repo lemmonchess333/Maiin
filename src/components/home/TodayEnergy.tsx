@@ -9,9 +9,11 @@ import type { DailyBurn } from "@/utils/dailyBurn";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
 
-export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge }: {
+export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
   calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
   postWorkoutNudge?: { type: "lift" | "run" | "both"; proteinRemaining: number } | null;
+  adaptiveTDEE?: { estimated: number; confidence: string } | null;
+  nutritionInsight?: { type: "positive" | "warning" | "tip"; title: string; message: string } | null;
 }) {
   const [expanded, setExpanded] = useState(false);
   const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
@@ -100,6 +102,35 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
                   {burn.dailyBudget.toLocaleString()}
                 </span>
               </div>
+              {adaptiveTDEE && adaptiveTDEE.estimated > 0 && (
+                <>
+                  <div className="h-px bg-border/50" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Adaptive TDEE</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold font-mono tabular-nums text-foreground">{adaptiveTDEE.estimated.toLocaleString()}</span>
+                      <span className="text-micro px-1.5 py-0.5 rounded-full font-medium" style={{
+                        backgroundColor: (adaptiveTDEE.confidence === "high" ? THEME.semantic.positive : adaptiveTDEE.confidence === "medium" ? THEME.warning : THEME.semantic.vitals) + "20",
+                        color: adaptiveTDEE.confidence === "high" ? THEME.semantic.positive : adaptiveTDEE.confidence === "medium" ? THEME.warning : THEME.semantic.vitals,
+                      }}>{adaptiveTDEE.confidence}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              {nutritionInsight && (
+                <>
+                  <div className="h-px bg-border/50" />
+                  <div className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full mt-1 shrink-0" style={{
+                      background: nutritionInsight.type === "positive" ? THEME.semantic.positive : nutritionInsight.type === "warning" ? THEME.warning : THEME.brand,
+                    }} />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">{nutritionInsight.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{nutritionInsight.message}</p>
+                    </div>
+                  </div>
+                </>
+              )}
               <Link to="/food" className="inline-flex items-center gap-1 text-xs font-medium pt-1" style={{ color: THEME.brand }}>
                 View food log &rarr;
               </Link>

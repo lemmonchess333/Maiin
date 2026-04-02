@@ -5,7 +5,7 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Flame, Dumbbell, Footprints } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 function pctSigned(x: number) {
@@ -187,8 +187,22 @@ export default function PerformanceTab() {
     pi >= 40 ? THEME.warning :
     THEME.running;
 
+  const insightBullets = currentWeek.insight?.bullets;
+  const planAdj = (currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }).planAdjustments;
+
   return (
     <div className="space-y-4">
+      {/* Deload banner */}
+      {currentWeek.flags?.deloadRecommended && (
+        <div className="p-4 rounded-2xl flex items-start gap-3" style={{ background: THEME.warning + "14" }}>
+          <Flame className="w-5 h-5 shrink-0 mt-0.5" style={{ color: THEME.warning }} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: THEME.warning }}>Consider a deload week</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger.</p>
+          </div>
+        </div>
+      )}
+
       {/* Plain language summary card */}
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
         <div className="flex items-center justify-between mb-1">
@@ -218,6 +232,21 @@ export default function PerformanceTab() {
           <span className="text-xs text-muted-foreground">/100 Performance Index</span>
         </div>
       </div>
+
+      {/* Weekly insight bullets */}
+      {insightBullets && insightBullets.length > 0 && (
+        <div className="p-4 rounded-2xl bg-card space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weekly Insights</h3>
+          <ul className="space-y-1.5">
+            {insightBullets.map((bullet, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: THEME.brand }} />
+                {bullet}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Technical details toggle */}
       <button
@@ -359,6 +388,38 @@ export default function PerformanceTab() {
                   </li>
                 </ul>
               </div>
+
+              {/* Plan adjustments from engine */}
+              {planAdj && (planAdj.lift.length > 0 || planAdj.run.length > 0) && (
+                <div className="space-y-3">
+                  {planAdj.lift.length > 0 && (
+                    <div className="p-4 rounded-2xl" style={{ background: THEME.lifting + "14" }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                        <h3 className="text-sm font-semibold" style={{ color: THEME.lifting }}>Lifting Suggestions</h3>
+                      </div>
+                      <ul className="space-y-1">
+                        {planAdj.lift.map((s, i) => (
+                          <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {planAdj.run.length > 0 && (
+                    <div className="p-4 rounded-2xl" style={{ background: THEME.running + "14" }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+                        <h3 className="text-sm font-semibold" style={{ color: THEME.running }}>Running Suggestions</h3>
+                      </div>
+                      <ul className="space-y-1">
+                        {planAdj.run.map((s, i) => (
+                          <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
