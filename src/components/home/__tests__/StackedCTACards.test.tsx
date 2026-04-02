@@ -145,11 +145,6 @@ describe("StackedCTACards", function() {
   });
 
   describe("always-present cards", function() {
-    it("always shows ActionPills", function() {
-      renderCards({ userSegment: "active" });
-      expect(screen.getByText("Log Food")).toBeInTheDocument();
-    });
-
     it("always shows weight tile", function() {
       renderCards({ userSegment: "casual" });
       expect(screen.getByText("75.0")).toBeInTheDocument();

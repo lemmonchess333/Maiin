@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
-import ActionPills from "@/components/home/ActionPills";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import WaterCard from "@/components/home/WaterCard";
@@ -30,21 +29,15 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
 }) {
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
-  const isBothDay = todayType === "both";
 
-  const actionPills = (
-    <motion.div key="pills" variants={fadeUp}>
-      <ActionPills showRun={showRun} />
-    </motion.div>
-  );
   const liftCard = showLift && nextWorkout ? (
     <motion.div key="lift" variants={fadeUp}>
-      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} isPrimary={!isBothDay || true} />
+      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} />
     </motion.div>
   ) : null;
   const runCard = showRun ? (
     <motion.div key="run" variants={fadeUp}>
-      <RunCTACard todayRun={todayRun} navigate={navigate} isPrimary={!isBothDay} />
+      <RunCTACard todayRun={todayRun} navigate={navigate} />
     </motion.div>
   ) : null;
   const waterCard = (
@@ -67,7 +60,6 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
           </AnimatePresence>
         </motion.div>
       )}
-      {actionPills}
       {liftCard}
       {runCard}
       {waterCard}
