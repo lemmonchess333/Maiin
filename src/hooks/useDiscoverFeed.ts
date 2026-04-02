@@ -1,16 +1,12 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDiscoverFeed, batchGetKudos } from '../lib/socialApi';
-import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
 import type { FeedItem, ActivityData } from './useSocialFeed';
 
 export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
   const { user } = useAuth();
-  // Stabilize blockedUsers reference by serializing to a key
-  const blockedKey = useMemo(() => blockedUsers ? [...blockedUsers].sort().join(',') : '', [blockedUsers]);
-  const blockedRef = useRef(blockedUsers);
-  blockedRef.current = blockedUsers;
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +56,9 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
         feedItems = feedItems.map(item => ({ ...item, liked: kudosMap[item.activityId] || false }));
       }
 
-      // Filter out blocked users (#1)
-      const blocked = blockedRef.current;
-      if (blocked && blocked.size > 0) {
-        feedItems = feedItems.filter(item => !blocked.has(item.authorId));
+      // Filter out blocked users
+      if (blockedUsers && blockedUsers.size > 0) {
+        feedItems = feedItems.filter(item => !blockedUsers.has(item.authorId));
       }
 
       if (refresh) {
@@ -74,12 +69,12 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       lastDocRef.current = result.lastDoc;
       setHasMore(rawItems.length === 20);
     } catch (e) {
-      logger.warn('Discover feed error (silenced):', e);
-      // Don't surface errors to the UI — let the empty state handle it
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      captureError(e instanceof Error ? e : new Error(msg), 'network');
     }
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, enabled, blockedKey]);
+  }, [user, enabled, blockedUsers]);
 
   useEffect(() => {
     if (!enabled) return;

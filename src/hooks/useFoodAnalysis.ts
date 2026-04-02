@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
+import { logger } from "@/lib/logger";
 
 const FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFood";
 const TEXT_FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFoodText";
@@ -80,9 +81,13 @@ export function useFoodAnalysis() {
         body: JSON.stringify({ text }),
       });
 
-      if (!response.ok) return null;
+      if (!response.ok) {
+        logger.error('[analyzeFoodText] HTTP error', response.status);
+        return null;
+      }
       return await response.json();
-    } catch {
+    } catch (e) {
+      logger.error('[analyzeFoodText] failed', e);
       return null;
     }
   };

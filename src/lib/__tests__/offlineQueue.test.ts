@@ -9,6 +9,11 @@ vi.mock('firebase/firestore', () => ({
   setDoc: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Mock errorReporting to avoid transitive Firebase dependency
+vi.mock('@/lib/errorReporting', () => ({
+  captureError: vi.fn(),
+}));
+
 // Mock crypto.randomUUID
 vi.stubGlobal('crypto', { randomUUID: () => 'test-uuid-' + Math.random() });
 
