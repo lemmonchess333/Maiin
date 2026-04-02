@@ -39,7 +39,7 @@ export default function RunCTACard({ todayRun, navigate }: {
         <div className="flex-1 min-w-0">
           <p className="text-micro uppercase tracking-wider mb-0.5" style={{ color: THEME.running }}>Today · Run day</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-sm font-semibold text-foreground truncate">{runLabel}</p>
+            <p className="text-sm font-bold text-foreground truncate">{runLabel}</p>
             {runKeyMetric && (
               <span className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.running }}>{runKeyMetric}</span>
             )}
