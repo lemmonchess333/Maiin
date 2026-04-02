@@ -380,17 +380,23 @@ describe("shouldRecommendDeload", () => {
     expect(shouldRecommendDeload(80, 45, 60)).toBe(false);
   });
 
-  it("returns true for sustained high load (two weeks >= 75)", () => {
-    expect(shouldRecommendDeload(75, 60, 60, 75)).toBe(true);
-    expect(shouldRecommendDeload(80, 60, 60, 80)).toBe(true);
+  it("returns true for sustained overreach (two weeks >= 85)", () => {
+    expect(shouldRecommendDeload(85, 60, 60, 85)).toBe(true);
+    expect(shouldRecommendDeload(90, 60, 60, 90)).toBe(true);
+  });
+
+  it("returns false for sustained high but below 85", () => {
+    // PI 75-84 for two weeks should NOT trigger deload anymore (raised threshold)
+    expect(shouldRecommendDeload(75, 60, 60, 75)).toBe(false);
+    expect(shouldRecommendDeload(80, 60, 60, 80)).toBe(false);
   });
 
   it("returns false if only current week is high but previous is not", () => {
-    expect(shouldRecommendDeload(75, 60, 60, 60)).toBe(false);
+    expect(shouldRecommendDeload(85, 60, 60, 60)).toBe(false);
   });
 
   it("returns false if previous week PI is undefined", () => {
-    expect(shouldRecommendDeload(75, 60, 60, undefined)).toBe(false);
+    expect(shouldRecommendDeload(85, 60, 60, undefined)).toBe(false);
   });
 
   it("returns true when PI >= 70 and adherence < 50 (burning out)", () => {

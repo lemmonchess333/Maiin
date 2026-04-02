@@ -53,11 +53,11 @@ describe("calculateHealthScore", () => {
       defaultTargets,
       { workoutsToday: 1 }
     );
-    // 1 workout = 25 points (graduated)
-    expect(result.breakdown.workouts).toBe(25);
-    // Workout 25/35, nutrition 0/30, water 0/15 — all always available
-    // Steps not available. So 25/80 scaled = 31
-    expect(result.score).toBe(31);
+    // 1 workout = 30 points (graduated)
+    expect(result.breakdown.workouts).toBe(30);
+    // Workout 30/35, nutrition 0/30, water 0/15 — all always available
+    // Steps not available. So 30/80 scaled = 38
+    expect(result.score).toBe(38);
   });
 
   it("returns capped score between 0 and 100", () => {
@@ -116,13 +116,13 @@ describe("calculateHealthScore", () => {
     expect(result.breakdown.workouts).toBe(0);
   });
 
-  it("gives 25 workout points for 1 workout", () => {
+  it("gives 30 workout points for 1 workout", () => {
     const result = calculateHealthScore(
       { calories: 2000, protein: 150, mealCount: 3 },
       defaultTargets,
       { workoutsToday: 1 }
     );
-    expect(result.breakdown.workouts).toBe(25);
+    expect(result.breakdown.workouts).toBe(30);
   });
 
   it("gives 35 workout points for 2+ workouts", () => {
@@ -141,13 +141,13 @@ describe("calculateHealthScore", () => {
     expect(result3.breakdown.workouts).toBe(35);
   });
 
-  it("gives 35 workout points on rest day regardless of workout count", () => {
+  it("gives 28 workout points on rest day", () => {
     const result = calculateHealthScore(
       { calories: 2000, protein: 150, mealCount: 3 },
       defaultTargets,
       { workoutsToday: 0, isRestDay: true }
     );
-    expect(result.breakdown.workouts).toBe(35);
+    expect(result.breakdown.workouts).toBe(28);
   });
 
   it("redistributes weights correctly with graduated workout scoring", () => {
@@ -157,8 +157,8 @@ describe("calculateHealthScore", () => {
       defaultTargets,
       { workoutsToday: 1, waterGlasses: 8, waterTarget: 8 }
     );
-    // workout 25/35 + nutrition 30/30 + water 15/15 = 70/80 → 88
-    expect(result.score).toBe(88);
+    // workout 30/35 + nutrition 30/30 + water 15/15 = 75/80 → 94
+    expect(result.score).toBe(94);
   });
 });
 

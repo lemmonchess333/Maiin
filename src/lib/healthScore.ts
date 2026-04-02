@@ -41,9 +41,10 @@ export function calculateHealthScore(
   // Graduated: 2+ workouts = full credit, 1 workout = partial (no completion status on docs)
   const isRestDay = e.isRestDay ?? false;
   const workoutsToday = e.workoutsToday ?? 0;
-  const workoutScore = isRestDay ? 35
+  // Rest is healthy, but working out is better. 1 workout > rest > 0 workouts.
+  const workoutScore = isRestDay ? 28
     : workoutsToday >= 2 ? 35
-    : workoutsToday === 1 ? 25
+    : workoutsToday === 1 ? 30
     : 0;
 
   // --- Nutrition (30 pts) ---

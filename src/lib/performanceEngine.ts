@@ -70,19 +70,41 @@ export function computeRunLoadScore(agg: WeeklyAggregates, bl: Baseline): number
   return clamp(raw * 67 + qualityBonus);
 }
 
-export function computeRecoveryScore(agg: WeeklyAggregates): number {
+export function computeRecoveryScore(
+  agg: WeeklyAggregates,
+  goal?: "cut" | "lean bulk" | "recomp" | string,
+): number {
   // Recovery is tricky without HRV/sleep. Use proxies:
   // 1. Bodyweight stability (if available) — stable = good
   // 2. Session frequency not spiking
   // 3. Nutrition logged (proxy for lifestyle consistency)
   let score = 60; // neutral starting point
 
-  // Bodyweight stability: ±0.5kg change = good, >2kg = concerning
+  // Bodyweight stability — goal-aware thresholds
+  // Cuts: weight loss is expected, so allow larger drops before penalizing
+  // Bulks: weight gain is expected, so allow moderate gain
   if (agg.bwCurrent7dAvg != null && agg.bwPrevious7dAvg != null) {
-    const delta = Math.abs(agg.bwCurrent7dAvg - agg.bwPrevious7dAvg);
-    if (delta <= 0.5) score += 20;
-    else if (delta <= 1.0) score += 10;
-    else if (delta > 2.0) score -= 15;
+    const rawDelta = agg.bwCurrent7dAvg - agg.bwPrevious7dAvg; // negative = weight loss
+    const absDelta = Math.abs(rawDelta);
+
+    if (goal === "cut") {
+      // On a cut: losing up to 1kg/week is expected and healthy
+      if (rawDelta <= 0 && absDelta <= 1.0) score += 20;      // expected loss
+      else if (rawDelta <= 0 && absDelta <= 2.0) score += 10;  // aggressive but OK
+      else if (rawDelta > 0 && absDelta <= 0.5) score += 10;   // small fluctuation up
+      else if (absDelta > 2.0) score -= 15;                    // too fast either way
+    } else if (goal === "lean bulk") {
+      // On a bulk: gaining up to 0.5kg/week is expected
+      if (rawDelta >= 0 && absDelta <= 0.5) score += 20;       // expected gain
+      else if (rawDelta >= 0 && absDelta <= 1.0) score += 10;  // moderate gain
+      else if (rawDelta < 0 && absDelta <= 0.5) score += 10;   // small fluctuation down
+      else if (absDelta > 2.0) score -= 15;                    // concerning either way
+    } else {
+      // Recomp / unknown: stability is the goal
+      if (absDelta <= 0.5) score += 20;
+      else if (absDelta <= 1.0) score += 10;
+      else if (absDelta > 2.0) score -= 15;
+    }
   }
 
   // Meal tracking consistency boosts confidence in recovery
@@ -102,6 +124,7 @@ export function computeAdherenceScore(
   targetWorkouts: number,
   targetCalories: number | null,
   targetProtein: number | null,
+  goal?: string,
 ): number {
   let score = 0;
   let factors = 0;
@@ -114,12 +137,14 @@ export function computeAdherenceScore(
     factors++;
   }
 
-  // Calorie adherence
+  // Calorie adherence — goal-aware tolerance
+  // Cuts need tighter bounds (±10%) since overeating undermines the deficit
+  // Bulks/recomp can be looser (±15%)
   if (targetCalories && agg.mealDaysLogged >= 3 && agg.avgDailyCalories > 0) {
     const calRatio = agg.avgDailyCalories / targetCalories;
-    // 0.85–1.15 = perfect, deductions outside
+    const tolerance = goal === "cut" ? 0.10 : 0.15;
     const calScore =
-      calRatio >= 0.85 && calRatio <= 1.15
+      calRatio >= (1 - tolerance) && calRatio <= (1 + tolerance)
         ? 100
         : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
     score += calScore;
@@ -175,8 +200,8 @@ export function shouldRecommendDeload(
 ): boolean {
   // PI ≥ 80 with poor recovery
   if (currentPI >= 80 && recoveryScore < 45) return true;
-  // Sustained high load (two weeks in a row ≥ 75)
-  if (currentPI >= 75 && previousWeekPI != null && previousWeekPI >= 75) return true;
+  // Sustained high load (two weeks in a row ≥ 85 — overreach territory)
+  if (currentPI >= 85 && previousWeekPI != null && previousWeekPI >= 85) return true;
   // High load with poor adherence (burning out)
   if (currentPI >= 70 && adherenceScore < 50) return true;
   return false;
@@ -287,6 +312,7 @@ export function computePerformanceIndex(
     weeklyWorkoutsTarget?: number;
     targetCalories?: number | null;
     targetProtein?: number | null;
+    goal?: string;
   },
   previousWeekPI?: number,
 ): PerformanceDoc {
@@ -294,15 +320,24 @@ export function computePerformanceIndex(
 
   const liftLoadScore = computeLiftLoadScore(currentWeek, bl);
   const runLoadScore = computeRunLoadScore(currentWeek, bl);
-  const recoveryScore = computeRecoveryScore(currentWeek);
+  const recoveryScore = computeRecoveryScore(currentWeek, profile.goal);
   const adherenceScore = computeAdherenceScore(
     currentWeek,
     profile.weeklyWorkoutsTarget || 4,
     profile.targetCalories ?? null,
     profile.targetProtein ?? null,
+    profile.goal,
   );
 
-  const loadScore = PI_WEIGHTS.liftInLoad * liftLoadScore + PI_WEIGHTS.runInLoad * runLoadScore;
+  // Goal-dependent lift/run weighting within load score
+  // Strength-focused goals weight lifting higher; endurance goals weight running higher
+  let liftW: number = PI_WEIGHTS.liftInLoad;
+  let runW: number = PI_WEIGHTS.runInLoad;
+  if (profile.goal === "lean bulk") { liftW = 0.65; runW = 0.35; }
+  else if (profile.goal === "cut") { liftW = 0.6; runW = 0.4; }
+  // "recomp" and unknown stay at default 0.5/0.5
+
+  const loadScore = liftW * liftLoadScore + runW * runLoadScore;
   const pi = clamp(
     PI_WEIGHTS.load * loadScore + PI_WEIGHTS.recovery * recoveryScore + PI_WEIGHTS.adherence * adherenceScore,
   );
@@ -311,7 +346,10 @@ export function computePerformanceIndex(
   const runVolume = safeRatio(currentWeek.runKm, bl.runKm);
   const confidence = computeConfidence(currentWeek, bl);
   const loadBand = computeLoadBand(pi);
-  const deloadRecommended = shouldRecommendDeload(pi, recoveryScore, adherenceScore, previousWeekPI);
+  // Don't recommend deload when baseline is insufficient — score is unreliable
+  const deloadRecommended = bl.weeksUsed >= 3
+    ? shouldRecommendDeload(pi, recoveryScore, adherenceScore, previousWeekPI)
+    : false;
 
   const partial = {
     performanceIndex: pi,

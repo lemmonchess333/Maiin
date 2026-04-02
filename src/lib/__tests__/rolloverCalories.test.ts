@@ -25,7 +25,7 @@ describe("calculateRollover", () => {
     };
     const result = calculateRollover(2000, dailyCalories);
     // 4 days elapsed, expected 8000, consumed 6000, rollover = 2000
-    expect(result.rolloverAmount).toBe(2000);
+    expect(result.underspendBuffer).toBe(2000);
     expect(result.adjustedTarget).toBe(4000);
   });
 
@@ -39,7 +39,7 @@ describe("calculateRollover", () => {
       "2026-03-12": 2500,
     };
     const result = calculateRollover(2000, dailyCalories);
-    expect(result.rolloverAmount).toBe(0);
+    expect(result.underspendBuffer).toBe(0);
     expect(result.adjustedTarget).toBe(2000);
   });
 
@@ -53,7 +53,7 @@ describe("calculateRollover", () => {
       "2026-03-12": 2000,
     };
     const result = calculateRollover(2000, dailyCalories);
-    expect(result.rolloverAmount).toBe(0);
+    expect(result.underspendBuffer).toBe(0);
     expect(result.adjustedTarget).toBe(2000);
   });
 
