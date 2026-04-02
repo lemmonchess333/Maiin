@@ -543,7 +543,7 @@ export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
 }
 
 export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
-  return workouts.every((day) => day.completed);
+  return workouts.every((day) => day.completed || day.skipped);
 }
 
 export function advanceWeek(state: ProgramState): ProgramState {

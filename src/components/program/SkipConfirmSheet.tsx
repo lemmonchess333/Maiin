@@ -1,0 +1,53 @@
+import { Drawer } from "vaul";
+
+interface SkipConfirmSheetProps {
+  open: boolean;
+  sessionName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export default function SkipConfirmSheet({
+  open,
+  sessionName,
+  onConfirm,
+  onCancel,
+}: SkipConfirmSheetProps) {
+  return (
+    <Drawer.Root open={open} onOpenChange={(o) => !o && onCancel()}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[102]" />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[103] rounded-t-2xl bg-background border-t border-border safe-area-pb flex flex-col">
+          <div className="px-5 pb-6 pt-3">
+            {/* Drag handle */}
+            <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+
+            <div className="mt-5 space-y-2">
+              <p className="text-base font-semibold text-foreground">
+                Skip {sessionName}?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can still do this workout later from the weekly view.
+              </p>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <button
+                onClick={onConfirm}
+                className="w-full py-3 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+              >
+                Skip
+              </button>
+              <button
+                onClick={onCancel}
+                className="w-full py-3 rounded-xl text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}

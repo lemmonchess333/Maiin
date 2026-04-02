@@ -8,6 +8,7 @@ import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import DayStepIndicator from "@/components/program/DayStepIndicator";
 import WeekContentCard from "@/components/program/WeekContentCard";
+import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
@@ -66,6 +67,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     prescription,
     loading,
     completeWorkoutDay,
+    skipWorkoutDay,
     advanceToNextWeek,
     logExercise,
     updateSettings,
@@ -88,6 +90,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
   const [activeView, setActiveView] = useState<"today" | "week">("today");
 
+
+  // Skip confirmation state
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
 
   // Exercise card state — read-only, tap opens info sheet
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
@@ -212,10 +218,24 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
   }, [profile]);
 
-  if (loading || !programState || !prescription) {
+  if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!programState || !prescription) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center gap-3">
+        <p className="text-sm text-muted-foreground">Failed to load programme</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
+        >
+          <RefreshCw className="w-4 h-4" /> Retry
+        </button>
       </div>
     );
   }
@@ -226,15 +246,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const displayWorkouts = isViewingHistory ? (viewedWorkouts ?? []) : programState.workouts;
   const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
 
-  const completedCount = displayWorkouts.filter((d) => d.completed).length;
-  const totalDays = displayWorkouts.length;
-  const allComplete = completedCount === totalDays && totalDays > 0;
+  const allComplete = displayWorkouts.length > 0 && displayWorkouts.every((d) => d.completed || d.skipped);
 
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
   // Week view: first incomplete day index and day selection
-  const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed);
+  const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed && !d.skipped);
 
   // Clamp selectedDay to valid range
   const clampedSelectedDay = displayWorkouts.length > 0
@@ -251,7 +269,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Today's workout = first incomplete day (same logic as Home page)
   const todayWorkout = !isViewingHistory
-    ? programState.workouts.find((d) => !d.completed) ?? null
+    ? programState.workouts.find((d) => !d.completed && !d.skipped) ?? null
     : null;
   const todayWorkoutIndex = todayWorkout
     ? programState.workouts.indexOf(todayWorkout)
@@ -259,7 +277,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Next workout after today (for rest day preview)
   const nextUpWorkout = !isViewingHistory
-    ? programState.workouts.find((d) => !d.completed) ?? null
+    ? programState.workouts.find((d) => !d.completed && !d.skipped) ?? null
     : null;
   const nextUpDayName = nextUpWorkout?.dayName ?? null;
 
@@ -502,7 +520,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 </button>
                 <div className="flex items-center justify-center mt-2">
                   <button
-                    onClick={() => completeWorkoutDay(todayWorkoutIndex)}
+                    onClick={() => { setSkipTargetDay(todayWorkoutIndex); setShowSkipConfirm(true); }}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Skip Session
@@ -589,7 +607,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <button
                   onClick={() => {
                     // Find first incomplete workout and start it
-                    const idx = programState.workouts.findIndex((d) => !d.completed);
+                    const idx = programState.workouts.findIndex((d) => !d.completed && !d.skipped);
                     if (idx >= 0) setSessionDayIndex(idx);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-border/50 text-muted-foreground text-sm font-medium active:scale-[0.97] transition-all hover:border-primary/30"
@@ -719,27 +737,71 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 firstIncompleteIndex={firstIncompleteIndex}
               />
 
-              {/* Content Pane — one day at a time */}
+              {/* Content Pane — one day at a time, swipeable */}
               {displayWorkouts[selectedDay] && (
+                <motion.div
+                  drag={reorderMode ? false : "x"}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.15}
+                  dragDirectionLock
+                  onDragEnd={(_e, info) => {
+                    const threshold = 50;
+                    if (info.offset.x < -threshold && selectedDay < displayWorkouts.length - 1) {
+                      haptic("light");
+                      handleDaySelect(selectedDay + 1);
+                    } else if (info.offset.x > threshold && selectedDay > 0) {
+                      haptic("light");
+                      handleDaySelect(selectedDay - 1);
+                    }
+                  }}
+                  style={{ touchAction: "pan-y" }}
+                >
                 <AnimatePresence mode="wait" custom={dayDirection}>
                   <WeekContentCard
                     key={selectedDay}
                     day={displayWorkouts[selectedDay]}
                     dayIndex={selectedDay}
-                    status={displayWorkouts[selectedDay].completed ? "completed" : selectedDay === firstIncompleteIndex ? "current" : "future"}
+                    status={
+                      displayWorkouts[selectedDay].completed ? "completed"
+                      : displayWorkouts[selectedDay].skipped ? "skipped"
+                      : selectedDay === firstIncompleteIndex ? "current"
+                      : "future"
+                    }
                     direction={dayDirection}
                     muscleGroups={getDayMuscleGroups(displayWorkouts[selectedDay].exercises)}
                     estimatedMinutes={Math.round(displayWorkouts[selectedDay].exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)}
                     onStartWorkout={() => setSessionDayIndex(selectedDay)}
-                    onSkipSession={() => completeWorkoutDay(selectedDay)}
+                    onSkipSession={() => { setSkipTargetDay(selectedDay); setShowSkipConfirm(true); }}
                     onExerciseTap={(name) => setDemoExercise(name)}
+                    onDoRetroactiveWorkout={() => setSessionDayIndex(selectedDay)}
                     isViewingHistory={isViewingHistory}
                     sessionActive={sessionDayIndex === selectedDay}
                   />
                 </AnimatePresence>
+                </motion.div>
               )}
         </div>
       )}
+
+      {/* Skip Confirmation Sheet */}
+      <SkipConfirmSheet
+        open={showSkipConfirm}
+        sessionName={skipTargetDay !== null ? (displayWorkouts[skipTargetDay]?.dayName ?? "") : ""}
+        onConfirm={async () => {
+          if (skipTargetDay !== null) {
+            await skipWorkoutDay(skipTargetDay);
+            haptic("medium");
+            // Auto-advance to next incomplete day
+            const nextIncomplete = displayWorkouts.findIndex((d, i) => i !== skipTargetDay && !d.completed && !d.skipped);
+            if (nextIncomplete >= 0) {
+              handleDaySelect(nextIncomplete);
+            }
+          }
+          setShowSkipConfirm(false);
+          setSkipTargetDay(null);
+        }}
+        onCancel={() => { setShowSkipConfirm(false); setSkipTargetDay(null); }}
+      />
 
       {/* Settings Panel */}
       <AnimatePresence>
