@@ -31,7 +31,7 @@ export default function RunCTACard({ todayRun, navigate }: {
     <motion.button whileTap={{ scale: 0.97 }}
       onClick={function() { haptic(); navigate("/run" + templateParam); }}
       className="w-full p-4 rounded-xl bg-card text-left"
-      style={{ backgroundColor: THEME.running + "14", boxShadow: `inset 3px 0 0 ${THEME.running}60, var(--ds-shadow-run-glow)` }}>
+      style={{ backgroundColor: THEME.running + "14", boxShadow: 'var(--ds-shadow-run-glow)' }}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: THEME.running + "18" }}>
           <RunIconComp className="w-5 h-5" style={{ color: THEME.running }} />
