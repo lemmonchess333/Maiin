@@ -24,7 +24,7 @@ export const phaseConfig: Record<
   },
   cut: {
     calorieMultiplier: 0.85,
-    proteinRatio: 2.4,
+    proteinRatio: 2.2,
     fatRatio: 0.3,
     plateauSensitivity: 0.8,
   },
@@ -71,10 +71,10 @@ export function detectPlateau(
   if (avgLiftChange < -threshold) {
     return {
       status: "regressing",
-      message: "Strength declining. Consider a deload week or reduce volume by 10%.",
-      calorieAdjust: 100,
+      message: "Strength declining — reduce volume 10% this week to recover.",
+      calorieAdjust: 0,
       volumeAdjust: -0.1,
-      macroNote: "Increase carbs slightly to support recovery.",
+      macroNote: "Maintain current intake. Prioritize sleep and recovery.",
     };
   }
 

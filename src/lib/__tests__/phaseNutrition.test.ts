@@ -64,9 +64,9 @@ describe("getDayAdjustment", () => {
       expect(adj.proteinMultiplier).toBe(2.0);
     });
 
-    it("returns cut protein multiplier of 2.4", () => {
+    it("returns cut protein multiplier of 2.2", () => {
       const adj = getDayAdjustment("lift", "cut");
-      expect(adj.proteinMultiplier).toBe(2.4);
+      expect(adj.proteinMultiplier).toBe(2.2);
     });
 
     it("returns default 2.0 multiplier for unknown phase", () => {
@@ -170,7 +170,7 @@ describe("getDayAdjustment", () => {
       hypertrophy: 2.0,
       deload: 1.8,
       race_prep: 1.6,
-      cut: 2.4,
+      cut: 2.2,
       base: 2.0,
     };
 
@@ -309,7 +309,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "both");
     // cut overrides: +250 cal (cut takes precedence over strength for both)
     expect(result.calories).toBe(2750); // 2500 + 250
-    expect(result.protein).toBe(Math.round(2.4 * 85)); // 204 — cut goal uses cut protein multiplier
+    expect(result.protein).toBe(Math.round(2.2 * 85)); // 187 — cut goal uses cut protein multiplier
     expect(result.carbs).toBe(340); // 300 + 40
   });
 });

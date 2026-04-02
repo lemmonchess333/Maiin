@@ -27,7 +27,7 @@ import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { estimateBMR } from "@/utils/calorieBalance";
 import { calcDailyBurn } from "@/utils/dailyBurn";
-import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
+import type { FitnessGoal } from "@/lib/tdee";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -160,9 +160,8 @@ export default function Home() {
     const a = profile?.age || 30;
     const s = (profile?.sex as "male" | "female") || "male";
     const bmr = estimateBMR(wKg, hCm, a, s);
-    const actLevel = (profile?.activityLevel as ActivityLevel) || "moderate";
     const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
-    return calcDailyBurn(bmr, actLevel, phase, todayWorkoutCals, todayRunCals, 0);
+    return calcDailyBurn(bmr, phase, todayWorkoutCals, todayRunCals, 0);
   }, [profile, todayWorkoutCals, todayRunCals]);
 
   // Performance data for InsightStrip

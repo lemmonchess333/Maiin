@@ -1,12 +1,8 @@
-import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
+import type { FitnessGoal } from "@/lib/tdee";
 
-const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
-  sedentary: 1.2,
-  light: 1.375,
-  moderate: 1.55,
-  active: 1.725,
-  very_active: 1.9,
-};
+/** NEAT multiplier — covers thermic effect of food + basic daily movement.
+ *  Structured exercise is added explicitly via workoutCals/runCals/stepCals. */
+const NEAT_MULTIPLIER = 1.2;
 
 const PHASE_OFFSETS: Record<FitnessGoal, number> = {
   cut: -500,
@@ -28,13 +24,12 @@ export interface DailyBurn {
 
 export function calcDailyBurn(
   bmr: number,
-  activityLevel: ActivityLevel,
   phase: FitnessGoal,
   workoutCals: number,
   runCals: number,
   stepCals: number,
 ): DailyBurn {
-  const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
+  const tdee = Math.round(bmr * NEAT_MULTIPLIER);
   const phaseAdjustedTdee = tdee + PHASE_OFFSETS[phase];
   const dailyBudget = phaseAdjustedTdee + workoutCals + runCals + stepCals;
 

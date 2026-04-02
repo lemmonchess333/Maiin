@@ -72,9 +72,9 @@ describe("calculateTDEE", () => {
     expect(result.protein).toBe(Math.round(1.8 * 80));
   });
 
-  it("floors carbs at 0 when calories are very low", () => {
+  it("enforces minimum 50g carbs even on aggressive cuts", () => {
     // Very low weight and cut to make calories potentially negative for carbs
     const result = calculateTDEE(40, 150, 60, "sedentary", "cut", "female");
-    expect(result.carbs).toBeGreaterThanOrEqual(0);
+    expect(result.carbs).toBeGreaterThanOrEqual(50);
   });
 });

@@ -81,6 +81,27 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("invalid-argument", "programState is required.");
     }
 
+    // Validate required profile fields
+    const requiredFields = ["weightKg", "heightCm", "age", "sex", "activityLevel"];
+    for (const field of requiredFields) {
+      if (profileData[field] === undefined || profileData[field] === null || profileData[field] === "") {
+        throw new functions.https.HttpsError("invalid-argument", `Missing required field: ${field}`);
+      }
+    }
+
+    // Validate age range (C6: server-side enforcement — client blocks <16 but API calls can bypass)
+    if (typeof profileData.age !== "number" || profileData.age < 16 || profileData.age > 120) {
+      throw new functions.https.HttpsError("invalid-argument", "Age must be between 16 and 120.");
+    }
+
+    // Validate body metrics are in sane ranges
+    if (typeof profileData.weightKg !== "number" || profileData.weightKg < 30 || profileData.weightKg > 300) {
+      throw new functions.https.HttpsError("invalid-argument", "Weight must be between 30 and 300 kg.");
+    }
+    if (typeof profileData.heightCm !== "number" || profileData.heightCm < 120 || profileData.heightCm > 230) {
+      throw new functions.https.HttpsError("invalid-argument", "Height must be between 120 and 230 cm.");
+    }
+
     // Sanitize: strip fields that clients must never set
     const clientForbidden = ["stripeCustomerId", "stripeSubscriptionId"];
     for (const key of clientForbidden) {

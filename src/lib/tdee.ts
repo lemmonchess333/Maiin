@@ -64,9 +64,9 @@ export function calculateTDEE(
   const fatCals = Math.round(targetCalories * FAT_CALORIE_FRACTION);
   const fat = Math.round(fatCals / 9);
 
-  // Carbs: remainder
+  // Carbs: remainder (minimum 50g for brain function and training performance)
   const carbCals = Math.max(0, targetCalories - proteinCals - fatCals);
-  const carbs = Math.round(carbCals / 4);
+  const carbs = Math.max(50, Math.round(carbCals / 4));
 
   return {
     bmr,
