@@ -40,6 +40,7 @@ export interface ProgramExercise {
   movementCategory: MovementCategory;
   sets: number;
   reps: number;
+  baseReps?: number; // original prescribed rep target — used as reset anchor on weight increase
   weight: number;
   progressionType: ProgressionType;
   // Exercise-specific progression
@@ -142,6 +143,7 @@ export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string;
     movementCategory: ex.movementCategory ?? "horizontal_push",
     sets: ex.sets ?? 3,
     reps: ex.reps ?? 8,
+    baseReps: ex.baseReps ?? ex.reps ?? 8,
     weight: ex.weight ?? 0,
     progressionType: ex.progressionType ?? "linear",
     lastSuccessfulWeight: ex.lastSuccessfulWeight ?? ex.weight ?? 0,

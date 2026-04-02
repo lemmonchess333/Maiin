@@ -15,6 +15,7 @@ function makeTestExercise(overrides: Partial<ProgramExercise> = {}): ProgramExer
     movementCategory: "horizontal_push",
     sets: 3,
     reps: 6,
+    baseReps: 6,
     weight: 60,
     progressionType: "double",
     lastSuccessfulWeight: 60,
@@ -260,5 +261,85 @@ describe("generateWeekPrescription", () => {
     expect(w1.intensityMultiplier).toBe(1.025);
     expect(w2.intensityMultiplier).toBe(1.050);
     expect(w3.intensityMultiplier).toBe(1.075);
+  });
+});
+
+// ── M7: baseReps drift prevention ───────────────
+
+describe("applyProgression — baseReps anchor (M7)", () => {
+  it("resets to baseReps on weight increase, not drifted reps", () => {
+    // Simulate a scenario where reps have drifted to 8 but baseReps is 6
+    const ex = makeTestExercise({ reps: 8, baseReps: 6, weight: 60 });
+    // Hit ceiling (8+2=10) → weight increase, reps should reset to baseReps=6
+    const result = applyProgression(ex, 10, 60, "recomp", false);
+    expect(result.weight).toBe(62.5);
+    expect(result.reps).toBe(6); // reset to baseReps, not 8
+  });
+
+  it("resets to baseReps in linear progression too", () => {
+    const ex = makeTestExercise({
+      progressionType: "linear",
+      reps: 14,
+      baseReps: 12,
+      weight: 30,
+    });
+    // Hit ceiling (14+2=16) → weight increase
+    const result = applyProgression(ex, 16, 30, "recomp", false);
+    expect(result.weight).toBe(32.5);
+    expect(result.reps).toBe(12); // baseReps anchor
+  });
+
+  it("falls back to exercise.reps when baseReps is undefined (backward compat)", () => {
+    const ex = makeTestExercise({ reps: 6, weight: 60 });
+    delete (ex as unknown as Record<string, unknown>).baseReps;
+    const result = applyProgression(ex, 8, 60, "recomp", false);
+    expect(result.weight).toBe(62.5);
+    expect(result.reps).toBe(6); // falls back to exercise.reps
+  });
+
+  it("generated exercises have baseReps set", () => {
+    const { workouts } = generateProgram("recomp", 3);
+    for (const day of workouts) {
+      for (const ex of day.exercises) {
+        expect(ex.baseReps).toBeDefined();
+        expect(ex.baseReps).toBe(ex.reps);
+      }
+    }
+  });
+});
+
+// ── M8: Legs B differentiation ──────────────────
+
+describe("generateProgram — Legs B differentiation (M8)", () => {
+  it("Legs B leads with hip-dominant, Legs A leads with knee-dominant", () => {
+    const { workouts } = generateProgram("recomp", 6);
+    const legsA = workouts.find(d => d.dayName === "Legs");
+    const legsB = workouts.find(d => d.dayName === "Legs B");
+    expect(legsA).toBeDefined();
+    expect(legsB).toBeDefined();
+    // Legs A first exercise is knee_dominant (squat)
+    expect(legsA!.exercises[0].movementCategory).toBe("knee_dominant");
+    // Legs B first exercise is hip_dominant (deadlift variant)
+    expect(legsB!.exercises[0].movementCategory).toBe("hip_dominant");
+  });
+
+  it("Legs B has different exercise order from Legs A", () => {
+    const { workouts } = generateProgram("recomp", 6);
+    const legsA = workouts.find(d => d.dayName === "Legs")!;
+    const legsB = workouts.find(d => d.dayName === "Legs B")!;
+    const categoriesA = legsA.exercises.map(e => e.movementCategory);
+    const categoriesB = legsB.exercises.map(e => e.movementCategory);
+    // First two exercises should be in opposite order
+    expect(categoriesA[0]).toBe("knee_dominant");
+    expect(categoriesA[1]).toBe("hip_dominant");
+    expect(categoriesB[0]).toBe("hip_dominant");
+    expect(categoriesB[1]).toBe("knee_dominant");
+  });
+
+  it("PPL×2+FB also uses differentiated Legs B", () => {
+    const { workouts } = generateProgram("recomp", 7);
+    const legsB = workouts.find(d => d.dayName === "Legs B");
+    expect(legsB).toBeDefined();
+    expect(legsB!.exercises[0].movementCategory).toBe("hip_dominant");
   });
 });
