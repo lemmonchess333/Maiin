@@ -9,6 +9,7 @@ import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import DayStepIndicator from "@/components/program/DayStepIndicator";
 import WeekContentCard from "@/components/program/WeekContentCard";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
+import SetNextWorkoutSheet from "@/components/program/SetNextWorkoutSheet";
 import { buildDisplayDays } from "@/components/program/weekViewTypes";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
@@ -71,6 +72,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     loading,
     completeWorkoutDay,
     skipWorkoutDay,
+    setNextWorkout,
     advanceToNextWeek,
     logExercise,
     updateSettings,
@@ -97,6 +99,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Skip confirmation state
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
+
+  // "Set as Next Workout" state
+  const [showSetNextSheet, setShowSetNextSheet] = useState(false);
+  const [pendingNextWorkoutIndex, setPendingNextWorkoutIndex] = useState<number | null>(null);
 
   // Completion animation state
   const [animatingCompletion, setAnimatingCompletion] = useState<number | null>(null);
@@ -286,10 +292,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
-  // Week view: first incomplete day index (in displayDays, skipping rest)
-  const firstIncompleteIndex = displayDays.findIndex(
-    d => d.type === "workout" && !d.workout.completed && !d.workout.skipped,
-  );
+  // Week view: current workout day index (respects nextWorkoutOverride)
+  const firstIncompleteIndex = (() => {
+    if (programState?.nextWorkoutOverride != null) {
+      const idx = displayDays.findIndex(
+        d => d.type === "workout"
+          && d.workoutIndex === programState.nextWorkoutOverride
+          && !d.workout.completed && !d.workout.skipped,
+      );
+      if (idx >= 0) return idx;
+    }
+    return displayDays.findIndex(
+      d => d.type === "workout" && !d.workout.completed && !d.workout.skipped,
+    );
+  })();
 
   // Clamp selectedDay to displayDays range
   const clampedSelectedDay = displayDays.length > 0
@@ -306,9 +322,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     setAnimatingCompletion(null);
   };
 
-  // Today's workout = first incomplete day (same logic as Home page)
+  // Today's workout — respects nextWorkoutOverride
   const todayWorkout = !isViewingHistory
-    ? programState.workouts.find((d) => !d.completed && !d.skipped) ?? null
+    ? (programState.nextWorkoutOverride != null
+        && programState.workouts[programState.nextWorkoutOverride]
+        && !programState.workouts[programState.nextWorkoutOverride].completed
+        && !programState.workouts[programState.nextWorkoutOverride].skipped
+      ? programState.workouts[programState.nextWorkoutOverride]
+      : programState.workouts.find((d) => !d.completed && !d.skipped) ?? null)
     : null;
   const todayWorkoutIndex = todayWorkout
     ? programState.workouts.indexOf(todayWorkout)
@@ -676,55 +697,71 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
       {/* ═══ WEEK VIEW ═══ */}
       {effectiveView === "week" && (
-        <div className="space-y-4">
-              {/* Phase + Week Header */}
-              <div>
-                <div className="flex items-center justify-between px-1 py-2">
-                  <button
-                    onClick={goBack}
-                    disabled={!canGoBack}
-                    className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
-                  >
-                    <ChevronLeft className="w-4 h-4 text-foreground" />
-                  </button>
+        <div className="space-y-3">
+              {/* ── Sticky: Week header + Step indicator ── */}
+              <div className="sticky top-0 z-30 bg-background pb-2" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                {/* Week header */}
+                <div>
+                  <div className="flex items-center justify-between px-1 py-2">
+                    <button
+                      onClick={goBack}
+                      disabled={!canGoBack}
+                      className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
+                    >
+                      <ChevronLeft className="w-4 h-4 text-foreground" />
+                    </button>
 
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-foreground tracking-tight">
-                      Week {displayWeekNumber}
-                      {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
-                    </p>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-foreground tracking-tight">
+                        Week {displayWeekNumber}
+                        {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={goForward}
+                      disabled={!canGoForward}
+                      className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
+                    >
+                      <ChevronRight className="w-4 h-4 text-foreground" />
+                    </button>
                   </div>
+                  {!canGoBack && !canGoForward && (
+                    <p className="text-xs text-muted-foreground text-center mt-1">
+                      Complete all sessions to advance to Week {displayWeekNumber + 1}
+                    </p>
+                  )}
 
-                  <button
-                    onClick={goForward}
-                    disabled={!canGoForward}
-                    className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
-                  >
-                    <ChevronRight className="w-4 h-4 text-foreground" />
-                  </button>
+                  <div className="flex items-center justify-center gap-2 px-1 mt-1 mb-1">
+                    <button
+                      onClick={function() { if (phaseLocked) setShowProSheet(true); }}
+                      className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full bg-primary text-white text-xs font-semibold", phaseLocked ? "cursor-pointer" : "cursor-default")}
+                    >
+                      {goalLabel(programState.goal)}
+                      {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" />}
+                    </button>
+                    <button
+                      onClick={function() { if (phaseLocked) setShowProSheet(true); }}
+                      className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-foreground text-xs font-medium", phaseLocked ? "cursor-pointer" : "cursor-default")}
+                    >
+                      {prescription.deload ? "Deload" : "Progression"}
+                      {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0 text-muted-foreground" />}
+                    </button>
+                  </div>
                 </div>
-                {!canGoBack && !canGoForward && (
-                  <p className="text-xs text-muted-foreground text-center mt-1">
-                    Complete all sessions to advance to Week {displayWeekNumber + 1}
-                  </p>
-                )}
 
-                <div className="flex items-center justify-center gap-2 px-1 mt-1 mb-3">
-                  <button
-                    onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                    className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full bg-primary text-white text-xs font-semibold", phaseLocked ? "cursor-pointer" : "cursor-default")}
-                  >
-                    {goalLabel(programState.goal)}
-                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" />}
-                  </button>
-                  <button
-                    onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                    className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-foreground text-xs font-medium", phaseLocked ? "cursor-pointer" : "cursor-default")}
-                  >
-                    {prescription.deload ? "Deload" : "Progression"}
-                    {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0 text-muted-foreground" />}
-                  </button>
-                </div>
+                {/* Day Step Indicator */}
+                <DayStepIndicator
+                  days={displayDays}
+                  selectedIndex={selectedDay}
+                  onSelect={handleDaySelect}
+                  firstIncompleteIndex={firstIncompleteIndex}
+                  animatingCompletion={
+                    animatingCompletion !== null
+                      ? displayDays.findIndex(d => d.type === "workout" && d.workoutIndex === animatingCompletion)
+                      : null
+                  }
+                />
               </div>
 
               {/* Phase explanation card */}
@@ -767,19 +804,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   {advancing ? "Advancing..." : "Advance to Next Week"}
                 </button>
               )}
-
-              {/* Day Step Indicator */}
-              <DayStepIndicator
-                days={displayDays}
-                selectedIndex={selectedDay}
-                onSelect={handleDaySelect}
-                firstIncompleteIndex={firstIncompleteIndex}
-                animatingCompletion={
-                  animatingCompletion !== null
-                    ? displayDays.findIndex(d => d.type === "workout" && d.workoutIndex === animatingCompletion)
-                    : null
-                }
-              />
 
               {/* Content Pane — one day at a time, swipeable */}
               {displayDays[selectedDay] && (() => {
@@ -866,6 +890,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         editMode={reorderMode && !isRestDay}
                         editContent={weekEditContent}
                         onAddExercise={() => { setAddPickerDayIndex(workoutIdx); setShowAddPicker(true); }}
+                        onSetAsNextWorkout={status === "future" && !isViewingHistory ? () => { setPendingNextWorkoutIndex(workoutIdx); setShowSetNextSheet(true); } : undefined}
                       />
                     </AnimatePresence>
                   </motion.div>
@@ -894,6 +919,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           setSkipTargetDay(null);
         }}
         onCancel={() => { setShowSkipConfirm(false); setSkipTargetDay(null); }}
+      />
+
+      {/* Set Next Workout Sheet */}
+      <SetNextWorkoutSheet
+        open={showSetNextSheet}
+        sessionName={pendingNextWorkoutIndex !== null ? (displayWorkouts[pendingNextWorkoutIndex]?.dayName ?? "") : ""}
+        onConfirm={async () => {
+          if (pendingNextWorkoutIndex !== null) {
+            await setNextWorkout(pendingNextWorkoutIndex);
+            haptic("medium");
+            // Select the overridden day in the step indicator
+            const targetDisplayIdx = displayDays.findIndex(
+              d => d.type === "workout" && d.workoutIndex === pendingNextWorkoutIndex,
+            );
+            if (targetDisplayIdx >= 0) {
+              handleDaySelect(targetDisplayIdx);
+            }
+          }
+          setShowSetNextSheet(false);
+          setPendingNextWorkoutIndex(null);
+        }}
+        onCancel={() => { setShowSetNextSheet(false); setPendingNextWorkoutIndex(null); }}
       />
 
       {/* Settings Panel */}

@@ -571,5 +571,6 @@ export function advanceWeek(state: ProgramState): ProgramState {
     workouts,
     weekHistory: history,
     updatedAt: Date.now(),
+    nextWorkoutOverride: undefined,
   };
 }

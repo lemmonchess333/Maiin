@@ -120,6 +120,7 @@ export interface ProgramState {
   weekHistory?: WeekSnapshot[];
   runDays?: ScheduledRunDay[];
   runPlan?: RunPlan;
+  nextWorkoutOverride?: number;
 }
 
 /* ================================
