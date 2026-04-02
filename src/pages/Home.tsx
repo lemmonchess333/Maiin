@@ -286,7 +286,8 @@ export default function Home() {
 
   return (
     <motion.div className="flex flex-col gap-4 pb-6" initial="hidden" animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+      style={{ background: 'linear-gradient(180deg, hsl(252 20% 97.5%) 0%, hsl(240 5% 96%) 40%, hsl(240 5% 95.5%) 100%)' }}>
 
       <header>
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-1 pb-1">
@@ -411,6 +412,9 @@ export default function Home() {
           {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
         </AnimatePresence>
       </motion.div>
+
+      {/* Section divider */}
+      <div style={{ height: 1, background: THEME.gradient.sectionFade, margin: '0 24px' }} />
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (

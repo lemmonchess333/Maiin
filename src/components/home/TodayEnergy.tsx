@@ -33,12 +33,12 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
   const fatColor = THEME.macros.fat;
 
   return (
-    <div className="rounded-2xl bg-card overflow-hidden">
+    <div className="rounded-2xl bg-card overflow-hidden" style={{ boxShadow: calories > 0 ? `inset 3px 0 0 ${THEME.semantic.nutrition}, var(--ds-shadow-card)` : 'inset 3px 0 0 transparent, var(--ds-shadow-card)', transition: 'box-shadow 0.3s ease' }}>
       {/* Calorie header -- tappable to expand */}
       <button
         onClick={function() { haptic(); setExpanded(function(e) { return !e; }); }}
         className="w-full text-left px-4 pt-4 pb-3 border-b border-border/30"
-        style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
+        style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "14 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold" style={{ color: THEME.text.muted }}>Today's Energy</p>

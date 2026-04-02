@@ -17,10 +17,16 @@ export default function WaterCard({ waterGlasses, waterTarget, onAddWater, onRem
 
   return (
     <div className="relative overflow-hidden p-4 rounded-2xl bg-card" style={{
-      boxShadow: waterGlasses > 0
+      boxShadow: waterGlasses >= waterTarget
+        ? '0 4px 24px rgba(82, 163, 189, 0.28), 0 1px 3px rgba(0,0,0,0.06), inset 0 -4px 12px rgba(82, 163, 189, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
+        : waterGlasses > waterTarget / 2
+        ? 'var(--ds-shadow-water-glow)'
+        : waterGlasses > 0
         ? '0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
-        : '0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)'
+        : 'var(--ds-shadow-hero)'
     }}>
+      {/* Gradient top accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl z-20" style={{ background: `linear-gradient(90deg, transparent, ${THEME.semantic.hydration}${waterGlasses > 0 ? '' : '40'}, transparent)` }} />
       <motion.div
         className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
         style={{
