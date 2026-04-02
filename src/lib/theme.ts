@@ -75,5 +75,8 @@ export const THEME = {
   gradient: {
     brand: 'linear-gradient(135deg, #9590E0, #7B72E9)',
     brandCta: 'linear-gradient(135deg, #7B72E9, #52A3BD)',
+    healthGlow: 'radial-gradient(ellipse at 30% 0%, rgba(77,184,114,0.08), transparent 60%)',
+    waterGlow: 'radial-gradient(ellipse at 70% 100%, rgba(82,163,189,0.08), transparent 60%)',
+    sectionFade: 'linear-gradient(90deg, transparent, rgba(123,114,233,0.10), transparent)',
   },
 } as const;

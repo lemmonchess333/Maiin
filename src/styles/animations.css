@@ -105,6 +105,15 @@
   100% { transform: scale(1); }
 }
 
+/* ─── HEALTH SCORE MILESTONE GLOW PULSE ─────────────────────── */
+@keyframes ds-glow-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.55; }
+}
+.ds-glow-pulse {
+  animation: ds-glow-pulse 3s ease-in-out infinite;
+}
+
 /* ─── REDUCED MOTION ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

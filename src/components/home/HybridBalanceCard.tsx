@@ -18,7 +18,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
   const totalSessions = liftSessions + runSessions;
   if (totalSessions === 0 && liftTonnage === 0 && runKm === 0) {
     return (
-      <div className="p-4 rounded-2xl bg-card">
+      <div className="p-4 rounded-2xl bg-card" style={{ boxShadow: 'var(--ds-shadow-card)' }}>
         <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell className="w-6 h-6 mx-auto" style={{ color: THEME.lifting }} />
@@ -78,6 +78,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
         className="p-4 rounded-2xl bg-card space-y-3"
+        style={{ boxShadow: 'var(--ds-shadow-card)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between">

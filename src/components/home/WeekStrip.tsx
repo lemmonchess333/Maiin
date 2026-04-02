@@ -35,6 +35,10 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
         } else if (day.isSelected) {
           cls += " text-foreground font-semibold";
           st = { backgroundColor: "rgba(142,142,147,0.20)" };
+        } else if (day.hasActivity) {
+          cls += " text-foreground font-medium";
+          cls += " bg-muted";
+          st = { boxShadow: `0 0 0 2px ${THEME.brand}18` };
         } else {
           cls += " text-muted-foreground";
           cls += " bg-muted";
