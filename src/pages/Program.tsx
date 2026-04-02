@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useSubscription } from "@/lib/subscription";
@@ -9,6 +9,7 @@ import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import DayStepIndicator from "@/components/program/DayStepIndicator";
 import WeekContentCard from "@/components/program/WeekContentCard";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
+import { buildDisplayDays } from "@/components/program/weekViewTypes";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
@@ -43,6 +44,8 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import ExerciseDemoCard from "@/components/ExerciseDemoCard";
+import CompactExerciseRow from "@/components/program/CompactExerciseRow";
+import { getExercisePrescription } from "@/lib/getBestSetSummary";
 
 /**
  * IMPORTANT:
@@ -94,6 +97,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Skip confirmation state
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
+
+  // Completion animation state
+  const [animatingCompletion, setAnimatingCompletion] = useState<number | null>(null);
+  const prevCompletionRef = useRef<boolean[]>([]);
 
   // Exercise card state — read-only, tap opens info sheet
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
@@ -209,14 +216,42 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     await saveProgram(updatedState);
   };
 
-  // Today's day type from schedule (must be before early return — hooks rule)
-  const todayDayType = useMemo(() => {
-    const schedule = profile?.weekSchedule && profile.weekSchedule.length === 7
+  // Build weekly schedule (must be before early return — hooks rule)
+  const weekSchedule = useMemo(() => {
+    return profile?.weekSchedule && profile.weekSchedule.length === 7
       ? profile.weekSchedule
       : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
-    const today = getTodaySchedule(schedule);
-    return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
   }, [profile]);
+
+  // Today's day type from schedule
+  const todayDayType = useMemo(() => {
+    const today = getTodaySchedule(weekSchedule);
+    return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
+  }, [weekSchedule]);
+
+  // Build display days (interleaving rest markers from schedule)
+  const displayDays = useMemo(() => {
+    const workouts = viewingHistoryIndex !== null
+      ? (viewedWorkouts ?? [])
+      : (programState?.workouts ?? []);
+    return buildDisplayDays(workouts, weekSchedule);
+  }, [viewingHistoryIndex, viewedWorkouts, programState?.workouts, weekSchedule]);
+
+  // Completion animation: detect when a day transitions to completed
+  useEffect(() => {
+    if (!programState) return;
+    const current = programState.workouts.map(d => d.completed);
+    const prev = prevCompletionRef.current;
+    if (prev.length > 0) {
+      const justCompleted = current.findIndex((c, idx) => c && !prev[idx]);
+      if (justCompleted >= 0) {
+        setAnimatingCompletion(justCompleted);
+        const timer = setTimeout(() => setAnimatingCompletion(null), 800);
+        return () => clearTimeout(timer);
+      }
+    }
+    prevCompletionRef.current = current;
+  }, [programState]);
 
   if (loading) {
     return (
@@ -251,12 +286,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
-  // Week view: first incomplete day index and day selection
-  const firstIncompleteIndex = displayWorkouts.findIndex(d => !d.completed && !d.skipped);
+  // Week view: first incomplete day index (in displayDays, skipping rest)
+  const firstIncompleteIndex = displayDays.findIndex(
+    d => d.type === "workout" && !d.workout.completed && !d.workout.skipped,
+  );
 
-  // Clamp selectedDay to valid range
-  const clampedSelectedDay = displayWorkouts.length > 0
-    ? Math.min(selectedDay, displayWorkouts.length - 1)
+  // Clamp selectedDay to displayDays range
+  const clampedSelectedDay = displayDays.length > 0
+    ? Math.min(selectedDay, displayDays.length - 1)
     : 0;
   if (clampedSelectedDay !== selectedDay) {
     setSelectedDay(clampedSelectedDay);
@@ -265,6 +302,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const handleDaySelect = (i: number) => {
     setDayDirection(i > selectedDay ? 1 : -1);
     setSelectedDay(i);
+    // Interrupt any completion animation
+    setAnimatingCompletion(null);
   };
 
   // Today's workout = first incomplete day (same logic as Home page)
@@ -731,55 +770,107 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
               {/* Day Step Indicator */}
               <DayStepIndicator
-                workouts={displayWorkouts}
+                days={displayDays}
                 selectedIndex={selectedDay}
                 onSelect={handleDaySelect}
                 firstIncompleteIndex={firstIncompleteIndex}
+                animatingCompletion={
+                  animatingCompletion !== null
+                    ? displayDays.findIndex(d => d.type === "workout" && d.workoutIndex === animatingCompletion)
+                    : null
+                }
               />
 
               {/* Content Pane — one day at a time, swipeable */}
-              {displayWorkouts[selectedDay] && (
-                <motion.div
-                  drag={reorderMode ? false : "x"}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.15}
-                  dragDirectionLock
-                  onDragEnd={(_e, info) => {
-                    const threshold = 50;
-                    if (info.offset.x < -threshold && selectedDay < displayWorkouts.length - 1) {
-                      haptic("light");
-                      handleDaySelect(selectedDay + 1);
-                    } else if (info.offset.x > threshold && selectedDay > 0) {
-                      haptic("light");
-                      handleDaySelect(selectedDay - 1);
-                    }
-                  }}
-                  style={{ touchAction: "pan-y" }}
-                >
-                <AnimatePresence mode="wait" custom={dayDirection}>
-                  <WeekContentCard
-                    key={selectedDay}
-                    day={displayWorkouts[selectedDay]}
-                    dayIndex={selectedDay}
-                    status={
-                      displayWorkouts[selectedDay].completed ? "completed"
-                      : displayWorkouts[selectedDay].skipped ? "skipped"
-                      : selectedDay === firstIncompleteIndex ? "current"
-                      : "future"
-                    }
-                    direction={dayDirection}
-                    muscleGroups={getDayMuscleGroups(displayWorkouts[selectedDay].exercises)}
-                    estimatedMinutes={Math.round(displayWorkouts[selectedDay].exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)}
-                    onStartWorkout={() => setSessionDayIndex(selectedDay)}
-                    onSkipSession={() => { setSkipTargetDay(selectedDay); setShowSkipConfirm(true); }}
-                    onExerciseTap={(name) => setDemoExercise(name)}
-                    onDoRetroactiveWorkout={() => setSessionDayIndex(selectedDay)}
-                    isViewingHistory={isViewingHistory}
-                    sessionActive={sessionDayIndex === selectedDay}
-                  />
-                </AnimatePresence>
-                </motion.div>
-              )}
+              {displayDays[selectedDay] && (() => {
+                const currentDisplayDay = displayDays[selectedDay];
+                const isRestDay = currentDisplayDay.type === "rest";
+                const workout = isRestDay ? undefined : currentDisplayDay.workout;
+                const workoutIdx = isRestDay ? -1 : currentDisplayDay.workoutIndex;
+
+                const status: "current" | "completed" | "future" | "skipped" | "rest" = isRestDay
+                  ? "rest"
+                  : workout!.completed ? "completed"
+                  : workout!.skipped ? "skipped"
+                  : selectedDay === firstIncompleteIndex ? "current"
+                  : "future";
+
+                // Next workout label for rest day card
+                const nextWorkoutLabel = isRestDay
+                  ? (() => {
+                      const next = displayDays.find((d, idx) => idx > selectedDay && d.type === "workout" && !d.workout.completed && !d.workout.skipped);
+                      if (!next || next.type !== "workout") return undefined;
+                      return `Day ${next.workoutIndex + 1} · ${next.workout.dayName}`;
+                    })()
+                  : undefined;
+
+                // Edit mode content: DnD-wrapped exercise rows
+                const weekEditContent = reorderMode && workout && !isRestDay ? (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(workoutIdx, event)}>
+                    <SortableContext items={workout.exercises.map((_, i) => `ex-${workoutIdx}-${i}`)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-0.5">
+                        {workout.exercises.map((ex, i) => (
+                          <SortableExerciseRow
+                            key={`ex-${workoutIdx}-${i}`}
+                            id={`ex-${workoutIdx}-${i}`}
+                            justDropped={justDroppedId === `ex-${workoutIdx}-${i}`}
+                            showHandle={true}
+                            onDelete={() => removeExFromDay(workoutIdx, i)}
+                          >
+                            <CompactExerciseRow
+                              name={ex.name}
+                              summary={getExercisePrescription(ex)}
+                              onTap={() => setDemoExercise(ex.name)}
+                            />
+                          </SortableExerciseRow>
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                ) : undefined;
+
+                return (
+                  <motion.div
+                    drag={reorderMode ? false : "x"}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.15}
+                    dragDirectionLock
+                    onDragEnd={(_e, info) => {
+                      const threshold = 50;
+                      if (info.offset.x < -threshold && selectedDay < displayDays.length - 1) {
+                        haptic("light");
+                        handleDaySelect(selectedDay + 1);
+                      } else if (info.offset.x > threshold && selectedDay > 0) {
+                        haptic("light");
+                        handleDaySelect(selectedDay - 1);
+                      }
+                    }}
+                    style={{ touchAction: "pan-y" }}
+                  >
+                    <AnimatePresence mode="wait" custom={dayDirection}>
+                      <WeekContentCard
+                        key={selectedDay}
+                        day={workout}
+                        dayIndex={workoutIdx}
+                        status={status}
+                        direction={dayDirection}
+                        muscleGroups={workout ? getDayMuscleGroups(workout.exercises) : ""}
+                        estimatedMinutes={workout ? Math.round(workout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5) : 0}
+                        onStartWorkout={() => setSessionDayIndex(workoutIdx)}
+                        onSkipSession={() => { setSkipTargetDay(workoutIdx); setShowSkipConfirm(true); }}
+                        onExerciseTap={(name) => setDemoExercise(name)}
+                        onDoRetroactiveWorkout={() => setSessionDayIndex(workoutIdx)}
+                        nextWorkoutLabel={nextWorkoutLabel}
+                        isViewingHistory={isViewingHistory}
+                        sessionActive={sessionDayIndex === workoutIdx}
+                        editMode={reorderMode && !isRestDay}
+                        editContent={weekEditContent}
+                        onAddExercise={() => { setAddPickerDayIndex(workoutIdx); setShowAddPicker(true); }}
+                      />
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })()}
         </div>
       )}
 
@@ -791,8 +882,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           if (skipTargetDay !== null) {
             await skipWorkoutDay(skipTargetDay);
             haptic("medium");
-            // Auto-advance to next incomplete day
-            const nextIncomplete = displayWorkouts.findIndex((d, i) => i !== skipTargetDay && !d.completed && !d.skipped);
+            // Auto-advance to next incomplete day in displayDays
+            const nextIncomplete = displayDays.findIndex(
+              d => d.type === "workout" && d.workoutIndex !== skipTargetDay && !d.workout.completed && !d.workout.skipped,
+            );
             if (nextIncomplete >= 0) {
               handleDaySelect(nextIncomplete);
             }
