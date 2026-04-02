@@ -172,7 +172,12 @@ export function computeConfidence(
   if (agg.liftSessions > 0) signals++;
   if (agg.runSessions > 0) signals++;
   if (agg.mealDaysLogged >= 3) signals++;
-  if (agg.bwCurrent7dAvg != null) signals++;
+  // Bodyweight signal only counts if data is from the current week (recency check)
+  if (agg.bwCurrent7dAvg != null) {
+    const weekDate = new Date(agg.weekKey + "T00:00:00");
+    const daysSince = (Date.now() - weekDate.getTime()) / 86_400_000;
+    if (daysSince <= 13) signals++; // current or previous week
+  }
   if (bl.weeksUsed >= 3) signals++;
 
   if (signals >= 4) return "high";
@@ -323,7 +328,7 @@ export function computePerformanceIndex(
   const recoveryScore = computeRecoveryScore(currentWeek, profile.goal);
   const adherenceScore = computeAdherenceScore(
     currentWeek,
-    profile.weeklyWorkoutsTarget || 4,
+    profile.weeklyWorkoutsTarget || (profile.goal === "cut" ? 3 : profile.goal === "lean bulk" ? 5 : 4),
     profile.targetCalories ?? null,
     profile.targetProtein ?? null,
     profile.goal,

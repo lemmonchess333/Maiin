@@ -1,14 +1,9 @@
 import type { FitnessGoal } from "@/lib/tdee";
+import { GOAL_CALORIE_OFFSET } from "@/lib/macroConstants";
 
 /** NEAT multiplier — covers thermic effect of food + basic daily movement.
  *  Structured exercise is added explicitly via workoutCals/runCals/stepCals. */
 const NEAT_MULTIPLIER = 1.2;
-
-const PHASE_OFFSETS: Record<FitnessGoal, number> = {
-  cut: -500,
-  recomp: 0,
-  "lean bulk": 300,
-};
 
 export interface DailyBurn {
   bmr: number;
@@ -30,7 +25,7 @@ export function calcDailyBurn(
   stepCals: number,
 ): DailyBurn {
   const tdee = Math.round(bmr * NEAT_MULTIPLIER);
-  const phaseAdjustedTdee = tdee + PHASE_OFFSETS[phase];
+  const phaseAdjustedTdee = tdee + (GOAL_CALORIE_OFFSET[phase] ?? 0);
   const dailyBudget = phaseAdjustedTdee + workoutCals + runCals + stepCals;
 
   const phaseLabel = phase === "cut" ? "cut" : phase === "lean bulk" ? "bulk" : "recomp";
