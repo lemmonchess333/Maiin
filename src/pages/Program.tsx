@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
+import DayStepIndicator from "@/components/program/DayStepIndicator";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
@@ -703,6 +704,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   {advancing ? "Advancing..." : "Advance to Next Week"}
                 </button>
               )}
+
+              {/* Step Indicator */}
+              <DayStepIndicator
+                workouts={displayWorkouts}
+                expandedDay={expandedDay}
+                onDayClick={(i) => setExpandedDay(expandedDay === i ? null : i)}
+                firstIncompleteIndex={displayWorkouts.findIndex(d => !d.completed)}
+              />
 
               {/* Workout Day Cards */}
               <section aria-label="Workout days">
