@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, Play } from "lucide-react";
+import { CheckCircle2, Play, Ban } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { WorkoutDay } from "@/features/program/programTypes";
 import { getBestSetSummary, getExercisePrescription } from "@/lib/getBestSetSummary";
@@ -8,13 +8,14 @@ import CompactExerciseRow from "./CompactExerciseRow";
 interface WeekContentCardProps {
   day: WorkoutDay;
   dayIndex: number;
-  status: "current" | "completed" | "future";
+  status: "current" | "completed" | "future" | "skipped";
   direction: 1 | -1;
   muscleGroups: string;
   estimatedMinutes: number;
   onStartWorkout: () => void;
   onSkipSession: () => void;
   onExerciseTap: (exerciseName: string) => void;
+  onDoRetroactiveWorkout?: () => void;
   isViewingHistory?: boolean;
   sessionActive?: boolean;
 }
@@ -35,12 +36,14 @@ export default function WeekContentCard({
   onStartWorkout,
   onSkipSession,
   onExerciseTap,
+  onDoRetroactiveWorkout,
   isViewingHistory = false,
   sessionActive = false,
 }: WeekContentCardProps) {
   const isFuture = status === "future";
   const isCompleted = status === "completed";
   const isCurrent = status === "current";
+  const isSkipped = status === "skipped";
 
   return (
     <motion.div
@@ -59,6 +62,8 @@ export default function WeekContentCard({
           <div className="shrink-0 mt-0.5">
             {isCompleted ? (
               <CheckCircle2 className="w-6 h-6 text-green-500" />
+            ) : isSkipped ? (
+              <Ban className="w-6 h-6 text-muted-foreground" />
             ) : isCurrent ? (
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center"
@@ -82,6 +87,11 @@ export default function WeekContentCard({
                   Done
                 </span>
               )}
+              {isSkipped && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
+                  Skipped
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {day.exercises.length} exercises · ~{estimatedMinutes}min
@@ -102,7 +112,7 @@ export default function WeekContentCard({
             name={ex.name}
             summary={isCompleted ? getBestSetSummary(ex) : getExercisePrescription(ex)}
             onTap={() => onExerciseTap(ex.name)}
-            opacity={isFuture ? 0.75 : 1}
+            opacity={isFuture ? 0.75 : isSkipped ? 0.6 : 1}
           />
         ))}
       </div>
@@ -125,6 +135,19 @@ export default function WeekContentCard({
               Skip Session
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Action area — skipped day: offer retroactive workout */}
+      {isSkipped && !isViewingHistory && onDoRetroactiveWorkout && (
+        <div className="px-4 pt-1 pb-4">
+          <button
+            onClick={onDoRetroactiveWorkout}
+            className="w-full text-center text-sm font-medium py-2 active:scale-[0.97] transition-transform"
+            style={{ color: THEME.lifting }}
+          >
+            Do This Workout
+          </button>
         </div>
       )}
     </motion.div>

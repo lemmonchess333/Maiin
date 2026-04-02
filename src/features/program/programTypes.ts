@@ -68,6 +68,7 @@ export interface WorkoutDay {
   exercises: ProgramExercise[];
   completed: boolean;
   isCustom?: boolean;
+  skipped?: boolean;
 }
 
 /* ================================
@@ -162,6 +163,7 @@ export function normalizeProgramState(state: ProgramState): ProgramState {
     weekHistory: state.weekHistory ?? [],
     workouts: (state.workouts ?? []).map((day) => ({
       ...day,
+      skipped: day.skipped ?? false,
       exercises: (day.exercises ?? []).map((ex) => normalizeExercise(ex)),
     })),
   };

@@ -178,7 +178,7 @@ export function useProgram() {
       const updated: ProgramState = {
         ...programState,
         workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, completed: true } : d,
+          i === dayIndex ? { ...d, completed: true, skipped: false } : d,
         ),
       };
 
@@ -248,12 +248,27 @@ export function useProgram() {
         logger.warn("Failed to sync programme day to workouts:", err);
       }
 
-      const allDone = updated.workouts.every((d) => d.completed);
+      const allDone = updated.workouts.every((d) => d.completed || d.skipped);
       if (allDone) {
         toast.success("All workouts complete! Advance to next week when ready.");
       }
     },
     [programState, user, saveProgram, profile],
+  );
+
+  // Skip a workout day (no stats, no social post)
+  const skipWorkoutDay = useCallback(
+    async (dayIndex: number) => {
+      if (!programState || !user) return;
+      const updated: ProgramState = {
+        ...programState,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, skipped: true } : d,
+        ),
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram],
   );
 
   // Manually advance to next week (called from UI)
@@ -557,6 +572,7 @@ export function useProgram() {
     prescription,
     loading,
     completeWorkoutDay,
+    skipWorkoutDay,
     advanceToNextWeek,
     logExercise,
     updateExercise,
