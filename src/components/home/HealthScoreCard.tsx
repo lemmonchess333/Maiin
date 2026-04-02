@@ -27,8 +27,6 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
         const offset = hasScore ? arcLength - (arcLength * Math.min(score, 100)) / 100 : arcLength;
         return (
           <>
-            {/* Gradient top accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${zoneColor}00, ${zoneColor}, ${zoneColor}00)` }} />
             {/* Radial glow background */}
             {hasScore && <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at 30% 0%, ${zoneColor}14, transparent 60%)` }} />}
             <div className="flex items-center gap-2 mb-3 relative">
