@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { getBlockedUsers } from '../lib/socialApi';
+import { captureError } from '../lib/errorReporting';
 
 export function useBlockedUsers(): Set<string> {
   const { user } = useAuth();
@@ -8,7 +9,9 @@ export function useBlockedUsers(): Set<string> {
 
   useEffect(() => {
     if (!user) return;
-    getBlockedUsers(user.uid).then(ids => setBlocked(new Set(ids))).catch(() => {});
+    getBlockedUsers(user.uid)
+      .then(ids => setBlocked(new Set(ids)))
+      .catch((e) => { captureError(e instanceof Error ? e : new Error(String(e)), 'network', { hook: 'useBlockedUsers' }); });
   }, [user]);
 
   return blocked;

@@ -87,9 +87,17 @@ export function useIntervalWorkout(config: IntervalConfig | undefined) {
         }
 
         if (prev.phase === 'rest' && phaseElapsed >= config.restDuration) {
+          const nextRep = prev.currentRep + 1;
+          if (nextRep > config.reps) {
+            if (config.cooldownDuration) {
+              phaseStartTime.current = Date.now();
+              return { ...next, phase: 'cooldown', phaseElapsed: 0, phaseTarget: config.cooldownDuration };
+            }
+            return { ...next, phase: 'complete' };
+          }
           phaseStartTime.current = Date.now();
           phaseStartDistance.current = totalDistance;
-          return { ...next, phase: 'work', currentRep: prev.currentRep + 1, phaseElapsed: 0, phaseDistanceCovered: 0, phaseTarget: config.workDistance || config.workDuration || 60, isDistanceBased: !!config.workDistance };
+          return { ...next, phase: 'work', currentRep: nextRep, phaseElapsed: 0, phaseDistanceCovered: 0, phaseTarget: config.workDistance || config.workDuration || 60, isDistanceBased: !!config.workDistance };
         }
 
         if (prev.phase === 'cooldown' && phaseElapsed >= (config.cooldownDuration || 0)) {
