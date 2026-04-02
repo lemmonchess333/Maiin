@@ -529,7 +529,9 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
 }
 
 export function advanceWeek(state: ProgramState): ProgramState {
-  const nextWeek = state.weekNumber + 1;
+  // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
+  // continues via modulo, but the number stays meaningful for UI display
+  const nextWeek = state.weekNumber >= 52 ? 1 : state.weekNumber + 1;
   const prescription = generateWeekPrescription(nextWeek);
 
   const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };

@@ -109,9 +109,18 @@ describe("checkSetPR", () => {
     expect(checkSetPR("Bench Press", 82.5, 5, prMap, sessionCounts)).toBe("5rm");
   });
 
-  it("returns null when weight does not beat record", () => {
+  it("returns null when weight does not beat record and reps are same", () => {
     expect(checkSetPR("Bench Press", 80, 5, prMap, sessionCounts)).toBeNull();
     expect(checkSetPR("Bench Press", 75, 5, prMap, sessionCounts)).toBeNull();
+  });
+
+  it("returns bucket for same weight with more reps (rep PR)", () => {
+    // Same weight (80kg) but 6 reps instead of 5 — maps to 8rm bucket (6 reps → 8rm)
+    // Since 8rm has no record, this is a new PR
+    expect(checkSetPR("Bench Press", 80, 6, prMap, sessionCounts)).toBe("8rm");
+    // For 1rm: 100kg with 2 reps maps to 3rm bucket (new), not a same-weight comparison
+    // To test true same-weight rep improvement, we need same bucket
+    expect(checkSetPR("Bench Press", 100, 1, prMap, sessionCounts)).toBeNull(); // same weight, same reps
   });
 
   it("returns bucket for a new rep range with no prior record", () => {

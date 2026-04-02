@@ -71,6 +71,7 @@ export function checkSetPR(
   if ((sessionCounts[exerciseName] || 0) < minSessions) return null;
   const bucket = getRepBucket(reps);
   const current = prMap[exerciseName]?.[bucket];
-  if (!current || weight > current.weight) return bucket;
+  // PR if heavier weight, OR same weight with more reps (rep PR at same load)
+  if (!current || weight > current.weight || (weight === current.weight && reps > current.reps)) return bucket;
   return null;
 }

@@ -9,7 +9,7 @@ export function calculateRollover(
   dailyCalories: Record<string, number> // date string → consumed calories
 ): {
   adjustedTarget: number;
-  rolloverAmount: number;
+  underspendBuffer: number;
   weeklyBudget: number;
   weeklyConsumed: number;
   weeklyRemaining: number;
@@ -38,14 +38,14 @@ export function calculateRollover(
   const expectedThroughYesterday = targetDailyCalories * daysElapsed;
 
   // Rollover = expected - actual (positive only)
-  const rolloverAmount = Math.max(0, expectedThroughYesterday - (weeklyConsumed - (dailyCalories[todayStr] || 0)));
+  const underspendBuffer = Math.max(0, expectedThroughYesterday - (weeklyConsumed - (dailyCalories[todayStr] || 0)));
 
-  const adjustedTarget = targetDailyCalories + rolloverAmount;
+  const adjustedTarget = targetDailyCalories + underspendBuffer;
   const weeklyRemaining = weeklyBudget - weeklyConsumed;
 
   return {
     adjustedTarget,
-    rolloverAmount: Math.round(rolloverAmount),
+    underspendBuffer: Math.round(underspendBuffer),
     weeklyBudget,
     weeklyConsumed: Math.round(weeklyConsumed),
     weeklyRemaining: Math.round(weeklyRemaining),
