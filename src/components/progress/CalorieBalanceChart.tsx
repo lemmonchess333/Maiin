@@ -61,9 +61,10 @@ export default function CalorieBalanceChart() {
     });
   }, [meals, workouts, runs, bmr, weightKg]);
 
-  const avgBalance = data.length
-    ? Math.round(data.reduce((s, d) => s + d.balance, 0) / data.length)
+  const rawAvg = data.length
+    ? data.reduce((s, d) => s + d.balance, 0) / data.length
     : 0;
+  const avgBalance = Number.isFinite(rawAvg) ? Math.round(rawAvg) : 0;
   const deficitDays = data.filter((d) => d.balance > 0).length;
 
   const phaseLabel =

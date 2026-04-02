@@ -100,6 +100,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Meal name (e.g. Chicken & rice)"
+              aria-label="Meal name"
               className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground"
               style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
             />

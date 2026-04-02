@@ -34,6 +34,7 @@ export default function FollowButton({ targetUid }: { targetUid: string }) {
 
   return (
     <button onClick={handleToggle} disabled={loading}
+      aria-label={following ? 'Unfollow user' : 'Follow user'}
       className={`text-xs px-4 py-1.5 rounded-lg font-medium transition-colors ${
         following
           ? 'bg-muted text-muted-foreground border border-border'

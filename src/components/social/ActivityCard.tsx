@@ -376,6 +376,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             </button>
             {kudosCount > 0 && (
               <button onClick={handleShowKudosList}
+                aria-label={`${kudosCount} props — show list`}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {kudosCount}
               </button>
@@ -451,8 +452,15 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         {showMenu && (
           <>
             <div className="fixed inset-0 z-10" role="presentation" aria-hidden="true" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44">
+            <div
+              className="absolute right-0 top-8 z-20 bg-card border border-border rounded-xl shadow-lg py-1 w-44"
+              role="menu"
+              tabIndex={-1}
+              ref={(el) => el?.focus()}
+              onKeyDown={(e) => { if (e.key === 'Escape') { setShowMenu(false); } }}
+            >
               <button
+                role="menuitem"
                 onClick={() => { setShowMenu(false); setShowReport(true); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -460,6 +468,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                 Report activity
               </button>
               <button
+                role="menuitem"
                 onClick={async () => {
                   setShowMenu(false);
                   if (!user || !activity?.authorId) return;

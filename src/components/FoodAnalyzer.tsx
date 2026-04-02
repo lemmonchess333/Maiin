@@ -285,6 +285,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
           <div className="flex gap-3">
             <button
               onClick={handleResetAll}
+              aria-label="Try food analysis again"
               className="text-sm text-red-500 font-medium flex items-center gap-1"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Try again
@@ -359,6 +360,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
                 <div className="flex items-center justify-center gap-4 pt-1">
                   <button
                     onClick={() => setServings(Math.max(0.5, servings - 0.5))}
+                    aria-label="Decrease servings"
                     className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
                   >
                     <Minus className="w-4 h-4" />
@@ -369,6 +371,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
                   </div>
                   <button
                     onClick={() => setServings(servings + 0.5)}
+                    aria-label="Increase servings"
                     className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
                   >
                     <Plus className="w-4 h-4" />
@@ -380,6 +383,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
             <div className="flex gap-2">
               <button
                 onClick={handleResetAll}
+                aria-label="Reset food analysis"
                 className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
                 Reset
