@@ -46,6 +46,9 @@ export default function PreferencesSection({
               setAutoRestTimer(next);
               await updateProfile({ autoRestTimer: next });
             }}
+            aria-label="Toggle auto-start rest timer"
+            role="switch"
+            aria-checked={autoRestTimer}
             className={cn("w-10 h-6 rounded-full transition-colors relative", autoRestTimer ? "bg-primary" : "bg-muted border border-border")}
           >
             <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoRestTimer ? "translate-x-5" : "translate-x-1")} />

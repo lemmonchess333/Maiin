@@ -61,6 +61,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setWeight((w) => Math.max(BAR_WEIGHT, w - 2.5))}
+          aria-label="Decrease weight"
           className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-foreground font-bold"
         >
           -
@@ -71,6 +72,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
         </div>
         <button
           onClick={() => setWeight((w) => w + 2.5)}
+          aria-label="Increase weight"
           className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-foreground font-bold"
         >
           +

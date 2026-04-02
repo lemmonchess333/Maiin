@@ -354,6 +354,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                   e.stopPropagation();
                   removeExercise(exIndex);
                 }}
+                aria-label="Remove exercise"
                 className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
@@ -592,6 +593,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
                 <div className="flex items-center gap-2 shrink-0 ml-3">
                   <button
                     onClick={() => setDemoExercise(exercise.name)}
+                    aria-label={`Show ${exercise.name} demo`}
                     className="flex items-center justify-center shrink-0"
                     style={{
                       width: 32,
@@ -605,6 +607,7 @@ export default function WorkoutLogger({ date, onSaved }: Props) {
 
                   <button
                     onClick={() => toggleExerciseSelection(exercise.id)}
+                    aria-label={selectedExerciseIds.has(exercise.id) ? `Remove ${exercise.name}` : `Add ${exercise.name}`}
                     className="flex items-center justify-center shrink-0"
                     style={{
                       width: 34,
