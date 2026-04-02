@@ -17,8 +17,12 @@ export default defineConfig({
   build: {
     minify: "esbuild",
     sourcemap: false,
+    // Performance budget: warn if any chunk exceeds this limit (KB)
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
     chunkSizeWarningLimit: 1100,
+
+    // Inline assets smaller than 4KB, keep larger ones as separate files
+    assetsInlineLimit: 4096,
 
     rollupOptions: {
       output: {
