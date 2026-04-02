@@ -715,13 +715,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <div
                     key={dayIndex}
                     className={cn(
-                      "transition-all border-l-2",
+                      "transition-all",
+                      isCurrent ? "border-l-[3px]" : "",
                       day.completed ? "opacity-70" : "",
-                      isCurrent ? "bg-[rgba(124,107,240,0.04)]" : ""
+                      isCurrent ? "bg-[rgba(124,107,240,0.06)]" : ""
                     )}
                     style={{
-                      borderLeftColor: isCurrent ? THEME.lifting : day.completed ? "transparent" : `${THEME.lifting}40`,
-                      borderLeftWidth: isCurrent ? 3 : 2,
+                      borderLeftColor: isCurrent ? THEME.lifting : "transparent",
+                      borderLeftWidth: isCurrent ? 3 : 0,
                     }}
                   >
 
@@ -781,6 +782,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           className="overflow-hidden"
                         >
                           <div className="px-3 pb-3 space-y-1">
+                            {/* Divider between metadata and exercises */}
+                            <div className="border-t border-border/50 -mx-0 mb-1 pt-2" />
                             {/* Exercise preview — compact rows */}
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(dayIndex, e)}>
                               <SortableContext items={day.exercises.map((_, i) => `ex-${dayIndex}-${i}`)} strategy={verticalListSortingStrategy}>
