@@ -59,6 +59,7 @@ describe("parseFoodText", () => {
       protein: 0,
       carbs: 0,
       fat: 0,
+      unrecognized: true,
     });
   });
 

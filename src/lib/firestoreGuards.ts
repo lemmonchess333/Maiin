@@ -38,7 +38,7 @@ export function parseGroup(id: string, data: DocumentData) {
     name: field(data, "name", ""),
     description: field(data, "description", ""),
     icon: field(data, "icon", ""),
-    memberCount: typeof data.memberCount === "number" ? data.memberCount : 0,
+    memberCount: Math.max(0, typeof data.memberCount === "number" ? data.memberCount : 0),
     createdAt: data.createdAt,
     createdBy: field(data, "createdBy", ""),
   };
@@ -53,7 +53,7 @@ export function parseCrew(id: string, data: DocumentData) {
     name: field(data, "name", ""),
     description: field(data, "description", ""),
     icon: field(data, "icon", ""),
-    memberCount: typeof data.memberCount === "number" ? data.memberCount : 0,
+    memberCount: Math.max(0, typeof data.memberCount === "number" ? data.memberCount : 0),
     leaderboardMetric: field(data, "leaderboardMetric", "workout_count"),
     type: (data.type === "default" || data.type === "custom") ? data.type : "custom" as const,
     createdAt: data.createdAt,

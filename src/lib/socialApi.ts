@@ -1,5 +1,5 @@
 import { db, auth } from './firebase';
-import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 import {
   collection, doc, setDoc, deleteDoc, getDocs, getDoc,
   query, orderBy, limit, startAfter, where, increment,
@@ -141,9 +141,13 @@ export async function postActivity(activity: {
     promises.push(addDoc(collection(db, 'feeds', activity.authorId, 'items'), feedItem));
     // Use allSettled so partial fan-out failures don't block the entire post
     const results = await Promise.allSettled(promises);
-    const failed = results.filter(r => r.status === 'rejected');
+    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
     if (failed.length > 0) {
-      logger.warn(`[postActivity] ${failed.length}/${results.length} feed writes failed`);
+      captureError(
+        new Error(`[postActivity] ${failed.length}/${results.length} feed writes failed`),
+        'network',
+        { reasons: failed.map(f => String(f.reason)) },
+      );
     }
   }
 
@@ -402,12 +406,13 @@ export async function batchGetKudos(activityIds: string[], userId: string): Prom
   for (let i = 0; i < activityIds.length; i += 30) {
     chunks.push(activityIds.slice(i, i + 30));
   }
-  const result: Record<string, boolean> = {};
-  await Promise.all(chunks.map(async (chunk) => {
+  const chunkResults = await Promise.all(chunks.map(async (chunk) => {
     const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'kudos', id, 'users', userId))));
-    chunk.forEach((id, i) => { result[id] = snaps[i].exists(); });
+    const map: Record<string, boolean> = {};
+    chunk.forEach((id, i) => { map[id] = snaps[i].exists(); });
+    return map;
   }));
-  return result;
+  return Object.assign({}, ...chunkResults) as Record<string, boolean>;
 }
 
 // ============================================
@@ -470,6 +475,13 @@ export async function deleteAccount(uid: string): Promise<void> {
   const authedUid = getAuthUid();
   if (uid !== authedUid) throw new Error('Identity mismatch');
 
+  // Delete Firebase Auth account first — safest ordering:
+  // If Firestore cleanup fails later, user can't re-login as a ghost
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    await firebaseDeleteUser(currentUser);
+  }
+
   // Collect all document refs to delete
   const allRefs: ReturnType<typeof doc>[] = [doc(db, 'users', uid)];
 
@@ -497,11 +509,5 @@ export async function deleteAccount(uid: string): Promise<void> {
     const batch = writeBatch(db);
     chunk.forEach(r => batch.delete(r));
     await batch.commit();
-  }
-
-  // Delete Firebase Auth account
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    await firebaseDeleteUser(currentUser);
   }
 }

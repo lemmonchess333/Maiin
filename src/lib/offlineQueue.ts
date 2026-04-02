@@ -1,5 +1,6 @@
 import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
 import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/errorReporting";
 
 interface QueuedWrite {
   id: string;
@@ -33,6 +34,7 @@ function saveQueue(queue: QueuedWrite[]) {
         localStorage.setItem(QUEUE_KEY, JSON.stringify(trimmed));
       } catch {
         // Last resort: clear the queue entirely
+        captureError(new Error('OfflineQueue: quota exceeded, queue cleared entirely'), 'network');
         localStorage.removeItem(QUEUE_KEY);
       }
     }
@@ -78,7 +80,12 @@ export async function flushQueue(db: Firestore): Promise<number> {
         await addDoc(collection(db, item.collectionPath), payload);
       }
       flushed++;
-    } catch {
+    } catch (e) {
+      captureError(
+        e instanceof Error ? e : new Error('OfflineQueue flush failed'),
+        'network',
+        { collectionPath: item.collectionPath, docId: item.docId },
+      );
       remaining.push(item);
     }
   }
@@ -96,8 +103,8 @@ export async function safeSave(
     try {
       await addDoc(collection(db, collectionPath), data);
       return;
-    } catch {
-      // Fall through to offline queue
+    } catch (e) {
+      logger.error('[OfflineQueue] safeSave failed, queuing offline', e);
     }
   }
   queueWrite(collectionPath, data);
@@ -113,8 +120,8 @@ export async function safeMerge(
     try {
       await setDoc(doc(db, collectionPath, docId), data, { merge: true });
       return;
-    } catch {
-      // Fall through to offline queue
+    } catch (e) {
+      logger.error('[OfflineQueue] safeMerge failed, queuing offline', e);
     }
   }
   queueWrite(collectionPath, data, docId, true);
