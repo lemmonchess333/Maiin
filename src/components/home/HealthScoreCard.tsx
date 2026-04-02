@@ -15,7 +15,7 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
   const hasScore = healthScore != null;
 
   return (
-    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform">
+    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
       {(() => {
         const score = hasScore ? healthScore : 0;
         const zoneColor = hasScore ? getScoreColor(score) : THEME.text.muted;
@@ -32,7 +32,8 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
             </div>
             <div className="flex items-center gap-6">
               <div className="relative w-24 h-24 flex-shrink-0">
-                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]">
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]"
+                  style={{ filter: hasScore && score >= 70 ? `drop-shadow(0 0 10px ${zoneColor}35)` : undefined }}>
                   <circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor + "1A"} strokeWidth={stroke}
                     strokeDasharray={arcLength + " " + circumference} strokeLinecap="round" />
                   <motion.circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor} strokeWidth={stroke}
@@ -54,7 +55,7 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
                       Based on your recent consistency, nutrition, and activity
                     </p>
                     <motion.p
-                      className="text-sm font-medium mt-0.5"
+                      className="text-sm font-semibold mt-0.5"
                       style={{ color: zoneColor, opacity: 0.8 }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.8 }}

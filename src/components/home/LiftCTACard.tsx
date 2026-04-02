@@ -19,7 +19,7 @@ export default function LiftCTACard({ nextWorkout, navigate, muscleGroups }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-micro uppercase tracking-wider mb-0.5" style={{ color: THEME.lifting }}>Today · Lift day</p>
-          <p className="text-sm font-semibold text-foreground truncate">{nextWorkout.dayName}</p>
+          <p className="text-sm font-bold text-foreground truncate">{nextWorkout.dayName}</p>
           <p className="text-micro text-muted-foreground capitalize">{muscleGroups || `${nextWorkout.dayType} · ${nextWorkout.exercises.length} exercises`}</p>
         </div>
         <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm" style={{ background: `linear-gradient(135deg, ${THEME.lifting}, ${THEME.liftingLight})`, color: "white" }}>

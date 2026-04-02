@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import { UtensilsCrossed } from "lucide-react";
 import type { DailyBurn } from "@/utils/dailyBurn";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
@@ -40,7 +41,7 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
         style={{ background: "linear-gradient(135deg, " + THEME.semantic.nutrition + "08 0%, transparent 70%)" }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>Today's Energy</p>
+            <p className="text-xs font-semibold" style={{ color: THEME.text.muted }}>Today's Energy</p>
             {burn.phase && (
               <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: THEME.semantic.nutrition + '15', color: THEME.semantic.nutrition }}>
                 {burn.phase === 'lean bulk' ? 'Bulk' : burn.phase === 'cut' ? 'Cut' : 'Recomp'}
@@ -155,7 +156,10 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           <MacroRing value={estimatedFat} target={tFat} color={fatColor} label="Fat" unit="g" />
         </motion.div>
         {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl" style={{ backgroundColor: THEME.semantic.nutrition + '08' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-2" style={{ backgroundColor: THEME.semantic.nutrition + '14' }}>
+              <UtensilsCrossed className="w-5 h-5" style={{ color: THEME.semantic.nutrition }} />
+            </div>
             <p className="text-sm font-semibold" style={{ color: THEME.semantic.nutrition }}>Log your first meal</p>
             <p className="text-xs mt-0.5" style={{ color: THEME.text.muted }}>Tap to start tracking</p>
           </div>

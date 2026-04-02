@@ -31,9 +31,9 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
         let st: React.CSSProperties = {};
         if (day.isToday) {
           cls += " text-white font-semibold";
-          st = { backgroundColor: THEME.brand };
+          st = { backgroundColor: THEME.brand, boxShadow: `0 0 0 3px ${THEME.brand}25, 0 2px 6px ${THEME.brand}30` };
         } else if (day.isSelected) {
-          cls += " text-foreground";
+          cls += " text-foreground font-semibold";
           st = { backgroundColor: "rgba(142,142,147,0.20)" };
         } else {
           cls += " text-muted-foreground";
