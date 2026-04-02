@@ -54,7 +54,7 @@ export default function WaterCard({ waterGlasses, waterTarget, onAddWater, onRem
       </AnimatePresence>
       {waterGlasses > 2 && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(82, 163, 189, 0.10)' }}>
           <Droplets className="w-5 h-5" style={{ color: THEME.semantic.hydration }} />
         </div>
         <div className="flex-1 min-w-0">

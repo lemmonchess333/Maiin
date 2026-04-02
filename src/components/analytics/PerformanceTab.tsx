@@ -88,7 +88,7 @@ function PIGauge({ score }: { score: number }) {
       </svg>
       {/* Score */}
       <div className="text-center -mt-2">
-        <p className="text-4xl font-black tabular-nums" style={{ color }}>
+        <p className="text-4xl font-black font-mono tabular-nums" style={{ color }}>
           {Math.round(clamped)}
         </p>
         <p className="text-xs font-semibold mt-0.5" style={{ color }}>

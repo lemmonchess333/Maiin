@@ -117,13 +117,13 @@ const ShareCard = forwardRef<HTMLDivElement, { data: ShareCardData }>(({ data },
             <div className="flex gap-20 justify-center">
               {!hidden.has('exercises') && (
                 <div className="text-center">
-                  <p className="text-5xl font-bold">{data.exerciseCount || 0}</p>
+                  <p className="text-5xl font-bold font-mono tabular-nums">{data.exerciseCount || 0}</p>
                   <p className="text-lg" style={{ color: s.muted }}>exercises</p>
                 </div>
               )}
               {!hidden.has('prs') && (data.prsHit || 0) > 0 && (
                 <div className="text-center">
-                  <p className="text-5xl font-bold flex items-center gap-2" style={{ color: THEME.warning }}><Trophy size={40} /> {data.prsHit}</p>
+                  <p className="text-5xl font-bold font-mono tabular-nums flex items-center gap-2" style={{ color: THEME.warning }}><Trophy size={40} /> {data.prsHit}</p>
                   <p className="text-lg" style={{ color: s.muted }}>PRs</p>
                 </div>
               )}
