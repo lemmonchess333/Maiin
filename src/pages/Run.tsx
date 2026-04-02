@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useRunVisibility } from '../hooks/useRunVisibility';
 import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
 import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig } from '../components/run/RunSetupModal';
@@ -69,6 +70,42 @@ export default function Run() {
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
+
+  // Coordinate all subsystems on background/foreground transitions
+  const handleHidden = useCallback(() => {
+    if (runConfig?.activityType !== 'treadmill') {
+      gps.stop(); // Stop GPS to save battery while backgrounded
+    }
+  }, [gps, runConfig?.activityType]);
+
+  const handleVisible = useCallback((event: import('../hooks/useRunVisibility').VisibilityEvent) => {
+    // Immediately recalculate timer (Date.now() is accurate, but the setInterval was throttled)
+    timer.recalcNow();
+
+    // Re-request wake lock (it drops when backgrounded)
+    wakeLock.request();
+
+    // Restart GPS tracking if we were actively tracking
+    if (runConfig?.activityType !== 'treadmill' && phase === 'active') {
+      gps.start();
+    }
+
+    // Show a brief banner if the gap was significant (> 5 seconds)
+    if (event.hiddenDuration > 5) {
+      const mins = Math.floor(event.hiddenDuration / 60);
+      const secs = Math.floor(event.hiddenDuration % 60);
+      const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+      setBgGapBanner(`App was in background for ${duration} — GPS data may have gaps`);
+      setTimeout(() => setBgGapBanner(null), 6000);
+    }
+  }, [timer, gps, wakeLock, runConfig?.activityType, phase]);
+
+  useRunVisibility({
+    onHidden: handleHidden,
+    onVisible: handleVisible,
+    enabled: phase === 'active',
+  });
 
   const guidedRun = useGuidedRun(
     runConfig?.activityType === 'guided' ? runConfig.guidedWorkout ?? null : null,
@@ -391,6 +428,12 @@ export default function Run() {
           {autoPaused && (
             <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
               <p className="text-xs text-yellow-300">Auto-paused · start moving to resume</p>
+            </div>
+          )}
+
+          {bgGapBanner && (
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-4 rounded-full bg-orange-500/20 animate-pulse">
+              <p className="text-xs text-orange-300">{bgGapBanner}</p>
             </div>
           )}
 

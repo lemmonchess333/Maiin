@@ -18,6 +18,12 @@ export function useRunTimer() {
     setElapsed(0); setIsRunning(false);
   }, []);
 
+  /** Force an immediate elapsed recalculation (call after tab becomes visible) */
+  const recalcNow = useCallback(() => {
+    if (!isRunning) return;
+    setElapsed(Math.floor(accumulatedRef.current + (Date.now() - startTimeRef.current) / 1000));
+  }, [isRunning]);
+
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -35,5 +41,5 @@ export function useRunTimer() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }, []);
 
-  return { elapsed, isRunning, start, pause, resume, reset, formatTime };
+  return { elapsed, isRunning, start, pause, resume, reset, recalcNow, formatTime };
 }
