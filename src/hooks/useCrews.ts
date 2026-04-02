@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   collection, getDocs, query, orderBy, doc, setDoc, deleteDoc,
   addDoc, serverTimestamp, increment, updateDoc,
@@ -63,20 +63,19 @@ export function useCrews() {
     load();
   }, [fetchCrews]);
 
-  const crewsRef = useRef(crews);
-  useEffect(() => { crewsRef.current = crews; }, [crews]);
-
   const joinCrew = useCallback(async (crewId: string) => {
     if (!user?.uid) return;
 
-    // Snapshot for rollback
-    const prevCrews = crewsRef.current;
-
-    // Optimistic: leave current crew first (one crew per user)
-    if (currentCrewId && currentCrewId !== crewId) {
-      setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
-    }
-    setCrews(prev => prev.map(c => c.id === crewId ? { ...c, memberCount: c.memberCount + 1 } : c));
+    // Capture snapshot via functional setState for accurate rollback
+    let snapshot: Crew[] = [];
+    setCrews(prev => {
+      snapshot = prev;
+      let updated = prev;
+      if (currentCrewId && currentCrewId !== crewId) {
+        updated = updated.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c);
+      }
+      return updated.map(c => c.id === crewId ? { ...c, memberCount: c.memberCount + 1 } : c);
+    });
 
     try {
       if (currentCrewId && currentCrewId !== crewId) {
@@ -90,7 +89,7 @@ export function useCrews() {
       await updateDoc(doc(db, 'groups', crewId), { memberCount: increment(1) });
       await updateProfile({ crewId });
     } catch (e) {
-      setCrews(prevCrews);
+      setCrews(snapshot);
       throw e;
     }
   }, [user, currentCrewId, profile, updateProfile]);
@@ -98,16 +97,18 @@ export function useCrews() {
   const leaveCrew = useCallback(async () => {
     if (!user?.uid || !currentCrewId) return;
 
-    // Snapshot for rollback
-    const prevCrews = crewsRef.current;
-    setCrews(prev => prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c));
+    let snapshot: Crew[] = [];
+    setCrews(prev => {
+      snapshot = prev;
+      return prev.map(c => c.id === currentCrewId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c);
+    });
 
     try {
       await deleteDoc(doc(db, 'groups', currentCrewId, 'members', user.uid));
       await updateDoc(doc(db, 'groups', currentCrewId), { memberCount: increment(-1) });
       await updateProfile({ crewId: undefined });
     } catch (e) {
-      setCrews(prevCrews);
+      setCrews(snapshot);
       throw e;
     }
   }, [user, currentCrewId, updateProfile]);
