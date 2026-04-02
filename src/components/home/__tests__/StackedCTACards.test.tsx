@@ -57,8 +57,6 @@ function renderCards(overrides: Partial<Parameters<typeof StackedCTACards>[0]> &
     onLogWeight: vi.fn(),
     lastWeightDate: "Logged today",
     todayRun: null,
-    healthScore: 72,
-    prevHealthScore: 65,
   };
   const props = { ...defaults, ...overrides };
   return render(
@@ -74,40 +72,20 @@ describe("StackedCTACards", function() {
   });
 
   describe("card ordering", function() {
-    it("active user: HealthScoreCard appears before LiftCTA", function() {
+    it("LiftCTA appears before RunCTA on both days", function() {
       const { container } = renderCards({ userSegment: "active" });
       const allText = container.textContent || "";
-      const healthIdx = allText.indexOf("Health Score");
       const liftIdx = allText.indexOf("Today \u00B7 Lift day");
-      expect(healthIdx).toBeGreaterThan(-1);
+      const runIdx = allText.indexOf("Today \u00B7 Run day");
       expect(liftIdx).toBeGreaterThan(-1);
-      expect(healthIdx).toBeLessThan(liftIdx);
+      expect(runIdx).toBeGreaterThan(-1);
+      expect(liftIdx).toBeLessThan(runIdx);
     });
 
-    it("returning user: LiftCTA appears before HealthScoreCard", function() {
-      const { container } = renderCards({ userSegment: "returning" });
+    it("HealthScoreCard is not rendered inside StackedCTACards (extracted to Home)", function() {
+      const { container } = renderCards({ userSegment: "active" });
       const allText = container.textContent || "";
-      const healthIdx = allText.indexOf("Health Score");
-      const liftIdx = allText.indexOf("Today \u00B7 Lift day");
-      expect(healthIdx).toBeGreaterThan(-1);
-      expect(liftIdx).toBeGreaterThan(-1);
-      expect(liftIdx).toBeLessThan(healthIdx);
-    });
-
-    it("new user: LiftCTA appears before HealthScoreCard (action-forward)", function() {
-      const { container } = renderCards({ userSegment: "new" });
-      const allText = container.textContent || "";
-      const healthIdx = allText.indexOf("Health Score");
-      const liftIdx = allText.indexOf("Today \u00B7 Lift day");
-      expect(liftIdx).toBeLessThan(healthIdx);
-    });
-
-    it("casual user: LiftCTA appears before HealthScoreCard (action-forward)", function() {
-      const { container } = renderCards({ userSegment: "casual" });
-      const allText = container.textContent || "";
-      const healthIdx = allText.indexOf("Health Score");
-      const liftIdx = allText.indexOf("Today \u00B7 Lift day");
-      expect(liftIdx).toBeLessThan(healthIdx);
+      expect(allText.indexOf("Health Score")).toBe(-1);
     });
   });
 
