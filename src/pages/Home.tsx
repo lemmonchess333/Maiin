@@ -35,8 +35,12 @@ import { useCountUp } from "@/hooks/useCountUp";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import InsightStrip from "@/components/home/InsightStrip";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
+
+import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsights";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -160,6 +164,33 @@ export default function Home() {
     const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
     return calcDailyBurn(bmr, actLevel, phase, todayWorkoutCals, todayRunCals, 0);
   }, [profile, todayWorkoutCals, todayRunCals]);
+
+  // Performance data for InsightStrip
+  const { currentWeek: perfWeek } = usePerformanceWeeks(1);
+  const perfLoadBand = perfWeek?.labels?.loadBand || perfWeek?.loadBand || "";
+  const showInsightStrip = perfWeek?.insight && (perfLoadBand === "high" || perfLoadBand === "overreach" || perfWeek?.flags?.deloadRecommended);
+
+  // Nutrition insight from meal patterns
+  const topNutritionInsight = useMemo(function() {
+    if (meals.length < 5) return null;
+    const mapped: MealEntry[] = meals.slice(0, 100).map(function(m) {
+      let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "dinner";
+      if (m.createdAt && typeof (m.createdAt as { toDate?: () => Date }).toDate === "function") {
+        const hour = ((m.createdAt as { toDate: () => Date }).toDate()).getHours();
+        if (hour < 10) mealType = "breakfast";
+        else if (hour < 14) mealType = "lunch";
+        else if (hour < 18) mealType = "snack";
+      }
+      return { calories: m.totalCalories, protein: m.totalProtein, carbs: m.totalCarbs, fat: m.totalFat, mealType, date: m.date };
+    });
+    const insights = analyzeNutritionPatterns(mapped, {
+      calories: profile?.targetCalories || 2200,
+      protein: profile?.targetProtein || 160,
+      carbs: profile?.targetCarbs || 250,
+      fat: profile?.targetFat || 60,
+    });
+    return insights.length > 0 ? insights[0] : null;
+  }, [meals, profile?.targetCalories, profile?.targetProtein, profile?.targetCarbs, profile?.targetFat]);
 
   // Meal history for conditional "Log first meal" CTA
   const totalLifetimeMeals = meals.length;
@@ -391,15 +422,21 @@ export default function Home() {
         )}
       </motion.div>
 
+      {showInsightStrip && perfWeek?.insight && (
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+          <SectionErrorBoundary sectionName="insight-strip">
+            <InsightStrip title={perfWeek.insight.title} bullet={perfWeek.insight.bullets[0] || ""} loadBand={perfLoadBand} />
+          </SectionErrorBoundary>
+        </motion.div>
+      )}
+
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
           <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} />
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targetProtein={profile.targetProtein || 160} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
           </SectionErrorBoundary>
         </motion.div>
       </section>
-
-
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
