@@ -14,6 +14,10 @@ export function calculateRollover(
   weeklyConsumed: number;
   weeklyRemaining: number;
 } {
+  if (targetDailyCalories <= 0) {
+    return { adjustedTarget: 0, underspendBuffer: 0, weeklyBudget: 0, weeklyConsumed: 0, weeklyRemaining: 0 };
+  }
+
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
   const todayStr = format(today, "yyyy-MM-dd");
