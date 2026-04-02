@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
@@ -76,14 +76,24 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
     onClose();
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (newlySelectedCount >= 2) {
       setShowDiscardConfirm(true);
     } else {
       setSelectedIds(new Set(preExistingIds));
       onClose();
     }
-  };
+  }, [newlySelectedCount, preExistingIds, onClose]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, handleClose]);
 
   const confirmDiscard = () => {
     setShowDiscardConfirm(false);

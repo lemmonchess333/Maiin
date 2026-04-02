@@ -31,6 +31,30 @@ export interface Meal {
   createdAt: unknown;
 }
 
+/** Coerce a value to a finite number, defaulting to 0 */
+function safeNum(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
+  return {
+    id,
+    date: typeof raw.date === 'string' ? raw.date : '',
+    foodName: typeof raw.foodName === 'string' ? raw.foodName : '',
+    items: Array.isArray(raw.items) ? raw.items as MealItem[] : [],
+    totalCalories: safeNum(raw.totalCalories),
+    totalProtein: safeNum(raw.totalProtein),
+    totalCarbs: safeNum(raw.totalCarbs),
+    totalFat: safeNum(raw.totalFat),
+    totalFiber: raw.totalFiber != null ? safeNum(raw.totalFiber) : undefined,
+    totalSugar: raw.totalSugar != null ? safeNum(raw.totalSugar) : undefined,
+    totalSodium: raw.totalSodium != null ? safeNum(raw.totalSodium) : undefined,
+    confidence: typeof raw.confidence === 'string' ? raw.confidence : '',
+    createdAt: raw.createdAt,
+  };
+}
+
 export function useMeals() {
   const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -51,10 +75,7 @@ export function useMeals() {
     const q = query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as Meal[];
+      const data = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
       setMeals(data);
       setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
       setHasMore(snapshot.docs.length >= PAGE_SIZE);
@@ -69,7 +90,7 @@ export function useMeals() {
     const mealsRef = collection(db, "users", user.uid, "meals");
     const q = query(mealsRef, orderBy("createdAt", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
     const snapshot = await getDocs(q);
-    const newData = snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as Meal[];
+    const newData = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
     setMeals(prev => [...prev, ...newData]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length >= PAGE_SIZE);
