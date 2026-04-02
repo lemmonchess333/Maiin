@@ -100,6 +100,7 @@ function makeExercise(
     movementCategory: category,
     sets,
     reps,
+    baseReps: reps,
     weight: w,
     progressionType: progression,
     lastSuccessfulWeight: existing?.lastSuccessfulWeight ?? w,
@@ -125,6 +126,7 @@ function makeAccessory(
     movementCategory: category,
     sets,
     reps,
+    baseReps: reps,
     weight,
     progressionType: "linear",
     lastSuccessfulWeight: weight,
@@ -301,6 +303,31 @@ function buildPPL(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
   ];
 }
 
+/** Legs B — flipped emphasis from Legs A.
+ *  Legs A leads with squat (knee), Legs B leads with deadlift (hip).
+ *  Accessories also swap order for different training stimulus. */
+function buildLegsB(goal: Goal, existing?: WorkoutDay[]): WorkoutDay {
+  const vm = goalVolumeMultiplier(goal);
+  const round = (n: number) => Math.max(1, Math.round(n));
+  // Use index 5 for existing exercises (Legs B is the 6th workout day)
+  const findExisting = (exIdx: number) => existing?.[5]?.exercises[exIdx];
+
+  return {
+    dayName: "Legs B",
+    dayType: "legs",
+    completed: false,
+    exercises: [
+      // Flipped: hip-dominant leads
+      makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", findExisting(0)),
+      makeExercise("knee_dominant", round(4 * vm), 8, 60, "double", findExisting(1)),
+      // Accessories in reversed order with different rep ranges
+      makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
+      makeAccessory("knee_dominant", round(3 * vm), 10, 40, "squat"),
+      makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(4)),
+    ],
+  };
+}
+
 /* ================================
    GENERATE FULL PROGRAM
 ================================ */
@@ -339,12 +366,7 @@ export function generateProgram(
       break;
     case "ppl_x2": {
       const ppl = buildPPL(goal, existingWorkouts);
-      workouts = [...ppl, {
-        ...ppl[2],
-        dayName: "Legs B",
-        completed: false,
-        exercises: ppl[2].exercises.map(ex => ({ ...ex })),
-      }];
+      workouts = [...ppl, buildLegsB(goal, existingWorkouts)];
       break;
     }
     case "ppl_x2_fb": {
@@ -352,12 +374,7 @@ export function generateProgram(
       const fb = buildFullBody(goal, 1, existingWorkouts);
       workouts = [
         ...ppl7,
-        {
-          ...ppl7[2],
-          dayName: "Legs B",
-          completed: false,
-          exercises: ppl7[2].exercises.map(ex => ({ ...ex })),
-        },
+        buildLegsB(goal, existingWorkouts),
         {
           ...fb[0],
           dayName: "Full Body (Recovery)",
@@ -404,6 +421,7 @@ export function applyProgression(
   const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
   const isBodyweight = exercise.weight === 0;
+  const resetReps = exercise.baseReps ?? exercise.reps; // anchor to original prescription
 
   if (exercise.progressionType === "double") {
     if (completed) {
@@ -413,9 +431,9 @@ export function applyProgression(
           // Bodyweight: progress via rep target increase
           updated.reps = exercise.reps + 1;
         } else {
-          // Weighted: increase weight and reset reps to base target
+          // Weighted: increase weight and reset reps to base prescription
           updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
-          updated.reps = exercise.reps;
+          updated.reps = resetReps;
         }
       }
       // Otherwise: success recorded but reps still accumulating toward ceiling
@@ -448,7 +466,7 @@ export function applyProgression(
       } else {
         if (actualReps >= exercise.reps + 2) {
           updated.weight = exercise.weight + 2.5;
-          updated.reps = exercise.reps;
+          updated.reps = resetReps; // reset to original prescription, not drifted value
         }
       }
       updated.lastSuccessfulWeight = actualWeight;
