@@ -1,115 +1,52 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
-let originalFetch: typeof globalThis.fetch;
+// Mock firebase/functions before importing gemini
+vi.mock('firebase/functions', () => ({
+  httpsCallable: vi.fn(),
+}));
+
+vi.mock('../firebase', () => ({
+  functions: {},
+}));
+
+import { httpsCallable } from 'firebase/functions';
 
 beforeEach(() => {
-  originalFetch = globalThis.fetch;
+  vi.resetModules();
 });
 
 afterEach(() => {
-  globalThis.fetch = originalFetch;
   vi.restoreAllMocks();
 });
 
-describe('askGemini', () => {
-  it('returns error when API key is not configured', async () => {
-    // Default env has no key set
-    const { askGemini } = await import('../gemini');
-    const result = await askGemini('test prompt');
-    expect(result.error).toMatch(/API key not configured/i);
-    expect(result.text).toBe('');
-  });
-});
-
-// For tests that need a key, we mock the module directly
-describe('askGemini with key', () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
+describe('askGemini (Cloud Function proxy)', () => {
   it('returns text on successful response', async () => {
-    // Mock the gemini module to bypass the API key check
-    vi.doMock('../gemini', () => ({
-      askGemini: async (prompt: string) => {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=test-key`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-          }
-        );
-        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-        const data = await response.json();
-        return { text: data?.candidates?.[0]?.content?.parts?.[0]?.text || '' };
-      },
-      generateWeeklyPlan: async (athleteType: string, _stats: Record<string, number>) => {
-        const { askGemini } = await import('../gemini');
-        return askGemini(`Generate a weekly training plan for a ${athleteType} athlete.`);
-      },
-      adjustMacros: async (_macros: Record<string, number>, _progress: Record<string, number>) => {
-        const { askGemini } = await import('../gemini');
-        return askGemini('Suggest macro adjustments based on current progress.');
-      },
-    }));
-
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        candidates: [{ content: { parts: [{ text: 'AI response here' }] } }],
-      }),
+    const mockCallable = vi.fn().mockResolvedValue({
+      data: { text: 'AI response here' },
     });
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
 
+    // Re-import to pick up fresh mock
     const { askGemini } = await import('../gemini');
     const result = await askGemini('test prompt');
     expect(result.text).toBe('AI response here');
   });
 
-  it('handles HTTP errors', async () => {
-    vi.doMock('../gemini', () => ({
-      askGemini: async (prompt: string) => {
-        try {
-          const response = await fetch('https://example.com', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-          });
-          if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-          const data = await response.json();
-          return { text: data?.candidates?.[0]?.content?.parts?.[0]?.text || '' };
-        } catch (err) {
-          return { text: '', error: err instanceof Error ? err.message : 'AI request failed' };
-        }
-      },
-    }));
-
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 429 });
+  it('handles rate limit errors', async () => {
+    const mockCallable = vi.fn().mockRejectedValue(
+      new Error('resource-exhausted: Rate limit reached'),
+    );
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
 
     const { askGemini } = await import('../gemini');
     const result = await askGemini('test prompt');
-    expect(result.error).toMatch(/429/);
+    expect(result.error).toMatch(/Rate limit/i);
     expect(result.text).toBe('');
   });
 
   it('handles network errors', async () => {
-    vi.doMock('../gemini', () => ({
-      askGemini: async (prompt: string) => {
-        try {
-          const response = await fetch('https://example.com', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-          });
-          if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-          const data = await response.json();
-          return { text: data?.candidates?.[0]?.content?.parts?.[0]?.text || '' };
-        } catch (err) {
-          return { text: '', error: err instanceof Error ? err.message : 'AI request failed' };
-        }
-      },
-    }));
-
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
+    const mockCallable = vi.fn().mockRejectedValue(new Error('Network failure'));
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
 
     const { askGemini } = await import('../gemini');
     const result = await askGemini('test prompt');
@@ -117,28 +54,39 @@ describe('askGemini with key', () => {
     expect(result.text).toBe('');
   });
 
-  it('handles empty candidates in response', async () => {
-    vi.doMock('../gemini', () => ({
-      askGemini: async (prompt: string) => {
-        const response = await fetch('https://example.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        });
-        if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-        const data = await response.json();
-        return { text: data?.candidates?.[0]?.content?.parts?.[0]?.text || '' };
-      },
-    }));
-
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ candidates: [] }),
-    });
+  it('handles unknown errors', async () => {
+    const mockCallable = vi.fn().mockRejectedValue('string error');
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
 
     const { askGemini } = await import('../gemini');
     const result = await askGemini('test prompt');
+    expect(result.error).toBe('AI request failed');
     expect(result.text).toBe('');
   });
 });
 
+describe('generateWeeklyPlan', () => {
+  it('calls askGemini with athlete type', async () => {
+    const mockCallable = vi.fn().mockResolvedValue({
+      data: { text: 'Weekly plan here' },
+    });
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
+
+    const { generateWeeklyPlan } = await import('../gemini');
+    const result = await generateWeeklyPlan('hybrid', { squat: 100 });
+    expect(result.text).toBe('Weekly plan here');
+  });
+});
+
+describe('adjustMacros', () => {
+  it('calls askGemini with macro prompt', async () => {
+    const mockCallable = vi.fn().mockResolvedValue({
+      data: { text: 'Adjust protein up' },
+    });
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable as never);
+
+    const { adjustMacros } = await import('../gemini');
+    const result = await adjustMacros({ protein: 150 }, { weight: 80 });
+    expect(result.text).toBe('Adjust protein up');
+  });
+});

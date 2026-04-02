@@ -10,7 +10,7 @@ const PRICE_IDS = {
 
 type PlanType = keyof typeof PRICE_IDS;
 
-// Your Cloud Function URL for creating checkout sessions
+// Cloud Function URL for creating checkout sessions
 const CREATE_CHECKOUT_URL =
   import.meta.env.VITE_STRIPE_CHECKOUT_URL ||
   "/api/create-checkout-session";
@@ -30,9 +30,15 @@ export function useStripeCheckout() {
     setError(null);
 
     try {
+      // Get Firebase ID token for server-side auth verification
+      const idToken = await user.getIdToken();
+
       const response = await fetch(CREATE_CHECKOUT_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           priceId: PRICE_IDS[plan],
           uid: user.uid,
@@ -41,6 +47,10 @@ export function useStripeCheckout() {
           cancelUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=cancelled`,
         }),
       });
+
+      if (response.status === 429) {
+        throw new Error("Too many checkout attempts. Please wait a moment.");
+      }
 
       if (!response.ok) {
         throw new Error("Failed to create checkout session");

@@ -5,6 +5,57 @@ const cors = require("cors")({ origin: true });
 admin.initializeApp();
 
 // ══════════════════════════════════════════════
+// RATE LIMITER — per-user, Firestore-backed
+// ══════════════════════════════════════════════
+
+/**
+ * Checks if a user has exceeded the allowed number of calls within a window.
+ * Uses a Firestore document to track timestamps.
+ * @param {string} uid - User ID
+ * @param {string} action - Action name (e.g., "askGemini", "analyzeFood")
+ * @param {number} maxCalls - Maximum calls allowed in the window
+ * @param {number} windowMs - Time window in milliseconds
+ * @returns {Promise<boolean>} true if rate limited (should block)
+ */
+async function isRateLimited(uid, action, maxCalls, windowMs) {
+  const rl = admin.firestore().collection("rateLimits").doc(`${uid}_${action}`);
+  const now = Date.now();
+
+  try {
+    const doc = await rl.get();
+    const data = doc.exists ? doc.data() : { timestamps: [] };
+    // Filter to only timestamps within the window
+    const recent = (data.timestamps || []).filter((t) => now - t < windowMs);
+
+    if (recent.length >= maxCalls) {
+      return true; // rate limited
+    }
+
+    // Record this call
+    recent.push(now);
+    await rl.set({ timestamps: recent, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    return false;
+  } catch (err) {
+    console.error(`Rate limiter error for ${uid}/${action}:`, err.message);
+    return false; // fail open — don't block on rate limiter errors
+  }
+}
+
+/**
+ * Verifies a Firebase ID token from an Authorization header.
+ * @param {string} authHeader
+ * @returns {Promise<{uid: string, email: string}>}
+ */
+async function verifyAuth(authHeader) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("Unauthorized");
+  }
+  const token = authHeader.split("Bearer ")[1];
+  const decoded = await admin.auth().verifyIdToken(token);
+  return { uid: decoded.uid, email: decoded.email || "" };
+}
+
+// ══════════════════════════════════════════════
 // ONBOARDING — bypasses security rules via Admin SDK
 // ══════════════════════════════════════════════
 
@@ -13,6 +64,12 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
   const uid = context.auth.uid;
+
+  // Rate limit: 5 onboarding attempts per 10 minutes
+  const limited = await isRateLimited(uid, "onboarding", 5, 600_000);
+  if (limited) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many attempts. Please wait.");
+  }
 
   try {
     // Validate required fields
@@ -86,14 +143,20 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      let authUser;
+      try {
+        authUser = await verifyAuth(req.headers.authorization);
+      } catch (_) {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
 
-      const token = authHeader.split("Bearer ")[1];
-      await admin.auth().verifyIdToken(token);
+      // Rate limit: 10 image analyses per 10 minutes
+      const limited = await isRateLimited(authUser.uid, "analyzeFood", 10, 600_000);
+      if (limited) {
+        res.status(429).json({ error: "Rate limit reached. Please wait before analyzing more food." });
+        return;
+      }
 
       const { imageBase64 } = req.body;
       if (!imageBase64) {
@@ -172,14 +235,20 @@ exports.analyzeFoodText = functions.https.onRequest((req, res) => {
         return;
       }
 
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      let authUser;
+      try {
+        authUser = await verifyAuth(req.headers.authorization);
+      } catch (_) {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
 
-      const token = authHeader.split("Bearer ")[1];
-      await admin.auth().verifyIdToken(token);
+      // Rate limit: 15 text analyses per 10 minutes
+      const limited = await isRateLimited(authUser.uid, "analyzeFoodText", 15, 600_000);
+      if (limited) {
+        res.status(429).json({ error: "Rate limit reached. Please wait before analyzing more food." });
+        return;
+      }
 
       const { text } = req.body;
       if (!text || !text.trim()) {
@@ -247,6 +316,161 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
 });
 
 // ══════════════════════════════════════════════
+// GEMINI TEXT PROXY — keeps API key server-side
+// ══════════════════════════════════════════════
+
+exports.askGeminiText = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+
+  // Rate limit: 5 calls per 60 seconds per user
+  const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
+  if (limited) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Rate limit reached. Please wait a moment before trying again.",
+    );
+  }
+
+  const { prompt } = data;
+  if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+    throw new functions.https.HttpsError("invalid-argument", "prompt is required.");
+  }
+
+  // Cap prompt length to prevent abuse
+  if (prompt.length > 5000) {
+    throw new functions.https.HttpsError("invalid-argument", "Prompt too long (max 5000 characters).");
+  }
+
+  try {
+    const projectId = process.env.GCLOUD_PROJECT;
+    const accessToken = await admin.credential.applicationDefault().getAccessToken();
+
+    const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
+      projectId + "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + accessToken.access_token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("askGeminiText: Vertex AI error:", JSON.stringify(result));
+      throw new functions.https.HttpsError("internal", "AI service error");
+    }
+
+    let responseText = "";
+    if (result.candidates && result.candidates[0] &&
+        result.candidates[0].content && result.candidates[0].content.parts) {
+      responseText = result.candidates[0].content.parts[0].text;
+    } else {
+      console.error("askGeminiText: unexpected response format:", JSON.stringify(result));
+      throw new functions.https.HttpsError("internal", "Unexpected AI response format");
+    }
+
+    return { text: responseText };
+  } catch (err) {
+    if (err instanceof functions.https.HttpsError) throw err;
+    console.error("askGeminiText error:", err.message);
+    throw new functions.https.HttpsError("internal", "AI request failed");
+  }
+});
+
+// ══════════════════════════════════════════════
+// STRIPE CHECKOUT SESSION
+// ══════════════════════════════════════════════
+
+exports.createCheckoutSession = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method not allowed" });
+        return;
+      }
+
+      const { uid, email, priceId, successUrl, cancelUrl } = req.body;
+
+      if (!uid || !priceId || !successUrl || !cancelUrl) {
+        res.status(400).json({ error: "Missing required fields: uid, priceId, successUrl, cancelUrl" });
+        return;
+      }
+
+      // Verify the user is authenticated
+      const authUser = await verifyAuth(req.headers.authorization);
+      if (authUser.uid !== uid) {
+        res.status(403).json({ error: "UID mismatch" });
+        return;
+      }
+
+      // Rate limit: 5 checkout attempts per 10 minutes
+      const limited = await isRateLimited(uid, "checkout", 5, 600_000);
+      if (limited) {
+        res.status(429).json({ error: "Too many checkout attempts. Please wait." });
+        return;
+      }
+
+      // Stripe secret key from Firebase config or environment
+      const stripeKey = process.env.STRIPE_SECRET_KEY ||
+        (functions.config().stripe && functions.config().stripe.secret_key);
+
+      if (!stripeKey) {
+        console.error("createCheckoutSession: STRIPE_SECRET_KEY not configured");
+        res.status(500).json({ error: "Payment service not configured" });
+        return;
+      }
+
+      const stripe = require("stripe")(stripeKey);
+
+      // Look up or create Stripe customer
+      const userDoc = await admin.firestore().collection("users").doc(uid).get();
+      const userData = userDoc.exists ? userDoc.data() : {};
+      let customerId = userData.stripeCustomerId;
+
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: email || authUser.email,
+          metadata: { firebaseUid: uid },
+        });
+        customerId = customer.id;
+        await admin.firestore().collection("users").doc(uid).set(
+          { stripeCustomerId: customerId },
+          { merge: true },
+        );
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: priceId.includes("lifetime") ? "payment" : "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: { firebaseUid: uid },
+      });
+
+      res.status(200).json({ url: session.url });
+    } catch (error) {
+      console.error("createCheckoutSession error:", error.message);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+});
+
+// ══════════════════════════════════════════════
 // PERFORMANCE ENGINE
 // ══════════════════════════════════════════════
 
@@ -266,6 +490,13 @@ exports.computePerformanceWeek = functions.https.onCall(async (data, context) =>
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
   const uid = context.auth.uid;
+
+  // Rate limit: 10 manual computes per 10 minutes
+  const limited = await isRateLimited(uid, "computePerformance", 10, 600_000);
+  if (limited) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
+  }
+
   const weekKey = data.weekKey || null;
 
   try {
