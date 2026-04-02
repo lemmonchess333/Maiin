@@ -35,6 +35,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import HealthScoreCard from "@/components/home/HealthScoreCard";
 import InsightStrip from "@/components/home/InsightStrip";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
@@ -413,11 +414,15 @@ export default function Home() {
       </motion.div>
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
+      </motion.div>
+
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
             waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
             lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} healthScore={healthScore} prevHealthScore={prevHealthScore} userSegment={userSegment} muscleGroups={muscleGroups} />
+            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} userSegment={userSegment} muscleGroups={muscleGroups} />
         )}
       </motion.div>
 
