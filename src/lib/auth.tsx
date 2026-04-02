@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { logger } from "./logger";
 import type { Goal } from "./types";
 
 /* ================================
@@ -253,15 +254,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (!isMounted) return;
+        try {
+          const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          if (!isMounted) return;
 
-        if (profileDoc.exists()) {
-          const data = profileDoc.data();
-          const safeProfile = hydrateProfile(firebaseUser.uid, data, "", firebaseUser.email ?? "");
-          setProfile(safeProfile);
-          syncDarkMode(safeProfile.darkMode);
-        } else {
+          if (profileDoc.exists()) {
+            const data = profileDoc.data();
+            const safeProfile = hydrateProfile(firebaseUser.uid, data, "", firebaseUser.email ?? "");
+            setProfile(safeProfile);
+            syncDarkMode(safeProfile.darkMode);
+          } else {
+            setProfile(null);
+          }
+        } catch (err) {
+          if (!isMounted) return;
+          logger.error('[AuthProvider] Failed to load profile', err);
           setProfile(null);
         }
       } else {

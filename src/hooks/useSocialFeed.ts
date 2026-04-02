@@ -79,18 +79,20 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
         batchGetKudos(activityIds, user.uid),
       ]);
 
-      const actData = (id: string) => activityMap[id] as ActivityData | undefined;
-      let enriched: FeedItem[] = feedItems.map(item => ({
-        ...item,
-        activity: (activityMap[item.activityId] || null) as ActivityData | undefined,
-        liked: kudosMap[item.activityId] || false,
-        kudosCount: (actData(item.activityId)?.kudosCount as number) || 0,
-        prHit: !!(actData(item.activityId)?.prHit || item.prHit),
-        prExercise: (actData(item.activityId)?.prExercise as string) || item.prExercise,
-        prWeight: (actData(item.activityId)?.prWeight as number) || item.prWeight,
-        badgeEarned: (actData(item.activityId)?.badgeEarned as string) || item.badgeEarned,
-        challengeMilestone: (actData(item.activityId)?.challengeMilestone as string) || item.challengeMilestone,
-      }));
+      let enriched: FeedItem[] = feedItems.map(item => {
+        const act = activityMap[item.activityId] as ActivityData | undefined;
+        return {
+          ...item,
+          activity: (act || null) as ActivityData | undefined,
+          liked: kudosMap[item.activityId] || false,
+          kudosCount: (act?.kudosCount as number) || 0,
+          prHit: !!(act?.prHit || item.prHit),
+          prExercise: (act?.prExercise as string) || item.prExercise,
+          prWeight: (act?.prWeight as number) || item.prWeight,
+          badgeEarned: (act?.badgeEarned as string) || item.badgeEarned,
+          challengeMilestone: (act?.challengeMilestone as string) || item.challengeMilestone,
+        };
+      });
 
       // Filter out blocked users
       if (blockedUsers && blockedUsers.size > 0) {
