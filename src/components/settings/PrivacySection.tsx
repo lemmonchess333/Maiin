@@ -27,8 +27,6 @@ interface PrivacySectionProps {
   setAutoPostRuns: (v: boolean) => void;
   autoPostWorkouts: boolean;
   setAutoPostWorkouts: (v: boolean) => void;
-  audioCues: boolean;
-  setAudioCues: (v: boolean) => void;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -51,8 +49,6 @@ export default function PrivacySection({
   setAutoPostRuns,
   autoPostWorkouts,
   setAutoPostWorkouts,
-  audioCues,
-  setAudioCues,
   privacyZones,
   addZone,
   removeZone,
@@ -170,23 +166,6 @@ export default function PrivacySection({
           className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostWorkouts ? "bg-primary" : "bg-muted border border-border")}
         >
           <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoPostWorkouts ? "translate-x-5" : "translate-x-1")} />
-        </button>
-      </div>
-
-      <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-        <div>
-          <p className="text-sm text-foreground">Audio cues</p>
-          <p className="text-xs text-muted-foreground">Voice announcements during runs</p>
-        </div>
-        <button
-          onClick={async () => {
-            const next = !audioCues;
-            setAudioCues(next);
-            await updateProfile({ audioCues: next });
-          }}
-          className={cn("w-10 h-6 rounded-full transition-colors relative", audioCues ? "bg-primary" : "bg-muted border border-border")}
-        >
-          <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", audioCues ? "translate-x-5" : "translate-x-1")} />
         </button>
       </div>
 

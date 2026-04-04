@@ -27,6 +27,7 @@ export function useShoes() {
   const { user } = useAuth();
   const [shoes, setShoes] = useState<Shoe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -37,6 +38,7 @@ export function useShoes() {
 
     const ref = collection(db, "users", user.uid, "shoes");
     const unsub = onSnapshot(ref, (snap) => {
+      setError(null);
       const list: Shoe[] = snap.docs.map((d) => {
         const data = d.data();
         return {
@@ -53,6 +55,10 @@ export function useShoes() {
         };
       });
       setShoes(list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0)));
+      setLoading(false);
+    }, (err) => {
+      console.error("useShoes snapshot error:", err);
+      setError(err);
       setLoading(false);
     });
 
@@ -115,5 +121,5 @@ export function useShoes() {
   const activeShoes = shoes.filter((s) => !s.retired);
   const defaultShoe = activeShoes.find((s) => s.isDefault) ?? activeShoes[0] ?? null;
 
-  return { shoes, activeShoes, defaultShoe, loading, addShoe, retireShoe, setDefault, updateMileage };
+  return { shoes, activeShoes, defaultShoe, loading, error, addShoe, retireShoe, setDefault, updateMileage };
 }

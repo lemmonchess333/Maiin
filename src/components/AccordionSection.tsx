@@ -43,7 +43,7 @@ export default function AccordionSection({ icon, title, subtitle, defaultOpen = 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">

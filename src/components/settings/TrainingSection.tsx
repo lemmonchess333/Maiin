@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  User,
   Target,
   ChevronRight,
   RefreshCw,
@@ -20,16 +19,8 @@ import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
-interface ProfileSectionProps {
+interface TrainingSectionProps {
   profile: UserProfile;
-  name: string;
-  setName: (v: string) => void;
-  weightKg: number;
-  setWeightKg: (v: number) => void;
-  heightCm: number;
-  setHeightCm: (v: number) => void;
-  mealsTarget: number;
-  setMealsTarget: (v: number) => void;
   runsTarget: number;
   schedule: ScheduleDay[];
   hasUnsavedScheduleChanges: boolean;
@@ -42,16 +33,8 @@ interface ProfileSectionProps {
   refreshRunSchedule: () => Promise<void>;
 }
 
-export default function ProfileSection({
+export default function TrainingSection({
   profile,
-  name,
-  setName,
-  weightKg,
-  setWeightKg,
-  heightCm,
-  setHeightCm,
-  mealsTarget,
-  setMealsTarget,
   runsTarget,
   schedule,
   hasUnsavedScheduleChanges,
@@ -62,7 +45,7 @@ export default function ProfileSection({
   programState,
   overrideRunDay,
   refreshRunSchedule,
-}: ProfileSectionProps) {
+}: TrainingSectionProps) {
   const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
   const [raceTargetDate, setRaceTargetDate] = useState("");
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
@@ -99,17 +82,17 @@ export default function ProfileSection({
   };
 
   return (
-    <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile & Goals" subtitle="Name, body stats, weekly schedule" defaultOpen>
-      {/* Retake Onboarding Quiz */}
+    <AccordionSection icon={<Target className="w-5 h-5 text-primary" />} title="Training" subtitle="Weekly schedule, run mode">
+      {/* Reconfigure Programme */}
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={async () => {
           await updateProfile({ onboardingComplete: false });
           navigate("/onboarding", { state: { retake: true } });
         }}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50 border border-border/30 hover:bg-muted transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
       >
-        <RefreshCw className="w-4 h-4 text-primary" />
+        <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         <div className="flex-1 text-left">
           <p className="text-sm font-medium">Reconfigure programme</p>
           <p className="text-xs text-muted-foreground">Re-run setup to generate a new training plan and targets</p>
@@ -117,56 +100,11 @@ export default function ProfileSection({
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </motion.button>
 
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Display name"
-        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
-      />
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="profile-weight" className="text-sm text-muted-foreground">Weight (kg)</label>
-          <input
-            id="profile-weight"
-            type="number"
-            value={weightKg}
-            onChange={(e) => setWeightKg(Number(e.target.value))}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-          />
-          <p className="text-xs text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
-        </div>
-        <div>
-          <label htmlFor="profile-height" className="text-sm text-muted-foreground">Height (cm)</label>
-          <input
-            id="profile-height"
-            type="number"
-            value={heightCm}
-            onChange={(e) => setHeightCm(Number(e.target.value))}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-          />
-        </div>
-      </div>
-
       {/* Weekly Schedule */}
       <div className="space-y-4">
         <p className="text-sm font-medium text-foreground flex items-center gap-2">
-          <Target className="w-4 h-4" />
           Weekly Schedule
         </p>
-        <div>
-          <label className="text-sm text-muted-foreground">
-            Weekly meal logging target ({mealsTarget})
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="20"
-            value={mealsTarget}
-            onChange={(e) => setMealsTarget(Number(e.target.value))}
-            className="w-full accent-primary"
-          />
-        </div>
 
         {/* Visual schedule editor */}
         <div className="bg-card rounded-2xl p-4 space-y-3">
@@ -282,7 +220,7 @@ export default function ProfileSection({
                   : "Follows a race training plan"}
             </p>
 
-            {/* Race goal setup form — shown when race_prep selected but no goal yet */}
+            {/* Race goal setup form */}
             {profile?.runMode === "race_prep" && !programState?.runPlan?.raceGoal && (
               <div className="p-3 rounded-xl bg-card space-y-3">
                 <div className="flex items-center gap-2 mb-1">
