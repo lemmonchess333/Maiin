@@ -6,21 +6,23 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { UtensilsCrossed } from "lucide-react";
+import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import type { DailyBurn } from "@/utils/dailyBurn";
+import type { DailyTargets } from "@/hooks/useDailyTargets";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
 
-export default function TodayEnergy({ calories, protein, burn, targetProtein: initProt, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
-  calories: number; protein: number; burn: DailyBurn; targetProtein: number; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
+export default function TodayEnergy({ calories, protein, burn, targets, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
+  calories: number; protein: number; burn: DailyBurn; targets: DailyTargets; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
   postWorkoutNudge?: { type: "lift" | "run" | "both"; proteinRemaining: number } | null;
   adaptiveTDEE?: { estimated: number; confidence: string } | null;
   nutritionInsight?: { type: "positive" | "warning" | "tip"; title: string; message: string } | null;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const tCal = burn.dailyBudget > 0 ? burn.dailyBudget : 2200;
-  const tProt = initProt > 0 ? initProt : 160;
-  const tCarbs = Math.round((tCal * 0.45) / 4);
-  const tFat = Math.round((tCal * 0.28) / 9);
+  const tCal = targets.finalTarget;
+  const tProt = targets.protein;
+  const tCarbs = targets.carbs;
+  const tFat = targets.fat;
   const proteinCal = protein * 4;
   const remaining = Math.max(calories - proteinCal, 0);
   const estimatedCarbs = Math.round((remaining * 0.62) / 4);
@@ -55,9 +57,9 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
           <span className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
-            {(calories || 0).toLocaleString()}
+            {formatCalories(calories || 0)}
           </span>
-          <span className="text-micro text-muted-foreground">/ {tCal.toLocaleString()} kcal</span>
+          <span className="text-micro text-muted-foreground">/ {formatCalories(tCal)} {CALORIE_UNIT}</span>
         </div>
         {(() => {
           const maxPct = Math.max(100, Math.min(calPct, 130));
@@ -93,8 +95,12 @@ export default function TodayEnergy({ calories, protein, burn, targetProtein: in
           >
             <div className="px-4 py-4 space-y-2.5">
               <BreakdownRow label={"Base TDEE (" + burn.phaseLabel + ")"} value={burn.phaseAdjustedTdee} />
-              <BreakdownRow label="+ Workout" value={burn.workoutCalories} color={THEME.semantic.positive} />
-              <BreakdownRow label="+ Run" value={burn.runCalories} color={THEME.semantic.vitals} />
+              {burn.workoutCalories > 0 && (
+                <BreakdownRow label="+ Workout" value={burn.workoutCalories} color={THEME.semantic.positive} />
+              )}
+              {burn.runCalories > 0 && (
+                <BreakdownRow label="+ Run" value={burn.runCalories} color={THEME.semantic.vitals} />
+              )}
               <BreakdownRow label="+ Steps" value={burn.stepCalories} placeholder="Connect Health App" color={THEME.textMuted} />
               <div className="h-px bg-border/50" />
               <div className="flex items-center justify-between">

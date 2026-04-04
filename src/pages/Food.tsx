@@ -47,9 +47,7 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { tint } from "@/lib/colorUtils";
-import { getAdjustedTargets } from "@/lib/phaseNutrition";
-import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
-import type { DayType } from "@/lib/types";
+import { useDailyTargets } from "@/hooks/useDailyTargets";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -71,7 +69,7 @@ interface OFFResult {
 }
 
 export default function Food() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { saveLog } = useDailyLogs();
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -125,6 +123,9 @@ export default function Food() {
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
+  const dailyTargets = useDailyTargets(selectedDateObj);
 
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
@@ -217,25 +218,11 @@ export default function Food() {
   };
 
 
-  const todayDayType = useMemo(() => {
-    const schedule =
-      profile?.weekSchedule && profile.weekSchedule.length === 7
-        ? profile.weekSchedule
-        : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
-    const today = getTodaySchedule(schedule);
-    return (today?.type || "rest") as DayType;
-  }, [profile]);
-
-  const adjustedTargets = useMemo(() => {
-    if (!profile) return null;
-    return getAdjustedTargets(profile, todayDayType);
-  }, [profile, todayDayType]);
-
   const macroTargets = {
-    calories: adjustedTargets?.calories || profile?.targetCalories || 2200,
-    protein: adjustedTargets?.protein || profile?.targetProtein || 160,
-    carbs: adjustedTargets?.carbs || profile?.targetCarbs || 250,
-    fat: adjustedTargets?.fat || profile?.targetFat || 70,
+    calories: dailyTargets.finalTarget,
+    protein: dailyTargets.protein,
+    carbs: dailyTargets.carbs,
+    fat: dailyTargets.fat,
   };
 
   useEffect(() => {
@@ -613,10 +600,10 @@ export default function Food() {
       </motion.div>
 
       {/* Day-type context */}
-      {isToday && adjustedTargets && (
-        <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: todayDayType === "rest" ? THEME.text.muted : todayDayType === "run" ? THEME.running : THEME.lifting }}>
-          {todayDayType !== "rest" && (todayDayType === "lift" ? <Dumbbell className="w-3 h-3" /> : todayDayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>)}
-          {todayDayType === "rest" ? "Rest day targets" : adjustedTargets.annotation}
+      {isToday && dailyTargets.annotation && (
+        <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: dailyTargets.dayType === "rest" ? THEME.text.muted : dailyTargets.dayType === "run" ? THEME.running : THEME.lifting }}>
+          {dailyTargets.dayType !== "rest" && (dailyTargets.dayType === "lift" ? <Dumbbell className="w-3 h-3" /> : dailyTargets.dayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>)}
+          {dailyTargets.dayType === "rest" ? "Rest day targets" : dailyTargets.annotation}
         </p>
       )}
 
@@ -637,7 +624,7 @@ export default function Food() {
                 value: dailyTotals.calories,
                 target: macroTargets.calories,
                 color: macroColors.calories,
-                label: "cal",
+                label: "kcal",
                 suffix: "",
               },
               {
@@ -982,7 +969,7 @@ export default function Food() {
       {/* Training-context nudge or Pro upsell */}
       {todaysMeals.length === 0 && isToday ? (
         <p className="text-[13px] text-muted-foreground/60 italic text-center py-2">
-          {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both", rest: "Log your first meal to get started" } as Record<string, string>)[todayDayType] || "Log your first meal to get started"}
+          {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both", rest: "Log your first meal to get started" } as Record<string, string>)[dailyTargets.dayType] || "Log your first meal to get started"}
         </p>
       ) : (
         !isPro && todaysMeals.length > 0 && (
