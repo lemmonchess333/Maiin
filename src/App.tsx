@@ -6,17 +6,36 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
-// that references chunk hashes that no longer exist after a deploy
+// that references chunk hashes that no longer exist after a deploy.
+// Also catches "Failed to fetch dynamically imported module" errors from
+// stale Service Worker caches.
 function lazyRetry<T extends { default: React.ComponentType<Record<string, never>> }>(
   factory: () => Promise<T>,
 ): React.LazyExoticComponent<T["default"]> {
   return lazy(() =>
-    factory().catch((err) => {
-      // Only retry once to avoid infinite loops
-      const key = "chunk-retry-" + factory.toString().slice(0, 64);
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, "1");
-        window.location.reload();
+    factory().catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      const isChunkError =
+        message.includes("Failed to fetch dynamically imported module") ||
+        message.includes("Importing a module script failed") ||
+        message.includes("error loading dynamically imported module") ||
+        message.includes("Loading chunk") ||
+        message.includes("Loading CSS chunk");
+
+      if (isChunkError) {
+        // Clear SW caches so the next reload fetches fresh assets
+        if ("caches" in window) {
+          caches.keys().then((names) => names.forEach((n) => caches.delete(n)));
+        }
+        // Only auto-reload once per session to avoid infinite loops
+        const key = "chunk-retry";
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          window.location.reload();
+          // Return a never-resolving promise to prevent React from rendering
+          // the error while the page is reloading
+          return new Promise<T>(() => {});
+        }
       }
       throw err;
     }),
