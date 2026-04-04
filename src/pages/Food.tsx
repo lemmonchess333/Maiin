@@ -696,15 +696,15 @@ export default function Food() {
                 <Icon className="w-5 h-5 mx-auto mb-1.5" />
                 <p className="text-base font-bold font-mono tabular-nums leading-tight" style={isOver ? { color: "#EF4444" } : undefined}>
                   {isOver
-                    ? (isCal ? `-${formatCalories(consumed - target)}` : `-${formatMacro(consumed - target)}${suffix}`)
-                    : (isCal ? formatCalories(remaining) : `${formatMacro(remaining)}${suffix}`)
+                    ? `-${isCal ? formatCalories(consumed - target) : formatMacro(consumed - target)}${isCal ? "" : suffix}`
+                    : `${isCal ? formatCalories(remaining) : formatMacro(remaining)}${isCal ? "" : suffix}`
                   }
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
-                  {isCal ? CALORIE_UNIT : ""} {isOver ? "over" : "left"}
+                  {isCal ? `${CALORIE_UNIT} ` : ""}{isOver ? "over" : "left"}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
-                  {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
+                  {isCal ? `${formatCalories(consumed)} ${CALORIE_UNIT}` : `${formatMacro(consumed)}${suffix}`} eaten
                 </p>
                 <p className="text-xs mt-1">{label}</p>
                 <div
@@ -830,7 +830,7 @@ export default function Food() {
         </p>
         {quickMeals.length >= 3 ? (
           <div
-            className="flex gap-2 pb-1 -mx-1 px-1 pr-4"
+            className="flex gap-2 pb-1 -mx-1 px-1"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
             {quickMeals.map((meal, i) => (
@@ -847,10 +847,11 @@ export default function Food() {
                 {meal.name} · {meal.cal} kcal
               </motion.button>
             ))}
+            <div className="shrink-0 w-3" aria-hidden="true" />
           </div>
         ) : (
           <div
-            className="flex gap-2.5 pb-1 -mx-1 px-1 pr-4"
+            className="flex gap-2.5 pb-1 -mx-1 px-1"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
             {quickMeals.map((meal, i) => (
@@ -869,6 +870,7 @@ export default function Food() {
                 <span className="block text-xs text-muted-foreground mt-1">~{meal.cal} kcal</span>
               </motion.button>
             ))}
+            <div className="shrink-0 w-3" aria-hidden="true" />
           </div>
         )}
         <div className="mt-2">
