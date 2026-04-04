@@ -701,10 +701,10 @@ export default function Food() {
                   }
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
-                  {isCal ? `${CALORIE_UNIT} ` : ""}{isOver ? "over" : "left"}
+                  {isOver ? "over" : "left"}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
-                  {isCal ? `${formatCalories(consumed)} ${CALORIE_UNIT}` : `${formatMacro(consumed)}${suffix}`} eaten
+                  {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
                 </p>
                 <p className="text-xs mt-1">{label}</p>
                 <div
@@ -847,7 +847,7 @@ export default function Food() {
                 {meal.name} · {meal.cal} kcal
               </motion.button>
             ))}
-            <div className="shrink-0 w-3" aria-hidden="true" />
+            <div className="shrink-0 w-4" aria-hidden="true" />
           </div>
         ) : (
           <div
@@ -870,7 +870,7 @@ export default function Food() {
                 <span className="block text-xs text-muted-foreground mt-1">~{meal.cal} kcal</span>
               </motion.button>
             ))}
-            <div className="shrink-0 w-3" aria-hidden="true" />
+            <div className="shrink-0 w-4" aria-hidden="true" />
           </div>
         )}
         <div className="mt-2">
