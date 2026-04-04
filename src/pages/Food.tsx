@@ -701,7 +701,7 @@ export default function Food() {
                   }
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
-                  {isOver ? "over" : "left"}
+                  {isCal ? `${CALORIE_UNIT} ` : ""}{isOver ? "over" : "left"}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
                   {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
