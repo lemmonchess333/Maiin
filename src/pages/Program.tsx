@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useSubscription } from "@/lib/subscription";
-import { useAuth } from "@/lib/auth";
+import { useWorkouts } from "@/hooks/useWorkouts";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
@@ -10,7 +10,6 @@ import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
-import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
   Lock,
   Check,
@@ -61,7 +60,6 @@ function formatVolume(kg: number): string {
 }
 
 function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
-  const { profile } = useAuth();
   const navigate = useNavigate();
   const {
     programState,
@@ -79,6 +77,38 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWorkouts,
     viewedWeekNumber,
   } = useProgram();
+
+  const { workouts: recentWorkouts } = useWorkouts();
+
+  // Per-exercise best working set from last session containing that exercise
+  const lastPerformanceMap = useMemo(() => {
+    const map = new Map<string, { weight: number; reps: number }>();
+    if (!recentWorkouts.length) return map;
+
+    // workouts are sorted by date desc — first occurrence of an exercise is the most recent
+    for (const workout of recentWorkouts) {
+      for (const wex of workout.exercises) {
+        if (map.has(wex.exerciseId) || !wex.sets.length) continue;
+
+        const maxWeight = Math.max(...wex.sets.map((s) => s.weightKg));
+
+        if (maxWeight > 0) {
+          // Filter out warm-up sets (< 50% of heaviest)
+          const workingSets = wex.sets.filter((s) => s.weightKg >= maxWeight * 0.5);
+          // Best set: heaviest weight, then highest reps
+          const best = workingSets.reduce((a, b) =>
+            b.weightKg > a.weightKg || (b.weightKg === a.weightKg && b.reps > a.reps) ? b : a
+          );
+          map.set(wex.exerciseId, { weight: best.weightKg, reps: best.reps });
+        } else {
+          // Bodyweight: take highest reps
+          const best = wex.sets.reduce((a, b) => (b.reps > a.reps ? b : a));
+          map.set(wex.exerciseId, { weight: 0, reps: best.reps });
+        }
+      }
+    }
+    return map;
+  }, [recentWorkouts]);
 
   // Core navigation state
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -215,18 +245,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     await saveProgram(updatedState);
   };
 
-  // Build weekly schedule (must be before early return — hooks rule)
-  const weekSchedule = useMemo(() => {
-    return profile?.weekSchedule && profile.weekSchedule.length === 7
-      ? profile.weekSchedule
-      : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
-  }, [profile]);
-
-  // Today's day type from schedule (for run card)
-  const todayDayType = useMemo(() => {
-    const today = getTodaySchedule(weekSchedule);
-    return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
-  }, [weekSchedule]);
 
   // Today index: first incomplete workout (respects nextWorkoutOverride)
   const todayIndex = useMemo(() => {
@@ -393,9 +411,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     }
   };
 
-  // Show run card: today selected AND run scheduled
-  const showRunCard = isSelectedToday && !selectedWorkout?.completed && (todayDayType === "run" || todayDayType === "both");
-
   // ── Render ──
   return (
     <div>
@@ -550,18 +565,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       <div className="space-y-2">
                         {selectedWorkout.exercises.map((ex, i) => {
                           const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+                          const lastPerf = lastPerformanceMap.get(ex.exerciseId);
                           return (
                             <SortableExerciseRow key={`ex-${idx}-${i}`} id={`ex-${idx}-${i}`} justDropped={justDroppedId === `ex-${idx}-${i}`} showHandle={true}>
-                              <div data-swipe-card="true" className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                                  <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                              <div data-swipe-card="true" className="p-3 rounded-xl bg-card">
+                                <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                                </p>
+                                {lastPerf && (
+                                  <p className="text-xs mt-0.5" style={{ color: "#999" }}>
+                                    Last: {lastPerf.weight > 0 ? `${lastPerf.weight}kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
                                   </p>
-                                </div>
+                                )}
                               </div>
                             </SortableExerciseRow>
                           );
@@ -573,38 +589,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <div className="space-y-2">
                     {selectedWorkout.exercises.map((ex, i) => {
                       const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-                      const lp = ex.lastPerformance;
-                      let secondaryText: string | undefined;
-                      let secondaryColor: string | undefined;
-                      if (status === "completed" && lp && lp.weight > 0) {
-                        secondaryText = `Logged: ${lp.weight}kg × ${lp.reps}`;
-                        secondaryColor = "#4CAF50";
-                      } else if (status === "today" && lp && lp.weight > 0) {
-                        secondaryText = `Prev: ${lp.weight}kg × ${lp.reps}`;
-                        secondaryColor = "#aaa";
-                      }
+                      const lastPerf = lastPerformanceMap.get(ex.exerciseId);
                       return (
                         <div key={`ex-${idx}-${i}`} data-swipe-card="true">
                           <SortableExerciseRow id={`ex-${idx}-${i}`} showHandle={false} onDelete={() => removeExFromDay(idx, i)}>
                             <button
                               onClick={() => setDemoExercise(ex.name)}
-                              className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
+                              className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
                               onTouchStart={(e) => handleLongPressStart(idx, i, e)}
                               onTouchMove={handleLongPressCancel}
                               onTouchEnd={handleLongPressCancel}
                             >
-                              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                                <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                              </p>
+                              {lastPerf && (
+                                <p className="text-xs mt-0.5" style={{ color: "#999" }}>
+                                  Last: {lastPerf.weight > 0 ? `${lastPerf.weight}kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
                                 </p>
-                                {secondaryText && (
-                                  <p className="text-xs mt-0.5" style={{ color: secondaryColor }}>{secondaryText}</p>
-                                )}
-                              </div>
+                              )}
                             </button>
                           </SortableExerciseRow>
                         </div>
@@ -645,25 +649,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
                 )}
 
-                {/* ── Run Card (today + run scheduled) ── */}
-                {showRunCard && (
-                  <div className="p-4 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.running}` }}>
-                    <p className="text-xs uppercase tracking-wider font-bold" style={{ color: THEME.running }}>Run · Scheduled</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Today's Run</p>
-                        <p className="text-xs text-muted-foreground">Start your run when you're ready</p>
-                      </div>
-                      <button
-                        onClick={() => navigate("/run")}
-                        className="px-3.5 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5"
-                        style={{ backgroundColor: THEME.running }}
-                      >
-                        <Play className="w-3 h-3" fill="white" /> Start
-                      </button>
-                    </div>
-                  </div>
-                )}
+
               </div>
             )}
           </motion.div>
