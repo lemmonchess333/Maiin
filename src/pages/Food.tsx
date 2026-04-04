@@ -696,16 +696,15 @@ export default function Food() {
                 <Icon className="w-5 h-5 mx-auto mb-1.5" />
                 <p className="text-base font-bold font-mono tabular-nums leading-tight" style={isOver ? { color: "#EF4444" } : undefined}>
                   {isOver
-                    ? (isCal ? `-${formatCalories(consumed - target)}` : `-${formatMacro(consumed - target)}`)
-                    : (isCal ? formatCalories(remaining) : formatMacro(remaining))
+                    ? (isCal ? `-${formatCalories(consumed - target)}` : `-${formatMacro(consumed - target)}${suffix}`)
+                    : (isCal ? formatCalories(remaining) : `${formatMacro(remaining)}${suffix}`)
                   }
-                  {suffix}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
                   {isOver ? "over" : "left"}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
-                  {isCal ? formatCalories(consumed) : formatMacro(consumed)} eaten
+                  {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
                 </p>
                 <p className="text-xs mt-1">{label}</p>
                 <div
@@ -738,7 +737,7 @@ export default function Food() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
             className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
-            style={{ backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))" }}
+            style={{ backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))", WebkitBackdropFilter: "blur(12px)" }}
           >
             <p className="text-xs font-semibold font-mono tabular-nums text-center text-foreground">
               {formatCalories(Math.max(0, macroTargets.calories - dailyTotals.calories))} {CALORIE_UNIT} left
@@ -826,12 +825,12 @@ export default function Food() {
 
       {/* Quick Add — merged section (quick meals + favourites + frequently logged) */}
       <motion.div variants={itemVariant} style={{ marginTop: "14px" }}>
-        <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: THEME.text.muted }}>
+        <p className="text-xs tracking-wide font-medium mb-2" style={{ color: THEME.text.muted }}>
           Quick add
         </p>
         {quickMeals.length >= 3 ? (
           <div
-            className="flex gap-2 pb-1 -mx-1 px-1"
+            className="flex gap-2 pb-1 -mx-1 px-1 pr-4"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
             {quickMeals.map((meal, i) => (
@@ -851,7 +850,7 @@ export default function Food() {
           </div>
         ) : (
           <div
-            className="flex gap-2.5 pb-1 -mx-1 px-1"
+            className="flex gap-2.5 pb-1 -mx-1 px-1 pr-4"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
             {quickMeals.map((meal, i) => (
@@ -984,52 +983,39 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Show all elapsed empty meals when nothing logged yet */}
-      {todaysMeals.length === 0 && (() => {
-        const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
-        const currentHour = isToday ? new Date().getHours() : 24;
-        const currentMealKey = !isToday ? null : currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
-        return (
-          <motion.div variants={itemVariant} className="space-y-3">
-            {MEAL_ORDER.filter(key => currentHour >= MEAL_START_HOURS[key]).map(emptyKey => {
-              const isCurrent = emptyKey === currentMealKey || !isToday;
-              return (
-                <div key={emptyKey}>
-                  {isCurrent ? (
-                    <>
-                      <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                      <p className="text-xs text-muted-foreground/40 px-1">Nothing yet</p>
-                      {yesterdaySegmented[emptyKey]?.length > 0 && (
-                        <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
-                          <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <button onClick={() => inputRef.current?.focus()} className="flex items-center justify-between w-full px-1">
-                      <span className="text-sm text-gray-400">{MEAL_LABELS[emptyKey]}</span>
-                      <span className="w-5 h-5 rounded-full border border-black/[0.12] flex items-center justify-center text-gray-400 text-xs">+</span>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </motion.div>
-        );
-      })()}
-
-      {/* Training-context nudge or Pro upsell */}
-      {todaysMeals.length === 0 && isToday ? (
-        <p className="text-[13px] text-muted-foreground/60 italic text-center py-2">
-          {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both", rest: "Log your first meal to get started" } as Record<string, string>)[dailyTargets.dayType] || "Log your first meal to get started"}
-        </p>
-      ) : (
-        !isPro && todaysMeals.length > 0 && (
-          <div className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
-            <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
+      {/* Empty day state — centered prompt when nothing logged */}
+      {todaysMeals.length === 0 && (
+        <motion.div variants={itemVariant} className="flex flex-col items-center justify-center py-10 space-y-3">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${THEME.semantic.nutrition}12` }}>
+            <Flame className="w-6 h-6" style={{ color: THEME.semantic.nutrition, opacity: 0.5 }} />
           </div>
-        )
+          <p className="text-sm font-medium text-muted-foreground">
+            {isToday
+              ? "Start by logging your first meal"
+              : selectedDate > format(new Date(), "yyyy-MM-dd")
+                ? "Nothing planned"
+                : "Nothing logged"}
+          </p>
+          {isToday && dailyTargets.dayType !== "rest" && (
+            <p className="text-xs text-muted-foreground/60 italic">
+              {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both" } as Record<string, string>)[dailyTargets.dayType]}
+            </p>
+          )}
+          {isToday && dailyTargets.dayType === "rest" && !isPro && (
+            <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
+              <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Pro upsell — populated state only */}
+      {!isPro && todaysMeals.length > 0 && (
+        <div className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
+          <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+          <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
+        </div>
       )}
 
       <Suspense fallback={null}>
