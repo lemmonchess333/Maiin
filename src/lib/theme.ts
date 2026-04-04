@@ -56,11 +56,12 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
-  // Macro colours (nutrition breakdown)
+  // Macro colours (nutrition breakdown) — bold saturated for visual impact
   macros: {
-    protein: '#E08A9B',  // warm rose — distinct from teal hydration
-    carbs: '#6BA3D6',    // sky blue — distinct from purple brand
-    fat: '#B8A044',      // golden — distinct from orange nutrition
+    calories: '#EF4444', // Tailwind red-500 — bold red
+    protein: '#EC4899',  // Tailwind pink-500 — bold pink
+    carbs: '#3B82F6',    // Tailwind blue-500 — bold blue
+    fat: '#F59E0B',      // Tailwind amber-500 — bold amber
   },
 
   // Charts
