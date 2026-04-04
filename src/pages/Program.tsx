@@ -6,27 +6,21 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
-import DayStepIndicator from "@/components/program/DayStepIndicator";
-import WeekContentCard from "@/components/program/WeekContentCard";
+import DayStepper from "@/components/program/DayStepper";
+import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
-import SetNextWorkoutSheet from "@/components/program/SetNextWorkoutSheet";
-import { buildDisplayDays } from "@/components/program/weekViewTypes";
 import { THEME } from "@/lib/theme";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import {
   Lock,
-  CheckCircle2,
+  Check,
   Dumbbell,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Settings2,
   MoreHorizontal,
   Plus,
   FastForward,
   Play,
-  Footprints,
-  Leaf,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -45,8 +39,6 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import ExerciseDemoCard from "@/components/ExerciseDemoCard";
-import CompactExerciseRow from "@/components/program/CompactExerciseRow";
-import { getExercisePrescription } from "@/lib/getBestSetSummary";
 
 /**
  * IMPORTANT:
@@ -63,6 +55,11 @@ export default function Program() {
   return <ProgramInner phaseLocked={!features.phaseModes} />;
 }
 
+function formatVolume(kg: number): string {
+  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
+  return `${Math.round(kg)}kg`;
+}
+
 function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +69,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     loading,
     completeWorkoutDay,
     skipWorkoutDay,
-    setNextWorkout,
     advanceToNextWeek,
     logExercise,
     updateSettings,
@@ -84,8 +80,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWeekNumber,
   } = useProgram();
 
-  const [selectedDay, setSelectedDay] = useState<number>(0);
-  const [dayDirection, setDayDirection] = useState<1 | -1>(1);
+  // Core navigation state
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const isAnimating = useRef(false);
+
+  // UI state
   const [regenerating, setRegenerating] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProSheet, setShowProSheet] = useState(false);
@@ -93,20 +93,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const settingsPanelRef = useFocusTrap<HTMLDivElement>(showSettings);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
-  const [activeView, setActiveView] = useState<"today" | "week">("today");
 
-
-  // Skip confirmation state
+  // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
 
-  // "Set as Next Workout" state
-  const [showSetNextSheet, setShowSetNextSheet] = useState(false);
-  const [pendingNextWorkoutIndex, setPendingNextWorkoutIndex] = useState<number | null>(null);
-
-  // Completion animation state
-  const [animatingCompletion, setAnimatingCompletion] = useState<number | null>(null);
-  const prevCompletionRef = useRef<boolean[]>([]);
+  // Swipe navigation
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
   // Exercise card state — read-only, tap opens info sheet
   const [demoExercise, setDemoExercise] = useState<string | null>(null);
@@ -229,35 +222,42 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       : generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
   }, [profile]);
 
-  // Today's day type from schedule
+  // Today's day type from schedule (for run card)
   const todayDayType = useMemo(() => {
     const today = getTodaySchedule(weekSchedule);
     return (today?.type || "rest") as "lift" | "run" | "both" | "rest";
   }, [weekSchedule]);
 
-  // Build display days (interleaving rest markers from schedule)
-  const displayDays = useMemo(() => {
-    const workouts = viewingHistoryIndex !== null
-      ? (viewedWorkouts ?? [])
-      : (programState?.workouts ?? []);
-    return buildDisplayDays(workouts, weekSchedule);
-  }, [viewingHistoryIndex, viewedWorkouts, programState?.workouts, weekSchedule]);
+  // Today index: first incomplete workout (respects nextWorkoutOverride)
+  const todayIndex = useMemo(() => {
+    if (!programState || viewingHistoryIndex !== null) return -1;
+    if (programState.nextWorkoutOverride != null) {
+      const oi = programState.workouts.findIndex(
+        (d, i) => i === programState.nextWorkoutOverride && !d.completed && !d.skipped,
+      );
+      if (oi >= 0) return oi;
+    }
+    return programState.workouts.findIndex(d => !d.completed && !d.skipped);
+  }, [programState, viewingHistoryIndex]);
 
-  // Completion animation: detect when a day transitions to completed
+  // Auto-select on week change (not on individual completion)
+  const prevWeekKeyRef = useRef("");
   useEffect(() => {
     if (!programState) return;
-    const current = programState.workouts.map(d => d.completed);
-    const prev = prevCompletionRef.current;
-    if (prev.length > 0) {
-      const justCompleted = current.findIndex((c, idx) => c && !prev[idx]);
-      if (justCompleted >= 0) {
-        setAnimatingCompletion(justCompleted);
-        const timer = setTimeout(() => setAnimatingCompletion(null), 800);
-        return () => clearTimeout(timer);
-      }
+    const weekKey = viewingHistoryIndex !== null
+      ? `h${viewingHistoryIndex}`
+      : `w${programState.weekNumber}`;
+    if (prevWeekKeyRef.current !== weekKey) {
+      prevWeekKeyRef.current = weekKey;
+      const target = todayIndex >= 0 ? todayIndex : 0;
+      setSelectedDayIndex(target); // eslint-disable-line react-hooks/set-state-in-effect -- intentional: reset selection on week navigation
     }
-    prevCompletionRef.current = current;
-  }, [programState]);
+  }, [programState, viewingHistoryIndex, todayIndex]);
+
+  // Scroll reset on day change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [selectedDayIndex]);
 
   if (loading) {
     return (
@@ -281,65 +281,68 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     );
   }
 
+  // ── Computed values ──
   const isViewingHistory = viewingHistoryIndex !== null;
-  // Force week view when browsing history
-  const effectiveView = isViewingHistory ? "week" : activeView;
   const displayWorkouts = isViewingHistory ? (viewedWorkouts ?? []) : programState.workouts;
   const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
-
   const allComplete = displayWorkouts.length > 0 && displayWorkouts.every((d) => d.completed || d.skipped);
-
   const settings = programState.settings ?? { autoProgression: true, microloading: true };
   const history = programState.weekHistory ?? [];
 
-  // Week view: current workout day index (respects nextWorkoutOverride)
-  const firstIncompleteIndex = (() => {
-    if (programState?.nextWorkoutOverride != null) {
-      const idx = displayDays.findIndex(
-        d => d.type === "workout"
-          && d.workoutIndex === programState.nextWorkoutOverride
-          && !d.workout.completed && !d.workout.skipped,
-      );
-      if (idx >= 0) return idx;
-    }
-    return displayDays.findIndex(
-      d => d.type === "workout" && !d.workout.completed && !d.workout.skipped,
-    );
-  })();
+  // Clamp selectedDayIndex
+  const idx = displayWorkouts.length > 0 ? Math.min(selectedDayIndex, displayWorkouts.length - 1) : 0;
+  if (idx !== selectedDayIndex) setSelectedDayIndex(idx);
 
-  // Clamp selectedDay to displayDays range
-  const clampedSelectedDay = displayDays.length > 0
-    ? Math.min(selectedDay, displayDays.length - 1)
-    : 0;
-  if (clampedSelectedDay !== selectedDay) {
-    setSelectedDay(clampedSelectedDay);
+  const selectedWorkout = displayWorkouts[idx];
+  const isSelectedToday = !isViewingHistory && idx === todayIndex;
+
+  // Day status
+  type DayStatus = "today" | "completed" | "skipped" | "upcoming";
+  const status: DayStatus = selectedWorkout?.completed
+    ? "completed"
+    : selectedWorkout?.skipped
+      ? "skipped"
+      : isSelectedToday
+        ? "today"
+        : "upcoming";
+
+  // Stepper data
+  const stepperDays = displayWorkouts.map((w, i) => ({
+    dayNumber: i + 1,
+    label: w.dayName,
+    status: (w.completed || w.skipped
+      ? "completed"
+      : !isViewingHistory && i === todayIndex
+        ? "today"
+        : "upcoming") as "completed" | "today" | "upcoming",
+  }));
+
+  // Session metadata
+  const exerciseCount = selectedWorkout?.exercises.length ?? 0;
+  const estimatedMinutes = Math.round((selectedWorkout?.exercises.reduce((s, ex) => s + ex.sets, 0) ?? 0) * 2.5);
+  const totalVolume = selectedWorkout?.exercises.reduce((sum, ex) => sum + ex.sets * ex.reps * ex.weight, 0) ?? 0;
+
+  function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
+    const groups = exercises.map(ex => getExerciseById(ex.exerciseId)?.category).filter(Boolean);
+    const unique = [...new Set(groups)] as string[];
+    if (unique.length === 0) return "";
+    if (unique.length <= 3) return unique.join(" · ");
+    return unique.slice(0, 3).join(" · ") + " + more";
   }
+  const muscleGroups = selectedWorkout ? getDayMuscleGroups(selectedWorkout.exercises) : "";
 
-  const handleDaySelect = (i: number) => {
-    setDayDirection(i > selectedDay ? 1 : -1);
-    setSelectedDay(i);
-    // Interrupt any completion animation
-    setAnimatingCompletion(null);
+  // ── Handlers ──
+  const handleSelect = (newIndex: number) => {
+    if (isAnimating.current || newIndex === idx) return;
+    isAnimating.current = true;
+    setDirection(newIndex > idx ? 1 : -1);
+    setSelectedDayIndex(newIndex);
   };
 
-  // Today's workout — respects nextWorkoutOverride
-  const todayWorkout = !isViewingHistory
-    ? (programState.nextWorkoutOverride != null
-        && programState.workouts[programState.nextWorkoutOverride]
-        && !programState.workouts[programState.nextWorkoutOverride].completed
-        && !programState.workouts[programState.nextWorkoutOverride].skipped
-      ? programState.workouts[programState.nextWorkoutOverride]
-      : programState.workouts.find((d) => !d.completed && !d.skipped) ?? null)
-    : null;
-  const todayWorkoutIndex = todayWorkout
-    ? programState.workouts.indexOf(todayWorkout)
-    : -1;
-
-  // Next workout after today (for rest day preview)
-  const nextUpWorkout = !isViewingHistory
-    ? programState.workouts.find((d) => !d.completed && !d.skipped) ?? null
-    : null;
-  const nextUpDayName = nextUpWorkout?.dayName ?? null;
+  const goalLabel = (g: string) => {
+    if (g === "lean bulk") return "Lean Bulk";
+    return g.charAt(0).toUpperCase() + g.slice(1);
+  };
 
   const handleRegenerate = async (goalOverride?: string, weeklyTargetOverride?: number) => {
     setRegenerating(true);
@@ -354,12 +357,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     setAdvancing(false);
   };
 
-  // Progression increment based on exercise type
-
   // Week navigation
   const canGoBack = history.length > 0;
   const canGoForward = isViewingHistory;
-
   const goBack = () => {
     if (isViewingHistory) {
       const newIdx = (viewingHistoryIndex ?? 0) - 1;
@@ -368,42 +368,40 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       viewWeek(history.length - 1);
     }
   };
-
   const goForward = () => {
     if (!isViewingHistory) return;
-    const idx = viewingHistoryIndex ?? 0;
-    if (idx < history.length - 1) {
-      viewWeek(idx + 1);
-    } else {
-      viewWeek(null);
+    const vi = viewingHistoryIndex ?? 0;
+    if (vi < history.length - 1) viewWeek(vi + 1);
+    else viewWeek(null);
+  };
+
+  // Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    let el = e.target as HTMLElement;
+    while (el && el !== e.currentTarget) {
+      if (el.dataset.swipeCard) return;
+      el = el.parentElement!;
+    }
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0 && idx < displayWorkouts.length - 1) handleSelect(idx + 1);
+      else if (dx > 0 && idx > 0) handleSelect(idx - 1);
     }
   };
 
-  // Goal display name
-  const goalLabel = (g: string) => {
-    if (g === "lean bulk") return "Lean Bulk";
-    return g.charAt(0).toUpperCase() + g.slice(1);
-  };
+  // Show run card: today selected AND run scheduled
+  const showRunCard = isSelectedToday && !selectedWorkout?.completed && (todayDayType === "run" || todayDayType === "both");
 
-  // Hero section helpers
-  const isLiftToday = todayDayType === "lift" || todayDayType === "both";
-  const isRestDay = todayDayType === "rest";
-
-  function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
-    const groups = exercises
-      .map(ex => getExerciseById(ex.exerciseId)?.category)
-      .filter(Boolean);
-    const unique = [...new Set(groups)] as string[];
-    if (unique.length === 0) return "";
-    if (unique.length <= 3) return unique.join(" · ");
-    return unique.slice(0, 3).join(" · ") + " + more";
-  }
-
+  // ── Render ──
   return (
-    <div className="space-y-4">
-
-      {/* Header */}
-      <header>
+    <div>
+      {/* ── Sticky Header Zone ── */}
+      <div className="sticky top-0 z-30 -mx-4" style={{ backgroundColor: "var(--background)" }}>
+        <header className="px-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-extrabold text-foreground">Program</h1>
@@ -439,53 +437,162 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
       </header>
 
-      {/* ═══ VIEW TOGGLE ═══ */}
-      <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        <button onClick={() => { haptic("light"); setActiveView("today"); }}
-          className={cn("flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
-            effectiveView === "today" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          )}>
-          Today
-        </button>
-        <button onClick={() => { haptic("light"); setActiveView("week"); }}
-          className={cn("flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
-            effectiveView === "week" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-          )}>
-          Week {displayWeekNumber}
-        </button>
+        {/* Week + Phase Row */}
+        <div className="px-4">
+          <WeekPhaseRow
+            weekNumber={displayWeekNumber}
+            phaseName={goalLabel(programState.goal)}
+            onPrevWeek={goBack}
+            onNextWeek={goForward}
+            canGoPrev={canGoBack}
+            canGoNext={canGoForward}
+          />
+        </div>
+
+        {/* Day Stepper */}
+        <div className="px-4">
+          <DayStepper
+            days={stepperDays}
+            selectedIndex={idx}
+            todayIndex={!isViewingHistory && todayIndex >= 0 ? todayIndex : null}
+            onSelect={handleSelect}
+          />
+        </div>
       </div>
 
-      {/* ═══ TODAY'S WORKOUT HERO ═══ */}
-      {effectiveView === "today" && !isViewingHistory && (
-        <section aria-label="Today's workout">
-          {/* LIFT DAY or BOTH DAY — show exercise cards */}
-          {isLiftToday && todayWorkout && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${THEME.lifting}15` }}>
-                  <Dumbbell className="w-3.5 h-3.5" style={{ color: THEME.lifting }} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">Today · {todayWorkout.dayName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Day {todayWorkoutIndex + 1} · Week {displayWeekNumber} · {todayWorkout.exercises.length} exercises · ~{Math.round(todayWorkout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5)} min
-                  </p>
-                  {getDayMuscleGroups(todayWorkout.exercises) && (
-                    <p className="text-xs text-muted-foreground">{getDayMuscleGroups(todayWorkout.exercises)}</p>
-                  )}
-                </div>
-              </div>
+      {/* ── Advance Week (all complete, current week) ── */}
+      {allComplete && !isViewingHistory && !phaseLocked && (
+        <div className="pt-4 pb-2">
+          <button
+            onClick={handleAdvanceWeek}
+            disabled={advancing}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <FastForward className="w-4 h-4" />
+            {advancing ? "Advancing..." : "Advance to Next Week"}
+          </button>
+        </div>
+      )}
 
-              {/* Exercise cards — read-only, tap for info, swipe to delete, long-press menu */}
-              {reorderMode ? (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(todayWorkoutIndex, event)}>
-                  <SortableContext items={todayWorkout.exercises.map((_, i) => `ex-${todayWorkoutIndex}-${i}`)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-1.5">
-                      {todayWorkout.exercises.map((ex, i) => {
-                        const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-                        return (
-                          <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} justDropped={justDroppedId === `ex-${todayWorkoutIndex}-${i}`} showHandle={true}>
-                            <div className="flex items-center gap-3 p-3 rounded-xl bg-card">
+      {/* ── Scrollable Session Content ── */}
+      <div className="pt-4 pb-[140px]" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <AnimatePresence
+          mode="wait"
+          custom={direction}
+          onExitComplete={() => { isAnimating.current = false; }}
+        >
+          <motion.div
+            key={idx}
+            custom={direction}
+            variants={{
+              enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
+              center: { opacity: 1, x: 0 },
+              exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            style={{ willChange: "transform" }}
+          >
+            {selectedWorkout && (
+              <div className="space-y-3">
+                {/* ── Session Header ── */}
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor:
+                        status === "completed" || status === "skipped"
+                          ? "rgba(76,175,80,0.1)"
+                          : status === "today"
+                            ? "rgba(124,107,240,0.1)"
+                            : "rgba(0,0,0,0.05)",
+                    }}
+                  >
+                    {status === "completed" ? (
+                      <Check className="w-[18px] h-[18px]" style={{ color: "#4CAF50" }} strokeWidth={2.5} />
+                    ) : (
+                      <Dumbbell className="w-[18px] h-[18px]" style={{ color: status === "today" ? "#7C6BF0" : "#999" }} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-bold truncate" style={{ color: "#1a1a1a" }}>
+                        Day {idx + 1} · {selectedWorkout.dayName}
+                      </p>
+                      {status === "completed" && (
+                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#4CAF50", backgroundColor: "rgba(76,175,80,0.1)", padding: "2px 8px", borderRadius: 6 }}>
+                          Done
+                        </span>
+                      )}
+                      {status === "skipped" && (
+                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#999", backgroundColor: "rgba(0,0,0,0.05)", padding: "2px 8px", borderRadius: 6 }}>
+                          Skipped
+                        </span>
+                      )}
+                      {status === "today" && (
+                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#7C6BF0", backgroundColor: "rgba(124,107,240,0.1)", padding: "2px 8px", borderRadius: 6 }}>
+                          Today
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[13px]" style={{ color: "#999", marginTop: 2 }}>
+                      {exerciseCount} exercises · ~{estimatedMinutes} min{muscleGroups ? ` · ${muscleGroups}` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ── Exercise Cards ── */}
+                {reorderMode ? (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(idx, event)}>
+                    <SortableContext items={selectedWorkout.exercises.map((_, i) => `ex-${idx}-${i}`)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-2">
+                        {selectedWorkout.exercises.map((ex, i) => {
+                          const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+                          return (
+                            <SortableExerciseRow key={`ex-${idx}-${i}`} id={`ex-${idx}-${i}`} justDropped={justDroppedId === `ex-${idx}-${i}`} showHandle={true}>
+                              <div data-swipe-card="true" className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
+                                  <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
+                                  </p>
+                                </div>
+                              </div>
+                            </SortableExerciseRow>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedWorkout.exercises.map((ex, i) => {
+                      const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
+                      const lp = ex.lastPerformance;
+                      let secondaryText: string | undefined;
+                      let secondaryColor: string | undefined;
+                      if (status === "completed" && lp && lp.weight > 0) {
+                        secondaryText = `Logged: ${lp.weight}kg × ${lp.reps}`;
+                        secondaryColor = "#4CAF50";
+                      } else if (status === "today" && lp && lp.weight > 0) {
+                        secondaryText = `Prev: ${lp.weight}kg × ${lp.reps}`;
+                        secondaryColor = "#aaa";
+                      }
+                      return (
+                        <div key={`ex-${idx}-${i}`} data-swipe-card="true">
+                          <SortableExerciseRow id={`ex-${idx}-${i}`} showHandle={false} onDelete={() => removeExFromDay(idx, i)}>
+                            <button
+                              onClick={() => setDemoExercise(ex.name)}
+                              className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
+                              onTouchStart={(e) => handleLongPressStart(idx, i, e)}
+                              onTouchMove={handleLongPressCancel}
+                              onTouchEnd={handleLongPressCancel}
+                            >
                               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
                                 <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
                               </div>
@@ -494,410 +601,145 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                 <p className="text-xs text-muted-foreground">
                                   {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
                                 </p>
+                                {secondaryText && (
+                                  <p className="text-xs mt-0.5" style={{ color: secondaryColor }}>{secondaryText}</p>
+                                )}
                               </div>
-                            </div>
+                            </button>
                           </SortableExerciseRow>
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <div className="space-y-1.5">
-                  {todayWorkout.exercises.map((ex, i) => {
-                    const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-                    return (
-                      <SortableExerciseRow key={`ex-${todayWorkoutIndex}-${i}`} id={`ex-${todayWorkoutIndex}-${i}`} showHandle={false} onDelete={() => removeExFromDay(todayWorkoutIndex!, i)}>
-                        <button
-                          onClick={() => setDemoExercise(ex.name)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
-                          onTouchStart={(e) => handleLongPressStart(todayWorkoutIndex!, i, e)}
-                          onTouchMove={handleLongPressCancel}
-                          onTouchEnd={handleLongPressCancel}
-                        >
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${THEME.lifting}10` }}>
-                            <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                            </p>
-                          </div>
-                        </button>
-                      </SortableExerciseRow>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* + Add Exercise */}
-              <button
-                onClick={() => { setAddPickerDayIndex(todayWorkoutIndex); setShowAddPicker(true); }}
-                className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
-              >
-                <Plus className="w-4 h-4" /> Add Exercise
-              </button>
-
-              {/* Long-press context menu */}
-              <AnimatePresence>
-                {contextMenu && (
-                  <>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200]" onClick={() => setContextMenu(null)} />
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
-                      style={{ top: Math.min(contextMenu.y, window.innerHeight - 220), left: Math.min(contextMenu.x - 80, window.innerWidth - 200), width: 200 }}
-                    >
-                      <button onClick={() => { setReplaceTarget({ dayIndex: contextMenu.dayIndex, exIndex: contextMenu.exIndex }); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
-                        <Repeat className="w-4 h-4 text-muted-foreground" /> Replace Exercise
-                      </button>
-                      <button onClick={() => { removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-red-500 hover:bg-muted transition-colors border-b border-border/30">
-                        <Trash2 className="w-4 h-4" /> Remove Exercise
-                      </button>
-                      <button onClick={() => moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1)} disabled={contextMenu.exIndex === 0} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30", contextMenu.exIndex === 0 && "opacity-30 cursor-not-allowed")}>
-                        <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
-                      </button>
-                      <button onClick={() => moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1)} disabled={contextMenu.exIndex === (programState.workouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1} className={cn("w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors", contextMenu.exIndex === (programState.workouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1 && "opacity-30 cursor-not-allowed")}>
-                        <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move Down
-                      </button>
-                    </motion.div>
-                  </>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-              </AnimatePresence>
 
-              {/* Sticky Begin Workout + Skip Session */}
-              <div className="sticky bottom-0 z-10 -mx-4 px-4 pt-3 pb-4 safe-area-pb" style={{ boxShadow: "0 -1px 4px rgba(0,0,0,0.06)", backgroundColor: "var(--background)" }}>
-                <button
-                  onClick={() => { haptic("light"); setSessionDayIndex(todayWorkoutIndex); }}
-                  className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-                  style={{ background: THEME.gradient.brand }}
-                >
-                  <Play className="w-4 h-4" /> Begin Workout
-                </button>
-                <div className="flex items-center justify-center mt-2">
+                {/* ── + Add Exercise (not on completed/skipped) ── */}
+                {status !== "completed" && status !== "skipped" && (
                   <button
-                    onClick={() => { setSkipTargetDay(todayWorkoutIndex); setShowSkipConfirm(true); }}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => { setAddPickerDayIndex(idx); setShowAddPicker(true); }}
+                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                   >
-                    Skip Session
+                    <Plus className="w-4 h-4" /> Add Exercise
                   </button>
-                </div>
-              </div>
-            </div>
-          )}
+                )}
 
-          {/* RUN DAY (run only, not both) — show run card */}
-          {todayDayType === "run" && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${THEME.running}15` }}>
-                  <Footprints className="w-3.5 h-3.5" style={{ color: THEME.running }} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">Today · Run Day</p>
-                  <p className="text-xs text-muted-foreground">Week {displayWeekNumber}</p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.running}` }}>
-                <p className="text-xs uppercase tracking-wider font-bold" style={{ color: THEME.running }}>Run · Scheduled</p>
-                <p className="text-sm font-semibold text-foreground mt-1">Today's Run</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Start your run when you're ready</p>
-                <button
-                  onClick={() => navigate("/run")}
-                  className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-                  style={{ backgroundColor: THEME.running }}
-                >
-                  <Play className="w-4 h-4" /> Start Run
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* BOTH DAY — stacked lift + run cards */}
-          {todayDayType === "both" && (
-            <div className="mt-3">
-              <div className="p-4 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.running}` }}>
-                <p className="text-xs uppercase tracking-wider font-bold" style={{ color: THEME.running }}>Run · Scheduled</p>
-                <div className="flex items-center justify-between mt-1">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Today's Run</p>
-                    <p className="text-xs text-muted-foreground">Start your run when you're ready</p>
-                  </div>
-                  <button
-                    onClick={() => navigate("/run")}
-                    className="px-3.5 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5"
-                    style={{ backgroundColor: THEME.running }}
-                  >
-                    <Play className="w-3 h-3" fill="white" /> Start
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* REST DAY */}
-          {isRestDay && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${THEME.success}15` }}>
-                  <Leaf className="w-3.5 h-3.5" style={{ color: THEME.success }} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">Recovery Day</p>
-                  <p className="text-xs text-muted-foreground">Week {displayWeekNumber}</p>
-                </div>
-              </div>
-
-              {/* Next workout preview */}
-              {nextUpDayName && (
-                <div className="p-3 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.text.muted}` }}>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Up Next</p>
-                  <p className="text-sm font-medium mt-0.5 text-foreground">{nextUpDayName} · {nextUpWorkout?.exercises.length} exercises</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Rest helps your muscles grow stronger</p>
-                </div>
-              )}
-
-              {/* Ad-hoc buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    // Find first incomplete workout and start it
-                    const idx = programState.workouts.findIndex((d) => !d.completed && !d.skipped);
-                    if (idx >= 0) setSessionDayIndex(idx);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-border/50 text-muted-foreground text-sm font-medium active:scale-[0.97] transition-all hover:border-primary/30"
-                >
-                  <Dumbbell className="w-4 h-4" /> Quick Lift
-                </button>
-                <button
-                  onClick={() => navigate("/run")}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-border/50 text-muted-foreground text-sm font-medium active:scale-[0.97] transition-all hover:border-primary/30"
-                >
-                  <Footprints className="w-4 h-4" /> Easy Run
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* All workouts complete this week */}
-          {!isRestDay && !todayWorkout && allComplete && (
-            <div className="p-4 rounded-xl bg-card text-center space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto" />
-              <p className="text-sm font-semibold text-foreground">All sessions complete!</p>
-              <p className="text-xs text-muted-foreground">Great work this week. Advance to start fresh.</p>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* ═══ WEEK VIEW ═══ */}
-      {effectiveView === "week" && (
-        <div className="space-y-3">
-              {/* ── Sticky: Week header + Step indicator ── */}
-              <div className="sticky top-0 z-30 bg-background pb-2" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                {/* Week header */}
-                <div>
-                  <div className="flex items-center justify-between px-1 py-2">
-                    <button
-                      onClick={goBack}
-                      disabled={!canGoBack}
-                      className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoBack ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
-                    >
-                      <ChevronLeft className="w-4 h-4 text-foreground" />
-                    </button>
-
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-foreground tracking-tight">
-                        Week {displayWeekNumber}
-                        {isViewingHistory && <span className="text-muted-foreground font-normal"> (past)</span>}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={goForward}
-                      disabled={!canGoForward}
-                      className={cn("w-8 h-8 flex items-center justify-center rounded-full transition-all", canGoForward ? "hover:bg-muted active:scale-[0.95]" : "opacity-30")}
-                    >
-                      <ChevronRight className="w-4 h-4 text-foreground" />
-                    </button>
-                  </div>
-                  {!canGoBack && !canGoForward && (
-                    <p className="text-xs text-muted-foreground text-center mt-1">
-                      Complete all sessions to advance to Week {displayWeekNumber + 1}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-center gap-2 px-1 mt-1 mb-1">
-                    <button
-                      onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                      className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full bg-primary text-white text-xs font-semibold", phaseLocked ? "cursor-pointer" : "cursor-default")}
-                    >
-                      {goalLabel(programState.goal)}
-                      {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0" />}
-                    </button>
-                    <button
-                      onClick={function() { if (phaseLocked) setShowProSheet(true); }}
-                      className={cn("inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full border border-border text-foreground text-xs font-medium", phaseLocked ? "cursor-pointer" : "cursor-default")}
-                    >
-                      {prescription.deload ? "Deload" : "Progression"}
-                      {phaseLocked && <Lock className="w-3 h-3 ml-1 inline shrink-0 text-muted-foreground" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Day Step Indicator */}
-                <DayStepIndicator
-                  days={displayDays}
-                  selectedIndex={selectedDay}
-                  onSelect={handleDaySelect}
-                  firstIncompleteIndex={firstIncompleteIndex}
-                  animatingCompletion={
-                    animatingCompletion !== null
-                      ? displayDays.findIndex(d => d.type === "workout" && d.workoutIndex === animatingCompletion)
-                      : null
-                  }
-                />
-              </div>
-
-              {/* Phase explanation card */}
-              {!isViewingHistory && !phaseLocked && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.2 }}
-                  className="mx-4 mb-3 p-3 rounded-xl text-xs space-y-1"
-                  style={{
-                    backgroundColor: prescription.deload ? `${THEME.lifting}08` : `${THEME.success}08`,
-                    borderLeft: `3px solid ${prescription.deload ? THEME.lifting : THEME.success}`,
-                  }}
-                >
-                  <p className="font-semibold text-foreground">
-                    {prescription.deload
-                      ? "Recovery Week"
-                      : `Week ${displayWeekNumber} — ${prescription.intensityMultiplier > 1 ? "Intensity building" : "Base volume"}`
-                    }
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {prescription.deload
-                      ? "Volume reduced to ~70%. Focus on form and recovery — your body adapts and grows during rest, not just during training."
-                      : prescription.intensityMultiplier > 1.05
-                      ? `Intensity at ${Math.round(prescription.intensityMultiplier * 100)}% of baseline. Progressive overload in action — small increases compound over time.`
-                      : "Building your base volume. Consistent effort now sets up bigger gains in the coming weeks."
-                    }
-                  </p>
-                </motion.div>
-              )}
-
-              {/* Advance Week Button */}
-              {allComplete && !isViewingHistory && !phaseLocked && (
-                <button
-                  onClick={handleAdvanceWeek}
-                  disabled={advancing}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-                >
-                  <FastForward className="w-4 h-4" />
-                  {advancing ? "Advancing..." : "Advance to Next Week"}
-                </button>
-              )}
-
-              {/* Content Pane — one day at a time, swipeable */}
-              {displayDays[selectedDay] && (() => {
-                const currentDisplayDay = displayDays[selectedDay];
-                const isRestDay = currentDisplayDay.type === "rest";
-                const workout = isRestDay ? undefined : currentDisplayDay.workout;
-                const workoutIdx = isRestDay ? -1 : currentDisplayDay.workoutIndex;
-
-                const status: "current" | "completed" | "future" | "skipped" | "rest" = isRestDay
-                  ? "rest"
-                  : workout!.completed ? "completed"
-                  : workout!.skipped ? "skipped"
-                  : selectedDay === firstIncompleteIndex ? "current"
-                  : "future";
-
-                // Next workout label for rest day card
-                const nextWorkoutLabel = isRestDay
-                  ? (() => {
-                      const next = displayDays.find((d, idx) => idx > selectedDay && d.type === "workout" && !d.workout.completed && !d.workout.skipped);
-                      if (!next || next.type !== "workout") return undefined;
-                      return `Day ${next.workoutIndex + 1} · ${next.workout.dayName}`;
-                    })()
-                  : undefined;
-
-                // Edit mode content: DnD-wrapped exercise rows
-                const weekEditContent = reorderMode && workout && !isRestDay ? (
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(workoutIdx, event)}>
-                    <SortableContext items={workout.exercises.map((_, i) => `ex-${workoutIdx}-${i}`)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-0.5">
-                        {workout.exercises.map((ex, i) => (
-                          <SortableExerciseRow
-                            key={`ex-${workoutIdx}-${i}`}
-                            id={`ex-${workoutIdx}-${i}`}
-                            justDropped={justDroppedId === `ex-${workoutIdx}-${i}`}
-                            showHandle={true}
-                            onDelete={() => removeExFromDay(workoutIdx, i)}
-                          >
-                            <CompactExerciseRow
-                              name={ex.name}
-                              summary={getExercisePrescription(ex)}
-                              onTap={() => setDemoExercise(ex.name)}
-                            />
-                          </SortableExerciseRow>
-                        ))}
+                {/* ── Completed Session Summary ── */}
+                {status === "completed" && (
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(76,175,80,0.05)", border: "1px solid rgba(76,175,80,0.1)" }}>
+                    <div className="flex justify-around items-center">
+                      <div className="text-center">
+                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>~{estimatedMinutes} min</p>
+                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Duration</p>
                       </div>
-                    </SortableContext>
-                  </DndContext>
-                ) : undefined;
+                      <div style={{ width: 1, height: 24, backgroundColor: "rgba(0,0,0,0.06)" }} />
+                      <div className="text-center">
+                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>{formatVolume(totalVolume)}</p>
+                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Volume</p>
+                      </div>
+                      <div style={{ width: 1, height: 24, backgroundColor: "rgba(0,0,0,0.06)" }} />
+                      <div className="text-center">
+                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>{exerciseCount}</p>
+                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Exercises</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                return (
-                  <motion.div
-                    drag={reorderMode ? false : "x"}
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.15}
-                    dragDirectionLock
-                    onDragEnd={(_e, info) => {
-                      const threshold = 50;
-                      if (info.offset.x < -threshold && selectedDay < displayDays.length - 1) {
-                        haptic("light");
-                        handleDaySelect(selectedDay + 1);
-                      } else if (info.offset.x > threshold && selectedDay > 0) {
-                        haptic("light");
-                        handleDaySelect(selectedDay - 1);
-                      }
-                    }}
-                    style={{ touchAction: "pan-y" }}
-                  >
-                    <AnimatePresence mode="wait" custom={dayDirection}>
-                      <WeekContentCard
-                        key={selectedDay}
-                        day={workout}
-                        dayIndex={workoutIdx}
-                        status={status}
-                        direction={dayDirection}
-                        muscleGroups={workout ? getDayMuscleGroups(workout.exercises) : ""}
-                        estimatedMinutes={workout ? Math.round(workout.exercises.reduce((s, ex) => s + ex.sets, 0) * 2.5) : 0}
-                        onStartWorkout={() => setSessionDayIndex(workoutIdx)}
-                        onSkipSession={() => { setSkipTargetDay(workoutIdx); setShowSkipConfirm(true); }}
-                        onExerciseTap={(name) => setDemoExercise(name)}
-                        onDoRetroactiveWorkout={() => setSessionDayIndex(workoutIdx)}
-                        nextWorkoutLabel={nextWorkoutLabel}
-                        isViewingHistory={isViewingHistory}
-                        sessionActive={sessionDayIndex === workoutIdx}
-                        editMode={reorderMode && !isRestDay}
-                        editContent={weekEditContent}
-                        onAddExercise={() => { setAddPickerDayIndex(workoutIdx); setShowAddPicker(true); }}
-                        onSetAsNextWorkout={status === "future" && !isViewingHistory ? () => { setPendingNextWorkoutIndex(workoutIdx); setShowSetNextSheet(true); } : undefined}
-                      />
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })()}
-        </div>
-      )}
+                {/* ── Run Card (today + run scheduled) ── */}
+                {showRunCard && (
+                  <div className="p-4 rounded-xl bg-card" style={{ borderLeft: `3px solid ${THEME.running}` }}>
+                    <p className="text-xs uppercase tracking-wider font-bold" style={{ color: THEME.running }}>Run · Scheduled</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Today's Run</p>
+                        <p className="text-xs text-muted-foreground">Start your run when you're ready</p>
+                      </div>
+                      <button
+                        onClick={() => navigate("/run")}
+                        className="px-3.5 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5"
+                        style={{ backgroundColor: THEME.running }}
+                      >
+                        <Play className="w-3 h-3" fill="white" /> Start
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* ── Sticky CTA Zone ── */}
+      <div
+        className="sticky bottom-0 z-20 -mx-4 px-4 safe-area-pb"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 35%)", paddingTop: 28, paddingBottom: 12 }}
+      >
+        {status === "today" && !selectedWorkout?.completed ? (
+          <>
+            <button
+              onClick={() => { haptic("light"); setSessionDayIndex(idx); }}
+              className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
+              style={{ background: THEME.gradient.brand }}
+            >
+              <Play className="w-4 h-4" /> Begin Workout
+            </button>
+            <div className="flex items-center justify-center mt-2">
+              <button
+                onClick={() => { setSkipTargetDay(idx); setShowSkipConfirm(true); }}
+                className="text-[13px] font-medium" style={{ color: "#999" }}
+              >
+                Skip Session
+              </button>
+            </div>
+          </>
+        ) : status === "completed" ? (
+          <div className="flex items-center justify-center gap-2 py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.12)" }}>
+            <Check className="w-4 h-4" style={{ color: "#4CAF50" }} strokeWidth={2.5} />
+            <span className="text-sm font-semibold" style={{ color: "#4CAF50" }}>
+              Completed · ~{estimatedMinutes} min · {formatVolume(totalVolume)}
+            </span>
+          </div>
+        ) : status === "skipped" ? (
+          <div className="flex items-center justify-center py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(0,0,0,0.03)" }}>
+            <span className="text-sm font-medium" style={{ color: "#999" }}>Skipped</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(0,0,0,0.03)" }}>
+            <span className="text-sm font-medium" style={{ color: "#999" }}>Scheduled</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Context Menu ── */}
+      <AnimatePresence>
+        {contextMenu && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200]" onClick={() => setContextMenu(null)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
+              style={{ top: Math.min(contextMenu.y, window.innerHeight - 220), left: Math.min(contextMenu.x - 80, window.innerWidth - 200), width: 200 }}
+            >
+              <button onClick={() => { setReplaceTarget({ dayIndex: contextMenu.dayIndex, exIndex: contextMenu.exIndex }); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
+                <Repeat className="w-4 h-4 text-muted-foreground" /> Replace Exercise
+              </button>
+              <button onClick={() => { removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors border-b border-border/30">
+                <Trash2 className="w-4 h-4" /> Remove Exercise
+              </button>
+              <button onClick={() => { moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1); }} disabled={contextMenu.exIndex === 0} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30">
+                <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
+              </button>
+              <button onClick={() => { moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1); }} disabled={contextMenu.exIndex >= (displayWorkouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30">
+                <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move Down
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
@@ -907,40 +749,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           if (skipTargetDay !== null) {
             await skipWorkoutDay(skipTargetDay);
             haptic("medium");
-            // Auto-advance to next incomplete day in displayDays
-            const nextIncomplete = displayDays.findIndex(
-              d => d.type === "workout" && d.workoutIndex !== skipTargetDay && !d.workout.completed && !d.workout.skipped,
+            // Auto-advance to next incomplete day
+            const nextIncomplete = displayWorkouts.findIndex(
+              (d, i) => i !== skipTargetDay && !d.completed && !d.skipped,
             );
             if (nextIncomplete >= 0) {
-              handleDaySelect(nextIncomplete);
+              handleSelect(nextIncomplete);
             }
           }
           setShowSkipConfirm(false);
           setSkipTargetDay(null);
         }}
         onCancel={() => { setShowSkipConfirm(false); setSkipTargetDay(null); }}
-      />
-
-      {/* Set Next Workout Sheet */}
-      <SetNextWorkoutSheet
-        open={showSetNextSheet}
-        sessionName={pendingNextWorkoutIndex !== null ? (displayWorkouts[pendingNextWorkoutIndex]?.dayName ?? "") : ""}
-        onConfirm={async () => {
-          if (pendingNextWorkoutIndex !== null) {
-            await setNextWorkout(pendingNextWorkoutIndex);
-            haptic("medium");
-            // Select the overridden day in the step indicator
-            const targetDisplayIdx = displayDays.findIndex(
-              d => d.type === "workout" && d.workoutIndex === pendingNextWorkoutIndex,
-            );
-            if (targetDisplayIdx >= 0) {
-              handleDaySelect(targetDisplayIdx);
-            }
-          }
-          setShowSetNextSheet(false);
-          setPendingNextWorkoutIndex(null);
-        }}
-        onCancel={() => { setShowSetNextSheet(false); setPendingNextWorkoutIndex(null); }}
       />
 
       {/* Settings Panel */}
@@ -973,11 +793,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <ExercisePicker
         open={showAddPicker}
         headerTitle="Add Exercise"
-        existingExerciseIds={programState.workouts[addPickerDayIndex ?? todayWorkoutIndex ?? 0]?.exercises.map(ex => ex.exerciseId) ?? []}
-        onSelect={(ex) => addExercisesToDay(addPickerDayIndex ?? todayWorkoutIndex!, [ex])}
-        onMultiSelect={(exs) => addExercisesToDay(addPickerDayIndex ?? todayWorkoutIndex!, exs)}
+        existingExerciseIds={programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(ex => ex.exerciseId) ?? []}
+        onSelect={(ex) => addExercisesToDay(addPickerDayIndex ?? idx, [ex])}
+        onMultiSelect={(exs) => addExercisesToDay(addPickerDayIndex ?? idx, exs)}
         onClose={() => { setShowAddPicker(false); setAddPickerDayIndex(null); }}
-        onRemoveExercise={(id) => removeExFromDayById(addPickerDayIndex ?? todayWorkoutIndex!, id)}
+        onRemoveExercise={(id) => removeExFromDayById(addPickerDayIndex ?? idx, id)}
       />
 
       {/* Exercise Picker — Replace mode */}
@@ -1044,7 +864,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* Pro Upsell Sheet — contextual replacement for removed banner */}
+      {/* Pro Upsell Sheet */}
       <AnimatePresence>
         {showProSheet && (
           <>
