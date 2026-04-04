@@ -274,7 +274,6 @@ function buildPPL(goal: Goal, existing?: WorkoutDay[]): WorkoutDay[] {
         makeExercise("knee_dominant", round(4 * vm), 6, 80, "double", findExisting(2, 0)),
         makeExercise("hip_dominant", round(4 * vm), 6, 80, "double", findExisting(2, 1)),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift"),
         makeExercise("core", round(3 * vm), 15, 15, "linear", findExisting(2, 4)),
       ],
     },
