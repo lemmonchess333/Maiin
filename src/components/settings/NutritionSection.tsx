@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 import {
   Calculator,
   ChevronDown,
@@ -160,6 +161,7 @@ export default function NutritionSection({
             <button
               key={phase.value}
               onClick={() => {
+                haptic("medium");
                 setTrainingPhase(phase.value);
                 onPhaseChange(phase.value);
               }}

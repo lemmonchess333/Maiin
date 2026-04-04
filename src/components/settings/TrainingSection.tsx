@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 import {
   Target,
   ChevronRight,
@@ -87,6 +88,7 @@ export default function TrainingSection({
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={async () => {
+          haptic("error");
           await updateProfile({ onboardingComplete: false });
           navigate("/onboarding", { state: { retake: true } });
         }}

@@ -1,5 +1,6 @@
 import { Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile } from "@/lib/auth";
 
@@ -32,6 +33,7 @@ export default function WorkoutPrefsSection({
           </div>
           <button
             onClick={async () => {
+              haptic("light");
               const next = !autoRestTimer;
               setAutoRestTimer(next);
               await updateProfile({ autoRestTimer: next });
@@ -73,6 +75,7 @@ export default function WorkoutPrefsSection({
           </div>
           <button
             onClick={async () => {
+              haptic("light");
               const next = !audioCues;
               setAudioCues(next);
               await updateProfile({ audioCues: next });

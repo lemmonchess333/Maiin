@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { haptic } from "@/lib/haptic";
 import {
   Users,
   Check,
@@ -142,6 +143,7 @@ export default function PrivacySection({
         </div>
         <button
           onClick={async () => {
+            haptic("light");
             const next = !autoPostRuns;
             setAutoPostRuns(next);
             await updateProfile({ autoPostRuns: next });
@@ -159,6 +161,7 @@ export default function PrivacySection({
         </div>
         <button
           onClick={async () => {
+            haptic("light");
             const next = !autoPostWorkouts;
             setAutoPostWorkouts(next);
             await updateProfile({ autoPostWorkouts: next });

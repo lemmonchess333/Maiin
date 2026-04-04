@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 import {
   Download,
-  Shield,
-  ChevronRight,
   LogOut,
   Trash2,
 } from "lucide-react";
@@ -32,7 +30,7 @@ export default function AccountSection({
 
   return (
     <>
-      <AccordionSection icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, privacy, sign out">
+      <AccordionSection icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, sign out">
         <div className="space-y-2">
           {[
             { label: "Export Workouts (CSV)", key: "workouts" },
@@ -65,28 +63,6 @@ export default function AccountSection({
           ))}
         </div>
 
-        <Link
-          to="/privacy"
-          className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5" />
-            <span>Privacy Policy</span>
-          </div>
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-
-        <Link
-          to="/terms"
-          className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5" />
-            <span>Terms of Service</span>
-          </div>
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={signOut}
@@ -97,7 +73,7 @@ export default function AccountSection({
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
         <button
-          onClick={() => setShowDeleteModal(true)}
+          onClick={() => { haptic("error"); setShowDeleteModal(true); }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="w-4 h-4" /> Delete Account

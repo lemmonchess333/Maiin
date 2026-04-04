@@ -18,6 +18,7 @@ import { generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { useMealReminders } from "@/hooks/useMealReminders";
+import { useWorkoutReminders } from "@/hooks/useWorkoutReminders";
 import { useCrews } from "@/hooks/useCrews";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
@@ -30,6 +31,7 @@ import ShoesSection from "@/components/settings/ShoesSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
+import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
 
 declare const __APP_VERSION__: string;
@@ -68,7 +70,8 @@ export default function Settings() {
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
-  const { reminders: mealReminders, updateReminders } = useMealReminders();
+  const { reminders: mealReminders, updateReminders: updateMealReminders } = useMealReminders();
+  const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
 
   // Restructure warning modal state
   const [showRestructureModal, setShowRestructureModal] = useState(false);
@@ -358,7 +361,9 @@ export default function Settings() {
       {/* 8. Notifications */}
       <NotificationsSection
         mealReminders={mealReminders}
-        updateReminders={updateReminders}
+        updateMealReminders={updateMealReminders}
+        workoutReminders={workoutReminders}
+        updateWorkoutReminders={updateWorkoutReminders}
       />
 
       {/* 9. Subscription — navigation row, not accordion */}
@@ -382,7 +387,10 @@ export default function Settings() {
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </button>
 
-      {/* 10. Account */}
+      {/* 10. Support & Legal */}
+      <SupportLegalSection />
+
+      {/* 11. Account */}
       <AccountSection
         user={user}
         signOut={signOut}

@@ -1,6 +1,7 @@
 import { useState, useId } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 
 interface AccordionSectionProps {
   icon: React.ReactNode;
@@ -20,7 +21,7 @@ export default function AccordionSection({ icon, title, subtitle, defaultOpen = 
     <div className="bg-card rounded-2xl overflow-hidden">
       <button
         id={triggerId}
-        onClick={() => setOpen(!open)}
+        onClick={() => { haptic("light"); setOpen(!open); }}
         className="w-full flex items-center justify-between p-4"
         aria-expanded={open}
         aria-controls={panelId}
