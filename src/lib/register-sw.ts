@@ -1,6 +1,21 @@
 import { toast } from "sonner";
 import { logger } from "./logger";
 
+/**
+ * Clear all SW caches. Called when a chunk load fails to ensure
+ * the next page load fetches fresh assets from the server.
+ */
+export async function clearSWCaches(): Promise<void> {
+  if (!("caches" in window)) return;
+  try {
+    const names = await caches.keys();
+    await Promise.all(names.map((n) => caches.delete(n)));
+    logger.log("SW caches cleared");
+  } catch {
+    // Best-effort — ignore failures
+  }
+}
+
 export function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
@@ -24,6 +39,8 @@ export function registerServiceWorker() {
                   newWorker.state === "activated" &&
                   navigator.serviceWorker.controller
                 ) {
+                  // New SW activated — clear old caches and prompt refresh
+                  clearSWCaches();
                   toast("New version available", {
                     action: {
                       label: "Refresh",
