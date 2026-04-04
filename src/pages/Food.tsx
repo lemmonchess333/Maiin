@@ -701,7 +701,7 @@ export default function Food() {
                   }
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
-                  {isOver ? "over" : "left"}
+                  {isCal ? CALORIE_UNIT : ""} {isOver ? "over" : "left"}
                 </p>
                 <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
                   {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
@@ -1006,6 +1006,20 @@ export default function Food() {
               <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
             </div>
+          )}
+          {isToday && yesterdayMeals.length > 0 && (
+            <button
+              onClick={() => {
+                for (const key of MEAL_ORDER) {
+                  if (yesterdaySegmented[key]?.length > 0) {
+                    copyFromYesterday(key);
+                  }
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-muted-foreground hover:bg-muted/50 active:scale-[0.97] transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
+            </button>
           )}
         </motion.div>
       )}
