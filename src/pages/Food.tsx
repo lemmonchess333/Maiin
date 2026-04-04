@@ -5,11 +5,9 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-
-function haptic(ms = 10) {
-  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
-}
+import { motion, AnimatePresence } from "framer-motion";
+import { haptic } from "@/lib/haptic";
+import { formatCalories, formatMacro, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -123,6 +121,8 @@ export default function Food() {
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const macroSentinelRef = useRef<HTMLDivElement>(null);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   const dailyTargets = useDailyTargets(selectedDateObj);
@@ -212,9 +212,9 @@ export default function Food() {
 
   const macroColors = {
     calories: THEME.semantic.nutrition,
-    protein: THEME.semantic.hydration,
-    carbs: THEME.semantic.activity,
-    fat: THEME.semantic.nutrition,
+    protein: THEME.macros.protein,
+    carbs: THEME.macros.carbs,
+    fat: THEME.macros.fat,
   };
 
 
@@ -243,6 +243,18 @@ export default function Food() {
   };
 
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
+
+  // Sticky header: show when macro tiles scroll out of view
+  useEffect(() => {
+    const el = macroSentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const suggestions = useMemo(() => {
     const parts = nlInput.split(/,/);
@@ -596,16 +608,24 @@ export default function Food() {
 
       {/* Header */}
       <motion.div variants={itemVariant}>
-        <h1 className="text-xl font-extrabold text-foreground">Log Food</h1>
+        <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
       {/* Day-type context */}
-      {isToday && dailyTargets.annotation && (
-        <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: dailyTargets.dayType === "rest" ? THEME.text.muted : dailyTargets.dayType === "run" ? THEME.running : THEME.lifting }}>
-          {dailyTargets.dayType !== "rest" && (dailyTargets.dayType === "lift" ? <Dumbbell className="w-3 h-3" /> : dailyTargets.dayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>)}
-          {dailyTargets.dayType === "rest" ? "Rest day targets" : dailyTargets.annotation}
-        </p>
-      )}
+      <AnimatePresence>
+        {isToday && dailyTargets.dayType !== "rest" && dailyTargets.annotation && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-[11px] font-medium flex items-center gap-1"
+            style={{ color: dailyTargets.dayType === "run" ? THEME.running : THEME.lifting }}
+          >
+            {dailyTargets.dayType === "lift" ? <Dumbbell className="w-3 h-3" /> : dailyTargets.dayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>}
+            {dailyTargets.annotation}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Macro Tiles */}
       <motion.div
@@ -656,25 +676,38 @@ export default function Food() {
               },
             ] as const
           ).map(({ key, icon: Icon, value, target, color, label, suffix }) => {
-            const isOver = safeNum(value) > target && target > 0;
+            const consumed = safeNum(value);
+            const remaining = Math.max(0, target - consumed);
+            const isOver = consumed > target && target > 0;
+            const pct = target > 0 ? consumed / target : 0;
+            const budgetColor = isOver ? "#EF4444" : pct >= 0.75 ? "#D9884E" : color;
+            const isCal = key === "calories";
             return (
             <div
               key={key}
               className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
-              style={{ backgroundColor: tint(color, 0.06), color }}
+              style={{ backgroundColor: tint(color, 0.06), color: budgetColor }}
             >
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-                style={glowStyle(value, target, color)}
+                style={glowStyle(consumed, target, color)}
               />
               <div className="relative z-10">
                 <Icon className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="stat-tile__value tabular-nums" style={isOver ? { color: "#EF4444" } : undefined}>
-                  {Math.round(safeNum(value))}
+                <p className="text-base font-bold font-mono tabular-nums leading-tight" style={isOver ? { color: "#EF4444" } : undefined}>
+                  {isOver
+                    ? (isCal ? `-${formatCalories(consumed - target)}` : `-${formatMacro(consumed - target)}`)
+                    : (isCal ? formatCalories(remaining) : formatMacro(remaining))
+                  }
                   {suffix}
                 </p>
-                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">/ {Math.round(target)}</p>
-                <p className="text-xs mt-0.5">{label}</p>
+                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
+                  {isOver ? "over" : "left"}
+                </p>
+                <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
+                  {isCal ? formatCalories(consumed) : formatMacro(consumed)} eaten
+                </p>
+                <p className="text-xs mt-1">{label}</p>
                 <div
                   className="mt-2 h-1 rounded-full overflow-hidden"
                   style={{ backgroundColor: `${color}15` }}
@@ -682,8 +715,8 @@ export default function Food() {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.min(100, (value / target) * 100)}%`,
-                      backgroundColor: isOver ? "#EF4444" : color,
+                      width: `${Math.min(100, pct * 100)}%`,
+                      backgroundColor: isOver ? "#EF4444" : budgetColor,
                       opacity: 0.6,
                     }}
                   />
@@ -695,6 +728,30 @@ export default function Food() {
         </div>
       </motion.div>
 
+      {/* Sticky macro summary — appears when tiles scroll out of view */}
+      <div ref={macroSentinelRef} className="h-0" />
+      <AnimatePresence>
+        {showStickyHeader && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
+            style={{ backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))" }}
+          >
+            <p className="text-xs font-semibold font-mono tabular-nums text-center text-foreground">
+              {formatCalories(Math.max(0, macroTargets.calories - dailyTotals.calories))} {CALORIE_UNIT} left
+              <span className="text-muted-foreground font-normal">
+                {" · P: "}{formatMacro(Math.max(0, macroTargets.protein - dailyTotals.protein))}g
+                {" · C: "}{formatMacro(Math.max(0, macroTargets.carbs - dailyTotals.carbs))}g
+                {" · F: "}{formatMacro(Math.max(0, macroTargets.fat - dailyTotals.fat))}g
+              </span>
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input bar + scan circle */}
       <motion.div variants={itemVariant} className="sticky top-[44px] z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
         <div className="flex items-start gap-2">
@@ -705,8 +762,8 @@ export default function Food() {
               onChange={(e) => setNlInput(e.target.value)}
               onFocus={() => setSuggestionsActive(true)}
               onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
-              placeholder="Describe what you ate…"
-              aria-label="Describe what you ate"
+              placeholder="What did you eat?"
+              aria-label="What did you eat"
               rows={1}
               maxLength={500}
               className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-gray-200 shadow-sm text-foreground text-sm resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
@@ -770,7 +827,7 @@ export default function Food() {
       {/* Quick Add — merged section (quick meals + favourites + frequently logged) */}
       <motion.div variants={itemVariant} style={{ marginTop: "14px" }}>
         <p className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: THEME.text.muted }}>
-          Quick Add
+          Quick add
         </p>
         {quickMeals.length >= 3 ? (
           <div
@@ -851,15 +908,10 @@ export default function Food() {
                   {MEAL_LABELS[mealKey]}
                   {meals.length > 0 && (
                     <span className="text-xs font-normal text-muted-foreground font-mono tabular-nums ml-1.5">
-                      {mealCals} cal
+                      {formatCalories(mealCals)} {CALORIE_UNIT}
                     </span>
                   )}
                 </p>
-                {meals.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
-                    P: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalProtein), 0))}g · C: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0))}g · F: {Math.round(meals.reduce((s, m) => s + safeNum(m.totalFat), 0))}g
-                  </p>
-                )}
               </div>
                 <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20">
                   {groupedEntries.map((group) => {
@@ -867,9 +919,9 @@ export default function Food() {
                     const carbCal = group.totalCarb * 4;
                     const fatCal = group.totalFat * 9;
                     const dotColor = proCal === 0 && carbCal === 0 && fatCal === 0 ? "#D1D5DB"
-                      : proCal >= carbCal && proCal >= fatCal ? "#4CAF50"
-                      : carbCal >= proCal && carbCal >= fatCal ? "#7C6BF0"
-                      : "#F59E0B";
+                      : proCal >= carbCal && proCal >= fatCal ? THEME.macros.protein
+                      : carbCal >= proCal && carbCal >= fatCal ? THEME.macros.carbs
+                      : THEME.macros.fat;
                     return (
                     <div key={group.foodName} className="flex items-center justify-between px-3 py-2.5">
                       <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
@@ -882,7 +934,7 @@ export default function Food() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-mono tabular-nums text-gray-500">{group.totalCal} cal</span>
+                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{formatCalories(group.totalCal)} {CALORIE_UNIT}</span>
                         <button
                           onClick={() => handleDeleteMeal(group.meals[group.meals.length - 1].id, group.foodName)}
                           aria-label={`Delete ${group.foodName}`}
@@ -912,7 +964,7 @@ export default function Food() {
                   {isCurrent ? (
                     <>
                       <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                      <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                      <p className="text-xs text-muted-foreground/40 px-1">Nothing yet</p>
                       {yesterdaySegmented[emptyKey]?.length > 0 && (
                         <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
                           <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
@@ -946,7 +998,7 @@ export default function Food() {
                   {isCurrent ? (
                     <>
                       <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                      <p className="text-xs text-muted-foreground/40 px-1">No items logged</p>
+                      <p className="text-xs text-muted-foreground/40 px-1">Nothing yet</p>
                       {yesterdaySegmented[emptyKey]?.length > 0 && (
                         <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
                           <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
