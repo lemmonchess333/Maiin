@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { X, Image as ImageIcon } from "lucide-react";
+import { haptic } from "@/lib/haptic";
+import { X, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 type CaptureMode = "food" | "label";
@@ -254,11 +255,11 @@ export default function FoodCameraModal({
         </button>
 
         <button
-          onClick={() => setFacing((p) => (p === "environment" ? "user" : "environment"))}
-          className="h-10 px-4 rounded-full bg-black/50 text-white text-sm"
+          onClick={() => { haptic("light"); setFacing((p) => (p === "environment" ? "user" : "environment")); }}
+          className="h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center"
           aria-label="Flip camera"
         >
-          Flip
+          <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
@@ -279,35 +280,26 @@ export default function FoodCameraModal({
       {/* bottom */}
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
         <div className="mx-auto max-w-[520px] space-y-3">
-          {/* tabs */}
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setTab("food")}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "food" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
-              )}
-            >
-              Scan Food
-            </button>
-            <button
-              onClick={() => setTab("barcode")}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "barcode" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
-              )}
-            >
-              Barcode
-            </button>
-            <button
-              onClick={() => setTab("label")}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium",
-                tab === "label" ? "bg-[#7C6BF0] text-white" : "bg-black/40 text-white"
-              )}
-            >
-              Food label
-            </button>
+          {/* tabs — pill/segment pattern matching app style */}
+          <div className="flex gap-1.5 justify-center bg-black/30 rounded-full p-1">
+            {([
+              { key: "food" as const, label: "Scan Food" },
+              { key: "barcode" as const, label: "Barcode" },
+              { key: "label" as const, label: "Food label" },
+            ]).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => { haptic("light"); setTab(key); }}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  tab === key
+                    ? "bg-[#7B72E9] text-white shadow-sm"
+                    : "text-white/70 hover:text-white"
+                )}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {tab === "barcode" && (
@@ -326,16 +318,19 @@ export default function FoodCameraModal({
               <ImageIcon className="w-5 h-5" />
             </button>
 
-            {/* Shutter (only for food/label) */}
+            {/* Shutter (only for food/label) — white fill + coral ring */}
             <button
-              onClick={takePhoto}
+              onClick={() => { haptic("medium"); takePhoto(); }}
               disabled={disableShutter}
               className={cn(
-                "h-16 w-16 rounded-full border-4 border-white bg-white/10",
+                "h-16 w-16 rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
                 disableShutter && "opacity-50"
               )}
+              style={{ borderColor: "#D4637A" }}
               aria-label="Capture"
-            />
+            >
+              <div className="w-[52px] h-[52px] rounded-full bg-white" />
+            </button>
 
             <div className="h-12 w-12" />
           </div>
@@ -343,7 +338,7 @@ export default function FoodCameraModal({
           <p className="text-center text-xs text-white/70">
             {tab === "barcode"
               ? "Auto-detects barcode (no shutter)"
-              : "Tap shutter to capture. Use gallery icon for photo library."}
+              : "Snap a photo or pick from library"}
           </p>
         </div>
       </div>
