@@ -211,7 +211,7 @@ export default function Food() {
 
 
   const macroColors = {
-    calories: THEME.semantic.nutrition,
+    calories: THEME.macros.calories,
     protein: THEME.macros.protein,
     carbs: THEME.macros.carbs,
     fat: THEME.macros.fat,
@@ -914,7 +914,7 @@ export default function Food() {
                   )}
                 </p>
               </div>
-                <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20">
+                <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)" }}>
                   {groupedEntries.map((group) => {
                     const proCal = group.totalPro * 4;
                     const carbCal = group.totalCarb * 4;
