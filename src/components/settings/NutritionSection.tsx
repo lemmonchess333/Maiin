@@ -1,3 +1,5 @@
+import { useState, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Calculator,
   ChevronDown,
@@ -10,16 +12,16 @@ import type { ActivityLevel } from "@/lib/tdee";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile } from "@/lib/auth";
 
-interface TDEESectionProps {
+interface NutritionSectionProps {
   profile: UserProfile;
-  showTDEE: boolean;
-  setShowTDEE: (v: boolean) => void;
   age: number;
   setAge: (v: number) => void;
   activityLevel: ActivityLevel;
   setActivityLevel: (v: ActivityLevel) => void;
   trainingPhase: "cut" | "lean bulk" | "recomp";
   setTrainingPhase: (v: "cut" | "lean bulk" | "recomp") => void;
+  mealsTarget: number;
+  setMealsTarget: (v: number) => void;
   tdee: {
     bmr: number;
     tdee: number;
@@ -30,25 +32,40 @@ interface TDEESectionProps {
     deficit: number;
   };
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<void>;
+  onPhaseChange: (phase: "cut" | "lean bulk" | "recomp") => void;
 }
 
-export default function TDEESection({
+export default function NutritionSection({
   profile,
-  showTDEE,
-  setShowTDEE,
   age,
   setAge,
   activityLevel,
   setActivityLevel,
   trainingPhase,
   setTrainingPhase,
+  mealsTarget,
+  setMealsTarget,
   tdee,
   updateProfile,
-}: TDEESectionProps) {
-  return (
-    <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Training Setup" subtitle="TDEE & training phase">
+  onPhaseChange,
+}: NutritionSectionProps) {
+  const [showTDEE, setShowTDEE] = useState(false);
+  const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-      {/* TDEE Calculator */}
+  const handleMealsChange = useCallback((val: number) => {
+    setMealsTarget(val);
+    clearTimeout(mealsTimerRef.current);
+    mealsTimerRef.current = setTimeout(() => {
+      updateProfile({ weeklyMealsTarget: val });
+    }, 500);
+  }, [setMealsTarget, updateProfile]);
+
+  const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  return (
+    <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Nutrition" subtitle="TDEE, phase, macros, meal target">
+
+      {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">
         <button
           onClick={() => setShowTDEE(!showTDEE)}
@@ -79,6 +96,7 @@ export default function TDEESection({
                 type="number"
                 value={age}
                 onChange={(e) => setAge(Number(e.target.value) || 25)}
+                onBlur={() => updateProfile({ age })}
                 className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
               />
             </div>
@@ -89,7 +107,10 @@ export default function TDEESection({
                 {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(([key, label]) => (
                   <button
                     key={key}
-                    onClick={() => setActivityLevel(key)}
+                    onClick={async () => {
+                      setActivityLevel(key);
+                      await updateProfile({ activityLevel: key });
+                    }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                       activityLevel === key
@@ -114,32 +135,6 @@ export default function TDEESection({
                 <p className="text-xs text-muted-foreground">TDEE</p>
               </div>
             </div>
-
-            <div className="bg-primary/5 rounded-xl p-4 space-y-2">
-              <p className="text-xs font-medium text-foreground">
-                Daily Target: <span className="text-primary">{tdee.targetCalories} cal</span>
-                {tdee.deficit !== 0 && (
-                  <span className="text-muted-foreground">
-                    {" "}({tdee.deficit > 0 ? "+" : ""}{tdee.deficit})
-                  </span>
-                )}
-              </p>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
-                  <p className="text-xs text-muted-foreground">Protein</p>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
-                  <p className="text-xs text-muted-foreground">Carbs</p>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
-                  <p className="text-xs text-muted-foreground">Fat</p>
-                </div>
-              </div>
-            </div>
-
           </div>
         )}
       </div>
@@ -164,7 +159,10 @@ export default function TDEESection({
           ]).map((phase) => (
             <button
               key={phase.value}
-              onClick={() => setTrainingPhase(phase.value)}
+              onClick={() => {
+                setTrainingPhase(phase.value);
+                onPhaseChange(phase.value);
+              }}
               className={cn(
                 "p-3 rounded-xl border text-center transition-all",
                 trainingPhase === phase.value
@@ -189,63 +187,100 @@ export default function TDEESection({
           ))}
         </div>
 
-        <p className="text-xs text-primary/60 italic text-center">
-          Tap Save Changes to apply
-        </p>
-
-        <div className="rounded-xl bg-muted/50 p-3 space-y-1.5">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Daily targets for {trainingPhase}
-          </p>
-          <div className="flex items-center justify-between">
-            <div className="text-center flex-1">
-              <p className="text-sm font-bold text-foreground">{tdee.targetCalories}</p>
-              <p className="text-xs text-muted-foreground">cal</p>
+        {/* Calorie calculation chain */}
+        <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Base TDEE</span>
+              <span>{tdee.tdee} cal</span>
             </div>
-            <div className="w-px h-6 bg-border/50" />
-            <div className="text-center flex-1">
-              <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
-              <p className="text-xs text-muted-foreground">protein</p>
-            </div>
-            <div className="w-px h-6 bg-border/50" />
-            <div className="text-center flex-1">
-              <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
-              <p className="text-xs text-muted-foreground">carbs</p>
-            </div>
-            <div className="w-px h-6 bg-border/50" />
-            <div className="text-center flex-1">
-              <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
-              <p className="text-xs text-muted-foreground">fat</p>
+            {tdee.deficit !== 0 && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Phase ({trainingPhase === "lean bulk" ? "Lean Bulk" : trainingPhase === "cut" ? "Cut" : "Recomp"})</span>
+                <span>{tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal</span>
+              </div>
+            )}
+            <div className="border-t border-border/50 pt-1 flex items-center justify-between">
+              <span className="text-xs font-medium text-foreground">Daily target</span>
+              <motion.span
+                key={tdee.targetCalories}
+                initial={{ opacity: 0.5, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="text-sm font-bold text-primary"
+              >
+                {tdee.targetCalories} cal
+              </motion.span>
             </div>
           </div>
-          {tdee.deficit !== 0 && (
-            <p className="text-xs text-muted-foreground text-center">
-              {tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal vs maintenance
-            </p>
-          )}
-            {/* Manual calorie override */}
-            <div className="mt-3 pt-3 border-t border-border/50">
+
+          <div className="flex items-center justify-between pt-1">
+            <motion.div key={tdee.protein} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
+              <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
+              <p className="text-xs text-muted-foreground">protein</p>
+            </motion.div>
+            <div className="w-px h-6 bg-border/50" />
+            <motion.div key={tdee.carbs} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
+              <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
+              <p className="text-xs text-muted-foreground">carbs</p>
+            </motion.div>
+            <div className="w-px h-6 bg-border/50" />
+            <motion.div key={tdee.fat} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
+              <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
+              <p className="text-xs text-muted-foreground">fat</p>
+            </motion.div>
+          </div>
+
+          {/* Custom calorie override */}
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <div className="flex items-center justify-between">
               <label htmlFor="tdee-custom-target" className="text-sm text-muted-foreground">
-                Custom daily target (optional)
+                Override daily target (optional)
               </label>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-                Leave blank to use your calculated TDEE of {tdee.targetCalories} cal
-              </p>
-              <input
-                id="tdee-custom-target"
-                type="number"
-                value={profile?.customCalorieTarget ?? ""}
-                onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : undefined;
-                  updateProfile({ customCalorieTarget: val || undefined });
-                }}
-                placeholder={String(tdee.targetCalories)}
-                className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-              />
+              {profile?.customCalorieTarget && (
+                <button
+                  onClick={() => updateProfile({ customCalorieTarget: undefined })}
+                  className="text-xs text-primary font-medium"
+                >
+                  Reset to calculated
+                </button>
+              )}
             </div>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+              Leave blank to use calculated target of {tdee.targetCalories} cal
+            </p>
+            <input
+              id="tdee-custom-target"
+              type="number"
+              value={profile?.customCalorieTarget ?? ""}
+              onChange={(e) => {
+                const val = e.target.value ? Number(e.target.value) : undefined;
+                clearTimeout(calorieTimerRef.current);
+                calorieTimerRef.current = setTimeout(() => {
+                  updateProfile({ customCalorieTarget: val || undefined });
+                }, 500);
+              }}
+              placeholder={String(tdee.targetCalories)}
+              className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+            />
+          </div>
         </div>
       </div>
 
+      {/* Meal logging target */}
+      <div>
+        <label className="text-sm text-muted-foreground">
+          Weekly meal logging target ({mealsTarget})
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="20"
+          value={mealsTarget}
+          onChange={(e) => handleMealsChange(Number(e.target.value))}
+          className="w-full accent-primary"
+        />
+      </div>
     </AccordionSection>
   );
 }

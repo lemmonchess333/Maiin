@@ -33,6 +33,7 @@ const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const Settings = lazyRetry(() => import("@/pages/Settings"));
+const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
 const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
@@ -208,6 +209,7 @@ function AppRoutes() {
           <Route path="/food" element={<RouteErrorBoundary><Food /></RouteErrorBoundary>} />
           <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
           <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
+          <Route path="/upgrade" element={<RouteErrorBoundary><Upgrade /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
           <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />
           <Route path="/user/:uid" element={<RouteErrorBoundary><UserProfile /></RouteErrorBoundary>} />

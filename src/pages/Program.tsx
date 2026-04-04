@@ -876,7 +876,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => { setShowProSheet(false); navigate("/settings"); }}
+                  onClick={() => { setShowProSheet(false); navigate("/upgrade"); }}
                   className="w-full py-3 rounded-xl text-white text-sm font-semibold"
                   style={{ background: THEME.gradient.brand }}
                 >

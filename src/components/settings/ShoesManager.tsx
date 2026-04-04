@@ -21,13 +21,25 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
 }
 
 export default function ShoesManager() {
-  const { shoes, activeShoes, addShoe, retireShoe, setDefault, loading } = useShoes();
+  const { shoes, activeShoes, addShoe, retireShoe, setDefault, loading, error } = useShoes();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newBrand, setNewBrand] = useState("");
   const [newMax, setNewMax] = useState("600");
 
-  if (loading) return <p className="text-xs text-muted-foreground animate-pulse">Loading shoes...</p>;
+  if (loading) return (
+    <div className="flex items-center gap-2 py-4">
+      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <p className="text-xs text-muted-foreground">Loading shoes...</p>
+    </div>
+  );
+
+  if (error) return (
+    <div className="text-center py-4">
+      <p className="text-xs text-destructive">Failed to load shoes</p>
+      <p className="text-xs text-muted-foreground mt-1">Please try again later</p>
+    </div>
+  );
 
   const retired = shoes.filter((s) => s.retired);
 

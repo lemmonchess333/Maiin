@@ -341,7 +341,7 @@ export default function Home() {
       {/* Persistent trial / upgrade strip */}
       {isInTrial && (
         <button
-          onClick={function() { if (trialDaysLeft <= 2) { setShowProModal(true); } else { navigate("/settings"); } }}
+          onClick={function() { if (trialDaysLeft <= 2) { setShowProModal(true); } else { navigate("/upgrade"); } }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left transition-colors",
             trialDaysLeft <= 2 ? "bg-orange-50 dark:bg-orange-950/30" : "bg-primary/8"
@@ -517,7 +517,7 @@ export default function Home() {
                   Maybe later
                 </button>
                 <button
-                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); navigate("/settings"); }}
+                  onClick={function() { setShowTrialExpiredModal(false); updateProfile({ trialExpiryPromptShown: true }); navigate("/upgrade"); }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   Upgrade
