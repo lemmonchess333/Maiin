@@ -45,6 +45,7 @@ import { useDailyTargets } from "@/hooks/useDailyTargets";
 import MacroRow from "@/components/food/MacroRow";
 import CalorieRing from "@/components/food/CalorieRing";
 import { useFeatureFlag } from "@/config/featureFlags";
+import { useScanUsage } from "@/hooks/useScanUsage";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -126,6 +127,7 @@ export default function Food() {
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   const dailyTargets = useDailyTargets(selectedDateObj);
   const foodHeroRing = useFeatureFlag("foodHeroRing");
+  const scanUsage = useScanUsage();
 
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
@@ -721,6 +723,20 @@ export default function Food() {
           </motion.button>
         </div>
       </motion.div>
+      {/* Scan usage indicator — show for free users */}
+      {!isPro && !scanUsage.loading && (
+        <p className="text-[11px] text-center" style={{ color: scanUsage.remaining <= 2 ? "#EF4444" : THEME.text.muted }}>
+          {scanUsage.remaining > 0
+            ? `${scanUsage.remaining} of ${scanUsage.limit} AI scans left this month`
+            : "Monthly scan limit reached"}
+          {scanUsage.remaining === 0 && (
+            <a href={`${import.meta.env.BASE_URL}upgrade`} className="ml-1 font-medium" style={{ color: THEME.brand }}>
+              Upgrade
+            </a>
+          )}
+        </p>
+      )}
+
       {scanOpen && (
         <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
           <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />

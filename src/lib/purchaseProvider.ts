@@ -9,7 +9,7 @@
  * Stripe is only used for web and Android builds.
  */
 
-export type PlanId = 'monthly' | 'yearly' | 'lifetime';
+export type PlanId = 'monthly' | 'yearly';
 
 export interface PurchaseResult {
   success: boolean;
@@ -32,7 +32,6 @@ function isNativeIOS(): boolean {
 const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
   monthly: 'com.tropos.app.pro.monthly',
   yearly: 'com.tropos.app.pro.yearly',
-  lifetime: 'com.tropos.app.pro.lifetime',
 };
 
 // IAP store interface (cordova-plugin-purchase or similar)
@@ -59,7 +58,7 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
     }
 
     const productId = APPLE_PRODUCT_IDS[plan];
-    const productType = plan === 'lifetime' ? store.NON_CONSUMABLE : store.PAID_SUBSCRIPTION;
+    const productType = store.PAID_SUBSCRIPTION;
 
     store.register({ id: productId, type: productType });
     store.refresh();
@@ -88,7 +87,6 @@ async function purchaseWithStripe(
   const PRICE_IDS = {
     monthly: import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || 'price_monthly',
     yearly: import.meta.env.VITE_STRIPE_YEARLY_PRICE_ID || 'price_yearly',
-    lifetime: import.meta.env.VITE_STRIPE_LIFETIME_PRICE_ID || 'price_lifetime',
   };
 
   const CREATE_CHECKOUT_URL =

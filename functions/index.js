@@ -41,6 +41,53 @@ async function isRateLimited(uid, action, maxCalls, windowMs) {
   }
 }
 
+// ══════════════════════════════════════════════
+// MONTHLY SCAN QUOTA — per-user, Firestore-backed
+// ══════════════════════════════════════════════
+
+const SCAN_LIMITS = { free: 10, pro: 300 };
+
+/**
+ * Checks and increments the user's monthly AI scan counter.
+ * Resets automatically when the month changes.
+ * @param {string} uid - User ID
+ * @returns {Promise<{allowed: boolean, remaining: number, limit: number}>}
+ */
+async function checkMonthlyQuota(uid) {
+  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const ref = admin.firestore().collection("scanUsage").doc(uid);
+
+  try {
+    // Get user's subscription tier
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    const tier = userDoc.exists && userDoc.data().subscriptionTier === "pro" ? "pro" : "free";
+
+    // Check trial status
+    const trialExpiresAt = userDoc.exists ? userDoc.data().trialExpiresAt : null;
+    const isInTrial = trialExpiresAt && new Date(trialExpiresAt) > new Date();
+    const effectiveTier = isInTrial ? "pro" : tier;
+
+    const limit = SCAN_LIMITS[effectiveTier];
+
+    const doc = await ref.get();
+    const data = doc.exists ? doc.data() : { count: 0, month: "" };
+
+    // Reset if month changed
+    const count = data.month === currentMonth ? (data.count || 0) : 0;
+
+    if (count >= limit) {
+      return { allowed: false, remaining: 0, limit };
+    }
+
+    // Increment
+    await ref.set({ count: count + 1, month: currentMonth, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    return { allowed: true, remaining: limit - count - 1, limit };
+  } catch (err) {
+    console.error(`Quota check error for ${uid}:`, err.message);
+    return { allowed: true, remaining: 999, limit: 999 }; // fail open
+  }
+}
+
 /**
  * Verifies a Firebase ID token from an Authorization header.
  * @param {string} authHeader
@@ -179,6 +226,13 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
+      // Monthly scan quota
+      const quota = await checkMonthlyQuota(authUser.uid);
+      if (!quota.allowed) {
+        res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
+        return;
+      }
+
       const { imageBase64 } = req.body;
       if (!imageBase64) {
         res.status(400).json({ error: "No image provided" });
@@ -268,6 +322,13 @@ exports.analyzeFoodText = functions.https.onRequest((req, res) => {
       const limited = await isRateLimited(authUser.uid, "analyzeFoodText", 15, 600_000);
       if (limited) {
         res.status(429).json({ error: "Rate limit reached. Please wait before analyzing more food." });
+        return;
+      }
+
+      // Monthly scan quota (shares counter with image analysis)
+      const quota = await checkMonthlyQuota(authUser.uid);
+      if (!quota.allowed) {
+        res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
         return;
       }
 

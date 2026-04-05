@@ -7,11 +7,15 @@ import { useAuth } from "./auth";
 ================================ */
 
 export const pricing = {
-  monthly: 2.99,
-  yearly: 29.99,
-  lifetime: 99,
+  monthly: 3.99,
+  yearly: 34.99,
   currency: "GBP",
 };
+
+export const SCAN_LIMITS = {
+  free: 10,
+  pro: 300,
+} as const;
 
 export const featureAccess = {
   free: {

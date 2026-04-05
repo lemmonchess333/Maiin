@@ -9,9 +9,8 @@ import { toast } from "sonner";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const PLANS = [
-  { id: "monthly" as const, label: "Monthly", price: "£2.99", period: "/mo" },
-  { id: "yearly" as const, label: "Yearly", price: "£29.99", period: "/yr", badge: "Save 17%" },
-  { id: "lifetime" as const, label: "Lifetime", price: "£99", period: "", badge: "Best value" },
+  { id: "monthly" as const, label: "Monthly", price: "£3.99", period: "/mo" },
+  { id: "yearly" as const, label: "Yearly", price: "£34.99", period: "/yr", badge: "Save 27%" },
 ];
 
 // Feature-specific hero configs — what to show when a specific feature gate was hit
@@ -264,13 +263,10 @@ export default function ProModal({ onClose, feature }: Props) {
           {/* Subscription terms (App Store Guideline 3.1.2(c)) */}
           <div className="text-center space-y-1 pb-1">
             <p className="text-xs text-white/50">
-              {selectedPlan === 'lifetime'
-                ? 'One-time purchase. No recurring charges.'
-                : `Subscription auto-renews ${selectedPlan === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period.`}
+              Subscription auto-renews {selectedPlan === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period.
             </p>
             <p className="text-xs text-white/50">
-              {selectedPlan !== 'lifetime' && 'Manage or cancel anytime in your device settings. '}
-              No hidden fees.
+              Manage or cancel anytime in your device settings. No hidden fees.
             </p>
             <button onClick={handleRestore} className="text-xs text-white/60 underline">
               Restore purchases

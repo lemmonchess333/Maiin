@@ -13,9 +13,8 @@ import {
 const ProModal = lazy(() => import("@/components/ProModal"));
 
 const PLANS = [
-  { id: "monthly" as const, label: "Monthly", price: "\u00A32.99", period: "/month", badge: null, recommended: false },
-  { id: "yearly" as const, label: "Yearly", price: "\u00A329.99", period: "/year", badge: "Save 17%", recommended: true },
-  { id: "lifetime" as const, label: "Lifetime", price: "\u00A399", period: "one-time", badge: "Best value", recommended: false },
+  { id: "monthly" as const, label: "Monthly", price: "\u00A33.99", period: "/month", badge: null, recommended: false },
+  { id: "yearly" as const, label: "Yearly", price: "\u00A334.99", period: "/year", badge: "Save 27%", recommended: true },
 ];
 
 export default function Upgrade() {
@@ -136,12 +135,7 @@ export default function Upgrade() {
                     </p>
                   </div>
                   {plan.badge && (
-                    <span className={cn(
-                      "text-xs px-2 py-0.5 rounded-full font-medium",
-                      plan.id === "lifetime"
-                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                        : "bg-primary/10 text-primary"
-                    )}>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary">
                       {plan.badge}
                     </span>
                   )}
