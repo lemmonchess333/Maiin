@@ -10,14 +10,24 @@ export interface ScanUsage {
   limit: number;
   remaining: number;
   loading: boolean;
+  /** First day of next month — when the counter resets */
+  resetDate: Date;
+  /** True when user has unlimited scans (pro or trial) */
+  isUnlimited: boolean;
+}
+
+function getResetDate(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 1);
 }
 
 export function useScanUsage(): ScanUsage {
   const { user } = useAuth();
-  const { isPro } = useSubscription();
+  const { isPro, isInTrial } = useSubscription();
   const [used, setUsed] = useState(0);
   const [loading, setLoading] = useState(true);
-  const limit = isPro ? SCAN_LIMITS.pro : SCAN_LIMITS.free;
+  const isUnlimited = isPro || isInTrial;
+  const limit = isUnlimited ? SCAN_LIMITS.pro : SCAN_LIMITS.free;
 
   useEffect(() => {
     if (!user) {
@@ -55,5 +65,7 @@ export function useScanUsage(): ScanUsage {
     limit,
     remaining: Math.max(0, limit - used),
     loading,
+    resetDate: getResetDate(),
+    isUnlimited,
   };
 }
