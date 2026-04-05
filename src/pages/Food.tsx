@@ -627,7 +627,7 @@ export default function Food() {
             <div className="mb-5 p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
               <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
             </div>
-            <div>
+            <div className="p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
               <MacroRow
                 macros={["protein", "carbs", "fat"]}
                 dailyTotals={dailyTotals}
@@ -636,11 +636,13 @@ export default function Food() {
             </div>
           </>
         ) : (
-          <MacroRow
-            macros={["calories", "protein", "carbs", "fat"]}
-            dailyTotals={dailyTotals}
-            macroTargets={macroTargets}
-          />
+          <div className="p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+            <MacroRow
+              macros={["calories", "protein", "carbs", "fat"]}
+              dailyTotals={dailyTotals}
+              macroTargets={macroTargets}
+            />
+          </div>
         )}
       </motion.div>
 
