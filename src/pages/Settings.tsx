@@ -277,8 +277,7 @@ export default function Settings() {
         </motion.div>
       )}
 
-      {import.meta.env.DEV && (
-        <motion.div
+      <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="bg-orange-500/10 rounded-xl border border-orange-500/20 p-4"
@@ -310,7 +309,6 @@ export default function Settings() {
             </div>
           </button>
         </motion.div>
-      )}
 
       {/* 1. Profile */}
       <ProfileInfoSection
