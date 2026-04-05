@@ -87,3 +87,11 @@ export const macroPastels: Record<MacroKey, string> = {
   carbs: "rgba(219, 234, 254, 0.5)",
   fat: "rgba(254, 249, 195, 0.4)",
 };
+
+/** Over-target colour: amber for modest overshoot (≤15%), deep red for substantial. */
+export function getOverTargetColor(consumed: number, target: number): string {
+  if (target <= 0) return "#B91C1C";
+  const ratio = consumed / target;
+  if (ratio <= 1.15) return "#F59E0B"; // 0–15% over: amber
+  return "#B91C1C";                     // >15% over: deep red
+}

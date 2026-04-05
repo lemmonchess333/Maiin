@@ -1,10 +1,8 @@
 import { motion } from "framer-motion";
-import { THEME, macroPastels, type MacroKey } from "@/lib/theme";
+import { THEME, macroPastels, type MacroKey, getOverTargetColor } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
-
-const OVER_COLOR = "#B91C1C"; // red-700 — warning state for all macros
 
 interface MacroCardProps {
   macroKey: MacroKey;
@@ -50,9 +48,9 @@ export default function MacroCard({
   const isCal = macroKey === "calories";
   const color = THEME.macros[macroKey];
   const pastel = macroPastels[macroKey];
-  const displayColor = isOver ? OVER_COLOR : color;
+  const displayColor = isOver ? getOverTargetColor(consumed, target) : color;
 
-  // The number to animate to: remaining (or overshoot amount if over)
+  // Over: positive overshoot amount (no minus sign). Under: remaining.
   const displayValue = isOver ? consumed - target : remaining;
 
   return (
@@ -72,7 +70,6 @@ export default function MacroCard({
           <Icon className="w-5 h-5" />
         </div>
         <p className="text-2xl font-bold font-mono tabular-nums leading-tight" style={{ color: displayColor }}>
-          {isOver && "-"}
           <AnimatedNumber
             value={displayValue}
             className="text-2xl font-bold font-mono tabular-nums"
