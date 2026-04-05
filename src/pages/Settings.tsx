@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useFeatureFlag, useFeatureFlagToggle } from "@/config/featureFlags";
+import { haptic } from "@/lib/haptic";
 import {
   Zap,
   Crown,
@@ -204,6 +206,9 @@ export default function Settings() {
     updateProfile({ darkMode: next });
   };
 
+  const foodHeroRing = useFeatureFlag("foodHeroRing");
+  const toggleFlag = useFeatureFlagToggle();
+
   const toggleDevPro = () => {
     if (!import.meta.env.DEV) return;
     const newTier = profile?.subscriptionTier === "pro" ? "free" : "pro";
@@ -262,6 +267,41 @@ export default function Settings() {
               className={cn(
                 "w-12 h-7 rounded-full transition-all flex items-center",
                 profile.subscriptionTier === "pro"
+                  ? "bg-orange-500 justify-end"
+                  : "bg-muted justify-start"
+              )}
+            >
+              <div className="w-5 h-5 bg-white rounded-full mx-1 shadow-sm" />
+            </div>
+          </button>
+        </motion.div>
+      )}
+
+      {import.meta.env.DEV && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-orange-500/10 rounded-xl border border-orange-500/20 p-4"
+        >
+          <button
+            onClick={() => { toggleFlag("foodHeroRing"); haptic("light"); toast.success(foodHeroRing ? "Hero ring off" : "Hero ring on"); }}
+            className="w-full flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Zap className="w-4 h-4 text-orange-500" />
+              <div className="text-left">
+                <span className="text-sm font-medium text-foreground">
+                  Dev: Food Hero Ring
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  Only visible in development
+                </p>
+              </div>
+            </div>
+            <div
+              className={cn(
+                "w-12 h-7 rounded-full transition-all flex items-center",
+                foodHeroRing
                   ? "bg-orange-500 justify-end"
                   : "bg-muted justify-start"
               )}

@@ -243,6 +243,8 @@ function AppRoutes() {
   );
 }
 
+import { FeatureFlagProvider } from "@/config/FeatureFlagProvider";
+
 /* ================================
    APP
 ================================ */
@@ -253,10 +255,12 @@ function App() {
       <MotionConfig reducedMotion="user">
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <AuthProvider>
-            <NotificationBubbleProvider>
-              <ToastProvider />
-              <AppRoutes />
-            </NotificationBubbleProvider>
+            <FeatureFlagProvider>
+              <NotificationBubbleProvider>
+                <ToastProvider />
+                <AppRoutes />
+              </NotificationBubbleProvider>
+            </FeatureFlagProvider>
           </AuthProvider>
         </BrowserRouter>
       </MotionConfig>

@@ -21,7 +21,7 @@ interface MacroRowProps {
 
 export default function MacroRow({ macros, dailyTotals, macroTargets }: MacroRowProps) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className={macros.length === 3 ? "grid grid-cols-3 gap-2" : "grid grid-cols-4 gap-2"}>
       {macros.map((key, i) => {
         const config = macroConfig[key];
         return (
