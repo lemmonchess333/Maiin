@@ -22,7 +22,7 @@ interface MacroRowProps {
 export default function MacroRow({ macros, dailyTotals, macroTargets }: MacroRowProps) {
   return (
     <div className="grid grid-cols-4 gap-2">
-      {macros.map((key) => {
+      {macros.map((key, i) => {
         const config = macroConfig[key];
         return (
           <MacroCard
@@ -33,6 +33,7 @@ export default function MacroRow({ macros, dailyTotals, macroTargets }: MacroRow
             target={macroTargets[key]}
             label={config.label}
             suffix={config.suffix}
+            index={i}
           />
         );
       })}
