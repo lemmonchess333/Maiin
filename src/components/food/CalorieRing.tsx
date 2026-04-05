@@ -51,7 +51,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
 
   return (
     <div
-      className="relative w-48 h-48 aspect-square mx-auto drop-shadow-[0_12px_32px_rgb(239_68_68_/_0.18)]"
+      className="relative w-48 h-48 aspect-square mx-auto"
       role="img"
       aria-label={ariaLabel}
     >

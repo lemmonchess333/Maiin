@@ -624,7 +624,7 @@ export default function Food() {
       <motion.div variants={itemVariant} key={selectedDate}>
         {foodHeroRing ? (
           <>
-            <div className="mb-5">
+            <div className="mb-5 p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
               <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
             </div>
             <div>
