@@ -43,6 +43,8 @@ import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
 import MacroRow from "@/components/food/MacroRow";
+import CalorieRing from "@/components/food/CalorieRing";
+import { useFeatureFlag } from "@/config/featureFlags";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -123,6 +125,7 @@ export default function Food() {
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   const dailyTargets = useDailyTargets(selectedDateObj);
+  const foodHeroRing = useFeatureFlag("foodHeroRing");
 
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
@@ -608,11 +611,24 @@ export default function Food() {
 
       {/* Macro Tiles */}
       <motion.div variants={itemVariant} key={selectedDate}>
-        <MacroRow
-          macros={["calories", "protein", "carbs", "fat"]}
-          dailyTotals={dailyTotals}
-          macroTargets={macroTargets}
-        />
+        {foodHeroRing ? (
+          <>
+            <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
+            <div className="mt-3">
+              <MacroRow
+                macros={["protein", "carbs", "fat"]}
+                dailyTotals={dailyTotals}
+                macroTargets={macroTargets}
+              />
+            </div>
+          </>
+        ) : (
+          <MacroRow
+            macros={["calories", "protein", "carbs", "fat"]}
+            dailyTotals={dailyTotals}
+            macroTargets={macroTargets}
+          />
+        )}
       </motion.div>
 
       {/* Sticky macro summary — appears when tiles scroll out of view */}
