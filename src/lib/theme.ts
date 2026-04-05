@@ -78,3 +78,12 @@ export const THEME = {
     brandCta: 'linear-gradient(135deg, #7B72E9, #52A3BD)',
   },
 } as const;
+
+export type MacroKey = keyof typeof THEME.macros;
+
+export const macroPastels: Record<MacroKey, string> = {
+  calories: "rgba(254, 226, 226, 0.5)",
+  protein: "rgba(252, 231, 243, 0.5)",
+  carbs: "rgba(219, 234, 254, 0.5)",
+  fat: "rgba(254, 249, 195, 0.4)",
+};
