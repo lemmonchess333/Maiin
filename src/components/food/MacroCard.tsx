@@ -62,7 +62,6 @@ export default function MacroCard({
       className="min-w-0 rounded-xl p-3 relative overflow-hidden text-center"
       style={{
         backgroundColor: pastel,
-        border: "1px solid rgba(255, 255, 255, 0.5)",
       }}
     >
       <div className="relative z-10">
