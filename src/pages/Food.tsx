@@ -28,9 +28,6 @@ import {
   Flame,
   Trash2,
   CalendarDays,
-  Beef,
-  Wheat,
-  Cookie,
   Footprints,
   Plus,
   Mic,
@@ -44,8 +41,8 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
-import { tint } from "@/lib/colorUtils";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
+import MacroRow from "@/components/food/MacroRow";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -199,24 +196,6 @@ export default function Food() {
     haptic(15);
     toast.success(`Copied ${items.length} item${items.length > 1 ? "s" : ""} from yesterday`);
   };
-
-  function glowStyle(current: number, target: number, color: string): React.CSSProperties {
-    const ratio = Math.min(1, current / (target || 1));
-    const spread = Math.round(ratio * 85);
-    const opacity = Math.round(ratio * 0.18 * 255).toString(16).padStart(2, "0");
-    return {
-      background: `radial-gradient(circle at 50% 28%, ${color}${opacity} 0%, transparent ${spread}%)`,
-    };
-  }
-
-
-  const macroColors = {
-    calories: THEME.macros.calories,
-    protein: THEME.macros.protein,
-    carbs: THEME.macros.carbs,
-    fat: THEME.macros.fat,
-  };
-
 
   const macroTargets = {
     calories: dailyTargets.finalTarget,
@@ -628,103 +607,12 @@ export default function Food() {
       </AnimatePresence>
 
       {/* Macro Tiles */}
-      <motion.div
-        variants={itemVariant}
-        className="rounded-2xl p-4"
-        style={{
-          background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)`,
-        }}
-      >
-        <div className="grid grid-cols-4 gap-2 text-center">
-          {(
-            [
-              {
-                key: "calories",
-                icon: Flame,
-                value: dailyTotals.calories,
-                target: macroTargets.calories,
-                color: macroColors.calories,
-                label: "kcal",
-                suffix: "",
-              },
-              {
-                key: "protein",
-                icon: Beef,
-                value: dailyTotals.protein,
-                target: macroTargets.protein,
-                color: macroColors.protein,
-                label: "protein",
-                suffix: "g",
-              },
-              {
-                key: "carbs",
-                icon: Wheat,
-                value: dailyTotals.carbs,
-                target: macroTargets.carbs,
-                color: macroColors.carbs,
-                label: "carbs",
-                suffix: "g",
-              },
-              {
-                key: "fat",
-                icon: Cookie,
-                value: dailyTotals.fat,
-                target: macroTargets.fat,
-                color: macroColors.fat,
-                label: "fat",
-                suffix: "g",
-              },
-            ] as const
-          ).map(({ key, icon: Icon, value, target, color, label, suffix }) => {
-            const consumed = safeNum(value);
-            const remaining = Math.max(0, target - consumed);
-            const isOver = consumed > target && target > 0;
-            const pct = target > 0 ? consumed / target : 0;
-            const budgetColor = isOver ? "#EF4444" : pct >= 0.75 ? "#D9884E" : color;
-            const isCal = key === "calories";
-            return (
-            <div
-              key={key}
-              className="min-w-0 rounded-xl p-3 shadow-sm relative overflow-hidden"
-              style={{ backgroundColor: tint(color, 0.06), color: budgetColor }}
-            >
-              <div
-                className="absolute inset-0 pointer-events-none transition-opacity duration-700"
-                style={glowStyle(consumed, target, color)}
-              />
-              <div className="relative z-10">
-                <Icon className="w-5 h-5 mx-auto mb-1.5" />
-                <p className="text-base font-bold font-mono tabular-nums leading-tight" style={isOver ? { color: "#EF4444" } : undefined}>
-                  {isOver
-                    ? `-${isCal ? formatCalories(consumed - target) : formatMacro(consumed - target)}${isCal ? "" : suffix}`
-                    : `${isCal ? formatCalories(remaining) : formatMacro(remaining)}${isCal ? "" : suffix}`
-                  }
-                </p>
-                <p className="text-[9px] text-muted-foreground font-mono tabular-nums">
-                  {isCal ? `${CALORIE_UNIT} ` : ""}{isOver ? "over" : "left"}
-                </p>
-                <p className="text-[9px] text-muted-foreground font-mono tabular-nums mt-0.5">
-                  {isCal ? formatCalories(consumed) : `${formatMacro(consumed)}${suffix}`} eaten
-                </p>
-                <p className="text-xs mt-1">{label}</p>
-                <div
-                  className="mt-2 h-1 rounded-full overflow-hidden"
-                  style={{ backgroundColor: `${color}15` }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.min(100, pct * 100)}%`,
-                      backgroundColor: isOver ? "#EF4444" : budgetColor,
-                      opacity: 0.6,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            );
-          })}
-        </div>
+      <motion.div variants={itemVariant} key={selectedDate}>
+        <MacroRow
+          macros={["calories", "protein", "carbs", "fat"]}
+          dailyTotals={dailyTotals}
+          macroTargets={macroTargets}
+        />
       </motion.div>
 
       {/* Sticky macro summary — appears when tiles scroll out of view */}
