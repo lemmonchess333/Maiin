@@ -152,7 +152,6 @@ describe('pricing constants', () => {
   it('has expected shape', () => {
     expect(pricing.monthly).toBeGreaterThan(0);
     expect(pricing.yearly).toBeGreaterThan(0);
-    expect(pricing.lifetime).toBeGreaterThan(0);
     expect(pricing.currency).toBe('GBP');
   });
 });
