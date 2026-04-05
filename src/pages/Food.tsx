@@ -46,6 +46,8 @@ import MacroRow from "@/components/food/MacroRow";
 import CalorieRing from "@/components/food/CalorieRing";
 import { useFeatureFlag } from "@/config/featureFlags";
 import { useScanUsage } from "@/hooks/useScanUsage";
+import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
+import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -128,6 +130,13 @@ export default function Food() {
   const dailyTargets = useDailyTargets(selectedDateObj);
   const foodHeroRing = useFeatureFlag("foodHeroRing");
   const scanUsage = useScanUsage();
+  const handleUpgrade = () => { window.location.href = `${import.meta.env.BASE_URL}upgrade`; };
+  const scanOverrides = useScanButtonOverrides(
+    scanUsage.remaining,
+    scanUsage.isUnlimited,
+    handleUpgrade,
+    () => { haptic(); setScanOpen(!scanOpen); },
+  );
 
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
@@ -615,8 +624,10 @@ export default function Food() {
       <motion.div variants={itemVariant} key={selectedDate}>
         {foodHeroRing ? (
           <>
-            <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
-            <div className="mt-3">
+            <div className="mb-5">
+              <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
+            </div>
+            <div>
               <MacroRow
                 macros={["protein", "carbs", "fat"]}
                 dailyTotals={dailyTotals}
@@ -715,26 +726,26 @@ export default function Food() {
               </div>
             )}
           </div>
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => { haptic(); setScanOpen(!scanOpen); }}
-            aria-label="Scan food"
-            className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-white shadow-sm active:scale-95 transition-transform mt-[1px]"
-            style={{ background: "linear-gradient(135deg, #f07368, #f09060)" }}>
-            <Camera className="w-5 h-5" />
-          </motion.button>
+          <div className="relative shrink-0">
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => { haptic(); scanOverrides.onClick(); }}
+              aria-label={scanUsage.isUnlimited || scanUsage.remaining > 0 ? "Scan food" : "Upgrade to scan food"}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-white shadow-sm active:scale-95 transition-transform mt-[1px]"
+              style={scanOverrides.style}>
+              <Camera className="w-5 h-5" />
+            </motion.button>
+            {scanOverrides.icon}
+          </div>
         </div>
       </motion.div>
-      {/* Scan usage indicator — show for free users */}
-      {!isPro && !scanUsage.loading && (
-        <p className="text-[11px] text-center" style={{ color: scanUsage.remaining <= 2 ? "#EF4444" : THEME.text.muted }}>
-          {scanUsage.remaining > 0
-            ? `${scanUsage.remaining} of ${scanUsage.limit} AI scans left this month`
-            : "Monthly scan limit reached"}
-          {scanUsage.remaining === 0 && (
-            <a href={`${import.meta.env.BASE_URL}upgrade`} className="ml-1 font-medium" style={{ color: THEME.brand }}>
-              Upgrade
-            </a>
-          )}
-        </p>
+      {/* Scan quota indicator — free users only, 3-stage escalation */}
+      {!scanUsage.isUnlimited && !scanUsage.loading && (
+        <div className="mt-2">
+          <ScanQuotaIndicator
+            remaining={scanUsage.remaining}
+            resetDate={scanUsage.resetDate}
+            onUpgrade={handleUpgrade}
+          />
+        </div>
       )}
 
       {scanOpen && (

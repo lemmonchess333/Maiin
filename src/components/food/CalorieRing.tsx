@@ -39,7 +39,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
 
   return (
     <div
-      className="relative w-40 h-40 aspect-square mx-auto"
+      className="relative w-48 h-48 aspect-square mx-auto"
       role="img"
       aria-label={ariaLabel}
     >
@@ -89,9 +89,15 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
             <p className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: numberColor, opacity: 0.7 }}>
               {CALORIE_UNIT} {isOver ? "over" : "left"}
             </p>
-            <p className="text-[10px] mt-1" style={{ color: numberColor, opacity: 0.4 }}>
-              <AnimatedNumber value={consumed} /> {CALORIE_UNIT} eaten
-            </p>
+            {isOver ? (
+              <p className="text-[10px] mt-1" style={{ color: numberColor, opacity: 0.4 }}>
+                <AnimatedNumber value={consumed} /> {CALORIE_UNIT} eaten
+              </p>
+            ) : (
+              <p className="text-[10px] mt-1" style={{ color: numberColor, opacity: 0.4 }}>
+                Goal {target.toLocaleString()}
+              </p>
+            )}
           </>
         ) : (
           <span className="text-4xl font-black text-gray-300">&mdash;</span>
