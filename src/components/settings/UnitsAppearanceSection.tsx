@@ -24,7 +24,7 @@ export default function UnitsAppearanceSection({
       <div className="space-y-2">
         <button
           onClick={() => toggleUnit("preferredWeightUnit", profile.preferredWeightUnit)}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
             <Weight className="w-5 h-5" />
@@ -37,7 +37,7 @@ export default function UnitsAppearanceSection({
 
         <button
           onClick={() => toggleUnit("preferredHeightUnit", profile.preferredHeightUnit)}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
             <Ruler className="w-5 h-5" />
@@ -50,7 +50,7 @@ export default function UnitsAppearanceSection({
 
         <button
           onClick={toggleDark}
-          className="w-full flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
             {profile.darkMode ? (

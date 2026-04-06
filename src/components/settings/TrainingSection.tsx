@@ -92,7 +92,7 @@ export default function TrainingSection({
           await updateProfile({ onboardingComplete: false });
           navigate("/onboarding", { state: { retake: true } });
         }}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
       >
         <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         <div className="flex-1 text-left">

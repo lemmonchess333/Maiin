@@ -230,7 +230,7 @@ export default function PrivacySection({
               toast.error("Could not get your location");
             }
           }}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium"
         >
           <Plus className="w-3.5 h-3.5" /> Add Current Location
         </button>

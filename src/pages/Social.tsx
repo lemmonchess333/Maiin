@@ -187,7 +187,7 @@ export default function Social() {
             className="overflow-hidden"
           >
             <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-purple-200 dark:border-purple-900/40"
-              style={{ background: 'rgba(124, 110, 246, 0.08)' }}>
+              style={{ background: `${THEME.brand}14` }}>
               <button onClick={() => setTab('find')} className="flex items-center gap-3 flex-1 text-left">
                 <Users className="w-5 h-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -396,7 +396,7 @@ export default function Social() {
             <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
               className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
-              style={{ borderLeft: '3px solid rgba(124, 110, 246, 0.5)' }}>
+              style={{ borderLeft: `3px solid ${THEME.brand}80` }}>
               Sync Contacts
             </button>
           </div>
