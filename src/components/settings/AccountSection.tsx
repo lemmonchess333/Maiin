@@ -66,7 +66,7 @@ export default function AccountSection({
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={signOut}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
         >
           <LogOut className="w-4 h-4" /> Sign Out
         </motion.button>
@@ -74,7 +74,7 @@ export default function AccountSection({
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
         <button
           onClick={() => { haptic("error"); setShowDeleteModal(true); }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="w-4 h-4" /> Delete Account
         </button>

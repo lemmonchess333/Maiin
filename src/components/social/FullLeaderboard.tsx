@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Zap } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -91,9 +91,13 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         )}
 
         {!loading && entries.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-8">
-            No activity this week. Follow athletes and start training!
-          </p>
+          <div className="text-center py-10 space-y-2">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{ background: 'rgba(123,114,233,0.12)' }}>
+              <Zap size={24} style={{ color: '#7B72E9' }} />
+            </div>
+            <p className="text-sm font-medium text-foreground">No activity this week</p>
+            <p className="text-xs text-muted-foreground">Follow athletes and start training to see rankings</p>
+          </div>
         )}
 
         {!loading && entries.map(entry => (

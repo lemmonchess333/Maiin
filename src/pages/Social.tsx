@@ -165,13 +165,16 @@ export default function Social() {
     }
   };
 
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
   return (
-    <div className="space-y-4">
-      <header>
+    <motion.div className="space-y-4" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      <motion.header variants={itemVariant}>
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-extrabold">Social</h1>
         </div>
-      </header>
+      </motion.header>
 
       {/* Crew banner if no crew — dismissible */}
       <AnimatePresence>
@@ -184,7 +187,7 @@ export default function Social() {
             className="overflow-hidden"
           >
             <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-purple-200 dark:border-purple-900/40"
-              style={{ background: 'rgba(124, 110, 246, 0.08)' }}>
+              style={{ background: `${THEME.brand}14` }}>
               <button onClick={() => setTab('find')} className="flex items-center gap-3 flex-1 text-left">
                 <Users className="w-5 h-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -393,7 +396,7 @@ export default function Social() {
             <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
             <button onClick={() => setShowContactModal(true)}
               className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
-              style={{ borderLeft: '3px solid rgba(124, 110, 246, 0.5)' }}>
+              style={{ borderLeft: `3px solid ${THEME.brand}80` }}>
               Sync Contacts
             </button>
           </div>
@@ -558,6 +561,6 @@ export default function Social() {
         </section>
       )}
       </>)}
-    </div>
+    </motion.div>
   );
 }

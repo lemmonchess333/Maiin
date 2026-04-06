@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -9,7 +10,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
-import { Footprints, Trophy } from "lucide-react";
+import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
@@ -288,13 +289,18 @@ export default function History() {
     return { avgCalories, avgProtein, adherence };
   }, [meals, rangeDays]);
 
-  return (
-    <div className="space-y-4 pt-2">
-      <header>
-        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
-      </header>
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
-      <FilterPills filter={filter} setFilter={setFilter} />
+  return (
+    <motion.div className="space-y-4 pt-2" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      <motion.header variants={itemVariant}>
+        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
+      </motion.header>
+
+      <motion.div variants={itemVariant}>
+        <FilterPills filter={filter} setFilter={setFilter} />
+      </motion.div>
 
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
@@ -485,9 +491,12 @@ export default function History() {
                     })}
                   </div>
                 ) : (
-                  <div className="px-4 py-6 text-center">
-                    <p className="text-xs text-muted-foreground">No lifts logged this week</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">Keep pushing — your best lifts will show here</p>
+                  <div className="px-4 py-8 text-center space-y-2">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto" style={{ background: `${THEME.lifting}15` }}>
+                      <Trophy size={20} style={{ color: THEME.lifting }} />
+                    </div>
+                    <p className="text-xs font-medium text-foreground">No lifts logged this week</p>
+                    <p className="text-xs text-muted-foreground">Keep pushing — your best lifts will show here</p>
                   </div>
                 )}
               </div>
@@ -539,10 +548,13 @@ export default function History() {
               </SectionErrorBoundary>
 
               {nutrition.avgCalories === 0 && (
-                <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-1">
-                  <p className="text-sm text-muted-foreground">Log meals to see your nutrition trends here.</p>
-                  <Link to="/food" className="text-sm font-medium text-primary hover:underline">
-                    Log a meal →
+                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.success}14` }}>
+                  <UtensilsCrossed className="w-5 h-5 shrink-0" style={{ color: THEME.success }} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Log meals to see your nutrition trends here</p>
+                  </div>
+                  <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: `linear-gradient(135deg, ${THEME.success}, ${THEME.teal})` }}>
+                    Log Meal
                   </Link>
                 </div>
               )}
@@ -553,6 +565,6 @@ export default function History() {
         </>
       )}
       </Suspense>
-    </div>
+    </motion.div>
   );
 }

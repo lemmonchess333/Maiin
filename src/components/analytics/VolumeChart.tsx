@@ -14,8 +14,11 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
       </div>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-[140px]">
-          <p className="text-sm text-muted-foreground">Complete workouts to see your volume trend</p>
+        <div className="flex flex-col items-center justify-center h-[140px] gap-2">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${accentColor}15` }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="12" rx="1"/><rect x="17" y="4" width="4" height="16" rx="1"/></svg>
+          </div>
+          <p className="text-xs text-muted-foreground">Complete workouts to see your volume trend</p>
         </div>
       ) : (
       <ResponsiveContainer width="100%" height={140}>

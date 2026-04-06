@@ -220,7 +220,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   );
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+    <div className="bg-card rounded-2xl overflow-hidden shadow-sm">
       {/* Hybrid card: map on top (shorter), then divider, then workout content */}
       {isHybrid ? (
         <>

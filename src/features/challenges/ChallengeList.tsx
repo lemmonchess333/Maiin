@@ -109,9 +109,10 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
           )}
 
           {!rankingsLoading && weeklyRankings.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              No workouts logged this week yet. Be the first!
-            </p>
+            <div className="text-center py-6 space-y-1.5">
+              <p className="text-xs font-medium text-foreground">No workouts logged this week yet</p>
+              <p className="text-xs text-muted-foreground">Be the first to get on the board!</p>
+            </div>
           )}
 
           {!rankingsLoading && weeklyRankings.map(entry => {

@@ -218,10 +218,13 @@ export default function Settings() {
 
   if (!profile) return null;
 
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
   return (
-    <div className="space-y-4">
+    <motion.div className="space-y-4" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}>
       {/* Header with avatar */}
-      <header>
+      <motion.header variants={itemVariant}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SettingsAvatar profile={profile} />
@@ -239,7 +242,7 @@ export default function Settings() {
             </button>
           )}
         </div>
-      </header>
+      </motion.header>
 
       {/* Dev: Force Pro toggle — only in dev mode */}
       {import.meta.env.DEV && (
@@ -485,6 +488,6 @@ export default function Settings() {
           </div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
