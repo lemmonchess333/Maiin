@@ -3,10 +3,22 @@ import { cn } from "@/lib/utils";
 import { Home, BarChart3, Dumbbell, Users, WifiOff, Check, UtensilsCrossed } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
+import { getQueueLength } from "@/lib/offlineQueue";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore, useCallback } from "react";
+
+/** Subscribe to offline queue length — polls every 3s while offline */
+function useQueueCount(isOnline: boolean): number {
+  const subscribe = useCallback((cb: () => void) => {
+    if (isOnline) return () => {};
+    const id = setInterval(cb, 3000);
+    return () => clearInterval(id);
+  }, [isOnline]);
+  const getSnapshot = useCallback(() => isOnline ? 0 : getQueueLength(), [isOnline]);
+  return useSyncExternalStore(subscribe, getSnapshot);
+}
 
 const tabs: { to: string; icon: typeof Home | null; label: string; elevated?: boolean }[] = [
   { to: "/", icon: Home, label: "Home" },
@@ -22,6 +34,7 @@ export default function Layout() {
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
+  const queueCount = useQueueCount(isOnline);
 
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
@@ -65,7 +78,12 @@ export default function Layout() {
           >
             <div className="flex items-center justify-center gap-2 py-2 px-4 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-medium">
               <WifiOff className="w-3.5 h-3.5 shrink-0" />
-              <span>You're offline — changes will sync when reconnected</span>
+              <span>
+                You're offline
+                {queueCount > 0
+                  ? ` — ${queueCount} change${queueCount > 1 ? "s" : ""} saved locally`
+                  : " — changes will sync when reconnected"}
+              </span>
             </div>
           </motion.div>
         )}
