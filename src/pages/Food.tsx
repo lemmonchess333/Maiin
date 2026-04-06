@@ -157,15 +157,14 @@ export default function Food() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getMealCategory = (item: any): string => {
-    // Check explicit meal field first (used by copied items)
+    // Check explicit meal field first (used by copied items and meal targeting)
     if (item?.meal && ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)) return item.meal;
-    // Fall back to time-based derivation
+    // Fall back to time-based derivation (snacks is never auto-assigned — use + button to target)
     const createdAt = item?.createdAt || item;
-    if (!createdAt || !createdAt.toDate) return "snacks";
+    if (!createdAt || !createdAt.toDate) return "lunch";
     const hour = createdAt.toDate().getHours();
     if (hour < 11) return "breakfast";
-    if (hour < 15) return "lunch";
-    if (hour < 17) return "snacks";
+    if (hour < 17) return "lunch";
     return "dinner";
   };
 
