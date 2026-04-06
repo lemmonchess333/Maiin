@@ -62,9 +62,12 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
         {loading && <p className="text-xs text-muted-foreground text-center py-3 animate-pulse">Loading...</p>}
 
         {!loading && entries.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-4">
-            Follow athletes to see the leaderboard
-          </p>
+          <div className="text-center py-6 space-y-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto" style={{ background: `${THEME.brand}15` }}>
+              <Zap size={20} style={{ color: THEME.brand }} />
+            </div>
+            <p className="text-xs text-muted-foreground">Follow athletes to see the leaderboard</p>
+          </div>
         )}
 
         {!loading && entries.length > 0 && entries.length < 3 && (

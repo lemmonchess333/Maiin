@@ -280,8 +280,8 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
               {filteredExercises.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 px-8">
                   <Search className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                  <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>No exercises found</p>
-                  <p style={{ fontSize: 14, color: "#AEAEB2", marginTop: 4, textAlign: "center" }}>Try a different search term or browse by muscle group</p>
+                  <p className="text-base font-semibold text-foreground">No exercises found</p>
+                  <p className="text-sm text-muted-foreground mt-1 text-center">Try a different search term or browse by muscle group</p>
                 </div>
               )}
             </div>

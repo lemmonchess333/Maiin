@@ -104,7 +104,10 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
           {/* Comment list */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {comments.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-6">No comments yet. Be the first!</p>
+              <div className="text-center py-8 space-y-1.5">
+                <p className="text-sm font-medium text-foreground">No comments yet</p>
+                <p className="text-xs text-muted-foreground">Be the first to leave a comment</p>
+              </div>
             )}
 
             <AnimatePresence>

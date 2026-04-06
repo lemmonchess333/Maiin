@@ -102,7 +102,10 @@ export default function ShoesManager() {
       )}
 
       {activeShoes.length === 0 && !showAdd && (
-        <p className="text-xs text-muted-foreground py-2">No shoes added yet — track your mileage to know when to replace them.</p>
+        <div className="py-4 text-center space-y-1">
+          <p className="text-xs font-medium text-foreground">No shoes added yet</p>
+          <p className="text-xs text-muted-foreground">Track your mileage to know when to replace them</p>
+        </div>
       )}
 
       {activeShoes.map((shoe) => (

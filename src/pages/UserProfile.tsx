@@ -9,8 +9,9 @@ import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
 import { Skeleton } from '../components/LoadingSkeleton';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
-import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft } from 'lucide-react';
+import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
+import { THEME } from '../lib/theme';
 import ReportModal from '../components/social/ReportModal';
 
 export default function UserProfile() {
@@ -237,7 +238,14 @@ export default function UserProfile() {
           </div>
         )}
         {activities.length === 0 && !isOwnProfile && !statsLoading && (
-          <p className="text-xs text-muted-foreground text-center py-8">No public activities yet</p>
+          <div className="text-center py-10 px-6 space-y-3">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto"
+              style={{ background: `${THEME.brand}15`, border: `1px solid ${THEME.brand}25` }}>
+              <Dumbbell size={24} style={{ color: THEME.brand }} />
+            </div>
+            <p className="text-sm font-medium text-foreground">No public activities yet</p>
+            <p className="text-xs text-muted-foreground">When they share a workout or run, it'll appear here</p>
+          </div>
         )}
       </div>
 
