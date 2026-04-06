@@ -984,7 +984,7 @@ export default function Food() {
               {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both" } as Record<string, string>)[dailyTargets.dayType]}
             </p>
           )}
-          {isToday && dailyTargets.dayType === "rest" && !isPro && (
+          {isToday && dailyTargets.dayType === "rest" && !isPro && !localStorage.getItem("tropos_ever_scanned") && (
             <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
               <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
@@ -1008,7 +1008,7 @@ export default function Food() {
       )}
 
       {/* Pro upsell — populated state only */}
-      {!isPro && todaysMeals.length > 0 && (
+      {!isPro && todaysMeals.length > 0 && !localStorage.getItem("tropos_ever_scanned") && (
         <div className="flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl" style={{ backgroundColor: "rgba(124,107,240,0.06)" }}>
           <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
           <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
