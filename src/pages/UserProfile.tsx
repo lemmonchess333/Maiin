@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { THEME } from '../lib/theme';
 import ReportModal from '../components/social/ReportModal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
@@ -24,6 +25,7 @@ export default function UserProfile() {
   const [followingCount, setFollowingCount] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [activities, setActivities] = useState<{ id: string; distance?: number; authorId?: string; authorName?: string; type?: string; avgPace?: string | number; exerciseCount?: number; prsHit?: number; createdAt?: unknown; [key: string]: unknown }[]>([]);
   const [stats, setStats] = useState<{ totalKm: number; totalSessions: number } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
@@ -83,7 +85,6 @@ export default function UserProfile() {
 
   const handleBlock = async () => {
     if (!user || !uid || !profile) return;
-    if (!window.confirm(`Block ${profile.displayName || 'this user'}? They won't be able to see your activity and you won't see theirs.`)) return;
     try {
       await blockUser(user.uid, uid);
       toast.success(`Blocked ${profile.displayName || 'user'}`);
@@ -159,7 +160,7 @@ export default function UserProfile() {
                       Report user
                     </button>
                     <button
-                      onClick={() => { setShowMenu(false); handleBlock(); }}
+                      onClick={() => { setShowMenu(false); setShowBlockConfirm(true); }}
                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <Ban className="w-4 h-4" />
@@ -258,6 +259,16 @@ export default function UserProfile() {
       {showReport && uid && (
         <ReportModal targetType="user" targetId={uid} onClose={() => setShowReport(false)} />
       )}
+
+      <ConfirmDialog
+        open={showBlockConfirm}
+        title={`Block ${profile.displayName || 'this user'}?`}
+        description="They won't be able to see your activity and you won't see theirs."
+        confirmLabel="Block"
+        destructive
+        onConfirm={() => { setShowBlockConfirm(false); handleBlock(); }}
+        onCancel={() => setShowBlockConfirm(false)}
+      />
     </motion.div>
   );
 }

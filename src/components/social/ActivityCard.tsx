@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth';
 import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
 import CommentSheet from './CommentSheet';
 import ReportModal from './ReportModal';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
 import { haptic } from '../../lib/haptic';
@@ -49,6 +50,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const activity = feedItem.activity;
 
   const activityTitle = (activity?.activityTitle || activity?.workoutName || activity?.runName) as string | undefined;
@@ -437,6 +439,22 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           onClose={() => setShowReport(false)}
         />
       )}
+
+      {/* Block Confirm */}
+      <ConfirmDialog
+        open={showBlockConfirm}
+        title="Block this user?"
+        description={`They won't be able to see your activities and you won't see theirs.`}
+        confirmLabel="Block"
+        destructive
+        onConfirm={async () => {
+          setShowBlockConfirm(false);
+          if (!user || !activity?.authorId) return;
+          await blockUser(user.uid, activity.authorId as string);
+          toast.success(`Blocked ${feedItem.authorName}`);
+        }}
+        onCancel={() => setShowBlockConfirm(false)}
+      />
     </div>
   );
 
@@ -469,12 +487,9 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               </button>
               <button
                 role="menuitem"
-                onClick={async () => {
+                onClick={() => {
                   setShowMenu(false);
-                  if (!user || !activity?.authorId) return;
-                  if (!window.confirm("Block this user? They won't be able to see your activities.")) return;
-                  await blockUser(user.uid, activity.authorId as string);
-                  toast.success(`Blocked ${feedItem.authorName}`);
+                  setShowBlockConfirm(true);
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
               >

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -21,6 +21,7 @@ import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
 import { WifiOff, CheckCircle, Trophy, ChevronLeft } from 'lucide-react';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 interface RunData {
   points: GPSPoint[];
@@ -45,6 +46,8 @@ export default function RunSummary() {
   const [shareToFeed, setShareToFeed] = useState(profile?.autoPostRuns !== false);
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const handleDiscard = useCallback(() => setShowDiscardConfirm(true), []);
 
   // Fetch past runs to compute pace trend badge
   useEffect(() => {
@@ -159,10 +162,6 @@ export default function RunSummary() {
     a.download = `tropos-run-${Date.now()}.gpx`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleDiscard = () => {
-    if (confirm('Discard this run? This cannot be undone.')) navigate('/');
   };
 
   const formatTime = (secs: number): string => {
@@ -408,6 +407,16 @@ export default function RunSummary() {
           }}
         />
       </div>
+
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title="Discard this run?"
+        description="This cannot be undone."
+        confirmLabel="Discard"
+        destructive
+        onConfirm={() => { setShowDiscardConfirm(false); navigate('/'); }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </div>
   );
 }

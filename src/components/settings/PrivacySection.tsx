@@ -14,6 +14,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { UserProfile } from "@/lib/auth";
 import type { PrivacyZone } from "@/lib/privacyZones";
 import type { User } from "firebase/auth";
@@ -63,11 +64,13 @@ export default function PrivacySection({
   leaveCrew,
 }: PrivacySectionProps) {
   const [showCrewPicker, setShowCrewPicker] = useState(false);
+  const [showLeaveCrewConfirm, setShowLeaveCrewConfirm] = useState(false);
   const [blockedUsersList, setBlockedUsersList] = useState<{ uid: string; displayName: string }[]>([]);
   const [blockedUsersLoading, setBlockedUsersLoading] = useState(false);
   const [blockedUsersLoaded, setBlockedUsersLoaded] = useState(false);
 
   return (
+    <>
     <AccordionSection icon={<Users className="w-5 h-5 text-primary" />} title="Social & Privacy" subtitle="Crew, visibility, auto-post">
       {/* Crew switcher */}
       <div className="p-4 rounded-lg bg-muted space-y-3">
@@ -106,7 +109,7 @@ export default function PrivacySection({
             ))}
             {currentCrew && (
               <button
-                onClick={async () => { if (!window.confirm('Leave this crew? You can rejoin later.')) return; await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
+                onClick={() => setShowLeaveCrewConfirm(true)}
                 className="w-full text-center text-xs text-muted-foreground hover:text-red-400 py-1"
               >
                 Leave crew
@@ -298,5 +301,16 @@ export default function PrivacySection({
         )}
       </div>
     </AccordionSection>
+
+    <ConfirmDialog
+      open={showLeaveCrewConfirm}
+      title="Leave crew?"
+      description="You can rejoin this crew later."
+      confirmLabel="Leave"
+      destructive
+      onConfirm={async () => { setShowLeaveCrewConfirm(false); await leaveCrew(); setShowCrewPicker(false); toast.success('Left crew'); }}
+      onCancel={() => setShowLeaveCrewConfirm(false)}
+    />
+    </>
   );
 }
