@@ -7,6 +7,7 @@ import { functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { THEME } from "@/lib/theme";
+import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import type { ProgramTemplate, TemplateExercise } from "@/features/program/templates";
@@ -412,7 +413,7 @@ export default function Onboarding() {
         return;
       }
     } catch (err) {
-      console.error("Onboarding save failed:", err);
+      logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code;
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {

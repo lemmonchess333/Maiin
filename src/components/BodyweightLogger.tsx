@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { 
   Scale, 
   Check, 
@@ -62,13 +63,13 @@ export default function BodyweightLogger() {
           setRecentLogs(logs);
         },
         (error) => {
-          console.error("BodyweightLogger snapshot error:", error);
+          logger.error("BodyweightLogger snapshot error:", error);
         }
       );
 
       return unsubscribe;
     } catch (error) {
-      console.error("BodyweightLogger setup error:", error);
+      logger.error("BodyweightLogger setup error:", error);
     }
   }, [user]);
 
@@ -114,7 +115,7 @@ export default function BodyweightLogger() {
 
       setTimeout(() => setSaved(false), 1800);
     } catch (error) {
-      console.error("Error saving weight:", error);
+      logger.error("Error saving weight:", error);
       const { toast } = await import("sonner");
       toast.error("Failed to save weight");
     }

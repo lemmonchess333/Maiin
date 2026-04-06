@@ -96,7 +96,7 @@ export default function ProgressPhotos() {
           const objectUrl = URL.createObjectURL(blob);
           setDecryptedUrls(prev => ({ ...prev, [photo.id]: objectUrl }));
         } catch (err) {
-          console.error(`Auto-decrypt failed for photo ${photo.id}:`, err);
+          logger.error(`Auto-decrypt failed for photo ${photo.id}:`, err);
         } finally {
           setDecrypting(prev => {
             const next = new Set(prev);

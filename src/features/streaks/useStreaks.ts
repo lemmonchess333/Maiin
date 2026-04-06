@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { format } from "date-fns";
+import { logger } from "@/lib/logger";
 
 export interface StreakData {
   currentStreak: number;
@@ -85,7 +86,7 @@ export function useStreaks() {
         badges: streakData.badges,
       }, { merge: true });
     } catch (error) {
-      console.error('[Streaks] Save failed:', error);
+      logger.error('[Streaks] Save failed:', error);
       toast.error('Failed to save streak');
     }
   }, [user, streakData]);
@@ -106,7 +107,7 @@ export function useStreaks() {
       await setDoc(ref, { badges: updatedBadges }, { merge: true });
       setNewBadge({ ...badge, earnedAt: now });
     } catch (error) {
-      console.error('[Streaks] Badge save failed:', error);
+      logger.error('[Streaks] Badge save failed:', error);
       toast.error('Failed to save badge');
     }
   }, [user, streakData.badges]);

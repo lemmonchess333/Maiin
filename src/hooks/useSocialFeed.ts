@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getFeed, fetchActivitiesByIds, batchGetKudos } from '../lib/socialApi';
 import { useAuth } from '../lib/auth';
 import type { DocumentSnapshot } from 'firebase/firestore';
+import { logger } from '../lib/logger';
 
 export interface ActivityData {
   authorId?: string;
@@ -116,7 +117,7 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
       lastDocRef.current = result.lastDoc;
       setHasMore(feedItems.length >= 20);
     } catch (e) {
-      console.error('Feed error:', e);
+      logger.error('Feed error:', e);
       setError(e instanceof Error ? e.message : 'Failed to load feed');
     }
     setLoading(false);

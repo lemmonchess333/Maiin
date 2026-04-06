@@ -140,7 +140,7 @@ export function useProgram() {
     };
 
     loadProgram().catch((err) => {
-      console.error("Failed to load program:", err);
+      logger.error("Failed to load program:", err);
       setLoading(false);
     });
   }, [user, profile]);
@@ -158,7 +158,7 @@ export function useProgram() {
         await setDoc(ref, clean);
         setProgramState(state);
       } catch (error) {
-        console.error('[Program] Save failed:', error);
+        logger.error('[Program] Save failed:', error);
         toast.error('Failed to save programme changes');
         throw error;
       }

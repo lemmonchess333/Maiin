@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 export function useBodyweightTrend() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export function useBodyweightTrend() {
           setMonthlyTrend(calculateWeightTrend(logs, 30));
         }
       } catch (error) {
-        console.error("useBodyweightTrend error:", error);
+        logger.error("useBodyweightTrend error:", error);
       }
     })();
   }, [user]);

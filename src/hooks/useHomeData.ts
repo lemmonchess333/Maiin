@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { format } from "date-fns";
 import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 interface WeightInfo {
   weight: string;
@@ -81,7 +82,7 @@ export function useHomeData(
           prot += dd.totalProtein || dd.protein || 0;
         });
       } else {
-        console.error("[useHomeData] meals fetch failed:", results[0].reason);
+        logger.error("[useHomeData] meals fetch failed:", results[0].reason);
         errors.push("Failed to load meals");
       }
 
@@ -93,7 +94,7 @@ export function useHomeData(
           rCals += Math.round(weightKg * distKm * 1.036);
         });
       } else {
-        console.error("[useHomeData] runs fetch failed:", results[1].reason);
+        logger.error("[useHomeData] runs fetch failed:", results[1].reason);
         errors.push("Failed to load runs");
       }
 
@@ -117,7 +118,7 @@ export function useHomeData(
           }
         }
       } else {
-        console.error("[useHomeData] weight fetch failed:", results[2].reason);
+        logger.error("[useHomeData] weight fetch failed:", results[2].reason);
         errors.push("Failed to load weight");
         // Fallback to profile weight
         if (profile?.weightKg) {

@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export interface Shoe {
   id: string;
@@ -57,7 +58,7 @@ export function useShoes() {
       setShoes(list.sort((a, b) => (a.retired ? 1 : 0) - (b.retired ? 1 : 0)));
       setLoading(false);
     }, (err) => {
-      console.error("useShoes snapshot error:", err);
+      logger.error("useShoes snapshot error:", err);
       setError(err);
       setLoading(false);
     });

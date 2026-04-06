@@ -7,6 +7,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import { deleteAccount } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
@@ -52,7 +53,7 @@ export default function AccountSection({
                   toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
                 } catch (err) {
                   toast.error("Export failed");
-                  console.error(err);
+                  logger.error(err);
                 }
                 setExporting(null);
               }}

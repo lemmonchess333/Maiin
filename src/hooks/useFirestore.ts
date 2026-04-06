@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeMerge } from "@/lib/offlineQueue";
 import { parseDailyLog } from "@/lib/firestoreGuards";
+import { logger } from "@/lib/logger";
 import {
   startOfWeek,
   endOfWeek,
@@ -58,7 +59,7 @@ export function useDailyLogs() {
         setLoading(false);
       },
       (error) => {
-        console.error("useDailyLogs error:", error);
+        logger.error("useDailyLogs error:", error);
         setLoading(false);
       }
     );
@@ -125,7 +126,7 @@ export function useWeeklyStats() {
         });
       },
       (error) => {
-        console.error("useWeeklyStats error:", error);
+        logger.error("useWeeklyStats error:", error);
       }
     );
 
@@ -180,7 +181,7 @@ export function useMonthlyStats() {
         });
       },
       (error) => {
-        console.error("useMonthlyStats error:", error);
+        logger.error("useMonthlyStats error:", error);
       }
     );
 
@@ -232,7 +233,7 @@ export function useWeeklyDayMap() {
         setDayMap(map);
       },
       (error) => {
-        console.error("useWeeklyDayMap error:", error);
+        logger.error("useWeeklyDayMap error:", error);
       }
     );
 
@@ -268,7 +269,7 @@ export function useHistoryData(days: number = 30) {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("useHistoryData error:", error);
+        logger.error("useHistoryData error:", error);
         setLoading(false);
       });
   }, [user, days]);

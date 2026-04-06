@@ -1,4 +1,5 @@
 import type { ShareCardTheme } from '@/components/social/ShareCard';
+import { logger } from '@/lib/logger';
 
 const THEME_BG: Record<ShareCardTheme, string | undefined> = {
   dark: '#0a0a0f',
@@ -26,6 +27,6 @@ export async function generateAndShare(node: HTMLElement, title: string, theme: 
       URL.revokeObjectURL(url);
     }
   } catch (e) {
-    console.error('Share failed:', e);
+    logger.error('Share failed:', e);
   }
 }

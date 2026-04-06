@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useFeatureFlag, useFeatureFlagToggle } from "@/config/featureFlags";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 import {
   Zap,
   Crown,
@@ -145,7 +146,7 @@ export default function Settings() {
       setPendingLiftDays(null);
       toast.success(`Program updated to ${splitLabel(newSplit)}`);
     } catch (error) {
-      console.error("handleConfirmRestructure failed:", error);
+      logger.error("handleConfirmRestructure failed:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setRestructuring(false);

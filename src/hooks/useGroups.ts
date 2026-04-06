@@ -3,6 +3,7 @@ import { collection, getDocs, query, orderBy, doc, setDoc, deleteDoc, addDoc, se
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import { parseGroup } from '@/lib/firestoreGuards';
+import { logger } from '@/lib/logger';
 
 export interface Group {
   id: string;
@@ -54,7 +55,7 @@ export function useGroups() {
         setGroups(list);
       }
     } catch (e) {
-      console.error('Failed to fetch groups:', e);
+      logger.error('Failed to fetch groups:', e);
     }
   }, []);
 
@@ -70,7 +71,7 @@ export function useGroups() {
       }
       setMyGroupIds(ids);
     } catch (e) {
-      console.error('Failed to fetch my groups:', e);
+      logger.error('Failed to fetch my groups:', e);
     }
   }, [user]);
 

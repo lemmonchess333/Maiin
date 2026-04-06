@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
 import type { User } from "firebase/auth";
+import { logger } from "@/lib/logger";
 
 interface DataExportSectionProps {
   user: User | null;
@@ -32,7 +33,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
               toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
             } catch (err) {
               toast.error("Export failed");
-              console.error(err);
+              logger.error(err);
             }
             setExporting(null);
           }}

@@ -6,6 +6,7 @@ import {
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import { parseCrew } from '@/lib/firestoreGuards';
+import { logger } from '@/lib/logger';
 
 export interface Crew {
   id: string;
@@ -54,7 +55,7 @@ export function useCrews() {
 
       setCrews(list);
     } catch (e) {
-      console.error('Failed to fetch crews:', e);
+      logger.error('Failed to fetch crews:', e);
     }
     setLoading(false);
   }, []);
