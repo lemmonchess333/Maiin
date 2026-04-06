@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
+import { motion } from "framer-motion";
 
 interface OptionCardProps {
   selected: boolean;
@@ -9,13 +10,18 @@ interface OptionCardProps {
   label: string;
   desc?: string;
   disabled?: boolean;
+  /** Stagger index — controls entrance delay */
+  index?: number;
 }
 
-export default function OptionCard({ selected, onSelect, icon, label, desc, disabled }: OptionCardProps) {
+export default function OptionCard({ selected, onSelect, icon, label, desc, disabled, index = 0 }: OptionCardProps) {
   return (
-    <button
+    <motion.button
       onClick={onSelect}
       disabled={disabled}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.06, ease: [0.32, 0.72, 0, 1] }}
       className={cn(
         "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.95]",
         disabled && "opacity-30 pointer-events-none"
@@ -35,8 +41,14 @@ export default function OptionCard({ selected, onSelect, icon, label, desc, disa
         )}
       </div>
       {selected && !disabled && (
-        <Check className="w-4 h-4 flex-shrink-0" style={{ color: THEME.teal }} />
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+        >
+          <Check className="w-4 h-4 flex-shrink-0" style={{ color: THEME.teal }} />
+        </motion.span>
       )}
-    </button>
+    </motion.button>
   );
 }

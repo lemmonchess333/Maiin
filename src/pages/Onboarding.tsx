@@ -467,16 +467,32 @@ export default function Onboarding() {
           transition={{ duration: 0.22 }}
           className="flex-1 overflow-y-auto"
         >
-          <p
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
             className="text-xs uppercase tracking-widest mb-2"
             style={{ color: "rgba(255,255,255,0.4)" }}
           >
             Step {step + 1} of {TOTAL_STEPS}
-          </p>
-          <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
-          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.45)" }}>
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
+            className="text-2xl font-bold mb-1"
+          >
+            {STEP_META[step].title}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            className="text-sm mb-8"
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
             {STEP_META[step].subtitle}
-          </p>
+          </motion.p>
 
           {/* ════════════════════════════════
              STEP 0 — Gender
@@ -487,13 +503,14 @@ export default function Onboarding() {
                 { id: "male" as Gender, label: "Male", icon: <User size={22} style={{ color: THEME.lifting }} /> },
                 { id: "female" as Gender, label: "Female", icon: <Heart size={22} style={{ color: THEME.running }} /> },
                 { id: "unspecified" as Gender, label: "Prefer not to say", icon: <User size={22} style={{ color: THEME.textSecondary }} /> },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={gender === opt.id}
                   onSelect={() => setGender(opt.id)}
                   icon={opt.icon}
                   label={opt.label}
+                  index={i}
                 />
               ))}
             </div>
@@ -511,13 +528,14 @@ export default function Onboarding() {
                 { id: "35-44" as AgeRange, label: "35 – 44" },
                 { id: "45-54" as AgeRange, label: "45 – 54" },
                 { id: "55+" as AgeRange, label: "55+" },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={ageRange === opt.id}
                   onSelect={() => setAgeRange(opt.id)}
                   icon={<Calendar size={22} style={{ color: THEME.brand }} />}
                   label={opt.label}
+                  index={i}
                 />
               ))}
               {ageRange === "under-16" && (
@@ -616,7 +634,7 @@ export default function Onboarding() {
                 { id: "fat_loss" as PrimaryGoal, label: "Lose fat", desc: "Calorie deficit with muscle preservation", icon: <Flame size={22} style={{ color: THEME.running }} /> },
                 { id: "general" as PrimaryGoal, label: "General fitness", desc: "Balanced strength, cardio, and mobility", icon: <Heart size={22} style={{ color: THEME.success }} /> },
                 { id: "running" as PrimaryGoal, label: "Improve running", desc: "Run-focused with complementary strength work", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={primaryGoal === opt.id}
@@ -624,6 +642,7 @@ export default function Onboarding() {
                   icon={opt.icon}
                   label={opt.label}
                   desc={opt.desc}
+                  index={i}
                 />
               ))}
             </div>
@@ -638,7 +657,7 @@ export default function Onboarding() {
                 { id: "beginner" as Experience, label: "Beginner", desc: "0 – 6 months of consistent training", icon: <Target size={22} style={{ color: THEME.success }} /> },
                 { id: "intermediate" as Experience, label: "Intermediate", desc: "6 months – 2 years of training", icon: <Award size={22} style={{ color: THEME.brand }} /> },
                 { id: "advanced" as Experience, label: "Advanced", desc: "2+ years of structured training", icon: <Sparkles size={22} style={{ color: THEME.warning }} /> },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={experience === opt.id}
@@ -646,6 +665,7 @@ export default function Onboarding() {
                   icon={opt.icon}
                   label={opt.label}
                   desc={opt.desc}
+                  index={i}
                 />
               ))}
             </div>
@@ -698,7 +718,7 @@ export default function Onboarding() {
                 { id: "full_gym" as Equipment, label: "Full gym", desc: "Barbells, dumbbells, cables, machines", icon: <Warehouse size={22} style={{ color: THEME.lifting }} /> },
                 { id: "home_gym" as Equipment, label: "Home gym", desc: "Dumbbells, bench, pull-up bar", icon: <Dumbbell size={22} style={{ color: THEME.brand }} /> },
                 { id: "minimal" as Equipment, label: "Minimal / bodyweight", desc: "Bands, bodyweight, maybe dumbbells", icon: <User size={22} style={{ color: THEME.success }} /> },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={equipment === opt.id}
@@ -706,6 +726,7 @@ export default function Onboarding() {
                   icon={opt.icon}
                   label={opt.label}
                   desc={opt.desc}
+                  index={i}
                 />
               ))}
             </div>
@@ -722,11 +743,12 @@ export default function Onboarding() {
                 { id: "ppl" as PreferredSplit, label: "Push / Pull / Legs", desc: "Classic PPL rotation (5-6 days)", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
                 { id: "bro_split" as PreferredSplit, label: "Bro Split", desc: "One muscle group per day (5-6 days)", icon: <Flame size={22} style={{ color: THEME.running }} /> },
                 { id: "auto" as PreferredSplit, label: "No preference", desc: "We'll pick the best split for you", icon: <Sparkles size={22} style={{ color: THEME.teal }} /> },
-              ]).map(opt => (
+              ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={preferredSplit === opt.id}
                   onSelect={() => setPreferredSplit(opt.id)}
+                  index={i}
                   icon={opt.icon}
                   label={opt.label}
                   desc={
@@ -750,10 +772,11 @@ export default function Onboarding() {
                   { id: "regular" as RunFrequency, label: "Regular runner", desc: "3+ runs per week", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
                   { id: "occasional" as RunFrequency, label: "Occasional runner", desc: "1 – 2 runs per week", icon: <Footprints size={22} style={{ color: THEME.warning }} /> },
                   { id: "none" as RunFrequency, label: "I don't run", desc: "Lifting only, no cardio programming", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
-                ]).map(opt => (
+                ]).map((opt, i) => (
                   <OptionCard
                     key={opt.id}
                     selected={runFrequency === opt.id}
+                    index={i}
                     onSelect={() => {
                       setRunFrequency(opt.id);
                       if (opt.id === "none") {
@@ -783,11 +806,12 @@ export default function Onboarding() {
                       { id: "freeform" as RunMode, label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
                       { id: "structured" as RunMode, label: "Structured", desc: "Auto-assign run types to your run days" },
                       { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodised plan for a specific race" },
-                    ]).map(opt => (
+                    ]).map((opt, i) => (
                       <OptionCard
                         key={opt.id}
                         selected={runMode === opt.id}
                         onSelect={() => setRunMode(opt.id)}
+                        index={i}
                         icon={<Target size={20} style={{ color: THEME.running }} />}
                         label={opt.label}
                         desc={opt.desc}
@@ -892,13 +916,14 @@ export default function Onboarding() {
                 { id: "shoulder", label: "Shoulder", desc: "We'll modify pressing movements", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "knee", label: "Knee", desc: "We'll adjust squat and lunge variations", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "other", label: "Other", desc: "Tell us more below", icon: <AlertTriangle size={22} style={{ color: THEME.danger }} /> },
-              ]).map(opt => {
+              ]).map((opt, i) => {
                 const isSelected = injuries.includes(opt.id);
                 const isNone = opt.id === "none";
                 return (
                   <div key={opt.id}>
                     <OptionCard
                       selected={isSelected}
+                      index={i}
                       onSelect={() => {
                         if (isNone) {
                           // "None" clears all others
