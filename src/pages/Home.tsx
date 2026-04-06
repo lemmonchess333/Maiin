@@ -18,6 +18,7 @@ import { useWaterLog } from "@/hooks/useWaterLog";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
@@ -246,7 +247,7 @@ export default function Home() {
       setWeightSaved(true);
       haptic("success");
       setTimeout(function() { setWeightSaved(false); setWeightInput(""); setShowWeightSheet(false); }, 500);
-    } catch (e) { console.error(e); }
+    } catch (e) { logger.error(e); }
     setWeightSaving(false);
   };
 

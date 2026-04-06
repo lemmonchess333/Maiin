@@ -4,6 +4,7 @@ import { addDoc, collection, getDocs, orderBy, query, Timestamp } from 'firebase
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { logger } from '../lib/logger';
 import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
 import type { GPSPoint, Split } from '../lib/gps';
@@ -138,7 +139,7 @@ export default function RunSummary() {
       // Short delay so user sees the confirmation, then go home
       setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
     } catch (error) {
-      console.error('[RunSave] Failed:', error);
+      logger.error('[RunSave] Failed:', error);
       toast.error('Failed to save run. Please try again.');
     }
   };

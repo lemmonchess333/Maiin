@@ -7,6 +7,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 export type ChallengeTier = "bronze" | "silver" | "gold";
 
@@ -171,7 +172,7 @@ export function useChallenges() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    seedChallenges().catch(console.error);
+    seedChallenges().catch(e => logger.error(e));
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
       collection(db, "challenges"),
@@ -231,7 +232,7 @@ export function useChallenges() {
       await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
       setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
     } catch (error) {
-      console.error('[Challenges] Join failed:', error);
+      logger.error('[Challenges] Join failed:', error);
       toast.error('Failed to join challenge');
     }
   }, [user]);
@@ -243,7 +244,7 @@ export function useChallenges() {
       await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
       setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
     } catch (error) {
-      console.error('[Challenges] Leave failed:', error);
+      logger.error('[Challenges] Leave failed:', error);
       toast.error('Failed to leave challenge');
     }
   }, [user]);
@@ -262,7 +263,7 @@ export function useChallenges() {
         [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
       }));
     } catch (error) {
-      console.error('[Challenges] Progress update failed:', error);
+      logger.error('[Challenges] Progress update failed:', error);
       toast.error('Failed to update challenge progress');
     }
   }, [user, challenges]);

@@ -1,4 +1,5 @@
 import { db } from "./firebase"; // Import your Firestore setup
+import { logger } from "./logger";
 import { collection, query, orderBy, getDocs } from "firebase/firestore"; // Utilities for Firestore
 
 // Define the structure of bodyweight logs
@@ -24,7 +25,7 @@ export async function fetchBodyweightLogs(userId: string): Promise<BodyweightLog
 
     return logs;
   } catch (error) {
-    console.error("Error fetching bodyweight logs:", error);
+    logger.error("Error fetching bodyweight logs:", error);
     return [];
   }
 }
