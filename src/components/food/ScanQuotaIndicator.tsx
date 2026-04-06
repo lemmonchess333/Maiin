@@ -26,7 +26,7 @@ export default function ScanQuotaIndicator({ remaining, resetDate, onUpgrade }: 
       <div className="flex justify-center">
         <button
           onClick={onUpgrade}
-          className="text-xs text-gray-500 font-medium active:opacity-70 transition-opacity"
+          className="text-xs text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
           Out of scans — upgrade for unlimited
         </button>

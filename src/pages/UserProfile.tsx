@@ -175,10 +175,10 @@ export default function UserProfile() {
           </>
         ) : stats && (
           <>
-            <span className="flex-1 text-center py-1.5 rounded-lg bg-card text-xs font-medium text-foreground font-mono tabular-nums">
+            <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
               {stats.totalKm.toFixed(1)} km
             </span>
-            <span className="flex-1 text-center py-1.5 rounded-lg bg-card text-xs font-medium text-foreground font-mono tabular-nums">
+            <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
               {stats.totalSessions} sessions
             </span>
           </>

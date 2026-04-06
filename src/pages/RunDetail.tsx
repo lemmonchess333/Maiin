@@ -160,7 +160,7 @@ export default function RunDetail() {
               </h1>
             </div>
             <button onClick={handleShare} disabled={sharing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium active:scale-[0.97] transition-transform"
               style={{ background: `${THEME.running}15`, color: THEME.running }}>
               {sharing ? 'Generating…' : '↗ Share'}
             </button>
@@ -169,7 +169,7 @@ export default function RunDetail() {
         </div>
 
         {/* Primary stats row */}
-        <div className="rounded-2xl bg-card flex divide-x divide-border/40">
+        <div className="rounded-2xl bg-card shadow-sm flex divide-x divide-border/40">
           <StatPill value={formatTime(run.duration)} label="Time" />
           <StatPill value={avgPaceStr} label="/km Pace" color={THEME.teal} />
           <StatPill value={`${run.calories ?? 0}`} label="Cal" color={THEME.warning} />
@@ -177,13 +177,13 @@ export default function RunDetail() {
 
         {/* Secondary stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-card text-center">
+          <div className="p-3 rounded-xl bg-card text-center shadow-sm">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.elevationGain ?? 0}m
             </p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">Elevation Gain</p>
           </div>
-          <div className="p-3 rounded-xl bg-card text-center">
+          <div className="p-3 rounded-xl bg-card text-center shadow-sm">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.splits?.length ?? 0}
             </p>
