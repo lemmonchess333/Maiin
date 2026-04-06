@@ -3,8 +3,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+const isCapacitor = process.env.CAPACITOR_BUILD === "true";
+
 export default defineConfig({
-  base: "/Maiin/",
+  base: isCapacitor ? "/" : "/Maiin/",
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.1.0'),
   },
