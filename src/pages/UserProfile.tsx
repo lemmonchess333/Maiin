@@ -11,6 +11,7 @@ import { Skeleton } from '../components/LoadingSkeleton';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
 import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { THEME } from '../lib/theme';
 import ReportModal from '../components/social/ReportModal';
 
@@ -92,11 +93,15 @@ export default function UserProfile() {
     }
   };
 
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
   if (!profile) return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading...</div>;
 
   return (
-    <div className="space-y-4">
+    <motion.div className="space-y-4" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
       {/* Back header */}
+      <motion.div variants={itemVariant}>
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors -mb-2"
@@ -104,8 +109,9 @@ export default function UserProfile() {
         <ChevronLeft className="w-4 h-4" />
         Back
       </button>
+      </motion.div>
 
-      <div className="flex items-center gap-4">
+      <motion.div variants={itemVariant} className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold overflow-hidden">
           {profile.avatarUrl ? (
             <img
@@ -165,7 +171,7 @@ export default function UserProfile() {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Stat pills */}
       <div className="flex gap-2">
@@ -252,6 +258,6 @@ export default function UserProfile() {
       {showReport && uid && (
         <ReportModal targetType="user" targetId={uid} onClose={() => setShowReport(false)} />
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -288,13 +289,18 @@ export default function History() {
     return { avgCalories, avgProtein, adherence };
   }, [meals, rangeDays]);
 
-  return (
-    <div className="space-y-4 pt-2">
-      <header>
-        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
-      </header>
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
-      <FilterPills filter={filter} setFilter={setFilter} />
+  return (
+    <motion.div className="space-y-4 pt-2" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      <motion.header variants={itemVariant}>
+        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
+      </motion.header>
+
+      <motion.div variants={itemVariant}>
+        <FilterPills filter={filter} setFilter={setFilter} />
+      </motion.div>
 
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
@@ -559,6 +565,6 @@ export default function History() {
         </>
       )}
       </Suspense>
-    </div>
+    </motion.div>
   );
 }

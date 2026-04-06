@@ -165,13 +165,16 @@ export default function Social() {
     }
   };
 
+  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
   return (
-    <div className="space-y-4">
-      <header>
+    <motion.div className="space-y-4" initial="hidden" animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+      <motion.header variants={itemVariant}>
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-extrabold">Social</h1>
         </div>
-      </header>
+      </motion.header>
 
       {/* Crew banner if no crew — dismissible */}
       <AnimatePresence>
@@ -558,6 +561,6 @@ export default function Social() {
         </section>
       )}
       </>)}
-    </div>
+    </motion.div>
   );
 }
