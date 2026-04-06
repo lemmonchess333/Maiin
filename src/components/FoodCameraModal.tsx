@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { X, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { logger } from "@/lib/logger";
 
 type CaptureMode = "food" | "label";
 type TabMode = "food" | "barcode" | "label";
@@ -75,7 +76,7 @@ export default function FoodCameraModal({
         streamRef.current = await startStream(videoEl, "environment");
       } catch (e: unknown) {
         // If camera permissions fail, close gracefully
-        console.error(e);
+        logger.error(e);
         onClose();
       }
     };
@@ -106,7 +107,7 @@ export default function FoodCameraModal({
         stopStream(streamRef.current);
         streamRef.current = await startStream(videoEl, facing);
       } catch (e: unknown) {
-        console.error(e);
+        logger.error(e);
       }
     };
 
@@ -168,7 +169,7 @@ export default function FoodCameraModal({
           }
         };
       } catch (e: unknown) {
-        console.error(e);
+        logger.error(e);
         setBarcodeHint("Scanner failed — try again");
       }
     };
@@ -201,7 +202,7 @@ export default function FoodCameraModal({
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setBusy(false);
     }
   };
@@ -232,7 +233,7 @@ export default function FoodCameraModal({
 
       await onCaptureBase64(base64, tab === "label" ? "label" : "food");
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     } finally {
       setBusy(false);
     }

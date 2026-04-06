@@ -269,7 +269,7 @@ export function useHistoryData(days: number = 30) {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("useHistoryData error:", error);
+        logger.error("useHistoryData error:", error);
         setLoading(false);
       });
   }, [user, days]);

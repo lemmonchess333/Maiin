@@ -8,6 +8,7 @@ import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import FoodCameraModal from "./FoodCameraModal";
 
 interface Props {
@@ -239,7 +240,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
       await analyzeFood(base64);
       toast.success(mode === "label" ? "Label captured!" : "Food captured!");
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error("Food analysis failed.");
     }
   };
