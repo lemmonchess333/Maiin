@@ -34,6 +34,7 @@ import {
   SendHorizontal,
   RotateCcw,
   Camera,
+  X,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { QuickRelog } from "@/components/nutrition/QuickRelog";
@@ -77,6 +78,7 @@ export default function Food() {
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const [suggestionsActive, setSuggestionsActive] = useState(true);
+  const [targetMeal, setTargetMeal] = useState<"breakfast" | "lunch" | "snacks" | "dinner" | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
@@ -145,6 +147,7 @@ export default function Food() {
   const [prevDate, setPrevDate] = useState(selectedDate);
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
+    if (targetMeal) setTargetMeal(null);
   }
 
   const safeNum = (value: unknown): number => {
@@ -429,8 +432,10 @@ export default function Food() {
         totalFat,
         confidence,
         createdAt: Timestamp.now(),
+        ...(targetMeal ? { meal: targetMeal } : {}),
       });
       setNlInput("");
+      setTargetMeal(null);
       toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
     } catch {
       toast.error("Failed to save. Please try again.");
@@ -446,6 +451,21 @@ export default function Food() {
       action: { label: "Undo", onClick: () => clearTimeout(timeoutId) },
       duration: 3000,
     });
+  };
+
+  const handleTargetMeal = (mealKey: "breakfast" | "lunch" | "snacks" | "dinner") => {
+    haptic();
+    // Toggle off if same meal tapped again
+    if (targetMeal === mealKey) {
+      setTargetMeal(null);
+      return;
+    }
+    setTargetMeal(mealKey);
+    // Scroll input into view then focus
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }, 50);
   };
 
   const handleQuickRelog = async (fav: {
@@ -486,7 +506,9 @@ export default function Food() {
         totalSodium: fav.sodium || undefined,
         confidence: "favourite",
         createdAt: Timestamp.now(),
+        ...(targetMeal ? { meal: targetMeal } : {}),
       });
+      setTargetMeal(null);
       await addFavourite({ ...fav, source: "manual" });
       toast.success(`${fav.name} added!`);
     } catch {
@@ -538,7 +560,9 @@ export default function Food() {
         totalFat: meal.fat,
         confidence: "quick-add",
         createdAt: Timestamp.now(),
+        ...(targetMeal ? { meal: targetMeal } : {}),
       });
+      setTargetMeal(null);
       toast.success(`${meal.name} added!`);
     } catch {
       toast.error("Failed to save. Please try again.");
@@ -624,7 +648,7 @@ export default function Food() {
       <motion.div variants={itemVariant} key={selectedDate}>
         {foodHeroRing ? (
           <>
-            <div className="mb-5 p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+            <div className="mb-4 p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
               <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
             </div>
             <div className="p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
@@ -680,7 +704,7 @@ export default function Food() {
               onChange={(e) => setNlInput(e.target.value)}
               onFocus={() => setSuggestionsActive(true)}
               onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
-              placeholder="What did you eat?"
+              placeholder={targetMeal ? `Adding to ${MEAL_LABELS[targetMeal]}…` : "What did you eat?"}
               aria-label="What did you eat"
               rows={1}
               maxLength={500}
@@ -739,6 +763,30 @@ export default function Food() {
           </div>
         </div>
       </motion.div>
+      {/* Meal targeting pill */}
+      <AnimatePresence>
+        {targetMeal && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            className="flex justify-center mt-2"
+          >
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 border border-purple-200 text-purple-700">
+              <ChevronRight className="w-3 h-3" />
+              {MEAL_LABELS[targetMeal]}
+              <button
+                onClick={() => setTargetMeal(null)}
+                aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
+                className="ml-0.5 p-0.5 rounded-full hover:bg-purple-100 active:scale-90 transition-all"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Scan quota indicator — free users only, 3-stage escalation */}
       {!scanUsage.isUnlimited && !scanUsage.loading && (
         <div className="mt-2">
@@ -752,7 +800,7 @@ export default function Food() {
 
       {scanOpen && (
         <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
-          <FoodAnalyzer date={selectedDate} onSaved={() => setScanOpen(false)} />
+          <FoodAnalyzer date={selectedDate} meal={targetMeal} onSaved={() => { setScanOpen(false); setTargetMeal(null); }} />
         </Suspense>
       )}
 
@@ -812,13 +860,15 @@ export default function Food() {
       </motion.div>
 
 
-      {/* Meal-segmented food log — only show populated sections */}
+      {/* Meal sections — all four render as cards with + button */}
       {todaysMeals.length > 0 && (
-        <motion.div variants={itemVariant} className="space-y-4">
-          {MEAL_ORDER.filter((mealKey) => mealSegmentedMeals[mealKey].length > 0).map((mealKey) => {
+        <motion.div variants={itemVariant} className="space-y-3">
+          {MEAL_ORDER.map((mealKey) => {
             const meals = mealSegmentedMeals[mealKey];
+            const isEmpty = meals.length === 0;
             const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
 
+            // Group populated items by food name
             const grouped = new Map<string, { foodName: string; meals: typeof meals; totalCal: number; totalPro: number; totalCarb: number; totalFat: number }>();
             for (const m of meals) {
               const key = (m.foodName || "Meal").toLowerCase().trim();
@@ -835,86 +885,84 @@ export default function Food() {
             }
             const groupedEntries = Array.from(grouped.values());
 
-          return (
-            <div key={mealKey}>
-              <div className="px-1 mb-1.5">
-                <p className="text-sm font-semibold text-foreground">
-                  {MEAL_LABELS[mealKey]}
-                  {meals.length > 0 && (
-                    <span className="text-xs font-normal text-muted-foreground font-mono tabular-nums ml-1.5">
-                      {formatCalories(mealCals)} {CALORIE_UNIT}
-                    </span>
-                  )}
-                </p>
-              </div>
-                <div className="bg-card rounded-xl overflow-hidden divide-y divide-border/20" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)" }}>
-                  {groupedEntries.map((group) => {
-                    const proCal = group.totalPro * 4;
-                    const carbCal = group.totalCarb * 4;
-                    const fatCal = group.totalFat * 9;
-                    const dotColor = proCal === 0 && carbCal === 0 && fatCal === 0 ? "#D1D5DB"
-                      : proCal >= carbCal && proCal >= fatCal ? THEME.macros.protein
-                      : carbCal >= proCal && carbCal >= fatCal ? THEME.macros.carbs
-                      : THEME.macros.fat;
-                    return (
-                    <div key={group.foodName} className="flex items-center justify-between px-3 py-2.5">
-                      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-                        <p className="text-sm text-foreground truncate">{group.foodName}</p>
-                        {group.meals.length > 1 && (
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white" style={{ backgroundColor: "#7C6BF0" }}>
-                            ×{group.meals.length}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{formatCalories(group.totalCal)} {CALORIE_UNIT}</span>
-                        <button
-                          onClick={() => handleDeleteMeal(group.meals[group.meals.length - 1].id, group.foodName)}
-                          aria-label={`Delete ${group.foodName}`}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
-                        >
-                          <Trash2 aria-hidden="true" className="w-3 h-3" />
-                        </button>
-                      </div>
+            return (
+              <div key={mealKey}>
+                <div className="bg-card rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)" }}>
+                  {/* Header row — always visible */}
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <p className="text-sm font-semibold text-foreground">
+                      {MEAL_LABELS[mealKey]}
+                      {!isEmpty && (
+                        <span className="text-xs font-normal text-muted-foreground font-mono tabular-nums ml-1.5">
+                          {formatCalories(mealCals)} {CALORIE_UNIT}
+                        </span>
+                      )}
+                    </p>
+                    <button
+                      onClick={() => handleTargetMeal(mealKey)}
+                      aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
+                        targetMeal === mealKey
+                          ? "bg-primary text-white"
+                          : "border border-black/[0.12] text-gray-400"
+                      )}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {/* Food items */}
+                  {!isEmpty && (
+                    <div className="divide-y divide-border/20">
+                      {groupedEntries.map((group) => {
+                        const proCal = group.totalPro * 4;
+                        const carbCal = group.totalCarb * 4;
+                        const fatCal = group.totalFat * 9;
+                        const dotColor = proCal === 0 && carbCal === 0 && fatCal === 0 ? "#D1D5DB"
+                          : proCal >= carbCal && proCal >= fatCal ? THEME.macros.protein
+                          : carbCal >= proCal && carbCal >= fatCal ? THEME.macros.carbs
+                          : THEME.macros.fat;
+                        return (
+                          <div key={group.foodName} className="flex items-center justify-between px-3 py-2.5">
+                            <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+                              <p className="text-sm text-foreground truncate">{group.foodName}</p>
+                              {group.meals.length > 1 && (
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white" style={{ backgroundColor: "#7C6BF0" }}>
+                                  ×{group.meals.length}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-xs font-mono tabular-nums text-muted-foreground">{formatCalories(group.totalCal)} {CALORIE_UNIT}</span>
+                              <button
+                                onClick={() => handleDeleteMeal(group.meals[group.meals.length - 1].id, group.foodName)}
+                                aria-label={`Delete ${group.foodName}`}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
+                              >
+                                <Trash2 aria-hidden="true" className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    );
-                  })}
-                </div>
-            </div>
-          );
-          })}
-          {/* Elapsed/current empty meal sections — collapsed for past, full for current */}
-          {(() => {
-            const MEAL_START_HOURS: Record<string, number> = { breakfast: 0, lunch: 11, snacks: 15, dinner: 17 };
-            const currentHour = isToday ? new Date().getHours() : 24;
-            const currentMealKey = !isToday ? null : currentHour < 11 ? "breakfast" : currentHour < 15 ? "lunch" : currentHour < 17 ? "snacks" : "dinner";
-            return MEAL_ORDER.filter(key =>
-              mealSegmentedMeals[key].length === 0 && currentHour >= MEAL_START_HOURS[key]
-            ).map(emptyKey => {
-              const isCurrent = emptyKey === currentMealKey || !isToday;
-              return (
-                <div key={emptyKey}>
-                  {isCurrent ? (
-                    <>
-                      <p className="text-sm font-semibold text-muted-foreground/50 px-1 mb-1">{MEAL_LABELS[emptyKey]}</p>
-                      <p className="text-xs text-muted-foreground/40 px-1">Nothing yet</p>
-                      {yesterdaySegmented[emptyKey]?.length > 0 && (
-                        <button onClick={() => copyFromYesterday(emptyKey)} className="flex items-center gap-1.5 mt-2 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-gray-500 hover:bg-muted/50 active:scale-[0.97] transition-all">
-                          <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
+                  )}
+                  {/* Empty state */}
+                  {isEmpty && (
+                    <div className="px-3 pb-3">
+                      <p className="text-xs text-muted-foreground/50">No {MEAL_LABELS[mealKey].toLowerCase()} logged yet</p>
+                      {yesterdaySegmented[mealKey]?.length > 0 && (
+                        <button onClick={() => copyFromYesterday(mealKey)} className="flex items-center gap-1.5 mt-2 text-xs font-medium text-gray-500 active:scale-[0.97] transition-all">
+                          <RotateCcw className="w-3 h-3" /> Copy from yesterday
                         </button>
                       )}
-                    </>
-                  ) : (
-                    <button onClick={() => inputRef.current?.focus()} className="flex items-center justify-between w-full px-1">
-                      <span className="text-sm text-gray-400">{MEAL_LABELS[emptyKey]}</span>
-                      <span className="w-5 h-5 rounded-full border border-black/[0.12] flex items-center justify-center text-gray-400 text-xs">+</span>
-                    </button>
+                    </div>
                   )}
                 </div>
-              );
-            });
-          })()}
+              </div>
+            );
+          })}
         </motion.div>
       )}
 

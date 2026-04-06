@@ -12,6 +12,7 @@ import FoodCameraModal from "./FoodCameraModal";
 
 interface Props {
   date: string;
+  meal?: string | null;
   onSaved?: () => void;
 }
 
@@ -111,7 +112,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
-export default function FoodAnalyzer({ date, onSaved }: Props) {
+export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
 
@@ -183,6 +184,7 @@ export default function FoodAnalyzer({ date, onSaved }: Props) {
       brand: meal.brand || null,
       imageUrl: meal.imageUrl || null,
       createdAt: Timestamp.now(),
+      ...(targetMealCategory ? { meal: targetMealCategory } : {}),
     });
 
     // Preserve favourites functionality
