@@ -144,7 +144,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
             )}
           </>
         ) : (
-          <span className="text-4xl font-black text-gray-300">&mdash;</span>
+          <span className="text-4xl font-black text-muted-foreground/40">&mdash;</span>
         )}
       </div>
     </div>

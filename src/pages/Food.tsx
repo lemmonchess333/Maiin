@@ -703,7 +703,7 @@ export default function Food() {
               aria-label="What did you eat"
               rows={1}
               maxLength={500}
-              className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-gray-200 shadow-sm text-foreground text-sm resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
+              className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-border/50 shadow-sm text-foreground text-sm resize-none focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
             />
             {nlInput.trim() ? (
               <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
@@ -714,7 +714,7 @@ export default function Food() {
               </button>
             ) : (
               <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
-                className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-gray-500 hover:text-primary hover:bg-primary/10")}>
+                className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
                 <Mic className="w-4 h-4" />
               </button>
             )}
@@ -900,7 +900,7 @@ export default function Food() {
                         "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
                         targetMeal === mealKey
                           ? "bg-primary text-white"
-                          : "border border-black/[0.12] text-gray-400"
+                          : "border border-black/[0.12] text-muted-foreground"
                       )}
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -948,7 +948,7 @@ export default function Food() {
                     <div className="px-3 pb-3">
                       <p className="text-xs text-muted-foreground/50">No {MEAL_LABELS[mealKey].toLowerCase()} logged yet</p>
                       {yesterdaySegmented[mealKey]?.length > 0 && (
-                        <button onClick={() => copyFromYesterday(mealKey)} className="flex items-center gap-1.5 mt-2 text-xs font-medium text-gray-500 active:scale-[0.97] transition-all">
+                        <button onClick={() => copyFromYesterday(mealKey)} className="flex items-center gap-1.5 mt-2 text-xs font-medium text-muted-foreground active:scale-[0.97] transition-all">
                           <RotateCcw className="w-3 h-3" /> Copy from yesterday
                         </button>
                       )}

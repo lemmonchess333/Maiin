@@ -22,6 +22,6 @@ export function useScanButtonOverrides(
   return {
     style: { background: "#D1D5DB" },
     onClick: onUpgrade,
-    icon: <Lock className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 text-gray-500" />,
+    icon: <Lock className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 text-muted-foreground" />,
   };
 }

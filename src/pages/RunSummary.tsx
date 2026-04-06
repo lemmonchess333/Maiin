@@ -257,27 +257,27 @@ export default function RunSummary() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card text-center">
+        <div className="p-3 rounded-xl bg-card text-center shadow-sm">
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
             {(distance / 1000).toFixed(2)}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">km</p>
         </div>
-        <div className="p-3 rounded-xl bg-card text-center">
+        <div className="p-3 rounded-xl bg-card text-center shadow-sm">
           <p className="text-2xl font-bold font-mono tabular-nums text-foreground">{formatTime(elapsed)}</p>
           <p className="text-xs text-muted-foreground mt-0.5">time</p>
         </div>
-        <div className="p-3 rounded-xl bg-card text-center">
+        <div className="p-3 rounded-xl bg-card text-center shadow-sm">
           <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: THEME.teal }}>{avgPace}</p>
           <p className="text-xs text-muted-foreground mt-0.5">/km pace</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-        <div className="p-3 rounded-xl bg-card text-center">
+        <div className="p-3 rounded-xl bg-card text-center shadow-sm">
           <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.success }}>{calories}</p>
           <p className="text-xs text-muted-foreground">calories</p>
         </div>
-        <div className="p-3 rounded-xl bg-card text-center">
+        <div className="p-3 rounded-xl bg-card text-center shadow-sm">
           <p className="text-lg font-bold font-mono tabular-nums text-foreground">{elevationGain}m</p>
           <p className="text-xs text-muted-foreground">elevation gain</p>
         </div>
@@ -380,13 +380,13 @@ export default function RunSummary() {
         </button>
         <div className="flex gap-2">
           <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground">
+            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
             Export GPX
           </button>
           <button
             onClick={handleShare}
             disabled={sharing}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50">
+            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform">
             {sharing ? 'Sharing…' : 'Share'}
           </button>
         </div>
