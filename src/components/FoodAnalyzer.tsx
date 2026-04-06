@@ -198,6 +198,8 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
       source: meal.barcode ? "barcode" : "photo",
     });
 
+    localStorage.setItem("tropos_ever_scanned", "1");
+
     setSaving(false);
     setSaved(true);
 
