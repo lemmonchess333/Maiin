@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
         <div>
           <h1 className="text-xl font-extrabold text-foreground">Privacy Policy</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: February 2026
+            Last updated: April 2026
           </p>
         </div>
 
@@ -74,6 +74,7 @@ export default function PrivacyPolicy() {
               <li>Track your workout and nutrition progress over time</li>
               <li>Calculate performance metrics and achievement badges</li>
               <li>Sync your data across your devices</li>
+              <li>Diagnose errors and improve app stability (crash reports)</li>
             </ul>
           </section>
 
@@ -161,8 +162,7 @@ export default function PrivacyPolicy() {
               </li>
             </ul>
             <p>
-              {/* Support email — update before App Store submission */}
-              For GDPR-related requests, contact us at: support@tropos.app
+For GDPR-related requests, contact us at: support@tropos.app
             </p>
           </section>
 
@@ -181,9 +181,11 @@ export default function PrivacyPolicy() {
                 Subscription and payment processing (platform-dependent)
               </li>
               <li>
-                <strong className="text-foreground">AI Food Analysis:</strong>{" "}
-                Food photos may be processed by AI services to estimate
-                nutritional content. Photos are not stored by the AI provider.
+                <strong className="text-foreground">AI Food Analysis (Google Gemini):</strong>{" "}
+                Food photos and text descriptions may be processed by Google
+                Gemini AI to estimate nutritional content. Photos are temporarily
+                processed and not permanently retained by Google. We do not use
+                your food photos for AI model training.
               </li>
               <li>
                 <strong className="text-foreground">MapLibre:</strong>{" "}
@@ -193,6 +195,13 @@ export default function PrivacyPolicy() {
             <p>
               These services have their own privacy policies governing data
               handling.
+            </p>
+            <p>
+              <strong className="text-foreground">Error Reporting:</strong>{" "}
+              We automatically collect crash reports and error logs to improve
+              app stability. Reports include error messages and stack traces
+              but do not contain sensitive personal data such as passwords,
+              meal content, or workout details.
             </p>
           </section>
 
@@ -241,8 +250,7 @@ export default function PrivacyPolicy() {
               11. Contact
             </h2>
             <p>
-              {/* Support email — update before App Store submission */}
-              For questions about this privacy policy or your data, please
+For questions about this privacy policy or your data, please
               contact us at support@tropos.app
             </p>
           </section>

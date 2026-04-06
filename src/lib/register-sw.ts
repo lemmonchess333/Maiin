@@ -16,7 +16,16 @@ export async function clearSWCaches(): Promise<void> {
   }
 }
 
+/** Detect if running inside a native Capacitor shell (iOS/Android) */
+function isNativeApp(): boolean {
+  return typeof window !== "undefined" && !!(window as unknown as Record<string, unknown>).Capacitor;
+}
+
 export function registerServiceWorker() {
+  // Service workers can cause stale API responses and broken auth flows
+  // inside native Capacitor shells — only register on web.
+  if (isNativeApp()) return;
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker
