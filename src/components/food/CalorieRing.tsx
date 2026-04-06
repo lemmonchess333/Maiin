@@ -51,7 +51,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
 
   return (
     <div
-      className="relative w-48 h-48 aspect-square mx-auto"
+      className="relative w-48 h-48 aspect-square mx-auto drop-shadow-[0_12px_32px_rgb(239_68_68_/_0.18)]"
       role="img"
       aria-label={ariaLabel}
     >
@@ -127,7 +127,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {hasTarget ? (
           <>
-            <p className="text-5xl font-black font-mono tabular-nums leading-none tracking-tight" style={{ color: numberColor }}>
+            <p className="text-4xl font-black font-mono tabular-nums leading-none tracking-tight" style={{ color: numberColor }}>
               <AnimatedNumber value={displayValue} />
             </p>
             <p className="text-xs font-medium uppercase tracking-wide mt-1" style={{ color: numberColor, opacity: 0.7 }}>
@@ -144,7 +144,7 @@ export default function CalorieRing({ consumed, target }: CalorieRingProps) {
             )}
           </>
         ) : (
-          <span className="text-5xl font-black text-gray-300">&mdash;</span>
+          <span className="text-4xl font-black text-gray-300">&mdash;</span>
         )}
       </div>
     </div>
