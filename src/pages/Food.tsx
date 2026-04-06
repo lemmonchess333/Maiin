@@ -648,25 +648,21 @@ export default function Food() {
       <motion.div variants={itemVariant} key={selectedDate}>
         {foodHeroRing ? (
           <>
-            <div className="mb-4 p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+            <div className="mb-4">
               <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
             </div>
-            <div className="p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
-              <MacroRow
-                macros={["protein", "carbs", "fat"]}
-                dailyTotals={dailyTotals}
-                macroTargets={macroTargets}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="p-5 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
             <MacroRow
-              macros={["calories", "protein", "carbs", "fat"]}
+              macros={["protein", "carbs", "fat"]}
               dailyTotals={dailyTotals}
               macroTargets={macroTargets}
             />
-          </div>
+          </>
+        ) : (
+          <MacroRow
+            macros={["calories", "protein", "carbs", "fat"]}
+            dailyTotals={dailyTotals}
+            macroTargets={macroTargets}
+          />
         )}
       </motion.div>
 
