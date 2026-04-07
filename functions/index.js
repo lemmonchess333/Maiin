@@ -734,9 +734,10 @@ exports.weeklyPerformanceRollup = functions.pubsub
         usersSnap = await db.collection("users")
           .where("lastActiveAt", ">=", cutoffTs)
           .get();
-      } catch (_) {
-        console.log("weeklyPerformanceRollup: lastActiveAt query failed, computing for all users");
-        usersSnap = await db.collection("users").get();
+      } catch (err) {
+        // Fail loud — do NOT fall back to processing all users (runaway cost risk)
+        console.error("weeklyPerformanceRollup: lastActiveAt query failed, skipping run:", err.message);
+        return null;
       }
 
       const uids = usersSnap.docs.map((d) => d.id);
