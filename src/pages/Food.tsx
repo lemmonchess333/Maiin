@@ -45,7 +45,6 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
 import MacroRow from "@/components/food/MacroRow";
 import CalorieRing from "@/components/food/CalorieRing";
-import { useFeatureFlag } from "@/config/featureFlags";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
@@ -130,7 +129,6 @@ export default function Food() {
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   const dailyTargets = useDailyTargets(selectedDateObj);
-  const foodHeroRing = useFeatureFlag("foodHeroRing");
   const scanUsage = useScanUsage();
   const handleUpgrade = () => { window.location.href = `${import.meta.env.BASE_URL}upgrade`; };
   const scanOverrides = useScanButtonOverrides(
@@ -645,24 +643,14 @@ export default function Food() {
 
       {/* Macro Tiles */}
       <motion.div variants={itemVariant} key={selectedDate}>
-        {foodHeroRing ? (
-          <>
-            <div className="mb-4">
-              <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
-            </div>
-            <MacroRow
-              macros={["protein", "carbs", "fat"]}
-              dailyTotals={dailyTotals}
-              macroTargets={macroTargets}
-            />
-          </>
-        ) : (
-          <MacroRow
-            macros={["calories", "protein", "carbs", "fat"]}
-            dailyTotals={dailyTotals}
-            macroTargets={macroTargets}
-          />
-        )}
+        <div className="mb-4">
+          <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
+        </div>
+        <MacroRow
+          macros={["protein", "carbs", "fat"]}
+          dailyTotals={dailyTotals}
+          macroTargets={macroTargets}
+        />
       </motion.div>
 
       {/* Sticky macro summary — appears when tiles scroll out of view */}
