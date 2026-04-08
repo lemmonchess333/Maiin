@@ -81,6 +81,9 @@ service cloud.firestore {
     match /users/{uid}/programState/{doc} {
       allow read, write: if isOwner(uid);
     }
+    match /users/{uid}/streaks/{doc} {
+      allow read, write: if isOwner(uid);
+    }
     match /users/{uid}/performanceWeeks/{doc} {
       allow read: if isOwner(uid);
       // Only Cloud Functions should write performance data
