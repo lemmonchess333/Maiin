@@ -2,7 +2,11 @@ import { Lock } from "lucide-react";
 
 /**
  * Returns style overrides and onClick handler for the scan button based on quota.
- * When quota is exhausted, the button becomes grey with a lock icon and opens upgrade.
+ *
+ * Active state (has scans remaining or unlimited): no inline style — the
+ *   button inherits the calmed white pill styling from its Tailwind classes
+ *   in Food.tsx so it visually matches the input bar alongside it.
+ * Exhausted state: greyed background + lock icon, opens upgrade.
  */
 export function useScanButtonOverrides(
   remaining: number,
@@ -12,7 +16,7 @@ export function useScanButtonOverrides(
 ): { style: React.CSSProperties; onClick: () => void; icon: React.ReactNode } {
   if (isUnlimited || remaining > 0) {
     return {
-      style: { background: "linear-gradient(135deg, #f07368, #f09060)" },
+      style: {},
       onClick: onScan,
       icon: null,
     };
