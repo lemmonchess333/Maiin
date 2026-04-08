@@ -41,7 +41,7 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { useDailyTargets } from "@/hooks/useDailyTargets";
+import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
@@ -127,7 +127,9 @@ export default function Food() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
-  const dailyTargets = useDailyTargets(selectedDateObj);
+  // Training-aware: returns planned values when adjustCaloriesForTraining is
+  // off; otherwise effectiveBonus = max(strategicBonus, actualBurn).
+  const dailyTargets = useEffectiveTargets(selectedDateObj);
   const scanUsage = useScanUsage();
   const handleUpgrade = () => { window.location.href = `${import.meta.env.BASE_URL}upgrade`; };
   const scanOverrides = useScanButtonOverrides(

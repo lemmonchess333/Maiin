@@ -5,6 +5,7 @@ import {
   Calculator,
   ChevronDown,
   ChevronUp,
+  Flame,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -282,6 +283,49 @@ export default function NutritionSection({
           onChange={(e) => handleMealsChange(Number(e.target.value))}
           className="w-full accent-primary"
         />
+      </div>
+
+      {/* Adjust calories for training */}
+      <div className="bg-card rounded-2xl p-4">
+        <button
+          onClick={() => {
+            haptic("light");
+            const next = profile.adjustCaloriesForTraining === false;
+            updateProfile({ adjustCaloriesForTraining: next });
+          }}
+          className="w-full flex items-center justify-between gap-3"
+          type="button"
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Flame className="w-5 h-5 text-primary shrink-0" />
+            <div className="text-left min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Adjust calories for training
+              </p>
+              <p className="text-xs text-muted-foreground">
+                When you complete a workout or run, your daily calorie target
+                updates to reflect the energy burned.
+              </p>
+            </div>
+          </div>
+          <div
+            className={cn(
+              "w-12 h-7 rounded-full transition-colors relative shrink-0",
+              profile.adjustCaloriesForTraining !== false
+                ? "bg-primary"
+                : "bg-muted border border-border",
+            )}
+          >
+            <div
+              className={cn(
+                "w-5 h-5 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                profile.adjustCaloriesForTraining !== false
+                  ? "translate-x-6"
+                  : "translate-x-1",
+              )}
+            />
+          </div>
+        </button>
       </div>
     </AccordionSection>
   );

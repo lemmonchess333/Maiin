@@ -2,14 +2,12 @@ import { useMemo } from "react";
 import { useAuth } from "@/lib/auth";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { getAdjustedTargets, getDayAdjustment } from "@/lib/phaseNutrition";
+import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import type { DayType } from "@/lib/types";
 
-export interface DailyTargetsCaption {
-  /** Uppercase training type — "LIFT DAY" / "RUN DAY" / "LIFT + RUN" */
-  trainingType: string;
-  /** Uppercase adjustment — "+150 RECOVERY" / "+200 FUEL" / "" if no adjustment */
-  adjustment: string;
-}
+// Re-export for backwards compatibility — existing consumers import
+// DailyTargetsCaption from this module.
+export type { DailyTargetsCaption };
 
 export interface DailyTargets {
   /** Stored profile target (TDEE + phase modifier, or custom override) */
@@ -30,26 +28,6 @@ export interface DailyTargets {
   annotation: string;
   /** Structured caption for the Food hero card. Null on rest days. */
   caption: DailyTargetsCaption | null;
-}
-
-const DAY_NOUN: Record<DayType, string> = {
-  lift: "RECOVERY",
-  run: "FUEL",
-  both: "FUEL",
-  rest: "",
-};
-
-function buildCaption(dayType: DayType, activityBonus: number): DailyTargetsCaption | null {
-  if (dayType === "rest") return null;
-  const trainingType =
-    dayType === "lift" ? "LIFT DAY" :
-    dayType === "run" ? "RUN DAY" :
-    "LIFT + RUN";
-  const noun = DAY_NOUN[dayType];
-  const adjustment = activityBonus > 0 && noun
-    ? `+${activityBonus} ${noun}`
-    : "";
-  return { trainingType, adjustment };
 }
 
 /**

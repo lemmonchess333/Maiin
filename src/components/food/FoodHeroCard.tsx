@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Beef, Wheat, Cookie } from "lucide-react";
 import { THEME } from "@/lib/theme";
-import type { DailyTargets } from "@/hooks/useDailyTargets";
+import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
 import { StreakFlame } from "@/components/StreakFlame";
 import { computeTrajectory } from "@/lib/foodTrajectory";
@@ -20,9 +20,15 @@ interface DailyTotals {
 interface FoodHeroCardProps {
   selectedDate: string;   // ISO date "YYYY-MM-DD"
   isToday: boolean;
-  dailyTargets: DailyTargets;
+  /** From useEffectiveTargets() — includes effective finalTarget and caption */
+  dailyTargets: EffectiveTargets;
   dailyTotals: DailyTotals;
   streak: number;
+}
+
+interface TrainingBurnToast {
+  delta: number;
+  source: string;
 }
 
 const MODE_STORAGE_KEY = "tropos.food.calorieRingMode";
@@ -43,7 +49,7 @@ function readInitialMode(): CalorieRingMode {
 }
 
 export default function FoodHeroCard({
-  selectedDate: _selectedDate,
+  selectedDate,
   isToday,
   dailyTargets,
   dailyTotals,
@@ -59,6 +65,23 @@ export default function FoodHeroCard({
   // Previous macro totals for transition detection
   const prevTotalsRef = useRef(dailyTotals);
   const firstMountRef = useRef(true);
+
+  // ── Training-burn toast ────────────────────────────────────────────────
+  // Triggers on finalTarget change, NOT on actualBurn change. This handles
+  // the "strategic covers actual" case: if a strength-phase user lifts
+  // within their strategic surplus, actualBurn increases but finalTarget
+  // does not move → no toast → ring stays put.
+  const [trainingBurnToast, setTrainingBurnToast] =
+    useState<TrainingBurnToast | null>(null);
+  const prevTargetRef = useRef<number | undefined>(undefined);
+  const prevLiftBurnRef = useRef<number>(0);
+  const prevRunBurnRef = useRef<number>(0);
+  // lastLogMomentAt: Option A (local ref in FoodHeroCard). The food-log
+  // handler doesn't live here, but the log moment manifests via dailyTotals
+  // changing — we stamp the ref whenever dailyTotals change, which is the
+  // same signal that triggers the 600ms animation. The toast detection
+  // effect reads this ref to defer itself when a log is in flight.
+  const lastLogMomentAt = useRef<number>(0);
 
   const toggleMode = () => {
     const next: CalorieRingMode = mode === "left" ? "eaten" : "left";
@@ -89,6 +112,10 @@ export default function FoodHeroCard({
       prev.fat !== dailyTotals.fat;
 
     if (!changed) return;
+
+    // Stamp the log moment so the training-burn toast detector can defer
+    // itself when a food log animation is in flight.
+    lastLogMomentAt.current = Date.now();
 
     const targets = {
       protein: dailyTargets.protein,
@@ -149,6 +176,79 @@ export default function FoodHeroCard({
     };
   }, [dailyTotals, dailyTargets.protein, dailyTargets.carbs, dailyTargets.fat, isToday]);
 
+  // ── Toast: reset on date change ──────────────────────────────────────
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    prevTargetRef.current = undefined;
+    prevLiftBurnRef.current = 0;
+    prevRunBurnRef.current = 0;
+    setTrainingBurnToast(null);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [selectedDate]);
+
+  // ── Toast: detection ─────────────────────────────────────────────────
+  const finalTarget = dailyTargets.finalTarget;
+  const actualLiftBurn = dailyTargets.actualLiftBurn;
+  const actualRunBurn = dailyTargets.actualRunBurn;
+  useEffect(() => {
+    if (prevTargetRef.current === undefined) {
+      // Baseline on first render for this date — no toast
+      prevTargetRef.current = finalTarget;
+      prevLiftBurnRef.current = actualLiftBurn;
+      prevRunBurnRef.current = actualRunBurn;
+      return;
+    }
+
+    if (finalTarget <= prevTargetRef.current) {
+      // Downward or unchanged — never fires a toast (handles deletes).
+      // Still update refs so a subsequent upward move has a correct baseline.
+      prevTargetRef.current = finalTarget;
+      prevLiftBurnRef.current = actualLiftBurn;
+      prevRunBurnRef.current = actualRunBurn;
+      return;
+    }
+
+    const delta = finalTarget - prevTargetRef.current;
+    const liftIncreased = actualLiftBurn > prevLiftBurnRef.current;
+    const runIncreased = actualRunBurn > prevRunBurnRef.current;
+    const source =
+      liftIncreased && runIncreased
+        ? "lift + run"
+        : liftIncreased
+          ? "lift"
+          : runIncreased
+            ? "run"
+            : "training";
+
+    // Race resolution — defer by any remaining log-moment time
+    const elapsed = Date.now() - lastLogMomentAt.current;
+    const defer = elapsed < LOG_MOMENT_MS ? LOG_MOMENT_MS - elapsed : 0;
+
+    const show = () => {
+      setTrainingBurnToast({ delta, source });
+      haptic("light");
+    };
+
+    // Update refs BEFORE scheduling — so overlapping upward moves detect
+    // against the latest baseline.
+    prevTargetRef.current = finalTarget;
+    prevLiftBurnRef.current = actualLiftBurn;
+    prevRunBurnRef.current = actualRunBurn;
+
+    if (defer > 0) {
+      const t = setTimeout(show, defer);
+      return () => clearTimeout(t);
+    }
+    show();
+  }, [finalTarget, actualLiftBurn, actualRunBurn]);
+
+  // ── Toast: auto-dismiss after 3s ─────────────────────────────────────
+  useEffect(() => {
+    if (!trainingBurnToast) return;
+    const t = setTimeout(() => setTrainingBurnToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [trainingBurnToast]);
+
   // Build the top-left caption. Suppressed on rest days.
   const caption = dailyTargets.caption;
   const celebrationCaptionText = `DAY ${streak || 1} ✓`;
@@ -195,7 +295,10 @@ export default function FoodHeroCard({
         <StreakFlame streak={streak} celebrate={celebrating} />
       </div>
 
-      {/* Calorie ring */}
+      {/* Calorie ring. Animation note: the kcal-left number animates on every
+          finalTarget change via AnimatedNumber's useEffect([value, ...])
+          (Case A — automatic). No extra wiring needed when the target shifts
+          mid-day due to training burn. */}
       <CalorieRing
         consumed={dailyTotals.calories}
         target={dailyTargets.finalTarget}
@@ -204,6 +307,7 @@ export default function FoodHeroCard({
         trajectoryLabel={trajectoryLabel}
         glowing={celebrating}
         ringDurationMs={LOG_MOMENT_MS}
+        trainingBurnToast={trainingBurnToast}
       />
 
       {/* Whitespace separator — no divider */}

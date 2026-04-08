@@ -96,6 +96,13 @@ export interface UserProfileNutrition {
   targetSugar?: number;
   targetSodium?: number;
   targetWaterGlasses?: number;
+  /**
+   * When true (default), the daily calorie target dynamically reflects the
+   * greater of (a) the program's strategic day-type adjustment or (b) actual
+   * calories burned via completed workouts and runs. When false, the target
+   * uses the planned day type only. See useEffectiveTargets.
+   */
+  adjustCaloriesForTraining?: boolean;
 }
 
 /** Social and privacy settings */
@@ -188,6 +195,7 @@ function createDefaultProfile(
     subscriptionTier: "free",
     currentStreak: 0,
     lastLogDate: null,
+    adjustCaloriesForTraining: true,
     program: {
       goal: "recomp",
       startWeight: 70,
@@ -215,6 +223,9 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
     subscriptionTier: (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
     currentStreak: (data.currentStreak as number) ?? 0,
     lastLogDate: (data.lastLogDate as string | null) ?? null,
+    // Training-aware calorie target — defaults to true for existing users who
+    // don't have the field set yet.
+    adjustCaloriesForTraining: (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
     program: {
       goal: ((data.program as Record<string, unknown>)?.goal as UserProfile["program"] extends { goal: infer G } ? G : never) ?? "recomp",
       startWeight: ((data.program as Record<string, unknown>)?.startWeight as number) ?? 0,

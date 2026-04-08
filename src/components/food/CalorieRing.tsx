@@ -18,6 +18,12 @@ interface CalorieRingProps {
   glowing?: boolean;
   /** Main ring redraw duration in seconds. Default 1.5. */
   ringDurationMs?: number;
+  /**
+   * Transient training-burn notice. When non-null, shows "+{delta} · {source}"
+   * beneath the centre label for ~3s. Parent owns the lifecycle (detection,
+   * lastLogMomentAt race, auto-dismiss). Null to hide.
+   */
+  trainingBurnToast?: { delta: number; source: string } | null;
 }
 
 // New dimensions per spec: 160px diameter, ~10px stroke
@@ -50,6 +56,7 @@ export default function CalorieRing({
   trajectoryLabel,
   glowing = false,
   ringDurationMs = 1500,
+  trainingBurnToast = null,
 }: CalorieRingProps) {
   const reduce = useReducedMotion();
   const id = useId();
@@ -208,6 +215,23 @@ export default function CalorieRing({
                   {trajectoryLabel}
                 </p>
               )}
+              {/* Training-burn toast — transient, ~3s lifetime. Lives below
+                  the trajectory line (or directly below KCAL LEFT when no
+                  trajectory is showing). */}
+              <AnimatePresence>
+                {trainingBurnToast && (
+                  <motion.p
+                    key="training-burn-toast"
+                    initial={reduce ? false : { opacity: 0, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduce ? { opacity: 0 } : { opacity: 0, y: -2 }}
+                    transition={{ duration: reduce ? 0 : 0.2 }}
+                    className="text-[10px] mt-1 text-muted-foreground/80 tabular-nums"
+                  >
+                    +{Math.round(trainingBurnToast.delta)} · {trainingBurnToast.source}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </motion.div>
           </AnimatePresence>
         ) : (

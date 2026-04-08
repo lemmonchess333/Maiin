@@ -56,21 +56,35 @@ export default function MacroColumn({
   // Pulse-once-on-cross: compare current consumed against previous, fire a
   // one-shot opacity pulse via an imperative animate() call on a MotionValue.
   // No setState → avoids react-hooks/set-state-in-effect lint rule.
-  const prevRef = useRef<number>(consumed);
+  //
+  // Guard against target shifts: we compare prev INTAKE against the PREVIOUS
+  // target (not the current one). If the target moves because the effective
+  // day type changed (e.g. lift → both), we do NOT fire a pulse — that's a
+  // target shift, not an intake crossing. Only user-driven intake that
+  // crosses the previous target threshold fires the pulse.
+  const prevConsumedRef = useRef<number>(consumed);
+  const prevTargetRef = useRef<number>(target);
   const firstMountRef = useRef(true);
   const pulseOpacity = useMotionValue(1);
 
   useEffect(() => {
     if (firstMountRef.current) {
       firstMountRef.current = false;
-      prevRef.current = consumed;
+      prevConsumedRef.current = consumed;
+      prevTargetRef.current = target;
       return;
     }
 
-    const prev = prevRef.current;
-    prevRef.current = consumed;
+    const prevConsumed = prevConsumedRef.current;
+    const prevTarget = prevTargetRef.current;
+    prevConsumedRef.current = consumed;
+    prevTargetRef.current = target;
 
-    const justCrossed = prev <= target && consumed > target;
+    const intakeIncreased = consumed > prevConsumed;
+    const crossedPrevTarget =
+      prevConsumed <= prevTarget && consumed > prevTarget;
+    const justCrossed = intakeIncreased && crossedPrevTarget;
+
     if (justCrossed && !reduce) {
       const controls = animate(pulseOpacity, [1, 0.6, 1], {
         duration: 0.4,
