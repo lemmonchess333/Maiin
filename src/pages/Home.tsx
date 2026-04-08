@@ -34,6 +34,7 @@ import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
 
+import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import StackedCTACards from "@/components/home/StackedCTACards";
@@ -315,25 +316,11 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <motion.div key={streak}
-              initial={streakBounce ? { scale: 1.15 } : undefined}
-              animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
-              className={cn("flex items-center gap-1 px-2 py-1 rounded-full", streak > 0 ? "" : "bg-muted")}
-              style={streak > 0 ? { background: "rgba(251,146,60,0.06)" } : undefined}>
-              <motion.span
-                animate={
-                  streak > 0 ? { opacity: [0.7, 1, 0.7], scale: 1 } : { opacity: 0.4, scale: 1 }
-                }
-                transition={
-                  streak > 0 ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 }
-                }
-              >
-                <Flame className={cn("w-4 h-4", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
-              </motion.span>
-              <span className={cn("text-sm font-semibold", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
-                <motion.span>{streakDisplay}</motion.span>
-              </span>
-            </motion.div>
+            <StreakFlame
+              streak={streak}
+              bounce={streakBounce}
+              display={<motion.span>{streakDisplay}</motion.span>}
+            />
             <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
               <SettingsIcon aria-hidden="true" className="w-4.5 h-4.5 text-muted-foreground/60" />
             </Link>

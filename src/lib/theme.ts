@@ -81,13 +81,6 @@ export const THEME = {
 
 export type MacroKey = keyof typeof THEME.macros;
 
-export const macroPastels: Record<MacroKey, string> = {
-  calories: "rgba(254, 226, 226, 0.5)",
-  protein: "rgba(252, 231, 243, 0.5)",
-  carbs: "rgba(219, 234, 254, 0.5)",
-  fat: "rgba(254, 249, 195, 0.4)",
-};
-
 /** Over-target colour: amber for modest overshoot (≤15%), deep red for substantial. */
 export function getOverTargetColor(consumed: number, target: number): string {
   if (target <= 0) return "#B91C1C";
