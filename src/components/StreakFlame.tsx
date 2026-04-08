@@ -23,6 +23,11 @@ export function StreakFlame({
   celebrate,
   display,
 }: StreakFlameProps) {
+  // Hide entirely at zero — a flame labelled "0" reads as a failure
+  // indicator. This early return is safe because the component uses no
+  // React hooks; only framer-motion's motion.div/motion.span.
+  if (streak <= 0) return null;
+
   const active = streak > 0;
 
   return (

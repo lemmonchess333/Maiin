@@ -40,6 +40,7 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useStreaks } from "@/features/streaks/useStreaks";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import { useScanUsage } from "@/hooks/useScanUsage";
@@ -66,7 +67,8 @@ interface OFFResult {
 }
 
 export default function Food() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { currentStreak } = useStreaks();
   const { saveLog } = useDailyLogs();
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -634,7 +636,7 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          streak={profile?.currentStreak ?? 0}
+          streak={currentStreak}
         />
       </motion.div>
 

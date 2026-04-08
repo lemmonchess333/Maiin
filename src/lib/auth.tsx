@@ -39,6 +39,11 @@ export interface UserProfileFitness {
   heightCm: number;
   weeklyWorkoutsTarget: number;
   weeklyMealsTarget: number;
+  /**
+   * @deprecated Use `useStreaks().currentStreak`. This field is retained on the
+   * type to preserve backwards compatibility with existing Firestore docs, but
+   * is no longer written by the app. It will be removed in a follow-up PR.
+   */
   currentStreak: number;
   lastLogDate: string | null;
   goal?: string;

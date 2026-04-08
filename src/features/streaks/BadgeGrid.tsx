@@ -5,7 +5,7 @@ import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
-  const { streakData, earnedBadges } = useStreaks();
+  const { currentStreak, longestStreak, allBadges, earnedBadges } = useStreaks();
 
   const categories = Object.keys(CATEGORY_LABELS) as BadgeDef["category"][];
 
@@ -14,11 +14,11 @@ export function BadgeGrid() {
       {/* Streak summary */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-orange-500">{streakData.currentStreak}</p>
+          <p className="text-2xl font-bold text-orange-500">{currentStreak}</p>
           <p className="text-xs text-muted-foreground">Current Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-primary">{streakData.longestStreak}</p>
+          <p className="text-2xl font-bold text-primary">{longestStreak}</p>
           <p className="text-xs text-muted-foreground">Longest Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
@@ -29,7 +29,7 @@ export function BadgeGrid() {
 
       {/* Badges by category */}
       {categories.map((cat) => {
-        const badges = streakData.badges.filter((b) => b.category === cat);
+        const badges = allBadges.filter((b) => b.category === cat);
         if (badges.length === 0) return null;
 
         return (
