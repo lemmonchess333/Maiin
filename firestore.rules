@@ -43,7 +43,8 @@ service cloud.firestore {
         'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes', 'lastActiveAt',
         'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
-        'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId'
+        'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
+        'adjustCaloriesForTraining'
       ];
     }
 
