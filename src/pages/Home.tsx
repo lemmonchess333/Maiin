@@ -48,20 +48,6 @@ import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsight
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
-function computeStreak(workoutDates: string[]): number {
-  if (!workoutDates.length) return 0;
-  const uniqueDates = [...new Set(workoutDates)].sort().reverse();
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
-  if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) return 0;
-  let streak = 1;
-  for (let i = 1; i < uniqueDates.length; i++) {
-    if ((new Date(uniqueDates[i-1]).getTime() - new Date(uniqueDates[i]).getTime()) / 86400000 === 1) streak++;
-    else break;
-  }
-  return streak;
-}
-
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
@@ -72,7 +58,7 @@ export default function Home() {
   const { programState, loading: programLoading } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
-  const { newBadge, dismissNewBadge } = useStreaks();
+  const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
   const [prevHealthScore, setPrevHealthScore] = useState<number | null>(null);
   const prevStreakRef = useRef<number>(0);
@@ -104,12 +90,7 @@ export default function Home() {
   }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
 
   const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
-  const streak = useMemo(function() { return computeStreak(workouts.map(function(w) { return w.date; })); }, [workouts]);
   const streakDisplay = useCountUp(streak, { sessionKey: "streak", duration: 0.5 });
-
-  useEffect(function() {
-    if (profile && streak !== profile.currentStreak) updateProfile({ currentStreak: streak });
-  }, [streak, profile, updateProfile]);
 
   useEffect(function() {
     if (streak > prevStreakRef.current && prevStreakRef.current > 0) {

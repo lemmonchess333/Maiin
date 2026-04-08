@@ -15,6 +15,8 @@ export interface BadgeDef {
   lucideIcon: string;
   tier: BadgeTier;
   category: "consistency" | "lifting" | "running" | "nutrition" | "hybrid";
+  /** Streak threshold (days). When set, useStreaks awards this badge once currentStreak >= threshold. */
+  threshold?: number;
 }
 
 export interface EarnedBadge extends BadgeDef {
@@ -23,10 +25,14 @@ export interface EarnedBadge extends BadgeDef {
 
 export const BADGE_DEFINITIONS: BadgeDef[] = [
   // Consistency
-  { id: "first_step", name: "First Step", description: "Log your first meal or workout", icon: "footprints", lucideIcon: "Footprints", tier: "bronze", category: "consistency" },
-  { id: "week_warrior", name: "Week Warrior", description: "7-day streak", icon: "flame", lucideIcon: "Flame", tier: "silver", category: "consistency" },
-  { id: "month_master", name: "Month Master", description: "30-day streak", icon: "gem", lucideIcon: "Gem", tier: "gold", category: "consistency" },
-  { id: "century_club", name: "Century Club", description: "100-day streak", icon: "medal", lucideIcon: "Medal", tier: "platinum", category: "consistency" },
+  { id: "first_step", name: "First Step", description: "Log your first meal or workout", icon: "footprints", lucideIcon: "Footprints", tier: "bronze", category: "consistency", threshold: 1 },
+  { id: "three_day", name: "Getting Started", description: "3-day streak", icon: "sparkles", lucideIcon: "Sparkles", tier: "bronze", category: "consistency", threshold: 3 },
+  { id: "week_warrior", name: "Week Warrior", description: "7-day streak", icon: "flame", lucideIcon: "Flame", tier: "silver", category: "consistency", threshold: 7 },
+  { id: "two_week", name: "Two Week Wonder", description: "14-day streak", icon: "flame", lucideIcon: "Flame", tier: "silver", category: "consistency", threshold: 14 },
+  { id: "month_master", name: "Month Master", description: "30-day streak", icon: "gem", lucideIcon: "Gem", tier: "gold", category: "consistency", threshold: 30 },
+  { id: "two_month", name: "Locked In", description: "60-day streak", icon: "lock", lucideIcon: "Lock", tier: "gold", category: "consistency", threshold: 60 },
+  { id: "century_club", name: "Century Club", description: "100-day streak", icon: "medal", lucideIcon: "Medal", tier: "platinum", category: "consistency", threshold: 100 },
+  { id: "year_long", name: "Year of Tropos", description: "365-day streak", icon: "trophy", lucideIcon: "Trophy", tier: "platinum", category: "consistency", threshold: 365 },
   { id: "early_bird", name: "Early Bird", description: "Log before 7am for 5 days", icon: "sunrise", lucideIcon: "Sunrise", tier: "bronze", category: "consistency" },
 
   // Lifting
@@ -53,6 +59,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
 
   // Hybrid
   { id: "hybrid_athlete", name: "Hybrid Athlete", description: "Log both a lift and run in one week", icon: "sparkles", lucideIcon: "Sparkles", tier: "bronze", category: "hybrid" },
+  { id: "balanced", name: "Balanced", description: "5 lifts + 5 runs in 14 days", icon: "scale", lucideIcon: "Scale", tier: "silver", category: "hybrid" },
   { id: "iron_runner", name: "Iron Runner", description: "3 lifts + 3 runs in one week", icon: "crown", lucideIcon: "Crown", tier: "silver", category: "hybrid" },
   { id: "triple_threat", name: "Triple Threat", description: "Hit nutrition, lift, and run targets same day", icon: "star", lucideIcon: "Star", tier: "gold", category: "hybrid" },
   { id: "ultimate_athlete", name: "Ultimate Athlete", description: "Earn 15 badges", icon: "trophy", lucideIcon: "Trophy", tier: "platinum", category: "hybrid" },
