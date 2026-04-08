@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Cookie } from "lucide-react";
+import { Beef, Wheat, Cookie, Info, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
+import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { StreakFlame } from "@/components/StreakFlame";
 import { computeTrajectory } from "@/lib/foodTrajectory";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
@@ -61,6 +62,13 @@ export default function FoodHeroCard({
   // Celebration state — driven by a log that completes all three macros today
   const [celebrating, setCelebrating] = useState(false);
   const [showCelebrationCaption, setShowCelebrationCaption] = useState(false);
+
+  // First-time explainer for the "+250 FUEL" adjustment in the caption.
+  // Keyed so it's independent of the Home welcome card. Shows once per
+  // user, dismissible via X or a tap-outside. Never auto-fires on rest
+  // days because there's no adjustment to explain.
+  const { showCoachMarks: showFuelExplainer, dismiss: dismissFuelExplainer } =
+    useCoachMarks("food-fuel-caption");
 
   // Previous macro totals for transition detection
   const prevTotalsRef = useRef(dailyTotals);
@@ -251,6 +259,24 @@ export default function FoodHeroCard({
 
   // Build the top-left caption. Suppressed on rest days.
   const caption = dailyTargets.caption;
+
+  // Fuel explainer visibility: only when there's an actual adjustment to
+  // explain AND the user hasn't dismissed it yet AND we're not mid-celebration
+  // (don't stomp on "DAY N ✓"). Boolean so the auto-dismiss effect below
+  // only triggers on the visibility transition, not on every caption update.
+  const shouldShowFuelExplainer =
+    showFuelExplainer &&
+    !!caption &&
+    !!caption.adjustment &&
+    !showCelebrationCaption;
+
+  // Auto-dismiss the explainer after 10 seconds so it doesn't linger if the
+  // user ignores it. Marks it seen permanently, same as tapping the X.
+  useEffect(() => {
+    if (!shouldShowFuelExplainer) return;
+    const t = setTimeout(() => dismissFuelExplainer(), 10000);
+    return () => clearTimeout(t);
+  }, [shouldShowFuelExplainer, dismissFuelExplainer]);
   const celebrationCaptionText = `DAY ${streak || 1} ✓`;
 
   // Trajectory line
@@ -294,6 +320,44 @@ export default function FoodHeroCard({
         </div>
         <StreakFlame streak={streak} celebrate={celebrating} />
       </div>
+
+      {/* First-time explainer for the caption's calorie adjustment. Shown
+          once per user (keyed via useCoachMarks("food-fuel-caption")), fades
+          in below the top row, dismissible via X, auto-dismissed after 10s. */}
+      <AnimatePresence initial={false}>
+        {shouldShowFuelExplainer && (
+          <motion.div
+            key="fuel-explainer"
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50">
+              <Info
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                style={{ color: THEME.lifting }}
+                aria-hidden="true"
+              />
+              <p className="flex-1 text-xs leading-snug text-muted-foreground">
+                Your calorie target is higher today to fuel your planned workout.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  dismissFuelExplainer();
+                }}
+                aria-label="Dismiss explainer"
+                className="p-0.5 -m-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Calorie ring. Animation note: the kcal-left number animates on every
           finalTarget change via AnimatedNumber's useEffect([value, ...])
