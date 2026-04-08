@@ -22,13 +22,11 @@ import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { parseVoiceInput, formatParsedItems } from "@/lib/voiceFoodParser";
 import {
-  Dumbbell,
   ChevronLeft,
   ChevronRight,
   Flame,
   Trash2,
   CalendarDays,
-  Footprints,
   Plus,
   Mic,
   SendHorizontal,
@@ -43,8 +41,7 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
-import MacroRow from "@/components/food/MacroRow";
-import CalorieRing from "@/components/food/CalorieRing";
+import FoodHeroCard from "@/components/food/FoodHeroCard";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
@@ -69,7 +66,7 @@ interface OFFResult {
 }
 
 export default function Food() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { saveLog } = useDailyLogs();
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -625,31 +622,19 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
-      {/* Day-type context */}
-      <AnimatePresence>
-        {isToday && dailyTargets.dayType !== "rest" && dailyTargets.annotation && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="text-[11px] font-medium flex items-center gap-1"
-            style={{ color: dailyTargets.dayType === "run" ? THEME.running : THEME.lifting }}
-          >
-            {dailyTargets.dayType === "lift" ? <Dumbbell className="w-3 h-3" /> : dailyTargets.dayType === "run" ? <Footprints className="w-3 h-3" /> : <><Dumbbell className="w-3 h-3" /><Footprints className="w-3 h-3" /></>}
-            {dailyTargets.annotation}
-          </motion.p>
-        )}
-      </AnimatePresence>
-
-      {/* Macro Tiles */}
+      {/* Hero card — ring + macros + streak on a single white card */}
       <motion.div variants={itemVariant} key={selectedDate}>
-        <div className="mb-4">
-          <CalorieRing consumed={dailyTotals.calories} target={macroTargets.calories} />
-        </div>
-        <MacroRow
-          macros={["protein", "carbs", "fat"]}
-          dailyTotals={dailyTotals}
-          macroTargets={macroTargets}
+        <FoodHeroCard
+          selectedDate={selectedDate}
+          isToday={isToday}
+          dailyTargets={dailyTargets}
+          dailyTotals={{
+            calories: dailyTotals.calories,
+            protein: dailyTotals.protein,
+            carbs: dailyTotals.carbs,
+            fat: dailyTotals.fat,
+          }}
+          streak={profile?.currentStreak ?? 0}
         />
       </motion.div>
 
