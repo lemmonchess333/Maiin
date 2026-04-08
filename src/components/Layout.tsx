@@ -20,10 +20,10 @@ function useQueueCount(isOnline: boolean): number {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
-const tabs: { to: string; icon: typeof Home | null; label: string; elevated?: boolean }[] = [
+const tabs: { to: string; icon: typeof Home; label: string }[] = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/program", icon: Dumbbell, label: "Program" },
-  { to: "/food", icon: null, label: "Food", elevated: true },
+  { to: "/food", icon: UtensilsCrossed, label: "Food" },
   { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "History" },
 ];
@@ -128,58 +128,7 @@ export default function Layout() {
         <div className="max-w-md mx-auto flex items-end" role="tablist">
           {tabs.map((tab) => {
             const hasBadge = tab.to === "/social" && unreadCount > 0;
-
-            // Elevated centre food button
-            if (tab.elevated) {
-              const isActive = location.pathname === tab.to;
-              return (
-                <NavLink
-                  key={tab.to}
-                  to={tab.to}
-                  aria-label={tab.label}
-                  onClick={() => haptic('light')}
-                  className="flex-1 flex flex-col items-center py-3"
-                >
-                  {/* Elevated circle */}
-                  <motion.div
-                    whileTap={prefersReducedMotion ? undefined : { scale: 0.9 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    className="relative -mt-8 mb-1"
-                  >
-                    <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center"
-                      style={{
-                        background: "linear-gradient(135deg, #f07368, #f09060)",
-                        boxShadow: "0 6px 20px rgba(240, 115, 104, 0.25)",
-                      }}
-                    >
-                      <UtensilsCrossed className="w-5 h-5 text-white" />
-                    </div>
-                  </motion.div>
-                  <span className={cn(
-                    "text-xs font-medium tracking-wide",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {tab.label}
-                  </span>
-                  {/* Active indicator dot */}
-                  {isActive && (
-                    prefersReducedMotion ? (
-                      <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />
-                    ) : (
-                      <motion.div
-                        layoutId="tab-indicator"
-                        className="w-1 h-1 rounded-full bg-primary mt-0.5"
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      />
-                    )
-                  )}
-                </NavLink>
-              );
-            }
-
-            // Standard tab
-            const Icon = tab.icon!;
+            const Icon = tab.icon;
             return (
               <NavLink
                 key={tab.to}
