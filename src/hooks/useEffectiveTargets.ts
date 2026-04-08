@@ -11,8 +11,9 @@ import {
 import { format } from "date-fns";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
-import { getAdjustedTargets, getDayAdjustment } from "@/lib/phaseNutrition";
+import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
+import { computeEffectiveBonus } from "@/lib/effectiveTargets";
 import {
   useDailyTargets,
   type DailyTargets,
@@ -73,23 +74,6 @@ interface WorkoutRow {
 interface RunRow {
   completedAt: Timestamp | null;
   calories: number;
-}
-
-/**
- * Determine the effective day type from completed activity.
- * Falls back to the planned day type when no activity is completed.
- */
-function deriveEffectiveDayType(
-  liftBurn: number,
-  runBurn: number,
-  plannedDayType: DayType,
-): DayType {
-  const hasLifts = liftBurn > 0;
-  const hasRuns = runBurn > 0;
-  if (hasLifts && hasRuns) return "both";
-  if (hasLifts) return "lift";
-  if (hasRuns) return "run";
-  return plannedDayType;
 }
 
 export function useEffectiveTargets(date?: Date): EffectiveTargets {
@@ -210,23 +194,23 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       }
     }, 0);
 
-    const actualBurn = actualLiftBurn + actualRunBurn;
-    const hasCompletedActivity = actualBurn > 0;
-
-    // Effective day type from reality, with scheduled fallback
-    const effectiveDayType = deriveEffectiveDayType(
-      actualLiftBurn,
-      actualRunBurn,
-      planned.dayType,
-    );
-
-    // Recompute strategic bonus for the EFFECTIVE day type
+    // Delegate the "max of strategy and reality" rule to the pure helper
+    // (see src/lib/effectiveTargets.ts — covered by 9-scenario unit tests).
     const phase = profile.program?.currentPhase || "base";
     const goal = profile.program?.goal;
-    const strategicBonus = getDayAdjustment(effectiveDayType, phase, goal)
-      .calorieAdjustment;
-
-    const effectiveBonus = Math.max(strategicBonus, Math.round(actualBurn));
+    const {
+      effectiveDayType,
+      actualBurn,
+      strategicBonus,
+      effectiveBonus,
+      hasCompletedActivity,
+    } = computeEffectiveBonus({
+      actualLiftBurn,
+      actualRunBurn,
+      plannedDayType: planned.dayType,
+      phase,
+      goal,
+    });
 
     // Recompute macros for the effective day type. Note: protein is stable
     // across day types (depends on phase/goal, not dayType), so only carbs
