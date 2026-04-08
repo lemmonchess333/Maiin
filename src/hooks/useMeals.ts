@@ -62,7 +62,11 @@ export function useMeals() {
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
 
-  const PAGE_SIZE = 100;
+  // 400 matches the useStreaks window — an active user logging 4-6 meals/day
+  // hits 100 in ~17 days and their history silently truncates. 400 covers
+  // ~67 days of heavy logging with headroom for the 365-day streak badge
+  // calculations that read meals as a signal.
+  const PAGE_SIZE = 400;
 
   useEffect(() => {
     if (!user) {

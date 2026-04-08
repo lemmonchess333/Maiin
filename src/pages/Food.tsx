@@ -82,6 +82,14 @@ export default function Food() {
   // lives here (at the page level), not per-row or per-section. Food rows
   // receive `isOpen` and `onOpenChange` as props — no context, no refs.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
+
+  // Optimistic delete: meals are immediately hidden from the visible list +
+  // hero card totals when deleted, then actually removed from Firestore 3s
+  // later. Tapping Undo on the toast within that window restores the row.
+  // Gmail/Twitter/iOS Mail pattern — instant feedback + safe rollback.
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
@@ -146,7 +154,7 @@ export default function Food() {
 
   const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
   const todaysMeals = getMealsForDate(selectedDate);
-  const dailyTotals = getDailyTotals(selectedDate);
+  const rawDailyTotals = getDailyTotals(selectedDate);
 
   const [prevDate, setPrevDate] = useState(selectedDate);
   if (prevDate !== selectedDate) {
@@ -175,14 +183,50 @@ export default function Food() {
   const MEAL_ORDER = ["breakfast", "lunch", "snacks", "dinner"] as const;
   const MEAL_LABELS: Record<string, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snacks: "Snacks" };
 
+  // Visible meals = all of today's meals minus any that are pending delete.
+  // Used for meal sections, hero card totals, and the food row list so the
+  // user sees an instant disappearance while the 3s undo window is active.
+  const visibleTodaysMeals = useMemo(
+    () =>
+      pendingDeleteIds.size === 0
+        ? todaysMeals
+        : todaysMeals.filter((m) => !pendingDeleteIds.has(m.id)),
+    [todaysMeals, pendingDeleteIds]
+  );
+
+  // Optimistic daily totals — the hero card's ring and macro columns reflect
+  // the pending-delete state instantly. If the user undoes, the ring ticks
+  // back up.
+  const dailyTotals = useMemo(() => {
+    if (pendingDeleteIds.size === 0) return rawDailyTotals;
+    let calories = rawDailyTotals.calories;
+    let protein = rawDailyTotals.protein;
+    let carbs = rawDailyTotals.carbs;
+    let fat = rawDailyTotals.fat;
+    for (const m of todaysMeals) {
+      if (!pendingDeleteIds.has(m.id)) continue;
+      calories -= safeNum(m.totalCalories);
+      protein -= safeNum(m.totalProtein);
+      carbs -= safeNum(m.totalCarbs);
+      fat -= safeNum(m.totalFat);
+    }
+    return {
+      ...rawDailyTotals,
+      calories,
+      protein,
+      carbs,
+      fat,
+    };
+  }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
+
   const mealSegmentedMeals = useMemo(() => {
-    const segments: Record<string, typeof todaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
-    for (const meal of todaysMeals) {
+    const segments: Record<string, typeof visibleTodaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+    for (const meal of visibleTodaysMeals) {
       const cat = getMealCategory(meal);
       segments[cat].push(meal);
     }
     return segments;
-  }, [todaysMeals]);
+  }, [visibleTodaysMeals]);
 
   // Yesterday's meals for "Copy from yesterday" feature
   const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
@@ -461,11 +505,40 @@ export default function Food() {
   };
 
   const handleDeleteMeal = (mealId: string, foodName: string) => {
+    // 1. Optimistic hide — the row disappears instantly and the hero card
+    //    totals update as if the meal is gone. Close any open swipe state
+    //    so the UI settles cleanly.
+    setPendingDeleteIds((prev) => {
+      const next = new Set(prev);
+      next.add(mealId);
+      return next;
+    });
+    setOpenRowId(null);
+
+    // 2. Schedule the actual Firestore delete after the undo window.
     const timeoutId = setTimeout(() => {
       deleteMeal(mealId);
+      setPendingDeleteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(mealId);
+        return next;
+      });
     }, 3000);
+
+    // 3. Toast with Undo. If the user taps it, cancel the timer AND remove
+    //    the id from pending — the row reappears, ring ticks back up, done.
     toast(`${foodName} deleted`, {
-      action: { label: "Undo", onClick: () => clearTimeout(timeoutId) },
+      action: {
+        label: "Undo",
+        onClick: () => {
+          clearTimeout(timeoutId);
+          setPendingDeleteIds((prev) => {
+            const next = new Set(prev);
+            next.delete(mealId);
+            return next;
+          });
+        },
+      },
       duration: 3000,
     });
   };
