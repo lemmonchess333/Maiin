@@ -352,12 +352,12 @@ export default function History() {
                   <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
               ) : runs.length === 0 ? (
-                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.running}14` }}>
+                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)" }}>
                   <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Complete your first run to see running analytics here</p>
                   </div>
-                  <Link to="/run" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})` }}>
+                  <Link to="/run" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.running }}>
                     Start Run
                   </Link>
                 </div>
@@ -446,8 +446,8 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
-              <div className="rounded-xl bg-card overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${THEME.lifting}08 0%, transparent 60%)` }}>
+              <div className="rounded-2xl bg-card overflow-hidden"
+                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)" }}>
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
                   <Trophy size={16} className="text-amber-500" />
                   <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
@@ -548,12 +548,12 @@ export default function History() {
               </SectionErrorBoundary>
 
               {nutrition.avgCalories === 0 && (
-                <div className="p-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${THEME.success}14` }}>
+                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)" }}>
                   <UtensilsCrossed className="w-5 h-5 shrink-0" style={{ color: THEME.success }} />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Log meals to see your nutrition trends here</p>
                   </div>
-                  <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: `linear-gradient(135deg, ${THEME.success}, ${THEME.teal})` }}>
+                  <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.success }}>
                     Log Meal
                   </Link>
                 </div>
