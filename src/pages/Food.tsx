@@ -554,11 +554,11 @@ export default function Food() {
     // 2. Schedule the actual Firestore delete after the undo window.
     const timeoutId = setTimeout(() => {
       deleteMeal(mealId);
-      setPendingDeleteIds((prev) => {
-        const next = new Set(prev);
-        next.delete(mealId);
-        return next;
-      });
+      // Don't remove from pendingDeleteIds here. The Firestore onSnapshot
+      // will drop the meal from the meals array, making the pending ID a
+      // harmless no-op filter on a non-existent entry. Removing from pending
+      // BEFORE onSnapshot confirms the delete causes a brief flash where the
+      // meal reappears in the list (the "automatically adds back" bug).
     }, 3000);
 
     // 3. Toast with Undo. If the user taps it, cancel the timer AND remove
