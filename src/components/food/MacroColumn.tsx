@@ -123,9 +123,15 @@ export default function MacroColumn({
       </p>
 
       {/* Progress bar */}
+      {/* Track — inset shadow reads as a recessed channel cut into the
+          white card surface, with the coloured fill sitting inside the
+          groove. Shadow is deliberately subtle (0.06 opacity). */}
       <div
         className="w-full mt-2.5 h-1.5 rounded-full overflow-hidden"
-        style={{ background: "#F2F2F7" }}
+        style={{
+          background: "#F2F2F7",
+          boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
+        }}
       >
         <motion.div
           className="h-full rounded-full"

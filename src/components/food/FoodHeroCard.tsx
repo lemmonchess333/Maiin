@@ -284,8 +284,18 @@ export default function FoodHeroCard({
     ? computeTrajectory(dailyTotals.calories, dailyTargets.finalTarget)
     : null;
 
+  // Card surface gradient (#FFFFFF to #FAFAFA, 1.6% lightness shift) adds
+  // imperceptible depth. Shadow bumped 1.2x vs Health Score to restore
+  // proportional weight on the taller card.
+  // TODO: dark mode needs a dark-surface gradient.
   return (
-    <div className="p-4 rounded-2xl bg-card shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+    <div
+      className="p-4 rounded-2xl"
+      style={{
+        background: "linear-gradient(to bottom, #FFFFFF 0%, #FAFAFA 100%)",
+        boxShadow: "0 2.4px 9.6px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
+      }}
+    >
       {/* Top row: caption + streak flame */}
       <div className="flex items-start justify-between mb-4 min-h-[20px]">
         <div className="flex-1 min-w-0">

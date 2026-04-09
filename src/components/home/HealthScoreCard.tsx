@@ -34,9 +34,24 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
               <div className="relative w-24 h-24 flex-shrink-0">
                 <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]"
                   style={{ filter: hasScore && score >= 70 ? `drop-shadow(0 0 10px ${zoneColor}35)` : undefined }}>
+                  {/* Apple Activity Rings-style gradient — lighter at the
+                      start of the arc, deeper at the end. Uses stopOpacity
+                      so it works with any dynamic zoneColor. The -135° CSS
+                      rotation on the SVG tilts the gradient to match the
+                      arc orientation automatically. */}
+                  <defs>
+                    <linearGradient
+                      id="healthRingFill"
+                      x1="0" y1="0" x2="0" y2="100"
+                      gradientUnits="userSpaceOnUse"
+                    >
+                      <stop offset="0%" stopColor={zoneColor} stopOpacity={0.5} />
+                      <stop offset="100%" stopColor={zoneColor} stopOpacity={1} />
+                    </linearGradient>
+                  </defs>
                   <circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor + "1A"} strokeWidth={stroke}
                     strokeDasharray={arcLength + " " + circumference} strokeLinecap="round" />
-                  <motion.circle cx="50" cy="50" r={radius} fill="none" stroke={zoneColor} strokeWidth={stroke}
+                  <motion.circle cx="50" cy="50" r={radius} fill="none" stroke="url(#healthRingFill)" strokeWidth={stroke}
                     strokeDasharray={arcLength + " " + circumference} strokeLinecap="round"
                     initial={{ strokeDashoffset: arcLength }}
                     animate={{ strokeDashoffset: offset }}

@@ -62,6 +62,7 @@ export default function CalorieRing({
   const id = useId();
   const ringGradientId = `calorie-ring-gradient${id}`;
   const overflowGradientId = `calorie-overflow-gradient${id}`;
+  const trackFilterId = `calorie-track-inset${id}`;
 
   const hasTarget = target > 0;
   const remaining = hasTarget ? target - consumed : 0;
@@ -120,18 +121,44 @@ export default function CalorieRing({
     >
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full">
         <defs>
-          <linearGradient id={ringGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#DC2626" />
-            <stop offset="100%" stopColor="#F87171" />
+          {/* Apple Activity Rings-style gradient — lighter at the top of the
+              arc (12 o'clock), deeper at the bottom. Uses userSpaceOnUse so
+              the gradient is anchored to the SVG viewport, not to the
+              rotated <g>. The -90° rotation on <g> starts the arc at 12
+              o'clock; this vertical gradient naturally aligns lighter at
+              the arc start and deeper at the arc end. */}
+          <linearGradient
+            id={ringGradientId}
+            x1="0" y1="0" x2="0" y2={SIZE}
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#FCA5A5" />
+            <stop offset="100%" stopColor="#EF4444" />
           </linearGradient>
           <linearGradient id={overflowGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#7F1D1D" />
             <stop offset="100%" stopColor="#B91C1C" />
           </linearGradient>
+          {/* Inset shadow filter for the track circle — makes it read as a
+              recessed groove cut into the white card surface rather than a
+              flat painted shape. Uses feComposite operator="out" to invert
+              the blur into a true inner shadow (regular drop-shadow would
+              make it look like it's floating). */}
+          <filter id={trackFilterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+            <feOffset in="blur" dx="0" dy="1" result="offsetBlur" />
+            <feComposite in="offsetBlur" in2="SourceAlpha" operator="out" result="innerShadow" />
+            <feFlood floodColor="#000000" floodOpacity="0.08" result="colour" />
+            <feComposite in="colour" in2="innerShadow" operator="in" result="colouredShadow" />
+            <feMerge>
+              <feMergeNode in="SourceGraphic" />
+              <feMergeNode in="colouredShadow" />
+            </feMerge>
+          </filter>
         </defs>
 
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
-          {/* Track */}
+          {/* Track — inset shadow filter makes it read as a recessed groove */}
           <circle
             cx={CENTER}
             cy={CENTER}
@@ -139,6 +166,7 @@ export default function CalorieRing({
             fill="none"
             stroke={trackColor}
             strokeWidth={STROKE}
+            filter={`url(#${trackFilterId})`}
           />
           {/* Progress */}
           {hasTarget && (
