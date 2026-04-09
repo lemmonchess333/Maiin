@@ -7,6 +7,7 @@ import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 import { formatCalories, formatMacro, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const itemVariant = {
@@ -90,6 +91,11 @@ export default function Food() {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(
     () => new Set()
   );
+
+  // Copy-from-yesterday: tracks which meal section is being copied so the
+  // pill stays disabled until the Firestore subscription propagates the new
+  // entries and the section actually becomes populated. Prevents double-taps.
+  const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
@@ -260,6 +266,36 @@ export default function Food() {
     haptic(15);
     toast.success(`Copied ${items.length} item${items.length > 1 ? "s" : ""} from yesterday`);
   };
+
+  // Wrapper with double-tap guard — disables the pill while Firestore
+  // propagates the new entries. Clears via the effect below, not setTimeout.
+  const handleCopyFromYesterday = async (mealKey: string) => {
+    if (copyingMealKey) return;
+    setCopyingMealKey(mealKey);
+    haptic("light");
+    try {
+      await copyFromYesterday(mealKey);
+      // Don't clear state here — the effect below clears it when the
+      // section actually becomes populated via the Firestore subscription.
+    } catch (err) {
+      logger.error("[copy] Failed:", err);
+      toast.error("Couldn't copy from yesterday");
+      setCopyingMealKey(null);
+    }
+  };
+
+  // Clear the in-flight state when the copied section becomes populated.
+  // More correct than setTimeout because it clears precisely when the data
+  // is visible, not after an arbitrary delay.
+  useEffect(() => {
+    if (!copyingMealKey) return;
+    if ((mealSegmentedMeals[copyingMealKey]?.length ?? 0) > 0) {
+      /* eslint-disable react-hooks/set-state-in-effect -- syncing with
+         Firestore subscription: mealSegmentedMeals updates via onSnapshot */
+      setCopyingMealKey(null);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [mealSegmentedMeals, copyingMealKey]);
 
   const macroTargets = {
     calories: dailyTargets.finalTarget,
@@ -1029,29 +1065,31 @@ export default function Food() {
                       }
                     }}
                     aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className="w-full flex items-center justify-between h-9 px-3 rounded-lg text-left active:bg-muted/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="w-full flex items-center h-9 px-3 rounded-lg text-left active:bg-muted/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <span className="text-micro uppercase tracking-wider text-muted-foreground/70">
                       {MEAL_LABELS[mealKey]} · add
                     </span>
-                    {/* TODO: Verify usage analytics. If <5% of empty meals
-                        trigger this, delete in v1.1. */}
-                    {hasYesterdayMealsForSection && (
+                  </div>
+                  {/* TODO: Verify usage analytics. If <5% of empty meals
+                      trigger this, delete in v1.1. */}
+                  {hasYesterdayMealsForSection && (
+                    <div className="pl-3 mt-1 mb-1">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          haptic("light");
-                          copyFromYesterday(mealKey);
+                          handleCopyFromYesterday(mealKey);
                         }}
+                        disabled={copyingMealKey === mealKey}
                         aria-label={`Copy yesterday's ${MEAL_LABELS[mealKey].toLowerCase()} entries`}
-                        className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-white border border-[#E5E7EB] text-[11px] font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+                        className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-white border border-[#E5E7EB] text-[11px] font-medium text-muted-foreground active:scale-[0.97] transition-transform disabled:opacity-50"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
-                        Copy from yesterday
+                        Copy yesterday&apos;s {MEAL_LABELS[mealKey].toLowerCase()}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </motion.div>
               );
             }
@@ -1159,20 +1197,6 @@ export default function Food() {
               <Camera className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <p className="text-[11px] font-medium text-muted-foreground">Scan any meal for instant macro estimates</p>
             </div>
-          )}
-          {isToday && yesterdayMeals.length > 0 && (
-            <button
-              onClick={() => {
-                for (const key of MEAL_ORDER) {
-                  if (yesterdaySegmented[key]?.length > 0) {
-                    copyFromYesterday(key);
-                  }
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border/60 bg-card text-[13px] font-medium text-muted-foreground hover:bg-muted/50 active:scale-[0.97] transition-all"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> Copy from yesterday
-            </button>
           )}
         </motion.div>
       )}
