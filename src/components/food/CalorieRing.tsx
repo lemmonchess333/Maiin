@@ -33,11 +33,10 @@ const SIZE = 160;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Brand colours
+// Brand colours — both modes use the same red palette. The toggle changes
+// which VALUE is displayed (left vs eaten), not the ring's visual identity.
 const COLOR_LEFT = "#EF4444"; // red-500
 const COLOR_LEFT_TRACK = "rgb(239 68 68 / 0.1)";
-const COLOR_EATEN = "#6B7280"; // neutral-500
-const COLOR_EATEN_TRACK = "#E5E7EB"; // neutral-200
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
 
@@ -78,14 +77,11 @@ export default function CalorieRing({
     ? (isOver ? Math.abs(remaining) : remaining)
     : consumed;
 
-  // Colour: LEFT uses red ramp, EATEN uses neutral grey
-  const numberColor = isLeftMode
-    ? getLeftNumberColor(consumed, target, remaining)
-    : COLOR_EATEN;
-
-  // Stroke / track colour
-  const strokeColor = isLeftMode ? COLOR_LEFT : COLOR_EATEN;
-  const trackColor = isLeftMode ? COLOR_LEFT_TRACK : COLOR_EATEN_TRACK;
+  // Colour stays red in both modes — the toggle changes the displayed value,
+  // not the ring's visual identity. The centre label text is the only mode
+  // indicator ("KCAL LEFT" vs "KCAL EATEN").
+  const numberColor = getLeftNumberColor(consumed, target, remaining);
+  const trackColor = COLOR_LEFT_TRACK;
 
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)
@@ -175,7 +171,7 @@ export default function CalorieRing({
               cy={CENTER}
               r={RADIUS}
               fill="none"
-              stroke={isLeftMode ? `url(#${ringGradientId})` : strokeColor}
+              stroke={`url(#${ringGradientId})`}
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
