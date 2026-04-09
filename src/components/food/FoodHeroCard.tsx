@@ -285,118 +285,113 @@ export default function FoodHeroCard({
     : null;
 
   // Card surface gradient (#FFFFFF to #FAFAFA, 1.6% lightness shift) adds
-  // imperceptible depth. Shadow bumped 1.2x vs Health Score to restore
-  // proportional weight on the taller card.
+  // imperceptible depth. Shadow matches Health Score (no 1.2x bump — the
+  // calorie card is now short enough that the standard shadow is correct).
   // TODO: dark mode needs a dark-surface gradient.
   return (
-    <div
-      className="p-4 rounded-2xl"
-      style={{
-        background: "linear-gradient(to bottom, #FFFFFF 0%, #FAFAFA 100%)",
-        boxShadow: "0 2.4px 9.6px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
-      }}
-    >
-      {/* Top row: caption + streak flame */}
-      <div className="flex items-start justify-between mb-4 min-h-[20px]">
-        <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            {showCelebrationCaption ? (
-              <motion.p
-                key="celebration"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="text-micro uppercase tracking-wider font-semibold"
-                style={{ color: "#4CAF50" }}
-              >
-                {celebrationCaptionText}
-              </motion.p>
-            ) : caption ? (
-              <motion.p
-                key="caption"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="text-micro uppercase tracking-wider"
-                style={{ color: THEME.lifting }}
-              >
-                {caption.trainingType}
-                {caption.adjustment && <span> · {caption.adjustment}</span>}
-              </motion.p>
-            ) : null}
-          </AnimatePresence>
+    <>
+      {/* ── CALORIE CARD — caption, ring, no macros ────────────────────── */}
+      <div
+        className="p-4 rounded-2xl"
+        style={{
+          background: "linear-gradient(to bottom, #FFFFFF 0%, #FAFAFA 100%)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
+        }}
+      >
+        {/* Top row: caption + streak flame */}
+        <div className="flex items-start justify-between mb-4 min-h-[20px]">
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {showCelebrationCaption ? (
+                <motion.p
+                  key="celebration"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-micro uppercase tracking-wider font-semibold"
+                  style={{ color: "#4CAF50" }}
+                >
+                  {celebrationCaptionText}
+                </motion.p>
+              ) : caption ? (
+                <motion.p
+                  key="caption"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-micro uppercase tracking-wider"
+                  style={{ color: THEME.lifting }}
+                >
+                  {caption.trainingType}
+                  {caption.adjustment && <span> · {caption.adjustment}</span>}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </div>
+          <StreakFlame streak={streak} celebrate={celebrating} />
         </div>
-        <StreakFlame streak={streak} celebrate={celebrating} />
+
+        {/* First-time explainer for the caption's calorie adjustment. */}
+        <AnimatePresence initial={false}>
+          {shouldShowFuelExplainer && (
+            <motion.div
+              key="fuel-explainer"
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50">
+                <Info
+                  className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                  style={{ color: THEME.lifting }}
+                  aria-hidden="true"
+                />
+                <p className="flex-1 text-xs leading-snug text-muted-foreground">
+                  Your calorie target is higher today to fuel your planned workout.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("light");
+                    dismissFuelExplainer();
+                  }}
+                  aria-label="Dismiss explainer"
+                  className="p-0.5 -m-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Calorie ring */}
+        <CalorieRing
+          consumed={dailyTotals.calories}
+          target={dailyTargets.finalTarget}
+          mode={mode}
+          onToggleMode={toggleMode}
+          trajectoryLabel={trajectoryLabel}
+          glowing={celebrating}
+          ringDurationMs={LOG_MOMENT_MS}
+          trainingBurnToast={trainingBurnToast}
+        />
       </div>
 
-      {/* First-time explainer for the caption's calorie adjustment. Shown
-          once per user (keyed via useCoachMarks("food-fuel-caption")), fades
-          in below the top row, dismissible via X, auto-dismissed after 10s. */}
-      <AnimatePresence initial={false}>
-        {shouldShowFuelExplainer && (
-          <motion.div
-            key="fuel-explainer"
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="overflow-hidden"
-          >
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50">
-              <Info
-                className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: THEME.lifting }}
-                aria-hidden="true"
-              />
-              <p className="flex-1 text-xs leading-snug text-muted-foreground">
-                Your calorie target is higher today to fuel your planned workout.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  haptic("light");
-                  dismissFuelExplainer();
-                }}
-                aria-label="Dismiss explainer"
-                className="p-0.5 -m-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Calorie ring. Animation note: the kcal-left number animates on every
-          finalTarget change via AnimatedNumber's useEffect([value, ...])
-          (Case A — automatic). No extra wiring needed when the target shifts
-          mid-day due to training burn. */}
-      <CalorieRing
-        consumed={dailyTotals.calories}
-        target={dailyTargets.finalTarget}
-        mode={mode}
-        onToggleMode={toggleMode}
-        trajectoryLabel={trajectoryLabel}
-        glowing={celebrating}
-        ringDurationMs={LOG_MOMENT_MS}
-        trainingBurnToast={trainingBurnToast}
-      />
-
-      {/* Whitespace separator — no divider */}
-      <div className="h-6" />
-
-      {/* Macro columns — each wrapped in a white tile with a hairline
-          border to give a "cards within cards" structural feel. GAMBLE:
-          if this adds clutter instead of structure, revert the wrapper
-          divs and restore flex gap-2. Changes 1 + 2 stay regardless. */}
-      <div className="flex gap-0">
+      {/* ── MACRO ROW — three independent floating tiles ───────────────
+          mt-4 provides 16px gap to the calorie card above.
+          gap-4 provides 16px between individual tiles.
+          The variants motion.div in Food.tsx animates both as one unit. */}
+      <div className="flex gap-4 mt-4">
         <div
-          className="flex-1 p-2 rounded-xl"
+          className="flex-1 p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
-            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
           }}
         >
           <MacroColumn
@@ -411,10 +406,10 @@ export default function FoodHeroCard({
           />
         </div>
         <div
-          className="flex-1 p-2 rounded-xl"
+          className="flex-1 p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
-            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
           }}
         >
           <MacroColumn
@@ -429,10 +424,10 @@ export default function FoodHeroCard({
           />
         </div>
         <div
-          className="flex-1 p-2 rounded-xl"
+          className="flex-1 p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
-            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
           }}
         >
           <MacroColumn
@@ -447,7 +442,6 @@ export default function FoodHeroCard({
           />
         </div>
       </div>
-
-    </div>
+    </>
   );
 }
