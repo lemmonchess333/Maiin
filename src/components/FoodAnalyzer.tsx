@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
-import { Loader2, RotateCcw, Save, Check, Plus, Minus } from "lucide-react";
+import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { haptic } from "@/lib/haptic";
+import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 
 interface Props {
@@ -126,6 +128,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedBase64, setCapturedBase64] = useState<string | null>(null);
 
   const [barcodeResult, setBarcodeResult] = useState<MealResult | null>(null);
   const [barcodeLoading, setBarcodeLoading] = useState(false);
@@ -154,6 +157,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
     setBarcodeResult(null);
     setBarcodeError(null);
     setBarcodeLoading(false);
+    setCapturedBase64(null);
     setServings(1);
     resetAI();
   };
@@ -235,6 +239,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
   const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
+    setCapturedBase64(base64);
 
     try {
       await analyzeFood(base64);
@@ -242,6 +247,18 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
     } catch (e) {
       logger.error(e);
       toast.error("Food analysis failed.");
+    }
+  };
+
+  // Save captured photo to the user's camera roll via the Web Share API.
+  // Guards against empty base64 in case the button is tapped before capture
+  // completes (e.g. rapid double-tap, race with analysis).
+  const handleSavePhoto = async () => {
+    if (!capturedBase64) return;
+    haptic("light");
+    const success = await sharePhotoToLibrary(capturedBase64);
+    if (success) {
+      toast.success("Photo saved");
     }
   };
 
@@ -393,6 +410,21 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
               >
                 Reset
               </button>
+
+              {/* Save photo to camera roll via Web Share API. Hidden on
+                  platforms that don't support navigator.share with files
+                  (Android < 12, desktop browsers). The support check is a
+                  module-level cached constant — no per-mount cost. */}
+              {isPhotoShareSupported() && capturedBase64 && (
+                <button
+                  onClick={handleSavePhoto}
+                  aria-label="Save photo to Photos library"
+                  className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Save photo
+                </button>
+              )}
 
               <button
                 onClick={handleSave}
