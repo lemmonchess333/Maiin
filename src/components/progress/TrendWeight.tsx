@@ -43,15 +43,20 @@ export function TrendWeight() {
     fetchBodyweightLogs(user.uid).then(setEntries);
   }, [user]);
 
-  const data = useMemo(
-    () =>
-      calculateEMA(
-        entries
-          .filter((e) => e.weight > 0)
-          .map((e) => ({ date: e.date, weight: e.weight }))
-      ),
-    [entries]
-  );
+  const data = useMemo(() => {
+    const filtered = entries
+      .filter((e) => e.weight > 0 && Number.isFinite(e.weight))
+      .map((e) => ({ date: e.date, weight: e.weight }));
+
+    // Deduplicate by date — keep the last entry for each date.
+    // Defence against upstream Firestore data with multiple logs per day.
+    const byDate = new Map<string, { date: string; weight: number }>();
+    for (const entry of filtered) {
+      byDate.set(entry.date, entry);
+    }
+
+    return calculateEMA([...byDate.values()]);
+  }, [entries]);
 
   const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   const convert = (v: number) => {
@@ -163,22 +168,61 @@ export function TrendWeight() {
                 style: { fontSize: 10, fill: "var(--muted-foreground)", textAnchor: "middle" },
               }}
             />
+            {/* Custom tooltip content — Recharts' Scatter inside ComposedChart
+                emits extra payload entries (including the date string as a value,
+                which convert() turns into "0 kg"). Filtering to only actual/trend
+                entries with valid positive values eliminates the phantom row. */}
             <Tooltip
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 12,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                padding: "10px 14px",
-              }}
-              formatter={(value: unknown, name?: string) => [
-                `${convert(Number(value))} ${unit}`,
-                name === "trend" ? "Trend" : "Actual",
-              ]}
-              labelFormatter={(label) => {
-                const d = new Date(label);
-                return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+              cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
+              content={(props) => {
+                if (!props.active || !props.payload?.length) return null;
+
+                const relevant = props.payload.filter(
+                  (entry) =>
+                    (entry.dataKey === "actual" || entry.dataKey === "trend") &&
+                    Number.isFinite(Number(entry.value)) &&
+                    Number(entry.value) > 0
+                );
+                if (relevant.length === 0) return null;
+
+                const label = props.label
+                  ? new Date(String(props.label)).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "";
+
+                return (
+                  <div
+                    style={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      padding: "10px 14px",
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--foreground)" }}>
+                      {label}
+                    </div>
+                    {relevant.map((entry, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          color:
+                            entry.dataKey === "trend"
+                              ? THEME.brand
+                              : "var(--muted-foreground)",
+                        }}
+                      >
+                        {entry.dataKey === "trend" ? "Trend" : "Actual"}:{" "}
+                        {convert(Number(entry.value))} {unit}
+                      </div>
+                    ))}
+                  </div>
+                );
               }}
             />
 
