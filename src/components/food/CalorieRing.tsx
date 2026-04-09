@@ -227,7 +227,7 @@ export default function CalorieRing({
               className="flex flex-col items-center"
             >
               <p
-                className="text-4xl font-extrabold font-mono tabular-nums leading-none tracking-tight"
+                className="text-4xl font-black font-mono tabular-nums leading-none tracking-tight"
                 style={{ color: numberColor }}
               >
                 <AnimatedNumber value={displayValue} duration={ringDurationSec} ease={RING_EASE} />
