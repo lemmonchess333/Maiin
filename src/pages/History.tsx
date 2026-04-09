@@ -363,7 +363,7 @@ export default function History() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.running }}>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
                     <StatCard
                       label="Weekly Distance"
                       value={formatDistance(runningTotals.runDistance)}
@@ -422,7 +422,7 @@ export default function History() {
                 </div>
               ) : (
               <>
-              <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.lifting }}>
+              <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Weekly Volume"
                   value={formatVolume(liftingData.liftVolume).value}
@@ -525,7 +525,7 @@ export default function History() {
                 </div>
               ) : (
               <>
-              <div className="grid grid-cols-2 gap-2 border-t-2 pt-2" style={{ borderColor: THEME.success }}>
+              <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}
