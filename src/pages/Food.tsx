@@ -1073,7 +1073,7 @@ export default function Food() {
                   </div>
                   {/* TODO: Verify usage analytics. If <5% of empty meals
                       trigger this, delete in v1.1. */}
-                  {hasYesterdayMealsForSection && (
+                  {hasYesterdayMealsForSection && copyingMealKey !== mealKey && (
                     <div className="pl-3 mt-1 mb-1">
                       <button
                         type="button"
@@ -1081,9 +1081,8 @@ export default function Food() {
                           e.stopPropagation();
                           handleCopyFromYesterday(mealKey);
                         }}
-                        disabled={copyingMealKey === mealKey}
                         aria-label={`Copy yesterday's ${MEAL_LABELS[mealKey].toLowerCase()} entries`}
-                        className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-white border border-[#E5E7EB] text-[11px] font-medium text-muted-foreground active:scale-[0.97] transition-transform disabled:opacity-50"
+                        className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-white border border-[#E5E7EB] text-[11px] font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         Copy yesterday&apos;s {MEAL_LABELS[mealKey].toLowerCase()}
