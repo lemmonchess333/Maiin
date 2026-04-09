@@ -387,38 +387,65 @@ export default function FoodHeroCard({
       {/* Whitespace separator — no divider */}
       <div className="h-6" />
 
-      {/* Macro columns */}
-      <div className="flex gap-2">
-        <MacroColumn
-          macroKey="protein"
-          Icon={Beef}
-          consumed={dailyTotals.protein}
-          target={dailyTargets.protein}
-          label="PROTEIN"
-          color={THEME.macros.protein}
-          numberDurationSec={LOG_MOMENT_SEC}
-          barDurationSec={LOG_MOMENT_SEC}
-        />
-        <MacroColumn
-          macroKey="carbs"
-          Icon={Wheat}
-          consumed={dailyTotals.carbs}
-          target={dailyTargets.carbs}
-          label="CARBS"
-          color={THEME.macros.carbs}
-          numberDurationSec={LOG_MOMENT_SEC}
-          barDurationSec={LOG_MOMENT_SEC}
-        />
-        <MacroColumn
-          macroKey="fat"
-          Icon={Cookie}
-          consumed={dailyTotals.fat}
-          target={dailyTargets.fat}
-          label="FAT"
-          color={THEME.macros.fat}
-          numberDurationSec={LOG_MOMENT_SEC}
-          barDurationSec={LOG_MOMENT_SEC}
-        />
+      {/* Macro columns — each wrapped in a white tile with a hairline
+          border to give a "cards within cards" structural feel. GAMBLE:
+          if this adds clutter instead of structure, revert the wrapper
+          divs and restore flex gap-2. Changes 1 + 2 stay regardless. */}
+      <div className="flex gap-0">
+        <div
+          className="flex-1 p-2 rounded-xl"
+          style={{
+            background: "#FFFFFF",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+          }}
+        >
+          <MacroColumn
+            macroKey="protein"
+            Icon={Beef}
+            consumed={dailyTotals.protein}
+            target={dailyTargets.protein}
+            label="PROTEIN"
+            color={THEME.macros.protein}
+            numberDurationSec={LOG_MOMENT_SEC}
+            barDurationSec={LOG_MOMENT_SEC}
+          />
+        </div>
+        <div
+          className="flex-1 p-2 rounded-xl"
+          style={{
+            background: "#FFFFFF",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+          }}
+        >
+          <MacroColumn
+            macroKey="carbs"
+            Icon={Wheat}
+            consumed={dailyTotals.carbs}
+            target={dailyTargets.carbs}
+            label="CARBS"
+            color={THEME.macros.carbs}
+            numberDurationSec={LOG_MOMENT_SEC}
+            barDurationSec={LOG_MOMENT_SEC}
+          />
+        </div>
+        <div
+          className="flex-1 p-2 rounded-xl"
+          style={{
+            background: "#FFFFFF",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.03)",
+          }}
+        >
+          <MacroColumn
+            macroKey="fat"
+            Icon={Cookie}
+            consumed={dailyTotals.fat}
+            target={dailyTargets.fat}
+            label="FAT"
+            color={THEME.macros.fat}
+            numberDurationSec={LOG_MOMENT_SEC}
+            barDurationSec={LOG_MOMENT_SEC}
+          />
+        </div>
       </div>
 
     </div>
