@@ -16,8 +16,8 @@ export default function StatCard({
   const gradientId = `spark-${label.replace(/\s/g, '-')}`;
   return (
     <button onClick={onClick}
-      className="p-4 rounded-xl bg-card text-left w-full active:scale-[0.98]"
-      style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 70%)` }}>
+      className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98]"
+      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)" }}>
       <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">

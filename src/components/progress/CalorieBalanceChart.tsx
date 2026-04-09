@@ -123,6 +123,7 @@ export default function CalorieBalanceChart() {
             />
             <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
             <Tooltip
+              cursor={false}
               contentStyle={{
                 background: "var(--card)",
                 border: "1px solid var(--border)",
