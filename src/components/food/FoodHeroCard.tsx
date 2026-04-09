@@ -388,7 +388,7 @@ export default function FoodHeroCard({
           The variants motion.div in Food.tsx animates both as one unit. */}
       <div className="flex gap-4 mt-4">
         <div
-          className="flex-1 p-3 rounded-2xl"
+          className="flex-1 flex p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
@@ -401,12 +401,13 @@ export default function FoodHeroCard({
             target={dailyTargets.protein}
             label="PROTEIN"
             color={THEME.macros.protein}
+            mode={mode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
         <div
-          className="flex-1 p-3 rounded-2xl"
+          className="flex-1 flex p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
@@ -419,12 +420,13 @@ export default function FoodHeroCard({
             target={dailyTargets.carbs}
             label="CARBS"
             color={THEME.macros.carbs}
+            mode={mode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
         <div
-          className="flex-1 p-3 rounded-2xl"
+          className="flex-1 flex p-3 rounded-2xl"
           style={{
             background: "#FFFFFF",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
@@ -437,6 +439,7 @@ export default function FoodHeroCard({
             target={dailyTargets.fat}
             label="FAT"
             color={THEME.macros.fat}
+            mode={mode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />

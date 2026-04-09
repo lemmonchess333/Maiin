@@ -8,6 +8,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { getOverTargetColor } from "@/lib/theme";
+import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
 
@@ -20,6 +21,8 @@ interface MacroColumnProps {
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
+  /** Display mode — "left" shows remaining, "eaten" shows consumed */
+  mode: CalorieRingMode;
   /** Forward-compat tap hook (no-op for phase 1) */
   onTap?: () => void;
   /** Number count duration in seconds */
@@ -37,6 +40,7 @@ export default function MacroColumn({
   target,
   label,
   color,
+  mode,
   onTap = () => {},
   numberDurationSec = 0.6,
   barDurationSec = 0.6,
@@ -48,7 +52,20 @@ export default function MacroColumn({
   const pct = hasTarget ? Math.min(consumed / target, 1) : 0;
   const remaining = Math.max(0, target - consumed);
   const isOver = consumed > target && hasTarget;
-  const displayValue = isOver ? consumed - target : remaining;
+  const isLeftMode = mode === "left";
+
+  // LEFT mode:
+  //   under target → remaining   (e.g. "151g left")
+  //   over target  → overshoot   (e.g. "5g over")
+  // EATEN mode:
+  //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
+  const displayValue = isLeftMode
+    ? (isOver ? consumed - target : remaining)
+    : consumed;
+
+  const displayLabel = isLeftMode
+    ? (isOver ? "over" : "left")
+    : "eaten";
 
   // Over-target colour ramping (number + bar only, NOT icon/label/tertiary)
   const overColor = isOver ? getOverTargetColor(consumed, target) : color;
@@ -119,7 +136,7 @@ export default function MacroColumn({
 
       {/* "left" label — stays in original colour */}
       <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-        {isOver ? "over" : "left"}
+        {displayLabel}
       </p>
 
       {/* Progress bar */}
