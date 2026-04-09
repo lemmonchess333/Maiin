@@ -56,7 +56,19 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background transition-colors pb-20">
+    <div
+      className="min-h-screen bg-background transition-colors pb-20"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
+          Uses bg-background (page grey) so scrolling content disappears into
+          the same colour as the gaps between cards. Mirrors the role of the
+          bottom nav at the bottom of the screen. */}
+      <div
+        aria-hidden="true"
+        className="fixed top-0 left-0 right-0 z-30 bg-background"
+        style={{ height: "env(safe-area-inset-top, 0px)" }}
+      />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium"

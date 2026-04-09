@@ -415,7 +415,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   return (
     <div>
       {/* ── Sticky Header Zone ── */}
-      <div className="sticky top-0 z-30 -mx-4" style={{ backgroundColor: "var(--background)" }}>
+      <div className="sticky z-30 -mx-4" style={{ top: "env(safe-area-inset-top, 0px)", backgroundColor: "var(--background)" }}>
         <header className="px-4">
         <div className="flex items-center justify-between">
           <div>

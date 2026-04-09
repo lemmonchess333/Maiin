@@ -707,7 +707,8 @@ export default function Food() {
       {/* Date Switcher */}
       <motion.div
         variants={itemVariant}
-        className="sticky top-0 z-30 bg-background flex items-center justify-between rounded-xl py-2 px-3"
+        className="sticky z-30 bg-background flex items-center justify-between rounded-xl py-2 px-3"
+        style={{ top: "env(safe-area-inset-top, 0px)" }}
       >
         <button
           onClick={() => {
@@ -779,8 +780,8 @@ export default function Food() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
-            className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
-            style={{ backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))", WebkitBackdropFilter: "blur(12px)" }}
+            className="sticky z-30 -mx-4 px-4 py-2 backdrop-blur-md"
+            style={{ top: "env(safe-area-inset-top, 0px)", backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))", WebkitBackdropFilter: "blur(12px)" }}
           >
             <p className="text-xs font-semibold font-mono tabular-nums text-center text-foreground">
               {formatCalories(Math.max(0, macroTargets.calories - dailyTotals.calories))} {CALORIE_UNIT} left
@@ -795,7 +796,7 @@ export default function Food() {
       </AnimatePresence>
 
       {/* Input bar + scan circle */}
-      <motion.div variants={itemVariant} className="sticky top-[44px] z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+      <motion.div variants={itemVariant} className="sticky z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 44px)" }}>
         <div className="flex items-start gap-2">
           <div className="relative flex-1">
             <textarea
