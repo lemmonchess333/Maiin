@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
+import {
+  scheduleNotification,
+  cancelNotification,
+  requestNotificationPermission,
+} from '@/lib/notifications';
 
 export interface MealReminders {
   enabled: boolean;
@@ -19,12 +24,39 @@ const DEFAULT_REMINDERS: MealReminders = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
+// Stable notification IDs across all Tropos scheduled notifications.
+// Reserve 1000–1999 for meal reminders, 2000–2999 for workout reminders,
+// 3000+ for event-driven notifications added in v1.2.
+const MEAL_NOTIFICATION_IDS = {
+  breakfast: 1001,
+  lunch: 1002,
+  dinner: 1003,
+} as const;
+
+/**
+ * Given a "HH:MM" time string, return a Date for the next occurrence —
+ * today if the time is still in the future, otherwise tomorrow.
+ * Returns null if the input is malformed.
+ */
+function computeNextOccurrence(timeHHMM: string): Date | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return null;
+  const now = new Date();
+  const target = new Date();
+  target.setHours(hours, minutes, 0, 0);
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+  return target;
+}
+
 export function useMealReminders() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
-  const checkIntervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  const lastNotifiedRef = useRef<Record<string, string>>({});
 
   // Load from Firestore
   useEffect(() => {
@@ -47,46 +79,50 @@ export function useMealReminders() {
     await setDoc(ref, updated);
   }, [user, reminders]);
 
-  // Check reminders every minute
+  // Schedule / reschedule the next occurrence of each enabled meal reminder
   useEffect(() => {
-    if (!reminders.enabled) return;
+    let cancelled = false;
 
-    const checkReminders = () => {
-      const now = new Date();
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      const today = now.toDateString();
+    const rescheduleAll = async () => {
+      await cancelNotification(MEAL_NOTIFICATION_IDS.breakfast);
+      await cancelNotification(MEAL_NOTIFICATION_IDS.lunch);
+      await cancelNotification(MEAL_NOTIFICATION_IDS.dinner);
 
-      const meals = [
-        { key: 'breakfast', ...reminders.breakfast },
-        { key: 'lunch', ...reminders.lunch },
-        { key: 'dinner', ...reminders.dinner },
+      if (cancelled || !reminders.enabled) return;
+
+      const mealConfigs: Array<{
+        key: keyof typeof MEAL_NOTIFICATION_IDS;
+        config: { enabled: boolean; time: string };
+        title: string;
+      }> = [
+        { key: 'breakfast', config: reminders.breakfast, title: 'Time for breakfast' },
+        { key: 'lunch', config: reminders.lunch, title: 'Time for lunch' },
+        { key: 'dinner', config: reminders.dinner, title: 'Time for dinner' },
       ];
 
-      for (const meal of meals) {
-        if (!meal.enabled) continue;
-        if (meal.time !== currentTime) continue;
-        if (lastNotifiedRef.current[meal.key] === today) continue;
-
-        lastNotifiedRef.current[meal.key] = today;
-
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(`Time for ${meal.key}!`, {
-            body: `Don't forget to log your ${meal.key} in Tropos`,
-            icon: `${import.meta.env.BASE_URL}icons/icon-192.png`,
-          });
-        }
+      for (const { key, config, title } of mealConfigs) {
+        if (!config.enabled) continue;
+        const nextAt = computeNextOccurrence(config.time);
+        if (!nextAt) continue;
+        await scheduleNotification({
+          id: MEAL_NOTIFICATION_IDS[key],
+          title,
+          body: 'Quick log keeps your day accurate.',
+          scheduleAt: nextAt,
+        });
       }
     };
 
-    checkIntervalRef.current = setInterval(checkReminders, 60000);
-    return () => clearInterval(checkIntervalRef.current);
+    rescheduleAll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [reminders]);
 
   // Request notification permission
   const requestPermission = useCallback(async () => {
-    if (!('Notification' in window)) return false;
-    const result = await Notification.requestPermission();
-    return result === 'granted';
+    return requestNotificationPermission();
   }, []);
 
   return { reminders, loading, updateReminders, requestPermission };
