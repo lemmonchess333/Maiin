@@ -1,75 +1,134 @@
-/**
- * Notification utilities for Tropos PWA.
- * Wraps the Web Notifications API with permission handling and scheduling.
- */
+import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { logger } from "@/lib/logger";
 
-export type NotificationCategory = 'workout' | 'nutrition' | 'streak' | 'social' | 'system';
-
-interface TroposNotification {
+export interface NotificationPayload {
+  /** Stable integer ID — lets us cancel or replace a previously scheduled notification */
+  id: number;
   title: string;
   body: string;
-  category: NotificationCategory;
-  icon?: string;
-  tag?: string;
-  data?: Record<string, unknown>;
+  /** If set, schedule for this time. If omitted, fire immediately. */
+  scheduleAt?: Date;
 }
 
-const DEFAULT_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
+const isNative = Capacitor.isNativePlatform();
 
-export function isNotificationSupported(): boolean {
-  return 'Notification' in window;
-}
-
-export function getNotificationPermission(): NotificationPermission | 'unsupported' {
-  if (!isNotificationSupported()) return 'unsupported';
-  return Notification.permission;
-}
-
+/**
+ * Request notification permission from the user.
+ * Returns true if granted, false otherwise.
+ */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!isNotificationSupported()) return false;
-  const result = await Notification.requestPermission();
-  return result === 'granted';
+  try {
+    if (isNative) {
+      const result = await LocalNotifications.requestPermissions();
+      return result.display === "granted";
+    }
+    if (typeof window !== "undefined" && "Notification" in window) {
+      const result = await Notification.requestPermission();
+      return result === "granted";
+    }
+    return false;
+  } catch (err) {
+    logger.error("requestNotificationPermission failed", err);
+    return false;
+  }
 }
 
-export function sendNotification(notification: TroposNotification): Notification | null {
-  if (!isNotificationSupported() || Notification.permission !== 'granted') return null;
-
-  return new Notification(notification.title, {
-    body: notification.body,
-    icon: notification.icon || DEFAULT_ICON,
-    tag: notification.tag || `tropos-${notification.category}-${Date.now()}`,
-    data: { ...notification.data, category: notification.category },
-  });
+/**
+ * Check whether notification permission is currently granted.
+ */
+export async function hasNotificationPermission(): Promise<boolean> {
+  try {
+    if (isNative) {
+      const result = await LocalNotifications.checkPermissions();
+      return result.display === "granted";
+    }
+    if (typeof window !== "undefined" && "Notification" in window) {
+      return Notification.permission === "granted";
+    }
+    return false;
+  } catch (err) {
+    logger.error("hasNotificationPermission failed", err);
+    return false;
+  }
 }
 
-// Predefined notifications
-export const NOTIFICATIONS = {
-  streakReminder: (days: number): TroposNotification => ({
-    title: "Don't break your streak!",
-    body: `You're on a ${days}-day streak. Log something today to keep it going!`,
-    category: 'streak',
-    tag: 'streak-reminder',
-  }),
-  workoutComplete: (name: string): TroposNotification => ({
-    title: 'Workout complete!',
-    body: `Great job finishing ${name}. Recovery starts now.`,
-    category: 'workout',
-  }),
-  proteinTarget: (grams: number): TroposNotification => ({
-    title: 'Protein check-in',
-    body: `You still need ${grams}g protein today. Time for a snack?`,
-    category: 'nutrition',
-    tag: 'protein-reminder',
-  }),
-  newFollower: (name: string): TroposNotification => ({
-    title: 'New follower',
-    body: `${name} started following you!`,
-    category: 'social',
-  }),
-  weeklyReport: (workouts: number, distance: number): TroposNotification => ({
-    title: 'Weekly summary',
-    body: `This week: ${workouts} workouts${distance > 0 ? `, ${distance.toFixed(1)}km run` : ''}. Keep it up!`,
-    category: 'system',
-    tag: 'weekly-report',
-  }),
-} as const;
+/**
+ * Schedule or immediately fire a notification.
+ * Returns true on success.
+ */
+export async function scheduleNotification(payload: NotificationPayload): Promise<boolean> {
+  const granted = await hasNotificationPermission();
+  if (!granted) return false;
+
+  try {
+    if (isNative) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: payload.id,
+            title: payload.title,
+            body: payload.body,
+            schedule: payload.scheduleAt ? { at: payload.scheduleAt } : undefined,
+          },
+        ],
+      });
+      return true;
+    }
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (payload.scheduleAt) {
+        const delay = payload.scheduleAt.getTime() - Date.now();
+        if (delay <= 0) {
+          new Notification(payload.title, { body: payload.body });
+        } else {
+          // Web fallback: setTimeout only fires if the app stays open.
+          // Accepted limitation — web is not the primary delivery target.
+          setTimeout(() => {
+            try {
+              new Notification(payload.title, { body: payload.body });
+            } catch (err) {
+              logger.error("web notification fire failed", err);
+            }
+          }, delay);
+        }
+      } else {
+        new Notification(payload.title, { body: payload.body });
+      }
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    logger.error("scheduleNotification failed", err);
+    return false;
+  }
+}
+
+/**
+ * Cancel a single scheduled notification by ID.
+ * No-op on web (setTimeout handles are not tracked).
+ */
+export async function cancelNotification(id: number): Promise<void> {
+  if (!isNative) return;
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id }] });
+  } catch (err) {
+    logger.error("cancelNotification failed", err);
+  }
+}
+
+/**
+ * Cancel all scheduled notifications.
+ */
+export async function cancelAllNotifications(): Promise<void> {
+  if (!isNative) return;
+  try {
+    const pending = await LocalNotifications.getPending();
+    if (pending.notifications.length > 0) {
+      await LocalNotifications.cancel({ notifications: pending.notifications });
+    }
+  } catch (err) {
+    logger.error("cancelAllNotifications failed", err);
+  }
+}

@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
+import {
+  scheduleNotification,
+  cancelNotification,
+  requestNotificationPermission,
+} from '@/lib/notifications';
 
 export interface WorkoutReminders {
   enabled: boolean;
@@ -15,12 +20,47 @@ const DEFAULT_REMINDERS: WorkoutReminders = {
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
+const WORKOUT_NOTIFICATION_ID = 2001;
+
+/**
+ * Given a "HH:MM" time string, return a Date for the next occurrence —
+ * today if the time is still in the future, otherwise tomorrow.
+ * Returns null if the input is malformed.
+ */
+function computeNextOccurrence(timeHHMM: string): Date | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return null;
+  const now = new Date();
+  const target = new Date();
+  target.setHours(hours, minutes, 0, 0);
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+  return target;
+}
+
+/**
+ * Mirrors the original fire-time check: a day counts as a workout day
+ * unless weekSchedule is a 7-entry array with an explicit 'rest' entry
+ * for that day-of-week.
+ */
+function isWorkoutDay(
+  dayOfWeek: number,
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined,
+): boolean {
+  if (!schedule || schedule.length !== 7) return true;
+  const todaySchedule = schedule.find((s) => s.day === dayOfWeek);
+  if (!todaySchedule) return false;
+  return todaySchedule.type !== 'rest';
+}
+
 export function useWorkoutReminders() {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
-  const checkIntervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
-  const lastNotifiedRef = useRef<string>('');
 
   // Load from Firestore
   useEffect(() => {
@@ -43,39 +83,53 @@ export function useWorkoutReminders() {
     await setDoc(ref, updated);
   }, [user, reminders]);
 
-  // Check reminders every minute — only fire on scheduled workout days
+  // Schedule / reschedule the next workout reminder, skipping rest days
   useEffect(() => {
-    if (!reminders.enabled) return;
+    let cancelled = false;
 
-    const checkReminder = () => {
-      const now = new Date();
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      const today = now.toDateString();
+    const rescheduleWorkout = async () => {
+      await cancelNotification(WORKOUT_NOTIFICATION_ID);
 
-      if (reminders.time !== currentTime) return;
-      if (lastNotifiedRef.current === today) return;
+      if (cancelled || !reminders.enabled) return;
 
-      // Check if today is a workout day based on weekly schedule
-      const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
-      const schedule = profile?.weekSchedule;
-      if (schedule && schedule.length === 7) {
-        const todaySchedule = schedule.find((s: { day: number }) => s.day === dayOfWeek);
-        if (!todaySchedule || todaySchedule.type === 'rest') return;
+      const nextAt = computeNextOccurrence(reminders.time);
+      if (!nextAt) return;
+
+      const schedule = profile?.weekSchedule as
+        | ReadonlyArray<{ day: number; type: string }>
+        | undefined;
+
+      if (!isWorkoutDay(nextAt.getDay(), schedule)) {
+        let found = false;
+        for (let i = 1; i <= 7; i++) {
+          nextAt.setDate(nextAt.getDate() + 1);
+          if (isWorkoutDay(nextAt.getDay(), schedule)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) return;
       }
 
-      lastNotifiedRef.current = today;
-
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Time to train!', {
-          body: 'You have a workout scheduled today. Let\'s go!',
-          icon: `${import.meta.env.BASE_URL}icons/icon-192.png`,
-        });
-      }
+      await scheduleNotification({
+        id: WORKOUT_NOTIFICATION_ID,
+        title: 'Time to train',
+        body: 'Your session is ready when you are.',
+        scheduleAt: nextAt,
+      });
     };
 
-    checkIntervalRef.current = setInterval(checkReminder, 60000);
-    return () => clearInterval(checkIntervalRef.current);
-  }, [reminders, profile?.weekSchedule]);
+    rescheduleWorkout();
 
-  return { reminders, loading, updateReminders };
+    return () => {
+      cancelled = true;
+    };
+  }, [reminders, profile]);
+
+  // Request notification permission
+  const requestPermission = useCallback(async () => {
+    return requestNotificationPermission();
+  }, []);
+
+  return { reminders, loading, updateReminders, requestPermission };
 }
