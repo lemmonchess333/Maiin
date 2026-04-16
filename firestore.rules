@@ -20,7 +20,10 @@ service cloud.firestore {
     }
 
     function subscriptionFieldsUnchanged() {
-      let protectedFields = ['subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt'];
+      let protectedFields = [
+        'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
+        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
+      ];
       return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
     }
 
@@ -44,7 +47,8 @@ service cloud.firestore {
         'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
-        'adjustCaloriesForTraining'
+        'adjustCaloriesForTraining',
+        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
       ];
     }
 

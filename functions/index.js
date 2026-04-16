@@ -4,6 +4,11 @@ const cors = require("cors")({ origin: true });
 
 admin.initializeApp();
 
+const appleIAP = require("./appleIAP");
+exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
+exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
+exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
+
 // ══════════════════════════════════════════════
 // RATE LIMITER — per-user, Firestore-backed
 // ══════════════════════════════════════════════

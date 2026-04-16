@@ -9,6 +9,9 @@
  * Stripe is only used for web and Android builds.
  */
 
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
+
 export type PlanId = 'monthly' | 'yearly';
 
 export interface PurchaseResult {
@@ -43,16 +46,43 @@ interface IAPStore {
   NON_CONSUMABLE: string;
 }
 
+// Shape of the transaction object exposed by cordova-plugin-purchase.
+// Property names can vary slightly across plugin versions — confirm against
+// the installed version's README and adjust if needed.
+interface IAPTransaction {
+  signedTransactionInfo?: string;
+  originalTransactionId?: string;
+  transactionId?: string;
+  nativePurchase?: {
+    signedTransactionInfo?: string;
+    originalTransactionId?: string;
+  };
+  appStoreReceipt?: string;
+}
+
+function getIAPStore(): (IAPStore & { latestTransaction?: IAPTransaction }) | undefined {
+  const w = window as unknown as Record<string, Record<string, unknown>>;
+  return (w.CdvPurchase?.store as (IAPStore & { latestTransaction?: IAPTransaction }) | undefined)
+    ?? ((window as unknown as Record<string, unknown>).store as (IAPStore & { latestTransaction?: IAPTransaction }) | undefined);
+}
+
+function readSignedTransactionInfo(tx: IAPTransaction | undefined): string | undefined {
+  if (!tx) return undefined;
+  return tx.signedTransactionInfo ?? tx.nativePurchase?.signedTransactionInfo;
+}
+
+function readOriginalTransactionId(tx: IAPTransaction | undefined): string | undefined {
+  if (!tx) return undefined;
+  return tx.originalTransactionId ?? tx.nativePurchase?.originalTransactionId;
+}
+
 /**
  * Purchase via Apple In-App Purchase (StoreKit)
  * Requires cordova-plugin-purchase or @capacitor-community/in-app-purchases
  */
 async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
   try {
-    // Access the global store object provided by cordova-plugin-purchase
-    const store = ((window as unknown as Record<string, Record<string, unknown>>).CdvPurchase?.store as IAPStore | undefined)
-      ?? ((window as unknown as Record<string, unknown>).store as IAPStore | undefined);
-
+    const store = getIAPStore();
     if (!store) {
       return { success: false, error: 'In-app purchases are not available on this device.' };
     }
@@ -65,7 +95,23 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
 
     return new Promise((resolve) => {
       store.order(productId)
-        .then(() => resolve({ success: true }))
+        .then(async () => {
+          try {
+            const signedTransactionInfo = readSignedTransactionInfo(store.latestTransaction);
+            if (!signedTransactionInfo) {
+              resolve({ success: false, error: 'No signed transaction to verify.' });
+              return;
+            }
+            const verify = httpsCallable(functions, 'verifyApplePurchase');
+            await verify({ signedTransactionInfo });
+            resolve({ success: true });
+          } catch (err) {
+            resolve({
+              success: false,
+              error: err instanceof Error ? err.message : 'Verification failed.',
+            });
+          }
+        })
         .error((e: Error) => resolve({ success: false, error: e.message }));
     });
   } catch (err) {
@@ -144,12 +190,20 @@ export async function restorePurchases(): Promise<PurchaseResult> {
   }
 
   try {
-    const store = ((window as unknown as Record<string, Record<string, unknown>>).CdvPurchase?.store as { refresh: () => void } | undefined)
-      ?? ((window as unknown as Record<string, unknown>).store as { refresh: () => void } | undefined);
+    const store = getIAPStore();
     if (!store) return { success: false, error: 'IAP not available on this device.' };
     store.refresh();
+    const originalTransactionId = readOriginalTransactionId(store.latestTransaction);
+    if (!originalTransactionId) {
+      return { success: false, error: 'No prior purchases found.' };
+    }
+    const restore = httpsCallable(functions, 'restoreApplePurchases');
+    await restore({ originalTransactionId });
     return { success: true };
-  } catch {
-    return { success: false, error: 'Failed to restore purchases.' };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to restore purchases.',
+    };
   }
 }
