@@ -6,7 +6,6 @@ import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { StreakFlame } from "@/components/StreakFlame";
-import { computeTrajectory } from "@/lib/foodTrajectory";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
@@ -279,10 +278,9 @@ export default function FoodHeroCard({
   }, [shouldShowFuelExplainer, dismissFuelExplainer]);
   const celebrationCaptionText = `DAY ${streak || 1} ✓`;
 
-  // Trajectory line
-  const trajectoryLabel = isToday
-    ? computeTrajectory(dailyTotals.calories, dailyTargets.finalTarget)
-    : null;
+  // Trajectory line — suppressed; can be reinstated by importing
+  // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
+  const trajectoryLabel = null;
 
   // Card surface gradient (#FFFFFF to #FAFAFA, 1.6% lightness shift) adds
   // imperceptible depth. Shadow matches Health Score (no 1.2x bump — the
