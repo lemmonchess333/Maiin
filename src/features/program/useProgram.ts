@@ -14,6 +14,26 @@ import {
   applyProgression,
 } from "./programEngine";
 import { logger } from "@/lib/logger";
+import { estimateLiftBurn } from "@/lib/workoutBurn";
+
+/** Per-set record from an active WorkoutSession run. */
+export interface CompletedSetLog {
+  weight: number;
+  reps: number;
+  completed: boolean;
+}
+
+/**
+ * Session data captured from the live WorkoutSession timer + set tracker.
+ * When provided to completeWorkoutDay, the saved workout record reflects
+ * actual execution (wall-clock duration, completed-only sets). When
+ * absent, the save falls back to planned data with estimateLiftBurn's
+ * built-in zero-duration fallback.
+ */
+export interface CompletedSessionData {
+  durationMinutes: number;
+  setLogs: CompletedSetLog[][];
+}
 import {
   scheduleStructuredWeek,
   generateRacePlan,
@@ -168,9 +188,14 @@ export function useProgram() {
   );
 
   // Mark a workout day as completed (does NOT auto-advance week)
-  // Also writes to workouts collection so Home stats can see it
+  // Also writes to workouts collection so Home stats can see it.
+  //
+  // `sessionData` (optional) carries the wall-clock duration and per-set
+  // completion state from an active WorkoutSession. When supplied, the saved
+  // record reflects actual execution; otherwise we fall back to planned data
+  // (every set assumed completed at `ex.lastAttemptedWeight || ex.weight`).
   const completeWorkoutDay = useCallback(
-    async (dayIndex: number) => {
+    async (dayIndex: number, sessionData?: CompletedSessionData) => {
       if (!programState || !user) return;
 
       const day = programState.workouts[dayIndex];
@@ -196,17 +221,32 @@ export function useProgram() {
         const workoutId = `${today}-prog-${Date.now()}`;
         const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
 
-        const exercises = day.exercises.map((ex) => {
-          const weight = ex.lastAttemptedWeight || ex.weight;
+        // Build exercises array — from actual setLogs when available,
+        // otherwise from planned data (every set assumed completed).
+        const exercises = day.exercises.map((ex, exIndex) => {
+          const logs = sessionData?.setLogs?.[exIndex];
+          const plannedWeight = ex.lastAttemptedWeight || ex.weight;
+          const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
+
+          const sets = logs
+            ? logs
+                .filter((l) => l.completed)
+                .map((l, i) => ({
+                  setNumber: i + 1,
+                  reps: l.reps,
+                  weightKg: l.weight,
+                }))
+            : Array.from({ length: ex.sets }, (_, i) => ({
+                setNumber: i + 1,
+                reps: plannedReps,
+                weightKg: plannedWeight,
+              }));
+
           return {
             exerciseId: ex.exerciseId,
             exerciseName: ex.name,
             category: ex.movementCategory,
-            sets: Array.from({ length: ex.sets }, (_, i) => ({
-              setNumber: i + 1,
-              reps: ex.lastPerformance?.reps ?? ex.reps,
-              weightKg: weight,
-            })),
+            sets,
             caloriesBurned: 0,
           };
         });
@@ -215,12 +255,41 @@ export function useProgram() {
           (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
           0,
         );
+        const completedSetCount = exercises.reduce(
+          (c, ex) => c + ex.sets.length,
+          0,
+        );
+
+        // Require bodyweight to compute a sensible burn. If it's missing we
+        // save the workout anyway — the helper returns 0 — but log so the
+        // operator can notice.
+        const bodyweightKg = profile?.weightKg ?? 0;
+        if (bodyweightKg <= 0) {
+          logger.warn(
+            "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0",
+          );
+        }
+
+        const durationMinutes = sessionData?.durationMinutes && sessionData.durationMinutes > 0
+          ? sessionData.durationMinutes
+          : 0;
+
+        const totalCalories = estimateLiftBurn({
+          durationMinutes,
+          tonnageKg: tonnage,
+          bodyweightKg,
+          completedSetCount,
+        });
 
         await setDoc(workoutRef, {
           date: today,
           exercises,
-          totalCalories: Math.round(tonnage * 0.05),
-          durationMinutes: day.exercises.length * 5,
+          totalCalories,
+          // Prefer the real timer value. When absent, estimateLiftBurn's
+          // completedSetCount × 3 fallback drives burn — record that same
+          // effective duration so downstream analytics see a consistent
+          // value. No more `exercises.length × 5` placeholder.
+          durationMinutes: durationMinutes > 0 ? durationMinutes : completedSetCount * 3,
           notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
           createdAt: Timestamp.now(),
           source: "programme",
@@ -238,7 +307,10 @@ export function useProgram() {
               activityTitle: day.dayName,
               exerciseCount: day.exercises.length,
               totalVolume: tonnage,
-              duration: day.exercises.length * 5 * 60, // estimated seconds
+              // Social-post duration in seconds — reuse the same effective
+              // duration that was saved on the workout record so the
+              // displayed value matches the per-user history.
+              duration: (durationMinutes > 0 ? durationMinutes : completedSetCount * 3) * 60,
               muscleGroups: uniqueCategories,
               crewId: profile?.crewId,
               exercises: exercises.slice(0, 3).map(ex => ({

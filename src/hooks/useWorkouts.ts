@@ -16,6 +16,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { estimateCalories } from "@/lib/exercises";
+import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
 
@@ -75,7 +76,7 @@ export interface Workout {
 }
 
 export function useWorkouts() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -124,14 +125,48 @@ export function useWorkouts() {
       if (!user) return;
       const date = normaliseWorkoutDate(workout.date);
       const workoutId = `${date}-${Date.now()}`;
+
+      // Canonicalise totalCalories via the shared estimateLiftBurn formula,
+      // ignoring any caller-supplied value. WorkoutLogger used to sum
+      // per-exercise `caloriesBurned`, which was zero whenever the user
+      // didn't fill cardio duration inputs. One formula, one source of
+      // truth. Per-exercise `caloriesBurned` is kept in the schema for
+      // backwards compat but is NOT summed here; do not reintroduce that.
+      const tonnageKg = workout.exercises.reduce(
+        (t, ex) =>
+          t +
+          (ex.sets ?? []).reduce(
+            (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
+            0,
+          ),
+        0,
+      );
+      const completedSetCount = workout.exercises.reduce(
+        (c, ex) => c + (ex.sets?.length ?? 0),
+        0,
+      );
+      const bodyweightKg = profile?.weightKg ?? 0;
+      if (bodyweightKg <= 0) {
+        logger.warn(
+          "saveWorkout: profile.weightKg missing — workout will save with totalCalories=0",
+        );
+      }
+      const totalCalories = estimateLiftBurn({
+        durationMinutes: workout.durationMinutes ?? 0,
+        tonnageKg,
+        bodyweightKg,
+        completedSetCount,
+      });
+
       await safeMerge(db, `users/${user.uid}/workouts`, workoutId, {
         ...workout,
         date,
+        totalCalories,
         createdAt: Timestamp.now(),
       });
       return workoutId;
     },
-    [user]
+    [user, profile?.weightKg]
   );
 
   const deleteWorkout = useCallback(

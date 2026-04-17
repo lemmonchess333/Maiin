@@ -91,7 +91,13 @@ interface Props {
   day: WorkoutDay;
   dayIndex: number;
   onLogExercise: (dayIndex: number, exIndex: number, reps: number, weight: number) => Promise<void>;
-  onCompleteDay: (dayIndex: number) => Promise<void>;
+  onCompleteDay: (
+    dayIndex: number,
+    sessionData?: {
+      durationMinutes: number;
+      setLogs: Array<Array<{ weight: number; reps: number; completed: boolean }>>;
+    },
+  ) => Promise<void>;
   onClose: () => void;
 }
 
@@ -478,7 +484,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
   const handleFinish = async () => {
     setCompleting(true);
-    await onCompleteDay(dayIndex);
+    // Pass the wall-clock duration + per-set logs so the saved workout
+    // record reflects actual execution instead of planned placeholders.
+    // sessionDurationMinutes is finalised in completeSession at the moment
+    // the last set is marked done (see line 404); setLogs is the source of
+    // truth for which sets were completed with what weight/reps.
+    await onCompleteDay(dayIndex, {
+      durationMinutes: sessionDurationMinutes,
+      setLogs: setLogs.map((exSets) =>
+        exSets.map((s) => ({
+          weight: s.weight,
+          reps: s.reps,
+          completed: s.completed,
+        })),
+      ),
+    });
 
     // Persist PR map to Firestore for history beyond 50-session window
     if (user?.uid && Object.keys(prMap).length > 0) {
