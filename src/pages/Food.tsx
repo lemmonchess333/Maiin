@@ -761,7 +761,7 @@ export default function Food() {
       </AnimatePresence>
 
       {/* Input area — text field stacked above full-width Scan CTA */}
-      <motion.div variants={itemVariant} className="sticky z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 44px)" }}>
+      <motion.div variants={itemVariant} className="sticky z-20 bg-background pb-2" style={{ top: "calc(env(safe-area-inset-top, 0px) + 44px)" }}>
         <div className="relative">
           <textarea
             ref={inputRef}
