@@ -834,13 +834,9 @@ export default function Food() {
                 onClick={() => { haptic(); handleQuickMealAdd(meal); }}
                 disabled={quickAdding !== null}
                 className={cn(
-                  "shrink-0 h-9 px-3.5 rounded-full border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
+                  "shrink-0 h-9 px-3.5 rounded-full bg-white border border-black/[0.08] text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
-                style={{
-                  background: `${THEME.semantic.nutrition}12`,
-                  borderColor: `${THEME.semantic.nutrition}22`,
-                }}
               >
                 {meal.name} · {meal.cal} kcal
               </motion.button>
@@ -862,7 +858,7 @@ export default function Food() {
                   "shrink-0 text-left border border-border/60 border-l-[3px] border-l-orange-300 rounded-xl transition-all active:bg-primary/10",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
-                style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}1A 0%, ${THEME.semantic.nutrition}08 100%)` }}
+                style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}
               >
                 <span className="text-micro font-semibold text-foreground block truncate">{meal.name}</span>
                 <span className="block text-xs text-muted-foreground mt-1">~{meal.cal} kcal</span>
