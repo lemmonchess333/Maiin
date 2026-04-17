@@ -28,7 +28,7 @@ import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { FitnessGoal } from "@/lib/tdee";
-import { useDailyTargets } from "@/hooks/useDailyTargets";
+import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
@@ -52,7 +52,7 @@ export default function Home() {
   const { workouts, getWorkoutsForDate } = useWorkouts();
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
 
-  const dailyTargets = useDailyTargets();
+  const effectiveTargets = useEffectiveTargets();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState, loading: programLoading } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
@@ -119,8 +119,8 @@ export default function Home() {
         mealCount: todayTotals.mealCount,
       },
       {
-        calories: dailyTargets.finalTarget,
-        protein: dailyTargets.protein,
+        calories: effectiveTargets.finalTarget,
+        protein: effectiveTargets.protein,
       },
       {
         workoutsToday: todayWorkoutCount,
@@ -129,7 +129,7 @@ export default function Home() {
         isRestDay: todayType === "rest",
       }
     );
-  }, [todayTotals, dailyTargets, todayWorkoutCount, waterGlasses, waterTarget, todayType]);
+  }, [todayTotals, effectiveTargets, todayWorkoutCount, waterGlasses, waterTarget, todayType]);
   const healthScore = healthScoreResult.score;
 
   useEffect(function() {
@@ -168,13 +168,13 @@ export default function Home() {
       return { calories: m.totalCalories, protein: m.totalProtein, carbs: m.totalCarbs, fat: m.totalFat, mealType, date: m.date };
     });
     const insights = analyzeNutritionPatterns(mapped, {
-      calories: dailyTargets.finalTarget,
-      protein: dailyTargets.protein,
-      carbs: dailyTargets.carbs,
-      fat: dailyTargets.fat,
+      calories: effectiveTargets.finalTarget,
+      protein: effectiveTargets.protein,
+      carbs: effectiveTargets.carbs,
+      fat: effectiveTargets.fat,
     });
     return insights.length > 0 ? insights[0] : null;
-  }, [meals, dailyTargets]);
+  }, [meals, effectiveTargets]);
 
   // Meal history for conditional "Log first meal" CTA
   const totalLifetimeMeals = meals.length;
@@ -407,7 +407,7 @@ export default function Home() {
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
           <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targets={dailyTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
           </SectionErrorBoundary>
         </motion.div>
       </section>
