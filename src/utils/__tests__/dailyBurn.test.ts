@@ -2,47 +2,49 @@ import { describe, it, expect } from 'vitest';
 import { calcDailyBurn, estimateStepCalories } from '../dailyBurn';
 
 describe('calcDailyBurn', () => {
-  // NEAT multiplier is always 1.2 (no activity level — exercise added explicitly)
+  // After the B1 unification (Prompt 1), calcDailyBurn takes the stored
+  // profile.targetCalories as its base. That value already includes the
+  // user's activity-level-aware TDEE and the phase deficit (from
+  // calculateTDEE), so this function simply sums the base with on-top
+  // burn sources (workouts, runs, steps). No NEAT, no goal offset.
 
-  it('calculates cut correctly with NEAT base', () => {
-    const result = calcDailyBurn(1800, 'cut', 0, 0, 0);
-    expect(result.bmr).toBe(1800);
-    expect(result.tdee).toBe(Math.round(1800 * 1.2)); // 2160
-    expect(result.phaseAdjustedTdee).toBe(2160 - 500); // 1660
-    expect(result.dailyBudget).toBe(1660);
+  it('returns the base when no activity is supplied', () => {
+    const result = calcDailyBurn(1887, 'cut', 0, 0, 0);
+    expect(result.phaseAdjustedTdee).toBe(1887);
+    expect(result.dailyBudget).toBe(1887);
     expect(result.phaseLabel).toBe('cut');
   });
 
-  it('calculates lean bulk with workout calories on top of NEAT base', () => {
-    const result = calcDailyBurn(2000, 'lean bulk', 400, 0, 0);
-    expect(result.tdee).toBe(Math.round(2000 * 1.2)); // 2400
-    expect(result.phaseAdjustedTdee).toBe(2400 + 300); // 2700
-    expect(result.dailyBudget).toBe(2700 + 400); // 3100
+  it('adds workout calories on top of the base', () => {
+    const result = calcDailyBurn(2400, 'lean bulk', 400, 0, 0);
+    expect(result.phaseAdjustedTdee).toBe(2400);
+    expect(result.dailyBudget).toBe(2800);
     expect(result.phaseLabel).toBe('bulk');
   });
 
-  it('calculates recomp with all calorie sources', () => {
-    const result = calcDailyBurn(1900, 'recomp', 300, 200, 100);
-    expect(result.tdee).toBe(Math.round(1900 * 1.2)); // 2280
-    expect(result.phaseAdjustedTdee).toBe(2280 + 0); // recomp = 0 offset
-    expect(result.dailyBudget).toBe(2280 + 300 + 200 + 100); // 2880
+  it('sums all activity sources with the base', () => {
+    const result = calcDailyBurn(2200, 'recomp', 300, 200, 100);
+    expect(result.phaseAdjustedTdee).toBe(2200);
+    expect(result.dailyBudget).toBe(2800);
     expect(result.phaseLabel).toBe('recomp');
     expect(result.workoutCalories).toBe(300);
     expect(result.runCalories).toBe(200);
     expect(result.stepCalories).toBe(100);
   });
 
-  it('returns correct phase value', () => {
+  it('returns the correct phase value across all three phases', () => {
     expect(calcDailyBurn(1800, 'cut', 0, 0, 0).phase).toBe('cut');
-    expect(calcDailyBurn(1800, 'recomp', 0, 0, 0).phase).toBe('recomp');
-    expect(calcDailyBurn(1800, 'lean bulk', 0, 0, 0).phase).toBe('lean bulk');
+    expect(calcDailyBurn(2200, 'recomp', 0, 0, 0).phase).toBe('recomp');
+    expect(calcDailyBurn(2700, 'lean bulk', 0, 0, 0).phase).toBe('lean bulk');
   });
 
-  it('no longer double-counts: same BMR gives lower budget than old activity-multiplied version', () => {
-    // Old "moderate" would give 1900*1.55=2945, new gives 1900*1.2=2280
-    // With 300 workout cals: old=3245, new=2580
-    const result = calcDailyBurn(1900, 'recomp', 300, 0, 0);
-    expect(result.dailyBudget).toBe(2280 + 300); // 2580, not 3245
+  it('does not re-apply the phase deficit (it is already baked into targetCalories)', () => {
+    // Regression guard: the old implementation computed bmr*1.2 + phase_offset,
+    // which on cut would subtract 500 again. The new impl takes targetCalories
+    // as-is. A cut user with targetCalories=1,887 and no activity should see
+    // dailyBudget=1,887 — not 1,387.
+    const result = calcDailyBurn(1887, 'cut', 0, 0, 0);
+    expect(result.dailyBudget).toBe(1887);
   });
 });
 

@@ -212,7 +212,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
     expect(result.current.todayRunCals).toBe(218);
   });
 
-  it("todayWorkoutCals computed from workouts prop (sync)", async () => {
+  it("todayWorkoutCals reads stored totalCalories via isWorkoutOnDate (sync)", async () => {
     mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
 
     const profile = makeProfile({ weightKg: 70 });
@@ -220,6 +220,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
     const oldCreatedAt = Date.now() - 200 * 60 * 1000;
     const workout = makeWorkout({
       date: "2026-04-01",
+      totalCalories: 300,
       durationMinutes: 60,
       createdAt: { toMillis: () => oldCreatedAt } as any,
     });
@@ -228,9 +229,9 @@ describe("useHomeData", { timeout: 5000 }, () => {
       useHomeData({ uid: "u1" }, profile, [workout], "kg")
     );
 
-    // Sync computation, available immediately
-    // (70 * 60 * 5) / 60 = 350
-    expect(result.current.todayWorkoutCals).toBe(350);
+    // Sync computation: sums w.totalCalories for today via the shared
+    // isWorkoutOnDate helper. No longer recomputes from duration × weight.
+    expect(result.current.todayWorkoutCals).toBe(300);
 
     await waitFor(() => expect(result.current.loading).toBe(false));
   });

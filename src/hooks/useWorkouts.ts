@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { format, parseISO } from "date-fns";
 import {
   collection,
   deleteDoc,
@@ -15,7 +16,35 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { estimateCalories } from "@/lib/exercises";
+import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
+
+/**
+ * Normalise a caller-supplied workout date to a local "yyyy-MM-dd" string.
+ *
+ * Callers historically passed a mix of pre-formatted date strings, ISO
+ * timestamps (often UTC, via `new Date().toISOString()`), and Date objects.
+ * Storing UTC strings breaks near-midnight reads on the useEffectiveTargets
+ * / isWorkoutOnDate side, which both use local-timezone keys. This helper
+ * routes each input shape through the correct parse path:
+ *
+ *   - undefined                    → today (local)
+ *   - Date instance                → local yyyy-MM-dd
+ *   - "yyyy-MM-dd" string          → passed through unchanged
+ *   - ISO or other string          → parseISO then format local
+ *   - unparseable string           → today (local), logged
+ */
+function normaliseWorkoutDate(input: string | Date | undefined): string {
+  if (!input) return format(new Date(), "yyyy-MM-dd");
+  if (input instanceof Date) return format(input, "yyyy-MM-dd");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+  try {
+    return format(parseISO(input), "yyyy-MM-dd");
+  } catch {
+    logger.warn("saveWorkout: unparseable date, using today", input);
+    return format(new Date(), "yyyy-MM-dd");
+  }
+}
 
 export interface WorkoutSet {
   setNumber: number;
@@ -93,9 +122,11 @@ export function useWorkouts() {
   const saveWorkout = useCallback(
     async (workout: Omit<Workout, "id" | "createdAt">) => {
       if (!user) return;
-      const workoutId = `${workout.date}-${Date.now()}`;
+      const date = normaliseWorkoutDate(workout.date);
+      const workoutId = `${date}-${Date.now()}`;
       await safeMerge(db, `users/${user.uid}/workouts`, workoutId, {
         ...workout,
+        date,
         createdAt: Timestamp.now(),
       });
       return workoutId;
