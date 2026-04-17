@@ -417,7 +417,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {/* ── Header Zone ── */}
       <div>
         <header>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-1 pb-1">
           <div>
             <h1 className="text-xl font-extrabold text-foreground">Program</h1>
             <p className="text-xs text-muted-foreground">
