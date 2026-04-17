@@ -42,6 +42,7 @@
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
   --radius: 0.5rem;
+  --input-fill: 240 5% 93%;
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
@@ -57,6 +58,7 @@
   --muted: 240 3% 15%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 16%;
+  --input-fill: 240 3% 12%;
   --glass-bg: rgba(18, 18, 20, 0.97);
   --glass-border: rgba(255, 255, 255, 0.06);
   --surface-solid: #161618;
