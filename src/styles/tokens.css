@@ -40,6 +40,8 @@
   --ds-shadow-purple-glow: 0 4px 16px rgba(123, 114, 233, 0.22);
   --ds-shadow-orange-glow: 0 4px 16px rgba(232, 115, 22, 0.22);
   --ds-shadow-green-glow: 0 4px 14px rgba(34, 184, 88, 0.20);
+  /* Scan-meal CTA shadow — tinted to THEME.semantic.nutrition (#D9884E) at 30% alpha */
+  --shadow-scan-button: 0 8px 24px #D9884E4D;
 
   /* Font Weights
      ─ Use 700 (bold) for section headings, card titles, inline emphasis

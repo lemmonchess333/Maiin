@@ -21,14 +21,12 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
-import { parseVoiceInput, formatParsedItems } from "@/lib/voiceFoodParser";
 import {
   ChevronLeft,
   ChevronRight,
   Flame,
   CalendarDays,
   Plus,
-  Mic,
   SendHorizontal,
   RotateCcw,
   Camera,
@@ -48,6 +46,7 @@ import MealMacroBar from "@/components/food/MealMacroBar";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
+import ScanMealButton from "@/components/food/ScanMealButton";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -100,41 +99,7 @@ export default function Food() {
   const { addFavourite } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Speech recognition is not supported in this browser.");
-      return;
-    }
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
-    recognitionRef.current = recognition;
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => {
-      setIsListening(false);
-      toast.error("Could not capture voice. Please try again.");
-    };
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
-      const parsed = parseVoiceInput(transcript);
-      const text = parsed.length > 0 ? formatParsedItems(parsed) : transcript;
-      setNlInput((prev) => (prev ? prev + ", " + text : text));
-      setSuggestionsActive(true);
-    };
-    recognition.start();
-  };
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -795,75 +760,66 @@ export default function Food() {
         )}
       </AnimatePresence>
 
-      {/* Input bar + scan circle */}
+      {/* Input area — text field stacked above full-width Scan CTA */}
       <motion.div variants={itemVariant} className="sticky z-20 bg-background pb-2 shadow-[0_1px_0_rgba(0,0,0,0.06)]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 44px)" }}>
-        <div className="flex items-start gap-2">
-          <div className="relative flex-1">
-            <textarea
-              ref={inputRef}
-              value={nlInput}
-              onChange={(e) => setNlInput(e.target.value)}
-              onFocus={() => setSuggestionsActive(true)}
-              onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
-              placeholder={targetMeal ? `Adding to ${MEAL_LABELS[targetMeal]}…` : "What did you eat?"}
-              aria-label="What did you eat"
-              rows={1}
-              maxLength={500}
-              className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-border/50 shadow-sm text-foreground text-sm resize-none focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
-            />
-            {nlInput.trim() ? (
-              <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
-                aria-label="Send"
-                className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
-                style={{ color: "#7C6BF0" }}>
-                <SendHorizontal className="w-5 h-5" />
-              </button>
-            ) : (
-              <button type="button" onClick={handleVoiceInput} aria-label={isListening ? "Stop listening" : "Voice input"}
-                className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-muted-foreground hover:text-primary hover:bg-primary/10")}>
-                <Mic className="w-4 h-4" />
-              </button>
-            )}
-            {showSuggestions && (
-              <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
-                {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
-                  <button key={`ai-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSuggestionSelect(s)} className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0">
-                    <span className="text-sm font-medium text-foreground">{s.name} — <span className="text-muted-foreground font-normal">{s.serving}</span></span>
-                    <span className="text-xs text-muted-foreground tabular-nums shrink-0">{s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g</span>
-                  </button>
-                ))}</div>)}
-                {offResults.length > 0 && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                  {offResults.map((food, i) => (
-                    <button key={`off-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleOFFSelect(food)} className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
-                          {food.brand && <p className="text-xs text-muted-foreground truncate">{food.brand}</p>}
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span className="text-orange-500 font-medium">{food.calories} cal</span>
-                            <span>&middot;</span><span>P {food.protein}g</span><span>C {food.carbs}g</span><span>F {food.fat}g</span>
-                            <span className="text-xs">per {food.servingSize}</span>
-                          </div>
+        <div className="relative">
+          <textarea
+            ref={inputRef}
+            value={nlInput}
+            onChange={(e) => setNlInput(e.target.value)}
+            onFocus={() => setSuggestionsActive(true)}
+            onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
+            placeholder={targetMeal ? `Adding to ${MEAL_LABELS[targetMeal]}…` : "What did you eat?"}
+            aria-label="What did you eat"
+            rows={1}
+            maxLength={500}
+            className="w-full px-4 py-3 pr-11 rounded-xl border-0 text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/15"
+            style={{ backgroundColor: "hsl(var(--input-fill))" }}
+          />
+          {nlInput.trim() && (
+            <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
+              aria-label="Send"
+              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
+              style={{ color: "#7C6BF0" }}>
+              <SendHorizontal className="w-5 h-5" />
+            </button>
+          )}
+          {showSuggestions && (
+            <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
+              {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
+                <button key={`ai-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSuggestionSelect(s)} className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0">
+                  <span className="text-sm font-medium text-foreground">{s.name} — <span className="text-muted-foreground font-normal">{s.serving}</span></span>
+                  <span className="text-xs text-muted-foreground tabular-nums shrink-0">{s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g</span>
+                </button>
+              ))}</div>)}
+              {offResults.length > 0 && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                {offResults.map((food, i) => (
+                  <button key={`off-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleOFFSelect(food)} className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
+                        {food.brand && <p className="text-xs text-muted-foreground truncate">{food.brand}</p>}
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span className="text-orange-500 font-medium">{food.calories} cal</span>
+                          <span>&middot;</span><span>P {food.protein}g</span><span>C {food.carbs}g</span><span>F {food.fat}g</span>
+                          <span className="text-xs">per {food.servingSize}</span>
                         </div>
-                        <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
                       </div>
-                    </button>
-                  ))}
-                </motion.div>)}
-              </div>
-            )}
-          </div>
-          <div className="relative shrink-0">
-            {/* Change #6: calmed camera button — matches input bar's white pill
-                styling. Coral stroke comes from the icon only, not the background. */}
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => { haptic(); scanOverrides.onClick(); }}
-              aria-label={scanUsage.isUnlimited || scanUsage.remaining > 0 ? "Scan food" : "Upgrade to scan food"}
-              className="w-11 h-11 rounded-full flex items-center justify-center bg-white border border-border/50 shadow-sm active:scale-95 transition-transform mt-[1px]"
-              style={scanOverrides.style}>
-              <Camera className="w-[22px] h-[22px]" style={{ color: "#FF6B4A" }} strokeWidth={2} />
-            </motion.button>
-            {scanOverrides.icon}
-          </div>
+                      <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
+                    </div>
+                  </button>
+                ))}
+              </motion.div>)}
+            </div>
+          )}
+        </div>
+        <div className="mt-3">
+          <ScanMealButton
+            onClick={() => { haptic(); scanOverrides.onClick(); }}
+            ariaLabel={scanUsage.isUnlimited || scanUsage.remaining > 0 ? "Scan your meal" : "Upgrade to scan your meal"}
+            styleOverride={scanOverrides.style}
+            statusIcon={scanOverrides.icon}
+          />
         </div>
       </motion.div>
       {/* Meal targeting pill */}
