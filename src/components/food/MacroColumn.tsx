@@ -63,9 +63,11 @@ export default function MacroColumn({
     ? (isOver ? consumed - target : remaining)
     : consumed;
 
+  // "eaten" (the default eaten-mode label) is suppressed; the dynamic
+  // "over" state is preserved so users still see the over-target signal.
   const displayLabel = isLeftMode
     ? (isOver ? "over" : "left")
-    : "eaten";
+    : null;
 
   // Over-target colour ramping (number + bar only, NOT icon/label/tertiary)
   const overColor = isOver ? getOverTargetColor(consumed, target) : color;
@@ -134,10 +136,12 @@ export default function MacroColumn({
         <span className="text-3xl">g</span>
       </p>
 
-      {/* "left" label — stays in original colour */}
-      <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-        {displayLabel}
-      </p>
+      {/* Left/over label — suppressed in eaten mode (displayLabel === null) */}
+      {displayLabel && (
+        <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+          {displayLabel}
+        </p>
+      )}
 
       {/* Progress bar */}
       {/* Track — inset shadow reads as a recessed channel cut into the
