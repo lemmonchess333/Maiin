@@ -254,14 +254,6 @@ export default function FoodCameraModal({
         >
           <X className="w-5 h-5" />
         </button>
-
-        <button
-          onClick={() => { haptic("light"); setFacing((p) => (p === "environment" ? "user" : "environment")); }}
-          className="h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center"
-          aria-label="Flip camera"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
       </div>
 
       {/* camera */}
@@ -273,9 +265,14 @@ export default function FoodCameraModal({
         autoPlay
       />
 
-      {/* frame overlay */}
+      {/* frame overlay — darkening shadow + four corner brackets (modern scanner) */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="w-[78%] max-w-[360px] aspect-[4/2.3] rounded-2xl border-2 border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+        <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
+          <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
+          <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
+          <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
+        </div>
       </div>
 
       {/* bottom */}
@@ -294,7 +291,7 @@ export default function FoodCameraModal({
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all",
                   tab === key
-                    ? "bg-[#7B72E9] text-white shadow-sm"
+                    ? "bg-[#FF6B4A] text-white shadow-sm"
                     : "text-white/70 hover:text-white"
                 )}
               >
@@ -307,7 +304,7 @@ export default function FoodCameraModal({
             <p className="text-center text-xs text-white/80">{barcodeHint}</p>
           )}
 
-          {/* capture row */}
+          {/* capture row — library · shutter · flip-camera (symmetrical) */}
           <div className="flex items-center justify-between">
             {/* Photo library */}
             <button
@@ -319,27 +316,36 @@ export default function FoodCameraModal({
               <ImageIcon className="w-5 h-5" />
             </button>
 
-            {/* Shutter (only for food/label) — white fill + coral ring */}
+            {/* Shutter (only for food/label) — white fill + scan-coral ring */}
             <button
               onClick={() => { haptic("medium"); takePhoto(); }}
               disabled={disableShutter}
               className={cn(
-                "h-16 w-16 rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
                 disableShutter && "opacity-50"
               )}
-              style={{ borderColor: "#D4637A" }}
+              style={{ borderColor: "#FF6B4A" }}
               aria-label="Capture"
             >
-              <div className="w-[52px] h-[52px] rounded-full bg-white" />
+              <div className="w-[60px] h-[60px] rounded-full bg-white" />
             </button>
 
-            <div className="h-12 w-12" />
+            {/* Flip camera — balances the library icon on the left */}
+            <button
+              onClick={() => { haptic("light"); setFacing((p) => (p === "environment" ? "user" : "environment")); }}
+              className="h-12 w-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+              aria-label="Flip camera"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
           </div>
 
           <p className="text-center text-xs text-white/70">
             {tab === "barcode"
               ? "Auto-detects barcode (no shutter)"
-              : "Snap a photo or pick from library"}
+              : tab === "label"
+                ? "Align the nutrition label"
+                : "Point at your meal"}
           </p>
         </div>
       </div>

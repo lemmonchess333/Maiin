@@ -32,5 +32,6 @@ export function computeTrajectory(
   const magnitude = Math.round(Math.abs(diff) / 10) * 10;
   if (magnitude === 0) return "On pace";
 
-  return diff > 0 ? `${magnitude} ahead` : `${magnitude} behind`;
+  const formatted = magnitude.toLocaleString();
+  return diff > 0 ? `${formatted} ahead of pace` : `${formatted} behind pace`;
 }

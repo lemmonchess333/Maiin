@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeftRight } from "lucide-react";
 import { getOverTargetColor } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
@@ -224,18 +225,19 @@ export default function CalorieRing({
             >
               <p
                 className="text-4xl font-black font-mono tabular-nums leading-none tracking-tight"
-                style={{ color: numberColor }}
+                style={{ color: numberColor, opacity: displayValue === 0 ? 0.4 : 1 }}
               >
                 <AnimatedNumber value={displayValue} duration={ringDurationSec} ease={RING_EASE} />
               </p>
               <p
-                className="text-[10px] font-semibold uppercase tracking-wider mt-1"
+                className="text-[10px] font-semibold uppercase tracking-wider mt-1 flex items-center gap-1"
                 style={{ color: numberColor, opacity: 0.7 }}
               >
                 {CALORIE_UNIT} {isLeftMode ? (isOver ? "over" : "left") : "eaten"}
+                <ArrowLeftRight className="w-2.5 h-2.5 opacity-60" aria-hidden="true" />
               </p>
               {trajectoryLabel && (
-                <p className="text-[10px] mt-1 text-muted-foreground/70 tabular-nums">
+                <p className="text-[10px] mt-1 text-muted-foreground/70 font-mono tabular-nums">
                   {trajectoryLabel}
                 </p>
               )}
