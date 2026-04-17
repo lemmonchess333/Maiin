@@ -14,6 +14,7 @@ import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { computeEffectiveBonus } from "@/lib/effectiveTargets";
+import { isWorkoutOnDate } from "@/lib/workoutDate";
 import {
   useDailyTargets,
   type DailyTargets,
@@ -179,9 +180,11 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const targetDate = date || new Date();
     const targetKey = format(targetDate, "yyyy-MM-dd");
 
-    // Sum actual burn for this specific date
+    // Sum actual burn for this specific date. Date matching lives in the
+    // shared isWorkoutOnDate helper so Home's workout-burn read (useHomeData)
+    // uses the same rule.
     const actualLiftBurn = workouts
-      .filter((w) => w.date === targetKey)
+      .filter((w) => isWorkoutOnDate(w, targetDate))
       .reduce((sum, w) => sum + w.totalCalories, 0);
 
     const actualRunBurn = runs.reduce((sum, r) => {

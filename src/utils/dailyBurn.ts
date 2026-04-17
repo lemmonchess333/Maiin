@@ -1,13 +1,16 @@
 import type { FitnessGoal } from "@/lib/tdee";
-import { GOAL_CALORIE_OFFSET } from "@/lib/macroConstants";
 
-/** NEAT multiplier — covers thermic effect of food + basic daily movement.
- *  Structured exercise is added explicitly via workoutCals/runCals/stepCals. */
-const NEAT_MULTIPLIER = 1.2;
-
+/**
+ * Daily calorie burn summary for the Home "Today's Energy" card.
+ *
+ * The base (phaseAdjustedTdee) is the user's stored targetCalories from the
+ * profile — written by onboarding / Settings via calculateTDEE, which already
+ * bakes in the user's activityLevel multiplier AND the phase deficit. This
+ * function therefore does NOT recompute NEAT or re-apply the goal offset; it
+ * just sums the phase-adjusted base with on-top burn sources.
+ */
 export interface DailyBurn {
-  bmr: number;
-  tdee: number;
+  /** Profile's stored target — already includes activity-level TDEE + phase deficit. */
   phaseAdjustedTdee: number;
   workoutCalories: number;
   runCalories: number;
@@ -18,21 +21,18 @@ export interface DailyBurn {
 }
 
 export function calcDailyBurn(
-  bmr: number,
+  targetCalories: number,
   phase: FitnessGoal,
   workoutCals: number,
   runCals: number,
   stepCals: number,
 ): DailyBurn {
-  const tdee = Math.round(bmr * NEAT_MULTIPLIER);
-  const phaseAdjustedTdee = tdee + (GOAL_CALORIE_OFFSET[phase] ?? 0);
+  const phaseAdjustedTdee = targetCalories;
   const dailyBudget = phaseAdjustedTdee + workoutCals + runCals + stepCals;
 
   const phaseLabel = phase === "cut" ? "cut" : phase === "lean bulk" ? "bulk" : "recomp";
 
   return {
-    bmr,
-    tdee,
     phaseAdjustedTdee,
     workoutCalories: workoutCals,
     runCalories: runCals,

@@ -26,7 +26,6 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { estimateBMR } from "@/utils/calorieBalance";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { FitnessGoal } from "@/lib/tdee";
 import { useDailyTargets } from "@/hooks/useDailyTargets";
@@ -141,14 +140,14 @@ export default function Home() {
   // Daily burn for Today's Energy card
 
   const dailyBurn = useMemo(function() {
-    const wKg = profile?.weightKg || 70;
-    const hCm = profile?.heightCm || 170;
-    const a = profile?.age || 30;
-    const s = (profile?.sex as "male" | "female") || "male";
-    const bmr = estimateBMR(wKg, hCm, a, s);
+    // Base now reads profile.targetCalories directly — the stored value
+    // already includes activityLevel-aware TDEE + phase deficit from
+    // calculateTDEE. This avoids the previous double-count / underestimate
+    // where calcDailyBurn was recomputing with a fixed 1.2 NEAT.
+    const targetCalories = profile?.targetCalories ?? 2200;
     const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
-    return calcDailyBurn(bmr, phase, todayWorkoutCals, todayRunCals, 0);
-  }, [profile, todayWorkoutCals, todayRunCals]);
+    return calcDailyBurn(targetCalories, phase, todayWorkoutCals, todayRunCals, 0);
+  }, [profile?.targetCalories, profile?.program?.goal, todayWorkoutCals, todayRunCals]);
 
   // Performance data for InsightStrip
   const { currentWeek: perfWeek } = usePerformanceWeeks(1);

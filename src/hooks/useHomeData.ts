@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { isWorkoutOnDate } from "@/lib/workoutDate";
 
 interface WeightInfo {
   weight: string;
@@ -140,19 +141,15 @@ export function useHomeData(
     return function () { cancelled = true; };
   }, [user?.uid, weightUnit, profile?.weightKg]);
 
-  // Workout calories — sync computation from workouts prop
+  // Workout calories — read the canonical stored totalCalories via the shared
+  // isWorkoutOnDate helper so Home matches Food's useEffectiveTargets.
+  // Null-safe fallback to 0 when a legacy workout doc is missing the field.
   const todayWorkoutCals = useMemo(function () {
-    const todayStr = format(new Date(), "yyyy-MM-dd");
-    const weightKg = profile?.weightKg || 70;
-    let wCals = 0;
-    workouts
-      .filter(function (w) { return w.date === todayStr; })
-      .forEach(function (w) {
-        const mins = w.durationMinutes || 0;
-        wCals += Math.round((weightKg * mins * 5) / 60);
-      });
-    return wCals;
-  }, [workouts, profile?.weightKg]);
+    const now = new Date();
+    return workouts
+      .filter(function (w) { return isWorkoutOnDate(w, now); })
+      .reduce(function (sum, w) { return sum + (w.totalCalories ?? 0); }, 0);
+  }, [workouts]);
 
   // Post-workout nudge — uses Date.now() so must be in useEffect, not useMemo
   const [postWorkoutNudge, setPostWorkoutNudge] = useState<PostWorkoutNudge | null>(null);
