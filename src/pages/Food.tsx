@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { formatCalories, formatMacro, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -107,8 +107,6 @@ export default function Food() {
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const macroSentinelRef = useRef<HTMLDivElement>(null);
-  const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   // Training-aware: returns planned values when adjustCaloriesForTraining is
@@ -262,13 +260,6 @@ export default function Food() {
     }
   }, [mealSegmentedMeals, copyingMealKey]);
 
-  const macroTargets = {
-    calories: dailyTargets.finalTarget,
-    protein: dailyTargets.protein,
-    carbs: dailyTargets.carbs,
-    fat: dailyTargets.fat,
-  };
-
   useEffect(() => {
     const mealCount = todaysMeals.length;
     if (mealCount === 0) return;
@@ -287,18 +278,6 @@ export default function Food() {
   };
 
   const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
-
-  // Sticky header: show when macro tiles scroll out of view
-  useEffect(() => {
-    const el = macroSentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Swipe-to-delete: close any open row when the user taps outside a food row.
   // A row marks itself with `data-food-row` so we can detect the boundary via
@@ -735,30 +714,6 @@ export default function Food() {
           streak={currentStreak}
         />
       </motion.div>
-
-      {/* Sticky macro summary — appears when tiles scroll out of view */}
-      <div ref={macroSentinelRef} className="h-0" />
-      <AnimatePresence>
-        {showStickyHeader && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="sticky z-30 -mx-4 px-4 py-2 backdrop-blur-md"
-            style={{ top: "env(safe-area-inset-top, 0px)", backgroundColor: "var(--background-translucent, rgba(242,242,247,0.85))", WebkitBackdropFilter: "blur(12px)" }}
-          >
-            <p className="text-xs font-semibold font-mono tabular-nums text-center text-foreground">
-              {formatCalories(Math.max(0, macroTargets.calories - dailyTotals.calories))} {CALORIE_UNIT} left
-              <span className="text-muted-foreground font-normal">
-                {" · P: "}{formatMacro(Math.max(0, macroTargets.protein - dailyTotals.protein))}g
-                {" · C: "}{formatMacro(Math.max(0, macroTargets.carbs - dailyTotals.carbs))}g
-                {" · F: "}{formatMacro(Math.max(0, macroTargets.fat - dailyTotals.fat))}g
-              </span>
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Input area — text field stacked above full-width Scan CTA */}
       <motion.div variants={itemVariant} className="pb-2">
