@@ -321,11 +321,15 @@ export default function FoodHeroCard({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.3 }}
-                  className="text-micro uppercase tracking-wider"
-                  style={{ color: THEME.lifting }}
+                  className="text-micro uppercase tracking-wider text-muted-foreground/70"
                 >
                   {caption.trainingType}
-                  {caption.adjustment && <span> · {caption.adjustment}</span>}
+                  {caption.adjustment && (
+                    <>
+                      {' · '}
+                      <span style={{ color: THEME.lifting }}>{caption.adjustment}</span>
+                    </>
+                  )}
                 </motion.p>
               ) : null}
             </AnimatePresence>
