@@ -12,10 +12,10 @@ interface ScanMealButtonProps {
   statusIcon?: ReactNode;
 }
 
-// Gradient stops. Base is THEME.semantic.nutrition; top stop is computed as
-// +8% lightness in HSL from the base (H=27°, S=64%, L=58% → L=66%).
-const GRADIENT_TOP = "#E0A371";
-const GRADIENT_BOTTOM = THEME.semantic.nutrition;
+// Gradient stops read from THEME.food.scan (+ its paired light variant,
+// which is the same hue at +8% lightness). Swapping the token propagates here.
+const GRADIENT_TOP = THEME.food.scanLight;
+const GRADIENT_BOTTOM = THEME.food.scan;
 
 export default function ScanMealButton({
   onClick,
@@ -29,7 +29,7 @@ export default function ScanMealButton({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       aria-label={ariaLabel}
-      className="relative w-full h-[60px] rounded-2xl flex items-center justify-center gap-[10px] text-white font-semibold text-base shadow-[var(--shadow-scan-button)]"
+      className="relative w-full h-[60px] rounded-2xl flex items-center justify-center gap-[10px] text-white font-semibold text-base shadow-[var(--shadow-scan)]"
       style={{
         background: `linear-gradient(180deg, ${GRADIENT_TOP} 0%, ${GRADIENT_BOTTOM} 100%)`,
         ...styleOverride,

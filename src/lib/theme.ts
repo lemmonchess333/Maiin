@@ -24,6 +24,15 @@ export const THEME = {
     negative: '#D4637A',   // shares coral — negative states, alerts
   },
 
+  // Food-specific action colour — used by the Scan CTA on the Food page.
+  // Distinct from semantic.nutrition (which stays warm orange for macro
+  // context) because the scan CTA needs a saturated coral-red that
+  // harmonises with the calorie ring above it.
+  food: {
+    scan: '#FF6B4A',
+    scanLight: '#FF7D5F', // +8% lightness in HSL for gradient top stop
+  },
+
   // Legacy semantic (kept for compatibility)
   success: '#4DB872',
   warning: '#D9884E',
