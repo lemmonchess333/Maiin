@@ -414,9 +414,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // ── Render ──
   return (
     <div>
-      {/* ── Sticky Header Zone ── */}
-      <div className="sticky z-30 -mx-4" style={{ top: "env(safe-area-inset-top, 0px)", backgroundColor: "var(--background)" }}>
-        <header className="px-4">
+      {/* ── Header Zone ── */}
+      <div>
+        <header>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-extrabold text-foreground">Program</h1>
@@ -453,7 +453,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       </header>
 
         {/* Week + Phase Row */}
-        <div className="px-4">
+        <div>
           <WeekPhaseRow
             weekNumber={displayWeekNumber}
             phaseName={goalLabel(programState.goal)}
@@ -465,7 +465,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
 
         {/* Day Stepper */}
-        <div className="px-4">
+        <div>
           <DayStepper
             days={stepperDays}
             selectedIndex={idx}
@@ -489,8 +489,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
       )}
 
-      {/* ── Scrollable Session Content ── */}
-      <div className="pt-4 pb-[140px]" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {/* ── Session Content ── */}
+      <div className="pt-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <AnimatePresence
           mode="wait"
           custom={direction}
@@ -656,11 +656,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </AnimatePresence>
       </div>
 
-      {/* ── Sticky CTA Zone ── */}
-      <div
-        className="sticky bottom-0 z-20 -mx-4 px-4 safe-area-pb"
-        style={{ background: "linear-gradient(to bottom, transparent 0%, var(--background) 35%)", paddingTop: 28, paddingBottom: 12 }}
-      >
+      {/* ── CTA Zone ── */}
+      <div className="mt-4">
         {status === "today" && !selectedWorkout?.completed ? (
           <>
             <button
