@@ -146,12 +146,15 @@ export default function MacroColumn({
       {/* Progress bar */}
       {/* Track — inset shadow reads as a recessed channel cut into the
           white card surface, with the coloured fill sitting inside the
-          groove. Shadow is deliberately subtle (0.06 opacity). */}
+          groove. Shadow is deliberately subtle (0.06 opacity). At
+          empty (consumed === 0) the whole track fades to reduce visual
+          noise without causing a layout jump on first log. */}
       <div
-        className="w-full mt-2.5 h-1.5 rounded-full overflow-hidden"
+        className="w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
         style={{
           background: "#F2F2F7",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
+          opacity: consumed === 0 ? 0.4 : 1,
         }}
       >
         <motion.div
@@ -165,9 +168,15 @@ export default function MacroColumn({
         />
       </div>
 
-      {/* Tertiary line — stays muted */}
-      <p className="text-[10px] text-muted-foreground/70 tabular-nums mt-1.5">
-        {Math.round(consumed)} / {Math.round(target)}g
+      {/* Tertiary line — consumed value tweens with the big number so all
+          three (big number, bar fill, tertiary) advance together during a log. */}
+      <p className="text-[10px] text-muted-foreground/70 font-mono tabular-nums mt-1.5">
+        <AnimatedNumber
+          value={Math.round(consumed)}
+          duration={numberDurationSec}
+          ease={RING_EASE}
+        />
+        {" / "}{Math.round(target)}g
       </p>
 
       {/* Uppercase macro label in macro colour */}

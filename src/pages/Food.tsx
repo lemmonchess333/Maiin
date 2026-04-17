@@ -24,7 +24,7 @@ import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import {
   ChevronLeft,
   ChevronRight,
-  Flame,
+  Utensils,
   CalendarDays,
   Plus,
   SendHorizontal,
@@ -834,9 +834,13 @@ export default function Food() {
                 onClick={() => { haptic(); handleQuickMealAdd(meal); }}
                 disabled={quickAdding !== null}
                 className={cn(
-                  "shrink-0 h-9 px-3.5 rounded-full bg-white border border-black/[0.08] text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
+                  "shrink-0 h-9 px-3.5 rounded-full border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
+                style={{
+                  background: `${THEME.semantic.nutrition}12`,
+                  borderColor: `${THEME.semantic.nutrition}22`,
+                }}
               >
                 {meal.name} · {meal.cal} kcal
               </motion.button>
@@ -858,7 +862,7 @@ export default function Food() {
                   "shrink-0 text-left border border-border/60 border-l-[3px] border-l-orange-300 rounded-xl transition-all active:bg-primary/10",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
-                style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}
+                style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}1A 0%, ${THEME.semantic.nutrition}08 100%)` }}
               >
                 <span className="text-micro font-semibold text-foreground block truncate">{meal.name}</span>
                 <span className="block text-xs text-muted-foreground mt-1">~{meal.cal} kcal</span>
@@ -976,11 +980,12 @@ export default function Food() {
                       }
                     }}
                     aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className="w-full flex items-center h-9 px-3 rounded-lg text-left active:bg-muted/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="w-full flex items-center justify-between h-9 px-3 rounded-lg bg-white/50 border border-dashed border-border/70 text-left active:bg-muted/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <span className="text-micro uppercase tracking-wider text-muted-foreground/70">
-                      {MEAL_LABELS[mealKey]} · add
+                      {MEAL_LABELS[mealKey]}
                     </span>
+                    <Plus className="w-3.5 h-3.5 text-muted-foreground/60" aria-hidden="true" />
                   </div>
                   {/* TODO: Verify usage analytics. If <5% of empty meals
                       trigger this, delete in v1.1. */}
@@ -1088,7 +1093,7 @@ export default function Food() {
       {todaysMeals.length === 0 && (
         <motion.div variants={itemVariant} className="flex flex-col items-center justify-center py-10 space-y-3">
           <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${THEME.semantic.nutrition}12` }}>
-            <Flame className="w-6 h-6" style={{ color: THEME.semantic.nutrition, opacity: 0.5 }} />
+            <Utensils className="w-5 h-5" style={{ color: THEME.semantic.nutrition, opacity: 0.5 }} />
           </div>
           <p className="text-sm font-medium text-muted-foreground">
             {isToday

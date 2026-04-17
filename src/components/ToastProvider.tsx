@@ -7,6 +7,12 @@ export function ToastProvider() {
       <style>{`
         [data-sonner-toast] [data-close-button] {
           color: #9ca3af !important;
+          left: auto !important;
+          right: 8px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          background: transparent !important;
+          border: 0 !important;
         }
         [data-sonner-toast] [data-icon] svg {
           color: ${THEME.brand} !important;
@@ -23,6 +29,7 @@ export function ToastProvider() {
           border: 1px solid rgba(0, 0, 0, 0.08) !important;
           border-left: 3px solid ${THEME.brand} !important;
           color: #1a1a2e !important;
+          padding-right: 32px !important;
         }
         /* Dark mode toast */
         .dark [data-sonner-toast],
