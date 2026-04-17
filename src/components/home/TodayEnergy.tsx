@@ -8,12 +8,12 @@ import { haptic } from "@/lib/haptic";
 import { UtensilsCrossed } from "lucide-react";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import type { DailyBurn } from "@/utils/dailyBurn";
-import type { DailyTargets } from "@/hooks/useDailyTargets";
+import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
 
 export default function TodayEnergy({ calories, protein, burn, targets, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
-  calories: number; protein: number; burn: DailyBurn; targets: DailyTargets; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
+  calories: number; protein: number; burn: DailyBurn; targets: EffectiveTargets; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
   postWorkoutNudge?: { type: "lift" | "run" | "both"; proteinRemaining: number } | null;
   adaptiveTDEE?: { estimated: number; confidence: string } | null;
   nutritionInsight?: { type: "positive" | "warning" | "tip"; title: string; message: string } | null;
