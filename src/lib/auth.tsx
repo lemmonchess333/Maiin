@@ -15,7 +15,15 @@ import {
   signInWithPopup,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  writeBatch,
+  Timestamp,
+  type FieldValue,
+} from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -29,6 +37,7 @@ export interface UserProfileCore {
   uid: string;
   displayName: string;
   email: string;
+  photoURL: string | null;
   onboardingComplete: boolean;
 }
 
@@ -160,6 +169,41 @@ export interface UserProfile extends
   UserProfileRunning,
   UserProfileOnboarding {}
 
+/**
+ * Cross-user-readable projection of safe UserProfile fields.
+ *
+ * Stored at `users/{uid}/public/profile`. Every field here is also stored on
+ * the main user doc (`users/{uid}`) — this doc is a deliberate mirror so that
+ * a strict `allow read: if request.auth != null` can apply to it without
+ * exposing the private fields that live on the user doc (email, billing IDs,
+ * nutrition targets, etc.).
+ *
+ * Add a field here only together with (a) an allowlist extension in
+ * firestore.rules match /users/{uid}/public/{doc} and (b) a mirror-write
+ * extension at every site that writes to this doc (useStreaks, updateProfile,
+ * createDefaultProfile, Onboarding, backfill script).
+ */
+export interface PublicProfile {
+  uid: string;
+  displayName: string | null;
+  photoURL: string | null;
+  athleteType: string;
+  currentStreak: number;
+  longestStreak: number;
+  createdAt: Timestamp | FieldValue;
+}
+
+/** Keys of PublicProfile — mirrors the rule allowlist. */
+export const PUBLIC_PROFILE_FIELDS = [
+  "uid",
+  "displayName",
+  "photoURL",
+  "athleteType",
+  "currentStreak",
+  "longestStreak",
+  "createdAt",
+] as const satisfies ReadonlyArray<keyof PublicProfile>;
+
 /* ================================
    HELPERS
 ================================ */
@@ -192,6 +236,7 @@ function createDefaultProfile(
     uid,
     displayName,
     email,
+    photoURL: null,
     athleteType: "Lifter",
     weightKg: 70,
     heightCm: 170,
@@ -221,6 +266,7 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
     uid,
     displayName: (data.displayName as string) ?? fallbackName,
     email: (data.email as string) ?? fallbackEmail,
+    photoURL: (data.photoURL as string | null | undefined) ?? null,
     athleteType: (data.athleteType as string) ?? "Lifter",
     weightKg: (data.weightKg as number) ?? 70,
     heightCm: (data.heightCm as number) ?? 170,
@@ -317,13 +363,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUp = async (email: string, password: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const newProfile = createDefaultProfile(cred.user.uid, "", cred.user.email || "");
-    await setDoc(doc(db, "users", cred.user.uid), {
+  // Create the main user doc AND the cross-user-readable public profile doc
+  // in a single batch so a half-landed create can't leak a user with no
+  // public projection. Shared by email signup, Google, and Apple flows.
+  const writeNewProfileDocs = async (uid: string, newProfile: UserProfile) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", uid), {
       ...newProfile,
       createdAt: serverTimestamp(),
     });
+    batch.set(doc(db, "users", uid, "public", "profile"), {
+      uid,
+      displayName: newProfile.displayName || null,
+      photoURL: newProfile.photoURL ?? null,
+      athleteType: newProfile.athleteType,
+      currentStreak: newProfile.currentStreak,
+      longestStreak: newProfile.longestStreak,
+      createdAt: serverTimestamp(),
+    });
+    await batch.commit();
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const newProfile = createDefaultProfile(cred.user.uid, "", cred.user.email || "");
+    await writeNewProfileDocs(cred.user.uid, newProfile);
     setProfile(newProfile);
   };
 
@@ -334,10 +398,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!profileDoc.exists()) {
       const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
-      await setDoc(doc(db, "users", cred.user.uid), {
-        ...newProfile,
-        createdAt: serverTimestamp(),
-      });
+      await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
@@ -354,10 +415,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!profileDoc.exists()) {
       const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
-      await setDoc(doc(db, "users", cred.user.uid), {
-        ...newProfile,
-        createdAt: serverTimestamp(),
-      });
+      await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
@@ -375,6 +433,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const PROTECTED_FIELDS = ["subscriptionTier", "stripeCustomerId", "stripeSubscriptionId", "trialExpiresAt"] as const;
 
+  // Subset of UserProfile fields that also need to be mirrored onto the
+  // cross-user-readable public/profile doc when they change.
+  const PUBLIC_MIRRORED_FIELDS = ["displayName", "photoURL", "athleteType"] as const;
+
   const updateProfile = async (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => {
     if (!user) return;
     let writeData = data;
@@ -383,7 +445,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Object.entries(data).filter(([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key))
       ) as Partial<UserProfile>;
     }
-    await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
+
+    // If any publicly-mirrored field is in the patch, commit both writes in a
+    // single batch so the main user doc and the public projection never drift.
+    const publicPatch: Record<string, unknown> = {};
+    for (const key of PUBLIC_MIRRORED_FIELDS) {
+      if (key in writeData) {
+        const value = (writeData as Record<string, unknown>)[key];
+        publicPatch[key] = value ?? null;
+      }
+    }
+
+    if (Object.keys(publicPatch).length > 0) {
+      const batch = writeBatch(db);
+      batch.set(doc(db, "users", user.uid), writeData, { merge: true });
+      batch.set(doc(db, "users", user.uid, "public", "profile"), publicPatch, { merge: true });
+      await batch.commit();
+    } else {
+      await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
+    }
+
     setProfile((prev) => {
       const updated = prev ? { ...prev, ...data } : null;
       if (updated && "darkMode" in data) {

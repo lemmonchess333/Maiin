@@ -8,6 +8,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     uid: "test-uid",
     displayName: "Test User",
     email: "test@example.com",
+    photoURL: null,
     athleteType: "Hybrid",
     weightKg: 80,
     heightCm: 180,

@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
-import { functions } from "@/lib/firebase";
+import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { THEME } from "@/lib/theme";
@@ -412,6 +413,28 @@ export default function Onboarding() {
       } catch {
         window.location.reload();
         return;
+      }
+
+      // Seed the cross-user-readable public profile doc. Best-effort: if this
+      // fails (e.g. offline), the next streak mutation or the backfill script
+      // will populate it lazily. Not in the same batch as the server-side
+      // profile write because that path is admin-SDK.
+      try {
+        await setDoc(
+          doc(db, "users", user.uid, "public", "profile"),
+          {
+            uid: user.uid,
+            displayName: (profileData.displayName as string | undefined) || null,
+            photoURL: (profileData.photoURL as string | undefined) || null,
+            athleteType: (profileData.athleteType as string | undefined) ?? "Lifter",
+            currentStreak: 0,
+            longestStreak: 0,
+            createdAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+      } catch (publicErr) {
+        logger.warn("Onboarding: public profile seed failed (will be populated lazily):", publicErr);
       }
     } catch (err) {
       logger.error("Onboarding save failed:", err);

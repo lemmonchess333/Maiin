@@ -386,14 +386,22 @@ export function useStreaks() {
 
   // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
   //
-  // Atomic batch writes two docs in one commit:
-  //   1. users/{uid}/streaks/data — full detail (source of truth; owner-only)
-  //   2. users/{uid}            — mirrored currentStreak + longestStreak
-  //                               (public summary, readable cross-user once
-  //                               rules are relaxed).
+  // Atomic batch writes three docs in one commit:
+  //   1. users/{uid}/streaks/data           — full detail (source of truth;
+  //                                           owner-only).
+  //   2. users/{uid}                        — mirrored currentStreak +
+  //                                           longestStreak on the main
+  //                                           user doc (owner-only read for
+  //                                           now; kept for Home's existing
+  //                                           hydration path).
+  //   3. users/{uid}/public/profile         — cross-user-readable projection
+  //                                           (see match rule in
+  //                                           firestore.rules). Only the
+  //                                           allowlisted fields land here.
   //
-  // Mirror-write contract: only the two summary fields. Keep badges,
-  // lastActiveDate, totalActiveDays confined to streaks/data.
+  // Mirror-write contract: streaks/data carries the full state (badges,
+  // lastActiveDate, totalActiveDays); users/{uid} + public/profile carry
+  // only the two summary numbers we denormalise for cross-surface reads.
 
   useEffect(() => {
     if (!allLoaded || !user) return;
@@ -407,6 +415,7 @@ export function useStreaks() {
 
     const streaksRef = doc(db, "users", user.uid, "streaks", "data");
     const userRef = doc(db, "users", user.uid);
+    const publicProfileRef = doc(db, "users", user.uid, "public", "profile");
     const today = format(new Date(), "yyyy-MM-dd");
     const nextLongest = Math.max(currentStreak, streakData.longestStreak);
 
@@ -424,6 +433,17 @@ export function useStreaks() {
     batch.set(
       userRef,
       {
+        currentStreak,
+        longestStreak: nextLongest,
+      },
+      { merge: true },
+    );
+    // Mirror onto the cross-user-readable public profile doc.
+    // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
+    batch.set(
+      publicProfileRef,
+      {
+        uid: user.uid,
         currentStreak,
         longestStreak: nextLongest,
       },
