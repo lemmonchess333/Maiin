@@ -18,7 +18,7 @@ export function BadgeGrid() {
           <p className="text-xs text-muted-foreground">Current Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-primary">{longestStreak}</p>
+          <p className="text-2xl font-bold text-primary">{Number.isFinite(longestStreak) ? longestStreak : 0}</p>
           <p className="text-xs text-muted-foreground">Longest Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">

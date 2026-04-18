@@ -259,7 +259,23 @@ export function useStreaks() {
         // downstream at line 329 and surfaced as "NaN" on the Longest Streak
         // stat card in BadgeGrid. The persist effect will naturally rewrite
         // the doc with the full field set on the next streak mutation.
-        setStreakData({ ...DEFAULT_STREAKS, ...data, badges: merged });
+        //
+        // Sanitize the two numeric streak fields on read: an earlier buggy
+        // persist (pre-spread-default) could have written `NaN` into
+        // streaks/data.longestStreak. `NaN` is a present value, so the
+        // spread-default above does NOT replace it. Coerce any non-finite
+        // value to 0 here so Math.max(currentStreak, 0) can't produce NaN.
+        const sanitizedCurrent = Number.isFinite(data.currentStreak) ? data.currentStreak : 0;
+        const sanitizedLongest = Number.isFinite(data.longestStreak) ? data.longestStreak : 0;
+        const sanitizedTotal = Number.isFinite(data.totalActiveDays) ? data.totalActiveDays : 0;
+        setStreakData({
+          ...DEFAULT_STREAKS,
+          ...data,
+          currentStreak: sanitizedCurrent,
+          longestStreak: sanitizedLongest,
+          totalActiveDays: sanitizedTotal,
+          badges: merged,
+        });
       } else {
         setStreakData(DEFAULT_STREAKS);
       }
