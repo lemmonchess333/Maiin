@@ -37,7 +37,6 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
-import { useStreaks } from "@/features/streaks/useStreaks";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodRow, { type FoodRowGroup } from "@/components/food/FoodRow";
@@ -68,7 +67,6 @@ interface OFFResult {
 
 export default function Food() {
   const { user } = useAuth();
-  const { currentStreak } = useStreaks();
   const { saveLog } = useDailyLogs();
 
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -698,7 +696,7 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
-      {/* Hero card — ring + macros + streak on a single white card */}
+      {/* Hero card — ring + macros on a single white card */}
       <motion.div variants={itemVariant} key={selectedDate}>
         <FoodHeroCard
           selectedDate={selectedDate}
@@ -710,7 +708,6 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          streak={currentStreak}
         />
       </motion.div>
 

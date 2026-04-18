@@ -335,6 +335,7 @@ export default function Onboarding() {
         displayName: user.displayName || "",
         email: user.email || "",
         currentStreak: 0,
+        longestStreak: 0,
         lastLogDate: null,
         darkMode: false,
         weeklyWorkoutsTarget: daysPerWeek,

@@ -5,7 +5,6 @@ import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
-import { StreakFlame } from "@/components/StreakFlame";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
@@ -23,7 +22,6 @@ interface FoodHeroCardProps {
   /** From useEffectiveTargets() — includes effective finalTarget and caption */
   dailyTargets: EffectiveTargets;
   dailyTotals: DailyTotals;
-  streak: number;
 }
 
 interface TrainingBurnToast {
@@ -53,7 +51,6 @@ export default function FoodHeroCard({
   isToday,
   dailyTargets,
   dailyTotals,
-  streak,
 }: FoodHeroCardProps) {
   // Synchronous init prevents first-paint flash of wrong mode
   const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
@@ -276,7 +273,7 @@ export default function FoodHeroCard({
     const t = setTimeout(() => dismissFuelExplainer(), 10000);
     return () => clearTimeout(t);
   }, [shouldShowFuelExplainer, dismissFuelExplainer]);
-  const celebrationCaptionText = `DAY ${streak || 1} ✓`;
+  const celebrationCaptionText = `GOAL HIT ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
   // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
@@ -296,43 +293,40 @@ export default function FoodHeroCard({
           boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
         }}
       >
-        {/* Top row: caption + streak flame */}
-        <div className="flex items-start justify-between mb-4 min-h-[20px]">
-          <div className="flex-1 min-w-0">
-            <AnimatePresence mode="wait">
-              {showCelebrationCaption ? (
-                <motion.p
-                  key="celebration"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-micro uppercase tracking-wider font-semibold"
-                  style={{ color: "#4CAF50" }}
-                >
-                  {celebrationCaptionText}
-                </motion.p>
-              ) : caption ? (
-                <motion.p
-                  key="caption"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-micro uppercase tracking-wider text-muted-foreground/70"
-                >
-                  {caption.trainingType}
-                  {caption.adjustment && (
-                    <>
-                      {' · '}
-                      <span style={{ color: THEME.lifting }}>{caption.adjustment}</span>
-                    </>
-                  )}
-                </motion.p>
-              ) : null}
-            </AnimatePresence>
-          </div>
-          <StreakFlame streak={streak} celebrate={celebrating} />
+        {/* Top row: caption */}
+        <div className="mb-4 min-h-[20px]">
+          <AnimatePresence mode="wait">
+            {showCelebrationCaption ? (
+              <motion.p
+                key="celebration"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.3 }}
+                className="text-micro uppercase tracking-wider font-semibold"
+                style={{ color: "#4CAF50" }}
+              >
+                {celebrationCaptionText}
+              </motion.p>
+            ) : caption ? (
+              <motion.p
+                key="caption"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.3 }}
+                className="text-micro uppercase tracking-wider text-muted-foreground/70"
+              >
+                {caption.trainingType}
+                {caption.adjustment && (
+                  <>
+                    {' · '}
+                    <span style={{ color: THEME.lifting }}>{caption.adjustment}</span>
+                  </>
+                )}
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
         </div>
 
         {/* First-time explainer for the caption's calorie adjustment. */}

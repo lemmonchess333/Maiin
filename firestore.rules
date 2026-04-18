@@ -35,7 +35,7 @@ service cloud.firestore {
         'weeklyWorkoutsTarget', 'weeklyMealsTarget', 'preferredWeightUnit',
         'preferredHeightUnit', 'darkMode', 'onboardingComplete', 'trialExpiresAt',
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId',
-        'currentStreak', 'lastLogDate', 'program', 'tdeeBase',
+        'currentStreak', 'longestStreak', 'lastLogDate', 'program', 'tdeeBase',
         'aiCalorieAdjustment', 'targetCalories', 'targetProtein', 'targetCarbs',
         'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
         'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',

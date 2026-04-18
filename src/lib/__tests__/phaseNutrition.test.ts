@@ -20,6 +20,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     trialExpiresAt: null,
     subscriptionTier: "free",
     currentStreak: 0,
+    longestStreak: 0,
     lastLogDate: null,
     targetCalories: 2500,
     targetProtein: 180,

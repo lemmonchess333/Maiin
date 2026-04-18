@@ -62,6 +62,14 @@ export default function UserProfile() {
       setStats({ totalKm, totalSessions });
     });
 
+    // TODO(streak-rules): this read succeeds only for the viewer's own profile
+    // because firestore.rules restricts users/{uid}/streaks/{doc} to isOwner.
+    // For cross-user views the getDoc rejects with permission-denied, the
+    // .catch swallows it, setStreak is never called, and the streak displays
+    // as 0. The longestStreak field now mirrored onto users/{uid} can't help
+    // until users/{uid} itself is made readable cross-user (it is currently
+    // doc-level owner-only — see firestore.rules:55-56). Migrating this block
+    // to read the mirrored fields from users/{uid} requires that rules change.
     const badgesPromise = getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
       if (snap.exists()) {
         const data = snap.data();

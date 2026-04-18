@@ -6,6 +6,7 @@ import {
   orderBy,
   query,
   setDoc,
+  writeBatch,
   limit,
   Timestamp,
 } from "firebase/firestore";
@@ -383,7 +384,16 @@ export function useStreaks() {
     // sequence without infinite loops (already-earned badges short-circuit).
   }, [allLoaded, currentStreak, workouts, runs, badgesSignature, streakData.badges, awardBadge]);
 
-  // ── Persist streak changes (loop-guarded) ──────────────────────────────
+  // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
+  //
+  // Atomic batch writes two docs in one commit:
+  //   1. users/{uid}/streaks/data — full detail (source of truth; owner-only)
+  //   2. users/{uid}            — mirrored currentStreak + longestStreak
+  //                               (public summary, readable cross-user once
+  //                               rules are relaxed).
+  //
+  // Mirror-write contract: only the two summary fields. Keep badges,
+  // lastActiveDate, totalActiveDays confined to streaks/data.
 
   useEffect(() => {
     if (!allLoaded || !user) return;
@@ -395,11 +405,14 @@ export function useStreaks() {
       return;
     }
 
-    const ref = doc(db, "users", user.uid, "streaks", "data");
+    const streaksRef = doc(db, "users", user.uid, "streaks", "data");
+    const userRef = doc(db, "users", user.uid);
     const today = format(new Date(), "yyyy-MM-dd");
     const nextLongest = Math.max(currentStreak, streakData.longestStreak);
-    setDoc(
-      ref,
+
+    const batch = writeBatch(db);
+    batch.set(
+      streaksRef,
       {
         currentStreak,
         longestStreak: nextLongest,
@@ -407,7 +420,17 @@ export function useStreaks() {
         totalActiveDays,
       },
       { merge: true },
-    )
+    );
+    batch.set(
+      userRef,
+      {
+        currentStreak,
+        longestStreak: nextLongest,
+      },
+      { merge: true },
+    );
+
+    batch.commit()
       .then(() => {
         lastWrittenStreakRef.current = currentStreak;
       })
