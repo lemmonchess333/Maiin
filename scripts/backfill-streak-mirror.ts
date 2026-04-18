@@ -129,17 +129,19 @@ async function backfillOne(
       }
 
       const streaksData = streaksSnap.data() ?? {};
+      // Number.isFinite (not typeof === "number") because NaN passes the
+      // typeof check but would re-poison the mirror on the next write.
       const currentStreak =
-        typeof streaksData.currentStreak === "number" ? streaksData.currentStreak : 0;
+        Number.isFinite(streaksData.currentStreak) ? (streaksData.currentStreak as number) : 0;
       const longestStreak =
-        typeof streaksData.longestStreak === "number" ? streaksData.longestStreak : 0;
+        Number.isFinite(streaksData.longestStreak) ? (streaksData.longestStreak as number) : 0;
       const computedBadgeSummary = computeBadgeSummary(streaksData.badges);
 
       const userData = userSnap.exists ? userSnap.data() ?? {} : {};
       const userCurrent =
-        typeof userData.currentStreak === "number" ? userData.currentStreak : null;
+        Number.isFinite(userData.currentStreak) ? (userData.currentStreak as number) : null;
       const userLongest =
-        typeof userData.longestStreak === "number" ? userData.longestStreak : null;
+        Number.isFinite(userData.longestStreak) ? (userData.longestStreak as number) : null;
 
       // Public-doc projection. Falls back to user-doc values for the
       // non-streak fields since users/{uid} is where displayName etc. live.
@@ -152,9 +154,9 @@ async function backfillOne(
 
       const publicData = publicSnap.exists ? publicSnap.data() ?? {} : {};
       const publicCurrent =
-        typeof publicData.currentStreak === "number" ? publicData.currentStreak : null;
+        Number.isFinite(publicData.currentStreak) ? (publicData.currentStreak as number) : null;
       const publicLongest =
-        typeof publicData.longestStreak === "number" ? publicData.longestStreak : null;
+        Number.isFinite(publicData.longestStreak) ? (publicData.longestStreak as number) : null;
       const publicDisplayName =
         publicData.displayName === undefined ? "__missing__" : publicData.displayName;
       const publicPhotoURL =
