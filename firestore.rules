@@ -132,6 +132,16 @@ service cloud.firestore {
         ]);
     }
 
+    // Collection-group read access: user search (`searchUsers`) runs a
+    // collectionGroup('public') query with a `displayName` range filter.
+    // Firestore evaluates CG queries against rules that cover the leaf
+    // collection at ANY depth, so we need this recursive-wildcard rule
+    // in addition to the per-user rule above. The per-user rule still
+    // enforces owner-only writes; this one only grants read.
+    match /{path=**}/public/{doc} {
+      allow read: if request.auth != null;
+    }
+
     // ========================================
     // Social: Activities (public feed)
     // H7: authorId must match authenticated user

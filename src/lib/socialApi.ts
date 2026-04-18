@@ -1,7 +1,7 @@
 import { db, auth } from './firebase';
 import { captureError } from '@/lib/errorReporting';
 import {
-  collection, doc, setDoc, deleteDoc, getDocs, getDoc,
+  collection, collectionGroup, doc, setDoc, deleteDoc, getDocs, getDoc,
   query, orderBy, limit, startAfter, where, increment,
   updateDoc, addDoc, Timestamp, serverTimestamp,
   type DocumentSnapshot, writeBatch,
@@ -322,17 +322,20 @@ export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapsh
 // User Search
 // ============================================
 export async function searchUsers(queryStr: string, limitCount = 10) {
-  // Search with the original input
+  // Architecture B: the owner-only `users/{uid}` doc is not cross-user
+  // readable. Search the `users/{uid}/public/profile` projection via a
+  // collection group query — every profile doc lives at the same leaf
+  // collection name (`public`), so collectionGroup('public') spans them all.
   const q1 = query(
-    collection(db, 'users'),
+    collectionGroup(db, 'public'),
     where('displayName', '>=', queryStr),
     where('displayName', '<=', queryStr + '\uf8ff'),
     limit(limitCount)
   );
-  // Also search with first letter capitalized to handle case mismatch
+  // Case-insensitive fallback: also search with first letter capitalized.
   const capitalized = queryStr.charAt(0).toUpperCase() + queryStr.slice(1).toLowerCase();
   const q2 = query(
-    collection(db, 'users'),
+    collectionGroup(db, 'public'),
     where('displayName', '>=', capitalized),
     where('displayName', '<=', capitalized + '\uf8ff'),
     limit(limitCount)
@@ -343,10 +346,13 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   const results: { uid: string; [key: string]: unknown }[] = [];
   for (const snap of [snap1, snap2]) {
     for (const d of snap.docs) {
-      if (!seen.has(d.id)) {
-        seen.add(d.id);
-        results.push({ uid: d.id, ...d.data() });
-      }
+      // Public docs live at `users/{uid}/public/profile` — the owner uid
+      // is the grandparent doc id. Fall back to the `uid` field if present.
+      const data = d.data() as Record<string, unknown>;
+      const ownerUid = d.ref.parent.parent?.id ?? (data.uid as string | undefined);
+      if (!ownerUid || seen.has(ownerUid)) continue;
+      seen.add(ownerUid);
+      results.push({ uid: ownerUid, ...data });
     }
   }
   return results.slice(0, limitCount);
