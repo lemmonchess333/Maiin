@@ -8,6 +8,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     email: 'test@example.com',
     displayName: 'Test User',
     currentStreak: 0,
+    longestStreak: 0,
     lastLogDate: '',
     ...overrides,
   } as UserProfile;

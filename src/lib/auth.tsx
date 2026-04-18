@@ -40,11 +40,21 @@ export interface UserProfileFitness {
   weeklyWorkoutsTarget: number;
   weeklyMealsTarget: number;
   /**
-   * @deprecated Use `useStreaks().currentStreak`. This field is retained on the
-   * type to preserve backwards compatibility with existing Firestore docs, but
-   * is no longer written by the app. It will be removed in a follow-up PR.
+   * Public streak summary mirrored from users/{uid}/streaks/data by useStreaks
+   * on every streak mutation (atomic batch — both docs committed together).
+   *
+   * Initialised to 0 on profile creation. Intended to support cross-user reads
+   * on UserProfile, but the users/{uid} rule is currently doc-level owner-only
+   * — a rules relaxation is required before cross-user consumers can read this.
+   * Until then the field is effectively only useful for the viewer's own
+   * profile; the source of truth for live streak values remains useStreaks().
    */
   currentStreak: number;
+  /**
+   * Public longest-streak summary, mirrored alongside currentStreak. Same
+   * constraints apply — see currentStreak for the rules-gating caveat.
+   */
+  longestStreak: number;
   lastLogDate: string | null;
   goal?: string;
   age?: number;
@@ -194,6 +204,7 @@ function createDefaultProfile(
     trialExpiresAt: getTrialExpiresAt(),
     subscriptionTier: "free",
     currentStreak: 0,
+    longestStreak: 0,
     lastLogDate: null,
     adjustCaloriesForTraining: true,
     program: {
@@ -222,6 +233,7 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
     trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
     subscriptionTier: (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
     currentStreak: (data.currentStreak as number) ?? 0,
+    longestStreak: (data.longestStreak as number) ?? 0,
     lastLogDate: (data.lastLogDate as string | null) ?? null,
     // Training-aware calorie target — defaults to true for existing users who
     // don't have the field set yet.
