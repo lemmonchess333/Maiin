@@ -253,7 +253,13 @@ export function useStreaks() {
           const saved = savedBadges.find((b: EarnedBadge) => b.id === def.id);
           return { ...def, earnedAt: saved?.earnedAt || null };
         });
-        setStreakData({ ...data, badges: merged });
+        // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
+        // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
+        // into state — that previously caused `Math.max(n, undefined) === NaN`
+        // downstream at line 329 and surfaced as "NaN" on the Longest Streak
+        // stat card in BadgeGrid. The persist effect will naturally rewrite
+        // the doc with the full field set on the next streak mutation.
+        setStreakData({ ...DEFAULT_STREAKS, ...data, badges: merged });
       } else {
         setStreakData(DEFAULT_STREAKS);
       }
