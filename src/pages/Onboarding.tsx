@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import OptionCard from "@/components/onboarding/OptionCard";
 import Stepper from "@/components/onboarding/Stepper";
 import { toast } from "sonner";
+import { validateDisplayName } from "@/lib/displayName";
 
 /* ============================
    TYPES
@@ -171,9 +172,10 @@ function equipmentLabel(e: Equipment): string {
    STEP DEFINITIONS
 ============================ */
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 
 const STEP_META: { title: string; subtitle: string }[] = [
+  { title: "What should we call you?", subtitle: "We'll show this on your profile and to friends." },
   { title: "What's your gender?", subtitle: "This helps us personalize your plan" },
   { title: "How old are you?", subtitle: "We'll tailor intensity recommendations" },
   { title: "Your body metrics", subtitle: "Used to calculate calories and macros" },
@@ -199,7 +201,16 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // ── Step 0: Gender
+  // ── Step 0: Display name
+  // Pre-populated from Firebase Auth's displayName when available (e.g. Google
+  // / Apple signin often supplies one). Users can edit it. Empty string when
+  // plain email signup — the input collects it.
+  const [displayName, setDisplayName] = useState<string>(user?.displayName || "");
+  // Tracks first blur — the validation hint only appears after the user has
+  // interacted with the input, not on the initial empty state.
+  const [displayNameTouched, setDisplayNameTouched] = useState(false);
+
+  // ── Step 1: Gender
   const [gender, setGender] = useState<Gender>("unspecified");
 
   // ── Step 1: Age range
@@ -243,6 +254,7 @@ export default function Onboarding() {
   // ── Pre-populate from profile in retake mode
   useEffect(() => {
     if (isRetake && profile) {
+      if (profile.displayName) setDisplayName(profile.displayName);
       if (profile.gender) setGender(profile.gender);
       if (profile.ageRange) setAgeRange(profile.ageRange);
       if (profile.heightCm) setHeightCm(profile.heightCm);
@@ -305,19 +317,24 @@ export default function Onboarding() {
     return false;
   }
 
+  // Display-name validation derived once per render. Both `canAdvance[0]` and
+  // the inline error message consume the same result.
+  const displayNameValidation = validateDisplayName(displayName);
+
   // Can advance per step
   const canAdvance: boolean[] = [
-    true,                                   // 0: gender (always has default)
-    ageRange !== "under-16",                // 1: age range (blocks under 16)
-    weightKg > 0 && heightCm > 0,           // 2: body metrics
-    true,                                   // 3: primary goal
-    true,                                   // 4: experience
-    true,                                   // 5: days per week
-    true,                                   // 6: equipment
-    !isSplitDisabled(preferredSplit),        // 7: preferred split
-    runFrequency === "none" || (daysPerWeek + weeklyRunDays <= 7 && (runMode !== "race_prep" || raceTargetDate !== "")), // 8: run frequency + mode
-    injuries.length > 0,                    // 9: injuries (must select at least one, including "none")
-    true,                                   // 10: confirmation
+    displayNameValidation.valid,            // 0: display name (2-30 chars after trim)
+    true,                                   // 1: gender (always has default)
+    ageRange !== "under-16",                // 2: age range (blocks under 16)
+    weightKg > 0 && heightCm > 0,           // 3: body metrics
+    true,                                   // 4: primary goal
+    true,                                   // 5: experience
+    true,                                   // 6: days per week
+    true,                                   // 7: equipment
+    !isSplitDisabled(preferredSplit),        // 8: preferred split
+    runFrequency === "none" || (daysPerWeek + weeklyRunDays <= 7 && (runMode !== "race_prep" || raceTargetDate !== "")), // 9: run frequency + mode
+    injuries.length > 0,                    // 10: injuries (must select at least one, including "none")
+    true,                                   // 11: confirmation
   ];
 
   // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
@@ -332,8 +349,14 @@ export default function Onboarding() {
 
       const effectiveRunDays = runFrequency === "none" ? 0 : (runMode === "freeform" ? (runFrequency === "regular" ? 3 : 1) : weeklyRunDays);
 
+      // Historical note: before this change, Onboarding did not collect
+      // displayName. The only pre-existing user (the solo founder) was
+      // fixed manually via Settings → Profile. All users onboarded after
+      // this change are guaranteed to have a non-empty displayName.
+      const trimmedDisplayName = displayNameValidation.trimmed;
+
       const profileData: Record<string, unknown> = {
-        displayName: user.displayName || "",
+        displayName: trimmedDisplayName,
         email: user.email || "",
         currentStreak: 0,
         longestStreak: 0,
@@ -519,9 +542,57 @@ export default function Onboarding() {
           </motion.p>
 
           {/* ════════════════════════════════
-             STEP 0 — Gender
+             STEP 0 — Display name
           ════════════════════════════════ */}
           {step === 0 && (
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onBlur={() => setDisplayNameTouched(true)}
+                onKeyDown={(e) => {
+                  // Enter advances when valid, matching the Continue button.
+                  if (e.key === "Enter" && canAdvance[0] && !saving) {
+                    e.preventDefault();
+                    setStep((s) => s + 1);
+                  }
+                }}
+                placeholder="Your name"
+                aria-label="Your name"
+                aria-invalid={displayNameTouched && !displayNameValidation.valid}
+                // Dedicated single-input onboarding step; focus is the
+                // intended behaviour. iOS Safari may still withhold the
+                // keyboard until tap — accepted platform constraint.
+                // eslint-disable-next-line jsx-a11y/no-autofocus
+                autoFocus
+                autoCapitalize="words"
+                autoComplete="nickname"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="text"
+                className="w-full px-4 py-4 rounded-2xl text-base outline-none border-none"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  color: THEME.textPrimary,
+                }}
+              />
+              {displayNameTouched && !displayNameValidation.valid && (
+                <p
+                  className="text-xs"
+                  style={{ color: THEME.danger }}
+                  role="alert"
+                >
+                  Please enter a name between 2 and 30 characters.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ════════════════════════════════
+             STEP 1 — Gender
+          ════════════════════════════════ */}
+          {step === 1 && (
             <div className="space-y-2">
               {([
                 { id: "male" as Gender, label: "Male", icon: <User size={22} style={{ color: THEME.lifting }} /> },
@@ -543,7 +614,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 1 — Age Range
           ════════════════════════════════ */}
-          {step === 1 && (
+          {step === 2 && (
             <div className="space-y-2">
               {([
                 { id: "under-16" as AgeRange, label: "Under 16" },
@@ -579,7 +650,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 2 — Body Metrics
           ════════════════════════════════ */}
-          {step === 2 && (
+          {step === 3 && (
             <div className="space-y-5">
               {/* Height */}
               <div>
@@ -650,7 +721,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 3 — Primary Goal
           ════════════════════════════════ */}
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-2">
               {([
                 { id: "hypertrophy" as PrimaryGoal, label: "Build muscle", desc: "Maximize muscle growth with hypertrophy training", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
@@ -675,7 +746,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 4 — Experience Level
           ════════════════════════════════ */}
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-2">
               {([
                 { id: "beginner" as Experience, label: "Beginner", desc: "0 – 6 months of consistent training", icon: <Target size={22} style={{ color: THEME.success }} /> },
@@ -698,7 +769,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 5 — Days Per Week
           ════════════════════════════════ */}
-          {step === 5 && (
+          {step === 6 && (
             <div className="grid grid-cols-5 gap-2">
               {([2, 3, 4, 5, 6] as DaysPerWeek[]).map(d => (
                 <button
@@ -736,7 +807,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 6 — Equipment Access
           ════════════════════════════════ */}
-          {step === 6 && (
+          {step === 7 && (
             <div className="space-y-2">
               {([
                 { id: "full_gym" as Equipment, label: "Full gym", desc: "Barbells, dumbbells, cables, machines", icon: <Warehouse size={22} style={{ color: THEME.lifting }} /> },
@@ -759,7 +830,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 7 — Preferred Split
           ════════════════════════════════ */}
-          {step === 7 && (
+          {step === 8 && (
             <div className="space-y-2">
               {([
                 { id: "full_body" as PreferredSplit, label: "Full Body", desc: "Hit everything each session", icon: <User size={22} style={{ color: THEME.success }} /> },
@@ -789,7 +860,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 8 — Run Frequency + Mode
           ════════════════════════════════ */}
-          {step === 8 && (
+          {step === 9 && (
             <div className="space-y-4">
               <div className="space-y-2">
                 {([
@@ -932,7 +1003,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 9 — Injuries
           ════════════════════════════════ */}
-          {step === 9 && (
+          {step === 10 && (
             <div className="space-y-2">
               {([
                 { id: "none", label: "No injuries", desc: "All clear — no limitations", icon: <Check size={22} style={{ color: THEME.success }} /> },
@@ -999,7 +1070,7 @@ export default function Onboarding() {
           {/* ════════════════════════════════
              STEP 10 — Confirmation
           ════════════════════════════════ */}
-          {step === 10 && (
+          {step === 11 && (
             <div
               className="rounded-2xl p-5 space-y-0"
               style={{
@@ -1099,12 +1170,12 @@ export default function Onboarding() {
       {/* Validation hint when button is disabled */}
       {!canAdvance[step] && !saving && (
         <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          {step === 1 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
-          {step === 2 && 'Enter your height and weight to continue'}
-          {step === 7 && 'This split requires more training days'}
-          {step === 8 && daysPerWeek + weeklyRunDays > 7 && `Reduce run days — total exceeds 7 (${daysPerWeek} lift + ${weeklyRunDays} run)`}
-          {step === 8 && runMode === 'race_prep' && !raceTargetDate && 'Select a target race date'}
-          {step === 9 && injuries.length === 0 && 'Select at least one option (or "None")'}
+          {step === 2 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
+          {step === 3 && 'Enter your height and weight to continue'}
+          {step === 8 && 'This split requires more training days'}
+          {step === 9 && daysPerWeek + weeklyRunDays > 7 && `Reduce run days — total exceeds 7 (${daysPerWeek} lift + ${weeklyRunDays} run)`}
+          {step === 9 && runMode === 'race_prep' && !raceTargetDate && 'Select a target race date'}
+          {step === 10 && injuries.length === 0 && 'Select at least one option (or "None")'}
         </p>
       )}
     </div>
