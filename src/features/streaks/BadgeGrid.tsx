@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
-import { CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
-import { Lock } from "lucide-react";
+import { BADGE_ICONS, CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
+import { Lock, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
@@ -41,6 +41,7 @@ export function BadgeGrid() {
               {badges.map((badge, i) => {
                 const tierColor = TIER_COLORS[badge.tier];
                 const earned = !!badge.earnedAt;
+                const Icon = BADGE_ICONS[badge.lucideIcon] ?? Trophy;
 
                 return (
                   <motion.div
@@ -51,16 +52,14 @@ export function BadgeGrid() {
                     whileTap={{ scale: 0.95 }}
                     className={cn(
                       "relative p-3 rounded-xl text-center transition-all overflow-hidden",
-                      earned
-                        ? "bg-card/80"
-                        : "bg-muted/20 opacity-50"
+                      earned ? "bg-card" : "bg-card/40"
                     )}
                     style={{
                       border: earned
-                        ? `1.5px solid ${tierColor}40`
-                        : "1px solid rgba(255,255,255,0.05)",
+                        ? `1.5px solid ${tierColor}55`
+                        : "1px solid rgba(0,0,0,0.05)",
                       backgroundImage: earned
-                        ? `linear-gradient(135deg, ${tierColor}08, transparent 60%)`
+                        ? `linear-gradient(135deg, ${tierColor}10, transparent 70%)`
                         : undefined,
                     }}
                   >
@@ -72,21 +71,51 @@ export function BadgeGrid() {
                       />
                     )}
 
-                    <div className="flex items-center justify-center text-2xl mb-1">
-                      {earned ? badge.icon : <Lock className="w-5 h-5 text-muted-foreground/30" />}
+                    {/* Icon in tier-colored ring */}
+                    <div className="flex items-center justify-center mb-2">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center"
+                        style={
+                          earned
+                            ? {
+                                backgroundColor: `${tierColor}18`,
+                                border: `1.5px solid ${tierColor}45`,
+                              }
+                            : {
+                                backgroundColor: "rgba(0,0,0,0.04)",
+                                border: "1.5px solid rgba(0,0,0,0.06)",
+                              }
+                        }
+                      >
+                        {earned ? (
+                          <Icon
+                            className="w-5 h-5"
+                            style={{ color: tierColor }}
+                            strokeWidth={2.25}
+                          />
+                        ) : (
+                          <Lock className="w-4 h-4 text-muted-foreground/40" />
+                        )}
+                      </div>
                     </div>
-                    <p className={cn(
-                      "text-xs font-medium leading-tight",
-                      earned ? "text-foreground" : "text-muted-foreground/50"
-                    )}>
+
+                    <p
+                      className={cn(
+                        "text-xs font-semibold leading-tight",
+                        earned ? "text-foreground" : "text-muted-foreground/60"
+                      )}
+                    >
                       {badge.name}
                     </p>
                     {earned ? (
-                      <p className="text-xs mt-0.5" style={{ color: tierColor }}>
+                      <p
+                        className="text-[10px] font-mono tabular-nums mt-1"
+                        style={{ color: tierColor }}
+                      >
                         {new Date(badge.earnedAt!).toLocaleDateString()}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground/40 mt-0.5 line-clamp-2">
+                      <p className="text-[10px] text-muted-foreground/50 mt-1 line-clamp-2">
                         {badge.description}
                       </p>
                     )}

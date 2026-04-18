@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import type { EarnedBadge } from "./badges";
-import { TIER_COLORS } from "./badges";
+import { BADGE_ICONS, TIER_COLORS } from "./badges";
+import { Trophy } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface BadgeEarnedModalProps {
@@ -95,13 +96,30 @@ function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismis
               style={{ backgroundColor: TIER_COLORS[badge.tier] }}
             />
 
-            <motion.p
+            <motion.div
               animate={{ scale: [0.5, 1.4, 1], rotate: [0, 15, -15, 0] }}
               transition={{ duration: 0.7, type: "spring" }}
-              className="text-7xl relative z-10"
+              className="relative z-10 flex justify-center"
             >
-              {badge.icon}
-            </motion.p>
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center"
+                style={{
+                  backgroundColor: `${TIER_COLORS[badge.tier]}20`,
+                  border: `2px solid ${TIER_COLORS[badge.tier]}60`,
+                }}
+              >
+                {(() => {
+                  const Icon = BADGE_ICONS[badge.lucideIcon] ?? Trophy;
+                  return (
+                    <Icon
+                      className="w-12 h-12"
+                      style={{ color: TIER_COLORS[badge.tier] }}
+                      strokeWidth={2.25}
+                    />
+                  );
+                })()}
+              </div>
+            </motion.div>
 
             <div className="relative z-10">
               <p

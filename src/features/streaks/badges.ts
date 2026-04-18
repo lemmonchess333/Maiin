@@ -1,3 +1,10 @@
+import {
+  Footprints, Sparkles, Flame, Gem, Lock, Medal, Trophy, Sunrise,
+  Dumbbell, ClipboardCheck, Zap, Target, Map, Beef, Droplets,
+  UtensilsCrossed, Scale, Crown, Star,
+  type LucideIcon,
+} from "lucide-react";
+
 export type BadgeTier = "bronze" | "silver" | "gold" | "platinum";
 
 export const TIER_COLORS: Record<BadgeTier, string> = {
@@ -5,6 +12,20 @@ export const TIER_COLORS: Record<BadgeTier, string> = {
   silver: "#c0c0c0",
   gold: "#ffd700",
   platinum: "#e5e4e2",
+};
+
+/**
+ * Map from BadgeDef.lucideIcon (PascalCase string) to the actual lucide
+ * component. Centralised so BadgeGrid, BadgeEarnedModal, and any future
+ * surface can render the icon by looking up this table instead of doing
+ * `{badge.icon}` — which prints the kebab-case string literally ("footprints",
+ * "sparkles", etc.). Fall callers back to Trophy if a definition references
+ * an icon that isn't in the map.
+ */
+export const BADGE_ICONS: Record<string, LucideIcon> = {
+  Footprints, Sparkles, Flame, Gem, Lock, Medal, Trophy, Sunrise,
+  Dumbbell, ClipboardCheck, Zap, Target, Map, Beef, Droplets,
+  UtensilsCrossed, Scale, Crown, Star,
 };
 
 export interface BadgeDef {
