@@ -36,9 +36,15 @@ export default function UserProfile() {
     if (!uid) return;
     setStatsLoading(true);
 
+    // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
+    // this read succeeds only for the viewer's own profile. For cross-user
+    // views the promise rejects with permission-denied. Pre-existing bug —
+    // separate prompt to fix. The .catch swallows it so the shared Promise.all
+    // below doesn't throw, and the public-doc read carries the cross-user-
+    // visible fields regardless.
     const profilePromise = getDoc(doc(db, 'users', uid)).then(snap => {
       if (snap.exists()) setProfile({ uid: snap.id, ...snap.data() });
-    });
+    }).catch(() => {});
     getFollowerCount(uid).then(setFollowers);
     getFollowingCount(uid).then(setFollowingCount);
 
@@ -62,18 +68,29 @@ export default function UserProfile() {
       setStats({ totalKm, totalSessions });
     });
 
-    // TODO(streak-rules): this read succeeds only for the viewer's own profile
-    // because firestore.rules restricts users/{uid}/streaks/{doc} to isOwner.
-    // For cross-user views the getDoc rejects with permission-denied, the
-    // .catch swallows it, setStreak is never called, and the streak displays
-    // as 0. The longestStreak field now mirrored onto users/{uid} can't help
-    // until users/{uid} itself is made readable cross-user (it is currently
-    // doc-level owner-only — see firestore.rules:55-56). Migrating this block
-    // to read the mirrored fields from users/{uid} requires that rules change.
+    // Cross-user-readable streak + display fields from the public projection.
+    // Populated by Onboarding, createDefaultProfile, updateProfile, and the
+    // streak mirror-write in useStreaks. Legacy users pre-backfill may not
+    // have this doc yet — default streak to 0 silently in that case.
+    const publicProfilePromise = getDoc(doc(db, 'users', uid, 'public', 'profile')).then(snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      setStreak((data.currentStreak as number) ?? 0);
+      // Backfill the local `profile` state with the cross-user-safe fields
+      // when the main user-doc read above failed (cross-user case).
+      setProfile((prev) => prev ?? ({
+        uid,
+        displayName: (data.displayName as string | null) ?? undefined,
+        avatarUrl: (data.photoURL as string | null) ?? undefined,
+      }));
+    }).catch(() => {});
+
+    // Badges still live in streaks/data (owner-only). Succeeds for own profile;
+    // silently fails cross-user. Moving badges into the public doc is a
+    // separate decision — not in scope for this prompt.
     const badgesPromise = getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
       if (snap.exists()) {
         const data = snap.data();
-        setStreak(data.currentStreak ?? 0);
         const earnedMap: Record<string, string> = data.badges ?? {};
         const earned: EarnedBadge[] = BADGE_DEFINITIONS
           .filter(b => earnedMap[b.id])
@@ -84,7 +101,7 @@ export default function UserProfile() {
       }
     }).catch(() => {});
 
-    Promise.all([profilePromise, activitiesPromise, badgesPromise]).finally(() => {
+    Promise.all([profilePromise, activitiesPromise, publicProfilePromise, badgesPromise]).finally(() => {
       setStatsLoading(false);
     });
   }, [uid]);

@@ -1,20 +1,25 @@
+#!/usr/bin/env node
 /**
- * One-time backfill to mirror currentStreak and longestStreak from
- * users/{uid}/streaks/data onto users/{uid}.
+ * One-time backfill to populate users/{uid}/public/profile with the safe,
+ * cross-user-readable projection of user-profile fields, AND to mirror
+ * currentStreak / longestStreak from users/{uid}/streaks/data onto
+ * users/{uid} (pattern P2) in the same transaction.
  *
  * Idempotent — safe to re-run. Race-safe via per-user transactions.
  *
  * ORDER OF OPERATIONS (critical):
- *   1. Deploy the useStreaks.ts batch-write change first.
- *   2. Verify mirror writes are firing: log a meal on a test account and
- *      confirm the user doc gets the updated fields (check via another
- *      account's view of that profile once rules permit, or inspect in
- *      Firestore console directly).
- *   3. THEN run this backfill to catch pre-existing users.
+ *   1. Deploy the Architecture B changes first (firestore.rules +
+ *      useStreaks + auth.tsx + Onboarding + UserProfile).
+ *   2. Verify the public doc is being created/updated live: sign up a
+ *      test account and confirm users/{uid}/public/profile exists in
+ *      Firestore console. Log a meal on a second test account and
+ *      verify currentStreak ticks on its public doc.
+ *   3. THEN run this backfill to populate the public doc for all
+ *      pre-existing users and to reconcile any users missed by the
+ *      earlier mirror-only backfill.
  *
- * Running this script before step 1 is pointless and misleading — the
- * mirror code path isn't live, so the backfill's correctness guarantees
- * immediately drift.
+ * Running this script before step 1 is pointless — the public-doc rule
+ * block wouldn't be deployed and every write would reject.
  *
  * Recommended execution window: low-activity hours (02:00–05:00 UK time)
  * to minimise transaction contention with live mirror writes.
@@ -41,8 +46,6 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// Page size for iterating users. Firestore per-transaction cost is fixed
-// regardless of this value; pagination is purely a memory concern.
 const USER_PAGE_SIZE = 500;
 
 interface Summary {
@@ -62,12 +65,14 @@ async function backfillOne(
 > {
   const streaksRef = db.doc(`users/${uid}/streaks/data`);
   const userRef = db.doc(`users/${uid}`);
+  const publicRef = db.doc(`users/${uid}/public/profile`);
 
   try {
     return await db.runTransaction(async (tx) => {
-      const [streaksSnap, userSnap] = await Promise.all([
+      const [streaksSnap, userSnap, publicSnap] = await Promise.all([
         tx.get(streaksRef),
         tx.get(userRef),
+        tx.get(publicRef),
       ]);
 
       if (!streaksSnap.exists) {
@@ -86,15 +91,59 @@ async function backfillOne(
       const userLongest =
         typeof userData.longestStreak === "number" ? userData.longestStreak : null;
 
-      if (userCurrent === currentStreak && userLongest === longestStreak) {
+      // Public-doc projection. Falls back to user-doc values for the
+      // non-streak fields since users/{uid} is where displayName etc. live.
+      const displayName = typeof userData.displayName === "string" ? userData.displayName : null;
+      const photoURL = typeof userData.photoURL === "string" ? userData.photoURL : null;
+      const athleteType =
+        typeof userData.athleteType === "string" ? userData.athleteType : "Lifter";
+      const createdAt =
+        userData.createdAt ?? admin.firestore.FieldValue.serverTimestamp();
+
+      const publicData = publicSnap.exists ? publicSnap.data() ?? {} : {};
+      const publicCurrent =
+        typeof publicData.currentStreak === "number" ? publicData.currentStreak : null;
+      const publicLongest =
+        typeof publicData.longestStreak === "number" ? publicData.longestStreak : null;
+      const publicDisplayName =
+        publicData.displayName === undefined ? "__missing__" : publicData.displayName;
+      const publicPhotoURL =
+        publicData.photoURL === undefined ? "__missing__" : publicData.photoURL;
+      const publicAthleteType =
+        typeof publicData.athleteType === "string" ? publicData.athleteType : null;
+
+      const userInSync =
+        userCurrent === currentStreak && userLongest === longestStreak;
+      const publicInSync =
+        publicSnap.exists &&
+        publicCurrent === currentStreak &&
+        publicLongest === longestStreak &&
+        publicDisplayName === displayName &&
+        publicPhotoURL === photoURL &&
+        publicAthleteType === athleteType;
+
+      if (userInSync && publicInSync) {
         return { status: "skipped-in-sync" as const };
       }
 
-      tx.set(
-        userRef,
-        { currentStreak, longestStreak },
-        { merge: true },
-      );
+      if (!userInSync) {
+        tx.set(userRef, { currentStreak, longestStreak }, { merge: true });
+      }
+      if (!publicInSync) {
+        tx.set(
+          publicRef,
+          {
+            uid,
+            displayName,
+            photoURL,
+            athleteType,
+            currentStreak,
+            longestStreak,
+            ...(publicSnap.exists ? {} : { createdAt }),
+          },
+          { merge: true },
+        );
+      }
 
       return {
         status: "mirrored" as const,
@@ -116,8 +165,6 @@ async function main() {
     errors: 0,
   };
 
-  // Get total count up-front for [n/total] logging. If this is expensive
-  // on very large collections, replace with a rolling counter.
   const totalSnap = await db.collection("users").count().get();
   const total = totalSnap.data().count;
   console.log(`[backfill] scanning ${total} users`);

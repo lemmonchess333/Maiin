@@ -95,6 +95,43 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Latent subcollections — owner-only, match existing pattern
+    // ========================================
+    match /users/{uid}/shoes/{shoeId} {
+      allow read, write: if isOwner(uid);
+    }
+    match /users/{uid}/logs/{date} {
+      allow read, write: if isOwner(uid);
+    }
+    match /users/{uid}/stats/{doc} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ========================================
+    // Public profile projection — cross-user readable
+    //
+    // A deliberately small projection of the user doc's safe fields.
+    // Written alongside the main user doc during onboarding, profile
+    // update, and streak mutation. Any authenticated user can read;
+    // owner-only write with a strict field allowlist — if you need
+    // to add a field, extend both this allowlist AND the mirror-write
+    // call sites in the same PR.
+    // ========================================
+    match /users/{uid}/public/{doc} {
+      allow read: if request.auth != null;
+      allow write: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'photoURL',
+          'athleteType',
+          'currentStreak',
+          'longestStreak',
+          'createdAt'
+        ]);
+    }
+
+    // ========================================
     // Social: Activities (public feed)
     // H7: authorId must match authenticated user
     // ========================================
