@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import { BADGE_ICONS, CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
-import { Lock, Trophy } from "lucide-react";
+import { BadgeHex } from "./BadgeHex";
+import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
@@ -50,59 +51,16 @@ export function BadgeGrid() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     whileTap={{ scale: 0.95 }}
-                    className={cn(
-                      "relative p-3 rounded-xl text-center transition-all overflow-hidden",
-                      earned ? "bg-card" : "bg-card/40"
-                    )}
-                    style={{
-                      border: earned
-                        ? `1.5px solid ${tierColor}55`
-                        : "1px solid rgba(0,0,0,0.05)",
-                      backgroundImage: earned
-                        ? `linear-gradient(135deg, ${tierColor}10, transparent 70%)`
-                        : undefined,
-                    }}
+                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center"
                   >
-                    {/* Tier dot */}
-                    {earned && (
-                      <div
-                        className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: tierColor }}
-                      />
-                    )}
-
-                    {/* Icon in tier-colored ring */}
-                    <div className="flex items-center justify-center mb-2">
-                      <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center"
-                        style={
-                          earned
-                            ? {
-                                backgroundColor: `${tierColor}18`,
-                                border: `1.5px solid ${tierColor}45`,
-                              }
-                            : {
-                                backgroundColor: "rgba(0,0,0,0.04)",
-                                border: "1.5px solid rgba(0,0,0,0.06)",
-                              }
-                        }
-                      >
-                        {earned ? (
-                          <Icon
-                            className="w-5 h-5"
-                            style={{ color: tierColor }}
-                            strokeWidth={2.25}
-                          />
-                        ) : (
-                          <Lock className="w-4 h-4 text-muted-foreground/40" />
-                        )}
-                      </div>
+                    <div className="flex items-center justify-center py-1 mb-2">
+                      <BadgeHex Icon={Icon} tier={badge.tier} earned={earned} size={64} />
                     </div>
 
                     <p
                       className={cn(
                         "text-xs font-semibold leading-tight",
-                        earned ? "text-foreground" : "text-muted-foreground/60"
+                        earned ? "text-foreground" : "text-muted-foreground/70",
                       )}
                     >
                       {badge.name}

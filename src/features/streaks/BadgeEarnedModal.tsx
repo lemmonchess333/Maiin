@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
 import type { EarnedBadge } from "./badges";
 import { BADGE_ICONS, TIER_COLORS } from "./badges";
+import { BadgeHex } from "./BadgeHex";
 import { Trophy } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
@@ -101,24 +102,12 @@ function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismis
               transition={{ duration: 0.7, type: "spring" }}
               className="relative z-10 flex justify-center"
             >
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center"
-                style={{
-                  backgroundColor: `${TIER_COLORS[badge.tier]}20`,
-                  border: `2px solid ${TIER_COLORS[badge.tier]}60`,
-                }}
-              >
-                {(() => {
-                  const Icon = BADGE_ICONS[badge.lucideIcon] ?? Trophy;
-                  return (
-                    <Icon
-                      className="w-12 h-12"
-                      style={{ color: TIER_COLORS[badge.tier] }}
-                      strokeWidth={2.25}
-                    />
-                  );
-                })()}
-              </div>
+              <BadgeHex
+                Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
+                tier={badge.tier}
+                earned={true}
+                size={120}
+              />
             </motion.div>
 
             <div className="relative z-10">
