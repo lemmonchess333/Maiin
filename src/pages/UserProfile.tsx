@@ -20,7 +20,7 @@ export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string; email?: string; bio?: string } | null>(null);
+  const [profile, setProfile] = useState<{ uid: string; displayName?: string; avatarUrl?: string; email?: string } | null>(null);
   const [followers, setFollowers] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
@@ -34,6 +34,11 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (!uid) return;
+    // Derive own-profile branch inside the effect so it re-evaluates if the
+    // signed-in user changes. Matches the isOwnProfile derivation below for
+    // render-time gating, but we can't use that binding here — it's declared
+    // after this effect.
+    const isOwnProfile = user?.uid === uid;
     setStatsLoading(true);
 
     // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
@@ -68,10 +73,11 @@ export default function UserProfile() {
       setStats({ totalKm, totalSessions });
     });
 
-    // Cross-user-readable streak + display fields from the public projection.
-    // Populated by Onboarding, createDefaultProfile, updateProfile, and the
-    // streak mirror-write in useStreaks. Legacy users pre-backfill may not
-    // have this doc yet — default streak to 0 silently in that case.
+    // Cross-user-readable streak + display fields + badgeSummary from the
+    // public projection. Populated by Onboarding, createDefaultProfile,
+    // updateProfile, the streak mirror-write in useStreaks, and awardBadge.
+    // Legacy users pre-backfill may not have this doc or may lack
+    // badgeSummary — default to zero/empty silently in that case.
     const publicProfilePromise = getDoc(doc(db, 'users', uid, 'public', 'profile')).then(snap => {
       if (!snap.exists()) return;
       const data = snap.data();
@@ -83,28 +89,52 @@ export default function UserProfile() {
         displayName: (data.displayName as string | null) ?? undefined,
         avatarUrl: (data.photoURL as string | null) ?? undefined,
       }));
-    }).catch(() => {});
 
-    // Badges still live in streaks/data (owner-only). Succeeds for own profile;
-    // silently fails cross-user. Moving badges into the public doc is a
-    // separate decision — not in scope for this prompt.
-    const badgesPromise = getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
-      if (snap.exists()) {
-        const data = snap.data();
-        const earnedMap: Record<string, string> = data.badges ?? {};
-        const earned: EarnedBadge[] = BADGE_DEFINITIONS
-          .filter(b => earnedMap[b.id])
-          .map(b => ({ ...b, earnedAt: earnedMap[b.id] }))
-          .sort((a, b) => (b.earnedAt ?? '').localeCompare(a.earnedAt ?? ''))
-          .slice(0, 3);
-        setBadges(earned);
+      // Cross-user badges reconstruct from the badgeSummary projection. Own
+      // profile still goes through streaks/data (see badgesPromise below)
+      // so the badge timestamps are the live values, not the summary mirror.
+      if (!isOwnProfile) {
+        const summary = (data.badgeSummary as { earnedMap?: Record<string, string> } | undefined);
+        const earnedMap = summary?.earnedMap ?? {};
+        const earned: EarnedBadge[] = [];
+        for (const [id, earnedAt] of Object.entries(earnedMap)) {
+          const def = BADGE_DEFINITIONS.find(b => b.id === id);
+          if (!def) {
+            // Schema drift: the public summary references a badge id the
+            // client catalog doesn't know. Log once per id, skip silently.
+            console.warn(`[UserProfile] unknown badge id in badgeSummary: ${id}`);
+            continue;
+          }
+          earned.push({ ...def, earnedAt });
+        }
+        earned.sort((a, b) => (b.earnedAt ?? '').localeCompare(a.earnedAt ?? ''));
+        setBadges(earned.slice(0, 3));
       }
     }).catch(() => {});
+
+    // Own-profile badges still read from streaks/data (owner-only rule). For
+    // cross-user views the badgeSummary path above has already populated
+    // `badges` state — this fetch is skipped to avoid a pointless
+    // permission-denied round-trip.
+    const badgesPromise = isOwnProfile
+      ? getDoc(doc(db, 'users', uid, 'streaks', 'data')).then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const earnedMap: Record<string, string> = data.badges ?? {};
+            const earned: EarnedBadge[] = BADGE_DEFINITIONS
+              .filter(b => earnedMap[b.id])
+              .map(b => ({ ...b, earnedAt: earnedMap[b.id] }))
+              .sort((a, b) => (b.earnedAt ?? '').localeCompare(a.earnedAt ?? ''))
+              .slice(0, 3);
+            setBadges(earned);
+          }
+        }).catch(() => {})
+      : Promise.resolve();
 
     Promise.all([profilePromise, activitiesPromise, publicProfilePromise, badgesPromise]).finally(() => {
       setStatsLoading(false);
     });
-  }, [uid]);
+  }, [uid, user?.uid]);
 
   const isOwnProfile = user?.uid === uid;
 
@@ -146,17 +176,14 @@ export default function UserProfile() {
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || profile.email || '?').charAt(0).toUpperCase(); }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0).toUpperCase(); }}
             />
           ) : (
-            (profile.displayName || profile.email || '?').charAt(0).toUpperCase()
+            (profile.displayName || '?').charAt(0).toUpperCase()
           )}
         </div>
         <div className="flex-1">
           <h1 className="text-lg font-extrabold">{profile.displayName}</h1>
-          {profile.bio && (
-            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{profile.bio}</p>
-          )}
           <div className="flex gap-4 text-xs text-muted-foreground mt-1">
             <span><strong className="text-foreground">{followers}</strong> followers</span>
             <span><strong className="text-foreground">{followingCount}</strong> following</span>
