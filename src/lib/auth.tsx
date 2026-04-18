@@ -170,6 +170,21 @@ export interface UserProfile extends
   UserProfileOnboarding {}
 
 /**
+ * Compact summary of earned badges mirrored onto the public profile doc.
+ *
+ * The full `badges: EarnedBadge[]` array lives on the owner-only
+ * `users/{uid}/streaks/data` doc. Only this summary is exposed cross-user —
+ * just IDs and timestamps. The renderer joins `earnedMap` against the local
+ * static `BADGE_DEFINITIONS` catalog to reconstruct display data.
+ */
+export interface BadgeSummary {
+  /** badgeId → earnedAt as ISO 8601 string */
+  earnedMap: Record<string, string>;
+  /** Total number of entries in earnedMap (cached for display/sort without scanning). */
+  count: number;
+}
+
+/**
  * Cross-user-readable projection of safe UserProfile fields.
  *
  * Stored at `users/{uid}/public/profile`. Every field here is also stored on
@@ -191,6 +206,8 @@ export interface PublicProfile {
   currentStreak: number;
   longestStreak: number;
   createdAt: Timestamp | FieldValue;
+  /** Optional — absent when the user has never earned a badge. */
+  badgeSummary?: BadgeSummary;
 }
 
 /** Keys of PublicProfile — mirrors the rule allowlist. */
@@ -202,6 +219,7 @@ export const PUBLIC_PROFILE_FIELDS = [
   "currentStreak",
   "longestStreak",
   "createdAt",
+  "badgeSummary",
 ] as const satisfies ReadonlyArray<keyof PublicProfile>;
 
 /* ================================

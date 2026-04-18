@@ -5,7 +5,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  setDoc,
   writeBatch,
   limit,
   Timestamp,
@@ -65,6 +64,32 @@ interface MealRow {
 }
 
 // ── Pure helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Coerce a value to an ISO 8601 string for badgeSummary mirror writes.
+ *
+ * Defensive across multiple shapes even though the current EarnedBadge.earnedAt
+ * is typed and written as `string | null` — an older or future write path
+ * could produce a Date / Timestamp / epoch number. Any path beyond `string`
+ * indicates schema drift; log on hit so we notice.
+ */
+function toIsoString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Date) {
+    logger.warn("[Streaks] toIsoString: Date received (expected ISO string)", value);
+    return value.toISOString();
+  }
+  if (typeof value === "number") {
+    logger.warn("[Streaks] toIsoString: number received (expected ISO string)", value);
+    return new Date(value).toISOString();
+  }
+  if (value && typeof (value as { toDate?: unknown }).toDate === "function") {
+    logger.warn("[Streaks] toIsoString: Timestamp received (expected ISO string)", value);
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  logger.warn("[Streaks] toIsoString: unexpected value", value);
+  return new Date().toISOString();
+}
 
 /**
  * Build the set of active dates (YYYY-MM-DD) from workouts, runs, and meals.
@@ -331,9 +356,29 @@ export function useStreaks() {
         b.id === badgeId ? updated : b,
       );
 
-      const ref = doc(db, "users", user.uid, "streaks", "data");
+      // Compute a compact, cross-user-readable badge summary for the public
+      // profile mirror. Full EarnedBadge[] stays on streaks/data (owner-only);
+      // only ids + earnedAt timestamps flow through the public doc.
+      const earnedMap: Record<string, string> = {};
+      for (const b of updatedBadges) {
+        if (!b.earnedAt) continue;
+        earnedMap[b.id] = toIsoString(b.earnedAt);
+      }
+      const badgeSummary = {
+        earnedMap,
+        count: Object.keys(earnedMap).length,
+      };
+
+      const streaksRef = doc(db, "users", user.uid, "streaks", "data");
+      const publicProfileRef = doc(db, "users", user.uid, "public", "profile");
       try {
-        await setDoc(ref, { badges: updatedBadges }, { merge: true });
+        const batch = writeBatch(db);
+        batch.set(streaksRef, { badges: updatedBadges }, { merge: true });
+        // Mirror only the summary onto the public profile doc. The
+        // users/{uid}/public/{doc} rule accepts subsets via hasOnly, so a
+        // partial merge with just badgeSummary is valid.
+        batch.set(publicProfileRef, { badgeSummary }, { merge: true });
+        await batch.commit();
         if (!silent) {
           setNewBadgeQueue((q) => [...q, updated]);
         }

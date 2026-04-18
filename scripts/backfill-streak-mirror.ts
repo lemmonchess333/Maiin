@@ -55,6 +55,55 @@ interface Summary {
   errors: number;
 }
 
+interface BadgeSummary {
+  earnedMap: Record<string, string>;
+  count: number;
+}
+
+// Mirror of the toIsoString helper in src/features/streaks/useStreaks.ts.
+// Kept inline since this script runs outside the src/ module graph. If the
+// runtime shape of EarnedBadge.earnedAt ever broadens, keep the two in sync.
+function toIsoString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "number") return new Date(value).toISOString();
+  if (value && typeof (value as { toDate?: unknown }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return new Date().toISOString();
+}
+
+function computeBadgeSummary(
+  badges: unknown,
+): BadgeSummary | undefined {
+  if (!Array.isArray(badges) || badges.length === 0) return undefined;
+  const earnedMap: Record<string, string> = {};
+  for (const b of badges) {
+    if (!b || typeof b !== "object") continue;
+    const id = (b as { id?: unknown }).id;
+    const earnedAt = (b as { earnedAt?: unknown }).earnedAt;
+    if (typeof id !== "string" || id.length === 0) continue;
+    if (earnedAt == null) continue;
+    earnedMap[id] = toIsoString(earnedAt);
+  }
+  const count = Object.keys(earnedMap).length;
+  if (count === 0) return undefined;
+  return { earnedMap, count };
+}
+
+function badgeSummariesEqual(
+  a: BadgeSummary | undefined,
+  b: BadgeSummary | undefined,
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  if (a.count !== b.count) return false;
+  const aKeys = Object.keys(a.earnedMap).sort();
+  const bKeys = Object.keys(b.earnedMap).sort();
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((k, i) => k === bKeys[i]);
+}
+
 async function backfillOne(
   uid: string,
 ): Promise<
@@ -84,6 +133,7 @@ async function backfillOne(
         typeof streaksData.currentStreak === "number" ? streaksData.currentStreak : 0;
       const longestStreak =
         typeof streaksData.longestStreak === "number" ? streaksData.longestStreak : 0;
+      const computedBadgeSummary = computeBadgeSummary(streaksData.badges);
 
       const userData = userSnap.exists ? userSnap.data() ?? {} : {};
       const userCurrent =
@@ -111,6 +161,10 @@ async function backfillOne(
         publicData.photoURL === undefined ? "__missing__" : publicData.photoURL;
       const publicAthleteType =
         typeof publicData.athleteType === "string" ? publicData.athleteType : null;
+      const publicBadgeSummary =
+        publicData.badgeSummary && typeof publicData.badgeSummary === "object"
+          ? (publicData.badgeSummary as BadgeSummary)
+          : undefined;
 
       const userInSync =
         userCurrent === currentStreak && userLongest === longestStreak;
@@ -120,7 +174,8 @@ async function backfillOne(
         publicLongest === longestStreak &&
         publicDisplayName === displayName &&
         publicPhotoURL === photoURL &&
-        publicAthleteType === athleteType;
+        publicAthleteType === athleteType &&
+        badgeSummariesEqual(publicBadgeSummary, computedBadgeSummary);
 
       if (userInSync && publicInSync) {
         return { status: "skipped-in-sync" as const };
@@ -139,6 +194,14 @@ async function backfillOne(
             athleteType,
             currentStreak,
             longestStreak,
+            // Write badgeSummary when there are earned badges. When there are
+            // none but the public doc has a stale summary, explicitly clear
+            // it — otherwise merge: true would leave the stale value.
+            ...(computedBadgeSummary
+              ? { badgeSummary: computedBadgeSummary }
+              : publicBadgeSummary
+                ? { badgeSummary: admin.firestore.FieldValue.delete() }
+                : {}),
             ...(publicSnap.exists ? {} : { createdAt }),
           },
           { merge: true },

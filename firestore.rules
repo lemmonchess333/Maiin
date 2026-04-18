@@ -127,7 +127,8 @@ service cloud.firestore {
           'athleteType',
           'currentStreak',
           'longestStreak',
-          'createdAt'
+          'createdAt',
+          'badgeSummary'
         ]);
     }
 
