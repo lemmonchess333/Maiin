@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
-import { CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
-import { Lock } from "lucide-react";
+import { BADGE_ICONS, CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
+import { BadgeHex } from "./BadgeHex";
+import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
@@ -37,10 +38,16 @@ export function BadgeGrid() {
             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {CATEGORY_LABELS[cat]}
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            {/* Perspective on the grid so child rotate transforms get a
+                proper 3D foreshortening when the user hovers a card. */}
+            <div
+              className="grid grid-cols-3 gap-2"
+              style={{ perspective: "800px" }}
+            >
               {badges.map((badge, i) => {
                 const tierColor = TIER_COLORS[badge.tier];
                 const earned = !!badge.earnedAt;
+                const Icon = BADGE_ICONS[badge.lucideIcon] ?? Trophy;
 
                 return (
                   <motion.div
@@ -48,45 +55,48 @@ export function BadgeGrid() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={cn(
-                      "relative p-3 rounded-xl text-center transition-all overflow-hidden",
+                    whileHover={
                       earned
-                        ? "bg-card/80"
-                        : "bg-muted/20 opacity-50"
-                    )}
+                        ? { rotateY: 6, rotateX: -4, scale: 1.04, y: -2 }
+                        : { scale: 1.02 }
+                    }
+                    whileTap={{ scale: 0.95 }}
+                    className="relative p-3 rounded-xl bg-card border border-border/50 text-center"
                     style={{
-                      border: earned
-                        ? `1.5px solid ${tierColor}40`
-                        : "1px solid rgba(255,255,255,0.05)",
+                      transformStyle: "preserve-3d",
+                      // Soft tier-tinted radial glow behind the hex on
+                      // earned cards — subtle always-on premium signal
+                      // that makes earned vs locked feel different at a
+                      // glance, without needing a coloured border.
                       backgroundImage: earned
-                        ? `linear-gradient(135deg, ${tierColor}08, transparent 60%)`
+                        ? `radial-gradient(circle at 50% 18%, ${tierColor}1a, transparent 65%)`
+                        : undefined,
+                      boxShadow: earned
+                        ? `0 4px 14px -6px ${tierColor}55`
                         : undefined,
                     }}
                   >
-                    {/* Tier dot */}
-                    {earned && (
-                      <div
-                        className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: tierColor }}
-                      />
-                    )}
-
-                    <div className="flex items-center justify-center text-2xl mb-1">
-                      {earned ? badge.icon : <Lock className="w-5 h-5 text-muted-foreground/30" />}
+                    <div className="flex items-center justify-center py-1 mb-2">
+                      <BadgeHex Icon={Icon} tier={badge.tier} earned={earned} size={64} />
                     </div>
-                    <p className={cn(
-                      "text-xs font-medium leading-tight",
-                      earned ? "text-foreground" : "text-muted-foreground/50"
-                    )}>
+
+                    <p
+                      className={cn(
+                        "text-xs font-semibold leading-tight",
+                        earned ? "text-foreground" : "text-muted-foreground/70",
+                      )}
+                    >
                       {badge.name}
                     </p>
                     {earned ? (
-                      <p className="text-xs mt-0.5" style={{ color: tierColor }}>
+                      <p
+                        className="text-[10px] font-mono tabular-nums mt-1"
+                        style={{ color: tierColor }}
+                      >
                         {new Date(badge.earnedAt!).toLocaleDateString()}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground/40 mt-0.5 line-clamp-2">
+                      <p className="text-[10px] text-muted-foreground/50 mt-1 line-clamp-2">
                         {badge.description}
                       </p>
                     )}
