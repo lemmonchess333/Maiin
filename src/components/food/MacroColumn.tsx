@@ -7,7 +7,6 @@ import {
 } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { getOverTargetColor } from "@/lib/theme";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -69,8 +68,14 @@ export default function MacroColumn({
     ? (isOver ? "over" : "left")
     : null;
 
-  // Over-target colour ramping (number + bar only, NOT icon/label/tertiary)
-  const overColor = isOver ? getOverTargetColor(consumed, target) : color;
+  // Macro number + bar stay in the macro's own colour regardless of
+  // over/under target. Previously the colour ramped amber → deep red
+  // when over, which made the Food hero read as a failure state
+  // (numbers going red, bars going red) even though "over carbs by 10g"
+  // is not a failure. Going over is now communicated purely by the
+  // "over" text label + the number visibly exceeding the target in
+  // the tertiary row. No red, no amber cascade.
+  const overColor = color;
 
   // Pulse-once-on-cross: compare current consumed against previous, fire a
   // one-shot opacity pulse via an imperative animate() call on a MotionValue.

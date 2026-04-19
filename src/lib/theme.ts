@@ -91,9 +91,7 @@ export const THEME = {
 export type MacroKey = keyof typeof THEME.macros;
 
 /** Over-target colour: amber for modest overshoot (≤15%), deep red for substantial. */
-export function getOverTargetColor(consumed: number, target: number): string {
-  if (target <= 0) return "#B91C1C";
-  const ratio = consumed / target;
-  if (ratio <= 1.15) return "#F59E0B"; // 0–15% over: amber
-  return "#B91C1C";                     // >15% over: deep red
-}
+// Deliberately removed — previously ramped numbers/bars on the Food hero
+// from amber to deep red when over target. Going over isn't a failure
+// state; the UI now simply keeps the base macro/ring colour and lets the
+// overshoot speak for itself via the "over" label and the tertiary value.

@@ -102,7 +102,7 @@ export default function Home() {
   }, [streak]);
 
   const weightUnit = profile?.preferredWeightUnit || "kg";
-  const { dailyCal, dailyProt, todayWorkoutCals, todayRunCals, lastWeightInfo, setLastWeightInfo, postWorkoutNudge } = useHomeData(user, profile, workouts, weightUnit);
+  const { dailyCal, dailyProt, dailyCarbs, dailyFat, todayWorkoutCals, todayRunCals, lastWeightInfo, setLastWeightInfo, postWorkoutNudge } = useHomeData(user, profile, workouts, weightUnit);
 
   const todayKey = format(new Date(), "yyyy-MM-dd");
   const todayTotals = getDailyTotals(todayKey);
@@ -389,7 +389,7 @@ export default function Home() {
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
           <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
+            <TodayEnergy calories={dailyCal} protein={dailyProt} carbs={dailyCarbs} fat={dailyFat} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
           </SectionErrorBoundary>
         </motion.div>
       </section>

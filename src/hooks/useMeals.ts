@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, limit, startAfter, getDocs, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { sumMealTotals } from "@/lib/mealTotals";
 
 export interface MealItem {
   name: string;
@@ -115,21 +116,13 @@ export function useMeals() {
     [meals]
   );
 
+  // Routed through the shared sumMealTotals util so useHomeData (Home's
+  // today sum) and useMeals (Food's daily sum) can't drift. If you're
+  // adding a new macro (fibre, sugar, sodium, something new), update
+  // mealTotals.ts — the two callers get it for free.
   const getDailyTotals = useCallback(
-    (date: string) => {
-      const dateMeals = meals.filter((m) => m.date === date);
-      return {
-        calories: dateMeals.reduce((sum, m) => sum + m.totalCalories, 0),
-        protein: dateMeals.reduce((sum, m) => sum + m.totalProtein, 0),
-        carbs: dateMeals.reduce((sum, m) => sum + m.totalCarbs, 0),
-        fat: dateMeals.reduce((sum, m) => sum + m.totalFat, 0),
-        fiber: dateMeals.reduce((sum, m) => sum + (m.totalFiber || 0), 0),
-        sugar: dateMeals.reduce((sum, m) => sum + (m.totalSugar || 0), 0),
-        sodium: dateMeals.reduce((sum, m) => sum + (m.totalSodium || 0), 0),
-        mealCount: dateMeals.length,
-      };
-    },
-    [meals]
+    (date: string) => sumMealTotals(meals.filter((m) => m.date === date)),
+    [meals],
   );
 
   return { meals, loading, hasMore, loadMore, deleteMeal, getMealsForDate, getDailyTotals };
