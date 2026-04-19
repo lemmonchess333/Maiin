@@ -6,6 +6,7 @@ import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
+import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 
 interface WeightInfo {
   weight: string;
@@ -86,17 +87,19 @@ export function useHomeData(
       let rCals = 0;
       let weightInfo: WeightInfo | null = null;
 
-      // Meals — also sum carbs + fat from the same doc shape as protein so
-      // Home's TodayEnergy can render true logged values instead of an
-      // estimated split.
+      // Meals — routed through the shared sumMealTotals util so this
+      // path can't drift from useMeals.getDailyTotals on Food. Both call
+      // sites read the same bare/prefixed-field fallbacks and coerce
+      // non-finite values identically.
       if (results[0].status === "fulfilled") {
-        results[0].value.forEach(function (d) {
-          const dd = d.data();
-          cal += dd.totalCalories || dd.calories || 0;
-          prot += dd.totalProtein || dd.protein || 0;
-          carb += dd.totalCarbs || dd.carbs || 0;
-          fat += dd.totalFat || dd.fat || 0;
-        });
+        const rawMeals: MealTotalsInput[] = results[0].value.docs.map(
+          (d) => d.data() as MealTotalsInput,
+        );
+        const totals = sumMealTotals(rawMeals);
+        cal = totals.calories;
+        prot = totals.protein;
+        carb = totals.carbs;
+        fat = totals.fat;
       } else {
         logger.error("[useHomeData] meals fetch failed:", results[0].reason);
         errors.push("Failed to load meals");
