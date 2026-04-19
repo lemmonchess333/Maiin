@@ -32,16 +32,19 @@ interface StreakFlameProps {
 
 interface Palette {
   bg: string;
-  border: string;
   glow: string;
   flameStroke: string;
   flameFill: string;
   numberClass: string;
 }
 
+// Borderless by design — the Lift / Run / Water / Weight cards on Home
+// don't carry a visible border either. The pill's definition comes from
+// the radial-gradient fill + drop-shadow glow, so the whole chip reads
+// as a warm orb rather than an outlined sticker.
+
 const TIER_BASE: Palette = {
-  bg: "radial-gradient(circle at 30% 30%, rgba(253,186,116,0.38), rgba(251,146,60,0.18) 60%, rgba(234,88,12,0.10) 100%)",
-  border: "1px solid rgba(249,115,22,0.45)",
+  bg: "radial-gradient(circle at 30% 30%, rgba(253,186,116,0.45), rgba(251,146,60,0.22) 60%, rgba(234,88,12,0.12) 100%)",
   glow: "0 2px 8px -2px rgba(249,115,22,0.35)",
   flameStroke: "#ea580c",
   flameFill: "rgba(251,146,60,0.55)",
@@ -49,8 +52,7 @@ const TIER_BASE: Palette = {
 };
 
 const TIER_WEEK: Palette = {
-  bg: "radial-gradient(circle at 30% 30%, rgba(253,230,138,0.55), rgba(245,158,11,0.22) 60%, rgba(217,119,6,0.14) 100%)",
-  border: "1px solid rgba(217,119,6,0.55)",
+  bg: "radial-gradient(circle at 30% 30%, rgba(253,230,138,0.6), rgba(245,158,11,0.28) 60%, rgba(217,119,6,0.16) 100%)",
   glow: "0 2px 10px -1px rgba(217,119,6,0.45)",
   flameStroke: "#b45309",
   flameFill: "rgba(251,191,36,0.65)",
@@ -58,8 +60,7 @@ const TIER_WEEK: Palette = {
 };
 
 const TIER_MONTH: Palette = {
-  bg: "radial-gradient(circle at 30% 25%, rgba(252,165,165,0.55), rgba(239,68,68,0.25) 55%, rgba(185,28,28,0.18) 100%)",
-  border: "1px solid rgba(220,38,38,0.55)",
+  bg: "radial-gradient(circle at 30% 25%, rgba(252,165,165,0.6), rgba(239,68,68,0.3) 55%, rgba(185,28,28,0.20) 100%)",
   glow: "0 2px 12px -1px rgba(220,38,38,0.45)",
   flameStroke: "#b91c1c",
   flameFill: "rgba(248,113,113,0.70)",
@@ -67,8 +68,7 @@ const TIER_MONTH: Palette = {
 };
 
 const TIER_ELITE: Palette = {
-  bg: "radial-gradient(circle at 30% 25%, rgba(196,181,253,0.55), rgba(139,92,246,0.28) 55%, rgba(91,33,182,0.20) 100%)",
-  border: "1px solid rgba(124,58,237,0.55)",
+  bg: "radial-gradient(circle at 30% 25%, rgba(196,181,253,0.6), rgba(139,92,246,0.32) 55%, rgba(91,33,182,0.22) 100%)",
   glow: "0 2px 14px -1px rgba(124,58,237,0.50)",
   flameStroke: "#6d28d9",
   flameFill: "rgba(167,139,250,0.70)",
@@ -108,7 +108,6 @@ export function StreakFlame({
       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
       style={{
         background: p.bg,
-        border: p.border,
         boxShadow: p.glow,
       }}
     >
