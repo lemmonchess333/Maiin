@@ -47,6 +47,24 @@ import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsight
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
+/**
+ * Header greeting — time-aware salutation with the user's first name.
+ * Falls back to "Today" when displayName is missing so the header line
+ * is never empty. Uses the first whitespace-delimited token of the
+ * display name so "Tom Brady" → "Tom" but emoji-only / single-token
+ * names pass through intact.
+ */
+function getGreetingLabel(displayName: string | null | undefined): string {
+  const hour = new Date().getHours();
+  const part =
+    hour < 5 ? "Hey" :
+    hour < 12 ? "Good morning" :
+    hour < 18 ? "Good afternoon" :
+    "Good evening";
+  const first = (displayName ?? "").trim().split(/\s+/)[0];
+  return first ? `${part}, ${first}` : "Today";
+}
+
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
@@ -276,21 +294,18 @@ export default function Home() {
       <header>
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-1 pb-1">
           <div className="flex flex-col">
-            <div className="flex items-center gap-2.5">
-              <svg width="34" height="34" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-                <defs>
-                  <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={THEME.brandLight}/>
-                    <stop offset="100%" stopColor={THEME.brand}/>
-                  </linearGradient>
-                </defs>
-                <polygon points="512,152 780,305 780,611 512,764 244,611 244,305" fill="url(#hexGrad)"/>
-                <polygon points="512,290 640,480 600,480 512,330 424,480 384,480" fill="white"/>
-              </svg>
-              <span className="text-xl font-extrabold tracking-wider text-foreground uppercase">TROPOS</span>
-            </div>
+            {/* Header greeting — uses the user's first name when we have one,
+                falls back to "Today" so the line isn't empty on unnamed
+                accounts. Replaces the TROPOS logo + wordmark: the brand mark
+                lives on the actual iOS Home Screen icon and PWA manifest —
+                repeating it inside the app at every return to / felt
+                redundant and dated the visual language. Program info moves
+                underneath the greeting, flush-left. */}
+            <h1 className="text-xl font-extrabold text-foreground leading-tight">
+              {getGreetingLabel(profile?.displayName)}
+            </h1>
             {programState && (
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5 ml-[46px]">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
                 {"Week " + programState.weekNumber + " · " + programState.currentPhase + " phase"}
               </span>
             )}
