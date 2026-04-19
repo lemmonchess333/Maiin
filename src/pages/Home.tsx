@@ -47,24 +47,6 @@ import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsight
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
-/**
- * Header greeting — time-aware salutation with the user's first name.
- * Falls back to "Today" when displayName is missing so the header line
- * is never empty. Uses the first whitespace-delimited token of the
- * display name so "Tom Brady" → "Tom" but emoji-only / single-token
- * names pass through intact.
- */
-function getGreetingLabel(displayName: string | null | undefined): string {
-  const hour = new Date().getHours();
-  const part =
-    hour < 5 ? "Hey" :
-    hour < 12 ? "Good morning" :
-    hour < 18 ? "Good afternoon" :
-    "Good evening";
-  const first = (displayName ?? "").trim().split(/\s+/)[0];
-  return first ? `${part}, ${first}` : "Today";
-}
-
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
   const { workouts, getWorkoutsForDate } = useWorkouts();
@@ -294,15 +276,12 @@ export default function Home() {
       <header>
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="flex items-center justify-between pt-1 pb-1">
           <div className="flex flex-col">
-            {/* Header greeting — uses the user's first name when we have one,
-                falls back to "Today" so the line isn't empty on unnamed
-                accounts. Replaces the TROPOS logo + wordmark: the brand mark
-                lives on the actual iOS Home Screen icon and PWA manifest —
-                repeating it inside the app at every return to / felt
-                redundant and dated the visual language. Program info moves
-                underneath the greeting, flush-left. */}
-            <h1 className="text-xl font-extrabold text-foreground leading-tight">
-              {getGreetingLabel(profile?.displayName)}
+            {/* TROPOS wordmark only — the hexagon icon was removed because it's
+                redundant with the iOS Home Screen / PWA launch icon. The icon
+                SVG itself is intentionally kept in `public/` and the manifest
+                so the device installer still has it. */}
+            <h1 className="text-xl font-extrabold tracking-wider text-foreground uppercase leading-tight">
+              TROPOS
             </h1>
             {programState && (
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">
@@ -402,6 +381,19 @@ export default function Home() {
         <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
       </motion.div>
 
+      {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
+          is the primary daily answer this page has to give, and buried at the
+          bottom of the scroll it was below the fold on first load. Now lives
+          directly under the Health Score card so it's always visible in the
+          first paint. */}
+      <section aria-label="Today's energy">
+        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+          <SectionErrorBoundary sectionName="today-intake">
+            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
+          </SectionErrorBoundary>
+        </motion.div>
+      </section>
+
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
           <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
@@ -418,14 +410,6 @@ export default function Home() {
           </SectionErrorBoundary>
         </motion.div>
       )}
-
-      <section aria-label="Today's energy">
-        <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-          <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
-          </SectionErrorBoundary>
-        </motion.div>
-      </section>
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
