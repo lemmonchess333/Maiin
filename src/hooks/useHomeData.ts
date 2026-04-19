@@ -63,9 +63,17 @@ export function useHomeData(
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const todayTs = Timestamp.fromDate(startOfToday);
+    const todayKey = format(new Date(), "yyyy-MM-dd");
 
+    // Filter on the client-set `date` string — same field Food's useMeals
+    // uses when it calls `getDailyTotals(date)`. Previously this query
+    // filtered on `createdAt >= todayTs` (server timestamp), which diverged
+    // from Food whenever a meal's local `date` didn't line up with its
+    // server `createdAt` (midnight edge, backdated entry, timezone). That
+    // was the remaining source of the Home/Food macro mismatch even after
+    // both paths started using sumMealTotals.
     const fetchMeals = getDocs(
-      query(collection(db, "users", user.uid, "meals"), where("createdAt", ">=", todayTs))
+      query(collection(db, "users", user.uid, "meals"), where("date", "==", todayKey))
     );
 
     const fetchRuns = getDocs(
