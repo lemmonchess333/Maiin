@@ -32,10 +32,16 @@ export interface MealTotalsInput {
   protein?: number;
   carbs?: number;
   fat?: number;
-  // Permit any other keys (Firestore payloads carry `items`, `confidence`,
-  // `createdAt`, etc.) — the sum only reads the fields above.
-  [key: string]: unknown;
 }
+
+// Firestore payloads carry extra keys (items, confidence, createdAt, ...).
+// The sum only reads the fields above; TypeScript's width-subtyping permits
+// wider objects to be assigned to this type, and the useHomeData call site
+// casts `d.data()` with `as MealTotalsInput` to make that explicit.
+//
+// No index signature on the interface itself — adding one broke
+// compatibility with the typed `Meal` interface from useMeals, which has
+// no index signature of its own. See commit message for the CI failure.
 
 export interface DailyTotals {
   calories: number;
