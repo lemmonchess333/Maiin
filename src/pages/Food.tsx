@@ -772,16 +772,19 @@ export default function Food() {
             aria-label="What did you eat"
             rows={1}
             maxLength={500}
-            className="w-full pl-10 pr-11 py-3.5 rounded-xl border text-foreground text-sm resize-none transition-all"
+            className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all"
             style={{
-              backgroundColor: "hsl(var(--input-fill))",
+              // Pure white (bg-card) instead of the grey --input-fill so
+              // the composer reads as a peer of the calorie hero card and
+              // macro cards (all white) instead of melting into the grey
+              // grouped-background. Shadow bumped to match card elevation.
               borderColor: inputFocused
                 ? "rgba(217,136,78,0.5)" // nutrition orange, 50%
-                : "rgba(0,0,0,0.08)",
+                : "rgba(0,0,0,0.06)",
               outline: "none",
               boxShadow: inputFocused
-                ? "0 4px 12px -4px rgba(217,136,78,0.25), 0 0 0 3px rgba(217,136,78,0.12)"
-                : "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
+                ? "0 4px 14px -4px rgba(217,136,78,0.3), 0 0 0 3px rgba(217,136,78,0.12)"
+                : "0 2px 6px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)",
             }}
           />
           {nlInput.trim() && (
