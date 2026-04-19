@@ -10,7 +10,7 @@ import {
   ChevronDown,
   Beef,
   Wheat,
-  Cookie,
+  Nut,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSubscription, pricing } from "@/lib/subscription";
@@ -671,7 +671,7 @@ export function AdaptiveSummary({
                     color: macroColors.fat,
                   }}
                 >
-                  <Cookie className="w-5 h-5 mx-auto mb-1.5" />
+                  <Nut className="w-5 h-5 mx-auto mb-1.5" />
                   <p className="text-xl font-bold tabular-nums leading-none truncate">{displayMacros.fat}g</p>
                   <p className="text-xs mt-1">fat</p>
                 </div>

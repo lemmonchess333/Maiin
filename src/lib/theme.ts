@@ -65,12 +65,17 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
-  // Macro colours (nutrition breakdown) — bold saturated for visual impact
+  // Macro colours (nutrition breakdown) — "Earth" palette (Option B):
+  //   protein = meat-pink, carbs = caramel-amber, fat = nut-brown.
+  // Deliberately non-Cal-AI (they use orange-carbs + blue-fat). Brown for
+  // fat is rare in UI so it reads as distinctive without clashing with
+  // the nutrition-orange theme already used by the Scan button + Today's
+  // Energy bar. Paired with the Nut lucide icon on the fat card.
   macros: {
     calories: '#EF4444', // Tailwind red-500 — bold red
-    protein: '#EC4899',  // Tailwind pink-500 — bold pink
-    carbs: '#3B82F6',    // Tailwind blue-500 — bold blue
-    fat: '#F59E0B',      // Tailwind amber-500 — bold amber
+    protein: '#EC4899',  // Tailwind pink-500 — bold pink (meat)
+    carbs: '#D97706',    // Tailwind amber-600 — caramel wheat
+    fat: '#8B5A2B',      // custom nut brown — walnut / almond shell
   },
 
   // Charts
