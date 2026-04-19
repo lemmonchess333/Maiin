@@ -28,6 +28,7 @@ import {
   CalendarDays,
   Plus,
   SendHorizontal,
+  Sparkles,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -711,9 +712,16 @@ export default function Food() {
         />
       </motion.div>
 
-      {/* Input area — text field stacked above full-width Scan CTA */}
+      {/* Input area — text field stacked above full-width Scan CTA. Leading
+          Sparkles icon + subtle border signal that the field is interactive
+          (previously it rendered as a flat grey pill that read as a label,
+          not a tappable input). */}
       <motion.div variants={itemVariant} className="pb-2">
         <div className="relative">
+          <Sparkles
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/70"
+          />
           <textarea
             ref={inputRef}
             value={nlInput}
@@ -724,8 +732,11 @@ export default function Food() {
             aria-label="What did you eat"
             rows={1}
             maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl border-0 text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/15"
-            style={{ backgroundColor: "hsl(var(--input-fill))" }}
+            className="w-full pl-10 pr-11 py-3 rounded-xl border text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/15 focus:border-primary/40 transition-colors"
+            style={{
+              backgroundColor: "hsl(var(--input-fill))",
+              borderColor: "rgba(0,0,0,0.08)",
+            }}
           />
           {nlInput.trim() && (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
