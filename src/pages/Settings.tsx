@@ -18,6 +18,7 @@ import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import { useMealReminders } from "@/hooks/useMealReminders";
 import { useWorkoutReminders } from "@/hooks/useWorkoutReminders";
+import { useStreakReminder } from "@/hooks/useStreakReminder";
 import { useCrews } from "@/hooks/useCrews";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 
@@ -71,6 +72,7 @@ export default function Settings() {
   const [newZoneRadius, setNewZoneRadius] = useState(500);
   const { reminders: mealReminders, updateReminders: updateMealReminders } = useMealReminders();
   const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
+  const { prefs: streakReminder, updatePrefs: updateStreakReminder } = useStreakReminder();
 
   // Restructure warning modal state
   const [showRestructureModal, setShowRestructureModal] = useState(false);
@@ -323,6 +325,8 @@ export default function Settings() {
         updateMealReminders={updateMealReminders}
         workoutReminders={workoutReminders}
         updateWorkoutReminders={updateWorkoutReminders}
+        streakReminder={streakReminder}
+        updateStreakReminder={updateStreakReminder}
       />
 
       {/* 9. Subscription — navigation row, not accordion */}

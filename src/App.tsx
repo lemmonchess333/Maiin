@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
+import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy.
 // Also catches "Failed to fetch dynamically imported module" errors from
@@ -220,6 +221,11 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <RoutePrefetcher />
+      {/* Mounted at App root (not in Settings) so the priming check runs on
+          every foreground event regardless of which page the user is on.
+          The modal internally gates on currentStreak >= 2 and
+          primingShown === false — renders nothing on most sessions. */}
+      <StreakReminderPrimingModal />
       <Routes>
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
