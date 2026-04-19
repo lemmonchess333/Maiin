@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Cookie, Info, X } from "lucide-react";
+// Nut icon (walnut silhouette) pairs with the Earth-palette fat colour —
+// more semantically fat-associated than Cookie (which reads as sugar) and
+// avoids avocado (Cal AI convention).
+import { Beef, Wheat, Nut, Info, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
@@ -430,7 +433,7 @@ export default function FoodHeroCard({
         >
           <MacroColumn
             macroKey="fat"
-            Icon={Cookie}
+            Icon={Nut}
             consumed={dailyTotals.fat}
             target={dailyTargets.fat}
             label="FAT"
