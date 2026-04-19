@@ -86,15 +86,17 @@ describe("sumMealTotals", () => {
 
   it("tolerates extra keys on the input (Firestore docs carry items/createdAt/etc.)", () => {
     // The sum only reads the macro fields; everything else is ignored.
-    const raw: MealTotalsInput[] = [
+    // Cast-through-unknown mirrors how useHomeData passes raw snapshot
+    // payloads (`d.data() as MealTotalsInput`).
+    const raw = [
       {
         totalCalories: 150,
         totalProtein: 12,
-        items: [{ name: "oats" }] as unknown as never,
-        confidence: "high" as unknown as never,
-        createdAt: Date.now() as unknown as never,
+        items: [{ name: "oats" }],
+        confidence: "high",
+        createdAt: Date.now(),
       },
-    ];
+    ] as unknown as MealTotalsInput[];
     expect(sumMealTotals(raw)).toMatchObject({
       calories: 150,
       protein: 12,
