@@ -7,17 +7,17 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 
 export interface WorkoutReminders {
   enabled: boolean;
   time: string;
-  timezone: string;
 }
 
 const DEFAULT_REMINDERS: WorkoutReminders = {
   enabled: false,
   time: '07:00',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 const WORKOUT_NOTIFICATION_ID = 2001;
@@ -57,7 +57,12 @@ function isWorkoutDay(
   return todaySchedule.type !== 'rest';
 }
 
-export function useWorkoutReminders() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useWorkoutReminders` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useWorkoutRemindersInternal() {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
@@ -71,16 +76,28 @@ export function useWorkoutReminders() {
         setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as WorkoutReminders });
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      logger.error('[WorkoutReminders] load failed', err);
+      setLoading(false);
+    });
   }, [user]);
 
-  // Save to Firestore
+  // Save to Firestore — see useMealReminders.ts for the error-handling
+  // rationale (critical-keyword tagging persists to users/{uid}/errors,
+  // failures don't re-throw into the UI).
   const updateReminders = useCallback(async (updates: Partial<WorkoutReminders>) => {
     if (!user) return;
     const updated = { ...reminders, ...updates };
     setReminders(updated);
     const ref = doc(db, 'users', user.uid, 'settings', 'workoutReminders');
-    await setDoc(ref, updated);
+    try {
+      await setDoc(ref, updated);
+    } catch (err) {
+      logger.error('[WorkoutReminders] save failed', err);
+      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
+        surface: 'workoutReminders.save',
+      });
+    }
   }, [user, reminders]);
 
   // Schedule / reschedule the next workout reminder, skipping rest days

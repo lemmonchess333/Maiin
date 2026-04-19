@@ -8,6 +8,8 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/errorReporting";
 
 /**
  * Streak-at-risk reminder — fires in the evening if the user hasn't logged
@@ -36,14 +38,12 @@ import {
 export interface StreakReminderPrefs {
   enabled: boolean;
   time: string; // HH:MM 24-hour local time
-  timezone: string;
   primingShown: boolean;
 }
 
 const DEFAULT_PREFS: StreakReminderPrefs = {
   enabled: true,
   time: "20:00",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   primingShown: false,
 };
 
@@ -93,7 +93,12 @@ export function shouldScheduleStreakReminder(state: {
   return true;
 }
 
-export function useStreakReminder() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useStreakReminder` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useStreakReminderInternal() {
   const { user } = useAuth();
   const { currentStreak, hasLoggedToday, loading: streaksLoading } = useStreaks();
   const [prefs, setPrefs] = useState<StreakReminderPrefs>(DEFAULT_PREFS);
@@ -118,7 +123,10 @@ export function useStreakReminder() {
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        logger.error("[StreakReminder] load failed", err);
+        setLoading(false);
+      });
   }, [user]);
 
   const updatePrefs = useCallback(
@@ -127,7 +135,16 @@ export function useStreakReminder() {
       const next = { ...prefs, ...updates };
       setPrefs(next);
       const ref = doc(db, "users", user.uid, "settings", "streakReminder");
-      await setDoc(ref, next);
+      try {
+        await setDoc(ref, next);
+      } catch (err) {
+        logger.error("[StreakReminder] save failed", err);
+        captureError(
+          err instanceof Error ? err : new Error(String(err)),
+          "network",
+          { surface: "streakReminder.save" },
+        );
+      }
     },
     [user, prefs],
   );
@@ -155,7 +172,12 @@ export function useStreakReminder() {
     const reschedule = async () => {
       // Always cancel first — regardless of whether we'll reschedule.
       // Some platforms don't cleanly replace a same-id notification.
-      await cancelNotification(STREAK_NOTIFICATION_ID).catch(() => {});
+      // cancelNotification already logs via logger.error in lib/notifications;
+      // the outer catch here is just to prevent an unhandled rejection on
+      // the no-op web path.
+      await cancelNotification(STREAK_NOTIFICATION_ID).catch((err) => {
+        logger.warn("[StreakReminder] cancel failed", err);
+      });
 
       if (cancelled) return;
 
@@ -170,7 +192,7 @@ export function useStreakReminder() {
 
       const fireAt = computeNextOccurrence(prefs.time);
       if (!fireAt) {
-        console.warn("[StreakReminder] malformed time:", prefs.time);
+        logger.warn("[StreakReminder] malformed time", prefs.time);
         return;
       }
 

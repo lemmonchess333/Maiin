@@ -1,7 +1,12 @@
-import { Bell } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import AccordionSection from "@/components/AccordionSection";
+import {
+  getNotificationPermissionState,
+  type NotificationPermissionState,
+} from "@/lib/notifications";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
@@ -23,8 +28,47 @@ export default function NotificationsSection({
   streakReminder,
   updateStreakReminder,
 }: NotificationsSectionProps) {
+  // Permission state for the inline denied-banner. Re-poll on every toggle
+  // action below so if the user opts in, hits the OS prompt, and denies,
+  // the banner appears without them needing to close/reopen Settings.
+  const [permission, setPermission] = useState<NotificationPermissionState>("default");
+  useEffect(() => {
+    let alive = true;
+    getNotificationPermissionState().then((state) => {
+      if (alive) setPermission(state);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const refreshPermission = () => {
+    getNotificationPermissionState().then(setPermission);
+  };
+  const anyReminderOn =
+    mealReminders.enabled || workoutReminders.enabled || streakReminder.enabled;
+
   return (
     <AccordionSection icon={<Bell className="w-5 h-5 text-primary" />} title="Notifications" subtitle="Meal, workout & streak reminders">
+      {/* Permission-denied banner — only shown when the user has at least one
+          reminder turned on AND the OS is blocking delivery. Silent failure
+          is confusing: the toggle says "on" but nothing fires. Surfacing the
+          root cause with a direct fix path is the minimum UX. */}
+      {permission === "denied" && anyReminderOn && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 p-3 rounded-lg border border-amber-400/50 bg-amber-50 text-amber-900"
+        >
+          <AlertTriangle className="w-4 h-4 mt-[2px] shrink-0" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Notifications are blocked</p>
+            <p className="text-xs leading-snug opacity-80">
+              Reminders won&apos;t fire until you enable notifications for Tropos
+              in your device settings.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Meal Reminders */}
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Meal Reminders</p>
@@ -40,6 +84,7 @@ export default function NotificationsSection({
               const next = !mealReminders.enabled;
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
+                refreshPermission();
               }
               await updateMealReminders({ enabled: next });
             }}
@@ -92,6 +137,7 @@ export default function NotificationsSection({
               const next = !workoutReminders.enabled;
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
+                refreshPermission();
               }
               await updateWorkoutReminders({ enabled: next });
             }}
@@ -139,6 +185,7 @@ export default function NotificationsSection({
               const next = !streakReminder.enabled;
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
+                refreshPermission();
               }
               // Toggling via Settings also counts as the user having
               // decided about priming — otherwise a user who opts in via
@@ -167,15 +214,9 @@ export default function NotificationsSection({
       </div>
 
       {/* Shared footer */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <span className="text-sm text-foreground">Timezone</span>
-          <p className="text-xs text-muted-foreground">{mealReminders.timezone}</p>
-        </div>
-        <p className="text-xs text-muted-foreground text-center">
-          Notifications work best when installed as an app
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Notifications work best when installed as an app
+      </p>
     </AccordionSection>
   );
 }

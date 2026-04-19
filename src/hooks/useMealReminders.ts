@@ -7,13 +7,14 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 
 export interface MealReminders {
   enabled: boolean;
   breakfast: { enabled: boolean; time: string };
   lunch: { enabled: boolean; time: string };
   dinner: { enabled: boolean; time: string };
-  timezone: string;
 }
 
 const DEFAULT_REMINDERS: MealReminders = {
@@ -21,7 +22,6 @@ const DEFAULT_REMINDERS: MealReminders = {
   breakfast: { enabled: true, time: '08:00' },
   lunch: { enabled: true, time: '12:30' },
   dinner: { enabled: true, time: '18:30' },
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 // Stable notification IDs across all Tropos scheduled notifications.
@@ -53,7 +53,12 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
   return target;
 }
 
-export function useMealReminders() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useMealReminders` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useMealRemindersInternal() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
@@ -67,16 +72,29 @@ export function useMealReminders() {
         setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as MealReminders });
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      logger.error('[MealReminders] load failed', err);
+      setLoading(false);
+    });
   }, [user]);
 
-  // Save to Firestore
+  // Save to Firestore. Errors are reported via captureError (Firestore
+  // writes are CRITICAL_KEYWORDS-tagged so they persist to users/{uid}/errors)
+  // but not re-thrown — the UI already did an optimistic setReminders, a
+  // background write failure shouldn't crash the toggle flow.
   const updateReminders = useCallback(async (updates: Partial<MealReminders>) => {
     if (!user) return;
     const updated = { ...reminders, ...updates };
     setReminders(updated);
     const ref = doc(db, 'users', user.uid, 'settings', 'mealReminders');
-    await setDoc(ref, updated);
+    try {
+      await setDoc(ref, updated);
+    } catch (err) {
+      logger.error('[MealReminders] save failed', err);
+      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
+        surface: 'mealReminders.save',
+      });
+    }
   }, [user, reminders]);
 
   // Schedule / reschedule the next occurrence of each enabled meal reminder

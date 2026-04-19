@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { useStreakReminder } from "@/hooks/useStreakReminder";
+import { useStreakReminder } from "@/hooks/RemindersProvider";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 
 /**
  * One-time priming modal for the streak-at-risk reminder.
@@ -78,17 +79,27 @@ export function StreakReminderPrimingModal() {
     close();
     // Mark priming as shown first — if the permission prompt hangs or
     // the user backgrounds to Settings, we must not re-prompt.
-    const granted = await requestPermission();
-    await updatePrefs({
-      primingShown: true,
-      enabled: granted,
-    });
+    try {
+      const granted = await requestPermission();
+      await updatePrefs({
+        primingShown: true,
+        enabled: granted,
+      });
+    } catch (err) {
+      // updatePrefs already calls captureError on Firestore write failure;
+      // this is a last-chance log so the UI error stays visible in dev.
+      logger.error("[StreakPriming] handleYes failed", err);
+    }
   }, [close, requestPermission, updatePrefs]);
 
   const handleNo = useCallback(async () => {
     haptic("light");
     close();
-    await updatePrefs({ primingShown: true, enabled: false });
+    try {
+      await updatePrefs({ primingShown: true, enabled: false });
+    } catch (err) {
+      logger.error("[StreakPriming] handleNo failed", err);
+    }
   }, [close, updatePrefs]);
 
   return (

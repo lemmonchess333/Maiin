@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, type ReactNode } from "react";
 import {
   collection,
   doc,
@@ -194,9 +194,14 @@ function isBalancedEarned(
   return liftDays.size >= 5 && runDays.size >= 5;
 }
 
-// ── Hook ─────────────────────────────────────────────────────────────────
+// ── Internal hook (single instance — lives inside <StreaksProvider>) ────
+//
+// The hook itself is unchanged; only the export surface changed. Previously
+// every caller (Home, BadgeGrid, useStreakReminder, ...) instantiated this
+// directly, each spinning up 4 Firestore subscriptions. Now <StreaksProvider>
+// runs it once near the authenticated root, and consumers read from context.
 
-export function useStreaks() {
+function useStreaksInternal() {
   const { user } = useAuth();
 
   // Streaks doc state (persisted badges + longest streak)
@@ -536,9 +541,13 @@ export function useStreaks() {
         // useStreakReminder hook re-evaluates on the next foreground /
         // state change and reschedules if the new post-mutation state
         // still warrants a reminder (rare, but cheap to re-evaluate).
-        // Errors are swallowed — cancel-of-nonexistent is harmless and
-        // this must never block or fail the streak write.
-        void cancelNotification(STREAK_NOTIFICATION_ID).catch(() => {});
+        // Intentionally swallow errors: cancel-of-nonexistent is harmless
+        // and this must never block or fail the streak write. Logged at
+        // warn (dev-only) in case the platform starts reporting real
+        // failures we need to debug.
+        void cancelNotification(STREAK_NOTIFICATION_ID).catch((err) => {
+          logger.warn("[Streaks] cancel streak-at-risk reminder failed", err);
+        });
       })
       .catch((error) => {
         logger.error("[Streaks] Save failed:", error);
@@ -568,6 +577,41 @@ export function useStreaks() {
   };
 }
 
-// TODO: hoist this hook to a context provider. Currently Home and Food each
-// create their own 4 subscriptions (8 total). A shared provider at the auth
-// boundary would halve Firestore reads.
+// ── Context provider ────────────────────────────────────────────────────
+//
+// Previously each consumer (Home, BadgeGrid, useStreakReminder, Settings via
+// useStreakReminder, the priming modal, ...) called `useStreaks()` directly,
+// each spawning its own 4 Firestore subscriptions (streaks/data + workouts +
+// runs + meals). With 3+ concurrent consumers that's 12 live listeners per
+// user per session. The provider runs the hook once near the authenticated
+// root; consumers read from context.
+
+type StreaksValue = ReturnType<typeof useStreaksInternal>;
+
+const StreaksContext = createContext<StreaksValue | null>(null);
+
+export function StreaksProvider({ children }: { children: ReactNode }) {
+  const value = useStreaksInternal();
+  return (
+    <StreaksContext.Provider value={value}>{children}</StreaksContext.Provider>
+  );
+}
+
+/**
+ * Read the streaks state populated by the single <StreaksProvider> higher
+ * up the tree. Throws if called outside the provider — that would mean
+ * either (a) the provider hasn't been mounted yet (e.g. on auth / onboarding
+ * screens — which is deliberate, we don't subscribe until the user is in),
+ * or (b) someone regressed by rendering a streak-consuming component
+ * outside the authenticated branch.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useStreaks(): StreaksValue {
+  const ctx = useContext(StreaksContext);
+  if (!ctx) {
+    throw new Error(
+      "useStreaks must be used inside <StreaksProvider> (authenticated routes only)",
+    );
+  }
+  return ctx;
+}
