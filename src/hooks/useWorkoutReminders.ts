@@ -7,6 +7,8 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 
 export interface WorkoutReminders {
   enabled: boolean;
@@ -74,16 +76,28 @@ export function useWorkoutRemindersInternal() {
         setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as WorkoutReminders });
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      logger.error('[WorkoutReminders] load failed', err);
+      setLoading(false);
+    });
   }, [user]);
 
-  // Save to Firestore
+  // Save to Firestore — see useMealReminders.ts for the error-handling
+  // rationale (critical-keyword tagging persists to users/{uid}/errors,
+  // failures don't re-throw into the UI).
   const updateReminders = useCallback(async (updates: Partial<WorkoutReminders>) => {
     if (!user) return;
     const updated = { ...reminders, ...updates };
     setReminders(updated);
     const ref = doc(db, 'users', user.uid, 'settings', 'workoutReminders');
-    await setDoc(ref, updated);
+    try {
+      await setDoc(ref, updated);
+    } catch (err) {
+      logger.error('[WorkoutReminders] save failed', err);
+      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
+        surface: 'workoutReminders.save',
+      });
+    }
   }, [user, reminders]);
 
   // Schedule / reschedule the next workout reminder, skipping rest days

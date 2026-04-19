@@ -8,6 +8,8 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/errorReporting";
 
 /**
  * Streak-at-risk reminder — fires in the evening if the user hasn't logged
@@ -121,7 +123,10 @@ export function useStreakReminderInternal() {
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        logger.error("[StreakReminder] load failed", err);
+        setLoading(false);
+      });
   }, [user]);
 
   const updatePrefs = useCallback(
@@ -130,7 +135,16 @@ export function useStreakReminderInternal() {
       const next = { ...prefs, ...updates };
       setPrefs(next);
       const ref = doc(db, "users", user.uid, "settings", "streakReminder");
-      await setDoc(ref, next);
+      try {
+        await setDoc(ref, next);
+      } catch (err) {
+        logger.error("[StreakReminder] save failed", err);
+        captureError(
+          err instanceof Error ? err : new Error(String(err)),
+          "network",
+          { surface: "streakReminder.save" },
+        );
+      }
     },
     [user, prefs],
   );
@@ -158,7 +172,12 @@ export function useStreakReminderInternal() {
     const reschedule = async () => {
       // Always cancel first — regardless of whether we'll reschedule.
       // Some platforms don't cleanly replace a same-id notification.
-      await cancelNotification(STREAK_NOTIFICATION_ID).catch(() => {});
+      // cancelNotification already logs via logger.error in lib/notifications;
+      // the outer catch here is just to prevent an unhandled rejection on
+      // the no-op web path.
+      await cancelNotification(STREAK_NOTIFICATION_ID).catch((err) => {
+        logger.warn("[StreakReminder] cancel failed", err);
+      });
 
       if (cancelled) return;
 
@@ -173,7 +192,7 @@ export function useStreakReminderInternal() {
 
       const fireAt = computeNextOccurrence(prefs.time);
       if (!fireAt) {
-        console.warn("[StreakReminder] malformed time:", prefs.time);
+        logger.warn("[StreakReminder] malformed time", prefs.time);
         return;
       }
 

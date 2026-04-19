@@ -541,9 +541,13 @@ function useStreaksInternal() {
         // useStreakReminder hook re-evaluates on the next foreground /
         // state change and reschedules if the new post-mutation state
         // still warrants a reminder (rare, but cheap to re-evaluate).
-        // Errors are swallowed — cancel-of-nonexistent is harmless and
-        // this must never block or fail the streak write.
-        void cancelNotification(STREAK_NOTIFICATION_ID).catch(() => {});
+        // Intentionally swallow errors: cancel-of-nonexistent is harmless
+        // and this must never block or fail the streak write. Logged at
+        // warn (dev-only) in case the platform starts reporting real
+        // failures we need to debug.
+        void cancelNotification(STREAK_NOTIFICATION_ID).catch((err) => {
+          logger.warn("[Streaks] cancel streak-at-risk reminder failed", err);
+        });
       })
       .catch((error) => {
         logger.error("[Streaks] Save failed:", error);

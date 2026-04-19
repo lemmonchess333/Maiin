@@ -7,6 +7,8 @@ import {
   cancelNotification,
   requestNotificationPermission,
 } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
+import { captureError } from '@/lib/errorReporting';
 
 export interface MealReminders {
   enabled: boolean;
@@ -70,16 +72,29 @@ export function useMealRemindersInternal() {
         setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as MealReminders });
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      logger.error('[MealReminders] load failed', err);
+      setLoading(false);
+    });
   }, [user]);
 
-  // Save to Firestore
+  // Save to Firestore. Errors are reported via captureError (Firestore
+  // writes are CRITICAL_KEYWORDS-tagged so they persist to users/{uid}/errors)
+  // but not re-thrown — the UI already did an optimistic setReminders, a
+  // background write failure shouldn't crash the toggle flow.
   const updateReminders = useCallback(async (updates: Partial<MealReminders>) => {
     if (!user) return;
     const updated = { ...reminders, ...updates };
     setReminders(updated);
     const ref = doc(db, 'users', user.uid, 'settings', 'mealReminders');
-    await setDoc(ref, updated);
+    try {
+      await setDoc(ref, updated);
+    } catch (err) {
+      logger.error('[MealReminders] save failed', err);
+      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
+        surface: 'mealReminders.save',
+      });
+    }
   }, [user, reminders]);
 
   // Schedule / reschedule the next occurrence of each enabled meal reminder
