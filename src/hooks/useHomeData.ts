@@ -21,6 +21,13 @@ interface PostWorkoutNudge {
 interface HomeDataState {
   dailyCal: number;
   dailyProt: number;
+  // Carbs + fat carried through so the Home TodayEnergy card can render the
+  // *actual* logged macros from meal docs. Previously TodayEnergy estimated
+  // them from leftover calories after protein (62/38 split), which drifted
+  // from the real numbers surfaced on the Food page and caused a visible
+  // mismatch (e.g. Home showing 200g carbs, Food showing 400g).
+  dailyCarbs: number;
+  dailyFat: number;
   todayRunCals: number;
   lastWeightInfo: WeightInfo | null;
   loading: boolean;
@@ -36,6 +43,8 @@ export function useHomeData(
   const [state, setState] = useState<HomeDataState>({
     dailyCal: 0,
     dailyProt: 0,
+    dailyCarbs: 0,
+    dailyFat: 0,
     todayRunCals: 0,
     lastWeightInfo: null,
     loading: true,
@@ -72,15 +81,21 @@ export function useHomeData(
       const errors: string[] = [];
       let cal = 0;
       let prot = 0;
+      let carb = 0;
+      let fat = 0;
       let rCals = 0;
       let weightInfo: WeightInfo | null = null;
 
-      // Meals
+      // Meals — also sum carbs + fat from the same doc shape as protein so
+      // Home's TodayEnergy can render true logged values instead of an
+      // estimated split.
       if (results[0].status === "fulfilled") {
         results[0].value.forEach(function (d) {
           const dd = d.data();
           cal += dd.totalCalories || dd.calories || 0;
           prot += dd.totalProtein || dd.protein || 0;
+          carb += dd.totalCarbs || dd.carbs || 0;
+          fat += dd.totalFat || dd.fat || 0;
         });
       } else {
         logger.error("[useHomeData] meals fetch failed:", results[0].reason);
@@ -131,6 +146,8 @@ export function useHomeData(
       setState({
         dailyCal: cal,
         dailyProt: prot,
+        dailyCarbs: carb,
+        dailyFat: fat,
         todayRunCals: rCals,
         lastWeightInfo: weightInfo,
         loading: false,
@@ -184,6 +201,8 @@ export function useHomeData(
   return {
     dailyCal: state.dailyCal,
     dailyProt: state.dailyProt,
+    dailyCarbs: state.dailyCarbs,
+    dailyFat: state.dailyFat,
     todayWorkoutCals,
     todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,

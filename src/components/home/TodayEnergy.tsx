@@ -12,8 +12,12 @@ import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
 import BreakdownRow from "@/components/home/BreakdownRow";
 
-export default function TodayEnergy({ calories, protein, burn, targets, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
-  calories: number; protein: number; burn: DailyBurn; targets: EffectiveTargets; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
+export default function TodayEnergy({ calories, protein, carbs, fat, burn, targets, totalLifetimeMeals = 0, daysSinceLastMeal = Infinity, mealsLoading = false, postWorkoutNudge, adaptiveTDEE, nutritionInsight }: {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  burn: DailyBurn; targets: EffectiveTargets; totalLifetimeMeals?: number; daysSinceLastMeal?: number; mealsLoading?: boolean;
   postWorkoutNudge?: { type: "lift" | "run" | "both"; proteinRemaining: number } | null;
   adaptiveTDEE?: { estimated: number; confidence: string } | null;
   nutritionInsight?: { type: "positive" | "warning" | "tip"; title: string; message: string } | null;
@@ -23,10 +27,6 @@ export default function TodayEnergy({ calories, protein, burn, targets, totalLif
   const tProt = targets.protein;
   const tCarbs = targets.carbs;
   const tFat = targets.fat;
-  const proteinCal = protein * 4;
-  const remaining = Math.max(calories - proteinCal, 0);
-  const estimatedCarbs = Math.round((remaining * 0.62) / 4);
-  const estimatedFat = Math.round((remaining * 0.38) / 9);
   const calPct = (calories / tCal) * 100;
 
   // Distinct macro colors from design tokens
@@ -158,8 +158,8 @@ export default function TodayEnergy({ calories, protein, burn, targets, totalLif
         )}
         <motion.div layout className={cn("flex items-center justify-around px-4 py-3", calories === 0 && "opacity-50")}>
           <MacroRing value={protein} target={tProt} color={proteinColor} label="Protein" unit="g" />
-          <MacroRing value={estimatedCarbs} target={tCarbs} color={carbsColor} label="Carbs" unit="g" />
-          <MacroRing value={estimatedFat} target={tFat} color={fatColor} label="Fat" unit="g" />
+          <MacroRing value={carbs} target={tCarbs} color={carbsColor} label="Carbs" unit="g" />
+          <MacroRing value={fat} target={tFat} color={fatColor} label="Fat" unit="g" />
         </motion.div>
         {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl" style={{ backgroundColor: THEME.semantic.nutrition + '08' }}>

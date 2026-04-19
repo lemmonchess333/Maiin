@@ -1,7 +1,6 @@
 import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeftRight } from "lucide-react";
-import { getOverTargetColor } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -34,19 +33,22 @@ const SIZE = 160;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Brand colours — both modes use the same red palette. The toggle changes
-// which VALUE is displayed (left vs eaten), not the ring's visual identity.
-const COLOR_LEFT = "#EF4444"; // red-500
-const COLOR_LEFT_TRACK = "rgb(239 68 68 / 0.1)";
+// Brand colours — ring uses the Tropos purple palette, matching the app's
+// primary colour. Both modes (left / eaten) share the same visual identity;
+// the toggle changes the displayed value, not the ring's colour.
+//
+// Over-target does NOT escalate to amber or red. Previously the number and
+// overshoot arc cascaded through warning-orange into deep red, which
+// (a) treated going over as a failure state, and (b) clashed with the
+// macro ring colours (which stayed pink/blue/orange). Now the ring stays
+// purple, the number stays purple, and "over" is communicated by the
+// tertiary "kcal over" label + the overshoot arc in a darker purple shade.
+const COLOR_RING = "#7B72E9"; // brand purple
+const COLOR_RING_LIGHT = "#A8A2EF"; // lighter stop for the arc gradient
+const COLOR_RING_DEEP = "#5D55C9"; // deeper stop for the overshoot arc
+const COLOR_TRACK = "rgba(123, 114, 233, 0.10)";
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
-
-function getLeftNumberColor(consumed: number, target: number, remaining: number): string {
-  if (target <= 0) return "#D1D5DB";
-  if (remaining < 0) return getOverTargetColor(consumed, target);
-  if (remaining / target <= 0.1) return "#DC2626"; // near target — deeper red
-  return COLOR_LEFT;
-}
 
 export default function CalorieRing({
   consumed,
@@ -78,11 +80,11 @@ export default function CalorieRing({
     ? (isOver ? Math.abs(remaining) : remaining)
     : consumed;
 
-  // Colour stays red in both modes — the toggle changes the displayed value,
-  // not the ring's visual identity. The centre label text is the only mode
-  // indicator ("KCAL LEFT" vs "KCAL EATEN").
-  const numberColor = getLeftNumberColor(consumed, target, remaining);
-  const trackColor = COLOR_LEFT_TRACK;
+  // Colour stays purple in both modes — the toggle changes the displayed
+  // value, not the ring's visual identity. The centre label text is the
+  // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
+  const numberColor = hasTarget ? COLOR_RING : "#D1D5DB";
+  const trackColor = COLOR_TRACK;
 
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)
@@ -112,7 +114,8 @@ export default function CalorieRing({
       aria-label={ariaLabel + ". Tap to toggle between calories left and calories eaten."}
       className="relative w-40 h-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
       style={{
-        filter: glowing ? "drop-shadow(0 0 16px rgb(239 68 68 / 0.4))" : undefined,
+        // Celebration glow — purple matching the ring itself.
+        filter: glowing ? "drop-shadow(0 0 16px rgba(123, 114, 233, 0.4))" : undefined,
         transition: "filter 800ms ease-in-out",
       }}
     >
@@ -129,12 +132,17 @@ export default function CalorieRing({
             x1="0" y1="0" x2="0" y2={SIZE}
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0%" stopColor="#FCA5A5" />
-            <stop offset="100%" stopColor="#EF4444" />
+            <stop offset="0%" stopColor={COLOR_RING_LIGHT} />
+            <stop offset="100%" stopColor={COLOR_RING} />
           </linearGradient>
+          {/* Overshoot gradient — a deeper shade of the same brand purple
+              so going over target still reads visually without introducing
+              a red "danger" state. The arc layers on top of the main ring
+              and only extends up to 1× target (capped), so it looks like
+              the ring has completed a second lap rather than broken. */}
           <linearGradient id={overflowGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#7F1D1D" />
-            <stop offset="100%" stopColor="#B91C1C" />
+            <stop offset="0%" stopColor={COLOR_RING} />
+            <stop offset="100%" stopColor={COLOR_RING_DEEP} />
           </linearGradient>
           {/* Inset shadow filter for the track circle — makes it read as a
               recessed groove cut into the white card surface rather than a
