@@ -28,7 +28,7 @@ import {
   CalendarDays,
   Plus,
   SendHorizontal,
-  Sparkles,
+  PenLine,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -741,20 +741,22 @@ export default function Food() {
       </motion.div>
 
       {/* Input area — text field stacked above full-width Scan CTA.
-          Leading Sparkles icon signals the AI-parse nature of the input.
-          Rotating placeholder teaches users what strings work without
-          needing a help doc. Soft shadow lifts the field above the
-          grouped-background so it reads as an interactive surface rather
-          than a label block. Focus state bumps the ring and primary
-          border so engagement is obvious. */}
+          Leading PenLine icon signals "write / input" without the
+          Sparkles+purple AI-chatbot connotation (the previous iteration
+          looked like a Gemini-style input, which clashed with the rest
+          of the Food page's warm nutrition palette). Focus state uses
+          the nutrition orange so the accent ties into the macros, the
+          scan button, and the hero ring — one consistent Food colour
+          instead of introducing a brand-purple in a nutrition context. */}
       <motion.div variants={itemVariant} className="pb-2">
         <div className="relative">
-          <Sparkles
+          <PenLine
             aria-hidden="true"
             className={cn(
               "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors",
-              inputFocused ? "text-primary" : "text-primary/70",
+              inputFocused ? "" : "text-muted-foreground",
             )}
+            style={inputFocused ? { color: THEME.semantic.nutrition } : undefined}
           />
           <textarea
             ref={inputRef}
@@ -770,20 +772,26 @@ export default function Food() {
             aria-label="What did you eat"
             rows={1}
             maxLength={500}
-            className="w-full pl-10 pr-11 py-3.5 rounded-xl border text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all"
             style={{
-              backgroundColor: "hsl(var(--input-fill))",
-              borderColor: inputFocused ? "rgba(123,114,233,0.5)" : "rgba(0,0,0,0.08)",
+              // Pure white (bg-card) instead of the grey --input-fill so
+              // the composer reads as a peer of the calorie hero card and
+              // macro cards (all white) instead of melting into the grey
+              // grouped-background. Shadow bumped to match card elevation.
+              borderColor: inputFocused
+                ? "rgba(217,136,78,0.5)" // nutrition orange, 50%
+                : "rgba(0,0,0,0.06)",
+              outline: "none",
               boxShadow: inputFocused
-                ? "0 4px 12px -4px rgba(123,114,233,0.25), 0 0 0 1px rgba(123,114,233,0.1)"
-                : "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
+                ? "0 4px 14px -4px rgba(217,136,78,0.3), 0 0 0 3px rgba(217,136,78,0.12)"
+                : "0 2px 6px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)",
             }}
           />
           {nlInput.trim() && (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
               aria-label="Send"
               className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
-              style={{ color: "#7C6BF0" }}>
+              style={{ color: THEME.semantic.nutrition }}>
               <SendHorizontal className="w-5 h-5" />
             </button>
           )}
