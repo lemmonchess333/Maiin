@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
+import { cancelNotification } from "@/lib/notifications";
+import { STREAK_NOTIFICATION_ID } from "@/hooks/useStreakReminder";
 
 export interface StreakData {
   currentStreak: number;
@@ -350,6 +352,15 @@ export function useStreaks() {
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
+  // True if the user has any logged activity (workout / run / meal with items)
+  // for today's date in the device-local timezone. Shared with useStreakReminder
+  // so its "hasLoggedToday" gate stays consistent with the streak computation
+  // itself — both read from the same activeDateSet + same date key.
+  const hasLoggedToday = useMemo(() => {
+    if (!allLoaded) return false;
+    return activeDateSet.has(format(new Date(), "yyyy-MM-dd"));
+  }, [allLoaded, activeDateSet]);
+
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
   // no-op alias — but explicit is clearer for consumers like BadgeGrid).
@@ -520,6 +531,14 @@ export function useStreaks() {
     batch.commit()
       .then(() => {
         lastWrittenStreakRef.current = currentStreak;
+        // Cancel any pending streak-at-risk reminder. The user has just
+        // logged something, so the reminder is stale by definition. The
+        // useStreakReminder hook re-evaluates on the next foreground /
+        // state change and reschedules if the new post-mutation state
+        // still warrants a reminder (rare, but cheap to re-evaluate).
+        // Errors are swallowed — cancel-of-nonexistent is harmless and
+        // this must never block or fail the streak write.
+        void cancelNotification(STREAK_NOTIFICATION_ID).catch(() => {});
       })
       .catch((error) => {
         logger.error("[Streaks] Save failed:", error);
@@ -539,6 +558,7 @@ export function useStreaks() {
     currentStreak,
     longestStreak,
     totalActiveDays,
+    hasLoggedToday,
     loading: !allLoaded,
     earnedBadges,
     lockedBadges,
