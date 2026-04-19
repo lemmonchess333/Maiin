@@ -28,6 +28,7 @@ import {
   CalendarDays,
   Plus,
   SendHorizontal,
+  Sparkles,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -55,6 +56,18 @@ const DEFAULT_QUICK_MEALS = [
   { name: "Tuna Salad", cal: 300, pro: 35, carb: 10, fat: 12 },
 ];
 
+// Rotating placeholder examples — shown in the NL input when empty +
+// unfocused. Each one is a real string the parser handles, so they
+// serve as both decoration and a working tutorial.
+const NL_EXAMPLE_PROMPTS = [
+  "What did you eat?",
+  "200g chicken & rice",
+  "2 eggs and toast",
+  "Protein shake with banana",
+  "Greek yoghurt & berries",
+  "Large coffee, no sugar",
+];
+
 interface OFFResult {
   name: string;
   brand: string;
@@ -74,7 +87,23 @@ export default function Food() {
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
   const [suggestionsActive, setSuggestionsActive] = useState(true);
+  // Rotating placeholder index — cycles through example meals every few
+  // seconds when the input is empty and not focused. Teaches users what
+  // kind of string the NL parser understands without needing a help doc.
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [inputFocused, setInputFocused] = useState(false);
   const [targetMeal, setTargetMeal] = useState<"breakfast" | "lunch" | "snacks" | "dinner" | null>(null);
+
+  // Cycle the placeholder every 2.8s when the input is idle (empty +
+  // unfocused + not adding to a specific meal). Stops the moment the
+  // user engages so the placeholder doesn't shift mid-typing.
+  useEffect(() => {
+    if (nlInput.trim() || inputFocused || targetMeal) return;
+    const id = window.setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % NL_EXAMPLE_PROMPTS.length);
+    }, 2800);
+    return () => window.clearInterval(id);
+  }, [nlInput, inputFocused, targetMeal]);
   // Swipe-to-delete: at most ONE row across the whole page can be open. State
   // lives here (at the page level), not per-row or per-section. Food rows
   // receive `isOpen` and `onOpenChange` as props — no context, no refs.
@@ -711,21 +740,44 @@ export default function Food() {
         />
       </motion.div>
 
-      {/* Input area — text field stacked above full-width Scan CTA */}
+      {/* Input area — text field stacked above full-width Scan CTA.
+          Leading Sparkles icon signals the AI-parse nature of the input.
+          Rotating placeholder teaches users what strings work without
+          needing a help doc. Soft shadow lifts the field above the
+          grouped-background so it reads as an interactive surface rather
+          than a label block. Focus state bumps the ring and primary
+          border so engagement is obvious. */}
       <motion.div variants={itemVariant} className="pb-2">
         <div className="relative">
+          <Sparkles
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors",
+              inputFocused ? "text-primary" : "text-primary/70",
+            )}
+          />
           <textarea
             ref={inputRef}
             value={nlInput}
             onChange={(e) => setNlInput(e.target.value)}
-            onFocus={() => setSuggestionsActive(true)}
-            onBlur={() => { setTimeout(() => setSuggestionsActive(false), 200); }}
-            placeholder={targetMeal ? `Adding to ${MEAL_LABELS[targetMeal]}…` : "What did you eat?"}
+            onFocus={() => { setSuggestionsActive(true); setInputFocused(true); }}
+            onBlur={() => { setInputFocused(false); setTimeout(() => setSuggestionsActive(false), 200); }}
+            placeholder={
+              targetMeal
+                ? `Adding to ${MEAL_LABELS[targetMeal]}…`
+                : NL_EXAMPLE_PROMPTS[placeholderIdx]
+            }
             aria-label="What did you eat"
             rows={1}
             maxLength={500}
-            className="w-full px-4 py-3 pr-11 rounded-xl border-0 text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/15"
-            style={{ backgroundColor: "hsl(var(--input-fill))" }}
+            className="w-full pl-10 pr-11 py-3.5 rounded-xl border text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            style={{
+              backgroundColor: "hsl(var(--input-fill))",
+              borderColor: inputFocused ? "rgba(123,114,233,0.5)" : "rgba(0,0,0,0.08)",
+              boxShadow: inputFocused
+                ? "0 4px 12px -4px rgba(123,114,233,0.25), 0 0 0 1px rgba(123,114,233,0.1)"
+                : "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
+            }}
           />
           {nlInput.trim() && (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
