@@ -16,9 +16,11 @@ import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
-import { useMealReminders } from "@/hooks/useMealReminders";
-import { useWorkoutReminders } from "@/hooks/useWorkoutReminders";
-import { useStreakReminder } from "@/hooks/useStreakReminder";
+import {
+  useMealReminders,
+  useWorkoutReminders,
+  useStreakReminder,
+} from "@/hooks/RemindersProvider";
 import { useCrews } from "@/hooks/useCrews";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 

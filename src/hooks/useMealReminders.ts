@@ -51,7 +51,12 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
   return target;
 }
 
-export function useMealReminders() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useMealReminders` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useMealRemindersInternal() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);

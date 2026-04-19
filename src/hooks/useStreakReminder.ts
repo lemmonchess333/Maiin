@@ -91,7 +91,12 @@ export function shouldScheduleStreakReminder(state: {
   return true;
 }
 
-export function useStreakReminder() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useStreakReminder` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useStreakReminderInternal() {
   const { user } = useAuth();
   const { currentStreak, hasLoggedToday, loading: streaksLoading } = useStreaks();
   const [prefs, setPrefs] = useState<StreakReminderPrefs>(DEFAULT_PREFS);

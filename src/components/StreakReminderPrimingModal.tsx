@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { useStreakReminder } from "@/hooks/useStreakReminder";
+import { useStreakReminder } from "@/hooks/RemindersProvider";
 import { haptic } from "@/lib/haptic";
 
 /**

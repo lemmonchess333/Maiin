@@ -7,6 +7,7 @@ import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 import { StreaksProvider } from "@/features/streaks/useStreaks";
+import { RemindersProvider } from "@/hooks/RemindersProvider";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy.
 // Also catches "Failed to fetch dynamically imported module" errors from
@@ -226,6 +227,11 @@ function AppRoutes() {
           from context instead of each spawning their own 4 Firestore
           subscriptions. */}
       <StreaksProvider>
+        {/* RemindersProvider runs the three reminder hooks once at the
+            authenticated root so scheduling doesn't drift whenever the
+            user skips the Settings page. Must sit inside StreaksProvider
+            because useStreakReminderInternal reads useStreaks(). */}
+        <RemindersProvider>
         <RoutePrefetcher />
         {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
@@ -251,6 +257,7 @@ function AppRoutes() {
         <Route path="/log" element={<Navigate to="/food" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+        </RemindersProvider>
       </StreaksProvider>
     </Suspense>
   );

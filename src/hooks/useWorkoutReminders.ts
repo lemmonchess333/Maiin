@@ -55,7 +55,12 @@ function isWorkoutDay(
   return todaySchedule.type !== 'rest';
 }
 
-export function useWorkoutReminders() {
+/**
+ * Heavy-lifting internal hook — run once per authenticated session by
+ * <RemindersProvider>. Public callers use `useWorkoutReminders` from
+ * RemindersProvider.tsx which reads this hook's output from context.
+ */
+export function useWorkoutRemindersInternal() {
   const { user, profile } = useAuth();
   const [reminders, setReminders] = useState<WorkoutReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
