@@ -41,35 +41,50 @@ export function StreakFlame({
           : { type: "spring", stiffness: 300 }
       }
       className={cn(
-        "flex items-center gap-1 px-2 py-1 rounded-full",
+        "flex items-center gap-1.5 px-2.5 py-1 rounded-full",
         active ? "" : "bg-muted",
       )}
-      style={active ? { background: "rgba(251,146,60,0.06)" } : undefined}
+      style={
+        active
+          ? {
+              // Punchier tinted pill — the previous 6% fill vanished against
+              // the iOS-grouped background. 15% reads as a warm-coloured
+              // chip, the subtle 35% border gives a definite edge without
+              // feeling "loud".
+              background: "rgba(251,146,60,0.15)",
+              border: "1px solid rgba(251,146,60,0.35)",
+            }
+          : undefined
+      }
     >
       <motion.span
         animate={
+          // Subtle scale-breathe instead of opacity pulse — the previous
+          // 0.7→1→0.7 opacity loop made the flame literally fade out half
+          // the time, which read as "washed out". Scale 0.95→1→0.95 keeps
+          // it alive without any translucency.
           active
-            ? { opacity: [0.7, 1, 0.7], scale: 1 }
+            ? { scale: [0.95, 1, 0.95] }
             : { opacity: 0.4, scale: 1 }
         }
         transition={
           active
-            ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+            ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
             : { duration: 0.3 }
         }
       >
         <Flame
           className={cn(
             "w-4 h-4",
-            active ? "text-orange-500" : "text-muted-foreground",
+            active ? "text-orange-500 fill-orange-500/40" : "text-muted-foreground",
           )}
         />
       </motion.span>
       <span
         className={cn(
-          "text-sm font-semibold",
+          "text-sm font-bold tabular-nums",
           active
-            ? "text-orange-600 dark:text-orange-400"
+            ? "text-orange-700 dark:text-orange-300"
             : "text-muted-foreground",
         )}
       >
