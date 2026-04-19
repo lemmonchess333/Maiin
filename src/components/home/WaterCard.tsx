@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -39,19 +39,14 @@ export default function WaterCard({ waterGlasses, waterTarget, onAddWater, onRem
           />
         )}
       </motion.div>
-      <AnimatePresence>
-        {rippleKey > 0 && (
-          <motion.div
-            key={rippleKey}
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: `radial-gradient(circle at 50% 80%, ${THEME.semantic.hydration}4D, transparent 70%)` }}
-            initial={{ opacity: 1, scale: 0.5 }}
-            animate={{ opacity: 0, scale: 1.5 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          />
-        )}
-      </AnimatePresence>
+      {/* Previously a second radial-gradient overlay scaled 0.5 → 1.5
+          from the bottom-centre on every add-water tap, which looked
+          like a teal blob swelling outward and felt unrelated to the
+          actual water level changing. Deleted. The splash is still
+          surfaced via WaterWave's `splash={rippleKey}` prop which
+          briefly boosts the wave amplitude — that's the intended
+          feedback, and it's bound to the water surface where the
+          action is happening. */}
       {waterGlasses > 2 && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
         <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(82, 163, 189, 0.10)' }}>

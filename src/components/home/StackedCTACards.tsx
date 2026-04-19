@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
+import RestDayCard from "@/components/home/RestDayCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 import WelcomeBackCard from "@/components/home/WelcomeBackCard";
@@ -29,6 +30,11 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
 }) {
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
+  // Rest-day cue. Previously neither lift nor run rendered on rest
+  // days and the page looked half-empty — users couldn't distinguish
+  // "scheduled rest" from "something broke". RestDayCard fills the
+  // slot with an intentional message and keeps the page rhythm.
+  const showRest = todayType === "rest";
 
   const liftCard = showLift && nextWorkout ? (
     <motion.div key="lift" variants={fadeUp}>
@@ -38,6 +44,11 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   const runCard = showRun ? (
     <motion.div key="run" variants={fadeUp}>
       <RunCTACard todayRun={todayRun} navigate={navigate} />
+    </motion.div>
+  ) : null;
+  const restCard = showRest ? (
+    <motion.div key="rest" variants={fadeUp}>
+      <RestDayCard />
     </motion.div>
   ) : null;
   const waterCard = (
@@ -62,6 +73,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
       )}
       {liftCard}
       {runCard}
+      {restCard}
       {waterCard}
       {weightTiles}
     </motion.div>
