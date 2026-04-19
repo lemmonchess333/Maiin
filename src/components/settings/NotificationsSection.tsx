@@ -167,15 +167,9 @@ export default function NotificationsSection({
       </div>
 
       {/* Shared footer */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <span className="text-sm text-foreground">Timezone</span>
-          <p className="text-xs text-muted-foreground">{mealReminders.timezone}</p>
-        </div>
-        <p className="text-xs text-muted-foreground text-center">
-          Notifications work best when installed as an app
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Notifications work best when installed as an app
+      </p>
     </AccordionSection>
   );
 }

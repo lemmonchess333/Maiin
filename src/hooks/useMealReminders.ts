@@ -13,7 +13,6 @@ export interface MealReminders {
   breakfast: { enabled: boolean; time: string };
   lunch: { enabled: boolean; time: string };
   dinner: { enabled: boolean; time: string };
-  timezone: string;
 }
 
 const DEFAULT_REMINDERS: MealReminders = {
@@ -21,7 +20,6 @@ const DEFAULT_REMINDERS: MealReminders = {
   breakfast: { enabled: true, time: '08:00' },
   lunch: { enabled: true, time: '12:30' },
   dinner: { enabled: true, time: '18:30' },
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 // Stable notification IDs across all Tropos scheduled notifications.

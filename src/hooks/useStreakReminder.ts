@@ -36,14 +36,12 @@ import {
 export interface StreakReminderPrefs {
   enabled: boolean;
   time: string; // HH:MM 24-hour local time
-  timezone: string;
   primingShown: boolean;
 }
 
 const DEFAULT_PREFS: StreakReminderPrefs = {
   enabled: true,
   time: "20:00",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   primingShown: false,
 };
 

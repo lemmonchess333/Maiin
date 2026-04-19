@@ -11,13 +11,11 @@ import {
 export interface WorkoutReminders {
   enabled: boolean;
   time: string;
-  timezone: string;
 }
 
 const DEFAULT_REMINDERS: WorkoutReminders = {
   enabled: false,
   time: '07:00',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 const WORKOUT_NOTIFICATION_ID = 2001;
