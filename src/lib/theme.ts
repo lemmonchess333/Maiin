@@ -65,12 +65,19 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
-  // Macro colours (nutrition breakdown) — bold saturated for visual impact
+  // Macro colours (nutrition breakdown) — "Kitchen" palette:
+  //   protein = meat-pink, carbs = toasted-wheat gold, fat = butter-yellow.
+  // Amber-700 for carbs is deeper than fat's yellow-500 so the two adjacent
+  // cards stay visually distinct. Chose this over blue-carbs + orange-fat
+  // because orange conflicted with the Food page's overall nutrition-orange
+  // theme (Scan button, Today's Energy bar) and blue has no real mental
+  // link to grain. Cal AI uses orange-carbs + blue-fat; this is
+  // deliberately different.
   macros: {
     calories: '#EF4444', // Tailwind red-500 — bold red
-    protein: '#EC4899',  // Tailwind pink-500 — bold pink
-    carbs: '#3B82F6',    // Tailwind blue-500 — bold blue
-    fat: '#F59E0B',      // Tailwind amber-500 — bold amber
+    protein: '#EC4899',  // Tailwind pink-500 — bold pink (meat)
+    carbs: '#B45309',    // Tailwind amber-700 — wheat gold
+    fat: '#EAB308',      // Tailwind yellow-500 — butter yellow
   },
 
   // Charts
