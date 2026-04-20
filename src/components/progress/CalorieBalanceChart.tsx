@@ -175,8 +175,8 @@ export default function CalorieBalanceChart() {
                 return (
                   <Cell
                     key={entry.date}
-                    fill={noData ? "hsl(var(--border))" : getBalanceColor(entry.balance, goal)}
-                    opacity={noData ? 0.4 : 0.75}
+                    fill={noData ? "hsl(var(--muted-foreground))" : getBalanceColor(entry.balance, goal)}
+                    opacity={noData ? 0.25 : 0.75}
                   />
                 );
               })}

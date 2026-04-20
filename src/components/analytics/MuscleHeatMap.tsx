@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
 
@@ -49,7 +49,32 @@ function getLegendDotColor(sets: number): string {
   return HIGH_COLOR;
 }
 
+// Subscribe to documentElement class changes so the body diagram recolours
+// when the user toggles dark mode at runtime (Settings writes .dark on
+// document.documentElement, see Settings.tsx:205).
+function subscribeDarkMode(cb: () => void) {
+  const observer = new MutationObserver(cb);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observer.disconnect();
+}
+function getIsDark() {
+  return document.documentElement.classList.contains("dark");
+}
+
 export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
+  const isDark = useSyncExternalStore(
+    subscribeDarkMode,
+    getIsDark,
+    () => false,
+  );
+  // Light: near-white silhouette (#e8e8f0) → calm iOS grouped-bg vibe.
+  // Dark: mid-neutral (#2A2A30) so the silhouette sits cleanly on
+  // bg-card (hsl 240 4% 10%) without bleaching out like the #e8e8f0
+  // did under .dark.
+  const bodyColor = isDark ? "#2A2A30" : "#e8e8f0";
   // Normalize technical keys → friendly names and merge counts
   const normalizedData = useMemo(() => {
     const result: Record<string, number> = {};
@@ -79,10 +104,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
   }, [normalizedData]);
 
   return (
-    <div
-      className="p-4 rounded-2xl border border-border/50"
-      style={{ backgroundColor: "var(--color-card)" }}
-    >
+    <div className="p-4 rounded-2xl border border-border/50 bg-card">
       <h3 className="text-sm font-semibold mb-3 text-foreground">
         Muscle Groups Trained
       </h3>
@@ -93,7 +115,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
             data={exerciseData}
             style={{ width: 140 }}
             highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
-            bodyColor="#e8e8f0"
+            bodyColor={bodyColor}
             type="anterior"
           />
           {/* Back view */}
@@ -101,7 +123,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
             data={exerciseData}
             style={{ width: 140 }}
             highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
-            bodyColor="#e8e8f0"
+            bodyColor={bodyColor}
             type="posterior"
           />
         </div>

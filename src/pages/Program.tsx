@@ -575,7 +575,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                 </p>
                                 {lastPerf && (
                                   <p className="text-xs mt-0.5 text-muted-foreground">
-                                    Last: {lastPerf.weight > 0 ? `${lastPerf.weight}kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
+                                    Last: {lastPerf.weight > 0 ? `${lastPerf.weight} kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
                                   </p>
                                 )}
                               </div>
@@ -606,7 +606,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               </p>
                               {lastPerf && (
                                 <p className="text-xs mt-0.5" style={{ color: "#999" }}>
-                                  Last: {lastPerf.weight > 0 ? `${lastPerf.weight}kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
+                                  Last: {lastPerf.weight > 0 ? `${lastPerf.weight} kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
                                 </p>
                               )}
                             </button>

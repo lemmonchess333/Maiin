@@ -35,7 +35,7 @@ export default function RestTimerRing({ restSeconds, restTarget, onStop, onChang
       <div className="relative w-32 h-32">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
           <circle cx="64" cy="64" r={RADIUS} fill="none"
-            stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            stroke="hsl(var(--muted))" strokeWidth="8" />
           <circle cx="64" cy="64" r={RADIUS} fill="none"
             stroke={isOver ? THEME.success : THEME.teal}
             strokeWidth="8"
