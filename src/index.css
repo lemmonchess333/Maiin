@@ -78,6 +78,10 @@ body {
   font-kerning: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* optimizeLegibility enables kerning pairs + common ligatures in body
+     text. Free crispness on modern browsers; no measurable perf cost at
+     the sizes we use. */
+  text-rendering: optimizeLegibility;
   overscroll-behavior-y: contain;
 }
 
@@ -86,6 +90,12 @@ h1, h2, h3, h4 {
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-kerning: normal;
+}
+/* Display-size headings (page titles, hero numbers) get a touch more
+   negative tracking so they read refined rather than airy. Pairs well
+   with Plus Jakarta Sans's geometric character at 24px+. */
+h1 {
+  letter-spacing: -0.02em;
 }
 
 

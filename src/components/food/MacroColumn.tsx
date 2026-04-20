@@ -130,7 +130,7 @@ export default function MacroColumn({
 
       {/* Big number */}
       <p
-        className="text-3xl font-black font-mono tabular-nums leading-none tracking-tight mt-2"
+        className="text-3xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2"
         style={{ color: overColor }}
       >
         <AnimatedNumber
