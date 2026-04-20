@@ -65,17 +65,23 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
-  // Macro colours (nutrition breakdown) — "Earth" palette (Option B):
-  //   protein = meat-pink, carbs = caramel-amber, fat = nut-brown.
-  // Deliberately non-Cal-AI (they use orange-carbs + blue-fat). Brown for
-  // fat is rare in UI so it reads as distinctive without clashing with
-  // the nutrition-orange theme already used by the Scan button + Today's
-  // Energy bar. Paired with the Nut lucide icon on the fat card.
+  // Macro colours (nutrition breakdown) — "Kitchen" palette (Option A):
+  //   protein = meat-pink, carbs = toasted-wheat gold, fat = butter-yellow.
+  // Amber-700 for carbs is deeper than fat's yellow-500 so the two adjacent
+  // cards stay visually distinct. Chose this over blue-carbs + orange-fat
+  // because orange conflicted with the Food page's overall nutrition-orange
+  // theme (Scan button, Today's Energy bar) and blue has no real mental
+  // link to grain. Cal AI uses orange-carbs + blue-fat; this is
+  // deliberately different.
+  //
+  // Briefly tried an Earth palette (amber + nut-brown + Nut icon) — the
+  // brown read as muddy against the white card and the acorn-shaped icon
+  // wasn't pulling its weight. Reverted.
   macros: {
     calories: '#EF4444', // Tailwind red-500 — bold red
     protein: '#EC4899',  // Tailwind pink-500 — bold pink (meat)
-    carbs: '#D97706',    // Tailwind amber-600 — caramel wheat
-    fat: '#8B5A2B',      // custom nut brown — walnut / almond shell
+    carbs: '#B45309',    // Tailwind amber-700 — wheat gold
+    fat: '#EAB308',      // Tailwind yellow-500 — butter yellow
   },
 
   // Charts
