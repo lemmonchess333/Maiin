@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -23,28 +22,12 @@ export default function DayStepper({
   todayIndex,
   onSelect,
 }: DayStepperProps) {
-  const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Auto-scroll today's circle to center on mount
-  useEffect(() => {
-    const target = todayIndex ?? 0;
-    const el = columnRefs.current[target];
-    if (el) {
-      el.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   if (days.length === 0) return null;
 
   return (
     <div
       role="tablist"
-      className="flex justify-center gap-[14px] px-4 pt-1 pb-3 overflow-x-auto border-b border-border/40"
-      style={{ scrollbarWidth: "none" }}
+      className="flex px-3 pt-1 pb-3 gap-1 border-b border-border/40"
     >
       {days.map((day, index) => {
         const isToday = index === todayIndex;
@@ -132,11 +115,7 @@ export default function DayStepper({
         return (
           <div
             key={index}
-            ref={(el) => {
-              columnRefs.current[index] = el;
-            }}
-            className="flex flex-col items-center"
-            style={{ minWidth: 48 }}
+            className="flex flex-col items-center flex-1 min-w-0"
           >
             <button
               role="tab"
@@ -165,7 +144,7 @@ export default function DayStepper({
               </motion.div>
             </button>
             <span
-              className="text-[10px] font-semibold text-center whitespace-nowrap mt-1"
+              className="text-[10px] font-semibold text-center truncate max-w-full mt-1"
               style={{ color: labelColor }}
             >
               {day.label}
