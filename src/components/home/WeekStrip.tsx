@@ -11,33 +11,41 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
 }) {
   const days = useMemo(() => {
     const today = new Date();
-    const sow = new Date(today);
-    sow.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const todayKey = format(today, "yyyy-MM-dd");
+    // Rolling 7-day window centred on today (today at index 3).
+    // Previously showed a fixed Mon–Sun calendar week, which pushed
+    // today to the edge of the strip on Mondays and Sundays. Centring
+    // gives symmetric past/future context every day and follows the
+    // rhythm of most fitness apps (Strava, Fitbit, Apple Fitness).
     return Array.from({ length: 7 }, function(_, i) {
-      const d = new Date(sow); d.setDate(sow.getDate() + i);
+      const d = new Date(today);
+      d.setDate(today.getDate() + (i - 3));
       const k = format(d, "yyyy-MM-dd");
       const data = dayMap.get(k);
-      const isToday = k === format(today, "yyyy-MM-dd");
+      const isToday = k === todayKey;
       const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
       const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
-      const isPast = !isToday && k < format(today, "yyyy-MM-dd");
+      const isPast = !isToday && k < todayKey;
       return { date: d, key: k, isToday: isToday, isPast: isPast, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
     });
   }, [dayMap, schedule, selectedDate]);
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
-        let cls = "size-11 rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
+        // Today: 48px filled purple + halo (matches Program DayStepper's
+        // Rule 3). Others: 40px. Selected-not-today: 40px filled purple
+        // to match Program Rule 5. Default: 40px filled grey.
+        const isBig = day.isToday;
+        let cls = (isBig ? "size-12 " : "size-10 ") + "rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
         let st: React.CSSProperties = {};
         if (day.isToday) {
           cls += " text-white font-semibold";
-          st = { backgroundColor: THEME.brand, boxShadow: `0 0 0 3px ${THEME.brand}25, 0 2px 6px ${THEME.brand}30` };
+          st = { backgroundColor: THEME.brand, boxShadow: `0 0 0 4px ${THEME.brand}1A, 0 4px 14px ${THEME.brand}40` };
         } else if (day.isSelected) {
-          cls += " text-foreground font-semibold";
-          st = { backgroundColor: "rgba(142,142,147,0.20)" };
+          cls += " text-white font-semibold";
+          st = { backgroundColor: THEME.brand };
         } else {
-          cls += " text-muted-foreground border-2 bg-transparent";
-          st = { borderColor: THEME.brand };
+          cls += " text-muted-foreground bg-muted";
         }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className={`flex flex-col items-center gap-1 active:scale-[0.95] ${day.isPast && !day.isToday ? "opacity-60" : ""}`}>
