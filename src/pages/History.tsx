@@ -340,7 +340,7 @@ export default function History() {
             <section aria-label="Running analytics">
               {filter === "all" && (
                 <p
-                  className="text-xs font-semibold uppercase tracking-wide"
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
                   style={{ color: THEME.running }}
                 >
                   Running
@@ -406,7 +406,7 @@ export default function History() {
             <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6"
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
                   style={{ color: THEME.lifting }}
                 >
                   Lifting
@@ -509,7 +509,7 @@ export default function History() {
             <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6"
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
                   style={{ color: THEME.success }}
                 >
                   Nutrition
