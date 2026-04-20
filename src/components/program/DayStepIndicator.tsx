@@ -104,7 +104,7 @@ export default function DayStepIndicator({
               top: from.centerY - 1.25,
               height: 2.5,
               borderRadius: 1.25,
-              background: filled ? PURPLE : "var(--border)",
+              background: filled ? PURPLE : "hsl(var(--border))",
               opacity: passedCount === 0 ? 0.5 : 1,
               transition: "background 400ms ease, opacity 300ms ease",
             }}
@@ -139,7 +139,7 @@ export default function DayStepIndicator({
                 {isRest ? (
                   <div
                     className="flex items-center justify-center rounded-full bg-card"
-                    style={{ width: 32, height: 32, border: "1.5px dashed var(--border)" }}
+                    style={{ width: 32, height: 32, border: "1.5px dashed hsl(var(--border))" }}
                   >
                     <Pause className="w-3 h-3 text-muted-foreground/60" />
                   </div>
@@ -155,7 +155,7 @@ export default function DayStepIndicator({
                 ) : isSkipped ? (
                   <div
                     className="flex items-center justify-center rounded-full bg-card"
-                    style={{ width: 32, height: 32, border: "1.5px solid var(--border)" }}
+                    style={{ width: 32, height: 32, border: "1.5px solid hsl(var(--border))" }}
                   >
                     <Ban className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
@@ -176,7 +176,7 @@ export default function DayStepIndicator({
                 ) : (
                   <div
                     className="flex items-center justify-center rounded-full bg-card"
-                    style={{ width: 32, height: 32, border: "1.5px solid var(--border)" }}
+                    style={{ width: 32, height: 32, border: "1.5px solid hsl(var(--border))" }}
                   >
                     <span className="text-xs text-muted-foreground font-medium">{workoutNumber}</span>
                   </div>

@@ -127,8 +127,8 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed inset-0 flex flex-col"
-            style={{ zIndex: 9999, backgroundColor: "#FFFFFF" }}
+            className="fixed inset-0 flex flex-col bg-background"
+            style={{ zIndex: 9999 }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 safe-area-pt">
@@ -138,7 +138,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
-              <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E" }}>{headerTitle}</p>
+              <p className="text-foreground" style={{ fontSize: 17, fontWeight: 600 }}>{headerTitle}</p>
               <div style={{ width: 32 }} />
             </div>
 
@@ -158,7 +158,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                       <button onClick={() => setShowDiscardConfirm(false)} className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card">
                         Keep Browsing
                       </button>
-                      <button onClick={confirmDiscard} className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-50 rounded-lg">
+                      <button onClick={confirmDiscard} className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-500/10 rounded-lg">
                         Discard
                       </button>
                     </div>
@@ -170,7 +170,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             {/* Search bar */}
             <div className="px-4 pb-2 flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8E8E93" }} />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   ref={searchRef}
                   type="text"
@@ -178,8 +178,8 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search exercises..."
                   aria-label="Search exercises"
-                  className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground"
-                  style={{ backgroundColor: "#EBEBF0", borderRadius: 10, border: "none" }}
+                  className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground bg-muted"
+                  style={{ borderRadius: 10, border: "none" }}
                 />
               </div>
               <AnimatePresence>
@@ -190,8 +190,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                     exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.2 }}
                     onClick={cancelSearch}
-                    className="text-sm font-medium shrink-0 overflow-hidden"
-                    style={{ color: "#7C6BF0" }}
+                    className="text-sm font-medium shrink-0 overflow-hidden text-primary"
                   >
                     Cancel
                   </motion.button>
@@ -208,13 +207,9 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                   className={cn(
                     "h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
-                      ? "font-semibold text-white"
-                      : "font-normal"
+                      ? "font-semibold text-white bg-primary"
+                      : "font-normal bg-transparent border-[1.5px] border-border text-foreground"
                   )}
-                  style={selectedCategory === cat
-                    ? { backgroundColor: "#7C6BF0" }
-                    : { backgroundColor: "transparent", border: "1.5px solid #D1D1D6", color: "#3C3C43" }
-                  }
                 >
                   {cat}
                 </button>
@@ -223,7 +218,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
 
             {/* Section label */}
             {!searchQuery && (
-              <div className="px-4 pt-1 pb-2" style={{ fontSize: 11, fontWeight: 600, color: "#8E8E93", textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <div className="px-4 pt-1 pb-2 text-muted-foreground uppercase" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>
                 {selectedCategory === "All" ? `All · ${filteredExercises.length} exercises` : `${selectedCategory} · ${filteredExercises.length} exercises`}
               </div>
             )}
@@ -238,18 +233,15 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                     {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
                     <div
                       onClick={() => toggleSelection(exercise.id)}
-                      className="flex items-center pr-4 transition-colors duration-100 active:bg-[#F2F2F7] cursor-pointer"
-                      style={{
-                        paddingLeft: 16,
-                        paddingTop: 12,
-                        paddingBottom: 12,
-                        minHeight: 68,
-                        ...(isSelected ? { backgroundColor: "rgba(76,175,80,0.06)" } : {}),
-                      }}
+                      className={cn(
+                        "flex items-center pr-4 transition-colors duration-100 active:bg-muted cursor-pointer",
+                        isSelected && "bg-green-500/10",
+                      )}
+                      style={{ paddingLeft: 16, paddingTop: 12, paddingBottom: 12, minHeight: 68 }}
                     >
                       <div className="flex-1 min-w-0">
-                        <p style={{ fontSize: 17, fontWeight: 600, color: "#1C1C1E", lineHeight: 1.25 }}>{exercise.name}</p>
-                        <p style={{ fontSize: 13, color: "#AEAEB2", marginTop: 2 }}>
+                        <p className="text-foreground" style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.25 }}>{exercise.name}</p>
+                        <p className="text-muted-foreground" style={{ fontSize: 13, marginTop: 2 }}>
                           {exercise.muscleGroup} · {exercise.equipment}
                         </p>
                       </div>
@@ -272,7 +264,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                     </div>
                     {/* Indented divider */}
                     {idx < filteredExercises.length - 1 && (
-                      <div style={{ height: 0.5, backgroundColor: "#E5E5EA", marginLeft: 16 }} />
+                      <div className="bg-border" style={{ height: 0.5, marginLeft: 16 }} />
                     )}
                   </div>
                 );
@@ -294,8 +286,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                   animate={{ y: 0 }}
                   exit={{ y: "100%" }}
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="p-4 safe-area-pb"
-                  style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}
+                  className="p-4 safe-area-pb border-t border-border"
                 >
                   <motion.button
                     whileTap={{ scale: 0.97 }}

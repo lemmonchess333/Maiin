@@ -56,7 +56,7 @@ function PIGauge({ score }: { score: number }) {
         <path
           d={arcPath(RADIUS, Math.PI, 0)}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="hsl(var(--muted))"
           strokeWidth={12}
           strokeLinecap="round"
         />
@@ -75,16 +75,16 @@ function PIGauge({ score }: { score: number }) {
         <line
           x1={CX} y1={CY}
           x2={nx} y2={ny}
-          stroke="white"
+          stroke="hsl(var(--foreground))"
           strokeWidth={2}
           strokeLinecap="round"
           style={{ transition: "x2 0.8s ease, y2 0.8s ease" }}
         />
-        <circle cx={CX} cy={CY} r={4} fill="white" />
+        <circle cx={CX} cy={CY} r={4} fill="hsl(var(--foreground))" />
         {/* Labels */}
-        <text x={14} y={98} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">0</text>
-        <text x={90} y={16} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">50</text>
-        <text x={166} y={98} fontSize={10} fill="rgba(255,255,255,0.3)" textAnchor="middle">100</text>
+        <text x={14} y={98} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">0</text>
+        <text x={90} y={16} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">50</text>
+        <text x={166} y={98} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">100</text>
       </svg>
       {/* Score */}
       <div className="text-center -mt-2">
@@ -108,7 +108,7 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-xs font-bold tabular-nums" style={{ color }}>{Math.round(value)}</p>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.min(value, 100)}%`, background: color }}
@@ -322,12 +322,13 @@ export default function PerformanceTab() {
                       />
                       <Tooltip
                         contentStyle={{
-                          background: 'rgba(0,0,0,0.85)',
-                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
                           borderRadius: 8,
                           fontSize: 12,
+                          color: 'hsl(var(--foreground))',
                         }}
-                        labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
+                        labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                         itemStyle={{ color: THEME.brand }}
                       />
                       <Line

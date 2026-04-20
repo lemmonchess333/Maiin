@@ -138,12 +138,12 @@ export function WeeklyEnergyChart() {
           <BarChart data={data} barGap={2} onClick={handleBarClick}>
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               width={30}

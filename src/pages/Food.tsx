@@ -929,7 +929,7 @@ export default function Food() {
                 onClick={() => { haptic(); handleQuickMealAdd(meal); }}
                 disabled={quickAdding !== null}
                 className={cn(
-                  "shrink-0 h-9 px-3.5 rounded-full bg-white border border-black/[0.08] text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
+                  "shrink-0 h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -1071,7 +1071,7 @@ export default function Food() {
                       }
                     }}
                     aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className="w-full flex items-center justify-between h-9 px-3 rounded-lg bg-white/50 border border-dashed border-border/70 text-left active:bg-muted/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="w-full flex items-center justify-between h-9 px-3 rounded-lg bg-muted/40 border border-dashed border-border text-left active:bg-muted transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <span className="text-micro uppercase tracking-wider text-muted-foreground/70">
                       {MEAL_LABELS[mealKey]}
@@ -1186,7 +1186,7 @@ export default function Food() {
                   onClick={handleCopyAllMissingFromYesterday}
                   disabled={inFlight}
                   aria-label={label}
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-white border border-[#E5E7EB] text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+                  className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   {label}

@@ -100,11 +100,10 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       {/* Swipeable card content */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="relative flex items-center"
+        className="relative flex items-center bg-card"
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? "none" : "transform 0.2s ease-out",
-          backgroundColor: "#FFFFFF",
           borderRadius: 10,
         }}
         onTouchStart={handleTouchStart}
