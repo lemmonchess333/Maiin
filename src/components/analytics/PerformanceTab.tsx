@@ -88,7 +88,7 @@ function PIGauge({ score }: { score: number }) {
       </svg>
       {/* Score */}
       <div className="text-center -mt-2">
-        <p className="text-4xl font-black font-mono tabular-nums" style={{ color }}>
+        <p className="text-4xl font-extrabold font-mono tabular-nums" style={{ color }}>
           {Math.round(clamped)}
         </p>
         <p className="text-xs font-semibold mt-0.5" style={{ color }}>
@@ -226,7 +226,7 @@ export default function PerformanceTab() {
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-3xl font-black tabular-nums" style={{ color: summaryColor }}>
+          <span className="text-3xl font-extrabold tabular-nums" style={{ color: summaryColor }}>
             {pi}
           </span>
           <span className="text-xs text-muted-foreground">/100 Performance Index</span>
@@ -299,7 +299,7 @@ export default function PerformanceTab() {
                 <div className="p-4 rounded-2xl border border-border/50 bg-card">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Performance Index — last 8 weeks</h3>
-                    <span className="text-2xl font-black tabular-nums" style={{ color: THEME.brand }}>
+                    <span className="text-2xl font-extrabold tabular-nums" style={{ color: THEME.brand }}>
                       {Math.round(currentWeek.performanceIndex)}
                     </span>
                   </div>
