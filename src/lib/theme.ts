@@ -66,7 +66,7 @@ export const THEME = {
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
   // Macro colours — iconic food per macro:
-  //   protein = meat-pink (Steak), carbs = wheat-gold (Wheat),
+  //   protein = meat-pink (Beef), carbs = wheat-gold (Wheat),
   //   fat = avocado-sage (Avocado). Each tile pairs colour + silhouette
   //   of the food it stands for. Sage fat is deliberately muted vs the
   //   punchy success green (#4DB872) so the two never collide as signals.
