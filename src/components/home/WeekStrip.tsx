@@ -36,8 +36,8 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           cls += " text-foreground font-semibold";
           st = { backgroundColor: "rgba(142,142,147,0.20)" };
         } else {
-          cls += " text-muted-foreground";
-          cls += " bg-muted";
+          cls += " text-muted-foreground border-2 bg-transparent";
+          st = { borderColor: THEME.brand };
         }
         return (
           <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className={`flex flex-col items-center gap-1 active:scale-[0.95] ${day.isPast && !day.isToday ? "opacity-60" : ""}`}>
