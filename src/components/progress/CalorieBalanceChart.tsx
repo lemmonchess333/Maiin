@@ -122,23 +122,52 @@ export default function CalorieBalanceChart() {
               }
             />
             <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
+            {/* Custom tooltip matches TrendWeight — full-date heading, then
+                label: value line. Previously rendered the day abbrev ("Sun")
+                as the heading; now both History charts show a consistent
+                "22 Mar 2026 / Deficit: 1,736 cal" template. */}
             <Tooltip
               cursor={false}
-              contentStyle={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                fontSize: 12,
-              }}
-              formatter={(value: unknown) => {
-                const v = Number(value);
+              content={(props) => {
+                if (!props.active || !props.payload?.length) return null;
+                const entry = props.payload[0];
+                const v = Number(entry.value);
+                if (!Number.isFinite(v)) return null;
+                const point = entry.payload as { date?: string } | undefined;
+                const heading = point?.date
+                  ? new Date(point.date + "T12:00:00").toLocaleDateString(
+                      "en-GB",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )
+                  : String(props.label ?? "");
                 const abs = Math.abs(Math.round(v)).toLocaleString();
-                return [
-                  `${abs} cal`,
-                  v >= 0 ? "Deficit" : "Surplus",
-                ];
+                const label = v >= 0 ? "Deficit" : "Surplus";
+                return (
+                  <div
+                    style={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      padding: "10px 14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        marginBottom: 4,
+                        color: "var(--foreground)",
+                      }}
+                    >
+                      {heading}
+                    </div>
+                    <div style={{ color: "var(--muted-foreground)" }}>
+                      {label}: {abs} cal
+                    </div>
+                  </div>
+                );
               }}
-              labelFormatter={(label) => String(label)}
             />
             <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12} minPointSize={2}>
               {data.map((entry) => {

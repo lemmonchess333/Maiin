@@ -340,7 +340,7 @@ export default function History() {
             <section aria-label="Running analytics">
               {filter === "all" && (
                 <p
-                  className="text-sm font-semibold uppercase tracking-wider"
+                  className="text-xs font-semibold uppercase tracking-wide"
                   style={{ color: THEME.running }}
                 >
                   Running
@@ -406,7 +406,7 @@ export default function History() {
             <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
-                  className="text-sm font-semibold uppercase tracking-wider mt-6"
+                  className="text-xs font-semibold uppercase tracking-wide mt-6"
                   style={{ color: THEME.lifting }}
                 >
                   Lifting
@@ -480,10 +480,10 @@ export default function History() {
                           </div>
                           <div className="text-right flex-shrink-0 ml-3">
                             <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                              {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight}kg` : pr.weight > 0 ? `${pr.weight}kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
+                              {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
                             </p>
                             {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-                              <p className="text-xs text-muted-foreground">~{e1rm}kg 1RM</p>
+                              <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
                             ) : null}
                           </div>
                         </div>
@@ -509,7 +509,7 @@ export default function History() {
             <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
-                  className="text-sm font-semibold uppercase tracking-wider mt-6"
+                  className="text-xs font-semibold uppercase tracking-wide mt-6"
                   style={{ color: THEME.success }}
                 >
                   Nutrition
@@ -529,7 +529,7 @@ export default function History() {
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}
-                  unit="/day"
+                  unit="kcal/day"
                   accentColor={THEME.success}
                 />
                 <StatCard

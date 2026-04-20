@@ -9,11 +9,11 @@ export function formatVolume(kg: number): { value: string; unit: string } {
   return { value: String(Math.round(kg)), unit: "kg" };
 }
 
-/** Format volume as a compact subtitle string (e.g. "1.5k vol" or "500kg vol") */
+/** Format volume as a compact subtitle string (e.g. "1.5k vol" or "500 kg vol") */
 export function formatVolumeSub(kg: number): string {
   if (kg <= 0) return "\u2014";
   if (kg >= 1000) return (kg / 1000).toFixed(1) + "k vol";
-  return Math.round(kg) + "kg vol";
+  return Math.round(kg) + " kg vol";
 }
 
 /** Format distance, showing "—" when zero/null */

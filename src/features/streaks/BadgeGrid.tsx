@@ -12,19 +12,22 @@ export function BadgeGrid() {
 
   return (
     <div className="space-y-6">
-      {/* Streak summary */}
+      {/* Streak summary — text-3xl / font-extrabold / font-mono / tabular-nums
+          matches the StatCard component used elsewhere on History (Avg
+          Calories, Weekly Volume, Sessions). Keeps the numeric hero scale
+          consistent across every History stat card. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-orange-500">{currentStreak}</p>
-          <p className="text-xs text-muted-foreground">Current Streak</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-orange-500">{currentStreak}</p>
+          <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-primary">{Number.isFinite(longestStreak) ? longestStreak : 0}</p>
-          <p className="text-xs text-muted-foreground">Longest Streak</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">{Number.isFinite(longestStreak) ? longestStreak : 0}</p>
+          <p className="text-xs text-muted-foreground mt-1">Longest Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-2xl font-bold text-foreground">{earnedBadges.length}</p>
-          <p className="text-xs text-muted-foreground">Badges Earned</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">{earnedBadges.length}</p>
+          <p className="text-xs text-muted-foreground mt-1">Badges Earned</p>
         </div>
       </div>
 

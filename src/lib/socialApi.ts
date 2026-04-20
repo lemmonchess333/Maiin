@@ -114,7 +114,7 @@ export async function postActivity(activity: {
       const name = activity.workoutName || 'Workout';
       const exCount = activity.exerciseCount || 0;
       const vol = activity.totalVolume
-        ? `${Math.round(activity.totalVolume).toLocaleString()}kg volume`
+        ? `${Math.round(activity.totalVolume).toLocaleString()} kg volume`
         : '';
       const dur = activity.duration
         ? `${Math.round(activity.duration / 60)} min`

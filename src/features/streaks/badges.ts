@@ -58,19 +58,19 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
 
   // Lifting
   { id: "first_pr", name: "First PR", description: "Set a personal record", icon: "trophy", lucideIcon: "Trophy", tier: "bronze", category: "lifting" },
-  { id: "plate_club", name: "Plate Club", description: "Lift 60kg on any compound", icon: "dumbbell", lucideIcon: "Dumbbell", tier: "silver", category: "lifting" },
-  { id: "two_plate", name: "Two Plate Club", description: "Lift 100kg on any compound", icon: "dumbbell", lucideIcon: "Dumbbell", tier: "gold", category: "lifting" },
-  { id: "three_plate", name: "Three Plate Club", description: "Lift 140kg on any compound", icon: "flame", lucideIcon: "Flame", tier: "platinum", category: "lifting" },
+  { id: "plate_club", name: "Plate Club", description: "Lift 60 kg on any compound", icon: "dumbbell", lucideIcon: "Dumbbell", tier: "silver", category: "lifting" },
+  { id: "two_plate", name: "Two Plate Club", description: "Lift 100 kg on any compound", icon: "dumbbell", lucideIcon: "Dumbbell", tier: "gold", category: "lifting" },
+  { id: "three_plate", name: "Three Plate Club", description: "Lift 140 kg on any compound", icon: "flame", lucideIcon: "Flame", tier: "platinum", category: "lifting" },
   { id: "programme_complete", name: "Programme Complete", description: "Finish a full programme cycle", icon: "clipboard-check", lucideIcon: "ClipboardCheck", tier: "silver", category: "lifting" },
   { id: "tonnage_100", name: "100-Tonne Club", description: "Move 100 tonnes total volume", icon: "zap", lucideIcon: "Zap", tier: "gold", category: "lifting" },
 
   // Running
   { id: "first_5k", name: "First 5K", description: "Complete a 5K run", icon: "footprints", lucideIcon: "Footprints", tier: "bronze", category: "running" },
   { id: "10k_club", name: "10K Club", description: "Complete a 10K run", icon: "target", lucideIcon: "Target", tier: "silver", category: "running" },
-  { id: "half_marathon", name: "Half Marathon", description: "Complete 21.1km", icon: "medal", lucideIcon: "Medal", tier: "gold", category: "running" },
-  { id: "marathon", name: "Marathoner", description: "Complete 42.2km", icon: "medal", lucideIcon: "Medal", tier: "platinum", category: "running" },
+  { id: "half_marathon", name: "Half Marathon", description: "Complete 21.1 km", icon: "medal", lucideIcon: "Medal", tier: "gold", category: "running" },
+  { id: "marathon", name: "Marathoner", description: "Complete 42.2 km", icon: "medal", lucideIcon: "Medal", tier: "platinum", category: "running" },
   { id: "speed_demon", name: "Speed Demon", description: "Run a sub-5:00/km pace", icon: "zap", lucideIcon: "Zap", tier: "silver", category: "running" },
-  { id: "century_km", name: "100km Total", description: "Run 100km lifetime distance", icon: "map", lucideIcon: "Map", tier: "gold", category: "running" },
+  { id: "century_km", name: "100 km Total", description: "Run 100 km lifetime distance", icon: "map", lucideIcon: "Map", tier: "gold", category: "running" },
 
   // Nutrition
   { id: "macro_master", name: "Macro Master", description: "Hit all macros within 5% for a day", icon: "target", lucideIcon: "Target", tier: "silver", category: "nutrition" },

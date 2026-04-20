@@ -42,8 +42,8 @@ describe("formatVolumeSub", () => {
     expect(formatVolumeSub(0)).toBe("\u2014");
   });
 
-  it("formats sub-1000 as Xkg vol", () => {
-    expect(formatVolumeSub(500)).toBe("500kg vol");
+  it("formats sub-1000 as `X kg vol` (space before unit)", () => {
+    expect(formatVolumeSub(500)).toBe("500 kg vol");
   });
 
   it("formats 1000+ as X.Xk vol (no double unit)", () => {

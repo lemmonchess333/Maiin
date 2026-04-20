@@ -97,7 +97,15 @@ export function BadgeHex({
         width: size,
         height: size,
         position: "relative",
-        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.18))",
+        // Locked hexes fade back so they read as unambiguously "off"
+        // even when the tier palette would otherwise look close to the
+        // locked grey (silver in particular — silver base #c0c0c0 sits
+        // right next to locked base #cfcfcf, which made earned silver
+        // badges look indistinguishable from locked ones on the grid).
+        opacity: earned ? 1 : 0.55,
+        filter: earned
+          ? "drop-shadow(0 2px 4px rgba(0,0,0,0.18))"
+          : "drop-shadow(0 1px 2px rgba(0,0,0,0.08))",
       }}
       aria-hidden="true"
     >
