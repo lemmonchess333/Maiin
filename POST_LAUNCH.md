@@ -59,3 +59,84 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 - `src/hooks/useSteps.ts` — new, reads from the plugin.
 - `src/lib/healthKit.ts` — new, platform-specific bridge.
 - `POST_LAUNCH.md` — delete this section when shipped.
+
+### Font rebrand experiment
+
+**Status:** Deferred. Current pair (Plus Jakarta Sans + JetBrains Mono)
+ships for launch; re-evaluate post-launch once real users weigh in.
+
+**Context:** Pre-launch audit of typography flagged Plus Jakarta Sans as
+"fine but generic" — it's become the 2024–25 default for consumer apps
+(alongside Inter). Not bad, but not distinctive. The immediate cleanup
+(trim weights, fix `RunBottomSheet.tsx` monospace bypass, delete
+Georgia decorative serif) made the existing pair feel more unified
+without needing a font change. That's shipped; rebrand deferred.
+
+**When to revisit:**
+
+- After collecting beta/early-user feedback on whether the brand feels
+  distinctive or blends into the "modern fitness app" category.
+- If a visual identity refresh is planned (logo, marketing site) —
+  cheaper to re-evaluate the type system at the same time.
+- If performance audits flag the Google Fonts load as a measurable
+  startup cost — some alternatives (system fonts, self-hosted Satoshi)
+  would cut it entirely.
+
+**Candidate fonts evaluated (ranked by fit for Tropos's brand):**
+
+| Font | Source | Why it's a candidate |
+|---|---|---|
+| **DM Sans** | Google Fonts | Warmer + more open than Jakarta, used by Vercel / Supabase. Already loaded for `privacy.html` so there's precedent. Biggest bang-for-buck swap. |
+| **Satoshi** | [Fontshare](https://www.fontshare.com/fonts/satoshi) (free) | Premium editorial feel, distinctive numerals, stands apart from Cal AI / MyFitnessPal. Slight risk at very small sizes on Android. |
+| **Geist** | [Vercel](https://vercel.com/font) | Sharp technical numerals — great for stats-heavy surfaces. Reads tech-brand rather than consumer-fitness, so only a fit if the brand pivots. |
+| **SF Pro / system** | Apple / OS default | Native iOS feel, zero font-download cost, fastest cold-start. Uninterested/invisible brand identity — only pick if speed > personality. |
+| **Plus Jakarta Sans** | Google Fonts | **Current.** Friendly geometric sans. Fine but common. |
+
+Plus two to avoid:
+
+- **Inter** — everyone uses it. Zero differentiation.
+- **Manrope** — almost identical to Plus Jakarta Sans. Not worth the swap.
+
+**How to actually swap (~30 min implementation):**
+
+The font system is centralised:
+
+1. `index.html` — two `<link rel="stylesheet">` tags for the Google Fonts URLs. One-line swap for each font.
+2. `src/index.css:21-22` — CSS custom properties `--font-display` and `--font-mono`. One string change each.
+3. Body rule in `src/index.css:75` uses `"Plus Jakarta Sans"` directly — update to match the new display font (or refactor to `var(--font-display)` first for free).
+
+Every other font reference in the codebase reads `var(--font-display)`
+or `var(--font-mono)` (after the `RunBottomSheet.tsx` cleanup landed),
+so changing those two variables + the `<link>` tags is the entire
+swap. No component-level edits.
+
+**A/B test path (if wanted):**
+
+- Env flag: `VITE_FONT_VARIANT=jakarta|dm|satoshi`.
+- `index.html` conditionally includes the matching font `<link>`.
+- `index.css` sets `--font-display` from a runtime `data-font` attribute
+  on `<body>` mirrored from the env flag.
+- Analytics segment by flag to compare engagement / feel.
+
+Small surface area; could run a week-long experiment before committing.
+
+**Before committing to a rebrand, answer these:**
+
+1. What brand emotion are we after — "friendly", "premium", "technical",
+   "fitness-utility"? The current pair leans friendly/generic. Each
+   candidate pushes toward a specific mood.
+2. Is there a visual identity refresh planned that this should align
+   with? If yes, do both together.
+3. Is Android (Capacitor + native system font fallback) a big enough
+   segment that font consistency across platforms matters? Satoshi and
+   DM Sans are safe; system fonts diverge wildly between iOS and
+   Android.
+
+**Files that would change in a rebrand:**
+
+- `index.html` — Google Fonts `<link>` URLs.
+- `src/index.css` — `--font-display` / `--font-mono` CSS variables + the
+  explicit `font-family` on the body rule.
+- `CLAUDE.md` — typography section update.
+
+Nothing else. The rest of the codebase reads through the variables.

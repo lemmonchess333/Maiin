@@ -59,10 +59,14 @@
     <link rel="preconnect" href="https://firebaseio.com" crossorigin />
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
-    <!-- Plus Jakarta Sans — variable weight 400..800 -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
-    <!-- JetBrains Mono — for numeric stats (precision feel) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&display=swap" />
+    <!-- Plus Jakarta Sans — variable weight 500..800. 400 dropped: only 12
+         call sites in src/ and body text inherits the platform default when
+         not specified, so the 400 face was dead weight in the font load. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+    <!-- JetBrains Mono — for numeric stats (precision feel). 500 for body
+         numbers, 700 for bold stats, 800 for hero stats. 600 dropped: no
+         `font-mono` + `font-semibold` combination exists in src/. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=swap" />
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/Maiin/manifest.json" />
