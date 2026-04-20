@@ -121,7 +121,31 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
             )}
 
             <button
-              onClick={() => {
+              onClick={async () => {
+                // Purge the stale-chunk recovery latch so lazyRetry can
+                // reload-and-retry again on the next failure. Previously
+                // the latch was session-scoped, which meant a user who
+                // hit ONE module-import error (typically post-deploy)
+                // exhausted their one-shot retry and then saw this
+                // error boundary on every subsequent navigation until
+                // they killed the PWA.
+                try {
+                  sessionStorage.removeItem("chunk-retry");
+                } catch {
+                  // Private mode / storage disabled — fine, the flag
+                  // just wasn't set.
+                }
+                // Blow away the service-worker caches so the reload
+                // fetches fresh HTML + chunks instead of the stale
+                // bundle the SW is still serving.
+                if ("caches" in window) {
+                  try {
+                    const names = await caches.keys();
+                    await Promise.all(names.map((n) => caches.delete(n)));
+                  } catch {
+                    // Best-effort; a cache error shouldn't block reload.
+                  }
+                }
                 this.setState({ hasError: false, error: null, componentStack: null });
                 window.location.reload();
               }}
