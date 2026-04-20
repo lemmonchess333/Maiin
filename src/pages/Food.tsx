@@ -946,8 +946,13 @@ export default function Food() {
             const totalCarb = meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0);
             const totalFat = meals.reduce((s, m) => s + safeNum(m.totalFat), 0);
 
-            // Earliest createdAt for the inline time (change #7)
-            let earliestDate: Date | null = null;
+            // Latest createdAt for the inline section time. Previously
+            // this was the EARLIEST — so adding a second item at 10:10
+            // to a section whose first item was at 9:50 left the header
+            // stuck at 9:50. "When did you last eat this meal" is the
+            // more useful reading, and it matches the user's mental
+            // model of "most recent activity in this section".
+            let latestDate: Date | null = null;
             if (!isEmpty) {
               for (const m of meals) {
                 const ts = m.createdAt;
@@ -958,12 +963,12 @@ export default function Food() {
                   typeof (ts as { toDate: unknown }).toDate === "function"
                 ) {
                   const d = (ts as { toDate: () => Date }).toDate();
-                  if (!earliestDate || d < earliestDate) earliestDate = d;
+                  if (!latestDate || d > latestDate) latestDate = d;
                 }
               }
             }
-            const timeLabel = earliestDate
-              ? format(earliestDate, "h:mm a").toUpperCase()
+            const timeLabel = latestDate
+              ? format(latestDate, "h:mm a").toUpperCase()
               : null;
 
             // Copy-from-yesterday render guard (change #4) — only show the
