@@ -235,56 +235,50 @@ export default function Food() {
     return segments;
   }, [yesterdayMeals]);
 
-  const copyFromYesterday = async (mealKey: string) => {
-    const items = yesterdaySegmented[mealKey];
-    if (!items.length || !user) return;
-    for (const item of items) {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        meal: mealKey,
-        foodName: item.foodName,
-        items: item.items ?? [],
-        totalCalories: item.totalCalories ?? 0,
-        totalProtein: item.totalProtein ?? 0,
-        totalCarbs: item.totalCarbs ?? 0,
-        totalFat: item.totalFat ?? 0,
-        confidence: "copy",
-        createdAt: Timestamp.now(),
-      });
-    }
-    haptic(15);
-    toast.success(`Copied ${items.length} item${items.length > 1 ? "s" : ""} from yesterday`);
-  };
-
-  // Wrapper with double-tap guard — disables the pill while Firestore
-  // propagates the new entries. Clears via the effect below, not setTimeout.
-  const handleCopyFromYesterday = async (mealKey: string) => {
-    if (copyingMealKey) return;
-    setCopyingMealKey(mealKey);
+  /**
+   * Copy every yesterday meal that today is missing in the same slot.
+   * Skips slots today already has so we never produce duplicates. Used by
+   * the bottom-of-page "Copy yesterday's meals" button — replaces the
+   * per-section "Copy yesterday's lunch" pills that used to sit beneath
+   * each empty section header.
+   */
+  const handleCopyAllMissingFromYesterday = async () => {
+    if (copyingMealKey || !user) return;
+    // Use a sentinel value so the in-flight UI guard works even though
+    // there's no single mealKey driving this call.
+    setCopyingMealKey("__all__");
     haptic("light");
     try {
-      await copyFromYesterday(mealKey);
-      // Don't clear state here — the effect below clears it when the
-      // section actually becomes populated via the Firestore subscription.
+      let total = 0;
+      for (const mealKey of MEAL_ORDER) {
+        const yesterdayHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
+        const todayHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
+        if (!yesterdayHas || todayHas) continue;
+        for (const item of yesterdaySegmented[mealKey] ?? []) {
+          await addDoc(collection(db, "users", user.uid, "meals"), {
+            date: selectedDate,
+            meal: mealKey,
+            foodName: item.foodName,
+            items: item.items ?? [],
+            totalCalories: item.totalCalories ?? 0,
+            totalProtein: item.totalProtein ?? 0,
+            totalCarbs: item.totalCarbs ?? 0,
+            totalFat: item.totalFat ?? 0,
+            confidence: "copy",
+            createdAt: Timestamp.now(),
+          });
+          total++;
+        }
+      }
+      haptic(15);
+      toast.success(`Copied ${total} item${total > 1 ? "s" : ""} from yesterday`);
     } catch (err) {
-      logger.error("[copy] Failed:", err);
+      logger.error("[copy-all] Failed:", err);
       toast.error("Couldn't copy from yesterday");
+    } finally {
       setCopyingMealKey(null);
     }
   };
-
-  // Clear the in-flight state when the copied section becomes populated.
-  // More correct than setTimeout because it clears precisely when the data
-  // is visible, not after an arbitrary delay.
-  useEffect(() => {
-    if (!copyingMealKey) return;
-    if ((mealSegmentedMeals[copyingMealKey]?.length ?? 0) > 0) {
-      /* eslint-disable react-hooks/set-state-in-effect -- syncing with
-         Firestore subscription: mealSegmentedMeals updates via onSnapshot */
-      setCopyingMealKey(null);
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-  }, [mealSegmentedMeals, copyingMealKey]);
 
   useEffect(() => {
     const mealCount = todaysMeals.length;
@@ -971,11 +965,6 @@ export default function Food() {
               ? format(latestDate, "h:mm a").toUpperCase()
               : null;
 
-            // Copy-from-yesterday render guard (change #4) — only show the
-            // pill when yesterday actually has entries for THIS meal section.
-            const hasYesterdayMealsForSection =
-              (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
-
             // Group populated items by food name
             const grouped = new Map<
               string,
@@ -1045,24 +1034,13 @@ export default function Food() {
                     </span>
                     <Plus className="w-3.5 h-3.5 text-muted-foreground/60" aria-hidden="true" />
                   </div>
-                  {/* TODO: Verify usage analytics. If <5% of empty meals
-                      trigger this, delete in v1.1. */}
-                  {hasYesterdayMealsForSection && copyingMealKey !== mealKey && (
-                    <div className="pl-3 mt-1 mb-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyFromYesterday(mealKey);
-                        }}
-                        aria-label={`Copy yesterday's ${MEAL_LABELS[mealKey].toLowerCase()} entries`}
-                        className="flex items-center gap-1.5 h-7 px-3 rounded-full bg-white border border-[#E5E7EB] text-[11px] font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Copy yesterday&apos;s {MEAL_LABELS[mealKey].toLowerCase()}
-                      </button>
-                    </div>
-                  )}
+                  {/* Per-section "Copy yesterday's <meal>" pill removed in
+                      favour of the single global "Copy yesterday's meals"
+                      button at the bottom of the day. The page used to
+                      sprinkle the pill under every empty meal section,
+                      which read as noise and forced the user to think one
+                      slot at a time. The bottom button copies every
+                      missing slot at once. */}
                 </motion.div>
               );
             }
@@ -1144,6 +1122,35 @@ export default function Food() {
               </motion.div>
             );
           })}
+
+          {/* Global "Copy yesterday's meals" button — only renders when
+              yesterday has at least one slot today is missing. Per-section
+              pills used to litter the page; one bottom button is calmer
+              and copies every missing slot at once (skips slots today
+              already has so we never duplicate). */}
+          {(() => {
+            const slotsToCopy = MEAL_ORDER.filter((mealKey) => {
+              const yHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
+              const tHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
+              return yHas && !tHas;
+            });
+            if (slotsToCopy.length === 0) return null;
+            const inFlight = copyingMealKey === "__all__";
+            return (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleCopyAllMissingFromYesterday}
+                  disabled={inFlight}
+                  aria-label="Copy yesterday's meals"
+                  className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-white border border-[#E5E7EB] text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Copy yesterday&apos;s meals
+                </button>
+              </div>
+            );
+          })()}
         </motion.div>
       )}
 
