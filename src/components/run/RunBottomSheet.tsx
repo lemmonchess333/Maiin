@@ -43,7 +43,7 @@ function SplitsStrip({ splits }: { splits: Split[] }) {
         return (
           <div key={i} className="text-center px-3 py-1.5 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
               {s.pace}
             </p>
             <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>km {s.km}</p>
@@ -141,7 +141,7 @@ export default function RunBottomSheet({
               <div className="text-center">
                 <p style={{
                   fontSize: 68, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
-                  fontFamily: 'monospace', color: THEME.teal, lineHeight: 1,
+                  fontFamily: 'var(--font-mono)', color: THEME.teal, lineHeight: 1,
                   letterSpacing: '-2px', textShadow: `0 0 40px ${THEME.teal}55`
                 }}>
                   {formatTime(elapsed)}
@@ -152,13 +152,13 @@ export default function RunBottomSheet({
               {/* Distance + Pace */}
               <div className="flex gap-12 items-end">
                 <div className="text-center">
-                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', lineHeight: 1 }}>
+                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
                     {(distance / 1000).toFixed(2)}
                   </p>
                   <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>KM</p>
                 </div>
                 <div className="text-center">
-                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', lineHeight: 1 }}>
+                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
                     {pace}
                   </p>
                   <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>/KM</p>
@@ -176,17 +176,17 @@ export default function RunBottomSheet({
             <div className="flex items-center justify-around py-3 mb-5 rounded-2xl flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>{calories}</p>
+                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{calories}</p>
                 <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>CAL</p>
               </div>
               <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>{elevation}m</p>
+                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{elevation}m</p>
                 <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>ELEV</p>
               </div>
               <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>{splits.length}</p>
+                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{splits.length}</p>
                 <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>SPLITS</p>
               </div>
             </div>
@@ -257,19 +257,19 @@ export default function RunBottomSheet({
         {!isExpanded && (
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
                 {formatTime(elapsed)}
               </p>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>TIME</p>
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: THEME.teal, fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>
+              <p style={{ fontSize: 22, fontWeight: 700, color: THEME.teal, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
                 {(distance / 1000).toFixed(2)}
               </p>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>KM</p>
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}>{pace}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{pace}</p>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>/KM</p>
             </div>
             <button
