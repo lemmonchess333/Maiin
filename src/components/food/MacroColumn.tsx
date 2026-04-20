@@ -184,11 +184,11 @@ export default function MacroColumn({
         {" / "}{Math.round(target)}g
       </p>
 
-      {/* Uppercase macro label in macro colour */}
-      <p
-        className="text-[10px] font-semibold uppercase tracking-wider mt-0.5"
-        style={{ color }}
-      >
+      {/* Uppercase macro label — intentionally muted (same tone as the
+          `X / Yg` ratio line above) so the card's colour identity is
+          carried by the icon + big number + progress bar, not duplicated
+          four times. The label is a caption, not a headline. */}
+      <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5 text-muted-foreground">
         {label}
       </p>
     </button>
