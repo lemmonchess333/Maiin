@@ -86,7 +86,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[60vh] flex flex-col">
           <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6">
             {/* Drag handle */}
-            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: "rgba(0,0,0,0.15)" }} />
+            <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
 
             {/* Title */}
             <div className="mb-5">
@@ -101,8 +101,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Meal name (e.g. Chicken & rice)"
               aria-label="Meal name"
-              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground"
-              style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
+              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
             />
 
             {/* Macro input grid */}
@@ -124,8 +123,7 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
                     value={field.value}
                     onChange={(e) => field.set(e.target.value)}
                     placeholder={field.unit}
-                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40"
-                    style={{ border: "1px solid rgba(0,0,0,0.08)", backgroundColor: "rgba(0,0,0,0.02)" }}
+                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
                   />
                 </div>
               ))}
