@@ -8,8 +8,12 @@ interface VolumeChartProps {
 export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeChartProps) {
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">Weekly Volume</h3>
+      {/* No "Weekly Volume" heading here — the StatCard directly above
+          already carries that label ("WEEKLY VOLUME"). Redundant heading
+          stacked two cards deep was part of the "too many labels" feel
+          flagged on the Analytics tab. Keeping only the "kg lifted" axis
+          hint, right-aligned to keep the card's top edge useful. */}
+      <div className="flex items-center justify-end mb-3">
         <p className="text-xs text-muted-foreground">kg lifted</p>
       </div>
 
