@@ -2,8 +2,11 @@ import type { SVGProps } from "react";
 
 // Lucide-style stroke icon for the Avocado macro tile.
 // Lucide doesn't ship an Avocado, so this stays in the same visual
-// language (24×24 viewBox, 2px stroke, currentColor, rounded caps)
-// as the Beef + Wheat icons paired alongside it.
+// language (24×24 viewBox, 2px stroke, currentColor, rounded caps) as
+// the Beef + Wheat icons paired alongside it. Shape is a half-avocado:
+// pear body with a large pit sitting in the upper centre — the pit
+// proportion (~54% of body width) is what visually separates "avocado"
+// from a generic teardrop silhouette.
 export function Avocado(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -18,10 +21,10 @@ export function Avocado(props: SVGProps<SVGSVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      {/* Pear-shaped body — narrower top, rounded base */}
-      <path d="M12 3c-3.3 0-6 2.7-6 7 0 5 2.5 11 6 11s6-6 6-11c0-4.3-2.7-7-6-7z" />
-      {/* Pit */}
-      <circle cx="12" cy="13" r="2.5" />
+      {/* Body — pear, narrower at top, bulging wider at the bottom */}
+      <path d="M12 2.5c-3.5 0-6.5 2.5-6.5 6.5 0 7 3 12.5 6.5 12.5s6.5-5.5 6.5-12.5c0-4-3-6.5-6.5-6.5z" />
+      {/* Pit — large, upper-centred */}
+      <circle cx="12" cy="10" r="3.5" />
     </svg>
   );
 }
