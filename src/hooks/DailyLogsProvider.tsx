@@ -64,7 +64,6 @@ interface DailyLogsValue {
   weeklyStats: WeeklyStats;
   monthlyStats: WeeklyStats;
   weeklyDayMap: Map<string, WeeklyDayEntry>;
-  rolling7DayMap: Map<string, WeeklyDayEntry>;
 }
 
 const DailyLogsContext = createContext<DailyLogsValue | null>(null);
@@ -183,31 +182,6 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     return map;
   }, [logs]);
 
-  // Rolling 7-day window centred on today (today ±3). Matches the
-  // window the Home WeekStrip renders after the rolling-strip redesign,
-  // so activity markers (used by aria-labels) cover every day that's
-  // visible — including days from the previous calendar week when today
-  // sits early in the week.
-  const rolling7DayMap = useMemo(() => {
-    const now = new Date();
-    const startD = new Date(now);
-    startD.setDate(now.getDate() - 3);
-    const endD = new Date(now);
-    endD.setDate(now.getDate() + 3);
-    const start = format(startD, "yyyy-MM-dd");
-    const end = format(endD, "yyyy-MM-dd");
-    const map = new Map<string, WeeklyDayEntry>();
-    for (const l of logs) {
-      if (l.date < start || l.date > end) continue;
-      map.set(l.date, {
-        workouts: l.workouts || 0,
-        meals: l.meals || 0,
-        caloriesHit: false,
-      });
-    }
-    return map;
-  }, [logs]);
-
   const value: DailyLogsValue = {
     logs,
     loading,
@@ -215,7 +189,6 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
     weeklyStats,
     monthlyStats,
     weeklyDayMap,
-    rolling7DayMap,
   };
 
   return (
@@ -259,9 +232,4 @@ export function useMonthlyStats(): WeeklyStats {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useWeeklyDayMap(): Map<string, WeeklyDayEntry> {
   return useDailyLogsContext().weeklyDayMap;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useRolling7DayMap(): Map<string, WeeklyDayEntry> {
-  return useDailyLogsContext().rolling7DayMap;
 }

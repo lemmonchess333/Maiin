@@ -12,21 +12,19 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
   const days = useMemo(() => {
     const today = new Date();
     const todayKey = format(today, "yyyy-MM-dd");
-    // Rolling 7-day window centred on today (today at index 3).
-    // Previously showed a fixed Mon–Sun calendar week, which pushed
-    // today to the edge of the strip on Mondays and Sundays. Centring
-    // gives symmetric past/future context every day and follows the
-    // rhythm of most fitness apps (Strava, Fitbit, Apple Fitness).
+    // Left-aligned rolling 7-day window: today at index 0, then 6
+    // future days. The Home strip is forward-facing — the past is done,
+    // what matters is today's progress and what's coming. Follows
+    // Apple Fitness / Fitbit convention.
     return Array.from({ length: 7 }, function(_, i) {
       const d = new Date(today);
-      d.setDate(today.getDate() + (i - 3));
+      d.setDate(today.getDate() + i);
       const k = format(d, "yyyy-MM-dd");
       const data = dayMap.get(k);
       const isToday = k === todayKey;
       const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
       const st = schedule.find(function(s) { return s.day === d.getDay(); })?.type || "rest";
-      const isPast = !isToday && k < todayKey;
-      return { date: d, key: k, isToday: isToday, isPast: isPast, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
+      return { date: d, key: k, isToday: isToday, hasActivity: hasAct, sType: st, isSelected: k === selectedDate };
     });
   }, [dayMap, schedule, selectedDate]);
   return (
@@ -48,7 +46,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           cls += " text-muted-foreground bg-muted";
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className={`flex flex-col items-center gap-1 active:scale-[0.95] ${day.isPast && !day.isToday ? "opacity-60" : ""}`}>
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 active:scale-[0.95]">
             <span className="text-xs text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>
               {day.date.getDate()}
