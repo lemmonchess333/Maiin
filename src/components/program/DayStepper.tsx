@@ -106,11 +106,13 @@ export default function DayStepper({
           );
           labelColor = PURPLE;
         } else {
-          // Rule 6: Default (upcoming)
+          // Rule 6: Default (upcoming) — purple outline matches Home's
+          // non-selected day circle so both weekly strips share the
+          // tappable-inactive visual signal.
           diameter = 40;
           fill = "transparent";
           bWidth = 2;
-          bColor = "hsl(var(--border))";
+          bColor = PURPLE;
           content = (
             <span className="text-sm font-bold text-muted-foreground">
               {day.dayNumber}
