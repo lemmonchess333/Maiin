@@ -68,6 +68,18 @@ const NL_EXAMPLE_PROMPTS = [
   "Large coffee, no sugar",
 ];
 
+// Meal slot ordering and display labels — true constants, defined at module
+// scope so the references are stable across renders. (Previously declared
+// inside the Food component body which made every render produce a new
+// array / object identity, defeating any useMemo that closed over them.)
+const MEAL_ORDER = ["breakfast", "lunch", "snacks", "dinner"] as const;
+const MEAL_LABELS: Record<string, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snacks: "Snacks",
+};
+
 interface OFFResult {
   name: string;
   brand: string;
@@ -157,6 +169,22 @@ export default function Food() {
     if (targetMeal) setTargetMeal(null);
   }
 
+  /**
+   * Join a list of strings into a human-readable phrase:
+   *   ["Lunch"]                  → "Lunch"
+   *   ["Breakfast","Lunch"]      → "Breakfast & Lunch"
+   *   ["Breakfast","Lunch","Dinner"] → "Breakfast, Lunch & Dinner"
+   * Used by the "Copy yesterday's …" button label and its success toast
+   * so the user sees exactly which meal slots are about to be / were
+   * just touched.
+   */
+  const joinHumanList = (items: string[]): string => {
+    if (items.length === 0) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return `${items[0]} & ${items[1]}`;
+    return `${items.slice(0, -1).join(", ")} & ${items[items.length - 1]}`;
+  };
+
   const safeNum = (value: unknown): number => {
     const num = Number(value);
     return isNaN(num) || value == null ? 0 : num;
@@ -175,8 +203,6 @@ export default function Food() {
     return "dinner";
   };
 
-  const MEAL_ORDER = ["breakfast", "lunch", "snacks", "dinner"] as const;
-  const MEAL_LABELS: Record<string, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snacks: "Snacks" };
 
   // Visible meals = all of today's meals minus any that are pending delete.
   // Used for meal sections, hero card totals, and the food row list so the
@@ -236,9 +262,22 @@ export default function Food() {
   }, [yesterdayMeals]);
 
   /**
+   * Slots that yesterday has and today doesn't. Drives both the bottom
+   * "Copy yesterday's …" button visibility + label and the copy handler
+   * so the two can't drift on what's about to happen vs what happens.
+   */
+  const slotsToCopyFromYesterday = useMemo(() => {
+    return MEAL_ORDER.filter((mealKey) => {
+      const yHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
+      const tHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
+      return yHas && !tHas;
+    });
+  }, [yesterdaySegmented, mealSegmentedMeals]);
+
+  /**
    * Copy every yesterday meal that today is missing in the same slot.
    * Skips slots today already has so we never produce duplicates. Used by
-   * the bottom-of-page "Copy yesterday's meals" button — replaces the
+   * the bottom-of-page "Copy yesterday's …" button — replaces the
    * per-section "Copy yesterday's lunch" pills that used to sit beneath
    * each empty section header.
    */
@@ -250,11 +289,11 @@ export default function Food() {
     haptic("light");
     try {
       let total = 0;
-      for (const mealKey of MEAL_ORDER) {
-        const yesterdayHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
-        const todayHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
-        if (!yesterdayHas || todayHas) continue;
-        for (const item of yesterdaySegmented[mealKey] ?? []) {
+      const copied: string[] = [];
+      for (const mealKey of slotsToCopyFromYesterday) {
+        const items = yesterdaySegmented[mealKey] ?? [];
+        if (items.length === 0) continue;
+        for (const item of items) {
           await addDoc(collection(db, "users", user.uid, "meals"), {
             date: selectedDate,
             meal: mealKey,
@@ -269,9 +308,14 @@ export default function Food() {
           });
           total++;
         }
+        copied.push(MEAL_LABELS[mealKey]);
       }
       haptic(15);
-      toast.success(`Copied ${total} item${total > 1 ? "s" : ""} from yesterday`);
+      // Toast names the slots that received copies so the user can see
+      // exactly what happened, not just an opaque item count.
+      toast.success(
+        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
+      );
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
       toast.error("Couldn't copy from yesterday");
@@ -1123,30 +1167,30 @@ export default function Food() {
             );
           })}
 
-          {/* Global "Copy yesterday's meals" button — only renders when
-              yesterday has at least one slot today is missing. Per-section
-              pills used to litter the page; one bottom button is calmer
-              and copies every missing slot at once (skips slots today
-              already has so we never duplicate). */}
-          {(() => {
-            const slotsToCopy = MEAL_ORDER.filter((mealKey) => {
-              const yHas = (yesterdaySegmented[mealKey]?.length ?? 0) > 0;
-              const tHas = (mealSegmentedMeals[mealKey]?.length ?? 0) > 0;
-              return yHas && !tHas;
-            });
-            if (slotsToCopy.length === 0) return null;
+          {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
+              has slots today is missing. The label names the exact slots
+              that'll be copied so the user knows what's about to happen
+              before tapping (no surprises, no destructive overwrites). */}
+          {slotsToCopyFromYesterday.length > 0 && (() => {
             const inFlight = copyingMealKey === "__all__";
+            const allFour = slotsToCopyFromYesterday.length === MEAL_ORDER.length;
+            const slotNames = joinHumanList(
+              slotsToCopyFromYesterday.map((k) => MEAL_LABELS[k].toLowerCase()),
+            );
+            const label = allFour
+              ? "Copy yesterday"
+              : `Copy yesterday's ${slotNames}`;
             return (
               <div className="flex justify-center pt-2">
                 <button
                   type="button"
                   onClick={handleCopyAllMissingFromYesterday}
                   disabled={inFlight}
-                  aria-label="Copy yesterday's meals"
+                  aria-label={label}
                   className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-white border border-[#E5E7EB] text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Copy yesterday&apos;s meals
+                  {label}
                 </button>
               </div>
             );
