@@ -279,19 +279,15 @@ export default function FoodHeroCard({
   // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
   const trajectoryLabel = null;
 
-  // Card surface gradient (#FFFFFF to #FAFAFA, 1.6% lightness shift) adds
-  // imperceptible depth. Shadow matches Health Score (no 1.2x bump — the
-  // calorie card is now short enough that the standard shadow is correct).
-  // TODO: dark mode needs a dark-surface gradient.
+  // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
+  // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
+  // markup renders correctly in both themes.
   return (
     <>
       {/* ── CALORIE CARD — caption, ring, no macros ────────────────────── */}
       <div
-        className="p-4 rounded-2xl"
-        style={{
-          background: "linear-gradient(to bottom, #FFFFFF 0%, #FAFAFA 100%)",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
-        }}
+        className="p-4 rounded-2xl bg-card"
+        style={{ boxShadow: "var(--ds-shadow-card)" }}
       >
         {/* Top row: caption */}
         <div className="mb-4 min-h-[20px]">
@@ -384,11 +380,8 @@ export default function FoodHeroCard({
           The variants motion.div in Food.tsx animates both as one unit. */}
       <div className="flex gap-4 mt-4">
         <div
-          className="flex-1 flex p-3 rounded-2xl"
-          style={{
-            background: "#FFFFFF",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
-          }}
+          className="flex-1 flex p-3 rounded-2xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
           <MacroColumn
             macroKey="protein"
@@ -403,11 +396,8 @@ export default function FoodHeroCard({
           />
         </div>
         <div
-          className="flex-1 flex p-3 rounded-2xl"
-          style={{
-            background: "#FFFFFF",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
-          }}
+          className="flex-1 flex p-3 rounded-2xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
           <MacroColumn
             macroKey="carbs"
@@ -422,11 +412,8 @@ export default function FoodHeroCard({
           />
         </div>
         <div
-          className="flex-1 flex p-3 rounded-2xl"
-          style={{
-            background: "#FFFFFF",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)",
-          }}
+          className="flex-1 flex p-3 rounded-2xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
           <MacroColumn
             macroKey="fat"

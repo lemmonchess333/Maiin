@@ -21,7 +21,7 @@ export default function RestDayCard() {
       className="p-4 rounded-2xl flex items-center gap-4"
       style={{
         background: "linear-gradient(135deg, rgba(123, 114, 233, 0.08), rgba(123, 114, 233, 0.02) 70%)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 114, 233, 0.08)",
+        boxShadow: "var(--ds-shadow-card), 0 0 0 1px rgba(123, 114, 233, 0.08)",
       }}
       whileTap={{ scale: 0.99 }}
     >

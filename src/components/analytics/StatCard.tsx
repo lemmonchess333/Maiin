@@ -17,7 +17,7 @@ export default function StatCard({
   return (
     <button onClick={onClick}
       className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98]"
-      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)" }}>
+      style={{ boxShadow: "var(--ds-shadow-card)" }}>
       <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">{label}</p>
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">
