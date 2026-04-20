@@ -34,9 +34,21 @@ export function ToastProvider() {
         }
       `}</style>
       <Toaster
-        position="top-center"
-        offset="env(safe-area-inset-top, 54px)"
+        // Bottom-anchored matches every modern fitness app (MyFitnessPal,
+        // Cal AI, Whoop, Apple Fitness). Top-center blocked the dynamic
+        // island and required eye travel away from the action site.
+        // Offset clears the bottom tab bar (~64px) plus a small gap so
+        // the toast doesn't visually merge with it.
+        position="bottom-center"
+        offset="calc(env(safe-area-inset-bottom, 0px) + 80px)"
         aria-live="polite"
+        // 1500ms matches the convention across the apps audited; Sonner's
+        // 4000ms default reads as slow/lingering on a fitness surface
+        // where users add multiple items in quick succession.
+        duration={1500}
+        // Cap at 2 visible — beyond that the stack starts to obscure the
+        // app behind it and feels chatty.
+        visibleToasts={2}
         toastOptions={{
           style: {
             fontSize: "14px",
