@@ -18,7 +18,7 @@ function Ring({ value, max, color, size = 44 }: { value: number; max: number; co
   const pct = Math.min(value / Math.max(max, 1), 1);
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`${color}18`} strokeWidth="4" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`${color}33`} strokeWidth="4" />
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="4"
         strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round" />
     </svg>

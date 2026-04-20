@@ -244,13 +244,13 @@ export function TrendWeight() {
               y={startWeight}
               stroke="hsl(var(--muted-foreground))"
               strokeDasharray="4 4"
-              strokeOpacity={0.3}
+              strokeOpacity={0.5}
             />
 
             <Scatter
               dataKey="actual"
               fill="hsl(var(--muted-foreground))"
-              opacity={0.4}
+              opacity={0.7}
               r={3}
             />
             <Line

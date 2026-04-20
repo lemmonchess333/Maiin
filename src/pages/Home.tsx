@@ -299,7 +299,7 @@ export default function Home() {
               TROPOS
             </h1>
             {programState && (
-              <span className="text-xs font-medium text-muted-foreground/80 mt-0.5">
+              <span className="text-xs font-medium text-muted-foreground mt-0.5">
                 {"Week " + programState.weekNumber + " · " + programState.currentPhase + " phase"}
               </span>
             )}

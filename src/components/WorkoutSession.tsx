@@ -704,7 +704,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                             aria-label={`Set ${setIdx + 1} weight`}
                             onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-[#C7C7CC]"
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-3">
@@ -714,7 +714,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                             aria-label={`Set ${setIdx + 1} reps`}
                             onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center"
+                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
