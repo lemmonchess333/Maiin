@@ -33,6 +33,7 @@ export {
   useWeeklyStats,
   useMonthlyStats,
   useWeeklyDayMap,
+  useRolling7DayMap,
 } from "@/hooks/DailyLogsProvider";
 
 /**
