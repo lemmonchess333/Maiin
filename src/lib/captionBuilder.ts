@@ -3,18 +3,24 @@ import type { DayType } from "@/lib/types";
 /**
  * Structured caption shape used by the Food hero card. Null on rest days.
  * Both `useDailyTargets` and `useEffectiveTargets` produce this shape.
+ *
+ * Sentence case for the decorative eyebrow: "Lift day · +150 Recovery" reads
+ * as information rather than a heading, which matches how the caption is
+ * actually used (an info line above a bigger number). Reserves all-caps for
+ * structural dividers (BREAKFAST, PROTEIN, etc.) so uppercase stays a real
+ * signal instead of ambient noise.
  */
 export interface DailyTargetsCaption {
-  /** Uppercase training type — "LIFT DAY" / "RUN DAY" / "LIFT + RUN" */
+  /** Sentence case training type — "Lift day" / "Run day" / "Lift + Run" */
   trainingType: string;
-  /** Uppercase adjustment — "+150 RECOVERY" / "+200 FUEL" / "" if no adjustment */
+  /** Sentence case adjustment — "+150 Recovery" / "+200 Fuel" / "" */
   adjustment: string;
 }
 
 const DAY_NOUN: Record<DayType, string> = {
-  lift: "RECOVERY",
-  run: "FUEL",
-  both: "FUEL",
+  lift: "Recovery",
+  run: "Fuel",
+  both: "Fuel",
   rest: "",
 };
 
@@ -31,10 +37,10 @@ export function buildCaption(
   if (dayType === "rest") return null;
   const trainingType =
     dayType === "lift"
-      ? "LIFT DAY"
+      ? "Lift day"
       : dayType === "run"
-        ? "RUN DAY"
-        : "LIFT + RUN";
+        ? "Run day"
+        : "Lift + Run";
   const noun = DAY_NOUN[dayType];
   const adjustment =
     activityBonus > 0 && noun ? `+${activityBonus} ${noun}` : "";

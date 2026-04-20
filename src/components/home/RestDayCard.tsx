@@ -33,7 +33,7 @@ export default function RestDayCard() {
       </div>
       <div className="flex-1 min-w-0">
         <p
-          className="text-[10px] uppercase tracking-wider font-semibold"
+          className="text-xs font-semibold"
           style={{ color: THEME.brand }}
         >
           Today · Rest day

@@ -18,7 +18,7 @@ export default function LiftCTACard({ nextWorkout, navigate, muscleGroups }: {
           <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-micro uppercase tracking-wider mb-0.5" style={{ color: THEME.lifting }}>Today · Lift day</p>
+          <p className="text-xs font-semibold mb-0.5" style={{ color: THEME.lifting }}>Today · Lift day</p>
           <p className="text-sm font-bold text-foreground truncate">{nextWorkout.dayName}</p>
           <p className="text-micro text-muted-foreground capitalize">{muscleGroups || `${nextWorkout.dayType} · ${nextWorkout.exercises.length} exercises`}</p>
         </div>
