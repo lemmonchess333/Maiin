@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
 import { useMeals } from "@/hooks/useMeals";
 import { ProGate } from "@/components/ProGate";
-import { toast } from "sonner";
 
 export function AdaptiveTDEECard() {
   const { user, profile, updateProfile } = useAuth();
@@ -70,7 +69,8 @@ export function AdaptiveTDEECard() {
       targetCarbs: tdeeResult.adjustedCarbs,
       targetFat: tdeeResult.adjustedFat,
     });
-    toast.success("Targets updated based on adaptive TDEE!");
+    // No success toast — calorie + macro target numbers update visibly
+    // on the same card, which is the confirmation.
   };
 
   const trendIcon = tdeeResult.weeklyWeightChange > 0.05

@@ -127,7 +127,7 @@ export default function Settings() {
       if (profile?.runMode && profile.runMode !== "freeform") {
         await refreshRunSchedule();
       }
-      toast.success("Schedule saved");
+      // No success toast — Settings UI shows the new schedule directly.
     }
   };
 
@@ -144,7 +144,8 @@ export default function Settings() {
       setShowRestructureModal(false);
       const newSplit = chooseSplit(pendingLiftDays);
       setPendingLiftDays(null);
-      toast.success(`Program updated to ${splitLabel(newSplit)}`);
+      // No success toast — the program section reflects the new split.
+      void newSplit;
     } catch (error) {
       logger.error("handleConfirmRestructure failed:", error);
       toast.error("Something went wrong. Please try again.");

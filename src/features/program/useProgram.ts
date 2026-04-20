@@ -438,7 +438,7 @@ export function useProgram() {
       };
 
       await saveProgram(updated);
-      toast.success("Run day updated");
+      // No success toast — the schedule UI shows the new run-day state.
     },
     [programState, saveProgram],
   );

@@ -467,7 +467,9 @@ export default function Food() {
       });
       await addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
-      toast.success(`${food.name} added!`);
+      // No success toast — the food appears in the meal list and the
+      // macro tiles animate, which is the confirmation. See ToastProvider
+      // commit notes for the wider rule.
     } catch {
       toast.error("Failed to save. Please try again.");
     }
@@ -644,7 +646,7 @@ export default function Food() {
       });
       setTargetMeal(null);
       await addFavourite({ ...fav, source: "manual" });
-      toast.success(`${fav.name} added!`);
+      // No success toast — meal list updates, macros animate.
     } catch {
       toast.error("Failed to save. Please try again.");
     }
@@ -697,7 +699,7 @@ export default function Food() {
         ...(targetMeal ? { meal: targetMeal } : {}),
       });
       setTargetMeal(null);
-      toast.success(`${meal.name} added!`);
+      // No success toast — meal list updates, macros animate.
     } catch {
       toast.error("Failed to save. Please try again.");
     }
