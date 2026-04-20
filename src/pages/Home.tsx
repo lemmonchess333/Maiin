@@ -7,7 +7,7 @@ import { useHomeData } from "@/hooks/useHomeData";
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
 import { getExerciseById } from "@/lib/exercises";
-import { useWeeklyDayMap, useRolling7DayMap } from "@/hooks/useFirestore";
+import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
@@ -56,7 +56,6 @@ export default function Home() {
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
   const { programState, loading: programLoading } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
-  const rolling7DayMap = useRolling7DayMap();
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
@@ -416,7 +415,7 @@ export default function Home() {
       )}
 
       <motion.div ref={weekStripRef} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
-        <WeekStrip dayMap={rolling7DayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
+        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
         {/* One-shot discoverability hint. Latches off on first day-tap
             so users who already know don't keep seeing it. */}
         {showDayTapHint && !peekDate && (
