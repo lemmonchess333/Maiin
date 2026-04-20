@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Cookie, Info, X } from "lucide-react";
+import { Beef, Wheat, Info, X } from "lucide-react";
+import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { haptic } from "@/lib/haptic";
@@ -417,7 +418,7 @@ export default function FoodHeroCard({
         >
           <MacroColumn
             macroKey="fat"
-            Icon={Cookie}
+            Icon={Avocado}
             consumed={dailyTotals.fat}
             target={dailyTargets.fat}
             label="FAT"
