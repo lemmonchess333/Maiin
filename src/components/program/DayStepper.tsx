@@ -27,29 +27,34 @@ export default function DayStepper({
   return (
     <div
       role="tablist"
-      className="flex px-3 pt-1 pb-3 gap-1 border-b border-border/40"
+      className="flex px-3 pt-1 pb-3 gap-1"
     >
       {days.map((day, index) => {
         const isToday = index === todayIndex;
         const isSelected = index === selectedIndex;
         const isCompleted = day.status === "completed";
 
-        // Circle evaluation order (first match wins)
+        // Circle evaluation order (first match wins). Today's circle is
+        // 48px (vs 40px for peers) with a coloured glow — 20% bigger and
+        // ringed with its state colour, so "you're here" reads from the
+        // top of the screen without scanning labels.
         let diameter: number;
         let fill: string;
         let bColor: string;
         let bWidth: number;
         let labelColor: string;
+        let glow: string | undefined;
         let content: React.ReactNode;
 
         if (isToday && isCompleted) {
-          // Rule 1: Today AND completed → 44px green
-          diameter = 44;
+          // Rule 1: Today AND completed → 48px green + glow
+          diameter = 48;
           fill = GREEN;
           bWidth = 0;
           bColor = "transparent";
+          glow = `0 0 0 4px ${GREEN}1A, 0 4px 14px ${GREEN}33`;
           content = (
-            <Check className="w-[18px] h-[18px] text-white" strokeWidth={3} />
+            <Check className="w-5 h-5 text-white" strokeWidth={3} />
           );
           labelColor = GREEN;
         } else if (isCompleted) {
@@ -63,25 +68,27 @@ export default function DayStepper({
           );
           labelColor = GREEN;
         } else if (isToday && isSelected) {
-          // Rule 3: Today AND selected
-          diameter = 44;
+          // Rule 3: Today AND selected → 48px purple + glow
+          diameter = 48;
           fill = PURPLE;
           bWidth = 0;
           bColor = "transparent";
+          glow = `0 0 0 4px ${PURPLE}1A, 0 4px 14px ${PURPLE}40`;
           content = (
-            <span className="text-sm font-bold text-white">
+            <span className="text-base font-bold text-white">
               {day.dayNumber}
             </span>
           );
           labelColor = PURPLE;
         } else if (isToday) {
-          // Rule 4: Today AND not selected
-          diameter = 40;
+          // Rule 4: Today AND not selected → 48px purple outline + glow
+          diameter = 48;
           fill = "transparent";
           bWidth = 2;
           bColor = PURPLE;
+          glow = `0 0 0 4px ${PURPLE}1A`;
           content = (
-            <span className="text-sm font-bold" style={{ color: PURPLE }}>
+            <span className="text-base font-bold" style={{ color: PURPLE }}>
               {day.dayNumber}
             </span>
           );
@@ -126,7 +133,7 @@ export default function DayStepper({
                 onSelect(index);
               }}
               className="flex items-center justify-center"
-              style={{ width: 44, height: 44 }}
+              style={{ width: 52, height: 52 }}
             >
               <motion.div
                 className="flex items-center justify-center rounded-full"
@@ -136,15 +143,16 @@ export default function DayStepper({
                   backgroundColor: fill,
                   borderColor: bColor,
                   borderWidth: bWidth,
+                  boxShadow: glow ?? "0 0 0 0 transparent",
                 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
                 style={{ borderStyle: "solid" }}
               >
                 {content}
               </motion.div>
             </button>
             <span
-              className="text-[10px] font-semibold text-center truncate max-w-full mt-1"
+              className="text-[10px] font-semibold text-center truncate max-w-full mt-1.5"
               style={{ color: labelColor }}
             >
               {day.label}
