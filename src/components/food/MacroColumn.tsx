@@ -1,19 +1,23 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ComponentType, type SVGProps } from "react";
 import {
   motion,
   useMotionValue,
   animate,
   useReducedMotion as useFramerReducedMotion,
 } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
 
+// Accepts lucide-react icons and our own custom SVG icons (e.g. Avocado)
+// via a shared shape. Both export a component that takes SVG props,
+// className, and strokeWidth.
+type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number | string }>;
+
 interface MacroColumnProps {
   macroKey: MacroColumnKey;
-  Icon: LucideIcon;
+  Icon: IconComponent;
   consumed: number;
   target: number;
   /** Uppercase label e.g. "PROTEIN" */
