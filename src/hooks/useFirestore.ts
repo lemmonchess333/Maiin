@@ -1,27 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   collection,
   query,
   where,
   orderBy,
   getDocs,
-  onSnapshot,
   Timestamp,
-  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { safeMerge } from "@/lib/offlineQueue";
-import { parseDailyLog } from "@/lib/firestoreGuards";
 import { logger } from "@/lib/logger";
-import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  format,
-  subDays,
-} from "date-fns";
+import { format, subDays } from "date-fns";
 
 export interface DailyLog {
   id: string;
@@ -34,215 +23,24 @@ export interface DailyLog {
   createdAt: Timestamp;
 }
 
-export function useDailyLogs() {
-  const { user } = useAuth();
-  const [logs, setLogs] = useState<DailyLog[]>([]);
-  const [loading, setLoading] = useState(true);
+// useDailyLogs, useWeeklyStats, useMonthlyStats, useWeeklyDayMap used to
+// live here — each owning its own `onSnapshot(users/{uid}/logs, ...)`.
+// They collapsed into a single subscription behind <DailyLogsProvider>;
+// re-exporting from this barrel keeps every existing call site
+// (`import { ... } from "@/hooks/useFirestore"`) working untouched.
+export {
+  useDailyLogs,
+  useWeeklyStats,
+  useMonthlyStats,
+  useWeeklyDayMap,
+} from "@/hooks/DailyLogsProvider";
 
-  useEffect(() => {
-    if (!user) {
-      const reset = () => { setLogs([]); setLoading(false); };
-      reset();
-      return;
-    }
-
-    const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(logsRef, orderBy("date", "desc"), limit(90));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs.map((d) =>
-          parseDailyLog(d.id, d.data())
-        ) as DailyLog[];
-        setLogs(data);
-        setLoading(false);
-      },
-      (error) => {
-        logger.error("useDailyLogs error:", error);
-        setLoading(false);
-      }
-    );
-
-    return unsubscribe;
-  }, [user]);
-
-  const saveLog = useCallback(
-    async (log: Omit<DailyLog, "id" | "createdAt">) => {
-      if (!user) return;
-      await safeMerge(db, `users/${user.uid}/logs`, log.date, {
-        ...log,
-        createdAt: Timestamp.now(),
-      });
-    },
-    [user]
-  );
-
-  return { logs, loading, saveLog };
-}
-
-export function useWeeklyStats() {
-  const { user, profile } = useAuth();
-  const [stats, setStats] = useState({
-    workoutsDone: 0,
-    workoutsTarget: 4,
-    mealsDone: 0,
-    mealsTarget: 10,
-    hasPR: false,
-  });
-
-  useEffect(() => {
-    if (!user) return;
-
-    const now = new Date();
-    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-
-    const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(
-      logsRef,
-      where("date", ">=", weekStart),
-      where("date", "<=", weekEnd)
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        let workouts = 0;
-        let meals = 0;
-        let pr = false;
-        snapshot.docs.forEach((d) => {
-          const data = d.data();
-          workouts += data.workouts || 0;
-          meals += data.meals || 0;
-          if (data.hasPR) pr = true;
-        });
-        setStats({
-          workoutsDone: workouts,
-          workoutsTarget: profile?.weeklyWorkoutsTarget || 4,
-          mealsDone: meals,
-          mealsTarget: profile?.weeklyMealsTarget || 10,
-          hasPR: pr,
-        });
-      },
-      (error) => {
-        logger.error("useWeeklyStats error:", error);
-      }
-    );
-
-    return unsubscribe;
-  }, [user, profile]);
-
-  return stats;
-}
-
-export function useMonthlyStats() {
-  const { user, profile } = useAuth();
-  const [stats, setStats] = useState({
-    workoutsDone: 0,
-    workoutsTarget: 16,
-    mealsDone: 0,
-    mealsTarget: 40,
-    hasPR: false,
-  });
-
-  useEffect(() => {
-    if (!user) return;
-
-    const now = new Date();
-    const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
-    const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
-
-    const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(
-      logsRef,
-      where("date", ">=", monthStart),
-      where("date", "<=", monthEnd)
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        let workouts = 0;
-        let meals = 0;
-        let pr = false;
-        snapshot.docs.forEach((d) => {
-          const data = d.data();
-          workouts += data.workouts || 0;
-          meals += data.meals || 0;
-          if (data.hasPR) pr = true;
-        });
-        setStats({
-          workoutsDone: workouts,
-          workoutsTarget: (profile?.weeklyWorkoutsTarget || 4) * 4,
-          mealsDone: meals,
-          mealsTarget: (profile?.weeklyMealsTarget || 10) * 4,
-          hasPR: pr,
-        });
-      },
-      (error) => {
-        logger.error("useMonthlyStats error:", error);
-      }
-    );
-
-    return unsubscribe;
-  }, [user, profile]);
-
-  return stats;
-}
-
-export function useWeeklyDayMap() {
-  const { user } = useAuth();
-  const [dayMap, setDayMap] = useState<
-    Map<string, { workouts: number; meals: number; caloriesHit: boolean }>
-  >(new Map());
-
-  useEffect(() => {
-    if (!user) {
-      const reset = () => { setDayMap(new Map()); };
-      reset();
-      return;
-    }
-
-    const now = new Date();
-    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-
-    const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(
-      logsRef,
-      where("date", ">=", weekStart),
-      where("date", "<=", weekEnd)
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const map = new Map<
-          string,
-          { workouts: number; meals: number; caloriesHit: boolean }
-        >();
-        snapshot.docs.forEach((d) => {
-          const data = d.data();
-          map.set(data.date, {
-            workouts: data.workouts || 0,
-            meals: data.meals || 0,
-            caloriesHit: data.caloriesHit ?? (data.meals > 0),
-          });
-        });
-        setDayMap(map);
-      },
-      (error) => {
-        logger.error("useWeeklyDayMap error:", error);
-      }
-    );
-
-    return unsubscribe;
-  }, [user]);
-
-  return dayMap;
-}
-
+/**
+ * One-shot read of the last `days` of daily logs for the History page.
+ * Not hoisted into the provider because it's a point-in-time getDocs
+ * fetch, not a live subscription — it doesn't contribute to the ambient
+ * listener count that motivated the consolidation.
+ */
 export function useHistoryData(days: number = 30) {
   const { user } = useAuth();
   const [data, setData] = useState<DailyLog[]>([]);

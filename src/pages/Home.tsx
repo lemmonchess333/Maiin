@@ -233,7 +233,22 @@ export default function Home() {
   };
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
-  const handleDayTap = useCallback(function(dk: string) { setPeekDate(function(p) { return p === dk ? null : dk; }); }, []);
+  // Discoverability latch: the tiny "Tap a day to see details" hint under
+  // the week strip disappears as soon as the user taps any day once (the
+  // affordance has been used, no need to keep advertising). Persisted to
+  // localStorage so the hint doesn't re-appear on every session.
+  const [showDayTapHint, setShowDayTapHint] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("home-day-tap-seen") !== "1";
+    } catch {
+      return true;
+    }
+  });
+  const handleDayTap = useCallback(function(dk: string) {
+    setPeekDate(function(p) { return p === dk ? null : dk; });
+    try { localStorage.setItem("home-day-tap-seen", "1"); } catch { /* private mode — hint will re-show, minor */ }
+    setShowDayTapHint(false);
+  }, []);
   const closePeek = useCallback(function() { setPeekDate(null); }, []);
   const weekStripRef = useRef<HTMLDivElement>(null);
   useEffect(function() {
@@ -290,11 +305,40 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <StreakFlame
-              streak={streak}
-              bounce={streakBounce}
-              display={<motion.span>{streakDisplay}</motion.span>}
-            />
+            {/* Streak pill is tappable — deep-links into History → Badges
+                so the user can see what streak-tier they're chasing next
+                (e.g. "4 more days to Week Warrior"). The pill is a real
+                achievement with reward context behind it; leaving it as
+                an inert ornament threw away the motivation loop. The
+                History page restores its last tab on mount, so we also
+                persist the target in sessionStorage to force the Badges
+                tab even if the user last looked at Lifting / Performance. */}
+            {streak > 0 ? (
+              <Link
+                to="/history"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("history-tab", "badges");
+                  } catch {
+                    /* private mode — fine, user lands on the default tab */
+                  }
+                }}
+                aria-label={`View badges — ${streak}-day streak`}
+                className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <StreakFlame
+                  streak={streak}
+                  bounce={streakBounce}
+                  display={<motion.span>{streakDisplay}</motion.span>}
+                />
+              </Link>
+            ) : (
+              <StreakFlame
+                streak={streak}
+                bounce={streakBounce}
+                display={<motion.span>{streakDisplay}</motion.span>}
+              />
+            )}
             <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
               <SettingsIcon aria-hidden="true" className="w-4.5 h-4.5 text-muted-foreground/60" />
             </Link>
@@ -372,6 +416,13 @@ export default function Home() {
 
       <motion.div ref={weekStripRef} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
         <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
+        {/* One-shot discoverability hint. Latches off on first day-tap
+            so users who already know don't keep seeing it. */}
+        {showDayTapHint && !peekDate && (
+          <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
+            Tap a day to see details
+          </p>
+        )}
         <AnimatePresence>
           {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
         </AnimatePresence>

@@ -15,7 +15,7 @@ export default function HealthScoreCard({ healthScore, prevHealthScore }: {
   const hasScore = healthScore != null;
 
   return (
-    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.03)]">
+    <Link to="/history?tab=health" onClick={function() { haptic(); }} className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform" style={{ boxShadow: "var(--ds-shadow-card)" }}>
       {(() => {
         const score = hasScore ? healthScore : 0;
         const zoneColor = hasScore ? getScoreColor(score) : THEME.text.muted;

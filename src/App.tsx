@@ -8,6 +8,7 @@ import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 import { StreaksProvider } from "@/features/streaks/useStreaks";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
+import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy.
 // Also catches "Failed to fetch dynamically imported module" errors from
@@ -256,6 +257,11 @@ function AppRoutes() {
             user skips the Settings page. Must sit inside StreaksProvider
             because useStreakReminderInternal reads useStreaks(). */}
         <RemindersProvider>
+        {/* DailyLogsProvider owns the single `users/{uid}/logs` live
+            subscription — useDailyLogs / useWeeklyStats / useMonthlyStats
+            / useWeeklyDayMap all read from it, collapsing four listeners
+            into one. */}
+        <DailyLogsProvider>
         <RoutePrefetcher />
         {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
@@ -281,6 +287,7 @@ function AppRoutes() {
         <Route path="/log" element={<Navigate to="/food" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+        </DailyLogsProvider>
         </RemindersProvider>
       </StreaksProvider>
     </Suspense>

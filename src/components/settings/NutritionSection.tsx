@@ -219,17 +219,17 @@ export default function NutritionSection({
 
           <div className="flex items-center justify-between pt-1">
             <motion.div key={tdee.protein} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
-              <p className="text-sm font-bold text-blue-500">{tdee.protein}g</p>
+              <p className="text-sm font-bold text-blue-500">{tdee.protein} g</p>
               <p className="text-xs text-muted-foreground">protein</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div key={tdee.carbs} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
-              <p className="text-sm font-bold text-amber-500">{tdee.carbs}g</p>
+              <p className="text-sm font-bold text-amber-500">{tdee.carbs} g</p>
               <p className="text-xs text-muted-foreground">carbs</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div key={tdee.fat} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
-              <p className="text-sm font-bold text-pink-500">{tdee.fat}g</p>
+              <p className="text-sm font-bold text-pink-500">{tdee.fat} g</p>
               <p className="text-xs text-muted-foreground">fat</p>
             </motion.div>
           </div>

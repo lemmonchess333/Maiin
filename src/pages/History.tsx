@@ -84,15 +84,39 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Initial tab resolution order (first hit wins):
+  //   1. ?tab=... query param (shareable link from another surface)
+  //   2. sessionStorage("history-tab") (deep-link from StreakFlame or
+  //      other in-app entry points — avoids polluting the URL)
+  //   3. "all"
   const initialTab = searchParams.get("tab") as FilterTab | null;
+  const stashedTab = (() => {
+    try {
+      return sessionStorage.getItem("history-tab") as FilterTab | null;
+    } catch {
+      return null;
+    }
+  })();
   const [filter, setFilter] = useState<FilterTab>(
-    initialTab && VALID_TABS.includes(initialTab) ? initialTab : "all"
+    initialTab && VALID_TABS.includes(initialTab)
+      ? initialTab
+      : stashedTab && VALID_TABS.includes(stashedTab)
+        ? stashedTab
+        : "all"
   );
 
   useEffect(() => {
     if (searchParams.has("tab")) {
       const clear = () => { setSearchParams({}, { replace: true }); };
       clear();
+    }
+    // One-shot consume: clear the sessionStorage hint once we've applied
+    // it so refreshing History doesn't silently force a tab the user may
+    // have navigated away from.
+    try {
+      sessionStorage.removeItem("history-tab");
+    } catch {
+      /* private mode — nothing to clean up */
     }
   }, [searchParams, setSearchParams]);
 
