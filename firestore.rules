@@ -76,6 +76,17 @@ service cloud.firestore {
     match /users/{uid}/weights/{doc} {
       allow read, write: if isOwner(uid);
     }
+    // Reminder / notification prefs — useMealReminders, useWorkoutReminders,
+    // useStreakReminder all write here. Without this rule, setDoc was
+    // silently failing (permission denied) and the priming modal re-fired
+    // on every app load because the `primingShown` flag never persisted.
+    match /users/{uid}/settings/{doc} {
+      allow read, write: if isOwner(uid);
+    }
+    // Food page "Quick add" saved items — useFoodFavourites.
+    match /users/{uid}/foodFavourites/{doc} {
+      allow read, write: if isOwner(uid);
+    }
     match /users/{uid}/waterLog/{doc} {
       allow read, write: if isOwner(uid);
     }
