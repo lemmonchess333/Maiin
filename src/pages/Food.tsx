@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -315,10 +315,11 @@ export default function Food() {
       // exactly what happened, not just an opaque item count.
       toast.success(
         `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
+        { id: "food-copy-yesterday" },
       );
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
-      toast.error("Couldn't copy from yesterday");
+      toast.error("Couldn't copy from yesterday", { id: "food-copy-yesterday" });
     } finally {
       setCopyingMealKey(null);
     }
@@ -467,9 +468,11 @@ export default function Food() {
       });
       await addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
-      toast.success(`${food.name} added!`);
+      // No success toast — the food appears in the meal list and the
+      // macro tiles animate, which is the confirmation. See ToastProvider
+      // commit notes for the wider rule.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
   };
 
@@ -503,7 +506,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Could not parse any foods. Try a different description.");
+      toast.error("Could not parse any foods. Try a different description.", { id: "food-nl-error" });
       setNlParsing(false);
       return;
     }
@@ -511,7 +514,8 @@ export default function Food() {
       const zeroItems = items.filter((i) => i.calories === 0);
       if (zeroItems.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`,
+          { id: "food-nl-warning" }
         );
       }
     }
@@ -541,9 +545,9 @@ export default function Food() {
       });
       setNlInput("");
       setTargetMeal(null);
-      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
+      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`, { id: "food-nl-success" });
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
     setNlParsing(false);
   };
@@ -644,9 +648,9 @@ export default function Food() {
       });
       setTargetMeal(null);
       await addFavourite({ ...fav, source: "manual" });
-      toast.success(`${fav.name} added!`);
+      // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
   };
 
@@ -697,9 +701,9 @@ export default function Food() {
         ...(targetMeal ? { meal: targetMeal } : {}),
       });
       setTargetMeal(null);
-      toast.success(`${meal.name} added!`);
+      // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
     setQuickAdding(null);
   };
@@ -833,6 +837,13 @@ export default function Food() {
               <SendHorizontal className="w-5 h-5" />
             </button>
           )}
+          {!nlInput.trim() && targetMeal && (
+            <button type="button" onClick={() => { haptic("light"); setTargetMeal(null); }}
+              aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg active:scale-90 text-muted-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          )}
           {showSuggestions && (
             <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
               {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
@@ -871,30 +882,6 @@ export default function Food() {
           />
         </div>
       </motion.div>
-      {/* Meal targeting pill */}
-      <AnimatePresence>
-        {targetMeal && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            className="flex justify-center mt-2"
-          >
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-purple-50 border border-purple-200 text-purple-700">
-              <ChevronRight className="w-3 h-3" />
-              {MEAL_LABELS[targetMeal]}
-              <button
-                onClick={() => setTargetMeal(null)}
-                aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-                className="ml-0.5 p-0.5 rounded-full hover:bg-purple-100 active:scale-90 transition-all"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* Scan quota indicator — free users only, 3-stage escalation */}
       {!scanUsage.isUnlimited && !scanUsage.loading && (
         <div className="mt-2">

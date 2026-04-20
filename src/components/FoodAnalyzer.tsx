@@ -235,15 +235,17 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
     await saveMeal(meal);
   };
 
-  // Matches FoodCameraModal: (base64, mode)
-  const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
+  // Matches FoodCameraModal: (base64, mode). `mode` previously gated
+  // the capture toast wording; now no toast fires (UI transitions
+  // straight to the analysis result), so the parameter is unused.
+  const onCaptureBase64 = async (base64: string, _mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
 
     try {
       await analyzeFood(base64);
-      toast.success(mode === "label" ? "Label captured!" : "Food captured!");
+      // No success toast — UI transitions to the analysis result.
     } catch (e) {
       logger.error(e);
       toast.error("Food analysis failed.");

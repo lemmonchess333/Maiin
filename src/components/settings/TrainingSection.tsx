@@ -52,19 +52,21 @@ export default function TrainingSection({
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
 
   const handleSaveRaceGoal = async () => {
+    // All validation toasts share one id so rapid-retry on the Save
+    // button replaces the previous message instead of stacking.
     if (!raceTargetDate) {
-      toast.error("Please select a target date");
+      toast.error("Please select a target date", { id: "race-goal" });
       return;
     }
     const target = new Date(raceTargetDate);
     const now = new Date();
     if (target < now) {
-      toast.error("Target date is in the past");
+      toast.error("Target date is in the past", { id: "race-goal" });
       return;
     }
     const weeksAway = Math.round((target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000));
     if (weeksAway < 3) {
-      toast.error("Target date must be at least 3 weeks away");
+      toast.error("Target date must be at least 3 weeks away", { id: "race-goal" });
       return;
     }
     setSavingRaceGoal(true);
@@ -74,9 +76,9 @@ export default function TrainingSection({
         raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
       });
       await refreshRunSchedule();
-      toast.success("Race plan created!");
+      toast.success("Race plan created!", { id: "race-goal" });
     } catch {
-      toast.error("Failed to save race goal");
+      toast.error("Failed to save race goal", { id: "race-goal" });
     } finally {
       setSavingRaceGoal(false);
     }

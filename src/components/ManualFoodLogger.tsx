@@ -61,7 +61,8 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
       });
 
       setSaved(true);
-      toast.success("Meal logged!");
+      // No success toast — drawer closes and the meal appears in the
+      // list, which is the confirmation.
 
       setTimeout(() => {
         setSaved(false);
