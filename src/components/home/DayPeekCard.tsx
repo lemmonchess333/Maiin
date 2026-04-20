@@ -7,7 +7,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   dateKey: string;
   schedule: ScheduleDay[];
-  workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[] }[];
+  workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[]; durationMinutes?: number }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
 }) {
@@ -17,7 +17,9 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
   const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
   const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
   let tonnage = 0;
+  let totalMinutes = 0;
   workouts.forEach(function(w) {
+    totalMinutes += w.durationMinutes || 0;
     (w.exercises || []).forEach(function(ex) {
       (ex.sets || []).forEach(function(s) {
         tonnage += (s.weightKg || 0) * (s.reps || 0);
@@ -46,6 +48,11 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
                   <Dumbbell className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.lifting }} />
                   <span className="text-foreground font-mono tabular-nums">
                     {workouts.length} session{workouts.length !== 1 ? "s" : ""}
+                    {totalMinutes > 0 && (
+                      <span className="text-muted-foreground">
+                        {" \u00B7 "}{totalMinutes} min
+                      </span>
+                    )}
                     {tonnage > 0 && (
                       <span className="text-muted-foreground">
                         {" \u00B7 "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "k kg" : Math.round(tonnage) + " kg"}
