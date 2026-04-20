@@ -43,11 +43,8 @@ export default function DayStepper({
   return (
     <div
       role="tablist"
-      className="flex justify-center gap-[14px] px-4 pt-1 pb-3 overflow-x-auto"
-      style={{
-        borderBottom: "1px solid rgba(0,0,0,0.04)",
-        scrollbarWidth: "none",
-      }}
+      className="flex justify-center gap-[14px] px-4 pt-1 pb-3 overflow-x-auto border-b border-border/40"
+      style={{ scrollbarWidth: "none" }}
     >
       {days.map((day, index) => {
         const isToday = index === todayIndex;
@@ -123,13 +120,13 @@ export default function DayStepper({
           diameter = 40;
           fill = "transparent";
           bWidth = 2;
-          bColor = "rgba(0,0,0,0.1)";
+          bColor = "hsl(var(--border))";
           content = (
-            <span className="text-sm font-bold" style={{ color: "#999" }}>
+            <span className="text-sm font-bold text-muted-foreground">
               {day.dayNumber}
             </span>
           );
-          labelColor = "#bbb";
+          labelColor = "hsl(var(--muted-foreground))";
         }
 
         return (

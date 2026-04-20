@@ -522,18 +522,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           ? "rgba(76,175,80,0.1)"
                           : status === "today"
                             ? "rgba(124,107,240,0.1)"
-                            : "rgba(0,0,0,0.05)",
+                            : "hsl(var(--muted))",
                     }}
                   >
                     {status === "completed" ? (
                       <Check className="w-[18px] h-[18px]" style={{ color: "#4CAF50" }} strokeWidth={2.5} />
                     ) : (
-                      <Dumbbell className="w-[18px] h-[18px]" style={{ color: status === "today" ? "#7C6BF0" : "#999" }} />
+                      <Dumbbell className={`w-[18px] h-[18px] ${status === "today" ? "" : "text-muted-foreground"}`} style={status === "today" ? { color: "#7C6BF0" } : undefined} />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-lg font-bold truncate" style={{ color: "#1a1a1a" }}>
+                      <p className="text-lg font-bold truncate text-foreground">
                         Day {idx + 1} · {selectedWorkout.dayName}
                       </p>
                       {status === "completed" && (
@@ -542,7 +542,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         </span>
                       )}
                       {status === "skipped" && (
-                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#999", backgroundColor: "rgba(0,0,0,0.05)", padding: "2px 8px", borderRadius: 6 }}>
+                        <span className="text-[11px] font-semibold shrink-0 text-muted-foreground bg-muted" style={{ padding: "2px 8px", borderRadius: 6 }}>
                           Skipped
                         </span>
                       )}
@@ -552,7 +552,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         </span>
                       )}
                     </div>
-                    <p className="text-[13px]" style={{ color: "#999", marginTop: 2 }}>
+                    <p className="text-[13px] text-muted-foreground" style={{ marginTop: 2 }}>
                       {exerciseCount} exercises · ~{estimatedMinutes} min{muscleGroups ? ` · ${muscleGroups}` : ""}
                     </p>
                   </div>
@@ -574,7 +574,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                   {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
                                 </p>
                                 {lastPerf && (
-                                  <p className="text-xs mt-0.5" style={{ color: "#999" }}>
+                                  <p className="text-xs mt-0.5 text-muted-foreground">
                                     Last: {lastPerf.weight > 0 ? `${lastPerf.weight}kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
                                   </p>
                                 )}
@@ -629,21 +629,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
                 {/* ── Completed Session Summary ── */}
                 {status === "completed" && (
-                  <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(76,175,80,0.05)", border: "1px solid rgba(76,175,80,0.1)" }}>
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(76,175,80,0.05)", border: "1px solid rgba(76,175,80,0.15)" }}>
                     <div className="flex justify-around items-center">
                       <div className="text-center">
-                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>~{estimatedMinutes} min</p>
-                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Duration</p>
+                        <p className="text-base font-bold text-foreground">~{estimatedMinutes} min</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Duration</p>
                       </div>
-                      <div style={{ width: 1, height: 24, backgroundColor: "rgba(0,0,0,0.06)" }} />
+                      <div className="bg-border/60" style={{ width: 1, height: 24 }} />
                       <div className="text-center">
-                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>{formatVolume(totalVolume)}</p>
-                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Volume</p>
+                        <p className="text-base font-bold text-foreground">{formatVolume(totalVolume)}</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Volume</p>
                       </div>
-                      <div style={{ width: 1, height: 24, backgroundColor: "rgba(0,0,0,0.06)" }} />
+                      <div className="bg-border/60" style={{ width: 1, height: 24 }} />
                       <div className="text-center">
-                        <p className="text-base font-bold" style={{ color: "#1a1a1a" }}>{exerciseCount}</p>
-                        <p className="text-[11px] font-medium" style={{ color: "#999" }}>Exercises</p>
+                        <p className="text-base font-bold text-foreground">{exerciseCount}</p>
+                        <p className="text-[11px] font-medium text-muted-foreground">Exercises</p>
                       </div>
                     </div>
                   </div>
@@ -670,7 +670,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             <div className="flex items-center justify-center mt-2">
               <button
                 onClick={() => { setSkipTargetDay(idx); setShowSkipConfirm(true); }}
-                className="text-[13px] font-medium" style={{ color: "#999" }}
+                className="text-[13px] font-medium text-muted-foreground"
               >
                 Skip Session
               </button>
@@ -684,12 +684,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             </span>
           </div>
         ) : status === "skipped" ? (
-          <div className="flex items-center justify-center py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(0,0,0,0.03)" }}>
-            <span className="text-sm font-medium" style={{ color: "#999" }}>Skipped</span>
+          <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
+            <span className="text-sm font-medium text-muted-foreground">Skipped</span>
           </div>
         ) : (
-          <div className="flex items-center justify-center py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(0,0,0,0.03)" }}>
-            <span className="text-sm font-medium" style={{ color: "#999" }}>Scheduled</span>
+          <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
+            <span className="text-sm font-medium text-muted-foreground">Scheduled</span>
           </div>
         )}
       </div>

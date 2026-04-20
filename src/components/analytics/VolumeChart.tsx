@@ -35,7 +35,7 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
             tickFormatter={(v) => Number(v) >= 1000 ? `${(Number(v)/1000).toFixed(0)}k` : String(v)} />
           <Bar dataKey="volume" radius={[4, 4, 0, 0]} minPointSize={2}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.volume === 0 ? "var(--border)" : accentColor}
+              <Cell key={i} fill={entry.volume === 0 ? "hsl(var(--border))" : accentColor}
                 fillOpacity={entry.volume === 0 ? 0.4 : i === data.length - 1 ? 1 : 0.5} />
             ))}
           </Bar>

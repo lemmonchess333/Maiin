@@ -145,7 +145,7 @@ export function TrendWeight() {
             <XAxis
               dataKey="date"
               allowDuplicatedCategory={false}
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               tickFormatter={(v) => {
                 const d = new Date(v);
                 return `${d.getDate()}/${d.getMonth() + 1}`;
@@ -155,7 +155,7 @@ export function TrendWeight() {
             />
             <YAxis
               domain={["auto", "auto"]}
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               width={45}
@@ -165,7 +165,7 @@ export function TrendWeight() {
                 angle: -90,
                 position: "insideLeft",
                 offset: 0,
-                style: { fontSize: 10, fill: "var(--muted-foreground)", textAnchor: "middle" },
+                style: { fontSize: 10, fill: "hsl(var(--muted-foreground))", textAnchor: "middle" },
               }}
             />
             {/* Custom tooltip content — Recharts' Scatter inside ComposedChart
@@ -173,7 +173,7 @@ export function TrendWeight() {
                 which convert() turns into "0 kg"). Filtering to only actual/trend
                 entries with valid positive values eliminates the phantom row. */}
             <Tooltip
-              cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
+              cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
               content={(props) => {
                 if (!props.active || !props.payload?.length) return null;
 
@@ -196,15 +196,15 @@ export function TrendWeight() {
                 return (
                   <div
                     style={{
-                      background: "var(--card)",
-                      border: "1px solid var(--border)",
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
                       borderRadius: 12,
                       fontSize: 12,
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                       padding: "10px 14px",
                     }}
                   >
-                    <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--foreground)" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4, color: "hsl(var(--foreground))" }}>
                       {label}
                     </div>
                     {relevant.map((entry, i) => (
@@ -214,7 +214,7 @@ export function TrendWeight() {
                           color:
                             entry.dataKey === "trend"
                               ? THEME.brand
-                              : "var(--muted-foreground)",
+                              : "hsl(var(--muted-foreground))",
                         }}
                       >
                         {entry.dataKey === "trend" ? "Trend" : "Actual"}:{" "}
@@ -242,14 +242,14 @@ export function TrendWeight() {
 
             <ReferenceLine
               y={startWeight}
-              stroke="var(--muted-foreground)"
+              stroke="hsl(var(--muted-foreground))"
               strokeDasharray="4 4"
               strokeOpacity={0.3}
             />
 
             <Scatter
               dataKey="actual"
-              fill="var(--muted-foreground)"
+              fill="hsl(var(--muted-foreground))"
               opacity={0.4}
               r={3}
             />

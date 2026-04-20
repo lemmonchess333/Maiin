@@ -39,7 +39,7 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
-          style={{ background: "var(--background)", border: "1px solid var(--border)", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+          style={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="max-w-md mx-auto p-4 space-y-4">

@@ -31,16 +31,13 @@ export default function WeekPhaseRow({
             className="p-1 active:scale-95 transition-transform"
             aria-label="Previous week"
           >
-            <ChevronLeft
-              className="w-[15px] h-[15px]"
-              style={{ color: "#ccc" }}
-            />
+            <ChevronLeft className="w-[15px] h-[15px] text-muted-foreground" />
           </button>
         ) : (
           <div className="w-[23px]" />
         ))}
 
-      <span className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>
+      <span className="text-sm font-semibold text-foreground">
         Week {weekNumber}
       </span>
 
@@ -66,10 +63,7 @@ export default function WeekPhaseRow({
             className="p-1 active:scale-95 transition-transform"
             aria-label="Next week"
           >
-            <ChevronRight
-              className="w-[15px] h-[15px]"
-              style={{ color: "#ccc" }}
-            />
+            <ChevronRight className="w-[15px] h-[15px] text-muted-foreground" />
           </button>
         ) : (
           <div className="w-[23px]" />

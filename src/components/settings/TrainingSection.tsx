@@ -159,7 +159,7 @@ export default function TrainingSection({
                     )}
                     <span
                       className="text-xs font-medium"
-                      style={{ color: s.type === "both" ? THEME.lifting : (color || "var(--muted-foreground)") }}
+                      style={{ color: s.type === "both" ? THEME.lifting : (color || "hsl(var(--muted-foreground))") }}
                     >
                       {label}
                     </span>

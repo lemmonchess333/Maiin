@@ -105,13 +105,13 @@ export default function CalorieBalanceChart() {
           <BarChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               interval={1}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
               width={35}
@@ -121,7 +121,7 @@ export default function CalorieBalanceChart() {
                   : String(v)
               }
             />
-            <ReferenceLine y={0} stroke="var(--border)" strokeWidth={1} />
+            <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
             {/* Custom tooltip matches TrendWeight — full-date heading, then
                 label: value line. Previously rendered the day abbrev ("Sun")
                 as the heading; now both History charts show a consistent
@@ -145,8 +145,8 @@ export default function CalorieBalanceChart() {
                 return (
                   <div
                     style={{
-                      background: "var(--card)",
-                      border: "1px solid var(--border)",
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
                       borderRadius: 12,
                       fontSize: 12,
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
@@ -157,12 +157,12 @@ export default function CalorieBalanceChart() {
                       style={{
                         fontWeight: 600,
                         marginBottom: 4,
-                        color: "var(--foreground)",
+                        color: "hsl(var(--foreground))",
                       }}
                     >
                       {heading}
                     </div>
-                    <div style={{ color: "var(--muted-foreground)" }}>
+                    <div style={{ color: "hsl(var(--muted-foreground))" }}>
                       {label}: {abs} cal
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export default function CalorieBalanceChart() {
                 return (
                   <Cell
                     key={entry.date}
-                    fill={noData ? "var(--border)" : getBalanceColor(entry.balance, goal)}
+                    fill={noData ? "hsl(var(--border))" : getBalanceColor(entry.balance, goal)}
                     opacity={noData ? 0.4 : 0.75}
                   />
                 );
