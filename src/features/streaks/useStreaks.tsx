@@ -273,8 +273,22 @@ function useStreaksInternal() {
         // spread-default above does NOT replace it. Coerce any non-finite
         // value to 0 here so Math.max(currentStreak, 0) can't produce NaN.
         const sanitizedCurrent = Number.isFinite(data.currentStreak) ? data.currentStreak : 0;
-        const sanitizedLongest = Number.isFinite(data.longestStreak) ? data.longestStreak : 0;
+        const sanitizedLongestRaw = Number.isFinite(data.longestStreak) ? data.longestStreak : 0;
         const sanitizedTotal = Number.isFinite(data.totalActiveDays) ? data.totalActiveDays : 0;
+        // Badge-earned reconciliation: if a streak-threshold badge has an
+        // earnedAt timestamp, the user reached at least that threshold
+        // at some point — so longestStreak must be >= threshold. We saw
+        // rows where Week Warrior (threshold 7) was earned but
+        // longestStreak was 4, which meant the old NaN-write bug wiped
+        // the longestStreak without clearing earnedAt. Patch it up on
+        // read so the UI and the persist effect agree. Bronze/plate/run
+        // badges with no threshold are ignored.
+        const impliedFromBadges = merged.reduce((max, b) => {
+          if (!b.earnedAt) return max;
+          if (typeof b.threshold !== "number" || b.threshold <= 0) return max;
+          return b.threshold > max ? b.threshold : max;
+        }, 0);
+        const sanitizedLongest = Math.max(sanitizedLongestRaw, impliedFromBadges);
         setStreakData({
           ...DEFAULT_STREAKS,
           ...data,
