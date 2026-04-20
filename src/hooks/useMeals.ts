@@ -28,6 +28,11 @@ export interface Meal {
   totalFiber?: number;
   totalSugar?: number;
   totalSodium?: number;
+  /** User-selected meal slot. When set, getMealCategory in Food.tsx uses this
+   *  instead of the time-of-day heuristic. Persisted from the "+ Snacks" /
+   *  "+ Breakfast" / ... targeting flow so a snack logged at 9am goes to
+   *  Snacks, not Breakfast. */
+  meal?: "breakfast" | "lunch" | "snacks" | "dinner";
   confidence: string;
   createdAt: unknown;
 }
@@ -51,6 +56,19 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
     totalFiber: raw.totalFiber != null ? safeNum(raw.totalFiber) : undefined,
     totalSugar: raw.totalSugar != null ? safeNum(raw.totalSugar) : undefined,
     totalSodium: raw.totalSodium != null ? safeNum(raw.totalSodium) : undefined,
+    // Preserve the user-selected meal slot — without this the field was
+    // being written to Firestore but stripped on read, so `+ Snacks`
+    // flow always fell through to the breakfast/lunch/dinner time
+    // heuristic in Food.tsx:getMealCategory and landed in the wrong
+    // section. Narrow to the four valid values to keep downstream
+    // switches exhaustive.
+    meal:
+      raw.meal === "breakfast" ||
+      raw.meal === "lunch" ||
+      raw.meal === "snacks" ||
+      raw.meal === "dinner"
+        ? raw.meal
+        : undefined,
     confidence: typeof raw.confidence === 'string' ? raw.confidence : '',
     createdAt: raw.createdAt,
   };
