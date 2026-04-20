@@ -65,23 +65,16 @@ export const THEME = {
   // Unified icon background
   iconBg: 'rgba(123, 114, 233, 0.10)',  // brand tint — subtle
 
-  // Macro colours (nutrition breakdown) — "Kitchen" palette (Option A):
-  //   protein = meat-pink, carbs = toasted-wheat gold, fat = butter-yellow.
-  // Amber-700 for carbs is deeper than fat's yellow-500 so the two adjacent
-  // cards stay visually distinct. Chose this over blue-carbs + orange-fat
-  // because orange conflicted with the Food page's overall nutrition-orange
-  // theme (Scan button, Today's Energy bar) and blue has no real mental
-  // link to grain. Cal AI uses orange-carbs + blue-fat; this is
-  // deliberately different.
-  //
-  // Briefly tried an Earth palette (amber + nut-brown + Nut icon) — the
-  // brown read as muddy against the white card and the acorn-shaped icon
-  // wasn't pulling its weight. Reverted.
+  // Macro colours — iconic food per macro:
+  //   protein = meat-pink (Beef), carbs = wheat-gold (Wheat),
+  //   fat = avocado-sage (Avocado). Each tile pairs colour + silhouette
+  //   of the food it stands for. Sage fat is deliberately muted vs the
+  //   punchy success green (#4DB872) so the two never collide as signals.
   macros: {
-    calories: '#EF4444', // Tailwind red-500 — bold red
-    protein: '#EC4899',  // Tailwind pink-500 — bold pink (meat)
-    carbs: '#B45309',    // Tailwind amber-700 — wheat gold
-    fat: '#EAB308',      // Tailwind yellow-500 — butter yellow
+    calories: '#EF4444', // Tailwind red-500
+    protein: '#EC4899',  // Tailwind pink-500
+    carbs: '#EAB308',    // Tailwind yellow-500
+    fat: '#7CB46C',      // sage avocado
   },
 
   // Charts
