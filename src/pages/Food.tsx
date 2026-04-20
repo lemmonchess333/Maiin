@@ -1168,18 +1168,17 @@ export default function Food() {
           })}
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
-              has slots today is missing. The label names the exact slots
-              that'll be copied so the user knows what's about to happen
-              before tapping (no surprises, no destructive overwrites). */}
+              has slots today is missing. Label is intentionally short:
+              a single missing slot names it (`Copy yesterday's lunch`),
+              two or more collapses to the generic `Copy yesterday's meals`
+              — listing every slot was verbose and the user can read the
+              toast after tapping to see what was copied where. */}
           {slotsToCopyFromYesterday.length > 0 && (() => {
             const inFlight = copyingMealKey === "__all__";
-            const allFour = slotsToCopyFromYesterday.length === MEAL_ORDER.length;
-            const slotNames = joinHumanList(
-              slotsToCopyFromYesterday.map((k) => MEAL_LABELS[k].toLowerCase()),
-            );
-            const label = allFour
-              ? "Copy yesterday"
-              : `Copy yesterday's ${slotNames}`;
+            const label =
+              slotsToCopyFromYesterday.length === 1
+                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
+                : "Copy yesterday's meals";
             return (
               <div className="flex justify-center pt-2">
                 <button
