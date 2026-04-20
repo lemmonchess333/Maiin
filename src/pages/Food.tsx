@@ -315,10 +315,11 @@ export default function Food() {
       // exactly what happened, not just an opaque item count.
       toast.success(
         `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
+        { id: "food-copy-yesterday" },
       );
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
-      toast.error("Couldn't copy from yesterday");
+      toast.error("Couldn't copy from yesterday", { id: "food-copy-yesterday" });
     } finally {
       setCopyingMealKey(null);
     }
@@ -471,7 +472,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
   };
 
@@ -505,7 +506,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Could not parse any foods. Try a different description.");
+      toast.error("Could not parse any foods. Try a different description.", { id: "food-nl-error" });
       setNlParsing(false);
       return;
     }
@@ -513,7 +514,8 @@ export default function Food() {
       const zeroItems = items.filter((i) => i.calories === 0);
       if (zeroItems.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`,
+          { id: "food-nl-warning" }
         );
       }
     }
@@ -543,9 +545,9 @@ export default function Food() {
       });
       setNlInput("");
       setTargetMeal(null);
-      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`);
+      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`, { id: "food-nl-success" });
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
     setNlParsing(false);
   };
@@ -648,7 +650,7 @@ export default function Food() {
       await addFavourite({ ...fav, source: "manual" });
       // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
   };
 
@@ -701,7 +703,7 @@ export default function Food() {
       setTargetMeal(null);
       // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.");
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
     setQuickAdding(null);
   };
