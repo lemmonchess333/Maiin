@@ -9,6 +9,12 @@ import AccordionSection from "@/components/AccordionSection";
 
 declare const __APP_VERSION__: string;
 
+// `support@tropos.app` is a Cloudflare Email Routing forwarder — no mailbox
+// lives at tropos.app itself. Inbound mail forwards to the owner's existing
+// personal inbox. The Privacy Policy and Terms of Service also reference
+// this address (see PrivacyPolicy.tsx, TermsOfService.tsx) so any change
+// to the routing target needs to be communicated, not code-swapped.
+
 // Pre-filled mailto body gives support a baseline diagnostic snapshot on
 // every ticket without asking the user to type it. App version, user
 // agent, and a short bug-report scaffold arrive in the same inbox slot as
