@@ -10,7 +10,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
-import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
+import { Footprints, Trophy, UtensilsCrossed, ChevronRight } from "lucide-react";
 import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
@@ -572,7 +572,11 @@ export default function History() {
                       const exercise = EXERCISES.find(e => e.name === pr.name);
                       const isBW = exercise?.equipment === "Bodyweight";
                       return (
-                        <div key={pr.name} className="flex items-center justify-between px-4 py-3">
+                        <Link
+                          key={pr.name}
+                          to={`/history/exercise/${encodeURIComponent(pr.name)}`}
+                          className="flex items-center justify-between px-4 py-3 active:bg-muted/40 transition-colors"
+                        >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               {pr.isAllTimeBest && (
@@ -589,15 +593,18 @@ export default function History() {
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-3">
-                            <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                              {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
-                            </p>
-                            {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-                              <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
-                            ) : null}
+                          <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
+                            <div>
+                              <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
+                                {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
+                              </p>
+                              {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
+                                <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
+                              ) : null}
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>

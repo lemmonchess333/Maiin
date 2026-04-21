@@ -63,6 +63,7 @@ const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
+const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 
 function PageLoader() {
   return (
@@ -275,6 +276,7 @@ function AppRoutes() {
           <Route path="/" element={<RouteErrorBoundary><Home /></RouteErrorBoundary>} />
           <Route path="/food" element={<RouteErrorBoundary><Food /></RouteErrorBoundary>} />
           <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
+          <Route path="/history/exercise/:name" element={<RouteErrorBoundary><ExerciseHistory /></RouteErrorBoundary>} />
           <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
           <Route path="/upgrade" element={<RouteErrorBoundary><Upgrade /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
