@@ -10,7 +10,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
-import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
+import { Footprints, Trophy, UtensilsCrossed, ChevronRight } from "lucide-react";
 import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
@@ -18,6 +18,7 @@ import { formatVolume, formatDistance } from "@/utils/formatters";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
+const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
 const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
 const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
@@ -79,6 +80,20 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
       <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
     </div>
   );
+}
+
+// Convert a "now vs. previous period" pair into the shape StatCard's
+// `delta` prop expects. Rule: prev === 0 → no delta (can't compute a
+// percent change from zero); abs-change < 1% → treated as no movement
+// and omitted so the UI doesn't shout about noise. Returns null to
+// match StatCard's `delta?: ... | null` contract.
+function buildDelta(current: number, previous: number): { value: string; positive: boolean } | null {
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
+  if (previous <= 0) return null;
+  const pct = ((current - previous) / previous) * 100;
+  if (Math.abs(pct) < 1) return null;
+  const positive = pct >= 0;
+  return { value: `${Math.abs(Math.round(pct))}%`, positive };
 }
 
 export default function History() {
@@ -211,6 +226,11 @@ export default function History() {
   const liftingData = useMemo(() => {
     const since = new Date();
     since.setDate(since.getDate() - rangeDays);
+    // Previous comparable period: the same span of days immediately before
+    // `since`. Used for ↑/↓ delta badges on stat cards — matches the
+    // Whoop / Apple Fitness convention of "this period vs. last period."
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - rangeDays);
 
     const filtered = workouts.filter((w) => new Date(w.date) >= since);
     const liftCount = filtered.length;
@@ -227,7 +247,23 @@ export default function History() {
       });
     });
 
+    // Previous-period totals for delta comparison.
+    const prevFiltered = workouts.filter((w) => {
+      const d = new Date(w.date);
+      return d >= prevSince && d < since;
+    });
+    let prevLiftVolume = 0;
+    prevFiltered.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        ex.sets?.forEach((set) => {
+          prevLiftVolume += set.weightKg * set.reps;
+        });
+      });
+    });
+    const prevLiftCount = prevFiltered.length;
+
     const weekMap: Record<string, number> = {};
+    const sessionWeekMap: Record<string, number> = {};
     filtered.forEach((w) => {
       const d = new Date(w.date);
       d.setDate(d.getDate() - d.getDay());
@@ -236,10 +272,12 @@ export default function History() {
         (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
       );
       weekMap[key] = (weekMap[key] || 0) + vol;
+      sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
     });
-    const weeklyVolume = Object.entries(weekMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([week, volume]) => ({ week, volume }));
+    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) => a.localeCompare(b));
+    const weeklyVolume = sortedWeekKeys.map((week) => ({ week, volume: weekMap[week] }));
+    const volumeSparkline = sortedWeekKeys.map((w) => weekMap[w]);
+    const sessionsSparkline = sortedWeekKeys.map((w) => sessionWeekMap[w] || 0);
 
     // Build all-time best e1rm per exercise
     const allTimeBest: Record<string, number> = {};
@@ -285,32 +323,77 @@ export default function History() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 8);
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline };
+    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
     const since = new Date();
     since.setDate(since.getDate() - rangeDays);
-    const filtered = meals.filter(
-      (m) => new Date(m.date + "T00:00:00") >= since
-    );
-    // Group by date so we average per day, not per meal
-    const byDate: Record<string, { cal: number; prot: number }> = {};
-    for (const m of filtered) {
-      if (!byDate[m.date]) byDate[m.date] = { cal: 0, prot: 0 };
-      byDate[m.date].cal += m.totalCalories || 0;
-      byDate[m.date].prot += m.totalProtein || 0;
-    }
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - rangeDays);
+
+    type DayTotals = { cal: number; prot: number; carbs: number; fat: number };
+    const bucketByDate = (ms: typeof meals) => {
+      const byDate: Record<string, DayTotals> = {};
+      for (const m of ms) {
+        if (!byDate[m.date]) byDate[m.date] = { cal: 0, prot: 0, carbs: 0, fat: 0 };
+        byDate[m.date].cal += m.totalCalories || 0;
+        byDate[m.date].prot += m.totalProtein || 0;
+        byDate[m.date].carbs += m.totalCarbs || 0;
+        byDate[m.date].fat += m.totalFat || 0;
+      }
+      return byDate;
+    };
+    const avg = (days: DayTotals[], key: keyof DayTotals) =>
+      days.length ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length) : 0;
+
+    const filtered = meals.filter((m) => new Date(m.date + "T00:00:00") >= since);
+    const prevFiltered = meals.filter((m) => {
+      const d = new Date(m.date + "T00:00:00");
+      return d >= prevSince && d < since;
+    });
+
+    const byDate = bucketByDate(filtered);
+    const prevByDate = bucketByDate(prevFiltered);
     const days = Object.values(byDate);
-    const avgCalories = days.length
-      ? Math.round(days.reduce((sum, d) => sum + d.cal, 0) / days.length)
-      : 0;
-    const avgProtein = days.length
-      ? Math.round(days.reduce((sum, d) => sum + d.prot, 0) / days.length)
-      : 0;
+    const prevDays = Object.values(prevByDate);
+
+    const avgCalories = avg(days, "cal");
+    const avgProtein = avg(days, "prot");
+    const avgCarbs = avg(days, "carbs");
+    const avgFat = avg(days, "fat");
+    const prevAvgCalories = avg(prevDays, "cal");
+    const prevAvgProtein = avg(prevDays, "prot");
+    const prevAvgCarbs = avg(prevDays, "carbs");
+    const prevAvgFat = avg(prevDays, "fat");
+
     const daysLogged = Object.keys(byDate).length;
     const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
-    return { avgCalories, avgProtein, adherence };
+
+    // Sparkline series: daily values, chronological. Zero-pad missing
+    // days so the sparkline shows a real shape rather than clustering
+    // only the logged entries.
+    const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));
+    const caloriesSparkline = sortedDates.map((d) => byDate[d].cal);
+    const proteinSparkline = sortedDates.map((d) => byDate[d].prot);
+    const carbsSparkline = sortedDates.map((d) => byDate[d].carbs);
+    const fatSparkline = sortedDates.map((d) => byDate[d].fat);
+
+    return {
+      avgCalories,
+      avgProtein,
+      avgCarbs,
+      avgFat,
+      prevAvgCalories,
+      prevAvgProtein,
+      prevAvgCarbs,
+      prevAvgFat,
+      adherence,
+      caloriesSparkline,
+      proteinSparkline,
+      carbsSparkline,
+      fatSparkline,
+    };
   }, [meals, rangeDays]);
 
   const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
@@ -451,12 +534,16 @@ export default function History() {
                   label="Weekly Volume"
                   value={formatVolume(liftingData.liftVolume).value}
                   unit={formatVolume(liftingData.liftVolume).unit}
+                  delta={buildDelta(liftingData.liftVolume, liftingData.prevLiftVolume)}
+                  sparklineData={liftingData.volumeSparkline}
                   accentColor={THEME.lifting}
                 />
                 <StatCard
                   label="Sessions"
                   value={String(liftingData.liftCount)}
                   unit={timeRange === "1W" ? "/week" : timeRange === "1M" ? "/month" : timeRange === "3M" ? "/3mo" : timeRange === "6M" ? "/6mo" : "/year"}
+                  delta={buildDelta(liftingData.liftCount, liftingData.prevLiftCount)}
+                  sparklineData={liftingData.sessionsSparkline}
                   accentColor={THEME.lifting}
                 />
               </div>
@@ -485,7 +572,11 @@ export default function History() {
                       const exercise = EXERCISES.find(e => e.name === pr.name);
                       const isBW = exercise?.equipment === "Bodyweight";
                       return (
-                        <div key={pr.name} className="flex items-center justify-between px-4 py-3">
+                        <Link
+                          key={pr.name}
+                          to={`/history/exercise/${encodeURIComponent(pr.name)}`}
+                          className="flex items-center justify-between px-4 py-3 active:bg-muted/40 transition-colors"
+                        >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               {pr.isAllTimeBest && (
@@ -502,15 +593,18 @@ export default function History() {
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
                           </div>
-                          <div className="text-right flex-shrink-0 ml-3">
-                            <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                              {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
-                            </p>
-                            {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-                              <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
-                            ) : null}
+                          <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
+                            <div>
+                              <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
+                                {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
+                              </p>
+                              {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
+                                <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
+                              ) : null}
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
@@ -549,20 +643,54 @@ export default function History() {
                 </div>
               ) : (
               <>
+              {/* Top row: calories + protein with trend deltas. */}
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}
                   unit="kcal/day"
+                  delta={buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories)}
+                  sparklineData={nutrition.caloriesSparkline}
                   accentColor={THEME.success}
                 />
                 <StatCard
                   label="Protein"
                   value={nutrition.avgProtein.toString()}
                   unit="g/day"
-                  accentColor={THEME.success}
+                  delta={buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein)}
+                  sparklineData={nutrition.proteinSparkline}
+                  accentColor={THEME.macros.protein}
                 />
               </div>
+              {/* Second row: carbs + fat. Matches the Food page's three-tile
+                  macro breakdown so users see the same palette everywhere.
+                  Deltas + sparklines here for parity with the Calories +
+                  Protein row above — all four macro stat cards now carry
+                  the same trend vocabulary. */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <StatCard
+                  label="Carbs"
+                  value={nutrition.avgCarbs.toString()}
+                  unit="g/day"
+                  delta={buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs)}
+                  sparklineData={nutrition.carbsSparkline}
+                  accentColor={THEME.macros.carbs}
+                />
+                <StatCard
+                  label="Fat"
+                  value={nutrition.avgFat.toString()}
+                  unit="g/day"
+                  delta={buildDelta(nutrition.avgFat, nutrition.prevAvgFat)}
+                  sparklineData={nutrition.fatSparkline}
+                  accentColor={THEME.macros.fat}
+                />
+              </div>
+
+              <MacroDistribution
+                protein={nutrition.avgProtein}
+                carbs={nutrition.avgCarbs}
+                fat={nutrition.avgFat}
+              />
 
               <SectionErrorBoundary sectionName="trend-weight">
                 <TrendWeight />

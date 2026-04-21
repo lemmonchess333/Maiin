@@ -213,6 +213,21 @@ export default function CalorieBalanceChart() {
               : Math.abs(avgBalance) <= 200 ? "Eating near maintenance" : avgBalance > 0 ? "Slight deficit" : "Slight surplus"}
         </p>
       )}
+
+      {/* Projected weekly weight change — rule-of-thumb 7700 cal ≈ 1 kg.
+          Suppressed under ±100 cal/day because the "projection" becomes
+          meaningless noise at maintenance. Positive avgBalance = deficit
+          convention (see data computation above), so positive → weight
+          down, negative → weight up. */}
+      {Math.abs(avgBalance) >= 100 && (() => {
+        const kgPerWeek = (Math.abs(avgBalance) * 7) / 7700;
+        const direction = avgBalance > 0 ? "down" : "up";
+        return (
+          <p className="text-xs text-muted-foreground text-center">
+            At this rate, ~{kgPerWeek.toFixed(1)} kg/week {direction}
+          </p>
+        );
+      })()}
     </div>
   );
 }
