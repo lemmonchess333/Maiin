@@ -8,6 +8,7 @@ import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
@@ -353,29 +354,29 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
               </div>
 
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.semantic.nutrition}1A` }}>
+                  <p className="text-lg font-bold tabular-nums" style={{ color: THEME.semantic.nutrition }}>
                     {Math.round(safeNum(activeResult.totalCalories) * s)}
                   </p>
-                  <p className="text-xs text-orange-500 dark:text-orange-400/70">cal</p>
+                  <p className="text-xs opacity-70" style={{ color: THEME.semantic.nutrition }}>cal</p>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.protein}1A` }}>
+                  <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.protein }}>
                     {Math.round(safeNum(activeResult.totalProtein) * s)}g
                   </p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400/70">protein</p>
+                  <p className="text-xs opacity-70" style={{ color: THEME.macros.protein }}>protein</p>
                 </div>
-                <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.carbs}1A` }}>
+                  <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.carbs }}>
                     {Math.round(safeNum(activeResult.totalCarbs) * s)}g
                   </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-400/70">carbs</p>
+                  <p className="text-xs opacity-70" style={{ color: THEME.macros.carbs }}>carbs</p>
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400 tabular-nums">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.fat}1A` }}>
+                  <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.fat }}>
                     {Math.round(safeNum(activeResult.totalFat) * s)}g
                   </p>
-                  <p className="text-xs text-purple-500 dark:text-purple-400/70">fat</p>
+                  <p className="text-xs opacity-70" style={{ color: THEME.macros.fat }}>fat</p>
                 </div>
               </div>
 

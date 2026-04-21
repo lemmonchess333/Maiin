@@ -260,7 +260,7 @@ export default function ProgressPhotos() {
           )}
           <button onClick={() => fileInputRef.current?.click()}
             aria-label="Add progress photo"
-            className="text-xs px-3 py-2 rounded-lg bg-purple-500 text-white font-medium min-h-[44px]">
+            className="text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium min-h-[44px]">
             + Add
           </button>
         </div>
