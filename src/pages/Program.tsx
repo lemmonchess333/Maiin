@@ -37,7 +37,6 @@ import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, 
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
-import ExerciseDemoCard from "@/components/ExerciseDemoCard";
 
 /**
  * IMPORTANT:
@@ -132,7 +131,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const touchStartRef = useRef({ x: 0, y: 0 });
 
   // Exercise card state — read-only, tap opens info sheet
-  const [demoExercise, setDemoExercise] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(null);
@@ -594,7 +592,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         <div key={`ex-${idx}-${i}`} data-swipe-card="true">
                           <SortableExerciseRow id={`ex-${idx}-${i}`} showHandle={false} onDelete={() => removeExFromDay(idx, i)}>
                             <button
-                              onClick={() => setDemoExercise(ex.name)}
+                              onClick={() => navigate(`/history/exercise/${encodeURIComponent(ex.name)}`)}
                               className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
                               onTouchStart={(e) => handleLongPressStart(idx, i, e)}
                               onTouchMove={handleLongPressCancel}
@@ -793,12 +791,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         />
       )}
 
-      {/* Exercise Info Half-Sheet */}
-      <ExerciseDemoCard
-        exerciseName={demoExercise ?? ""}
-        open={demoExercise !== null}
-        onClose={() => setDemoExercise(null)}
-      />
 
       {/* Overflow Menu Sheet */}
       <AnimatePresence>

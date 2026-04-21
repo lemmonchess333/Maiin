@@ -8,6 +8,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
 const ExerciseProgressChart = lazy(() => import("@/components/analytics/ExerciseProgressChart"));
+const ExerciseFormContent = lazy(() => import("@/components/ExerciseFormContent"));
 
 // Time ranges available on the chart. Mirrors History's main time-range
 // pills so the mental model carries across pages.
@@ -76,6 +77,10 @@ export default function ExerciseHistory() {
 
   const [timeRange, setTimeRange] = useState<typeof RANGE_ORDER[number]>("3M");
   const [metric, setMetric] = useState<Metric>("1RM");
+  // Top-level tab: "progress" (chart + sessions) or "form" (muscle
+  // diagrams + instructions). Users from the PR list default to
+  // progress; users coming from Program who want form cues tap across.
+  const [tab, setTab] = useState<"progress" | "form">("progress");
 
   const exercise = useMemo(
     () => EXERCISES.find((e) => e.name === decodedName),
@@ -335,7 +340,31 @@ export default function ExerciseHistory() {
         </div>
       </div>
 
-      {hasNoSessions ? (
+      {/* ── Tab toggle — Progress / Form ─────────────────────────── */}
+      <div className="flex gap-1 bg-muted rounded-full p-0.5">
+        {(["progress", "form"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => { haptic("light"); setTab(t); }}
+            className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              tab === t
+                ? "bg-card text-foreground"
+                : "text-muted-foreground"
+            }`}
+            style={tab === t ? { boxShadow: "var(--ds-shadow-card)" } : undefined}
+          >
+            {t === "progress" ? "Progress" : "Form"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "form" ? (
+        <div className="rounded-2xl bg-card p-4" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+          <Suspense fallback={<div className="h-40 bg-muted/30 rounded animate-pulse" />}>
+            <ExerciseFormContent exerciseName={decodedName} />
+          </Suspense>
+        </div>
+      ) : hasNoSessions ? (
         <EmptyState exerciseName={decodedName} />
       ) : (
         <>
@@ -474,17 +503,6 @@ export default function ExerciseHistory() {
             </div>
           </div>
 
-          {/* ── Form cues (if available in exercise database) ──────── */}
-          {exercise?.instructions && (
-            <div className="rounded-2xl bg-card p-4 space-y-2" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-              <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                Form cues
-              </p>
-              <p className="text-sm text-foreground leading-relaxed">
-                {exercise.instructions}
-              </p>
-            </div>
-          )}
         </>
       )}
     </motion.div>
