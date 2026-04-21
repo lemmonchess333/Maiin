@@ -364,6 +364,8 @@ export default function History() {
     const avgFat = avg(days, "fat");
     const prevAvgCalories = avg(prevDays, "cal");
     const prevAvgProtein = avg(prevDays, "prot");
+    const prevAvgCarbs = avg(prevDays, "carbs");
+    const prevAvgFat = avg(prevDays, "fat");
 
     const daysLogged = Object.keys(byDate).length;
     const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
@@ -374,6 +376,8 @@ export default function History() {
     const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));
     const caloriesSparkline = sortedDates.map((d) => byDate[d].cal);
     const proteinSparkline = sortedDates.map((d) => byDate[d].prot);
+    const carbsSparkline = sortedDates.map((d) => byDate[d].carbs);
+    const fatSparkline = sortedDates.map((d) => byDate[d].fat);
 
     return {
       avgCalories,
@@ -382,9 +386,13 @@ export default function History() {
       avgFat,
       prevAvgCalories,
       prevAvgProtein,
+      prevAvgCarbs,
+      prevAvgFat,
       adherence,
       caloriesSparkline,
       proteinSparkline,
+      carbsSparkline,
+      fatSparkline,
     };
   }, [meals, rangeDays]);
 
@@ -648,18 +656,25 @@ export default function History() {
                 />
               </div>
               {/* Second row: carbs + fat. Matches the Food page's three-tile
-                  macro breakdown so users see the same palette everywhere. */}
+                  macro breakdown so users see the same palette everywhere.
+                  Deltas + sparklines here for parity with the Calories +
+                  Protein row above — all four macro stat cards now carry
+                  the same trend vocabulary. */}
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Carbs"
                   value={nutrition.avgCarbs.toString()}
                   unit="g/day"
+                  delta={buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs)}
+                  sparklineData={nutrition.carbsSparkline}
                   accentColor={THEME.macros.carbs}
                 />
                 <StatCard
                   label="Fat"
                   value={nutrition.avgFat.toString()}
                   unit="g/day"
+                  delta={buildDelta(nutrition.avgFat, nutrition.prevAvgFat)}
+                  sparklineData={nutrition.fatSparkline}
                   accentColor={THEME.macros.fat}
                 />
               </div>
