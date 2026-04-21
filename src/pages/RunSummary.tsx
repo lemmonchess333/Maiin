@@ -40,7 +40,7 @@ export default function RunSummary() {
   const { user, profile } = useAuth();
   const { zones: privacyZones } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
-  const { updateMileage } = useShoes();
+  const { updateMileage, defaultShoe } = useShoes();
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -82,6 +82,17 @@ export default function RunSummary() {
 
   const handleSave = async () => {
     if (!user) return;
+
+    // Resolve the shoe this run should attribute mileage to. If the user
+    // picked one in RunSetupModal, honour that; otherwise fall back to the
+    // current default. Previously the mileage accumulator only fired when
+    // `runConfig.shoeId` was explicitly set, so users who hit "Start" with
+    // their default shoe configured saw mileage silently stay at zero.
+    // Persist the resolved value as a top-level `shoeId` field so the
+    // mileage reconciliation utility in useShoes has a clean reference
+    // regardless of how the run was started.
+    const effectiveShoeId = runConfig?.shoeId ?? defaultShoe?.id ?? null;
+
     const runData = {
       distance,
       duration: elapsed,
@@ -99,6 +110,7 @@ export default function RunSummary() {
       target: runConfig?.target,
       intervalData,
       runConfig,
+      shoeId: effectiveShoeId,
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB persistence
@@ -125,9 +137,9 @@ export default function RunSummary() {
         });
       }
 
-      // Update shoe mileage if a shoe was selected
-      if (runConfig?.shoeId) {
-        const alert = await updateMileage(runConfig.shoeId, distance / 1000);
+      // Update shoe mileage against whichever shoe was resolved above.
+      if (effectiveShoeId) {
+        const alert = await updateMileage(effectiveShoeId, distance / 1000);
         if (alert === 'replace') {
           toast.error('Time for new shoes! This pair has exceeded its recommended mileage.', { duration: 5000 });
         } else if (alert === 'warning') {

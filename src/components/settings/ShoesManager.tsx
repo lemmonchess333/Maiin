@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
-import { Plus, Star, Archive, Footprints } from "lucide-react";
+import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
+import { toast } from "sonner";
 import { searchShoes, type ShoeModel } from "@/lib/shoeDatabase";
+import { logger } from "@/lib/logger";
 
 function MileageBar({ shoe }: { shoe: Shoe }) {
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
@@ -22,12 +24,13 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
 }
 
 export default function ShoesManager() {
-  const { shoes, activeShoes, addShoe, retireShoe, setDefault, loading, error } = useShoes();
+  const { shoes, activeShoes, addShoe, retireShoe, setDefault, reconcileMileageFromRuns, loading, error } = useShoes();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newBrand, setNewBrand] = useState("");
   const [newMax, setNewMax] = useState("600");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
 
   // Only show suggestions when the user is actively typing into the name
   // field and hasn't yet picked an exact match (substring match against
@@ -48,6 +51,28 @@ export default function ShoesManager() {
     setNewBrand(shoe.brand);
     setNewMax(String(shoe.recommendedMaxKm));
     setShowSuggestions(false);
+  };
+
+  // One-shot reconciler for users whose mileage may have drifted while the
+  // auto-assign-default-shoe bug was live. Safe to re-run: it rebuilds
+  // totals from `runs` rather than incrementing, so repeated taps converge
+  // on the same number.
+  const handleRecalculate = async () => {
+    if (recalculating) return;
+    setRecalculating(true);
+    try {
+      const { totalRuns } = await reconcileMileageFromRuns();
+      toast.success(
+        totalRuns > 0
+          ? `Recalculated mileage from ${totalRuns} run${totalRuns === 1 ? "" : "s"}.`
+          : "No runs yet — nothing to recalculate.",
+      );
+    } catch (err) {
+      logger.error("[ShoesManager] reconcileMileageFromRuns failed", err);
+      toast.error("Couldn't recalculate mileage. Please try again.");
+    } finally {
+      setRecalculating(false);
+    }
   };
 
   if (loading) return (
@@ -83,12 +108,25 @@ export default function ShoesManager() {
           <Footprints className="w-5 h-5 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">My Shoes</h3>
         </div>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-1 text-xs text-primary font-medium"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add
-        </button>
+        <div className="flex items-center gap-3">
+          {activeShoes.length > 0 && (
+            <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              aria-label="Recalculate mileage from run history"
+              className="flex items-center gap-1 text-xs text-muted-foreground font-medium disabled:opacity-50"
+            >
+              <RotateCw className={cn("w-3.5 h-3.5", recalculating && "animate-spin")} />
+              {recalculating ? "Recalculating…" : "Recalculate"}
+            </button>
+          )}
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="flex items-center gap-1 text-xs text-primary font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add
+          </button>
+        </div>
       </div>
 
       {showAdd && (
