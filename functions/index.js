@@ -108,6 +108,43 @@ async function verifyAuth(authHeader) {
 }
 
 // ══════════════════════════════════════════════
+// REMOTE KILL SWITCHES — Firestore-backed feature flags
+// ══════════════════════════════════════════════
+
+/**
+ * Reads a boolean feature flag from `config/flags`. Flags default to ON —
+ * missing doc or missing key returns `true` — so a freshly deployed
+ * project without the doc still works. Operators disable a flag by writing
+ * `{ [key]: false }` via Admin SDK or the Firebase Console, and the next
+ * Cloud Function invocation sees the change without a redeploy.
+ *
+ * Cached for 60s per process to keep the Firestore read off the hot path
+ * while still letting an incident responder flip a switch and see effect
+ * within a minute.
+ *
+ * @param {string} key
+ * @returns {Promise<boolean>}
+ */
+const _flagCache = { value: null, at: 0 };
+const FLAG_CACHE_MS = 60_000;
+async function isFlagEnabled(key) {
+  const now = Date.now();
+  if (!_flagCache.value || now - _flagCache.at > FLAG_CACHE_MS) {
+    try {
+      const snap = await admin.firestore().doc("config/flags").get();
+      _flagCache.value = snap.exists ? snap.data() : {};
+      _flagCache.at = now;
+    } catch (err) {
+      console.error("isFlagEnabled read failed:", err.message);
+      // Fail open — a Firestore read blip shouldn't take down food scan.
+      return true;
+    }
+  }
+  const v = _flagCache.value[key];
+  return v === undefined ? true : Boolean(v);
+}
+
+// ══════════════════════════════════════════════
 // ONBOARDING — bypasses security rules via Admin SDK
 // ══════════════════════════════════════════════
 
@@ -224,6 +261,15 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
+      // Remote kill switch — operators flip `geminiEnabled=false` in
+      // config/flags to cut off scans instantly if costs spike or
+      // Vertex AI is returning bad data. Checked before rate limit so
+      // disabled-state requests don't eat a user's quota window.
+      if (!(await isFlagEnabled("geminiEnabled"))) {
+        res.status(503).json({ error: "AI food scan is temporarily unavailable. Please use manual entry." });
+        return;
+      }
+
       // Rate limit: 10 image analyses per 10 minutes
       const limited = await isRateLimited(authUser.uid, "analyzeFood", 10, 600_000);
       if (limited) {
@@ -320,6 +366,13 @@ exports.analyzeFoodText = functions.https.onRequest((req, res) => {
         authUser = await verifyAuth(req.headers.authorization);
       } catch (_) {
         res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      // Remote kill switch — shared flag with analyzeFood. One toggle
+      // disables both modalities so scan pricing stays predictable.
+      if (!(await isFlagEnabled("geminiEnabled"))) {
+        res.status(503).json({ error: "AI food scan is temporarily unavailable. Please use manual entry." });
         return;
       }
 

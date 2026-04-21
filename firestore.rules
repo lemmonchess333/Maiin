@@ -266,5 +266,34 @@ service cloud.firestore {
     match /users/{uid}/progressPhotos/{doc} {
       allow read, write: if isOwner(uid);
     }
+
+    // ========================================
+    // User subcollection: Client error reports
+    //
+    // errorReporting.persistToFirestore writes critical errors (network,
+    // component, payment/auth/subscription keyword matches) here. Without
+    // this rule, writes silently fail against the default-deny and the
+    // error log never materialises. Create-only from the client so a
+    // compromised session can't rewrite its own history; reads are
+    // reserved for Admin-SDK support tooling.
+    // ========================================
+    match /users/{uid}/errors/{doc} {
+      allow create: if isOwner(uid);
+      allow read, update, delete: if false;
+    }
+
+    // ========================================
+    // Server-managed feature flags
+    //
+    // Holds kill switches the app and Cloud Functions read at runtime —
+    // e.g. `geminiEnabled` to instantly cut AI food/text analysis off
+    // if costs spike or Gemini is down. World-readable (any
+    // authenticated client needs to see the flag before a scan) and
+    // write-only from Admin-SDK / Firebase Console.
+    // ========================================
+    match /config/{doc} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }
