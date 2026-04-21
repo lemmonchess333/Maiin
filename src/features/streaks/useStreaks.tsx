@@ -249,6 +249,15 @@ function useStreaksInternal() {
       return;
     }
 
+    // Error callback applied to every subscription below: if any one fails,
+    // flip its *Loaded flag true so `allLoaded` still resolves and the UI
+    // doesn't hang in a skeleton state. State for the failed source stays
+    // at its previous value (empty by default, stale if we already had data).
+    const onSubscriptionError = (source: string, setLoadedFlag: (v: boolean) => void) => (err: unknown) => {
+      logger.error(`[useStreaks] ${source} subscription failed`, err);
+      setLoadedFlag(true);
+    };
+
     const streaksRef = doc(db, "users", user.uid, "streaks", "data");
     const unsubStreaks = onSnapshot(streaksRef, (snap) => {
       if (snap.exists()) {
@@ -301,7 +310,7 @@ function useStreaksInternal() {
         setStreakData(DEFAULT_STREAKS);
       }
       setStreaksDocLoaded(true);
-    });
+    }, onSubscriptionError("streaks", setStreaksDocLoaded));
 
     const workoutsRef = collection(db, "users", user.uid, "workouts");
     const workoutsQ = query(workoutsRef, orderBy("date", "desc"), limit(WORKOUT_LIMIT));
@@ -312,7 +321,7 @@ function useStreaksInternal() {
         .map((d) => ({ date: d.date as string }));
       setWorkouts(rows);
       setWorkoutsLoaded(true);
-    });
+    }, onSubscriptionError("workouts", setWorkoutsLoaded));
 
     const runsRef = collection(db, "users", user.uid, "runs");
     const runsQ = query(runsRef, orderBy("completedAt", "desc"), limit(RUN_LIMIT));
@@ -324,7 +333,7 @@ function useStreaksInternal() {
       });
       setRuns(rows);
       setRunsLoaded(true);
-    });
+    }, onSubscriptionError("runs", setRunsLoaded));
 
     const mealsRef = collection(db, "users", user.uid, "meals");
     const mealsQ = query(mealsRef, orderBy("createdAt", "desc"), limit(MEAL_LIMIT));
@@ -338,7 +347,7 @@ function useStreaksInternal() {
       });
       setMeals(rows);
       setMealsLoaded(true);
-    });
+    }, onSubscriptionError("meals", setMealsLoaded));
 
     return () => {
       unsubStreaks();

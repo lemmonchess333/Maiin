@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Drawer } from "vaul";
 import { Plus, Minus } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 interface Props {
   food: { name: string; brand: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string } | null;
@@ -13,6 +14,7 @@ interface Props {
 export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
   const [servings, setServings] = useState(1);
   const [prevFood, setPrevFood] = useState(food);
+  const { accent, text: macroText } = useMacroPalette();
   if (prevFood !== food) {
     setPrevFood(food);
     setServings(1);
@@ -41,29 +43,29 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
 
             {/* Macro grid */}
             <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.semantic.nutrition}1A` }}>
-                <p className="text-lg font-bold tabular-nums" style={{ color: THEME.semantic.nutrition }}>
+              <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
                   {Math.round(food.calories * servings)}
                 </p>
-                <p className="text-xs opacity-70" style={{ color: THEME.semantic.nutrition }}>cal</p>
+                <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
               </div>
-              <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.protein}1A` }}>
-                <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.protein }}>
+              <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
                   {Math.round(food.protein * servings)}g
                 </p>
-                <p className="text-xs opacity-70" style={{ color: THEME.macros.protein }}>protein</p>
+                <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
               </div>
-              <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.carbs}1A` }}>
-                <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.carbs }}>
+              <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
                   {Math.round(food.carbs * servings)}g
                 </p>
-                <p className="text-xs opacity-70" style={{ color: THEME.macros.carbs }}>carbs</p>
+                <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
               </div>
-              <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.fat}1A` }}>
-                <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.fat }}>
+              <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
+                <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
                   {Math.round(food.fat * servings)}g
                 </p>
-                <p className="text-xs opacity-70" style={{ color: THEME.macros.fat }}>fat</p>
+                <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
               </div>
             </div>
 

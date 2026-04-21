@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { cn } from "@/lib/utils";
 import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +9,6 @@ import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
@@ -119,6 +119,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
+  const { accent, text: macroText } = useMacroPalette();
 
   const {
     analyzeFood,
@@ -406,29 +407,29 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
                 )}
 
                 <div className="grid grid-cols-4 gap-2 text-center">
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.semantic.nutrition}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: THEME.semantic.nutrition }}>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
                       {Math.round(safeNum(activeResult.totalCalories) * s)}
                     </p>
-                    <p className="text-xs opacity-70" style={{ color: THEME.semantic.nutrition }}>cal</p>
+                    <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
                   </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.protein}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.protein }}>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
                       {Math.round(safeNum(activeResult.totalProtein) * s)}g
                     </p>
-                    <p className="text-xs opacity-70" style={{ color: THEME.macros.protein }}>protein</p>
+                    <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
                   </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.carbs}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.carbs }}>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
                       {Math.round(safeNum(activeResult.totalCarbs) * s)}g
                     </p>
-                    <p className="text-xs opacity-70" style={{ color: THEME.macros.carbs }}>carbs</p>
+                    <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
                   </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${THEME.macros.fat}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: THEME.macros.fat }}>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
                       {Math.round(safeNum(activeResult.totalFat) * s)}g
                     </p>
-                    <p className="text-xs opacity-70" style={{ color: THEME.macros.fat }}>fat</p>
+                    <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
                   </div>
                 </div>
 

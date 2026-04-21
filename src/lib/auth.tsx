@@ -15,6 +15,7 @@ import {
   signInWithPopup,
   type User,
 } from "firebase/auth";
+import { toast } from "sonner";
 import {
   doc,
   getDoc,
@@ -474,22 +475,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    if (Object.keys(publicPatch).length > 0) {
-      const batch = writeBatch(db);
-      batch.set(doc(db, "users", user.uid), writeData, { merge: true });
-      batch.set(doc(db, "users", user.uid, "public", "profile"), publicPatch, { merge: true });
-      await batch.commit();
-    } else {
-      await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
-    }
-
-    setProfile((prev) => {
-      const updated = prev ? { ...prev, ...data } : null;
-      if (updated && "darkMode" in data) {
-        syncDarkMode(updated.darkMode);
+    // Wrap the write in try/catch so silent call sites (toggleDark, TDEE
+     // auto-sync, dozens of Settings fire-and-forgets) surface a toast and
+     // leave local state untouched on failure instead of silently diverging
+     // from Firestore. We don't re-throw: no existing caller handles the
+     // exception, and swallowing it keeps unhandled promise rejections out
+     // of the console for this expected failure path.
+    try {
+      if (Object.keys(publicPatch).length > 0) {
+        const batch = writeBatch(db);
+        batch.set(doc(db, "users", user.uid), writeData, { merge: true });
+        batch.set(doc(db, "users", user.uid, "public", "profile"), publicPatch, { merge: true });
+        await batch.commit();
+      } else {
+        await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
       }
-      return updated;
-    });
+
+      setProfile((prev) => {
+        const updated = prev ? { ...prev, ...data } : null;
+        if (updated && "darkMode" in data) {
+          syncDarkMode(updated.darkMode);
+        }
+        return updated;
+      });
+    } catch (err) {
+      logger.error("[auth] updateProfile failed", err);
+      // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
+      // a single visible message.
+      toast.error("Couldn't save your settings. Please try again.", {
+        id: "update-profile-error",
+      });
+    }
   };
 
   return (
