@@ -171,7 +171,7 @@ export default function TermsOfService() {
             </h2>
             <p>
               For questions about these Terms, please contact us at
-              support@tropos.app
+              support@troposfit.com
             </p>
           </section>
         </div>

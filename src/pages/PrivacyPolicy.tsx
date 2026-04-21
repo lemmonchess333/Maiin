@@ -162,7 +162,7 @@ export default function PrivacyPolicy() {
               </li>
             </ul>
             <p>
-For GDPR-related requests, contact us at: support@tropos.app
+For GDPR-related requests, contact us at: support@troposfit.com
             </p>
           </section>
 
@@ -251,7 +251,7 @@ For GDPR-related requests, contact us at: support@tropos.app
             </h2>
             <p>
 For questions about this privacy policy or your data, please
-              contact us at support@tropos.app
+              contact us at support@troposfit.com
             </p>
           </section>
         </div>

@@ -9,11 +9,17 @@ import AccordionSection from "@/components/AccordionSection";
 
 declare const __APP_VERSION__: string;
 
-// `support@tropos.app` is a Cloudflare Email Routing forwarder — no mailbox
-// lives at tropos.app itself. Inbound mail forwards to the owner's existing
-// personal inbox. The Privacy Policy and Terms of Service also reference
-// this address (see PrivacyPolicy.tsx, TermsOfService.tsx) so any change
-// to the routing target needs to be communicated, not code-swapped.
+// `support@troposfit.com` is a Cloudflare Email Routing forwarder — no
+// mailbox lives at troposfit.com itself. Inbound mail forwards to
+// troposfit@gmail.com, a dedicated support inbox separate from the
+// owner's personal Gmail. The Privacy Policy, Terms of Service, and
+// privacy.html also reference this address (see PrivacyPolicy.tsx,
+// TermsOfService.tsx, privacy.html) so any change to the routing target
+// or the support address itself needs to touch all four.
+//
+// The original address was support@troposfit.com — a domain nobody
+// here owned. Swapped to support@troposfit.com once the troposfit.com
+// domain was registered and the Cloudflare route verified.
 
 // Pre-filled mailto body gives support a baseline diagnostic snapshot on
 // every ticket without asking the user to type it. App version, user
@@ -31,7 +37,7 @@ function buildSupportMailto(): string {
     `Device: ${ua}`,
   ].join("\n");
   const subject = `Tropos support — v${version}`;
-  return `mailto:support@tropos.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 export default function SupportLegalSection() {
@@ -45,7 +51,7 @@ export default function SupportLegalSection() {
           <Mail className="w-5 h-5" />
           <div>
             <p className="text-sm text-foreground">Help & Support</p>
-            <p className="text-xs text-muted-foreground">support@tropos.app</p>
+            <p className="text-xs text-muted-foreground">support@troposfit.com</p>
           </div>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
