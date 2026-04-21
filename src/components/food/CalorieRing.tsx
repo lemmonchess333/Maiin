@@ -219,8 +219,11 @@ export default function CalorieRing({
         </g>
       </svg>
 
-      {/* Centre text — cross-fades on mode toggle */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+      {/* Centre text — cross-fades on mode toggle. aria-hidden because
+          the outer button's aria-label already announces the same value
+          (and the mode toggle hint), so without this VoiceOver reads
+          the calorie number twice on focus. */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
         {hasTarget ? (
           <AnimatePresence mode="wait">
             <motion.div
