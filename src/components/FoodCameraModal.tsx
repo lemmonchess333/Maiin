@@ -59,60 +59,71 @@ export default function FoodCameraModal({
   const [busy, setBusy] = useState(false);
   const [barcodeHint, setBarcodeHint] = useState<string>("Align barcode in frame");
 
-  // start camera when opened
+  // Keep onClose stable across renders so effects don't tear down / rebuild
+  // the camera stream every time the parent re-renders with a fresh closure.
+  // Previously `onClose` lived in the stream effect's deps, which caused the
+  // camera to repeatedly stop/start and produced the "press the button 4x"
+  // flicker pattern.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Reset UI state whenever the modal opens.
   useEffect(() => {
     if (!open) return;
-
     setTab("food");
     setFacing("environment");
     setBusy(false);
     setBarcodeHint("Align barcode in frame");
+  }, [open]);
 
-    const run = async () => {
-      try {
-        const videoEl = videoRef.current;
-        if (!videoEl) return;
-
-        streamRef.current = await startStream(videoEl, "environment");
-      } catch (e: unknown) {
-        // If camera permissions fail, close gracefully
-        logger.error(e);
-        onClose();
-      }
-    };
-
-    void run();
-
-    return () => {
-      stopZXingRef.current?.();
-      stopZXingRef.current = null;
-
-      stopStream(streamRef.current);
-      streamRef.current = null;
-    };
-  }, [open, onClose]);
-
-  // flip camera
+  // Single stream lifecycle — handles open, close, and camera flip.
+  //
+  // This was previously split into two effects (mount + flip) that both
+  // called `startStream` on first open and raced each other, which is the
+  // root cause of the shutter flicker and intermittent capture failures.
+  // The unified effect runs exactly one `getUserMedia` call per (open, facing)
+  // change and uses a `cancelled` flag so late-resolving streams from stale
+  // renders get stopped immediately instead of leaking tracks.
   useEffect(() => {
     if (!open) return;
 
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    const restart = async () => {
+    let cancelled = false;
+
+    const run = async () => {
       try {
+        // Tear down any prior stream before acquiring a new one.
         stopZXingRef.current?.();
         stopZXingRef.current = null;
-
         stopStream(streamRef.current);
-        streamRef.current = await startStream(videoEl, facing);
+        streamRef.current = null;
+
+        const stream = await startStream(videoEl, facing);
+        if (cancelled) {
+          stopStream(stream);
+          return;
+        }
+        streamRef.current = stream;
       } catch (e: unknown) {
         logger.error(e);
+        if (!cancelled) onCloseRef.current();
       }
     };
 
-    void restart();
-  }, [facing, open]);
+    void run();
+
+    return () => {
+      cancelled = true;
+      stopZXingRef.current?.();
+      stopZXingRef.current = null;
+      stopStream(streamRef.current);
+      streamRef.current = null;
+    };
+  }, [open, facing]);
 
   // barcode scanning
   useEffect(() => {
@@ -265,15 +276,19 @@ export default function FoodCameraModal({
         autoPlay
       />
 
-      {/* frame overlay — darkening shadow + four corner brackets (modern scanner) */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
-          <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
-          <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
-          <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
-          <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
+      {/* Alignment frame — only shown for barcode/label modes where the crop
+          matters for the decoder. Food-scan uses the full viewport so users
+          don't have to shoehorn a plate into a narrow rectangle. */}
+      {tab !== "food" && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
+            <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* bottom */}
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">

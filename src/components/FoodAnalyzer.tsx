@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { cn } from "@/lib/utils";
 import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -118,6 +119,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
+  const { accent, text: macroText } = useMacroPalette();
 
   const {
     analyzeFood,
@@ -149,6 +151,15 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
   }, [aiResult, barcodeResult]);
 
   const isBarcode = activeResult?.confidence === "barcode";
+
+  // Hero photo shown at the top of the result card. Prefer the user's own
+  // captured photo (AI food scan); fall back to the product image pulled
+  // from OpenFoodFacts for barcode results. Null means no hero band.
+  const heroImageSrc = useMemo(() => {
+    if (capturedBase64) return `data:image/jpeg;base64,${capturedBase64}`;
+    if (activeResult?.imageUrl) return activeResult.imageUrl;
+    return null;
+  }, [capturedBase64, activeResult?.imageUrl]);
 
   const showLoading = aiLoading || barcodeLoading;
   const showError = aiError || barcodeError;
@@ -238,6 +249,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
   // Matches FoodCameraModal: (base64, mode). `mode` previously gated
   // the capture toast wording; now no toast fires (UI transitions
   // straight to the analysis result), so the parameter is unused.
+  //
+  // Camera auto-closes on success so the user lands on the result card.
+  // On error we keep it open so a retry is a single shutter tap away.
   const onCaptureBase64 = async (base64: string, _mode: "food" | "label") => {
     setBarcodeResult(null);
     setBarcodeError(null);
@@ -245,7 +259,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
 
     try {
       await analyzeFood(base64);
-      // No success toast — UI transitions to the analysis result.
+      setCameraOpen(false);
     } catch (e) {
       logger.error(e);
       toast.error("Food analysis failed.");
@@ -274,6 +288,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
     try {
       const meal = await fetchOpenFoodFacts(code);
       setBarcodeResult(meal);
+      setCameraOpen(false);
       toast.success("Barcode found!");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Barcode lookup failed.";
@@ -334,10 +349,31 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
             transition={{ duration: 0.2 }}
             className="space-y-4"
           >
-            <div className="bg-card rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between gap-2">
+            <div className="bg-card rounded-2xl overflow-hidden">
+              {/* Hero photo — user's captured image for AI scan, OpenFoodFacts
+                  product shot for barcode. The confidence label is dropped
+                  from the header (it read as a portion size next to "Rice");
+                  only low-confidence results surface a warning badge. */}
+              {heroImageSrc && (
+                <div className="relative aspect-[5/3] bg-muted">
+                  <img
+                    src={heroImageSrc}
+                    alt={activeResult.foodName}
+                    className="w-full h-full object-cover"
+                  />
+                  {activeResult.confidence === "low" && (
+                    <div className="absolute top-3 right-3">
+                      <span className="text-[11px] px-2.5 py-1 rounded-full font-medium bg-black/60 text-white backdrop-blur-sm">
+                        Low confidence — double-check
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="p-4 space-y-3">
                 <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-foreground truncate">
+                  <h3 className="text-base font-semibold text-foreground truncate">
                     {activeResult.foodName}
                   </h3>
                   {activeResult.brand && (
@@ -347,61 +383,80 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
                   )}
                 </div>
 
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-foreground">
-                  {activeResult.confidence}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
-                    {Math.round(safeNum(activeResult.totalCalories) * s)}
-                  </p>
-                  <p className="text-xs text-orange-500 dark:text-orange-400/70">cal</p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 tabular-nums">
-                    {Math.round(safeNum(activeResult.totalProtein) * s)}g
-                  </p>
-                  <p className="text-xs text-blue-500 dark:text-blue-400/70">protein</p>
-                </div>
-                <div className="bg-amber-50 dark:bg-amber-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-                    {Math.round(safeNum(activeResult.totalCarbs) * s)}g
-                  </p>
-                  <p className="text-xs text-amber-500 dark:text-amber-400/70">carbs</p>
-                </div>
-                <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-2">
-                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400 tabular-nums">
-                    {Math.round(safeNum(activeResult.totalFat) * s)}g
-                  </p>
-                  <p className="text-xs text-purple-500 dark:text-purple-400/70">fat</p>
-                </div>
-              </div>
-
-              {/* Serving size adjuster — shown for barcode results */}
-              {isBarcode && (
-                <div className="flex items-center justify-center gap-4 pt-1">
-                  <button
-                    onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-                    aria-label="Decrease servings"
-                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-foreground">{servings}</p>
-                    <p className="text-xs text-muted-foreground">servings</p>
+                {/* Per-item breakdown — only when the model returned multiple
+                    items. Single-item meals would just duplicate the title. */}
+                {activeResult.items.length > 1 && (
+                  <div className="space-y-1.5 border-t border-border/40 pt-2.5">
+                    {activeResult.items.map((item, i) => (
+                      <div
+                        key={`${item.name}-${i}`}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground truncate">{item.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {item.portionSize}
+                          </p>
+                        </div>
+                        <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+                          {Math.round(item.calories * s)} cal
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                  <button
-                    onClick={() => setServings(servings + 0.5)}
-                    aria-label="Increase servings"
-                    className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                )}
+
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
+                      {Math.round(safeNum(activeResult.totalCalories) * s)}
+                    </p>
+                    <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
+                      {Math.round(safeNum(activeResult.totalProtein) * s)}g
+                    </p>
+                    <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
+                      {Math.round(safeNum(activeResult.totalCarbs) * s)}g
+                    </p>
+                    <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
+                  </div>
+                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
+                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
+                      {Math.round(safeNum(activeResult.totalFat) * s)}g
+                    </p>
+                    <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
+                  </div>
                 </div>
-              )}
+
+                {/* Serving size adjuster — shown for barcode results */}
+                {isBarcode && (
+                  <div className="flex items-center justify-center gap-4 pt-1">
+                    <button
+                      onClick={() => setServings(Math.max(0.5, servings - 0.5))}
+                      aria-label="Decrease servings"
+                      className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-foreground">{servings}</p>
+                      <p className="text-xs text-muted-foreground">servings</p>
+                    </div>
+                    <button
+                      onClick={() => setServings(servings + 0.5)}
+                      aria-label="Increase servings"
+                      className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2">

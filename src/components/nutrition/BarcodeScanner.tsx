@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { BrowserMultiFormatReader } from "@zxing/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 
 interface NutrientData {
   name: string;
@@ -25,6 +26,7 @@ interface BarcodeScannerProps {
 export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const { accent, text: macroText } = useMacroPalette();
   const [scanning, setScanning] = useState(true);
   const [product, setProduct] = useState<NutrientData | null>(null);
   const [servings, setServings] = useState(1);
@@ -233,26 +235,26 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               </div>
 
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-lg bg-orange-500/10 p-2">
-                  <p className="text-sm font-bold text-orange-500">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
+                  <p className="text-sm font-bold" style={{ color: macroText.nutrition }}>
                     {Math.round(product.calories * servings)}
                   </p>
                   <p className="text-xs text-muted-foreground">cal</p>
                 </div>
-                <div className="rounded-lg bg-blue-500/10 p-2">
-                  <p className="text-sm font-bold text-blue-500">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
+                  <p className="text-sm font-bold" style={{ color: macroText.protein }}>
                     {Math.round(product.protein * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">protein</p>
                 </div>
-                <div className="rounded-lg bg-amber-500/10 p-2">
-                  <p className="text-sm font-bold text-amber-500">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
+                  <p className="text-sm font-bold" style={{ color: macroText.carbs }}>
                     {Math.round(product.carbs * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">carbs</p>
                 </div>
-                <div className="rounded-lg bg-purple-500/10 p-2">
-                  <p className="text-sm font-bold text-purple-500">
+                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
+                  <p className="text-sm font-bold" style={{ color: macroText.fat }}>
                     {Math.round(product.fat * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">fat</p>

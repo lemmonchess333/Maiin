@@ -3,6 +3,7 @@ import { collection, query, orderBy, onSnapshot, deleteDoc, doc, limit, startAft
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
+import { logger } from "@/lib/logger";
 
 export interface MealItem {
   name: string;
@@ -97,13 +98,24 @@ export function useMeals() {
     const mealsRef = collection(db, "users", user.uid, "meals");
     const q = query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
-      setMeals(data);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length >= PAGE_SIZE);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
+        setMeals(data);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+        setHasMore(snapshot.docs.length >= PAGE_SIZE);
+        setLoading(false);
+      },
+      // Surface the failure so the UI can exit its skeleton state; keep any
+      // previously loaded meals in state so a transient permission blip or
+      // network hiccup doesn't wipe what the user is already looking at.
+      (err) => {
+        logger.error("[useMeals] snapshot subscription failed", err);
+        setLoading(false);
+        setHasMore(false);
+      }
+    );
 
     return unsubscribe;
   }, [user]);

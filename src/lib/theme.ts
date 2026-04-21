@@ -70,6 +70,11 @@ export const THEME = {
   //   fat = avocado-sage (Avocado). Each tile pairs colour + silhouette
   //   of the food it stands for. Sage fat is deliberately muted vs the
   //   punchy success green (#4DB872) so the two never collide as signals.
+  //
+  //   These values are tuned for dark mode and for accents/tints/dots.
+  //   For text on a light card, pair with `MACROS_TEXT_LIGHT` (see below)
+  //   via the `useMacroPalette()` hook — the raw values fail WCAG AA
+  //   contrast on white (#EAB308 ≈ 1.95:1).
   macros: {
     calories: '#EF4444', // Tailwind red-500
     protein: '#EC4899',  // Tailwind pink-500
@@ -93,6 +98,27 @@ export const THEME = {
 } as const;
 
 export type MacroKey = keyof typeof THEME.macros;
+
+/**
+ * Darker macro colours intended for text rendered on a light card surface.
+ *
+ * Paired with `THEME.macros.*` via `useMacroPalette()` — that hook returns
+ * the bright palette in dark mode and these darker values in light mode so
+ * macro tiles keep their semantic colour coding while clearing WCAG AA
+ * contrast (4.5:1 for body text) on white. All values measured against
+ * pure white are ≥ 4.85:1.
+ *
+ *   protein  #BE185D  pink-700   ~6.1:1
+ *   carbs    #A16207  yellow-700 ~4.95:1
+ *   fat      #4F7D43  deep sage  ~4.86:1
+ *   nutrition #B45309 amber-700  ~4.95:1
+ */
+export const MACROS_TEXT_LIGHT = {
+  protein: '#BE185D',
+  carbs: '#A16207',
+  fat: '#4F7D43',
+  nutrition: '#B45309',
+} as const;
 
 /** Over-target colour: amber for modest overshoot (≤15%), deep red for substantial. */
 // Deliberately removed — previously ramped numbers/bars on the Food hero

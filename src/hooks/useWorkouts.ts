@@ -94,15 +94,26 @@ export function useWorkouts() {
     const workoutsRef = collection(db, "users", user.uid, "workouts");
     const q = query(workoutsRef, orderBy("date", "desc"), limit(PAGE_SIZE));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs
-        .map((d) => ({ id: d.id, ...d.data() }) as Workout)
-        .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
-      setWorkouts(data);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length >= PAGE_SIZE);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs
+          .map((d) => ({ id: d.id, ...d.data() }) as Workout)
+          .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
+        setWorkouts(data);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+        setHasMore(snapshot.docs.length >= PAGE_SIZE);
+        setLoading(false);
+      },
+      // Surface the failure so the UI exits its skeleton; retain any
+      // previously loaded workouts so a transient rule or network error
+      // doesn't empty the history view.
+      (err) => {
+        logger.error("[useWorkouts] snapshot subscription failed", err);
+        setLoading(false);
+        setHasMore(false);
+      }
+    );
 
     return unsubscribe;
   }, [user]);

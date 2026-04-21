@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { THEME } from "@/lib/theme";
 
 interface MealMacroBarProps {
   totalProtein: number;
@@ -52,7 +53,8 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${pPct}%`,
-          background: "rgb(236 72 153 / 0.7)",
+          background: THEME.macros.protein,
+          opacity: 0.85,
           borderTopLeftRadius: "2px",
           borderBottomLeftRadius: "2px",
         }}
@@ -63,7 +65,8 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${cPct}%`,
-          background: "rgb(59 130 246 / 0.7)",
+          background: THEME.macros.carbs,
+          opacity: 0.85,
         }}
       />
       <motion.div
@@ -72,7 +75,8 @@ export default function MealMacroBar({
         className="h-full"
         style={{
           width: `${fPct}%`,
-          background: "rgb(245 158 11 / 0.7)",
+          background: THEME.macros.fat,
+          opacity: 0.85,
           borderTopRightRadius: "2px",
           borderBottomRightRadius: "2px",
         }}
