@@ -46,7 +46,7 @@ export default function WeekStrip({ dayMap, schedule, selectedDate, onDayTap }: 
           cls += " text-muted-foreground bg-muted";
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 active:scale-[0.95]">
+          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center">
             <span className="text-xs text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
             <div className={cls} style={st}>
               {day.date.getDate()}

@@ -63,8 +63,18 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
     );
   }
 
+  // Screen-reader summary. Recharts renders raw SVG with no built-in
+  // accessible name, so VoiceOver users hit a silent rectangle without
+  // this. Includes session count, range, latest value, and PR count
+  // — enough to convey the trend without the visual.
+  const prCount = data.filter((d) => d.isPR).length;
+  const firstDate = new Date(data[0].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const lastDate = new Date(data[data.length - 1].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const latestValue = Math.round(data[data.length - 1].value).toLocaleString();
+  const ariaLabel = `Progression chart, ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} personal record${prCount === 1 ? "" : "s"}.`;
+
   return (
-    <div className="h-44">
+    <div className="h-44" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 12, bottom: 5, left: 0 }}>
           <XAxis

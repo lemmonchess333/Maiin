@@ -37,7 +37,11 @@ export default function MacroDistribution({ protein, carbs, fat }: MacroDistribu
         Macro Distribution
       </p>
       <div className="flex items-center gap-4">
-        <div className="w-24 h-24 shrink-0 relative">
+        {/* Donut is decorative re: VoiceOver — the legend below it
+            already announces the same percentages + grams as text.
+            aria-hidden on the chart container prevents the screen
+            reader from reading "image" twice. */}
+        <div className="w-24 h-24 shrink-0 relative" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

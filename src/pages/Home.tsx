@@ -19,6 +19,7 @@ import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
@@ -228,7 +229,14 @@ export default function Home() {
       setWeightSaved(true);
       haptic("success");
       setTimeout(function() { setWeightSaved(false); setWeightInput(""); setShowWeightSheet(false); }, 500);
-    } catch (e) { logger.error(e); }
+    } catch (e) {
+      // Previously: silent log only — sheet stayed open with the form
+      // still populated, weightSaving turned off, and the user had no
+      // signal whether the save worked or not. Now surface the failure
+      // so they know to retry.
+      logger.error("[Home] weight save failed", e);
+      toast.error("Couldn't save your weight. Please try again.");
+    }
     setWeightSaving(false);
   };
 

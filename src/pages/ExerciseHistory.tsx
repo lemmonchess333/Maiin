@@ -40,7 +40,10 @@ interface SessionSummary {
 }
 
 function epley1RM(weightKg: number, reps: number): number {
-  if (reps <= 0) return 0;
+  // Guard: zero/negative reps produce nonsense (or in the case of a
+  // logged "failed" set with reps=0, would falsely report
+  // weight × 1.0 as a 1RM). Mirrors src/lib/analytics.ts's guard.
+  if (reps <= 0 || weightKg < 0) return 0;
   return weightKg * (1 + reps / 30);
 }
 
@@ -123,38 +126,27 @@ export default function ExerciseHistory() {
     return out;
   }, [workouts, decodedName]);
 
-  // Rep-range PRs — max weight ever lifted at exactly that rep count (or
-  // max reps at that bucket for bodyweight exercises).
+  // Rep-range PRs — heaviest weight ever lifted at exactly that rep
+  // count. For bodyweight exercises this is the heaviest ADDED weight
+  // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
+  // pure BW sessions store `weightKg = 0` and just show "BW" with the
+  // most recent date that achieved exactly that rep count.
   const repRangePRs = useMemo(() => {
     const map: Record<number, { weightKg: number; date: string } | null> = {};
     for (const bucket of REP_BUCKETS) map[bucket] = null;
     for (const s of allSessions) {
       for (const set of s.sets) {
-        if (isBodyweight) {
-          // BW bucket: max reps at each volume-of-reps tier. Here we
-          // track the heaviest ADDED weight for exactly that rep count.
-          for (const bucket of REP_BUCKETS) {
-            if (set.reps === bucket) {
-              const existing = map[bucket];
-              if (!existing || set.weightKg > existing.weightKg) {
-                map[bucket] = { weightKg: set.weightKg, date: s.date };
-              }
-            }
-          }
-        } else {
-          for (const bucket of REP_BUCKETS) {
-            if (set.reps === bucket) {
-              const existing = map[bucket];
-              if (!existing || set.weightKg > existing.weightKg) {
-                map[bucket] = { weightKg: set.weightKg, date: s.date };
-              }
-            }
+        for (const bucket of REP_BUCKETS) {
+          if (set.reps !== bucket) continue;
+          const existing = map[bucket];
+          if (!existing || set.weightKg > existing.weightKg) {
+            map[bucket] = { weightKg: set.weightKg, date: s.date };
           }
         }
       }
     }
     return map;
-  }, [allSessions, isBodyweight]);
+  }, [allSessions]);
 
   // Walk sessions chronologically tracking running best. Flag each session
   // whose top-set e1rm beats the previous running best — these get a
@@ -289,7 +281,7 @@ export default function ExerciseHistory() {
         <button
           onClick={goBack}
           aria-label="Back"
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />

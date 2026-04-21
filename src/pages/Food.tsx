@@ -328,12 +328,22 @@ export default function Food() {
   useEffect(() => {
     const mealCount = todaysMeals.length;
     if (mealCount === 0) return;
+    // Fire-and-forget previously: a failed log write (permission, offline)
+    // would silently desync the streak system from the user's actual
+    // activity. We removed the "Meal logged!" success toast in 0f68ff3
+    // arguing visible meal-list state is the confirmation, but that
+    // assumption only holds if the daily-log write actually succeeds.
+    // Now we capture the failure — toast.error already same-id'd as
+    // food-save-error so rapid retries collapse into one message.
     saveLog({
       date: selectedDate,
       workouts: 0,
       meals: mealCount,
       hasPR: false,
       notes: "",
+    }).catch((err) => {
+      logger.error("[Food] daily log save failed", err);
+      toast.error("Couldn't update today's log", { id: "food-save-error" });
     });
   }, [todaysMeals.length, selectedDate, saveLog]);
 
