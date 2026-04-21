@@ -30,10 +30,10 @@ import {
   SendHorizontal,
   PenLine,
   RotateCcw,
+  Star,
   X,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
-import { QuickRelog } from "@/components/nutrition/QuickRelog";
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
@@ -134,7 +134,7 @@ export default function Food() {
   // entries and the section actually becomes populated. Prevents double-taps.
   const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const { addFavourite } = useFoodFavourites();
+  const { addFavourite, getTimeRelevant } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -616,76 +616,68 @@ export default function Food() {
     }, 50);
   };
 
-  const handleQuickRelog = async (fav: {
-    name: string;
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber?: number;
-    sugar?: number;
-    sodium?: number;
-    servingSize: string;
-  }) => {
-    if (!user) return;
-    try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        foodName: fav.name,
-        items: [
-          {
-            name: fav.name,
-            portionSize: fav.servingSize,
-            calories: fav.calories,
-            protein: fav.protein,
-            carbs: fav.carbs,
-            fat: fav.fat,
-            fiber: fav.fiber,
-            sugar: fav.sugar,
-            sodium: fav.sodium,
-          },
-        ],
-        totalCalories: fav.calories,
-        totalProtein: fav.protein,
-        totalCarbs: fav.carbs,
-        totalFat: fav.fat,
-        totalFiber: fav.fiber || undefined,
-        totalSugar: fav.sugar || undefined,
-        totalSodium: fav.sodium || undefined,
-        confidence: "favourite",
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
-      });
-      setTargetMeal(null);
-      await addFavourite({ ...fav, source: "manual" });
-      // No success toast — meal list updates, macros animate.
-    } catch {
-      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
-    }
-  };
-
+  // Merged Quick Add source: time-relevant favourites first (they're tagged
+  // by time of day so breakfast foods bubble up at breakfast), then fill
+  // from recent meal history (top unique names), then a seeded fallback.
+  // Dedupe is by normalized food name across all three sources — previously
+  // a "Pasta with Sauce" favourite was listed twice (once via QuickRelog,
+  // once via the history-derived row) which was the duplicate the user
+  // flagged. Cap at 5 entries to keep the row scannable.
   const quickMeals = useMemo(() => {
     const seen = new Set<string>();
-    const fromHistory: typeof DEFAULT_QUICK_MEALS = [];
-    for (const meal of meals) {
-      const key = (meal.foodName || "").toLowerCase().trim();
-      if (!key || seen.has(key)) continue;
+    const items: Array<{
+      name: string;
+      cal: number;
+      pro: number;
+      carb: number;
+      fat: number;
+      portionSize: string;
+    }> = [];
+
+    const push = (entry: typeof items[number]) => {
+      const key = entry.name.toLowerCase().trim();
+      if (!key || seen.has(key) || items.length >= 5) return;
       seen.add(key);
-      fromHistory.push({
+      items.push(entry);
+    };
+
+    // 1. Time-relevant favourites (richest data — known portion size)
+    for (const f of getTimeRelevant(new Date().getHours(), 10)) {
+      push({
+        name: f.name,
+        cal: f.calories,
+        pro: f.protein,
+        carb: f.carbs,
+        fat: f.fat,
+        portionSize: f.servingSize || "1 serving",
+      });
+    }
+
+    // 2. Recent meal history
+    for (const meal of meals) {
+      push({
         name: meal.foodName,
         cal: meal.totalCalories || 0,
         pro: meal.totalProtein || 0,
         carb: meal.totalCarbs || 0,
         fat: meal.totalFat || 0,
+        portionSize: "1 serving",
       });
-      if (fromHistory.length >= 5) break;
     }
-    return fromHistory.length >= 3 ? fromHistory : DEFAULT_QUICK_MEALS;
-  }, [meals]);
+
+    // 3. Seeded defaults so first-time users still see suggestions
+    if (items.length < 3) {
+      for (const d of DEFAULT_QUICK_MEALS) {
+        push({ ...d, portionSize: "1 serving" });
+      }
+    }
+
+    return items;
+  }, [meals, getTimeRelevant]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
 
-  const handleQuickMealAdd = async (meal: (typeof DEFAULT_QUICK_MEALS)[0]) => {
+  const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
     if (!user || quickAdding) return;
     setQuickAdding(meal.name);
     try {
@@ -695,7 +687,7 @@ export default function Food() {
         items: [
           {
             name: meal.name,
-            portionSize: "1 serving",
+            portionSize: meal.portionSize,
             calories: meal.cal,
             protein: meal.pro,
             carbs: meal.carb,
@@ -910,57 +902,34 @@ export default function Food() {
       )}
 
       {/* Quick Add — merged section (quick meals + favourites + frequently logged) */}
+      {/* Quick Add — single merged surface (favourites + history). Previously
+          this was two stacked rows ("Quick add" recents + a separate
+          "Quick Add" favourites strip via QuickRelog) which duplicated any
+          food that was both recent and favourited. */}
       <motion.div variants={itemVariant} style={{ marginTop: "14px" }}>
-        <p className="text-xs tracking-wide font-medium mb-2" style={{ color: THEME.text.muted }}>
-          Quick add
+        <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+          <Star className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+          Quick Add
         </p>
-        {quickMeals.length >= 3 ? (
-          <div
-            className="flex gap-2 pb-1 -mx-1 px-1"
-            style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
-          >
-            {quickMeals.map((meal, i) => (
-              <motion.button
-                key={i}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                disabled={quickAdding !== null}
-                className={cn(
-                  "shrink-0 h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
-                  quickAdding !== null && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                {meal.name} · {meal.cal} kcal
-              </motion.button>
-            ))}
-            <div className="shrink-0 w-4" aria-hidden="true" />
-          </div>
-        ) : (
-          <div
-            className="flex gap-2.5 pb-1 -mx-1 px-1"
-            style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
-          >
-            {quickMeals.map((meal, i) => (
-              <motion.button
-                key={i}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                disabled={quickAdding !== null}
-                className={cn(
-                  "shrink-0 text-left border border-border/60 border-l-[3px] border-l-orange-300 rounded-xl transition-all active:bg-primary/10",
-                  quickAdding !== null && "opacity-60 cursor-not-allowed"
-                )}
-                style={{ width: "180px", padding: "8px 12px", background: `linear-gradient(135deg, ${THEME.semantic.nutrition}08 0%, transparent 70%)` }}
-              >
-                <span className="text-micro font-semibold text-foreground block truncate">{meal.name}</span>
-                <span className="block text-xs text-muted-foreground mt-1">~{meal.cal} kcal</span>
-              </motion.button>
-            ))}
-            <div className="shrink-0 w-4" aria-hidden="true" />
-          </div>
-        )}
-        <div className="mt-2">
-          <QuickRelog onSelect={handleQuickRelog} />
+        <div
+          className="flex gap-2 pb-1 -mx-1 px-1"
+          style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+        >
+          {quickMeals.map((meal, i) => (
+            <motion.button
+              key={`${meal.name}-${i}`}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { haptic(); handleQuickMealAdd(meal); }}
+              disabled={quickAdding !== null}
+              className={cn(
+                "shrink-0 h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
+                quickAdding !== null && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              {meal.name} · {meal.cal} kcal
+            </motion.button>
+          ))}
+          <div className="shrink-0 w-4" aria-hidden="true" />
         </div>
       </motion.div>
 

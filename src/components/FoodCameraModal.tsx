@@ -276,19 +276,30 @@ export default function FoodCameraModal({
         autoPlay
       />
 
-      {/* Alignment frame — only shown for barcode/label modes where the crop
-          matters for the decoder. Food-scan uses the full viewport so users
-          don't have to shoehorn a plate into a narrow rectangle. */}
-      {tab !== "food" && (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+      {/* Alignment frame — always shown as a visual aid to help the user
+          centre the subject (Cal AI / face-verification pattern). Barcode
+          and label modes use a narrow rectangle with strong darkening
+          outside because the crop matters to the decoder. Food mode uses
+          a larger square-ish frame with lighter darkening — the corner
+          brackets just help you centre the plate without forcing it into
+          a tiny box. */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        {tab === "food" ? (
+          <div className="w-[86%] max-w-[420px] aspect-square relative rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]">
+            <div className="absolute top-0 left-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white/90 rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-r-[3px] border-t-[3px] border-white/90 rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-[3px] border-b-[3px] border-white/90 rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-[3px] border-b-[3px] border-white/90 rounded-br-2xl" />
+          </div>
+        ) : (
           <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
             <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
             <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
             <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
             <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* bottom */}
       <div className="absolute bottom-0 left-0 right-0 p-4 pb-8">
