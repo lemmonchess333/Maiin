@@ -263,6 +263,7 @@ export default function History() {
     const prevLiftCount = prevFiltered.length;
 
     const weekMap: Record<string, number> = {};
+    const sessionWeekMap: Record<string, number> = {};
     filtered.forEach((w) => {
       const d = new Date(w.date);
       d.setDate(d.getDate() - d.getDay());
@@ -271,10 +272,12 @@ export default function History() {
         (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
       );
       weekMap[key] = (weekMap[key] || 0) + vol;
+      sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
     });
-    const weeklyVolume = Object.entries(weekMap)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([week, volume]) => ({ week, volume }));
+    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) => a.localeCompare(b));
+    const weeklyVolume = sortedWeekKeys.map((week) => ({ week, volume: weekMap[week] }));
+    const volumeSparkline = sortedWeekKeys.map((w) => weekMap[w]);
+    const sessionsSparkline = sortedWeekKeys.map((w) => sessionWeekMap[w] || 0);
 
     // Build all-time best e1rm per exercise
     const allTimeBest: Record<string, number> = {};
@@ -320,7 +323,7 @@ export default function History() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 8);
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline, prevLiftCount, prevLiftVolume };
+    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -365,6 +368,13 @@ export default function History() {
     const daysLogged = Object.keys(byDate).length;
     const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
 
+    // Sparkline series: daily values, chronological. Zero-pad missing
+    // days so the sparkline shows a real shape rather than clustering
+    // only the logged entries.
+    const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));
+    const caloriesSparkline = sortedDates.map((d) => byDate[d].cal);
+    const proteinSparkline = sortedDates.map((d) => byDate[d].prot);
+
     return {
       avgCalories,
       avgProtein,
@@ -373,6 +383,8 @@ export default function History() {
       prevAvgCalories,
       prevAvgProtein,
       adherence,
+      caloriesSparkline,
+      proteinSparkline,
     };
   }, [meals, rangeDays]);
 
@@ -515,6 +527,7 @@ export default function History() {
                   value={formatVolume(liftingData.liftVolume).value}
                   unit={formatVolume(liftingData.liftVolume).unit}
                   delta={buildDelta(liftingData.liftVolume, liftingData.prevLiftVolume)}
+                  sparklineData={liftingData.volumeSparkline}
                   accentColor={THEME.lifting}
                 />
                 <StatCard
@@ -522,6 +535,7 @@ export default function History() {
                   value={String(liftingData.liftCount)}
                   unit={timeRange === "1W" ? "/week" : timeRange === "1M" ? "/month" : timeRange === "3M" ? "/3mo" : timeRange === "6M" ? "/6mo" : "/year"}
                   delta={buildDelta(liftingData.liftCount, liftingData.prevLiftCount)}
+                  sparklineData={liftingData.sessionsSparkline}
                   accentColor={THEME.lifting}
                 />
               </div>
@@ -621,6 +635,7 @@ export default function History() {
                   value={nutrition.avgCalories.toLocaleString()}
                   unit="kcal/day"
                   delta={buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories)}
+                  sparklineData={nutrition.caloriesSparkline}
                   accentColor={THEME.success}
                 />
                 <StatCard
@@ -628,6 +643,7 @@ export default function History() {
                   value={nutrition.avgProtein.toString()}
                   unit="g/day"
                   delta={buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein)}
+                  sparklineData={nutrition.proteinSparkline}
                   accentColor={THEME.macros.protein}
                 />
               </div>

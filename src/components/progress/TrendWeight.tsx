@@ -113,6 +113,38 @@ export function TrendWeight() {
     ? convert(Math.abs(currentTrend - goalWeight))
     : null;
 
+  // Projected goal-reach date. Linear extrapolation from the current
+  // trend slope — not a prediction engine, just a motivational
+  // "at this rate, about X weeks away." Only shown when:
+  //   1. The data spans at least 14 days (slope is too noisy under that),
+  //   2. The trend is moving in the direction of the goal, and
+  //   3. The projected ETA is under ~2 years (otherwise it becomes
+  //      demotivating noise — "your goal is 847 days away").
+  const projectedGoal: { date: string; weeks: number } | null = (() => {
+    if (!goalWeight || !Number.isFinite(goalWeight)) return null;
+    if (data.length < 2) return null;
+    const firstDate = new Date(data[0].date);
+    const lastDate = new Date(data[data.length - 1].date);
+    const daysSpan = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSpan < 14) return null;
+    const slope = (data[data.length - 1].trend - data[0].trend) / daysSpan; // kg/day
+    const remaining = goalWeight - currentTrend; // +ve if goal is higher, -ve if lower
+    // Directions mismatch → not on track for goal, suppress.
+    if (slope === 0) return null;
+    if ((remaining > 0) !== (slope > 0)) return null;
+    const daysToGoal = remaining / slope;
+    if (!Number.isFinite(daysToGoal) || daysToGoal <= 0) return null;
+    if (daysToGoal > 730) return null;
+    const eta = new Date();
+    eta.setDate(eta.getDate() + Math.round(daysToGoal));
+    const dateLabel = eta.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: eta.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+    });
+    return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
+  })();
+
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
@@ -263,6 +295,13 @@ export function TrendWeight() {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+      {projectedGoal && (
+        <p className="text-xs text-muted-foreground text-center pt-1">
+          At this rate, goal by{" "}
+          <span className="text-foreground font-medium">{projectedGoal.date}</span>
+          {" · "}~{projectedGoal.weeks} {projectedGoal.weeks === 1 ? "week" : "weeks"}
+        </p>
+      )}
     </div>
   );
 }
