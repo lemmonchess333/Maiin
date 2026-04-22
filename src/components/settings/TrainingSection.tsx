@@ -86,7 +86,7 @@ export default function TrainingSection({
 
   return (
     <AccordionSection icon={<Target className="w-5 h-5 text-primary" />} title="Training" subtitle="Weekly schedule, run mode">
-      {/* Reconfigure Programme */}
+      {/* Edit Programme */}
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={async () => {
@@ -98,8 +98,8 @@ export default function TrainingSection({
       >
         <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         <div className="flex-1 text-left">
-          <p className="text-sm font-medium">Reconfigure programme</p>
-          <p className="text-xs text-muted-foreground">Re-run setup to generate a new training plan and targets</p>
+          <p className="text-sm font-medium">Edit programme</p>
+          <p className="text-xs text-muted-foreground">Update goals, days, equipment or injuries — we'll rebuild your plan</p>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </motion.button>

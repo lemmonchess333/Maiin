@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -202,9 +202,16 @@ const STEP_META: { title: string; subtitle: string }[] = [
 export default function Onboarding() {
   const { user, profile, updateProfile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isRetake = !!(location.state as { retake?: boolean } | null)?.retake;
 
-  const [step, setStep] = useState(0);
+  // In retake mode, skip the identity steps (name, gender, age, body metrics)
+  // that can't meaningfully change. The user jumps straight to the program-
+  // relevant steps starting at "What's your primary goal?" (STEP_META index 4).
+  const START_STEP = isRetake ? 4 : 0;
+  const VISIBLE_STEPS = TOTAL_STEPS - START_STEP;
+
+  const [step, setStep] = useState(START_STEP);
   const [saving, setSaving] = useState(false);
 
   // ── Step 0: Display name
@@ -535,20 +542,23 @@ export default function Onboarding() {
     >
       {/* ── Progress bar ── */}
       <div className="flex gap-1.5 pt-14 pb-6">
-        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-          <div
-            key={i}
-            className="h-1 flex-1 rounded-full overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-          >
-            <motion.div
-              className="h-full rounded-full"
-              animate={{ width: i <= step ? "100%" : "0%" }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              style={{ background: THEME.teal }}
-            />
-          </div>
-        ))}
+        {Array.from({ length: VISIBLE_STEPS }).map((_, i) => {
+          const stepIdx = i + START_STEP;
+          return (
+            <div
+              key={stepIdx}
+              className="h-1 flex-1 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.1)" }}
+            >
+              <motion.div
+                className="h-full rounded-full"
+                animate={{ width: stepIdx <= step ? "100%" : "0%" }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                style={{ background: THEME.teal }}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Step content ── */}
@@ -568,7 +578,7 @@ export default function Onboarding() {
             className="text-xs uppercase tracking-widest mb-2"
             style={{ color: "rgba(255,255,255,0.4)" }}
           >
-            Step {step + 1} of {TOTAL_STEPS}
+            Step {step - START_STEP + 1} of {VISIBLE_STEPS}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
@@ -1127,7 +1137,7 @@ export default function Onboarding() {
 
       {/* ── Navigation ── */}
       <div className="flex items-center gap-3 pt-6">
-        {step > 0 && (
+        {step > START_STEP ? (
           <button
             onClick={() => setStep(s => s - 1)}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
@@ -1138,7 +1148,24 @@ export default function Onboarding() {
           >
             Back
           </button>
-        )}
+        ) : isRetake ? (
+          <button
+            onClick={async () => {
+              // Entry handler flipped this to false before sending the user
+              // into retake; restore it so bailing out doesn't leave the app
+              // treating them as mid-onboarding on next load.
+              await updateProfile({ onboardingComplete: true });
+              navigate("/settings");
+            }}
+            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
+            style={{
+              background: "rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.6)",
+            }}
+          >
+            Exit
+          </button>
+        ) : null}
         <button
           onClick={() => {
             if (step < TOTAL_STEPS - 1) {
