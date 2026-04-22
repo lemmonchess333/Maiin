@@ -3,26 +3,27 @@ import { PROGRAM_TEMPLATES } from "../templates";
 import { applyInjuryFilters } from "../matchTemplate";
 
 /**
- * Guardrail: every template × every injury combination must produce
- * a valid program — no duplicate exercises on a single day, no
- * exercises the filter left untouched despite being contraindicated
- * for the user, and no exercises left in a tier-4 "no safe substitute"
- * unresolved state.
+ * Guardrail: every template × every non-empty subset of the 5 supported
+ * injury categories must produce a valid program — no duplicate
+ * exercises on a single day, no exercises the filter left untouched
+ * despite being contraindicated for the user, and no exercises left
+ * in a tier-4 "no safe substitute" unresolved state.
  *
- * The 17-broken-id cleanup plus the dedup fix plus the expanded
- * leg-extension substitute list bring this count to zero. If it
- * rises again, the test output surfaces exactly which combination
- * regressed.
+ * 2^5 - 1 = 31 injury combos × 11 templates = 341 cases. Any user in
+ * the wild can click any combination of cards on the onboarding
+ * injury step, and every one must produce a valid program.
  */
-const combos: readonly (readonly string[])[] = [
-  ["knee"],
-  ["shoulder"],
-  ["lower_back"],
-  ["knee", "shoulder"],
-  ["knee", "lower_back"],
-  ["shoulder", "lower_back"],
-  ["knee", "shoulder", "lower_back"],
-];
+const ALL_INJURIES = ["knee", "shoulder", "lower_back", "wrist", "elbow"] as const;
+const combos: readonly (readonly string[])[] = (() => {
+  const out: string[][] = [];
+  const n = ALL_INJURIES.length;
+  for (let mask = 1; mask < 1 << n; mask++) {
+    const combo: string[] = [];
+    for (let i = 0; i < n; i++) if (mask & (1 << i)) combo.push(ALL_INJURIES[i]);
+    out.push(combo);
+  }
+  return out;
+})();
 
 describe("injury filter — full coverage", () => {
   for (const t of PROGRAM_TEMPLATES) {

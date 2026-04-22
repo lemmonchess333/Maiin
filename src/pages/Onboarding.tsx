@@ -270,7 +270,7 @@ export default function Onboarding() {
       if (profile.preferredSplit) setPreferredSplit(profile.preferredSplit);
       if (profile.runFrequency) setRunFrequency(profile.runFrequency);
       if (profile.injuries) {
-        const knownInjuries = ["none", "lower_back", "shoulder", "knee"];
+        const knownInjuries = ["none", "lower_back", "shoulder", "knee", "wrist", "elbow"];
         // Pre-W1c "other" / free-text injury values are ignored on retake —
         // the filter only acts on the three known categories, so surfacing
         // stale free-text would only re-confuse the user.
@@ -1040,6 +1040,8 @@ export default function Onboarding() {
                 { id: "lower_back", label: "Lower back", desc: "We'll avoid heavy axial loading", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "shoulder", label: "Shoulder", desc: "We'll modify pressing movements", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "knee", label: "Knee", desc: "We'll adjust squat and lunge variations", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
+                { id: "elbow", label: "Elbow", desc: "We'll swap heavy curls and dips for cable/machine work", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
+                { id: "wrist", label: "Wrist", desc: "We'll pick neutral-grip and machine variants", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
               ]).map((opt, i) => {
                 const isSelected = injuries.includes(opt.id);
                 const isNone = opt.id === "none";

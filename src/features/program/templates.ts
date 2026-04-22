@@ -74,9 +74,9 @@ const fullBodyBeginner: ProgramTemplate = {
         dayNumber: 1, name: "Full Body A", type: "lift",
         exercises: [
           ex("Barbell Squat", "squat", 3, "8-10", 120, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Bench Press", "bench-press", 3, "8-10", 120, { alt: ["Chest Press Machine"] }),
+          ex("Bench Press", "bench-press", 3, "8-10", 120, { alt: ["Chest Press Machine"], contra: ["wrist"] }),
           ex("Barbell Row", "barbell-row", 3, "8-10", 90, { alt: ["Seated Cable Row"], contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-10", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Overhead Press", "overhead-press", 3, "8-10", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Plank", "plank", 3, "30-45s", 60),
         ],
       },
@@ -97,7 +97,7 @@ const fullBodyBeginner: ProgramTemplate = {
           ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
           ex("Dumbbell Row", "db-row", 3, "10-12", 90),
           ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Bicep Curl", "barbell-curl", 2, "10-12", 60),
+          ex("Bicep Curl", "barbell-curl", 2, "10-12", 60, { contra: ["wrist", "elbow"] }),
         ],
       },
     ],
@@ -135,7 +135,7 @@ const fullBodyHome: ProgramTemplate = {
         exercises: [
           ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
           ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"] }),
+          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
           ex("Dumbbell Curl", "db-curl", 2, "10-12", 60),
         ],
@@ -174,9 +174,9 @@ const fullBodyMinimal: ProgramTemplate = {
         dayNumber: 1, name: "Full Body A", type: "lift",
         exercises: [
           ex("Bodyweight Squat", "bodyweight-squat", 4, "15-20", 60),
-          ex("Push-Ups", "push-ups", 4, "10-20", 60),
+          ex("Push-Ups", "push-ups", 4, "10-20", 60, { contra: ["wrist"] }),
           ex("Inverted Row", "inverted-row", 3, "8-12", 60),
-          ex("Pike Push-Up", "pike-push-up", 3, "8-12", 60, { alt: ["Push-Ups"], contra: ["shoulder"] }),
+          ex("Pike Push-Up", "pike-push-up", 3, "8-12", 60, { alt: ["Push-Ups"], contra: ["shoulder", "wrist"] }),
           ex("Plank", "plank", 3, "30-60s", 45),
         ],
       },
@@ -184,8 +184,8 @@ const fullBodyMinimal: ProgramTemplate = {
         dayNumber: 2, name: "Full Body B", type: "lift",
         exercises: [
           ex("Lunge", "bodyweight-lunge", 3, "12/leg", 60, { contra: ["knee"] }),
-          ex("Diamond Push-Ups", "diamond-push-ups", 3, "8-15", 60),
-          ex("Pull-Ups", "pull-ups", 3, "5-10", 90, { alt: ["Inverted Row"] }),
+          ex("Diamond Push-Ups", "diamond-push-ups", 3, "8-15", 60, { contra: ["wrist", "elbow"] }),
+          ex("Pull-Ups", "pull-ups", 3, "5-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
           ex("Glute Bridge", "glute-bridge", 3, "15-20", 60),
           ex("Mountain Climbers", "mountain-climbers", 3, "20/side", 45),
         ],
@@ -195,7 +195,7 @@ const fullBodyMinimal: ProgramTemplate = {
         exercises: [
           ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
           ex("Weighted Push-Ups", "weighted-push-ups", 3, "8-15", 60),
-          ex("Chin-Ups", "chin-ups", 3, "5-10", 90, { alt: ["Inverted Row"] }),
+          ex("Chin-Ups", "chin-ups", 3, "5-10", 90, { alt: ["Inverted Row"], contra: ["elbow"] }),
           ex("Superman Hold", "superman-hold", 3, "20-30s", 45, { contra: ["lower_back"] }),
           ex("Dead Bug", "dead-bug", 3, "10/side", 45),
         ],
@@ -223,9 +223,9 @@ const upperLowerHypertrophy: ProgramTemplate = {
       {
         dayNumber: 1, name: "Upper A", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120),
+          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
           ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
           ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
@@ -248,7 +248,7 @@ const upperLowerHypertrophy: ProgramTemplate = {
           ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
           ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60),
+          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
           ex("Overhead Tricep Extension", "overhead-extension", 3, "10-12", 60),
         ],
       },
@@ -287,9 +287,9 @@ const upperLowerRuns: ProgramTemplate = {
       {
         dayNumber: 1, name: "Upper A", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120),
+          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
           ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
           ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
@@ -312,7 +312,7 @@ const upperLowerRuns: ProgramTemplate = {
           ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
           ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60),
+          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
         ],
       },
       {
@@ -354,8 +354,8 @@ const pplHypertrophy: ProgramTemplate = {
       {
         dayNumber: 1, name: "Push A", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "6-8", 150),
-          ex("Overhead Press", "overhead-press", 3, "8-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Bench Press", "bench-press", 4, "6-8", 150, { contra: ["wrist"] }),
+          ex("Overhead Press", "overhead-press", 3, "8-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
           ex("Cable Crossover", "cable-crossover", 3, "12-15", 60),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
@@ -366,10 +366,10 @@ const pplHypertrophy: ProgramTemplate = {
         dayNumber: 2, name: "Pull A", type: "lift",
         exercises: [
           ex("Deadlift", "deadlift", 4, "5-6", 180, { contra: ["lower_back"] }),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 120),
+          ex("Pull-Ups", "pull-ups", 3, "6-10", 120, { contra: ["shoulder", "elbow"] }),
           ex("Barbell Row", "barbell-row", 3, "8-10", 90, { contra: ["lower_back"] }),
           ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60),
+          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
           ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
         ],
       },
@@ -386,11 +386,11 @@ const pplHypertrophy: ProgramTemplate = {
       {
         dayNumber: 4, name: "Push B", type: "lift",
         exercises: [
-          ex("Incline Bench Press", "incline-bench", 4, "8-10", 120),
+          ex("Incline Bench Press", "incline-bench", 4, "8-10", 120, { contra: ["wrist"] }),
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
           ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Dips", "dips", 3, "8-12", 90),
+          ex("Dips", "dips", 3, "8-12", 90, { contra: ["shoulder", "wrist", "elbow"] }),
         ],
       },
       {
@@ -443,10 +443,10 @@ const pplStrength: ProgramTemplate = {
       {
         dayNumber: 1, name: "Push (Strength)", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 5, "3-5", 240),
-          ex("Overhead Press", "overhead-press", 4, "4-6", 180, { alt: ["Dumbbell Shoulder Press"], contra: ["shoulder"] }),
-          ex("Incline Bench Press", "incline-bench", 3, "6-8", 120),
-          ex("Weighted Chest Dip", "weighted-chest-dip", 3, "6-10", 120),
+          ex("Bench Press", "bench-press", 5, "3-5", 240, { contra: ["wrist"] }),
+          ex("Overhead Press", "overhead-press", 4, "4-6", 180, { alt: ["Dumbbell Shoulder Press"], contra: ["shoulder", "wrist"] }),
+          ex("Incline Bench Press", "incline-bench", 3, "6-8", 120, { contra: ["wrist"] }),
+          ex("Weighted Chest Dip", "weighted-chest-dip", 3, "6-10", 120, { contra: ["shoulder", "wrist", "elbow"] }),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "8-12", 60),
         ],
       },
@@ -455,9 +455,9 @@ const pplStrength: ProgramTemplate = {
         exercises: [
           ex("Deadlift", "deadlift", 5, "3-5", 300, { contra: ["lower_back"] }),
           ex("Barbell Row", "barbell-row", 4, "4-6", 150, { contra: ["lower_back"] }),
-          ex("Pull-Ups", "pull-ups", 3, "5-8", 120),
+          ex("Pull-Ups", "pull-ups", 3, "5-8", 120, { contra: ["shoulder", "elbow"] }),
           ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "6-10", 60),
+          ex("Barbell Curl", "barbell-curl", 3, "6-10", 60, { contra: ["wrist", "elbow"] }),
         ],
       },
       {
@@ -473,11 +473,11 @@ const pplStrength: ProgramTemplate = {
       {
         dayNumber: 4, name: "Push (Volume)", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "6-8", 150),
+          ex("Bench Press", "bench-press", 4, "6-8", 150, { contra: ["wrist"] }),
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
           ex("Dumbbell Flyes", "db-flyes", 3, "10-12", 60),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Close Grip Bench Press", "close-grip-bench", 3, "8-10", 120),
+          ex("Close Grip Bench Press", "close-grip-bench", 3, "8-10", 120, { contra: ["wrist", "elbow"] }),
         ],
       },
       {
@@ -560,8 +560,8 @@ const pplHybridRunner: ProgramTemplate = {
       {
         dayNumber: 3, name: "Push", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
+          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
           ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
@@ -570,12 +570,12 @@ const pplHybridRunner: ProgramTemplate = {
       {
         dayNumber: 4, name: "Upper — Chest & Back", type: "lift",
         exercises: [
-          ex("Incline Bench Press", "incline-bench", 3, "8-10", 120),
+          ex("Incline Bench Press", "incline-bench", 3, "8-10", 120, { contra: ["wrist"] }),
           ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
           ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
           ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Barbell Curl", "barbell-curl", 2, "10-12", 60),
-          ex("Dips", "dips", 2, "8-12", 90),
+          ex("Barbell Curl", "barbell-curl", 2, "10-12", 60, { contra: ["wrist", "elbow"] }),
+          ex("Dips", "dips", 2, "8-12", 90, { contra: ["shoulder", "wrist", "elbow"] }),
         ],
       },
       {
@@ -615,7 +615,7 @@ const broSplitClassic: ProgramTemplate = {
       {
         dayNumber: 1, name: "Chest", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "6-10", 120),
+          ex("Bench Press", "bench-press", 4, "6-10", 120, { contra: ["wrist"] }),
           ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
           ex("Cable Crossover", "cable-crossover", 3, "12-15", 60),
           ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
@@ -635,7 +635,7 @@ const broSplitClassic: ProgramTemplate = {
       {
         dayNumber: 3, name: "Shoulders", type: "lift",
         exercises: [
-          ex("Overhead Press", "overhead-press", 4, "6-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Overhead Press", "overhead-press", 4, "6-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Dumbbell Lateral Raise", "lateral-raise", 4, "12-15", 60),
           ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
@@ -645,8 +645,8 @@ const broSplitClassic: ProgramTemplate = {
       {
         dayNumber: 4, name: "Arms", type: "lift",
         exercises: [
-          ex("Barbell Curl", "barbell-curl", 4, "8-10", 60),
-          ex("Close Grip Bench Press", "close-grip-bench", 4, "8-10", 90),
+          ex("Barbell Curl", "barbell-curl", 4, "8-10", 60, { contra: ["wrist", "elbow"] }),
+          ex("Close Grip Bench Press", "close-grip-bench", 4, "8-10", 90, { contra: ["wrist", "elbow"] }),
           ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
           ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
           ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
@@ -690,7 +690,7 @@ const homeDumbbellUL: ProgramTemplate = {
           ex("Dumbbell Bench Press", "db-bench", 4, "8-12", 90),
           ex("Dumbbell Row", "db-row", 4, "8-12", 90),
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"] }),
+          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
           ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
           ex("Dumbbell Tricep Extension", "overhead-extension", 3, "10-12", 60),
         ],
@@ -749,9 +749,9 @@ const fatLossCircuit: ProgramTemplate = {
         dayNumber: 1, name: "Full Body Circuit A", type: "lift",
         exercises: [
           ex("Barbell Squat", "squat", 3, "12-15", 45, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Bench Press", "bench-press", 3, "12-15", 45),
+          ex("Bench Press", "bench-press", 3, "12-15", 45, { contra: ["wrist"] }),
           ex("Barbell Row", "barbell-row", 3, "12-15", 45, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Overhead Press", "overhead-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
           ex("Plank", "plank", 3, "30-45s", 30),
         ],
       },
