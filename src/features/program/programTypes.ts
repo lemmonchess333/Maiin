@@ -83,6 +83,16 @@ export interface ProgramExercise {
     weight: number;
     completed: boolean;
   } | null;
+  /**
+   * Optional free-text note surfaced in the UI. Currently used by
+   * `applyInjuryFilters` to explain a substitution ("Swapped from
+   * Barbell Squat (knee limitation): ...") or flag an exercise with no
+   * safe substitute ("No safe substitute found — consider reducing
+   * load"). Carried from `TemplateExercise.notes` through
+   * `templateExToProgEx` so the warning survives the template →
+   * program-state conversion.
+   */
+  notes?: string;
 }
 
 /* ================================
@@ -198,6 +208,7 @@ export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string;
     plateauCount: ex.plateauCount ?? 0,
     performanceHistory: ex.performanceHistory ?? [],
     lastPerformance: ex.lastPerformance ?? null,
+    ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
   };
 }
 

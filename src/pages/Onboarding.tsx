@@ -98,6 +98,11 @@ function templateExToProgEx(te: TemplateExercise): ProgramExercise {
     plateauCount: 0,
     performanceHistory: [],
     lastPerformance: null,
+    // Carry `notes` from the template through to program state so the
+    // injury-substitution rationale written by `applyInjuryFilters`
+    // survives the conversion — previously dropped, so users saw their
+    // swapped exercises with no context for why.
+    ...(te.notes !== undefined ? { notes: te.notes } : {}),
   };
 }
 
@@ -435,7 +440,17 @@ export default function Onboarding() {
 
       let programState: ProgramState;
       if (matchResult.isGoalMatch) {
-        const filtered = applyInjuryFilters(matchResult.template, injuriesForSave);
+        // Pass PROGRAM_TEMPLATES as the contra-index source so
+        // applyInjuryFilters can validate alternatives across every
+        // template's contraindication data, not just the selected
+        // template's own alts. Without this the validator can miss
+        // e.g. a knee-contraindicated alternative declared in a
+        // different template.
+        const filtered = applyInjuryFilters(
+          matchResult.template,
+          injuriesForSave,
+          PROGRAM_TEMPLATES,
+        );
         programState = templateToProgramState(filtered, fitnessGoal);
         programState.primaryGoal = primaryGoal;
         programState.templateId = filtered.id;

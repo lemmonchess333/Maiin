@@ -73,7 +73,7 @@ const fullBodyBeginner: ProgramTemplate = {
       {
         dayNumber: 1, name: "Full Body A", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 3, "8-10", 120, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 3, "8-10", 120, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Bench Press", "bench-press", 3, "8-10", 120, { alt: ["Chest Press Machine"] }),
           ex("Barbell Row", "barbell-row", 3, "8-10", 90, { alt: ["Seated Cable Row"], contra: ["lower_back"] }),
           ex("Overhead Press", "overhead-press", 3, "8-10", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
@@ -123,7 +123,7 @@ const fullBodyHome: ProgramTemplate = {
       {
         dayNumber: 1, name: "Full Body A", type: "lift",
         exercises: [
-          ex("Goblet Squat", "goblet-squat", 3, "12-15", 90, { contra: ["knee"] }),
+          ex("Goblet Squat", "goblet-squat", 3, "12-15", 90),
           ex("Dumbbell Bench Press", "db-bench", 3, "10-12", 90),
           ex("Dumbbell Row", "db-row", 3, "10-12", 90),
           ex("Dumbbell Overhead Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
@@ -173,7 +173,7 @@ const fullBodyMinimal: ProgramTemplate = {
       {
         dayNumber: 1, name: "Full Body A", type: "lift",
         exercises: [
-          ex("Bodyweight Squat", "bodyweight-squat", 4, "15-20", 60, { contra: ["knee"] }),
+          ex("Bodyweight Squat", "bodyweight-squat", 4, "15-20", 60),
           ex("Push-Ups", "push-ups", 4, "10-20", 60),
           ex("Inverted Row", "inverted-row", 3, "8-12", 60),
           ex("Pike Push-Up", "pike-push-up", 3, "8-12", 60, { alt: ["Push-Ups"], contra: ["shoulder"] }),
@@ -193,7 +193,7 @@ const fullBodyMinimal: ProgramTemplate = {
       {
         dayNumber: 3, name: "Full Body C", type: "lift",
         exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
           ex("Weighted Push-Ups", "weighted-push-ups", 3, "8-15", 60),
           ex("Chin-Ups", "chin-ups", 3, "5-10", 90, { alt: ["Inverted Row"] }),
           ex("Superman Hold", "superman-hold", 3, "20-30s", 45, { contra: ["lower_back"] }),
@@ -234,7 +234,7 @@ const upperLowerHypertrophy: ProgramTemplate = {
       {
         dayNumber: 2, name: "Lower A", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 4, "6-8", 150, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 4, "6-8", 150, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
@@ -256,7 +256,7 @@ const upperLowerHypertrophy: ProgramTemplate = {
         dayNumber: 4, name: "Lower B", type: "lift",
         exercises: [
           ex("Deadlift", "deadlift", 4, "5-6", 180, { contra: ["lower_back"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "8-10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
           ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
           ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60),
@@ -298,7 +298,7 @@ const upperLowerRuns: ProgramTemplate = {
       {
         dayNumber: 2, name: "Lower A", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 3, "8-10", 120, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 3, "8-10", 120, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
@@ -318,7 +318,7 @@ const upperLowerRuns: ProgramTemplate = {
       {
         dayNumber: 4, name: "Lower B", type: "lift",
         exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
           ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
           ex("Hip Thrust", "hip-thrust", 3, "10-12", 90),
@@ -376,7 +376,7 @@ const pplHypertrophy: ProgramTemplate = {
       {
         dayNumber: 3, name: "Legs A", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 4, "6-8", 180, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 4, "6-8", 180, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
@@ -408,7 +408,7 @@ const pplHypertrophy: ProgramTemplate = {
         dayNumber: 6, name: "Legs B", type: "lift",
         exercises: [
           ex("Leg Press", "leg-press", 4, "10-12", 90, { contra: ["knee"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
           ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
           ex("Seated Calf Raise", "seated-calf-raise", 4, "15-20", 60),
@@ -463,7 +463,7 @@ const pplStrength: ProgramTemplate = {
       {
         dayNumber: 3, name: "Legs (Strength)", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 5, "3-5", 300, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 5, "3-5", 300, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 4, "5-8", 150, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "6-10", 120, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "8-10", 90),
@@ -494,7 +494,7 @@ const pplStrength: ProgramTemplate = {
         dayNumber: 6, name: "Legs (Volume)", type: "lift",
         exercises: [
           ex("Leg Press", "leg-press", 4, "8-12", 120, { contra: ["knee"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "8-10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
           ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
           ex("Seated Calf Raise", "seated-calf-raise", 4, "12-15", 60),
@@ -540,7 +540,7 @@ const pplHybridRunner: ProgramTemplate = {
       {
         dayNumber: 1, name: "Legs (Heavy)", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 4, "6-8", 150, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 4, "6-8", 150, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
@@ -656,7 +656,7 @@ const broSplitClassic: ProgramTemplate = {
       {
         dayNumber: 5, name: "Legs", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 4, "6-10", 180, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 4, "6-10", 180, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
           ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
           ex("Leg Curl", "leg-curl", 3, "10-12", 90),
@@ -698,7 +698,7 @@ const homeDumbbellUL: ProgramTemplate = {
       {
         dayNumber: 2, name: "Lower A", type: "lift",
         exercises: [
-          ex("Goblet Squat", "goblet-squat", 4, "10-15", 90, { contra: ["knee"] }),
+          ex("Goblet Squat", "goblet-squat", 4, "10-15", 90),
           ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
           ex("Dumbbell Lunge", "db-lunge", 3, "10/leg", 90, { contra: ["knee"] }),
           ex("Glute Bridge", "glute-bridge", 3, "15-20", 60),
@@ -718,9 +718,9 @@ const homeDumbbellUL: ProgramTemplate = {
       {
         dayNumber: 4, name: "Lower B", type: "lift",
         exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
           ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
-          ex("Step Up", "step-up", 3, "10/leg", 90, { contra: ["knee"] }),
+          ex("Step Up", "barbell-step-ups", 3, "10/leg", 90),
           ex("Hip Thrust", "hip-thrust", 3, "12-15", 60),
           ex("Plank", "plank", 3, "30-60s", 45),
         ],
@@ -748,7 +748,7 @@ const fatLossCircuit: ProgramTemplate = {
       {
         dayNumber: 1, name: "Full Body Circuit A", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 3, "12-15", 45, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Barbell Squat", "barbell-squat", 3, "12-15", 45, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
           ex("Bench Press", "bench-press", 3, "12-15", 45),
           ex("Barbell Row", "barbell-row", 3, "12-15", 45, { contra: ["lower_back"] }),
           ex("Overhead Press", "overhead-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
@@ -778,7 +778,7 @@ const fatLossCircuit: ProgramTemplate = {
       {
         dayNumber: 4, name: "Full Body Circuit D", type: "lift",
         exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "12/leg", 45, { contra: ["knee"] }),
+          ex("Bulgarian Split Squat", "bulgarian-split", 3, "12/leg", 45),
           ex("Cable Crossover", "cable-crossover", 3, "12-15", 30),
           ex("Dumbbell Row", "db-row", 3, "12-15", 45),
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
