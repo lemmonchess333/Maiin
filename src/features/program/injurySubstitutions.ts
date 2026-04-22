@@ -119,6 +119,24 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub("seated-row", "Seated Cable Row", ["lower_back"], "Seated row pattern, no hinging"),
   ],
 
+  // Dumbbell RDL — same hinge issue, separate id so the table has a
+  // first-class entry rather than deferring to the barbell RDL row.
+  "db-rdl": [
+    sub("hip-thrust", "Hip Thrust", ["lower_back", "knee"], "Glute-hamstring focus with spine supported"),
+    sub("kettlebell-swing", "Kettlebell Swing", ["lower_back"], "Ballistic posterior-chain work, lighter load"),
+    sub("glute-ham-raise", "Glute-Ham Raise", ["lower_back"], "Hamstring isolation, minimal lumbar demand"),
+  ],
+
+  // Superman Hold — loaded lumbar extension, not appropriate for
+  // lower-back users. Substitute with a supported posterior-chain
+  // alternative or a core stabiliser that doesn't require spinal
+  // extension.
+  "superman-hold": [
+    sub("dead-bug", "Dead Bug", ["lower_back"], "Neutral-spine core stability, zero extension load"),
+    sub("plank", "Plank", ["lower_back"], "Isometric anti-extension, spine-safe"),
+    sub("hip-thrust", "Hip Thrust", ["lower_back", "knee"], "Glute focus without spinal extension"),
+  ],
+
   // ═══════════════════════════════════════════════════════════════════════
   // KNEE — bilateral compression patterns that need substitutes
   // ═══════════════════════════════════════════════════════════════════════
@@ -180,6 +198,20 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub("barbell-step-ups", "Step-Up", ["knee"], "Controlled unilateral with lower knee shear"),
   ],
 
+  // Dumbbell lunge variant (forward-step, knee-stressful path). Same
+  // substitutes as generic `lunges` but declared separately so the
+  // table-lookup path doesn't fall through.
+  "db-lunge": [
+    sub("bulgarian-split", "Bulgarian Split Squat", ["knee"], "Rear foot stable — less knee shear than forward lunge"),
+    sub("barbell-step-ups", "Step-Up", ["knee"], "Vertical movement path, lower knee stress"),
+    sub("hip-thrust", "Hip Thrust", ["knee"], "Off-loads the knee entirely"),
+  ],
+
+  "bodyweight-lunge": [
+    sub("bulgarian-split", "Bulgarian Split Squat", ["knee"], "Static rear-foot position removes forward-lunge knee shear"),
+    sub("barbell-step-ups", "Step-Up", ["knee"], "Lower-impact unilateral alternative"),
+  ],
+
   // Bodyweight and goblet patterns — only swap if the user's knee
   // condition is flagged. For most "knee" labels these are already
   // safe, but we provide lighter alternatives for worst-case use.
@@ -206,6 +238,25 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
   "arnold-press": [
     sub("landmine-press", "Landmine Press", ["shoulder"], "Angled path, shoulder-friendly"),
     sub("shoulder-press-machine", "Shoulder Press Machine", ["shoulder"], "Machine-controlled, reduced stabiliser load"),
+  ],
+
+  // DB overhead press (the non-barbell variant). Template alts currently
+  // point at "Lateral Raise" which is a hypertrophy-stimulus downgrade.
+  // The landmine and machine press options preserve the pressing pattern
+  // while being shoulder-friendly.
+  "db-shoulder-press": [
+    sub("landmine-press", "Landmine Press", ["shoulder"], "Angled path eliminates the impingement arc"),
+    sub("shoulder-press-machine", "Shoulder Press Machine", ["shoulder"], "Controlled plane, reduced stabiliser demand"),
+    sub("incline-db-press", "Incline DB Press", ["shoulder"], "Inclined bench press emphasises upper chest with friendlier shoulder path"),
+  ],
+
+  // Pike push-up — advanced bodyweight vertical press, irritates the
+  // shoulder in the bottom position. Substitutes preserve the
+  // bodyweight-friendly theme where possible.
+  "pike-push-up": [
+    sub("landmine-press", "Landmine Press", ["shoulder"], "Angled path, friendlier than overhead"),
+    sub("push-ups", "Push-Ups", ["shoulder"], "Horizontal press pattern avoids overhead impingement"),
+    sub("shoulder-press-machine", "Shoulder Press Machine", ["shoulder"], "Controlled plane alternative"),
   ],
 
   "bench-press": [
