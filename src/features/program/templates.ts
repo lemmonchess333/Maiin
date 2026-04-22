@@ -330,17 +330,23 @@ const upperLowerRuns: ProgramTemplate = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 6. PPL HYPERTROPHY M — 6 days, hypertrophy, full gym, male
+// 6. PPL HYPERTROPHY — 6 days, hypertrophy, full gym
 // ═══════════════════════════════════════════════════════════════════════════
-const pplHypertrophyM: ProgramTemplate = {
-  id: "ppl-hypertrophy-m",
-  name: "PPL Hypertrophy (M)",
+// Formerly split into M/F variants. Gender-based template selection was
+// removed in W1a — same hypertrophy stimulus produces equivalent
+// relative gains across sexes at matched volume (Roberts 2020), so the
+// F variant's hip-thrust-heavy "Legs & Glutes" framing was preference-
+// dressed-as-physiology. Users who want more glute work can swap
+// individual exercises via the existing variation bank.
+const pplHypertrophy: ProgramTemplate = {
+  id: "ppl-hypertrophy",
+  name: "PPL Hypertrophy",
   split: "ppl",
   daysPerWeek: 6,
   goal: "hypertrophy",
   experience: ["intermediate", "advanced"],
   equipment: "full_gym",
-  gender: ["male"],
+  gender: ["male", "female", "unspecified"],
   runIntegration: false,
   weeks: [{
     weekNumber: 1,
@@ -412,85 +418,11 @@ const pplHypertrophyM: ProgramTemplate = {
   }],
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 7. PPL HYPERTROPHY F — 6 days, hypertrophy, full gym, female
-// ═══════════════════════════════════════════════════════════════════════════
-const pplHypertrophyF: ProgramTemplate = {
-  id: "ppl-hypertrophy-f",
-  name: "PPL Hypertrophy (F)",
-  split: "ppl",
-  daysPerWeek: 6,
-  goal: "hypertrophy",
-  experience: ["intermediate", "advanced"],
-  equipment: "full_gym",
-  gender: ["female"],
-  runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Push", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 3, "8-10", 120),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "db-lateral-raise", 3, "12-15", 60),
-          ex("Tricep Pushdown", "tricep-pushdown", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Pull", type: "lift",
-        exercises: [
-          ex("Lat Pulldown", "lat-pulldown", 4, "8-12", 90),
-          ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Dumbbell Row", "db-row", 3, "10-12", 90),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Legs & Glutes A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "barbell-squat", 4, "8-10", 120, { alt: ["Leg Press"], contra: ["knee"] }),
-          ex("Hip Thrust", "hip-thrust", 4, "8-12", 90),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "10-12", 90, { contra: ["lower_back"] }),
-          ex("Leg Curl", "leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 3, "15-20", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Push B", type: "lift",
-        exercises: [
-          ex("Incline Bench Press", "incline-bench", 3, "8-10", 120),
-          ex("Cable Crossover", "cable-crossover", 3, "12-15", 60),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Dumbbell Lateral Raise", "db-lateral-raise", 3, "12-15", 60),
-          ex("Overhead Tricep Extension", "db-overhead-tricep-ext", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 5, name: "Pull B", type: "lift",
-        exercises: [
-          ex("Pull-Ups", "pull-ups", 3, "5-10", 120, { alt: ["Lat Pulldown"] }),
-          ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
-          ex("Straight-Arm Pulldown", "straight-arm-pulldown", 3, "12-15", 60),
-          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 6, name: "Legs & Glutes B", type: "lift",
-        exercises: [
-          ex("Hip Thrust", "hip-thrust", 4, "8-12", 90),
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "leg-curl", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60),
-        ],
-      },
-    ],
-  }],
-};
+// Template 7 (`pplHypertrophyF`) removed in W1a. See comment on
+// `pplHypertrophy` above for rationale. Hip-thrust-heavy "Legs & Glutes"
+// framing was preference-dressed-as-physiology; removed from the default
+// template matrix. Existing user `programState` docs already have their
+// exercises denormalized, so deletion affects only future matches.
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 8. PPL STRENGTH — 6 days, strength, full gym
@@ -588,16 +520,31 @@ const pplHybridRunner: ProgramTemplate = {
   weeks: [{
     weekNumber: 1,
     days: [
-      // Mon: Push, Tue: Run, Wed: Pull, Thu: Run, Fri: Legs, Sat: Run(long), Sun: Rest
-      // Legs on Friday so Saturday long run has a day gap
+      // Intended weekly mapping (scheduler handles the actual day-of-week):
+      //   Mon: Legs (heavy, single leg day)
+      //   Tue: Pull
+      //   Wed: Push
+      //   Thu: Upper (chest/back volume)
+      //   Fri: Shoulders & Arms (NO leg work)
+      //   Sat: Long run (96h after Monday's heavy legs)
+      //   Sun: Rest
+      //
+      // Pre-W1a this template had two leg days (Wed moderate + Fri light)
+      // and a comment claiming "Saturday long run has a day gap" — but
+      // Fri→Sat was back-to-back. Running lit (Doma & Deakin 2013/2015)
+      // shows heavy lower-body work within 24h of endurance work
+      // compromises both. Collapsing to a single heavy leg day on Day 1
+      // gives 96h of recovery before Saturday's long run and matches how
+      // hybrid programs (Hybrid Athlete, Tactical Barbell) structure
+      // leg work around endurance days.
       {
-        dayNumber: 1, name: "Push", type: "lift",
+        dayNumber: 1, name: "Legs (Heavy)", type: "lift",
         exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "db-lateral-raise", 3, "12-15", 60),
-          ex("Tricep Pushdown", "tricep-pushdown", 3, "10-12", 60),
+          ex("Barbell Squat", "barbell-squat", 4, "6-8", 150, { alt: ["Leg Press"], contra: ["knee"] }),
+          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
+          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+          ex("Leg Curl", "leg-curl", 3, "10-12", 90),
+          ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60),
         ],
       },
       {
@@ -611,33 +558,34 @@ const pplHybridRunner: ProgramTemplate = {
         ],
       },
       {
-        dayNumber: 3, name: "Legs (Moderate)", type: "lift",
+        dayNumber: 3, name: "Push", type: "lift",
         exercises: [
-          ex("Barbell Squat", "barbell-squat", 3, "8-10", 120, { alt: ["Leg Press"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60),
+          ex("Bench Press", "bench-press", 4, "8-10", 120),
+          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
+          ex("Dumbbell Lateral Raise", "db-lateral-raise", 3, "12-15", 60),
+          ex("Tricep Pushdown", "tricep-pushdown", 3, "10-12", 60),
         ],
       },
       {
-        dayNumber: 4, name: "Upper", type: "lift",
+        dayNumber: 4, name: "Upper — Chest & Back", type: "lift",
         exercises: [
           ex("Incline Bench Press", "incline-bench", 3, "8-10", 120),
           ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
           ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
+          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
           ex("Barbell Curl", "barbell-curl", 2, "10-12", 60),
           ex("Dip", "dip", 2, "8-12", 90),
         ],
       },
       {
-        dayNumber: 5, name: "Legs (Light)", type: "lift",
+        dayNumber: 5, name: "Shoulders & Arms", type: "lift",
         exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split-squat", 3, "10/leg", 90, { contra: ["knee"] }),
-          ex("Hip Thrust", "hip-thrust", 3, "10-12", 90),
-          ex("Leg Curl", "leg-curl", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60),
+          ex("Dumbbell Shoulder Press", "db-shoulder-press", 4, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
+          ex("Dumbbell Lateral Raise", "db-lateral-raise", 4, "12-15", 60),
+          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
+          ex("Overhead Tricep Extension", "db-overhead-tricep-ext", 3, "10-12", 60),
+          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
         ],
       },
     ],
@@ -655,7 +603,11 @@ const broSplitClassic: ProgramTemplate = {
   goal: "hypertrophy",
   experience: ["intermediate", "advanced"],
   equipment: "full_gym",
-  gender: ["male"],
+  // Gender array retained on templates for legacy programState-doc
+  // compatibility, but gender is no longer used as a scoring input in
+  // `matchTemplate` (see W1a comment there). All templates are available
+  // to any gender.
+  gender: ["male", "female", "unspecified"],
   runIntegration: false,
   weeks: [{
     weekNumber: 1,
@@ -846,8 +798,7 @@ export const PROGRAM_TEMPLATES: ProgramTemplate[] = [
   fullBodyMinimal,
   upperLowerHypertrophy,
   upperLowerRuns,
-  pplHypertrophyM,
-  pplHypertrophyF,
+  pplHypertrophy,
   pplStrength,
   pplHybridRunner,
   broSplitClassic,

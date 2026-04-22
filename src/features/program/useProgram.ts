@@ -69,7 +69,14 @@ export function useProgram() {
 
       if (snap.exists()) {
         const raw = snap.data() as ProgramState;
-        const normalized = normalizeProgramState(raw);
+        // Pass profile.primaryGoal as the backfill source so pre-W1a
+        // programState docs — written before primaryGoal was persisted —
+        // still return a normalised state with the user's actual goal,
+        // not an empty field. Onboarding already stores primaryGoal on
+        // the profile, so the backfill is always available at read time.
+        const normalized = normalizeProgramState(raw, {
+          primaryGoal: profile.primaryGoal,
+        });
 
         // Hydrate run days if user has run mode but no runDays yet
         if (!normalized.runDays && profile.runMode && profile.runMode !== "freeform") {
@@ -109,7 +116,15 @@ export function useProgram() {
       } else {
         const goal = profile.program?.goal ?? "recomp";
         const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
-        const { splitType, workouts } = generateProgram(goal, weeklyTarget);
+        // Thread primaryGoal through so the procedural engine reps track
+        // what the user asked for. Pre-W1a this call dropped primaryGoal
+        // entirely and hypertrophy-rep defaults leaked into every goal.
+        const { splitType, workouts } = generateProgram(
+          goal,
+          weeklyTarget,
+          undefined,
+          profile.primaryGoal,
+        );
 
         // Generate run schedule if applicable
         let runDays: ScheduledRunDay[] | undefined;
@@ -536,10 +551,14 @@ export function useProgram() {
 
       const goal = (goalOverride ?? programState?.goal ?? profile.program?.goal ?? "recomp") as ProgramState["goal"];
       const weeklyTarget = weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
+      // Prefer programState's persisted primaryGoal (set at onboarding),
+      // falling back to the profile value. Regenerate with goal-aware reps.
+      const primaryGoal = programState?.primaryGoal ?? profile.primaryGoal;
       const { splitType, workouts } = generateProgram(
         goal,
         weeklyTarget,
         programState?.workouts,
+        primaryGoal,
       );
 
       // Regenerate run schedule

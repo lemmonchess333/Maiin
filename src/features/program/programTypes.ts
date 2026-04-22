@@ -17,6 +17,33 @@ export type SplitType = "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2
 
 export type Goal = "cut" | "lean bulk" | "recomp";
 
+/**
+ * Lifting goal from onboarding — orthogonal to the `Goal` type above.
+ * `Goal` describes the nutrition phase (cut / lean bulk / recomp) and is
+ * already used in the engine to scale volume. `PrimaryGoal` describes the
+ * training stimulus the user wants — strength vs hypertrophy vs fat loss
+ * vs general vs running-supportive.
+ *
+ * Before W1a these two axes were conflated. `generateProgram()` only
+ * received the nutrition `Goal` and hardcoded rep ranges, meaning a user
+ * who declared "strength" at onboarding silently got hypertrophy reps on
+ * every regenerate. `PrimaryGoal` + `GoalProfile` below fix that seam.
+ */
+export type PrimaryGoal = "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
+
+/**
+ * Training-stimulus parameters derived from the user's `PrimaryGoal`.
+ * Consumed by the procedural engine (`generateProgram`) so main- and
+ * accessory-lift rep ranges, volume, and progression type track what the
+ * user actually asked for.
+ */
+export interface GoalProfile {
+  mainReps: number;
+  accessoryReps: number;
+  volumeMultiplier: number;
+  mainProgression: ProgressionType;
+}
+
 export type ProgressionType = "double" | "linear";
 
 /* ================================
@@ -121,6 +148,23 @@ export interface ProgramState {
   runDays?: ScheduledRunDay[];
   runPlan?: RunPlan;
   nextWorkoutOverride?: number;
+  /**
+   * Lifting goal declared at onboarding. Added in W1a so the procedural
+   * engine can scale rep ranges to the user's actual request on regen,
+   * and so the Program page UI can surface "Built for [goal] · [split]"
+   * legibility. Optional for backward compatibility with pre-W1a docs —
+   * `normalizeProgramState` backfills from `UserProfile.primaryGoal` at
+   * read time; UI falls back to `"General Fitness"` if still missing.
+   */
+  primaryGoal?: PrimaryGoal;
+  /**
+   * ID of the handwritten template this program was assigned at
+   * onboarding, when a match existed. Absent when `matchTemplate`
+   * couldn't find a goal-matching template and the program came from
+   * the procedural engine — UI uses this to render or omit the
+   * "from the X template" clause.
+   */
+  templateId?: string;
 }
 
 /* ================================
@@ -157,11 +201,19 @@ export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string;
   };
 }
 
-export function normalizeProgramState(state: ProgramState): ProgramState {
+export function normalizeProgramState(
+  state: ProgramState,
+  backfill?: { primaryGoal?: PrimaryGoal },
+): ProgramState {
   return {
     ...state,
     settings: state.settings ?? { autoProgression: true, microloading: true },
     weekHistory: state.weekHistory ?? [],
+    // Backfill primaryGoal from UserProfile for pre-W1a docs. Keeps the
+    // program-page legibility line functional for legacy users without
+    // forcing a migration. If both are missing we leave it undefined and
+    // the UI falls back to a generic label.
+    primaryGoal: state.primaryGoal ?? backfill?.primaryGoal,
     workouts: (state.workouts ?? []).map((day) => ({
       ...day,
       skipped: day.skipped ?? false,
