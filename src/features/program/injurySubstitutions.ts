@@ -141,7 +141,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
   // KNEE — bilateral compression patterns that need substitutes
   // ═══════════════════════════════════════════════════════════════════════
 
-  "barbell-squat": [
+  "squat": [
     sub("bulgarian-split", "Bulgarian Split Squat", ["knee", "lower_back"], "Unilateral loading, less compressive shear at the knee"),
     sub("hip-thrust", "Hip Thrust", ["knee", "lower_back"], "Glute-focused, off-loads the knee joint entirely"),
     sub("goblet-squat", "Goblet Squat", ["knee"], "Lighter load, allows ROM control to pain-free depth"),
@@ -196,15 +196,6 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
   "walking-dumbbell-lunges": [
     sub("bulgarian-split", "Bulgarian Split Squat", ["knee"], "Static rear-foot position removes walking-lunge impact"),
     sub("barbell-step-ups", "Step-Up", ["knee"], "Controlled unilateral with lower knee shear"),
-  ],
-
-  // Dumbbell lunge variant (forward-step, knee-stressful path). Same
-  // substitutes as generic `lunges` but declared separately so the
-  // table-lookup path doesn't fall through.
-  "db-lunge": [
-    sub("bulgarian-split", "Bulgarian Split Squat", ["knee"], "Rear foot stable — less knee shear than forward lunge"),
-    sub("barbell-step-ups", "Step-Up", ["knee"], "Vertical movement path, lower knee stress"),
-    sub("hip-thrust", "Hip Thrust", ["knee"], "Off-loads the knee entirely"),
   ],
 
   "bodyweight-lunge": [
