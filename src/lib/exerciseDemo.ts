@@ -166,8 +166,19 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
   };
 }
 
-// Fuzzy match: try exact, then stripped, then partial, then word overlap, then local fallback
+// Resolution order:
+// 1. If the local EXERCISES entry has been upgraded to our coach-voice format
+//    (multi-step instructions or a tip), prefer it — this is the authored
+//    content and the only path that surfaces tips in the UI.
+// 2. Otherwise try free-exercise-db via exact / partial / word-overlap match.
+// 3. Fall back to the raw local entry (single-paragraph pre-rewrite content)
+//    so at-least-something renders for exercises free-exercise-db doesn't cover.
 export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null> {
+  const local = buildLocalFallback(name);
+  if (local && (local.tip || local.instructions.length >= 2)) {
+    return local;
+  }
+
   const demos = await loadDemos();
   const key = normaliseKey(name);
 
@@ -194,6 +205,6 @@ export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null
     if (bestScore >= 2) return bestMatch;
   }
 
-  // Fallback to local exercise database
-  return buildLocalFallback(name);
+  // Raw local fallback for anything remote doesn't cover
+  return local;
 }
