@@ -185,6 +185,9 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
   "leg-extension": [
     sub("bulgarian-split", "Bulgarian Split Squat", ["knee"], "Compound unilateral replaces open-chain knee isolation"),
     sub("hip-thrust", "Hip Thrust", ["knee"], "Posterior-chain focus, minimal knee stress"),
+    sub("barbell-step-ups", "Step-Up", ["knee"], "Unilateral, start low height, lower knee shear"),
+    sub("goblet-squat", "Goblet Squat", ["knee"], "Closed-chain pattern with controllable depth"),
+    sub("nordic-hamstring-curl", "Nordic Hamstring Curl", ["knee"], "Posterior-chain alternative, spares the knee"),
   ],
 
   "lunges": [
