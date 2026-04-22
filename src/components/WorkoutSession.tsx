@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket } from "@/lib/prTracking";
 import { getExerciseById } from "@/lib/exercises";
+import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
 import StallModal from "@/components/workout/StallModal";
@@ -103,9 +104,14 @@ interface Props {
 
 export default function WorkoutSession({ day, dayIndex, onLogExercise, onCompleteDay, onClose }: Props) {
   const { user } = useAuth();
-  const [currentExIndex, setCurrentExIndex] = useState(0);
+  const { load: loadDraft, save: saveDraft, clear: clearDraft } = useWorkoutDraft(dayIndex);
+  // Captured once on mount — stable across renders via the stable hook callbacks.
+  const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
+  const [showResumePrompt, setShowResumePrompt] = useState(initialDraft !== null);
+  const [currentExIndex, setCurrentExIndex] = useState(initialDraft?.currentExIndex ?? 0);
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() =>
+    initialDraft?.setLogs as SetLog[][] ??
     day.exercises.map((ex) =>
       Array.from({ length: ex.sets }, () => ({
         reps: ex.reps,
@@ -116,12 +122,18 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     )
   );
   const [showRPE, setShowRPE] = useState(false);
-  const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>({});
+  const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(initialDraft?.exerciseNotes ?? {});
   const [typePopover, setTypePopover] = useState<number | null>(null);
   const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({ top: 0, left: 0, bottom: 0 });
   const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
-  useEffect(() => { sessionStartRef.current = Date.now(); }, []);
+  useEffect(() => {
+    // Backdate session start on resume so sessionDurationMinutes reflects
+    // actual training time, not wall-clock from when the user returned.
+    sessionStartRef.current = initialDraft
+      ? Date.now() - initialDraft.elapsedSeconds * 1000
+      : Date.now();
+  }, [initialDraft]);
 
   // Auto-scroll exercise tabs when active exercise changes
   useEffect(() => {
@@ -224,11 +236,30 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   }, [user?.uid, day.exercises]);
 
   // Elapsed workout timer
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(initialDraft?.elapsedSeconds ?? 0);
   useEffect(() => {
     const id = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Auto-save in-progress workout to localStorage so abandoned sessions can
+  // be resumed. Saves on meaningful state change (set logs, notes, exercise
+  // nav); elapsedSeconds is snapshotted via ref so we don't write every
+  // second. Only persists once the user has completed at least one set.
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  useEffect(() => { elapsedSecondsRef.current = elapsedSeconds; }, [elapsedSeconds]);
+  useEffect(() => {
+    const hasProgress = setLogs.some((exSets) => exSets.some((s) => s.completed));
+    if (!hasProgress) return;
+    saveDraft({
+      dayIndex,
+      dayName: day.dayName,
+      setLogs,
+      exerciseNotes,
+      elapsedSeconds: elapsedSecondsRef.current,
+      currentExIndex,
+    });
+  }, [setLogs, exerciseNotes, currentExIndex, dayIndex, day.dayName, saveDraft]);
 
   const formatElapsed = (s: number): string => {
     const hrs = Math.floor(s / 3600);
@@ -515,8 +546,30 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       }
     }
 
+    // Clear the draft only after the workout is saved. If onCompleteDay
+    // throws above, the draft survives so the user can retry the finish.
+    clearDraft();
+
     setCompleting(false);
     onClose();
+  };
+
+  const handleStartFresh = () => {
+    setSetLogs(day.exercises.map((ex) =>
+      Array.from({ length: ex.sets }, () => ({
+        reps: ex.reps,
+        weight: ex.weight,
+        completed: false,
+        type: "working" as SetType,
+      }))
+    ));
+    setExerciseNotes({});
+    setElapsedSeconds(0);
+    setCurrentExIndex(0);
+    setCurrentSetIndex(0);
+    sessionStartRef.current = Date.now();
+    clearDraft();
+    setShowResumePrompt(false);
   };
 
   // Session complete screen
@@ -542,8 +595,46 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   }
 
 
+  const draftCompletedSets = initialDraft
+    ? initialDraft.setLogs.reduce((sum, exSets) => sum + exSets.filter((s) => s.completed).length, 0)
+    : 0;
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+      {showResumePrompt && initialDraft && (
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center p-4">
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-full max-w-md bg-card rounded-2xl p-5 shadow-xl"
+          >
+            <h3 className="text-lg font-bold text-foreground">Resume workout?</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You left this workout in progress earlier.
+            </p>
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-mono tabular-nums">{draftCompletedSets} sets logged</span>
+              <span>·</span>
+              <span className="font-mono tabular-nums">{formatElapsed(initialDraft.elapsedSeconds)} elapsed</span>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setShowResumePrompt(false)}
+                className="flex-1 h-11 rounded-xl font-semibold text-sm bg-primary text-primary-foreground transition-transform active:scale-[0.97]"
+              >
+                Resume
+              </button>
+              <button
+                onClick={handleStartFresh}
+                className="flex-1 h-11 rounded-xl font-semibold text-sm bg-muted text-foreground transition-transform active:scale-[0.97]"
+              >
+                Start fresh
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div>
