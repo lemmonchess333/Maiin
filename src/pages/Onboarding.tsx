@@ -478,9 +478,26 @@ export default function Onboarding() {
         };
       }
 
-      // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules
+      // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules.
+      // Retry once on "internal" error: the function has no minInstances, so the
+      // first invocation after idle spins up a cold instance that can exceed the
+      // client SDK's default wait window and surface as functions/internal even
+      // though the warm instance will handle the second call fine.
       const completeOnboarding = httpsCallable(functions, "completeOnboarding");
-      await completeOnboarding({ profileData, programState });
+      const callCF = () => completeOnboarding({ profileData, programState });
+      try {
+        await callCF();
+      } catch (err) {
+        const code = (err as { code?: string })?.code;
+        const msg = (err as { message?: string })?.message || "";
+        const isColdStart =
+          code === "functions/internal" ||
+          code === "internal" ||
+          msg.toUpperCase().includes("INTERNAL");
+        if (!isColdStart) throw err;
+        await new Promise((r) => setTimeout(r, 1200));
+        await callCF();
+      }
 
       // Data is saved server-side. Update local state to trigger router transition.
       // Try Firestore write first; if rules block it, just reload the page
@@ -571,32 +588,21 @@ export default function Onboarding() {
           transition={{ duration: 0.22 }}
           className="flex-1 overflow-y-auto"
         >
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+          <p
             className="text-xs uppercase tracking-widest mb-2"
             style={{ color: "rgba(255,255,255,0.4)" }}
           >
             Step {step - START_STEP + 1} of {VISIBLE_STEPS}
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.05 }}
-            className="text-2xl font-bold mb-1"
-          >
+          </p>
+          <h1 className="text-2xl font-bold mb-1">
             {STEP_META[step].title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
+          </h1>
+          <p
             className="text-sm mb-8"
             style={{ color: "rgba(255,255,255,0.45)" }}
           >
             {STEP_META[step].subtitle}
-          </motion.p>
+          </p>
 
           {/* ════════════════════════════════
              STEP 0 — Display name
