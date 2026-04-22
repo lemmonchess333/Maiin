@@ -1,8 +1,30 @@
 import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
+import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import type { UserProfile } from "@/lib/auth";
 
+type Gender = "male" | "female" | "unspecified";
+type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
+
+const GENDER_OPTIONS: { value: Gender; label: string }[] = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "unspecified", label: "Prefer not to say" },
+];
+
+// "under-16" intentionally omitted — it's the signup age gate, not a
+// legitimate edit target for an existing user.
+const AGE_RANGE_OPTIONS: { value: AgeRange; label: string }[] = [
+  { value: "16-24", label: "16 – 24" },
+  { value: "25-34", label: "25 – 34" },
+  { value: "35-44", label: "35 – 44" },
+  { value: "45-54", label: "45 – 54" },
+  { value: "55+", label: "55+" },
+];
+
 interface ProfileInfoSectionProps {
+  profile: UserProfile;
   name: string;
   setName: (v: string) => void;
   weightKg: number;
@@ -13,6 +35,7 @@ interface ProfileInfoSectionProps {
 }
 
 export default function ProfileInfoSection({
+  profile,
   name,
   setName,
   weightKg,
@@ -54,6 +77,68 @@ export default function ProfileInfoSection({
             onBlur={() => updateProfile({ heightCm })}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
+        </div>
+      </div>
+
+      <div>
+        <span className="text-sm text-muted-foreground">Gender</span>
+        <div className="mt-1.5 grid grid-cols-3 gap-2">
+          {GENDER_OPTIONS.map((opt) => {
+            const selected = profile.gender === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={async () => {
+                  haptic("light");
+                  await updateProfile({ gender: opt.value });
+                }}
+                className={cn(
+                  "p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
+                  selected
+                    ? "border-primary bg-primary/10"
+                    : "border-border/50 bg-muted/30 hover:border-border"
+                )}
+              >
+                <p className={cn(
+                  "text-xs font-medium",
+                  selected ? "text-primary" : "text-foreground"
+                )}>
+                  {opt.label}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <span className="text-sm text-muted-foreground">Age range</span>
+        <div className="mt-1.5 grid grid-cols-3 gap-2">
+          {AGE_RANGE_OPTIONS.map((opt) => {
+            const selected = profile.ageRange === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={async () => {
+                  haptic("light");
+                  await updateProfile({ ageRange: opt.value });
+                }}
+                className={cn(
+                  "p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
+                  selected
+                    ? "border-primary bg-primary/10"
+                    : "border-border/50 bg-muted/30 hover:border-border"
+                )}
+              >
+                <p className={cn(
+                  "text-xs font-medium",
+                  selected ? "text-primary" : "text-foreground"
+                )}>
+                  {opt.label}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
     </AccordionSection>

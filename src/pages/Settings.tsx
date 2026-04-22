@@ -238,6 +238,7 @@ export default function Settings() {
 
       {/* 1. Profile */}
       <ProfileInfoSection
+        profile={profile}
         name={name}
         setName={setName}
         weightKg={weightKg}
