@@ -93,14 +93,14 @@ export default function ProfileInfoSection({
                   await updateProfile({ gender: opt.value });
                 }}
                 className={cn(
-                  "p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
+                  "min-h-14 flex items-center justify-center p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
                   selected
                     ? "border-primary bg-primary/10"
                     : "border-border/50 bg-muted/30 hover:border-border"
                 )}
               >
                 <p className={cn(
-                  "text-xs font-medium",
+                  "text-xs font-medium leading-tight",
                   selected ? "text-primary" : "text-foreground"
                 )}>
                   {opt.label}
@@ -124,14 +124,14 @@ export default function ProfileInfoSection({
                   await updateProfile({ ageRange: opt.value });
                 }}
                 className={cn(
-                  "p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
+                  "min-h-14 flex items-center justify-center p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
                   selected
                     ? "border-primary bg-primary/10"
                     : "border-border/50 bg-muted/30 hover:border-border"
                 )}
               >
                 <p className={cn(
-                  "text-xs font-medium",
+                  "text-xs font-medium leading-tight",
                   selected ? "text-primary" : "text-foreground"
                 )}>
                   {opt.label}
