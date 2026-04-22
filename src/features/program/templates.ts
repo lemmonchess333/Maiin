@@ -390,7 +390,7 @@ const pplHypertrophy: ProgramTemplate = {
           ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
           ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
           ex("Dumbbell Lateral Raise", "db-lateral-raise", 3, "12-15", 60),
-          ex("Dip", "dip", 3, "8-12", 90),
+          ex("Dips", "dips", 3, "8-12", 90),
         ],
       },
       {
@@ -446,7 +446,7 @@ const pplStrength: ProgramTemplate = {
           ex("Bench Press", "bench-press", 5, "3-5", 240),
           ex("Overhead Press", "overhead-press", 4, "4-6", 180, { alt: ["Dumbbell Shoulder Press"], contra: ["shoulder"] }),
           ex("Incline Bench Press", "incline-bench", 3, "6-8", 120),
-          ex("Dip", "dip", 3, "6-10", 120),
+          ex("Weighted Chest Dip", "weighted-chest-dip", 3, "6-10", 120),
           ex("Tricep Pushdown", "tricep-pushdown", 3, "8-12", 60),
         ],
       },
@@ -575,7 +575,7 @@ const pplHybridRunner: ProgramTemplate = {
           ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
           ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
           ex("Barbell Curl", "barbell-curl", 2, "10-12", 60),
-          ex("Dip", "dip", 2, "8-12", 90),
+          ex("Dips", "dips", 2, "8-12", 90),
         ],
       },
       {
