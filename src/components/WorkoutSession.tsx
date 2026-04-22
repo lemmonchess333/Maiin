@@ -602,20 +602,24 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
       {showResumePrompt && initialDraft && (
-        <div className="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="w-full max-w-md bg-card rounded-2xl p-5 shadow-xl"
+            className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 shadow-xl"
           >
             <h3 className="text-lg font-bold text-foreground">Resume workout?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               You left this workout in progress earlier.
             </p>
             <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-mono tabular-nums">{draftCompletedSets} sets logged</span>
+              <span>
+                <span className="font-mono tabular-nums">{draftCompletedSets}</span> sets logged
+              </span>
               <span>·</span>
-              <span className="font-mono tabular-nums">{formatElapsed(initialDraft.elapsedSeconds)} elapsed</span>
+              <span>
+                <span className="font-mono tabular-nums">{formatElapsed(initialDraft.elapsedSeconds)}</span> elapsed
+              </span>
             </div>
             <div className="mt-5 flex gap-2">
               <button
