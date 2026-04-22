@@ -250,12 +250,8 @@ export default function Onboarding() {
   const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
   const [raceTargetDate, setRaceTargetDate] = useState("");
 
-  // ── Step 8.5: Meals target
-  const [mealsTarget, setMealsTarget] = useState(10);
-
   // ── Step 9: Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
-  const [otherInjuryText, setOtherInjuryText] = useState("");
 
   // ── Pre-populate from profile in retake mode
   useEffect(() => {
@@ -274,11 +270,11 @@ export default function Onboarding() {
       if (profile.preferredSplit) setPreferredSplit(profile.preferredSplit);
       if (profile.runFrequency) setRunFrequency(profile.runFrequency);
       if (profile.injuries) {
-        const knownInjuries = ["none", "lower_back", "shoulder", "knee"];
-        const known = profile.injuries.filter(i => knownInjuries.includes(i));
-        const other = profile.injuries.filter(i => !knownInjuries.includes(i) && i !== "other");
-        setInjuries([...known, ...(other.length > 0 ? ["other"] : [])]);
-        if (other.length > 0) setOtherInjuryText(other.join(", "));
+        const knownInjuries = ["none", "lower_back", "shoulder", "knee", "wrist", "elbow"];
+        // Pre-W1c "other" / free-text injury values are ignored on retake —
+        // the filter only acts on the three known categories, so surfacing
+        // stale free-text would only re-confuse the user.
+        setInjuries(profile.injuries.filter(i => knownInjuries.includes(i)));
       }
     }
   }, [isRetake, profile]);
@@ -348,10 +344,7 @@ export default function Onboarding() {
     if (!user) return;
     setSaving(true);
     try {
-      // Build injuries array for Firestore
-      const injuriesForSave = injuries.includes("other") && otherInjuryText.trim()
-        ? [...injuries.filter(i => i !== "other"), otherInjuryText.trim()]
-        : injuries;
+      const injuriesForSave = injuries;
 
       const effectiveRunDays = runFrequency === "none" ? 0 : (runMode === "freeform" ? (runFrequency === "regular" ? 3 : 1) : weeklyRunDays);
 
@@ -369,7 +362,7 @@ export default function Onboarding() {
         lastLogDate: null,
         darkMode: false,
         weeklyWorkoutsTarget: daysPerWeek,
-        weeklyMealsTarget: mealsTarget,
+        weeklyMealsTarget: 10,
         weeklyRunsTarget: effectiveRunDays,
         weeklyRunDaysTarget: effectiveRunDays,
         athleteType: "Lifter",
@@ -1034,23 +1027,6 @@ export default function Onboarding() {
                 </div>
               )}
 
-              {/* Meals target */}
-              <div className="pt-2">
-                <p className="text-xs font-medium mb-2" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  Weekly meal logging target ({mealsTarget})
-                </p>
-                <input
-                  type="range"
-                  min="0"
-                  max="21"
-                  value={mealsTarget}
-                  onChange={(e) => setMealsTarget(Number(e.target.value))}
-                  className="w-full accent-primary"
-                />
-                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  {mealsTarget === 0 ? "No meal tracking" : `${mealsTarget} meals per week`}
-                </p>
-              </div>
             </div>
           )}
 
@@ -1064,58 +1040,32 @@ export default function Onboarding() {
                 { id: "lower_back", label: "Lower back", desc: "We'll avoid heavy axial loading", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "shoulder", label: "Shoulder", desc: "We'll modify pressing movements", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
                 { id: "knee", label: "Knee", desc: "We'll adjust squat and lunge variations", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-                { id: "other", label: "Other", desc: "Tell us more below", icon: <AlertTriangle size={22} style={{ color: THEME.danger }} /> },
+                { id: "elbow", label: "Elbow", desc: "We'll swap heavy curls and dips for cable/machine work", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
+                { id: "wrist", label: "Wrist", desc: "We'll pick neutral-grip and machine variants", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
               ]).map((opt, i) => {
                 const isSelected = injuries.includes(opt.id);
                 const isNone = opt.id === "none";
                 return (
-                  <div key={opt.id}>
-                    <OptionCard
-                      selected={isSelected}
-                      index={i}
-                      onSelect={() => {
-                        if (isNone) {
-                          // "None" clears all others
-                          setInjuries(isSelected ? [] : ["none"]);
-                          setOtherInjuryText("");
-                        } else {
-                          // Any other option removes "none"
-                          setInjuries(prev => {
-                            const withoutNone = prev.filter(i => i !== "none");
-                            return isSelected
-                              ? withoutNone.filter(i => i !== opt.id)
-                              : [...withoutNone, opt.id];
-                          });
-                        }
-                      }}
-                      icon={opt.icon}
-                      label={opt.label}
-                      desc={opt.desc}
-                    />
-                    {/* Other free text input */}
-                    {opt.id === "other" && isSelected && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="overflow-hidden mt-2 ml-10"
-                      >
-                        <input
-                          // eslint-disable-next-line jsx-a11y/no-autofocus
-                          autoFocus
-                          type="text"
-                          value={otherInjuryText}
-                          onChange={e => setOtherInjuryText(e.target.value)}
-                          placeholder="Describe your injury..."
-                          className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                          style={{
-                            background: "rgba(255,255,255,0.08)",
-                            border: "1px solid rgba(255,255,255,0.12)",
-                            color: THEME.textPrimary,
-                          }}
-                        />
-                      </motion.div>
-                    )}
-                  </div>
+                  <OptionCard
+                    key={opt.id}
+                    selected={isSelected}
+                    index={i}
+                    onSelect={() => {
+                      if (isNone) {
+                        setInjuries(isSelected ? [] : ["none"]);
+                      } else {
+                        setInjuries(prev => {
+                          const withoutNone = prev.filter(i => i !== "none");
+                          return isSelected
+                            ? withoutNone.filter(i => i !== opt.id)
+                            : [...withoutNone, opt.id];
+                        });
+                      }
+                    }}
+                    icon={opt.icon}
+                    label={opt.label}
+                    desc={opt.desc}
+                  />
                 );
               })}
             </div>
@@ -1137,7 +1087,6 @@ export default function Onboarding() {
                 { label: "Schedule", value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`, color: THEME.brand },
                 { label: "Setup", value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`, color: THEME.lifting },
                 { label: "Running", value: runFrequency === "none" ? "No running" : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`, color: THEME.running },
-                { label: "Meal tracking", value: mealsTarget === 0 ? "Off" : `${mealsTarget} meals/week`, color: THEME.teal },
                 { label: "Metrics", value: `${displayHeight} · ${displayWeight}`, color: THEME.warning },
                 {
                   label: "Daily targets",
@@ -1153,7 +1102,7 @@ export default function Onboarding() {
                   className="flex items-start gap-3 py-3"
                   style={{
                     borderBottom:
-                      i < 6 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                      i < 5 ? "1px solid rgba(255,255,255,0.06)" : "none",
                   }}
                 >
                   <div
