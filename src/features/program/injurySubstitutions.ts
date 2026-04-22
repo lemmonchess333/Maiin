@@ -299,13 +299,23 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
 
 /**
  * Find the first substitute whose `safeFor` covers ALL of the user's
- * contraindicated injuries. Returns null if no substitute in the table
- * clears every injury — caller should keep the original exercise with
- * a user-visible warning note.
+ * contraindicated injuries AND whose id is not already in `excludeIds`.
+ * Returns null if no substitute clears every injury — caller should
+ * keep the original exercise with a user-visible warning note.
+ *
+ * `excludeIds` is how `applyInjuryFilters` prevents duplicate-stacking
+ * when multiple contraindicated exercises on the same day would
+ * otherwise all swap to the same safe candidate (e.g. a knee user's
+ * Barbell Squat AND Leg Press both picking Bulgarian Split Squat
+ * would leave two BSS entries in a row). Passing the day's already-
+ * present ids in `excludeIds` forces the second swap to continue
+ * down the ordered candidate list to the next safe option (e.g. Hip
+ * Thrust), preserving pattern diversity and total work.
  */
 export function findSafeSubstitute(
   originalId: string,
   userInjuries: readonly string[],
+  excludeIds?: ReadonlySet<string>,
 ): SafeSubstitute | null {
   const candidates = INJURY_SUBSTITUTIONS[originalId];
   if (!candidates || candidates.length === 0) return null;
@@ -318,7 +328,9 @@ export function findSafeSubstitute(
 
   for (const candidate of candidates) {
     const clears = relevant.every((injury) => candidate.safeFor.includes(injury));
-    if (clears) return candidate;
+    if (!clears) continue;
+    if (excludeIds && excludeIds.has(candidate.id)) continue;
+    return candidate;
   }
   return null;
 }

@@ -161,6 +161,13 @@ function swapContraExercise(
   ex: TemplateExercise,
   injuries: readonly string[],
   contraIndex: Map<string, Set<string>>,
+  /**
+   * IDs already present on the day being filtered — used so multiple
+   * contra exercises on the same day (e.g. Barbell Squat + Leg Press
+   * for a knee user) resolve to different substitutes rather than
+   * stacking onto the same pick.
+   */
+  usedIds: ReadonlySet<string>,
 ): TemplateExercise {
   const contras = ex.contraindicated;
   if (!contras || contras.length === 0) return ex;
@@ -170,7 +177,7 @@ function swapContraExercise(
   if (relevant.length === 0) return ex;
 
   // (2) Global substitution table — PT-curated safe alternatives.
-  const safe = findSafeSubstitute(ex.exerciseId, relevant);
+  const safe = findSafeSubstitute(ex.exerciseId, relevant, usedIds);
   if (safe) {
     return {
       ...ex,
@@ -181,12 +188,14 @@ function swapContraExercise(
   }
 
   // (3) Template-declared alternatives, validated against the contra
-  // index so we can't swap into another contraindicated exercise.
+  // index so we can't swap into another contraindicated exercise, and
+  // against `usedIds` so we don't pick an alt already on the day.
   if (ex.alternatives && ex.alternatives.length > 0) {
     for (const altName of ex.alternatives) {
       if (!altClearsInjuries(altName, relevant, contraIndex)) continue;
       const altId = resolveExerciseId(altName);
       if (!altId) continue;
+      if (usedIds.has(altId)) continue;
       return {
         ...ex,
         name: altName,
@@ -229,7 +238,32 @@ export function applyInjuryFilters(
 
   for (const week of filtered.weeks) {
     for (const day of week.days) {
-      day.exercises = day.exercises.map((ex) => swapContraExercise(ex, injuries, contraIndex));
+      // Seed the day's used-id set with the ids of every exercise that
+      // is NOT getting swapped (i.e. the user has no relevant injury
+      // for it). This prevents a subsequent swap from landing on one
+      // of those — e.g. Bulgarian Split Squat already present on
+      // Lower B means Leg Extension's swap should pick Hip Thrust,
+      // not stack a second BSS.
+      const usedIds = new Set<string>();
+      for (const ex of day.exercises) {
+        const contras = ex.contraindicated ?? [];
+        const isBeingSwapped = contras.some((c) => injuries.includes(c));
+        if (!isBeingSwapped) usedIds.add(ex.exerciseId);
+      }
+
+      const out: TemplateExercise[] = [];
+      for (const ex of day.exercises) {
+        const swapped = swapContraExercise(ex, injuries, contraIndex, usedIds);
+        const wasSwapped = swapped.exerciseId !== ex.exerciseId;
+        // If every safe candidate is already on the day and we fell
+        // through to tier 4 (warning), swapped.exerciseId === ex.id
+        // — we still append it so the warning surfaces. Only drop
+        // when a real swap would produce a duplicate.
+        if (wasSwapped && usedIds.has(swapped.exerciseId)) continue;
+        usedIds.add(swapped.exerciseId);
+        out.push(swapped);
+      }
+      day.exercises = out;
     }
   }
 
