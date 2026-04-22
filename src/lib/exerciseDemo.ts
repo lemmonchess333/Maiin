@@ -13,6 +13,7 @@ export interface ExerciseDemo {
   secondaryMuscles: string[];
   instructions: string[];
   images: string[];
+  tip?: string;
 }
 
 // Mapping from free-exercise-db muscle names → react-body-highlighter IDs
@@ -159,8 +160,9 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
     equipment: match.equipment,
     primaryMuscles: mapLocal(match.muscleGroup),
     secondaryMuscles: (match.secondaryMuscles ?? []).flatMap(mapLocal),
-    instructions: match.instructions ? [match.instructions] : [],
+    instructions: match.instructions ?? [],
     images: [],
+    tip: match.tip,
   };
 }
 

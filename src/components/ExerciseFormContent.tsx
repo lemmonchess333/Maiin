@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect, memo } from "react";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, needsAnterior, type ExerciseDemo } from "@/lib/exerciseDemo";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { THEME } from "@/lib/theme";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
@@ -202,6 +202,19 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               )}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Watch out — form-failure tip */}
+      {demo.tip && (
+        <div className="mt-4 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 dark:border-amber-900/40 dark:bg-amber-950/30">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div>
+            <p className="text-[13px] font-semibold text-amber-900 dark:text-amber-200">Watch out</p>
+            <p className="mt-0.5 text-[14px] leading-relaxed text-amber-900/90 dark:text-amber-100/90">
+              {demo.tip}
+            </p>
+          </div>
         </div>
       )}
     </div>
