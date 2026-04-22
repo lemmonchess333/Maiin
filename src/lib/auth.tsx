@@ -16,6 +16,7 @@ import {
   type User,
 } from "firebase/auth";
 import { toast } from "sonner";
+import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
   getDoc,
@@ -345,6 +346,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
       setUser(firebaseUser);
+      // Track the current UID on errorReporting so the Firestore sink
+      // writes critical errors under the correct user doc. Null clears it
+      // on sign-out so orphaned errors don't leak to a stale UID.
+      setErrorReportingUid(firebaseUser?.uid ?? null);
 
       if (firebaseUser) {
         try {

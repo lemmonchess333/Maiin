@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import type { ProgramTemplate, TemplateExercise } from "@/features/program/templates";
 import { matchTemplate, applyInjuryFilters } from "@/features/program/matchTemplate";
+import { generateProgram } from "@/features/program/programEngine";
 import type { ProgramState, WorkoutDay, ProgramExercise, SplitType } from "@/features/program/programTypes";
 import {
   ChevronRight,
@@ -419,10 +420,48 @@ export default function Onboarding() {
         runFrequency,
         injuries: injuriesForSave,
       };
-      const matched = matchTemplate(profileForMatch as Parameters<typeof matchTemplate>[0], PROGRAM_TEMPLATES);
-      const filtered = applyInjuryFilters(matched, injuriesForSave);
+      // matchTemplate now returns a result object with an `isGoalMatch`
+      // signal. W1a: when no template matches the exact primaryGoal for
+      // this day-count + equipment combination (e.g. 4-day strength, 3-day
+      // fat_loss — gaps in the handwritten template matrix), fall back to
+      // the procedural engine with `primaryGoal` threaded through so the
+      // user actually gets rep ranges matching what they asked for,
+      // instead of silently receiving another goal's template.
+      const matchResult = matchTemplate(
+        profileForMatch as Parameters<typeof matchTemplate>[0],
+        PROGRAM_TEMPLATES,
+      );
       const fitnessGoal = goalToFitnessGoal(primaryGoal);
-      const programState = templateToProgramState(filtered, fitnessGoal);
+
+      let programState: ProgramState;
+      if (matchResult.isGoalMatch) {
+        const filtered = applyInjuryFilters(matchResult.template, injuriesForSave);
+        programState = templateToProgramState(filtered, fitnessGoal);
+        programState.primaryGoal = primaryGoal;
+        programState.templateId = filtered.id;
+      } else {
+        // No exact-goal template. Use the procedural engine with
+        // primaryGoal so reps + volume reflect the user's stated goal.
+        const { splitType, workouts } = generateProgram(
+          fitnessGoal,
+          daysPerWeek,
+          undefined,
+          primaryGoal,
+        );
+        programState = {
+          goal: fitnessGoal,
+          currentPhase: "base",
+          weekNumber: 1,
+          splitType,
+          workouts,
+          fatigueScore: 0,
+          updatedAt: Date.now(),
+          settings: { autoProgression: true, microloading: true },
+          weekHistory: [],
+          primaryGoal,
+          // No templateId — this program came from the procedural engine.
+        };
+      }
 
       // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules
       const completeOnboarding = httpsCallable(functions, "completeOnboarding");

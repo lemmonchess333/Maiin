@@ -228,9 +228,10 @@ describe("advanceWeek", () => {
 
 describe("generateProgram — PPL×2", () => {
   it("Legs B has independent exercise objects from Legs A (H2)", () => {
+    // Day names were renamed in W1a from "Legs"/"Legs B" to emphasis labels.
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === "Legs");
-    const legsB = workouts.find(d => d.dayName === "Legs B");
+    const legsA = workouts.find(d => d.dayName === "Legs — Squat Focus");
+    const legsB = workouts.find(d => d.dayName === "Legs — Deadlift Focus");
     expect(legsA).toBeDefined();
     expect(legsB).toBeDefined();
     // Exercises should be separate objects
@@ -311,10 +312,14 @@ describe("applyProgression — baseReps anchor (M7)", () => {
 // ── M8: Legs B differentiation ──────────────────
 
 describe("generateProgram — Legs B differentiation (M8)", () => {
+  // Day names were renamed in W1a from "Legs"/"Legs B" to emphasis labels.
+  const LEGS_A = "Legs — Squat Focus";
+  const LEGS_B = "Legs — Deadlift Focus";
+
   it("Legs B leads with hip-dominant, Legs A leads with knee-dominant", () => {
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === "Legs");
-    const legsB = workouts.find(d => d.dayName === "Legs B");
+    const legsA = workouts.find(d => d.dayName === LEGS_A);
+    const legsB = workouts.find(d => d.dayName === LEGS_B);
     expect(legsA).toBeDefined();
     expect(legsB).toBeDefined();
     // Legs A first exercise is knee_dominant (squat)
@@ -325,8 +330,8 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
 
   it("Legs B has different exercise order from Legs A", () => {
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === "Legs")!;
-    const legsB = workouts.find(d => d.dayName === "Legs B")!;
+    const legsA = workouts.find(d => d.dayName === LEGS_A)!;
+    const legsB = workouts.find(d => d.dayName === LEGS_B)!;
     const categoriesA = legsA.exercises.map(e => e.movementCategory);
     const categoriesB = legsB.exercises.map(e => e.movementCategory);
     // First two exercises should be in opposite order
@@ -336,9 +341,14 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
     expect(categoriesB[1]).toBe("knee_dominant");
   });
 
-  it("PPL×2+FB also uses differentiated Legs B", () => {
+  it("7-day target caps to 6 and still emits differentiated Legs B", () => {
+    // W1a: chooseSplit caps at 6 hard days instead of returning ppl_x2_fb.
+    // A user requesting 7 lift days gets the 6-day ppl_x2 split and the
+    // scheduler fills the 7th weekday as active rest. The differentiated
+    // Legs B is still emitted as the 6th workout.
     const { workouts } = generateProgram("recomp", 7);
-    const legsB = workouts.find(d => d.dayName === "Legs B");
+    expect(workouts).toHaveLength(6);
+    const legsB = workouts.find(d => d.dayName === LEGS_B);
     expect(legsB).toBeDefined();
     expect(legsB!.exercises[0].movementCategory).toBe("hip_dominant");
   });

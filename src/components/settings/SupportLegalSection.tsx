@@ -7,18 +7,51 @@ import {
 } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 
+declare const __APP_VERSION__: string;
+
+// `support@troposfit.com` is a Cloudflare Email Routing forwarder — no
+// mailbox lives at troposfit.com itself. Inbound mail forwards to
+// troposfit@gmail.com, a dedicated support inbox separate from the
+// owner's personal Gmail. The Privacy Policy, Terms of Service, and
+// privacy.html also reference this address (see PrivacyPolicy.tsx,
+// TermsOfService.tsx, privacy.html) so any change to the routing target
+// or the support address itself needs to touch all four.
+//
+// The original address was support@troposfit.com — a domain nobody
+// here owned. Swapped to support@troposfit.com once the troposfit.com
+// domain was registered and the Cloudflare route verified.
+
+// Pre-filled mailto body gives support a baseline diagnostic snapshot on
+// every ticket without asking the user to type it. App version, user
+// agent, and a short bug-report scaffold arrive in the same inbox slot as
+// the complaint, which roughly halves back-and-forth before a fix.
+function buildSupportMailto(): string {
+  const version = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "unknown";
+  const body = [
+    "Describe what you were doing and what went wrong:",
+    "",
+    "",
+    "---",
+    `App version: ${version}`,
+    `Device: ${ua}`,
+  ].join("\n");
+  const subject = `Tropos support — v${version}`;
+  return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 export default function SupportLegalSection() {
   return (
     <AccordionSection icon={<Scale className="w-5 h-5 text-primary" />} title="Support & Legal" subtitle="Help, privacy policy, terms">
       <a
-        href="mailto:support@tropos.app"
+        href={buildSupportMailto()}
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
       >
         <div className="flex items-center gap-3">
           <Mail className="w-5 h-5" />
           <div>
             <p className="text-sm text-foreground">Help & Support</p>
-            <p className="text-xs text-muted-foreground">support@tropos.app</p>
+            <p className="text-xs text-muted-foreground">support@troposfit.com</p>
           </div>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />

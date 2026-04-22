@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
+import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -360,6 +361,31 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return g.charAt(0).toUpperCase() + g.slice(1);
   };
 
+  // W1b legibility line: "Built for [lifting goal] · [split] · [N] days/week"
+  //
+  // Pre-W1a the Program-page subtitle hardcoded a binary split check
+  // (`ppl` vs "Upper / Lower") — so full_body, bro_split, ppl_x2, and
+  // fat-loss-circuit users all saw the wrong label. This helper replaces
+  // it with a full legibility line built from persisted programState
+  // fields (primaryGoal + splitType + actual workout count).
+  //
+  // Edge handling:
+  //   - Run-only athletes (workouts.length === 0): skip the split and
+  //     days clause — "Built for Running Support" alone is the truth.
+  //   - Legacy docs without primaryGoal: `primaryGoalLabel(undefined)`
+  //     falls back to "General Fitness" so the line still renders.
+  //   - Day count uses workouts.length (actual) rather than
+  //     profile.daysPerWeek (requested) — reflects what the engine
+  //     produced after the W1a 7-day cap.
+  const programHeaderLine = (() => {
+    if (!programState) return "";
+    const goalText = primaryGoalLabel(programState.primaryGoal);
+    const dayCount = programState.workouts.length;
+    if (dayCount === 0) return `Built for ${goalText}`;
+    const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
+    return `Built for ${goalText} · ${splitLabel(programState.splitType)} · ${daysLabel}`;
+  })();
+
   const handleRegenerate = async (goalOverride?: string, weeklyTargetOverride?: number) => {
     setRegenerating(true);
     await regenerateProgram(goalOverride, weeklyTargetOverride);
@@ -419,7 +445,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <div>
             <h1 className="text-xl font-extrabold text-foreground">Program</h1>
             <p className="text-xs text-muted-foreground">
-              {programState.splitType === "ppl" ? "Push / Pull / Legs" : "Upper / Lower"}
+              {programHeaderLine}
             </p>
           </div>
           <div className="flex items-center gap-1">
