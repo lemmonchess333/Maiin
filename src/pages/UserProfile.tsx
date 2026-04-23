@@ -13,6 +13,7 @@ import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft, Dumbbell } from 'lucide-
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { THEME } from '../lib/theme';
+import Avatar from '../components/Avatar';
 import ReportModal from '../components/social/ReportModal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
@@ -168,20 +169,12 @@ export default function UserProfile() {
       </motion.div>
 
       <motion.div variants={itemVariant} className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold overflow-hidden">
-          {profile.avatarUrl ? (
-            <img
-              src={profile.avatarUrl}
-              alt={profile.displayName || 'User avatar'}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = (profile.displayName || '?').charAt(0).toUpperCase(); }}
-            />
-          ) : (
-            (profile.displayName || '?').charAt(0).toUpperCase()
-          )}
-        </div>
+        <Avatar
+          photoURL={profile.avatarUrl}
+          displayName={profile.displayName || '?'}
+          size="xl"
+          className="w-16 h-16 text-2xl"
+        />
         <div className="flex-1">
           <h1 className="text-lg font-extrabold">{profile.displayName}</h1>
           <div className="flex gap-4 text-xs text-muted-foreground mt-1">

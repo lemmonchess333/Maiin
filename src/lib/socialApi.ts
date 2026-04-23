@@ -232,14 +232,27 @@ export async function hasGivenKudos(activityId: string, userId: string): Promise
   return snap.exists();
 }
 
-export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string }[]> {
+export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string; photoURL?: string }[]> {
   const snap = await getDocs(collection(db, 'kudos', activityId, 'users'));
   const userIds = snap.docs.map(d => d.id);
   if (userIds.length === 0) return [];
+  // Source from `users/{uid}/public/profile` (cross-user readable) —
+  // pre-W1d this read `users/{uid}` (owner-only) and silently returned
+  // "Athlete" for every kudos-giver except the current user. Also
+  // pulls photoURL so the "Props from" list can render real avatars.
   const users = await Promise.all(
     userIds.map(async uid => {
-      const userSnap = await getDoc(doc(db, 'users', uid));
-      return { userId: uid, userName: userSnap.exists() ? (userSnap.data().displayName || 'Athlete') : 'Athlete' };
+      try {
+        const userSnap = await getDoc(doc(db, 'users', uid, 'public', 'profile'));
+        const data = userSnap.data() as { displayName?: string; photoURL?: string } | undefined;
+        return {
+          userId: uid,
+          userName: data?.displayName || 'Athlete',
+          ...(data?.photoURL ? { photoURL: data.photoURL } : {}),
+        };
+      } catch {
+        return { userId: uid, userName: 'Athlete' };
+      }
     })
   );
   return users;

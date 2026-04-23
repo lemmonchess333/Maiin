@@ -48,7 +48,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const [showCommentSheet, setShowCommentSheet] = useState(false);
   const [flameAnimating, setFlameAnimating] = useState(false);
   const [showKudosList, setShowKudosList] = useState(false);
-  const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string }[]>([]);
+  const [kudosUsers, setKudosUsers] = useState<{ userId: string; userName: string; photoURL?: string }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -416,7 +416,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               </div>
             ) : kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
-                <Avatar displayName={u.userName} size="sm" />
+                <Avatar photoURL={u.photoURL} displayName={u.userName} size="sm" />
                 <span className="text-xs font-medium text-foreground">{u.userName}</span>
               </div>
             ))}
