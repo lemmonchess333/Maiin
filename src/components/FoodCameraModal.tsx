@@ -1,12 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { X, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { X, Image as ImageIcon, RefreshCw, CameraOff, Keyboard } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { logger } from "@/lib/logger";
 
 type CaptureMode = "food" | "label";
 type TabMode = "food" | "barcode" | "label";
+/**
+ * Camera state machine.
+ *  - `idle`       — stream starting, video tag visible
+ *  - `granted`    — stream live, user can shoot
+ *  - `denied`     — user tapped Deny on the browser prompt (or OS-level)
+ *  - `unavailable`— no camera device, or getUserMedia rejected for a
+ *                   non-permission reason (driver error, in-use by another
+ *                   tab, secure-context violation etc.)
+ *
+ * Pre-W1e the denied/unavailable branches silently called `onClose`,
+ * which read as "the app is broken" — the camera modal would open for
+ * a split second and vanish with no explanation. Now we render an
+ * explicit fallback screen with recovery actions.
+ */
+type CameraState = "idle" | "granted" | "denied" | "unavailable";
 
 type Props = {
   open: boolean;
@@ -14,6 +29,11 @@ type Props = {
   onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
   onBarcodeDetected: (raw: string) => Promise<void>;
   loading: boolean;
+  /**
+   * Fired when the user taps "Type it instead" from the denied-permission
+   * fallback. The parent should close the modal and focus the NL input.
+   */
+  onRequestTypedInput?: () => void;
 };
 
 function dataUrlToBase64(dataUrl: string) {
@@ -45,6 +65,7 @@ export default function FoodCameraModal({
   onCaptureBase64,
   onBarcodeDetected,
   loading,
+  onRequestTypedInput,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -58,6 +79,7 @@ export default function FoodCameraModal({
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
   const [barcodeHint, setBarcodeHint] = useState<string>("Align barcode in frame");
+  const [cameraState, setCameraState] = useState<CameraState>("idle");
 
   // Keep onClose stable across renders so effects don't tear down / rebuild
   // the camera stream every time the parent re-renders with a fresh closure.
@@ -76,6 +98,7 @@ export default function FoodCameraModal({
     setFacing("environment");
     setBusy(false);
     setBarcodeHint("Align barcode in frame");
+    setCameraState("idle");
   }, [open]);
 
   // Single stream lifecycle — handles open, close, and camera flip.
@@ -108,9 +131,19 @@ export default function FoodCameraModal({
           return;
         }
         streamRef.current = stream;
+        setCameraState("granted");
       } catch (e: unknown) {
         logger.error(e);
-        if (!cancelled) onCloseRef.current();
+        if (cancelled) return;
+        // Classify the failure so the fallback surface can be honest
+        // about what went wrong. `NotAllowedError` covers both
+        // explicit user-deny AND OS-level camera-off; we treat them
+        // the same because the recovery actions are identical.
+        // Everything else (NotFoundError, NotReadableError, security
+        // errors) falls into "unavailable" — user can still upload
+        // a photo from library or type the meal in manually.
+        const name = (e as { name?: string } | null)?.name;
+        setCameraState(name === "NotAllowedError" || name === "PermissionDeniedError" ? "denied" : "unavailable");
       }
     };
 
@@ -253,6 +286,75 @@ export default function FoodCameraModal({
   if (!open) return null;
 
   const disableShutter = loading || busy || tab === "barcode";
+  const cameraBlocked = cameraState === "denied" || cameraState === "unavailable";
+
+  // Permission denied / camera unavailable — render a fallback surface
+  // instead of the camera preview. Gives the user a clear path back to
+  // the happy case (upload from library or type the meal manually)
+  // rather than silently closing the modal.
+  if (cameraBlocked) {
+    const deniedCopy = cameraState === "denied"
+      ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes — no photos are stored from the scanner."
+      : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+    return (
+      <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Camera unavailable" className="fixed inset-0 z-[60] bg-background flex flex-col">
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={onClose}
+            className="h-10 w-10 rounded-full bg-muted text-foreground flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "rgba(217,136,78,0.12)", border: "1px solid rgba(217,136,78,0.25)" }}
+          >
+            <CameraOff className="w-7 h-7" style={{ color: "#D9884E" }} />
+          </div>
+          <div className="space-y-2 max-w-[320px]">
+            <p className="text-base font-semibold text-foreground">
+              {cameraState === "denied" ? "Camera access needed" : "Camera unavailable"}
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{deniedCopy}</p>
+            {cameraState === "denied" && (
+              <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                To re-enable, tap the <span className="font-medium">AA</span> or lock icon in your browser address bar → Website Settings → Camera → Allow.
+              </p>
+            )}
+          </div>
+          <div className="w-full max-w-[320px] space-y-2 pt-2">
+            <button
+              onClick={() => { haptic("light"); fileInputRef.current?.click(); }}
+              className="w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
+              style={{ background: "#D9884E" }}
+            >
+              <ImageIcon className="w-4 h-4" />
+              Upload a photo instead
+            </button>
+            {onRequestTypedInput && (
+              <button
+                onClick={() => { haptic("light"); onRequestTypedInput(); }}
+                className="w-full h-12 rounded-xl bg-muted text-foreground font-medium text-sm flex items-center justify-center gap-2"
+              >
+                <Keyboard className="w-4 h-4" />
+                Type it instead
+              </button>
+            )}
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={onFileChange}
+          className="hidden"
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Food camera" className="fixed inset-0 z-[60] bg-black">
