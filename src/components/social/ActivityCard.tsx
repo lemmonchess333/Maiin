@@ -68,33 +68,47 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
     setTimeout(() => setFlameAnimating(false), 200);
     haptic('light');
 
-    const sent = await giveHighFive(feedItem.activityId, user.uid);
-    if (!sent) {
-      // Already given server-side — reconcile
-      setLiked(true);
-    }
-    // Notify activity author
-    if (sent && activity?.authorId && activity.authorId !== user.uid) {
-      writeNotification(activity.authorId as string, {
-        type: 'kudos',
-        fromUserId: user.uid,
-        fromName: profile?.displayName || 'Someone',
-        activityId: feedItem.activityId,
-        message: `${profile?.displayName || 'Someone'} gave you props on ${activityTitle || feedItem.type}`,
-      }).catch(() => {});
+    try {
+      const sent = await giveHighFive(feedItem.activityId, user.uid);
+      // `sent === false` just means "you already gave props on a previous
+      // session" — state is already correct, no reconcile needed.
+      // Notify activity author only when this call actually wrote new
+      // kudos (avoids duplicate notifications on retry).
+      if (sent && activity?.authorId && activity.authorId !== user.uid) {
+        writeNotification(activity.authorId as string, {
+          type: 'kudos',
+          fromUserId: user.uid,
+          fromName: profile?.displayName || 'Someone',
+          activityId: feedItem.activityId,
+          message: `${profile?.displayName || 'Someone'} gave you props on ${activityTitle || feedItem.type}`,
+        }).catch(() => {});
+      }
+    } catch {
+      // Network / auth failure — revert the optimistic flip so the
+      // UI reflects the server truth. Error haptic signals the bounce.
+      setLiked(false);
+      setKudosCount(c => Math.max(0, c - 1));
+      haptic('error');
     }
   };
 
   const [kudosLoading, setKudosLoading] = useState(false);
 
   const handleShowKudosList = async () => {
-    if (kudosCount === 0) return;
     if (showKudosList) { setShowKudosList(false); return; }
     setShowKudosList(true);
     setKudosLoading(true);
-    const users = await getKudosList(feedItem.activityId);
-    setKudosUsers(users);
-    setKudosLoading(false);
+    try {
+      const users = await getKudosList(feedItem.activityId);
+      setKudosUsers(users);
+    } catch {
+      // Fetch failed — render an empty list and clear loading so the
+      // popup doesn't hang on a spinner forever. Popup can be
+      // re-opened to retry.
+      setKudosUsers([]);
+    } finally {
+      setKudosLoading(false);
+    }
   };
 
   const createdAtObj = feedItem.createdAt as { toDate?: () => Date } | undefined;
@@ -414,6 +428,8 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               <div className="flex items-center justify-center py-2">
                 <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
+            ) : kudosUsers.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-1">Couldn&apos;t load props right now. Try again.</p>
             ) : kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
                 <Avatar photoURL={u.photoURL} displayName={u.userName} size="sm" />
