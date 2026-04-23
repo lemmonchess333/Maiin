@@ -363,6 +363,7 @@ export default function Social() {
                   title="Be the first to share"
                   description="Complete a workout or run and it'll appear here for the community"
                   accentColor={THEME.brand}
+                  action={{ label: 'Start a workout', href: '/program' }}
                 />
               ) : (
                 <div className="text-center py-12 px-6 space-y-4">
