@@ -61,5 +61,13 @@ export function useSuggestedPeople(active: boolean, blockedUsers?: Set<string>) 
     people,
     loading,
     refresh: () => setRefreshKey((k) => k + 1),
+    /**
+     * Optimistically remove a suggestion from the list. Call this
+     * from the FollowButton's onFollowChange so users get immediate
+     * visual feedback that the person they just followed has
+     * moved from "Suggested" to their Following feed, instead of
+     * sitting in the suggestion list stale until the next refresh.
+     */
+    remove: (uid: string) => setPeople((prev) => prev.filter((p) => p.uid !== uid)),
   };
 }

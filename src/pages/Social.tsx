@@ -85,7 +85,7 @@ export default function Social() {
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
   // Suggested People — fetches lazily only when the Find tab is shown.
-  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions } =
+  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions, remove: removeSuggestion } =
     useSuggestedPeople(tab === 'find', blockedUsers);
 
   // Crews
@@ -486,7 +486,14 @@ export default function Social() {
                         {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
                       </p>
                     </div>
-                    <FollowButton targetUid={p.uid} />
+                    <FollowButton
+                      targetUid={p.uid}
+                      onFollowChange={(isFollowing) => {
+                        // Moved from "Suggested" to the user's Following feed —
+                        // remove from the suggestion list for immediate feedback.
+                        if (isFollowing) removeSuggestion(p.uid);
+                      }}
+                    />
                   </div>
                 ))}
               </div>
