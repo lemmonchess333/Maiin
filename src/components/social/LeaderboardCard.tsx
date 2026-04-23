@@ -1,16 +1,21 @@
 import { Footprints, Dumbbell, Zap, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../lib/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { THEME } from '../../lib/theme';
 import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
+import Avatar from '../Avatar';
 
 const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
+interface EnrichedEntry extends LeaderboardEntry {
+  photoURL?: string;
+}
+
 export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFull }: { challenge?: ChallengeType; onViewFull?: () => void }) {
   const { user } = useAuth();
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const challengeLabels: Record<ChallengeType, { title: string; unit: string; icon: string }> = {
@@ -20,28 +25,40 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
     weekly_workouts: { title: 'Workouts', unit: 'sessions', icon: 'dumbbell' },
   };
 
-  useEffect(() => {
+  // Load leaderboard + enrich each UID with displayName + photoURL
+  // from the PUBLIC profile projection. Pre-W1d this read
+  // `users/{uid}` directly, which is owner-only — cross-user reads
+  // silently failed and everyone rendered as "Athlete". Now sources
+  // from `users/{uid}/public/profile` which IS cross-user readable.
+  const load = useCallback(async () => {
     if (!user) return;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const raw = await buildLeaderboard(user.uid, challenge);
-        const named = await Promise.all(raw.map(async (e) => {
-          try {
-            const snap = await getDoc(doc(db, 'users', e.uid));
-            const name = snap.exists() ? (snap.data().displayName || 'Athlete') : 'Athlete';
-            return { ...e, name };
-          } catch {
-            return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' };
-          }
-        }));
-        setEntries(named.filter(e => e.value > 0));
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    setLoading(true);
+    try {
+      const raw = await buildLeaderboard(user.uid, challenge);
+      const enriched = await Promise.all(raw.map(async (e) => {
+        try {
+          const snap = await getDoc(doc(db, 'users', e.uid, 'public', 'profile'));
+          const data = snap.data() as { displayName?: string; photoURL?: string } | undefined;
+          return {
+            ...e,
+            name: data?.displayName || (e.uid === user.uid ? 'You' : 'Athlete'),
+            photoURL: data?.photoURL,
+          } as EnrichedEntry;
+        } catch {
+          return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' } as EnrichedEntry;
+        }
+      }));
+      setEntries(enriched.filter((e) => e.value > 0));
+    } finally {
+      setLoading(false);
+    }
   }, [user, challenge]);
+
+  useEffect(() => {
+    let cancelled = false;
+    load().catch(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, [load]);
 
   const { title, unit, icon } = challengeLabels[challenge];
   const top3 = entries.slice(0, 3);
@@ -81,9 +98,12 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   style={{ color: RANK_COLORS[entry.rank - 1] || undefined }}>
                   {entry.rank}
                 </span>
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-                  {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
-                </div>
+                <Avatar
+                  photoURL={entry.photoURL}
+                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  size="sm"
+                />
+
                 <span className="text-sm font-medium flex-1 truncate">
                   {entry.uid === user?.uid ? 'You' : entry.name}
                 </span>
@@ -109,9 +129,12 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   style={{ color: RANK_COLORS[entry.rank - 1] }}>
                   {entry.rank}
                 </span>
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-                  {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
-                </div>
+                <Avatar
+                  photoURL={entry.photoURL}
+                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  size="sm"
+                />
+
                 <span className="text-sm font-medium flex-1 truncate">
                   {entry.uid === user?.uid ? 'You' : entry.name}
                 </span>
@@ -128,7 +151,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 </div>
                 <div className="flex items-center gap-2.5 p-2 rounded-lg bg-primary/5 border border-primary/15">
                   <span className="w-5 text-xs font-bold text-center shrink-0">{selfEntry.rank}</span>
-                  <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">Y</div>
+                  <Avatar photoURL={selfEntry.photoURL} displayName="You" size="sm" />
                   <span className="text-sm font-medium flex-1 truncate">You</span>
                   <span className="text-sm font-mono tabular-nums font-bold">
                     {selfEntry.value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{unit}</span>

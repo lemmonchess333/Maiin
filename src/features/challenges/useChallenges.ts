@@ -36,6 +36,12 @@ export interface ChallengeParticipant {
   tierAchieved: ChallengeTier | null;
   joinedAt: Timestamp;
   displayName?: string;
+  /**
+   * Denormalised avatar URL — stored at join time so leaderboard
+   * entries can render without a per-user profile fetch. Absent on
+   * pre-W1d participant docs; the UI falls back to initials.
+   */
+  photoURL?: string;
   uid?: string;
 }
 
@@ -226,8 +232,10 @@ export function useChallenges() {
     try {
       const profileSnap = await getDoc(doc(db, "users", user.uid));
       const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
+      const photoURL = profileSnap.exists() ? (profileSnap.data().photoURL as string | null | undefined) ?? null : null;
       await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
         currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
+        ...(photoURL ? { photoURL } : {}),
       });
       await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
       setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));

@@ -399,6 +399,8 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
 export interface SuggestedPerson {
   uid: string;
   displayName: string;
+  /** Uploaded avatar URL — threads through from `users/{uid}/public/profile`. */
+  photoURL?: string;
   /** Short reason chip surfaced in the UI. */
   reason: 'in_your_crew' | 'recent_post';
   /** For the "in_your_crew" reason — included so UIs can label it. */
@@ -480,14 +482,16 @@ export async function getSuggestedPeople(
     }
   }
 
-  // Enrich with display names from the public profile projection.
-  // Parallel getDoc — small list (≤ limitCount), no pagination, runs once.
+  // Enrich with display names + avatars from the public profile
+  // projection. Parallel getDoc — small list (≤ limitCount), no
+  // pagination, runs once.
   const list = Array.from(candidates.values()).slice(0, limitCount);
   await Promise.all(list.map(async (p) => {
     try {
       const snap = await getDoc(doc(db, 'users', p.uid, 'public', 'profile'));
-      const data = snap.data() as { displayName?: string } | undefined;
+      const data = snap.data() as { displayName?: string; photoURL?: string } | undefined;
       if (data?.displayName) p.displayName = data.displayName;
+      if (data?.photoURL) p.photoURL = data.photoURL;
     } catch {
       // Fall through with default 'Athlete' — a missing public profile
       // shouldn't break the whole list.

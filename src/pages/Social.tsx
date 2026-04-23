@@ -9,6 +9,7 @@ import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import TrajectoryCard from '../components/social/TrajectoryCard';
+import Avatar from '../components/Avatar';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
@@ -100,7 +101,7 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; crewId?: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; photoURL?: string; crewId?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const contactModalRef = useFocusTrap<HTMLDivElement>(showContactModal);
@@ -421,9 +422,7 @@ export default function Social() {
               <div className="space-y-2">
                 {searchResults.map((u) => (
                   <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {(u.displayName || '?').charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
                       {u.crewId && <p className="text-xs text-muted-foreground">Crew member</p>}
@@ -480,9 +479,7 @@ export default function Social() {
               <div className="space-y-2">
                 {suggestedPeople.map((p) => (
                   <div key={p.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {p.displayName.charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar photoURL={p.photoURL} displayName={p.displayName} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
                       <p className="text-xs text-muted-foreground">
