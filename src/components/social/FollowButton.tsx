@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { isFollowing, followUser, unfollowUser } from '../../lib/socialApi';
 import { logger } from '../../lib/logger';
+import { haptic } from '../../lib/haptic';
 
 interface FollowButtonProps {
   targetUid: string;
@@ -44,6 +45,9 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
   const handleToggle = async () => {
     if (!user || busy) return;
     const nextFollowing = !following;
+    // Tactile confirmation on the commit — follow is stronger haptic
+    // (meaningful new relationship), unfollow is lighter (undo action).
+    haptic(nextFollowing ? 'medium' : 'light');
     // Optimistic flip — snap the UI to the target state, reconcile
     // after the server write resolves.
     setFollowing(nextFollowing);
@@ -59,6 +63,7 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
       // Revert on failure.
       logger.error('[FollowButton] toggle failed', err);
       setFollowing(!nextFollowing);
+      haptic('error');
     } finally {
       setBusy(false);
     }

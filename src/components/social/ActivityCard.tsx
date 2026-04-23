@@ -453,6 +453,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         onConfirm={async () => {
           setShowBlockConfirm(false);
           if (!user || !activity?.authorId) return;
+          haptic('heavy');
           await blockUser(user.uid, activity.authorId as string);
           toast.success(`Blocked ${feedItem.authorName}`);
         }}
