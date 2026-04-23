@@ -8,6 +8,8 @@ import { getTimeAgo } from '../../lib/timeAgo';
 import { haptic } from '../../lib/haptic';
 import type { DocumentSnapshot } from 'firebase/firestore';
 import Avatar from '../Avatar';
+import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 
 interface Comment {
   id: string;
@@ -65,13 +67,20 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
     if (!user || !text.trim()) return;
     setSending(true);
     haptic('light');
-    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId, profile?.photoURL || undefined);
-    setText('');
-    const result = await getComments(activityId);
-    setComments(result.comments as Comment[]);
-    lastDocRef.current = result.lastDoc;
-    setHasMore(result.hasMore);
-    setSending(false);
+    try {
+      await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId, profile?.photoURL || undefined);
+      setText('');
+      const result = await getComments(activityId);
+      setComments(result.comments as Comment[]);
+      lastDocRef.current = result.lastDoc;
+      setHasMore(result.hasMore);
+    } catch (err) {
+      logger.error('[CommentSheet] send failed', err);
+      toast.error("Couldn't post comment. Try again.");
+      haptic('error');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleDelete = async (commentId: string) => {
