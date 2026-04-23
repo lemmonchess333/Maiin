@@ -267,11 +267,19 @@ export async function addComment(
   authorName: string,
   text: string,
   activityAuthorId?: string,
+  /**
+   * Denormalised author avatar URL. Persisted on the comment doc so
+   * the read path can render real avatars without a per-comment
+   * profile fetch. Optional — absent when the commenter hasn't
+   * uploaded a photo; UI falls back to initials.
+   */
+  authorPhotoURL?: string,
 ) {
   const authedUid = getAuthUid();
   if (authorId !== authedUid) throw new Error('Identity mismatch');
   await addDoc(collection(db, 'comments', activityId, 'items'), {
     authorId, authorName, text, createdAt: serverTimestamp(),
+    ...(authorPhotoURL ? { authorPhotoURL } : {}),
   });
   await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(1) });
 

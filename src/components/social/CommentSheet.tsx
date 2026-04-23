@@ -7,11 +7,13 @@ import { getComments, addComment, deleteComment } from '../../lib/socialApi';
 import { getTimeAgo } from '../../lib/timeAgo';
 import { haptic } from '../../lib/haptic';
 import type { DocumentSnapshot } from 'firebase/firestore';
+import Avatar from '../Avatar';
 
 interface Comment {
   id: string;
   authorId?: string;
   authorName?: string;
+  authorPhotoURL?: string;
   text?: string;
   createdAt?: { toDate?: () => Date };
 }
@@ -63,7 +65,7 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
     if (!user || !text.trim()) return;
     setSending(true);
     haptic('light');
-    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId);
+    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId, profile?.photoURL || undefined);
     setText('');
     const result = await getComments(activityId);
     setComments(result.comments as Comment[]);
@@ -125,9 +127,7 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
                     transition={{ duration: 0.2 }}
                     className="flex gap-2 group"
                   >
-                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-                      {(c.authorName || '?').charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs">
                         <span className="font-semibold text-foreground">{c.authorName}</span>{' '}
