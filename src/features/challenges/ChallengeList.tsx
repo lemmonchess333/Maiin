@@ -7,6 +7,11 @@ import { THEME } from "@/lib/theme";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
+import Avatar from "@/components/Avatar";
+
+interface EnrichedEntry extends LeaderboardEntry {
+  photoURL?: string;
+}
 
 export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void }) {
   const { user } = useAuth();
@@ -14,7 +19,7 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
   const [notifyRequested, setNotifyRequested] = useState(
     () => !!localStorage.getItem('tropos_challenge_notify')
   );
-  const [weeklyRankings, setWeeklyRankings] = useState<LeaderboardEntry[]>([]);
+  const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(true);
   const autoJoinedRef = useRef(false);
 
@@ -38,17 +43,25 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
       if (cancelled) return;
       const { getDoc, doc } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase');
-      const named = await Promise.all(raw.map(async (e) => {
+      // Source from `users/{uid}/public/profile` (cross-user readable) —
+      // the owner-only `users/{uid}` path silently failed for anyone
+      // other than the current user and left them all rendered as
+      // "Athlete". Same bug + fix as LeaderboardCard / FullLeaderboard.
+      const enriched = await Promise.all(raw.map(async (e) => {
         try {
-          const snap = await getDoc(doc(db, 'users', e.uid));
-          const name = snap.exists() ? (snap.data().displayName || 'Athlete') : 'Athlete';
-          return { ...e, name };
+          const snap = await getDoc(doc(db, 'users', e.uid, 'public', 'profile'));
+          const data = snap.data() as { displayName?: string; photoURL?: string } | undefined;
+          return {
+            ...e,
+            name: data?.displayName || (e.uid === user.uid ? 'You' : 'Athlete'),
+            photoURL: data?.photoURL,
+          } as EnrichedEntry;
         } catch {
-          return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' };
+          return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' } as EnrichedEntry;
         }
       }));
       if (!cancelled) {
-        setWeeklyRankings(named.filter(e => e.value > 0));
+        setWeeklyRankings(enriched.filter(e => e.value > 0));
         setRankingsLoading(false);
       }
     }).catch(() => {
@@ -130,9 +143,11 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
                 >
                   {entry.rank}
                 </span>
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-                  {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
-                </div>
+                <Avatar
+                  photoURL={entry.photoURL}
+                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  size="sm"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium truncate">

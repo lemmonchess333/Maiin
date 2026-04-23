@@ -3,10 +3,14 @@ import { useAuth } from '../../lib/auth';
 import { getComments, addComment } from '../../lib/socialApi';
 import { getTimeAgo } from '../../lib/timeAgo';
 import type { DocumentSnapshot } from 'firebase/firestore';
+import Avatar from '../Avatar';
+import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 
 interface Comment {
   id: string;
   authorName?: string;
+  authorPhotoURL?: string;
   text?: string;
   createdAt?: { toDate?: () => Date };
 }
@@ -45,13 +49,23 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
   const handleSend = async () => {
     if (!user || !text.trim()) return;
     setSending(true);
-    await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId);
-    setText('');
-    const result = await getComments(activityId);
-    setComments(result.comments as Comment[]);
-    lastDocRef.current = result.lastDoc;
-    setHasMore(result.hasMore);
-    setSending(false);
+    try {
+      await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId, profile?.photoURL || undefined);
+      setText('');
+      const result = await getComments(activityId);
+      setComments(result.comments as Comment[]);
+      lastDocRef.current = result.lastDoc;
+      setHasMore(result.hasMore);
+    } catch (err) {
+      // Keep the user's typed text so they don't lose it on retry.
+      // Surface the failure via toast — bare await previously left
+      // the send button locked on `sending=true` forever if the write
+      // failed, with no user-visible signal.
+      logger.error('[CommentSection] send failed', err);
+      toast.error("Couldn't post comment. Try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -60,9 +74,7 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
         const timeAgo = c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : '';
         return (
           <div key={c.id} className="flex gap-2">
-            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-              {(c.authorName || '?').charAt(0)}
-            </div>
+            <Avatar photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" className="w-6 h-6" />
             <div>
               <p className="text-xs">
                 <span className="font-semibold">{c.authorName}</span>{' '}

@@ -10,6 +10,8 @@ import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import TrajectoryCard from '../components/social/TrajectoryCard';
 import Avatar from '../components/Avatar';
+import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
+import { isNativePlatform } from '../lib/platform';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
@@ -85,7 +87,7 @@ export default function Social() {
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
   // Suggested People — fetches lazily only when the Find tab is shown.
-  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions } =
+  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions, remove: removeSuggestion } =
     useSuggestedPeople(tab === 'find', blockedUsers);
 
   // Crews
@@ -324,7 +326,24 @@ export default function Social() {
             ))}
           </div>
 
-          {activeFeed.loading && (
+          {/*
+            Two different loading states:
+              - Initial load (no items yet) — render 3 staggered
+                skeleton cards so the feed surface has visual weight
+                while waiting for the first batch. Feels dramatically
+                snappier than flashing blank then popping in content.
+              - Pagination load (items already present) — keep the
+                small centred spinner; full skeletons below real
+                cards would be visually noisy.
+          */}
+          {activeFeed.loading && activeFeed.items.length === 0 && (
+            <div className="space-y-3" aria-live="polite" aria-label="Loading feed">
+              <ActivityCardSkeleton stagger={0} />
+              <ActivityCardSkeleton stagger={1} />
+              <ActivityCardSkeleton stagger={2} />
+            </div>
+          )}
+          {activeFeed.loading && activeFeed.items.length > 0 && (
             <div className="flex items-center justify-center py-4" aria-live="polite">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             </div>
@@ -344,6 +363,7 @@ export default function Social() {
                   title="Be the first to share"
                   description="Complete a workout or run and it'll appear here for the community"
                   accentColor={THEME.brand}
+                  action={{ label: 'Start a workout', href: '/program' }}
                 />
               ) : (
                 <div className="text-center py-12 px-6 space-y-4">
@@ -389,15 +409,34 @@ export default function Social() {
       {tab === 'find' && (
         <section aria-label="Find people">
         <div className="space-y-6">
-          {/* Section 1: Invite link CTA (simplified) */}
-          <div className="p-3 rounded-xl bg-card border border-border/50">
-            <p className="text-xs text-muted-foreground mb-2">Invite friends to compete and share workouts</p>
-            <button onClick={handleShareInvite}
-              className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97]">
-              <div className="flex items-center justify-center gap-2">
-                <Share2 className="w-4 h-4" />
-                Share invite link
+          {/* Section 1: Invite link CTA — primary growth path on web */}
+          <div
+            className="p-4 rounded-2xl border"
+            style={{
+              background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
+              borderColor: `${THEME.brand}33`,
+            }}
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `${THEME.brand}25` }}
+              >
+                <Share2 className="w-5 h-5" style={{ color: THEME.brand }} />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Bring a friend</p>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                  Share a link to invite someone to train and compete with you.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleShareInvite}
+              className="w-full py-3 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+              style={{ background: THEME.brand }}
+            >
+              Share invite link
             </button>
           </div>
 
@@ -439,15 +478,24 @@ export default function Social() {
             )}
           </div>
 
-          {/* Section 3: Contact Sync */}
-          <div className="space-y-2">
-            <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
-            <button onClick={() => setShowContactModal(true)}
-              className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
-              style={{ borderLeft: `3px solid ${THEME.brand}80` }}>
-              Sync Contacts
-            </button>
-          </div>
+          {/*
+            Section 3: Contact Sync — hidden on web because the
+            implementation lives behind a Capacitor contacts plugin
+            that isn't available in a browser. Rather than surface a
+            button that opens a modal saying "only in the iOS app",
+            we just hide the section until the user is in the native
+            shell. Surfaces back automatically on iOS / Android builds.
+          */}
+          {isNativePlatform() && (
+            <div className="space-y-2">
+              <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
+              <button onClick={() => setShowContactModal(true)}
+                className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
+                style={{ borderLeft: `3px solid ${THEME.brand}80` }}>
+                Sync Contacts
+              </button>
+            </div>
+          )}
 
           {/* Section 4: Suggested People */}
           <div className="space-y-2">
@@ -486,7 +534,14 @@ export default function Social() {
                         {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
                       </p>
                     </div>
-                    <FollowButton targetUid={p.uid} />
+                    <FollowButton
+                      targetUid={p.uid}
+                      onFollowChange={(isFollowing) => {
+                        // Moved from "Suggested" to the user's Following feed —
+                        // remove from the suggestion list for immediate feedback.
+                        if (isFollowing) removeSuggestion(p.uid);
+                      }}
+                    />
                   </div>
                 ))}
               </div>

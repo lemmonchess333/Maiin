@@ -232,14 +232,27 @@ export async function hasGivenKudos(activityId: string, userId: string): Promise
   return snap.exists();
 }
 
-export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string }[]> {
+export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string; photoURL?: string }[]> {
   const snap = await getDocs(collection(db, 'kudos', activityId, 'users'));
   const userIds = snap.docs.map(d => d.id);
   if (userIds.length === 0) return [];
+  // Source from `users/{uid}/public/profile` (cross-user readable) —
+  // pre-W1d this read `users/{uid}` (owner-only) and silently returned
+  // "Athlete" for every kudos-giver except the current user. Also
+  // pulls photoURL so the "Props from" list can render real avatars.
   const users = await Promise.all(
     userIds.map(async uid => {
-      const userSnap = await getDoc(doc(db, 'users', uid));
-      return { userId: uid, userName: userSnap.exists() ? (userSnap.data().displayName || 'Athlete') : 'Athlete' };
+      try {
+        const userSnap = await getDoc(doc(db, 'users', uid, 'public', 'profile'));
+        const data = userSnap.data() as { displayName?: string; photoURL?: string } | undefined;
+        return {
+          userId: uid,
+          userName: data?.displayName || 'Athlete',
+          ...(data?.photoURL ? { photoURL: data.photoURL } : {}),
+        };
+      } catch {
+        return { userId: uid, userName: 'Athlete' };
+      }
     })
   );
   return users;
@@ -254,11 +267,19 @@ export async function addComment(
   authorName: string,
   text: string,
   activityAuthorId?: string,
+  /**
+   * Denormalised author avatar URL. Persisted on the comment doc so
+   * the read path can render real avatars without a per-comment
+   * profile fetch. Optional — absent when the commenter hasn't
+   * uploaded a photo; UI falls back to initials.
+   */
+  authorPhotoURL?: string,
 ) {
   const authedUid = getAuthUid();
   if (authorId !== authedUid) throw new Error('Identity mismatch');
   await addDoc(collection(db, 'comments', activityId, 'items'), {
     authorId, authorName, text, createdAt: serverTimestamp(),
+    ...(authorPhotoURL ? { authorPhotoURL } : {}),
   });
   await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(1) });
 
