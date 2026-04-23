@@ -3,7 +3,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
-import { Camera, Lock, Loader2, RotateCcw } from 'lucide-react';
+import { Camera, Lock, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../../lib/theme';
 import { logger } from '../../lib/logger';
@@ -44,7 +44,7 @@ export default function ProgressPhotos() {
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
-  const [uploadError, setUploadError] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const keyRef = useRef<CryptoKey | null>(null);
   const pendingFileRef = useRef<File | null>(null);
@@ -128,7 +128,7 @@ export default function ProgressPhotos() {
   const uploadFile = useCallback(async (file: File) => {
     if (!user) return;
     setLoading(true);
-    setUploadError(false);
+    setUploadError(null);
     try {
       logger.log('[UPLOAD] Current user:', user.uid);
       logger.log('[UPLOAD] 1. Image picked:', { name: file.name, size: file.size, type: file.type });
@@ -226,7 +226,12 @@ export default function ProgressPhotos() {
       toast.success('Photo uploaded!');
     } catch (err) {
       logger.error('[UPLOAD] Upload failed:', err);
-      setUploadError(true);
+      // Surface the actual error so the user can tell what went
+      // wrong (storage bucket misconfigured, offline, size limit,
+      // permission denied). Fallback to the generic message if the
+      // error object doesn't carry a useful message.
+      const message = err instanceof Error && err.message ? err.message : 'Upload failed. Please try again.';
+      setUploadError(message);
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -242,9 +247,14 @@ export default function ProgressPhotos() {
 
   const retryUpload = useCallback(async () => {
     if (!pendingFileRef.current) return;
-    setUploadError(false);
+    setUploadError(null);
     await uploadFile(pendingFileRef.current);
   }, [uploadFile]);
+
+  const dismissError = useCallback(() => {
+    setUploadError(null);
+    pendingFileRef.current = null;
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -288,13 +298,26 @@ export default function ProgressPhotos() {
       )}
 
       {uploadError && !loading && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20">
-          <p className="text-xs text-destructive">Upload failed. Please try again.</p>
-          <button onClick={retryUpload}
-            aria-label="Retry photo upload"
-            className="flex items-center gap-1 text-xs font-medium text-destructive ml-2 shrink-0">
-            <RotateCcw size={12} />
-            Retry
+        <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20" role="alert">
+          <p className="text-xs text-destructive flex-1 leading-relaxed break-words">{uploadError}</p>
+          {/*
+            Only surface Retry when we actually have a file to retry.
+            Without this guard the button was silently no-op'ing when
+            the pendingFileRef had been cleared (e.g. after the user
+            navigated away and back).
+          */}
+          {pendingFileRef.current && (
+            <button onClick={retryUpload}
+              aria-label="Retry photo upload"
+              className="flex items-center gap-1 text-xs font-medium text-destructive shrink-0">
+              <RotateCcw size={12} />
+              Retry
+            </button>
+          )}
+          <button onClick={dismissError}
+            aria-label="Dismiss error"
+            className="p-0.5 text-destructive/70 hover:text-destructive shrink-0">
+            <X size={14} />
           </button>
         </div>
       )}
