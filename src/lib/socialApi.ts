@@ -63,6 +63,18 @@ export async function hasAnyFollowing(uid: string): Promise<boolean> {
 }
 
 /**
+ * Return the user's following count bounded by `cap` — cheap when
+ * caller only needs to know if the count crosses a small threshold
+ * (e.g. "does this user have ≥2 follows" for the leaderboard vs
+ * trajectory card decision). A `limit(cap)` query reads at most
+ * `cap` docs regardless of the full follow list size.
+ */
+export async function getBoundedFollowingCount(uid: string, cap: number): Promise<number> {
+  const snap = await getDocs(query(collection(db, 'following', uid, 'users'), limit(cap)));
+  return snap.size;
+}
+
+/**
  * Return the Set of UIDs the user follows. Used by Suggested People
  * for exclusion. Only fetch when the suggestion UI is actually
  * visible — each read scales with the user's follow list.

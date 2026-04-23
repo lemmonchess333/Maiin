@@ -5,9 +5,10 @@ import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { searchUsers, hasAnyFollowing } from '../lib/socialApi';
+import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
+import TrajectoryCard from '../components/social/TrajectoryCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
@@ -41,29 +42,31 @@ export default function Social() {
   const [tab, setTab] = useState<SocialTab>('feed');
   /**
    * Smart default: new / zero-follow users land on Discover; users
-   * with any follows land on Following. One cheap limit(1) read
-   * decides it. While we wait, we default to 'discover' so a brand-
-   * new user never sees a flash of the empty Following state before
-   * resolution.
+   * with any follows land on Following. One cheap limit(2) read
+   * decides both "do I have any follows" (smart default tab) AND
+   * "do I have ≥2 follows" (leaderboard vs trajectory card).
+   * While we wait, we default to 'discover' so a brand-new user
+   * never sees a flash of the empty Following state before
+   * resolution. `followingCount` is bounded at 2 — we only care
+   * about the threshold, not the exact number.
    */
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('discover');
-  const [feedSubTabResolved, setFeedSubTabResolved] = useState(false);
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
   useEffect(() => {
-    if (!user || feedSubTabResolved) return;
+    if (!user || followingCount !== null) return;
     let cancelled = false;
-    hasAnyFollowing(user.uid)
-      .then((any) => {
+    getBoundedFollowingCount(user.uid, 2)
+      .then((n) => {
         if (cancelled) return;
-        setFeedSubTab(any ? 'following' : 'discover');
+        setFollowingCount(n);
+        setFeedSubTab(n > 0 ? 'following' : 'discover');
       })
       .catch(() => {
-        // On error, leave default 'discover' — safe empty state.
-      })
-      .finally(() => {
-        if (!cancelled) setFeedSubTabResolved(true);
+        // On error, treat as zero — safe empty state + trajectory card.
+        if (!cancelled) setFollowingCount(0);
       });
     return () => { cancelled = true; };
-  }, [user, feedSubTabResolved]);
+  }, [user, followingCount]);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
@@ -271,7 +274,24 @@ export default function Social() {
             ))}
           </div>
 
-          {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} /></div>}
+          {feedSubTab === 'following' && (
+            <div className="mt-4">
+              {/*
+                If the user has <2 follows, a real leaderboard would just
+                show them (and maybe one other person) — reads as "app is
+                empty". Replace the slot with a trajectory card that
+                reframes the space around personal progression: week-over-
+                week hybrid score. Keeps the slot useful until the user
+                builds a social graph. `followingCount === null` = still
+                loading → render nothing so we don't flash the wrong card.
+              */}
+              {followingCount !== null && (
+                followingCount >= 2
+                  ? <LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} />
+                  : <TrajectoryCard />
+              )}
+            </div>
+          )}
 
           {pullRefreshing && (
             <div className="flex items-center justify-center py-2" aria-live="polite">
