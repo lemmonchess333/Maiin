@@ -10,6 +10,7 @@ import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import TrajectoryCard from '../components/social/TrajectoryCard';
 import Avatar from '../components/Avatar';
+import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
@@ -324,7 +325,24 @@ export default function Social() {
             ))}
           </div>
 
-          {activeFeed.loading && (
+          {/*
+            Two different loading states:
+              - Initial load (no items yet) — render 3 staggered
+                skeleton cards so the feed surface has visual weight
+                while waiting for the first batch. Feels dramatically
+                snappier than flashing blank then popping in content.
+              - Pagination load (items already present) — keep the
+                small centred spinner; full skeletons below real
+                cards would be visually noisy.
+          */}
+          {activeFeed.loading && activeFeed.items.length === 0 && (
+            <div className="space-y-3" aria-live="polite" aria-label="Loading feed">
+              <ActivityCardSkeleton stagger={0} />
+              <ActivityCardSkeleton stagger={1} />
+              <ActivityCardSkeleton stagger={2} />
+            </div>
+          )}
+          {activeFeed.loading && activeFeed.items.length > 0 && (
             <div className="flex items-center justify-center py-4" aria-live="polite">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             </div>

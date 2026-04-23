@@ -47,6 +47,38 @@ export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
   );
 }
 
+/**
+ * Matches the shape of an ActivityCard so the feed doesn't visually
+ * jump when real data swaps in. Used for the initial-load state of
+ * the Following and Discover feeds.
+ */
+export function ActivityCardSkeleton({ stagger = 0 }: { stagger?: number }) {
+  return (
+    <div className="bg-card rounded-2xl overflow-hidden">
+      {/* Map / route preview area */}
+      <Skeleton className="h-28 rounded-none" stagger={stagger} />
+      <div className="p-4 space-y-3">
+        {/* Author row — avatar + name + time */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-full" stagger={stagger} />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3 w-24" stagger={stagger + 1} />
+            <Skeleton className="h-2.5 w-14" stagger={stagger + 1} />
+          </div>
+        </div>
+        {/* Activity title + stat line */}
+        <Skeleton className="h-4 w-2/3" stagger={stagger + 2} />
+        <Skeleton className="h-3 w-1/2" stagger={stagger + 2} />
+        {/* Kudos / comment row */}
+        <div className="flex items-center gap-4 pt-2">
+          <Skeleton className="h-6 w-14 rounded-full" stagger={stagger + 3} />
+          <Skeleton className="h-6 w-14 rounded-full" stagger={stagger + 3} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HomeSkeleton() {
   return (
     <div className="space-y-6">
