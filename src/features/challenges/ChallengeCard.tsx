@@ -4,6 +4,7 @@ import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut } from "lucide-rea
 import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
 import { TIER_COLORS, computeTier, getTimeRemaining } from "./useChallenges";
 import { THEME } from "@/lib/theme";
+import Avatar from "@/components/Avatar";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -96,9 +97,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               return (
                 <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-right font-medium text-muted-foreground">{i + 1}</span>
-                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                    {(p.displayName || "?").charAt(0)}
-                  </div>
+                  <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                   <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
                   <span className="font-medium tabular-nums">{p.currentValue}</span>
                   {tier && (
@@ -186,9 +185,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                 return (
                   <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                     <span className="w-5 text-right font-medium text-muted-foreground">{i + 1}</span>
-                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                      {(p.displayName || "?").charAt(0)}
-                    </div>
+                    <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                     <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
                     <span className="font-medium tabular-nums">{p.currentValue}</span>
                     {tier && (

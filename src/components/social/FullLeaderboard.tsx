@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, Zap } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
 import { Skeleton } from '../LoadingSkeleton';
+import Avatar from '../Avatar';
+
+interface EnrichedEntry extends LeaderboardEntry {
+  photoURL?: string;
+}
 
 const TABS: { key: ChallengeType; label: string; unit: string }[] = [
   { key: 'weekly_hybrid', label: 'Hybrid Score', unit: 'pts' },
@@ -18,34 +23,42 @@ const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ChallengeType>('weekly_hybrid');
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Source from `users/{uid}/public/profile` (cross-user readable) —
+  // pre-W1d this read `users/{uid}` (owner-only), which silently
+  // failed for everyone except the current user and left them all
+  // rendered as "Athlete".
+  const load = useCallback(async () => {
     if (!user) return;
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const raw = await buildLeaderboard(user.uid, activeTab);
-        if (cancelled) return;
-        const named = await Promise.all(raw.map(async (e) => {
-          try {
-            const snap = await getDoc(doc(db, 'users', e.uid));
-            const name = snap.exists() ? (snap.data().displayName || 'Athlete') : 'Athlete';
-            return { ...e, name };
-          } catch {
-            return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' };
-          }
-        }));
-        if (!cancelled) setEntries(named.filter(e => e.value > 0));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    load();
-    return () => { cancelled = true; };
+    setLoading(true);
+    try {
+      const raw = await buildLeaderboard(user.uid, activeTab);
+      const enriched = await Promise.all(raw.map(async (e) => {
+        try {
+          const snap = await getDoc(doc(db, 'users', e.uid, 'public', 'profile'));
+          const data = snap.data() as { displayName?: string; photoURL?: string } | undefined;
+          return {
+            ...e,
+            name: data?.displayName || (e.uid === user.uid ? 'You' : 'Athlete'),
+            photoURL: data?.photoURL,
+          } as EnrichedEntry;
+        } catch {
+          return { ...e, name: e.uid === user.uid ? 'You' : 'Athlete' } as EnrichedEntry;
+        }
+      }));
+      setEntries(enriched.filter((e) => e.value > 0));
+    } finally {
+      setLoading(false);
+    }
   }, [user, activeTab]);
+
+  useEffect(() => {
+    let cancelled = false;
+    load().catch(() => { if (cancelled) return; });
+    return () => { cancelled = true; };
+  }, [load]);
 
   const currentUnit = TABS.find(t => t.key === activeTab)?.unit || 'pts';
 
@@ -113,9 +126,11 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
             >
               {entry.rank}
             </span>
-            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-              {(entry.uid === user?.uid ? 'Y' : (entry.name || '?').charAt(0)).toUpperCase()}
-            </div>
+            <Avatar
+              photoURL={entry.photoURL}
+              displayName={entry.uid === user?.uid ? 'You' : entry.name}
+              size="sm"
+            />
             <span className="text-sm font-medium flex-1 truncate">
               {entry.uid === user?.uid ? 'You' : entry.name}
             </span>

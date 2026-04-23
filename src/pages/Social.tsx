@@ -2,11 +2,14 @@ import { useSocialFeed } from '../hooks/useSocialFeed';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
+import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { searchUsers } from '../lib/socialApi';
+import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
+import TrajectoryCard from '../components/social/TrajectoryCard';
+import Avatar from '../components/Avatar';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
@@ -38,7 +41,33 @@ export default function Social() {
   const { user, profile } = useAuth();
   const blockedUsers = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
-  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('following');
+  /**
+   * Smart default: new / zero-follow users land on Discover; users
+   * with any follows land on Following. One cheap limit(2) read
+   * decides both "do I have any follows" (smart default tab) AND
+   * "do I have ≥2 follows" (leaderboard vs trajectory card).
+   * While we wait, we default to 'discover' so a brand-new user
+   * never sees a flash of the empty Following state before
+   * resolution. `followingCount` is bounded at 2 — we only care
+   * about the threshold, not the exact number.
+   */
+  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('discover');
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!user || followingCount !== null) return;
+    let cancelled = false;
+    getBoundedFollowingCount(user.uid, 2)
+      .then((n) => {
+        if (cancelled) return;
+        setFollowingCount(n);
+        setFeedSubTab(n > 0 ? 'following' : 'discover');
+      })
+      .catch(() => {
+        // On error, treat as zero — safe empty state + trajectory card.
+        if (!cancelled) setFollowingCount(0);
+      });
+    return () => { cancelled = true; };
+  }, [user, followingCount]);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
@@ -55,6 +84,10 @@ export default function Social() {
   const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
+  // Suggested People — fetches lazily only when the Find tab is shown.
+  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions } =
+    useSuggestedPeople(tab === 'find', blockedUsers);
+
   // Crews
   const { crews, currentCrew, joinCrew, leaveCrew, createCrew } = useCrews();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -68,7 +101,7 @@ export default function Social() {
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; crewId?: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; photoURL?: string; crewId?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const contactModalRef = useFocusTrap<HTMLDivElement>(showContactModal);
@@ -242,7 +275,24 @@ export default function Social() {
             ))}
           </div>
 
-          {feedSubTab === 'following' && <div className="mt-4"><LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} /></div>}
+          {feedSubTab === 'following' && (
+            <div className="mt-4">
+              {/*
+                If the user has <2 follows, a real leaderboard would just
+                show them (and maybe one other person) — reads as "app is
+                empty". Replace the slot with a trajectory card that
+                reframes the space around personal progression: week-over-
+                week hybrid score. Keeps the slot useful until the user
+                builds a social graph. `followingCount === null` = still
+                loading → render nothing so we don't flash the wrong card.
+              */}
+              {followingCount !== null && (
+                followingCount >= 2
+                  ? <LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} />
+                  : <TrajectoryCard />
+              )}
+            </div>
+          )}
 
           {pullRefreshing && (
             <div className="flex items-center justify-center py-2" aria-live="polite">
@@ -304,16 +354,16 @@ export default function Social() {
                     <Users size={32} style={{ color: THEME.brand }} />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-foreground">Your feed is empty</p>
+                    <p className="text-sm font-semibold text-foreground">Follow someone to start competing</p>
                     <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
-                      Follow athletes to see their workouts, runs, and milestones here
+                      Their workouts, runs, and milestones will show up here
                     </p>
                   </div>
                   <button
                     onClick={() => setTab('find')}
                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
                   >
-                    Find Friends
+                    Find people to follow
                   </button>
                   <button
                     onClick={() => setFeedSubTab('discover')}
@@ -372,9 +422,7 @@ export default function Social() {
               <div className="space-y-2">
                 {searchResults.map((u) => (
                   <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {(u.displayName || '?').charAt(0).toUpperCase()}
-                    </div>
+                    <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
                       {u.crewId && <p className="text-xs text-muted-foreground">Crew member</p>}
@@ -403,14 +451,46 @@ export default function Social() {
 
           {/* Section 4: Suggested People */}
           <div className="space-y-2">
-            <p className="text-small font-semibold text-foreground">Suggested people</p>
-            <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
-              <p className="text-xs text-muted-foreground">
-                {profile?.crewId && currentCrew
-                  ? 'Suggestions appear as more athletes join your crew'
-                  : 'Suggestions appear as you join crews and follow athletes'}
-              </p>
+            <div className="flex items-center justify-between">
+              <p className="text-small font-semibold text-foreground">Suggested people</p>
+              {suggestedPeople.length > 0 && !suggestedLoading && (
+                <button
+                  onClick={refreshSuggestions}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Refresh suggestions"
+                >
+                  Refresh
+                </button>
+              )}
             </div>
+            {suggestedLoading && suggestedPeople.length === 0 ? (
+              <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : suggestedPeople.length === 0 ? (
+              <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {profile?.crewId && currentCrew
+                    ? 'Suggestions appear as more athletes join your crew'
+                    : 'Suggestions appear as you join crews and follow athletes'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {suggestedPeople.map((p) => (
+                  <div key={p.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                    <Avatar photoURL={p.photoURL} displayName={p.displayName} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
+                      </p>
+                    </div>
+                    <FollowButton targetUid={p.uid} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Contact Sync Modal */}
