@@ -2,9 +2,10 @@ import { useSocialFeed } from '../hooks/useSocialFeed';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
+import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
-import { searchUsers } from '../lib/socialApi';
+import { searchUsers, hasAnyFollowing } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import ProgressPhotos from '../components/social/ProgressPhotos';
@@ -38,7 +39,31 @@ export default function Social() {
   const { user, profile } = useAuth();
   const blockedUsers = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
-  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('following');
+  /**
+   * Smart default: new / zero-follow users land on Discover; users
+   * with any follows land on Following. One cheap limit(1) read
+   * decides it. While we wait, we default to 'discover' so a brand-
+   * new user never sees a flash of the empty Following state before
+   * resolution.
+   */
+  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('discover');
+  const [feedSubTabResolved, setFeedSubTabResolved] = useState(false);
+  useEffect(() => {
+    if (!user || feedSubTabResolved) return;
+    let cancelled = false;
+    hasAnyFollowing(user.uid)
+      .then((any) => {
+        if (cancelled) return;
+        setFeedSubTab(any ? 'following' : 'discover');
+      })
+      .catch(() => {
+        // On error, leave default 'discover' — safe empty state.
+      })
+      .finally(() => {
+        if (!cancelled) setFeedSubTabResolved(true);
+      });
+    return () => { cancelled = true; };
+  }, [user, feedSubTabResolved]);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
@@ -54,6 +79,10 @@ export default function Social() {
   const followingFeed = useSocialFeed(false, blockedUsers);
   const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
+
+  // Suggested People — fetches lazily only when the Find tab is shown.
+  const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions } =
+    useSuggestedPeople(tab === 'find', blockedUsers);
 
   // Crews
   const { crews, currentCrew, joinCrew, leaveCrew, createCrew } = useCrews();
@@ -304,16 +333,16 @@ export default function Social() {
                     <Users size={32} style={{ color: THEME.brand }} />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-foreground">Your feed is empty</p>
+                    <p className="text-sm font-semibold text-foreground">Follow someone to start competing</p>
                     <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
-                      Follow athletes to see their workouts, runs, and milestones here
+                      Their workouts, runs, and milestones will show up here
                     </p>
                   </div>
                   <button
                     onClick={() => setTab('find')}
                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
                   >
-                    Find Friends
+                    Find people to follow
                   </button>
                   <button
                     onClick={() => setFeedSubTab('discover')}
@@ -403,14 +432,48 @@ export default function Social() {
 
           {/* Section 4: Suggested People */}
           <div className="space-y-2">
-            <p className="text-small font-semibold text-foreground">Suggested people</p>
-            <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
-              <p className="text-xs text-muted-foreground">
-                {profile?.crewId && currentCrew
-                  ? 'Suggestions appear as more athletes join your crew'
-                  : 'Suggestions appear as you join crews and follow athletes'}
-              </p>
+            <div className="flex items-center justify-between">
+              <p className="text-small font-semibold text-foreground">Suggested people</p>
+              {suggestedPeople.length > 0 && !suggestedLoading && (
+                <button
+                  onClick={refreshSuggestions}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Refresh suggestions"
+                >
+                  Refresh
+                </button>
+              )}
             </div>
+            {suggestedLoading && suggestedPeople.length === 0 ? (
+              <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : suggestedPeople.length === 0 ? (
+              <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
+                <p className="text-xs text-muted-foreground">
+                  {profile?.crewId && currentCrew
+                    ? 'Suggestions appear as more athletes join your crew'
+                    : 'Suggestions appear as you join crews and follow athletes'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {suggestedPeople.map((p) => (
+                  <div key={p.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                      {p.displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
+                      </p>
+                    </div>
+                    <FollowButton targetUid={p.uid} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Contact Sync Modal */}

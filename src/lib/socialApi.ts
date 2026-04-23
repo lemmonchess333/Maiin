@@ -50,6 +50,28 @@ export async function getFollowingCount(uid: string): Promise<number> {
   return snap.size;
 }
 
+/**
+ * Cheap check for "do I follow anyone at all". `getFollowingCount`
+ * reads every doc in the subcollection — wasteful when the caller
+ * only needs a boolean (smart-default feed sub-tab). `limit(1)`
+ * costs a single Firestore read regardless of how many follows the
+ * user has.
+ */
+export async function hasAnyFollowing(uid: string): Promise<boolean> {
+  const snap = await getDocs(query(collection(db, 'following', uid, 'users'), limit(1)));
+  return !snap.empty;
+}
+
+/**
+ * Return the Set of UIDs the user follows. Used by Suggested People
+ * for exclusion. Only fetch when the suggestion UI is actually
+ * visible — each read scales with the user's follow list.
+ */
+export async function getFollowingIds(uid: string): Promise<Set<string>> {
+  const snap = await getDocs(collection(db, 'following', uid, 'users'));
+  return new Set(snap.docs.map((d) => d.id));
+}
+
 // ============================================
 // Post Activity + Fan-out to Followers
 // ============================================
@@ -356,6 +378,111 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
     }
   }
   return results.slice(0, limitCount);
+}
+
+// ============================================
+// Suggested People (v1 — no recommendation engine)
+// ============================================
+
+export interface SuggestedPerson {
+  uid: string;
+  displayName: string;
+  /** Short reason chip surfaced in the UI. */
+  reason: 'in_your_crew' | 'recent_post';
+  /** For the "in_your_crew" reason — included so UIs can label it. */
+  crewId?: string;
+}
+
+/**
+ * v1 strategy: union two cheap sources, rank crew members first.
+ *
+ *   1. Crew members — if the user is in a crew, pull the member list
+ *      (the user most cares about people they share a crew with).
+ *   2. Recent public posters — anyone who posted a public activity
+ *      recently is someone worth following (they're active AND they
+ *      share publicly, so they'll show up on your feed).
+ *
+ * Filters: self, already-followed, blocked. No graph traversal, no
+ * ML, no collaborative filtering — a v1 good enough to turn the
+ * Find tab from a dead stub into a working discovery surface.
+ *
+ * If the pool comes back empty after filtering, the caller should
+ * render the honest "suggestions appear as the community grows"
+ * empty state rather than faking a list.
+ */
+export async function getSuggestedPeople(
+  uid: string,
+  opts: { crewId?: string; limitCount?: number; blockedUsers?: Set<string> } = {},
+): Promise<SuggestedPerson[]> {
+  const { crewId, limitCount = 10, blockedUsers = new Set<string>() } = opts;
+  const excludeIds = new Set<string>([uid, ...blockedUsers]);
+
+  // Exclude people we already follow — one-time read scoped to when
+  // the suggestion UI is actually rendered.
+  try {
+    const following = await getFollowingIds(uid);
+    following.forEach((id) => excludeIds.add(id));
+  } catch (e) {
+    // If we can't read following, suggestions may duplicate existing
+    // follows — acceptable degraded-state rather than failing outright.
+    captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.getFollowingIds' });
+  }
+
+  // Build an ordered list of candidate UIDs with their reason.
+  const candidates = new Map<string, SuggestedPerson>();
+
+  // 1. Crew members first.
+  if (crewId) {
+    try {
+      const memberSnap = await getDocs(collection(db, 'groups', crewId, 'members'));
+      for (const m of memberSnap.docs) {
+        const memberUid = m.id;
+        if (excludeIds.has(memberUid)) continue;
+        if (candidates.has(memberUid)) continue;
+        candidates.set(memberUid, { uid: memberUid, displayName: 'Athlete', reason: 'in_your_crew', crewId });
+      }
+    } catch (e) {
+      captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.crewMembers' });
+    }
+  }
+
+  // 2. Recent public posters — dedupe by authorId, keep the most recent.
+  if (candidates.size < limitCount) {
+    try {
+      const recent = await getDocs(query(
+        collection(db, 'activities'),
+        where('visibility', '==', 'public'),
+        orderBy('createdAt', 'desc'),
+        limit(50),
+      ));
+      for (const d of recent.docs) {
+        const author = (d.data().authorId as string | undefined);
+        if (!author) continue;
+        if (excludeIds.has(author)) continue;
+        if (candidates.has(author)) continue;
+        candidates.set(author, { uid: author, displayName: 'Athlete', reason: 'recent_post' });
+        if (candidates.size >= limitCount) break;
+      }
+    } catch (e) {
+      captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.recentPosters' });
+    }
+  }
+
+  // Enrich with display names from the public profile projection.
+  // Parallel getDoc — small list (≤ limitCount), no pagination, runs once.
+  const list = Array.from(candidates.values()).slice(0, limitCount);
+  await Promise.all(list.map(async (p) => {
+    try {
+      const snap = await getDoc(doc(db, 'users', p.uid, 'public', 'profile'));
+      const data = snap.data() as { displayName?: string } | undefined;
+      if (data?.displayName) p.displayName = data.displayName;
+    } catch {
+      // Fall through with default 'Athlete' — a missing public profile
+      // shouldn't break the whole list.
+    }
+  }));
+
+  return list;
 }
 
 export async function searchUsersByEmail(email: string, limitCount = 10) {
