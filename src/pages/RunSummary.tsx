@@ -120,6 +120,7 @@ export default function RunSummary() {
         await postActivity({
           authorId: user.uid,
           authorName: profile?.displayName || 'Athlete',
+          ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
           type: 'run',
           visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
           runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',

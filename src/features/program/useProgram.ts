@@ -316,6 +316,7 @@ export function useProgram() {
             await postActivity({
               authorId: user.uid,
               authorName: profile?.displayName || 'Athlete',
+              ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
               type: 'workout',
               visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
               workoutName: day.dayName,

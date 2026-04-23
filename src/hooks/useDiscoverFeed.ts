@@ -19,7 +19,7 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
     setError(null);
     try {
       const result = await getDiscoverFeed(20, refresh ? undefined : lastDocRef.current);
-      const rawItems = result.items as { id: string; authorId?: string; authorName?: string; type?: string; summary?: string; createdAt?: unknown; kudosCount?: number; prHit?: boolean; prExercise?: string; prWeight?: number; badgeEarned?: string; challengeMilestone?: string }[];
+      const rawItems = result.items as { id: string; authorId?: string; authorName?: string; authorPhotoURL?: string; type?: string; summary?: string; createdAt?: unknown; kudosCount?: number; prHit?: boolean; prExercise?: string; prWeight?: number; badgeEarned?: string; challengeMilestone?: string }[];
 
       // Convert activity docs to FeedItem shape
       let feedItems: FeedItem[] = rawItems.map(item => ({
@@ -27,6 +27,7 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
         activityId: item.id,
         authorId: item.authorId || '',
         authorName: item.authorName || '',
+        ...(item.authorPhotoURL ? { authorPhotoURL: item.authorPhotoURL } : {}),
         type: (item.type || 'workout') as 'run' | 'workout',
         summary: item.summary || '',
         createdAt: item.createdAt,

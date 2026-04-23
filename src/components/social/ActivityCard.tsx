@@ -7,6 +7,7 @@ import ReportModal from './ReportModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
+import Avatar from '../Avatar';
 import { haptic } from '../../lib/haptic';
 import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, Target, Star, MoreHorizontal, Flag, Ban } from 'lucide-react';
 import { toast } from 'sonner';
@@ -232,11 +233,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             {/* Author row */}
             <div className="flex items-center gap-3 mb-2">
               <Link to={`/user/${feedItem.authorId}`} className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ background: `${THEME.brand}20`, color: THEME.brand }}
-                  role="img" aria-label={`${feedItem.authorName}'s avatar`}>
-                  {feedItem.authorName.charAt(0).toUpperCase()}
-                </div>
+                <Avatar
+                  photoURL={feedItem.authorPhotoURL}
+                  displayName={feedItem.authorName}
+                  size="lg"
+                  fallbackBg={`${THEME.brand}20`}
+                  fallbackColor={THEME.brand}
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
                   <p className="text-xs text-muted-foreground">{timeAgo}</p>
@@ -261,11 +264,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             {/* Author row */}
             <div className="flex items-center gap-3 mb-2">
               <Link to={`/user/${feedItem.authorId}`} className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                  style={{ background: avatarBg, color: avatarColor }}
-                  role="img" aria-label={`${feedItem.authorName}'s avatar`}>
-                  {feedItem.authorName.charAt(0).toUpperCase()}
-                </div>
+                <Avatar
+                  photoURL={feedItem.authorPhotoURL}
+                  displayName={feedItem.authorName}
+                  size="lg"
+                  fallbackBg={avatarBg}
+                  fallbackColor={avatarColor}
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
                   <div className="flex items-center gap-1 text-muted-foreground">
@@ -411,9 +416,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               </div>
             ) : kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                  {u.userName.charAt(0).toUpperCase()}
-                </div>
+                <Avatar displayName={u.userName} size="sm" />
                 <span className="text-xs font-medium text-foreground">{u.userName}</span>
               </div>
             ))}

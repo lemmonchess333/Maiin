@@ -19,6 +19,16 @@ interface AvatarProps {
   size?: AvatarSize;
   /** Optional ring colour — pass when this avatar represents the current user ("You" highlight). */
   ringColor?: string;
+  /**
+   * Override the initial-fallback background colour. Defaults to the
+   * Tailwind `bg-muted` grey. ActivityCard passes a sport-coded tint
+   * (brand for hybrid, coral for run, purple for workout) so the
+   * feed's author-row avatars stay visually distinct by activity
+   * type even when there's no uploaded photo.
+   */
+  fallbackBg?: string;
+  /** Override the initial-fallback text colour. Paired with `fallbackBg`. */
+  fallbackColor?: string;
   /** Extra Tailwind classes for the outer container. */
   className?: string;
 }
@@ -40,6 +50,8 @@ export default function Avatar({
   displayName,
   size = 'md',
   ringColor,
+  fallbackBg,
+  fallbackColor,
   className,
 }: AvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -48,16 +60,24 @@ export default function Avatar({
   const sizeCls = SIZE_CLASSES[size];
 
   const showImage = photoURL && !imageFailed;
+  const useDefaultFallback = !showImage && !fallbackBg;
+
+  const style: React.CSSProperties = {};
+  if (ringColor) style.boxShadow = `0 0 0 2px ${ringColor}`;
+  if (!showImage && fallbackBg) {
+    style.background = fallbackBg;
+    if (fallbackColor) style.color = fallbackColor;
+  }
 
   return (
     <div
       className={cn(
-        'rounded-full overflow-hidden flex items-center justify-center shrink-0',
-        !showImage && 'bg-muted font-bold text-foreground/70',
+        'rounded-full overflow-hidden flex items-center justify-center shrink-0 font-bold',
+        useDefaultFallback && 'bg-muted text-foreground/70',
         sizeCls,
         className,
       )}
-      style={ringColor ? { boxShadow: `0 0 0 2px ${ringColor}` } : undefined}
+      style={Object.keys(style).length ? style : undefined}
     >
       {showImage ? (
         <img

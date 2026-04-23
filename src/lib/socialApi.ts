@@ -102,6 +102,13 @@ function formatPace(secPerKm: number): string {
 export async function postActivity(activity: {
   authorId: string;
   authorName: string;
+  /**
+   * Denormalised author avatar URL. Carried on the activity doc and
+   * on each fan-out feed item so ActivityCard can render the author
+   * row without a per-card profile fetch. Optional — absent when the
+   * user hasn't uploaded a photo; the UI falls back to initials.
+   */
+  authorPhotoURL?: string;
   type: 'run' | 'workout';
   visibility: 'public' | 'followers' | 'private';
   // Enriched fields
@@ -164,6 +171,7 @@ export async function postActivity(activity: {
       summary,
       createdAt: serverTimestamp(),
     };
+    if (activity.authorPhotoURL) feedItem.authorPhotoURL = activity.authorPhotoURL;
     // Include highlight fields for filtering
     if (activity.prHit) feedItem.prHit = true;
     if (activity.badgeEarned) feedItem.badgeEarned = activity.badgeEarned;

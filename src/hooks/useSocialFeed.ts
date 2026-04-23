@@ -34,6 +34,13 @@ export interface FeedItem {
   activityId: string;
   authorId: string;
   authorName: string;
+  /**
+   * Denormalised author avatar URL. Carried on each feed item so
+   * ActivityCard renders the author row without a per-card profile
+   * fetch. Absent on pre-W1d feed items (written before the
+   * denormalization) — UI falls back to initials.
+   */
+  authorPhotoURL?: string;
   type: 'run' | 'workout';
   summary: string;
   createdAt: { toDate: () => Date } | unknown;
