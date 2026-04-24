@@ -86,7 +86,7 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it("hides Duplicate and Edit buttons when those callbacks are not provided (back-compat)", function() {
+  it("hides the Edit button when onEdit is not provided (back-compat)", function() {
     render(
       <FoodRow
         group={baseGroup}
@@ -95,23 +95,7 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
         onDelete={vi.fn()}
       />,
     );
-    expect(screen.queryByLabelText("Duplicate Chicken salad")).toBeNull();
     expect(screen.queryByLabelText("Edit Chicken salad")).toBeNull();
-  });
-
-  it("shows Duplicate button when onDuplicate is provided and invokes it on tap", function() {
-    const onDuplicate = vi.fn();
-    render(
-      <FoodRow
-        group={baseGroup}
-        isOpen={false}
-        onOpenChange={noop}
-        onDelete={vi.fn()}
-        onDuplicate={onDuplicate}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText("Duplicate Chicken salad"));
-    expect(onDuplicate).toHaveBeenCalledTimes(1);
   });
 
   it("shows Edit button when onEdit is provided and invokes it on tap", function() {

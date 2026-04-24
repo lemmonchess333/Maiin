@@ -559,48 +559,25 @@ export default function Food() {
     setNlParsing(false);
   };
 
-  /**
-   * Duplicate the most recent meal in a group onto the currently-
-   * selected day. Written as a plain addDoc with the existing meal's
-   * items + totals preserved — no macro scaling needed. Tagged
-   * `confidence: "duplicate"` so downstream analytics can tell
-   * duplicated logs apart from original natural-language parses.
-   */
-  const handleDuplicateMeal = async (group: { foodName: string; meals: Meal[] }) => {
-    if (!user || group.meals.length === 0) return;
-    const source = group.meals[group.meals.length - 1];
-    haptic("light");
-    try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        foodName: source.foodName,
-        items: source.items ?? [],
-        totalCalories: safeNum(source.totalCalories),
-        totalProtein: safeNum(source.totalProtein),
-        totalCarbs: safeNum(source.totalCarbs),
-        totalFat: safeNum(source.totalFat),
-        confidence: "duplicate",
-        createdAt: Timestamp.now(),
-        ...(source.meal ? { meal: source.meal } : {}),
-      });
-      setOpenRowId(null);
-      toast.success(`Added another ${source.foodName}`, { id: `food-duplicate-${source.id}` });
-    } catch {
-      toast.error("Couldn't duplicate. Try again.", { id: "food-duplicate-error" });
-    }
+  // Edit servings sheet state — opens a +/- stepper so the user can
+  // match a logged meal's servings count to what they actually ate
+  // ("I had 2 servings of this chicken salad, not 1"). Adds or
+  // removes meal docs to reach the target count; no per-item macro
+  // scaling, which keeps the math trivially auditable. Replaced the
+  // earlier redundant "Copy" swipe action — a +1 tap in the stepper
+  // is the same outcome.
+  const [editingGroup, setEditingGroup] = useState<{ foodName: string; meals: Meal[] } | null>(null);
+  const [editingTarget, setEditingTarget] = useState<number>(1);
+  const openServingsEditor = (group: { foodName: string; meals: Meal[] }) => {
+    setEditingGroup(group);
+    setEditingTarget(group.meals.length);
   };
 
-  // Edit servings sheet state — opens a simple count stepper so the
-  // user can match a logged meal's servings count to what they
-  // actually ate ("I had 2 servings of this chicken salad, not 1").
-  // Adds or removes meal docs to reach the target count; no per-item
-  // macro scaling, which keeps the math trivially auditable.
-  const [editingGroup, setEditingGroup] = useState<{ foodName: string; meals: Meal[] } | null>(null);
-
-  const applyServingsChange = async (targetCount: number) => {
+  const applyServingsChange = async () => {
     if (!user || !editingGroup) return;
     const { meals: groupMeals } = editingGroup;
     const currentCount = groupMeals.length;
+    const targetCount = editingTarget;
     if (targetCount === currentCount || targetCount < 1) {
       setEditingGroup(null);
       return;
@@ -626,8 +603,6 @@ export default function Food() {
         }
       } else {
         const removes = currentCount - targetCount;
-        // Delete from the end (most recent first) so earlier docs
-        // keep their stable ordering in the list.
         const toRemove = groupMeals.slice(-removes);
         for (const m of toRemove) {
           await deleteMeal(m.id);
@@ -1205,8 +1180,7 @@ export default function Food() {
                             group.foodName
                           )
                         }
-                        onDuplicate={() => handleDuplicateMeal(group)}
-                        onEdit={() => { setOpenRowId(null); setEditingGroup(group); }}
+                        onEdit={() => { setOpenRowId(null); openServingsEditor(group); }}
                       />
                     );
                   })}
@@ -1280,61 +1254,107 @@ export default function Food() {
         onConfirm={handleOFFConfirm}
       />
 
-      {/* Edit-servings sheet — opens from the FoodRow Edit swipe action.
-          Simple count stepper (1-8): scales by adding or removing meal
-          docs to match the target. Intentionally skips fractional
-          servings and per-item macro math for v1 — common case is "I
-          had 2 not 1" and this handles that cleanly. */}
-      {editingGroup && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40"
-            role="presentation"
-            onClick={() => setEditingGroup(null)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Edit servings for ${editingGroup.foodName}`}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-4 shadow-2xl"
-          >
-            <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-            <div className="text-center space-y-1">
-              <p className="text-base font-semibold text-foreground">{editingGroup.foodName}</p>
-              <p className="text-xs text-muted-foreground">
-                Currently {editingGroup.meals.length} {editingGroup.meals.length === 1 ? "serving" : "servings"} · {Math.round(editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0))} cal
-              </p>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
-                const isCurrent = n === editingGroup.meals.length;
-                return (
-                  <button
-                    key={n}
-                    onClick={() => applyServingsChange(n)}
-                    disabled={isCurrent}
-                    className={cn(
-                      "h-12 rounded-xl font-semibold text-sm transition-colors active:scale-95",
-                      isCurrent
-                        ? "bg-muted text-muted-foreground border border-border"
-                        : "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                    aria-label={`${n} servings`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-            <button
+      {/*
+        Edit-servings sheet. +/- stepper driven by local `editingTarget`
+        state; calorie preview updates live as the user steps so they
+        can see what they're committing to before tapping Save. Scales
+        to any count (no artificial 1-8 cap). Save button is disabled
+        when the target equals the current count — nothing to do.
+      */}
+      {editingGroup && (() => {
+        const currentCount = editingGroup.meals.length;
+        const perServingCal = currentCount > 0
+          ? editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0) / currentCount
+          : 0;
+        const previewCal = Math.round(perServingCal * editingTarget);
+        const delta = editingTarget - currentCount;
+        const unchanged = delta === 0;
+        return (
+          <>
+            <div
+              className="fixed inset-0 bg-black/40 z-40"
+              role="presentation"
               onClick={() => setEditingGroup(null)}
-              className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Edit servings for ${editingGroup.foodName}`}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-5 shadow-2xl"
             >
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
+              <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+              <div className="text-center space-y-1">
+                <p className="text-base font-semibold text-foreground">{editingGroup.foodName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {currentCount} {currentCount === 1 ? "serving" : "servings"} logged
+                </p>
+              </div>
+
+              {/* Stepper */}
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => { haptic("light"); setEditingTarget((n) => Math.max(1, n - 1)); }}
+                  disabled={editingTarget <= 1}
+                  aria-label="Decrease servings"
+                  className="h-12 w-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+                >
+                  −
+                </button>
+                <div className="text-center min-w-[80px]">
+                  <p className="text-4xl font-mono tabular-nums font-extrabold text-foreground">
+                    {editingTarget}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                    {editingTarget === 1 ? "serving" : "servings"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { haptic("light"); setEditingTarget((n) => n + 1); }}
+                  aria-label="Increase servings"
+                  className="h-12 w-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center active:scale-90"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Calorie preview + delta */}
+              <div className="text-center text-xs text-muted-foreground">
+                {unchanged ? (
+                  <span>~ {previewCal} cal</span>
+                ) : (
+                  <span>
+                    ~ {previewCal} cal
+                    <span className="ml-2" style={{ color: delta > 0 ? "#D9884E" : "#8E8E93" }}>
+                      ({delta > 0 ? "+" : ""}{delta} {Math.abs(delta) === 1 ? "serving" : "servings"})
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingGroup(null)}
+                  className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={applyServingsChange}
+                  disabled={unchanged}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98]",
+                    unchanged
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-primary text-primary-foreground"
+                  )}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </motion.div>
   );
 }
