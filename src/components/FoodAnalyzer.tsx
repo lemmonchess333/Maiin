@@ -18,6 +18,12 @@ interface Props {
   date: string;
   meal?: string | null;
   onSaved?: () => void;
+  /**
+   * Fired when the user hits the camera permission-denied fallback and
+   * taps "Type it instead". Parent page typically closes the analyzer
+   * and focuses the NL text composer.
+   */
+  onRequestTypedInput?: () => void;
 }
 
 type MealResult = {
@@ -116,7 +122,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
-export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }: Props) {
+export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
   const { accent, text: macroText } = useMacroPalette();
@@ -309,6 +315,10 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved }
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         loading={showLoading}
+        onRequestTypedInput={onRequestTypedInput ? () => {
+          setCameraOpen(false);
+          onRequestTypedInput();
+        } : undefined}
       />
 
       {showLoading && (

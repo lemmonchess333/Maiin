@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Trash2, Copy, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -25,11 +25,21 @@ interface FoodRowProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete: () => void;
+  /** Duplicate the last meal in the group — one extra copy on the current day. */
+  onDuplicate?: () => void;
+  /** Open an edit-portion surface (typically a servings-count stepper sheet). */
+  onEdit?: () => void;
 }
 
-const OPEN_OFFSET = -120;
+// Widened from -120 to -168 to fit the three action icons (56px each)
+// with balanced spacing. When only the delete callback is wired the
+// row still works — it just shows a single wider delete button.
+const OPEN_OFFSET = -168;
 const OPEN_THRESHOLD = -80;
 const DELETE_COLOR = "#EF4444";
+const EDIT_COLOR = "#4B5563";
+const DUPLICATE_COLOR = "#7B72E9";
+const ACTION_WIDTH = 56;
 
 /**
  * Quantity label formatter (change #5).
@@ -90,6 +100,8 @@ export default function FoodRow({
   isOpen,
   onOpenChange,
   onDelete,
+  onDuplicate,
+  onEdit,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -142,10 +154,28 @@ export default function FoodRow({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono tabular-nums text-muted-foreground">
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="text-xs font-mono tabular-nums text-muted-foreground mr-1">
             {formatCalories(group.totalCal)} {CALORIE_UNIT}
           </span>
+          {onDuplicate && (
+            <button
+              onClick={onDuplicate}
+              aria-label={`Duplicate ${group.foodName}`}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors active:scale-90"
+            >
+              <Copy aria-hidden="true" className="w-3 h-3" />
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              aria-label={`Edit ${group.foodName}`}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
+            >
+              <Pencil aria-hidden="true" className="w-3 h-3" />
+            </button>
+          )}
           <button
             onClick={onDelete}
             aria-label={`Delete ${group.foodName}`}
@@ -167,20 +197,51 @@ export default function FoodRow({
         exit={{ height: 0, opacity: 0 }}
         transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
       >
-        {/* Red delete action revealed from the right */}
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={`Delete ${group.foodName}`}
-          className="absolute right-0 top-0 bottom-0 flex items-center justify-center gap-1.5 px-5 text-white text-xs font-semibold"
-          style={{
-            background: DELETE_COLOR,
-            width: Math.abs(OPEN_OFFSET),
-          }}
-        >
-          <Trash2 className="w-4 h-4" aria-hidden="true" />
-          Delete
-        </button>
+        {/*
+          Action buttons revealed from the right. In order: Duplicate
+          (brand purple, icon-only), Edit portion (neutral, icon-only),
+          Delete (red, icon-only). Previously a single wider Delete
+          button — widened the swipe offset to -168px to fit three
+          56px-wide actions. Duplicate / Edit only render when their
+          callbacks are provided, keeping the component back-compat
+          with callers that want the original delete-only behaviour.
+        */}
+        <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: Math.abs(OPEN_OFFSET) }}>
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={onDuplicate}
+              aria-label={`Duplicate ${group.foodName}`}
+              className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold"
+              style={{ background: DUPLICATE_COLOR, width: ACTION_WIDTH }}
+            >
+              <Copy className="w-4 h-4" aria-hidden="true" />
+              Copy
+            </button>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label={`Edit ${group.foodName}`}
+              className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold"
+              style={{ background: EDIT_COLOR, width: ACTION_WIDTH }}
+            >
+              <Pencil className="w-4 h-4" aria-hidden="true" />
+              Edit
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label={`Delete ${group.foodName}`}
+            className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold flex-1"
+            style={{ background: DELETE_COLOR }}
+          >
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
+            Delete
+          </button>
+        </div>
 
         {/* Draggable row content sitting on top */}
         <motion.div
