@@ -11,7 +11,12 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      // 2000ms → 500ms. The full-opaque splash should be gone as
+      // soon as the web layer has something to paint. A 2s hard
+      // wait made the app feel sluggish on cold start — iOS users
+      // expect apps to feel instantly alive.
+      launchShowDuration: 500,
+      launchAutoHide: true,
       backgroundColor: "#7C6EF6",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
