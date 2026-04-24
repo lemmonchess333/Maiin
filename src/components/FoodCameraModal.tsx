@@ -321,7 +321,7 @@ export default function FoodCameraModal({
             <p className="text-sm text-muted-foreground leading-relaxed">{deniedCopy}</p>
             {cameraState === "denied" && (
               <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                To re-enable, tap the <span className="font-medium">AA</span> or lock icon in your browser address bar → Website Settings → Camera → Allow.
+                To re-enable, update camera permissions for Tropos in your device or browser settings.
               </p>
             )}
           </div>
