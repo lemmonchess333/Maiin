@@ -4,9 +4,9 @@ import {
   collection, collectionGroup, doc, setDoc, deleteDoc, getDocs, getDoc,
   query, orderBy, limit, startAfter, where, increment,
   updateDoc, addDoc, Timestamp, serverTimestamp,
-  type DocumentSnapshot, writeBatch,
+  type DocumentSnapshot,
 } from 'firebase/firestore';
-import { deleteUser as firebaseDeleteUser } from 'firebase/auth';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 
 // ============================================
 // Auth helper — single source of truth for identity
@@ -649,43 +649,22 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
 // ============================================
 // Account Deletion (App Store Guideline 5.1.1(v))
 // ============================================
+/**
+ * Delete the current user's account end-to-end. Runs server-side
+ * via the `deleteMyAccount` Cloud Function — the Admin SDK on the
+ * server bypasses Firestore rules, removes data from every known
+ * subcollection + author-keyed top-level collection, deletes the
+ * user's Storage files, and then deletes the Auth user as the
+ * FINAL step (so a partial failure mid-flow leaves the user still
+ * authenticated and retryable).
+ *
+ * Pre-W1f this ran client-side and deleted the Auth user first,
+ * which stranded users in an inconsistent state if any Firestore
+ * cleanup step failed afterwards.
+ */
 export async function deleteAccount(uid: string): Promise<void> {
   const authedUid = getAuthUid();
   if (uid !== authedUid) throw new Error('Identity mismatch');
-
-  // Delete Firebase Auth account first — safest ordering:
-  // If Firestore cleanup fails later, user can't re-login as a ghost
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    await firebaseDeleteUser(currentUser);
-  }
-
-  // Collect all document refs to delete
-  const allRefs: ReturnType<typeof doc>[] = [doc(db, 'users', uid)];
-
-  const subcollections = [
-    { parent: 'feeds', sub: 'items' },
-    { parent: 'notifications', sub: 'items' },
-    { parent: 'following', sub: 'users' },
-    { parent: 'followers', sub: 'users' },
-    { parent: 'blocks', sub: 'users' },
-  ];
-
-  for (const { parent, sub } of subcollections) {
-    const snap = await getDocs(collection(db, parent, uid, sub));
-    snap.docs.forEach(d => allRefs.push(d.ref));
-  }
-
-  const activitiesSnap = await getDocs(
-    query(collection(db, 'activities'), where('authorId', '==', uid))
-  );
-  activitiesSnap.docs.forEach(d => allRefs.push(d.ref));
-
-  // Chunk into batches of 450 (safe under Firestore's 500 limit)
-  for (let i = 0; i < allRefs.length; i += 450) {
-    const chunk = allRefs.slice(i, i + 450);
-    const batch = writeBatch(db);
-    chunk.forEach(r => batch.delete(r));
-    await batch.commit();
-  }
+  const deleteMyAccount = httpsCallable(getFunctions(), 'deleteMyAccount');
+  await deleteMyAccount({});
 }

@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { THEME } from '../lib/theme';
+import { captureError } from '@/lib/errorReporting';
 
 interface Props {
   children: ReactNode;
@@ -22,11 +23,23 @@ export default class RouteErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error('Route crash:', error, info.componentStack);
+    // Route the crash to the error-reporting pipeline so we capture
+    // it in the structured log rather than a raw console.error that
+    // users can see in DevTools. Dev mode still surfaces the full
+    // componentStack via the built-in React overlay.
+    captureError(error, 'component', { componentStack: info.componentStack });
   }
 
   render() {
     if (this.state.hasError) {
+      // Raw error.message can leak implementation detail ("Firestore:
+      // Missing or insufficient permissions", SDK internal paths).
+      // Keep it visible in dev for debugging, collapse to a generic
+      // "Please try again" in production.
+      const isDev = import.meta.env.DEV;
+      const errorText = isDev
+        ? (this.state.error?.message || 'An unexpected error occurred on this page.')
+        : 'Please try again. If the problem keeps happening, restart Tropos.';
       return (
         <div className="flex-1 flex items-center justify-center px-6 py-12" role="alert">
           <div className="text-center space-y-4 max-w-sm w-full">
@@ -43,7 +56,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
               {this.props.fallbackTitle || 'Something went wrong'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {this.state.error?.message || 'An unexpected error occurred on this page.'}
+              {errorText}
             </p>
             <div className="flex gap-2 justify-center">
               <button

@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { captureError } from "@/lib/errorReporting";
 
 interface Props {
   children: ReactNode;
@@ -20,7 +21,10 @@ export class SectionErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error(`[${this.props.sectionName ?? "Section"}] error:`, error, info);
+    captureError(error, "component", {
+      section: this.props.sectionName ?? "Section",
+      componentStack: info.componentStack,
+    });
   }
 
   render() {

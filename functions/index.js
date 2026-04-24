@@ -10,6 +10,109 @@ exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
 // ══════════════════════════════════════════════
+// ACCOUNT DELETION — server-side, auth-user last
+// ══════════════════════════════════════════════
+//
+// Pre-W1f deletion ran client-side and deleted the Firebase Auth
+// user FIRST, then tried to clean up Firestore subcollections. As
+// soon as the auth user was gone, subsequent Firestore writes ran
+// as an unauthenticated client and either (a) hit permission denied
+// if rules required auth, or (b) succeeded partially, leaving the
+// account in an inconsistent "ghost user with orphan data" state.
+//
+// Now a callable Cloud Function runs with Admin SDK (bypasses
+// Firestore rules), deletes the data first across every known
+// subcollection + author-keyed top-level collection, then deletes
+// the Auth user as the final step. Partial failure leaves the user
+// logged in and retryable rather than stranded.
+exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
+  }
+  const uid = context.auth.uid;
+  const firestore = admin.firestore();
+
+  // Subcollections that live under users/{uid}/... — deleting the
+  // parent doc doesn't cascade, so we iterate each subcollection and
+  // delete its docs in batches.
+  const userSubcollections = [
+    "meals", "workouts", "runs", "weights", "water",
+    "bodyweight", "progressPhotos", "favorites", "preferences",
+  ];
+  const topLevelSubcollections = [
+    { parent: "feeds", sub: "items" },
+    { parent: "notifications", sub: "items" },
+    { parent: "following", sub: "users" },
+    { parent: "followers", sub: "users" },
+    { parent: "blocks", sub: "users" },
+    { parent: "kudos", sub: null }, // author-keyed, not user-keyed; skip
+  ];
+
+  const deleteBatch = async (refs) => {
+    // Firestore write batches are limited to 500 ops; chunk
+    // aggressively to keep margin for retries.
+    for (let i = 0; i < refs.length; i += 450) {
+      const batch = firestore.batch();
+      refs.slice(i, i + 450).forEach((r) => batch.delete(r));
+      await batch.commit();
+    }
+  };
+
+  try {
+    // 1. User's own subcollections
+    for (const sub of userSubcollections) {
+      const snap = await firestore.collection("users").doc(uid).collection(sub).get();
+      if (!snap.empty) await deleteBatch(snap.docs.map((d) => d.ref));
+    }
+
+    // 2. Top-level collections keyed by user id
+    for (const { parent, sub } of topLevelSubcollections) {
+      if (!sub) continue;
+      const snap = await firestore.collection(parent).doc(uid).collection(sub).get();
+      if (!snap.empty) await deleteBatch(snap.docs.map((d) => d.ref));
+    }
+
+    // 3. Top-level collections with author-id fields. We delete
+    // activities the user posted; we deliberately keep comments /
+    // kudos the user gave on OTHER people's activities because
+    // removing those would retroactively mutate other users' feeds.
+    const activitiesSnap = await firestore
+      .collection("activities")
+      .where("authorId", "==", uid)
+      .get();
+    if (!activitiesSnap.empty) await deleteBatch(activitiesSnap.docs.map((d) => d.ref));
+
+    // 4. Public profile projection
+    await firestore.doc(`users/${uid}/public/profile`).delete().catch(() => {});
+
+    // 5. The user document itself
+    await firestore.collection("users").doc(uid).delete();
+
+    // 6. Storage files under progress-photos/{uid}/ and
+    // profile-photos/{uid}/. Wrapped in try/catch individually —
+    // a missing folder shouldn't block the auth-user delete.
+    const bucket = admin.storage().bucket();
+    for (const prefix of [`progress-photos/${uid}/`, `profile-photos/${uid}/`]) {
+      try {
+        await bucket.deleteFiles({ prefix });
+      } catch (e) {
+        console.warn(`deleteMyAccount: storage cleanup for ${prefix} failed`, e);
+      }
+    }
+
+    // 7. FINAL: delete the Auth user. Done last so that if any
+    // Firestore step above failed, the user retries with valid
+    // credentials still attached to the remaining orphans.
+    await admin.auth().deleteUser(uid);
+
+    return { ok: true };
+  } catch (err) {
+    console.error(`deleteMyAccount: uid=${uid}`, err);
+    throw new functions.https.HttpsError("internal", err.message);
+  }
+});
+
+// ══════════════════════════════════════════════
 // RATE LIMITER — per-user, Firestore-backed
 // ══════════════════════════════════════════════
 

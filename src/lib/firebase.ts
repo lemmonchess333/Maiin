@@ -10,6 +10,7 @@ import {
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
+import { initAppCheck } from "@/lib/appCheck";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
@@ -22,6 +23,13 @@ const firebaseConfig = {
 
 
 const app = initializeApp(firebaseConfig);
+
+// App Check runs BEFORE Firestore / Storage / Functions handles are
+// created — the first call into those services triggers the App
+// Check token request, so we need the provider installed by then.
+// See src/lib/appCheck.ts for the web / native split.
+initAppCheck(app);
+
 export const auth = getAuth(app);
 
 // Try persistent cache first; fall back to memory cache if IndexedDB is unavailable
