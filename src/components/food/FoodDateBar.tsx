@@ -38,7 +38,7 @@ function FoodDateBar({
     <motion.div
       variants={itemVariant}
       className="sticky z-30 bg-background flex items-center justify-between rounded-xl py-2 px-3"
-      style={{ top: "env(safe-area-inset-top, 0px)" }}
+      style={{ top: "var(--safe-top)" }}
     >
       <button
         onClick={() => { haptic(); onPrev(); }}
