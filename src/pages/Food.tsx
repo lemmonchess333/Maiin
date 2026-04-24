@@ -39,6 +39,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodRow, { type FoodRowGroup } from "@/components/food/FoodRow";
 import FoodDateBar from "@/components/food/FoodDateBar";
+import EditServingsSheet from "@/components/food/EditServingsSheet";
 import MealMacroBar from "@/components/food/MealMacroBar";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
@@ -559,42 +560,9 @@ export default function Food() {
     setNlParsing(false);
   };
 
-  /**
-   * Duplicate the most recent meal in a group onto the currently-
-   * selected day. Written as a plain addDoc with the existing meal's
-   * items + totals preserved — no macro scaling needed. Tagged
-   * `confidence: "duplicate"` so downstream analytics can tell
-   * duplicated logs apart from original natural-language parses.
-   */
-  const handleDuplicateMeal = async (group: { foodName: string; meals: Meal[] }) => {
-    if (!user || group.meals.length === 0) return;
-    const source = group.meals[group.meals.length - 1];
-    haptic("light");
-    try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        foodName: source.foodName,
-        items: source.items ?? [],
-        totalCalories: safeNum(source.totalCalories),
-        totalProtein: safeNum(source.totalProtein),
-        totalCarbs: safeNum(source.totalCarbs),
-        totalFat: safeNum(source.totalFat),
-        confidence: "duplicate",
-        createdAt: Timestamp.now(),
-        ...(source.meal ? { meal: source.meal } : {}),
-      });
-      setOpenRowId(null);
-      toast.success(`Added another ${source.foodName}`, { id: `food-duplicate-${source.id}` });
-    } catch {
-      toast.error("Couldn't duplicate. Try again.", { id: "food-duplicate-error" });
-    }
-  };
-
-  // Edit servings sheet state — opens a simple count stepper so the
-  // user can match a logged meal's servings count to what they
-  // actually ate ("I had 2 servings of this chicken salad, not 1").
-  // Adds or removes meal docs to reach the target count; no per-item
-  // macro scaling, which keeps the math trivially auditable.
+  // Edit-servings state. The sheet itself (EditServingsSheet) owns
+  // the stepper's target value — Food.tsx just tracks which group is
+  // open and persists the change when the user taps Save.
   const [editingGroup, setEditingGroup] = useState<{ foodName: string; meals: Meal[] } | null>(null);
 
   const applyServingsChange = async (targetCount: number) => {
@@ -626,8 +594,6 @@ export default function Food() {
         }
       } else {
         const removes = currentCount - targetCount;
-        // Delete from the end (most recent first) so earlier docs
-        // keep their stable ordering in the list.
         const toRemove = groupMeals.slice(-removes);
         for (const m of toRemove) {
           await deleteMeal(m.id);
@@ -1205,7 +1171,6 @@ export default function Food() {
                             group.foodName
                           )
                         }
-                        onDuplicate={() => handleDuplicateMeal(group)}
                         onEdit={() => { setOpenRowId(null); setEditingGroup(group); }}
                       />
                     );
@@ -1280,61 +1245,15 @@ export default function Food() {
         onConfirm={handleOFFConfirm}
       />
 
-      {/* Edit-servings sheet — opens from the FoodRow Edit swipe action.
-          Simple count stepper (1-8): scales by adding or removing meal
-          docs to match the target. Intentionally skips fractional
-          servings and per-item macro math for v1 — common case is "I
-          had 2 not 1" and this handles that cleanly. */}
-      {editingGroup && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-40"
-            role="presentation"
-            onClick={() => setEditingGroup(null)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Edit servings for ${editingGroup.foodName}`}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-4 shadow-2xl"
-          >
-            <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-            <div className="text-center space-y-1">
-              <p className="text-base font-semibold text-foreground">{editingGroup.foodName}</p>
-              <p className="text-xs text-muted-foreground">
-                Currently {editingGroup.meals.length} {editingGroup.meals.length === 1 ? "serving" : "servings"} · {Math.round(editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0))} cal
-              </p>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
-                const isCurrent = n === editingGroup.meals.length;
-                return (
-                  <button
-                    key={n}
-                    onClick={() => applyServingsChange(n)}
-                    disabled={isCurrent}
-                    className={cn(
-                      "h-12 rounded-xl font-semibold text-sm transition-colors active:scale-95",
-                      isCurrent
-                        ? "bg-muted text-muted-foreground border border-border"
-                        : "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                    aria-label={`${n} servings`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              onClick={() => setEditingGroup(null)}
-              className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium"
-            >
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
+      <EditServingsSheet
+        source={editingGroup ? {
+          foodName: editingGroup.foodName,
+          currentCount: editingGroup.meals.length,
+          currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
+        } : null}
+        onCancel={() => setEditingGroup(null)}
+        onSave={applyServingsChange}
+      />
     </motion.div>
   );
 }

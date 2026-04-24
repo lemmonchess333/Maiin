@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
-import { Trash2, Copy, Pencil } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -25,21 +25,23 @@ interface FoodRowProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete: () => void;
-  /** Duplicate the last meal in the group — one extra copy on the current day. */
-  onDuplicate?: () => void;
-  /** Open an edit-portion surface (typically a servings-count stepper sheet). */
+  /**
+   * Open a servings stepper sheet so the user can bump the count
+   * up or down. Handles both "I had more" (stepper +) and exact-count
+   * edits.
+   */
   onEdit?: () => void;
 }
 
-// Widened from -120 to -168 to fit the three action icons (56px each)
-// with balanced spacing. When only the delete callback is wired the
-// row still works — it just shows a single wider delete button.
-const OPEN_OFFSET = -168;
+// Two action columns (edit + delete). Was wider when there was a
+// redundant "Copy" action; removed because Copy just added +1 serving,
+// which the Edit stepper does natively and which Quick Add / the NL
+// composer do in fewer taps anyway.
+const OPEN_OFFSET = -128;
 const OPEN_THRESHOLD = -80;
 const DELETE_COLOR = "#EF4444";
 const EDIT_COLOR = "#4B5563";
-const DUPLICATE_COLOR = "#7B72E9";
-const ACTION_WIDTH = 56;
+const ACTION_WIDTH = 64;
 
 /**
  * Quantity label formatter (change #5).
@@ -100,7 +102,6 @@ export default function FoodRow({
   isOpen,
   onOpenChange,
   onDelete,
-  onDuplicate,
   onEdit,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
@@ -158,15 +159,6 @@ export default function FoodRow({
           <span className="text-xs font-mono tabular-nums text-muted-foreground mr-1">
             {formatCalories(group.totalCal)} {CALORIE_UNIT}
           </span>
-          {onDuplicate && (
-            <button
-              onClick={onDuplicate}
-              aria-label={`Duplicate ${group.foodName}`}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors active:scale-90"
-            >
-              <Copy aria-hidden="true" className="w-3 h-3" />
-            </button>
-          )}
           {onEdit && (
             <button
               onClick={onEdit}
@@ -198,27 +190,12 @@ export default function FoodRow({
         transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
       >
         {/*
-          Action buttons revealed from the right. In order: Duplicate
-          (brand purple, icon-only), Edit portion (neutral, icon-only),
-          Delete (red, icon-only). Previously a single wider Delete
-          button — widened the swipe offset to -168px to fit three
-          56px-wide actions. Duplicate / Edit only render when their
-          callbacks are provided, keeping the component back-compat
-          with callers that want the original delete-only behaviour.
+          Action buttons revealed from the right: Edit (neutral) +
+          Delete (red). `onEdit` is optional — when not provided the
+          row collapses to a single wider delete button for back-
+          compat with callers that only want the original behaviour.
         */}
         <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: Math.abs(OPEN_OFFSET) }}>
-          {onDuplicate && (
-            <button
-              type="button"
-              onClick={onDuplicate}
-              aria-label={`Duplicate ${group.foodName}`}
-              className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold"
-              style={{ background: DUPLICATE_COLOR, width: ACTION_WIDTH }}
-            >
-              <Copy className="w-4 h-4" aria-hidden="true" />
-              Copy
-            </button>
-          )}
           {onEdit && (
             <button
               type="button"
