@@ -22,10 +22,7 @@ import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import {
-  ChevronLeft,
-  ChevronRight,
   Utensils,
-  CalendarDays,
   Plus,
   SendHorizontal,
   PenLine,
@@ -41,6 +38,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import FoodRow, { type FoodRowGroup } from "@/components/food/FoodRow";
+import FoodDateBar from "@/components/food/FoodDateBar";
 import MealMacroBar from "@/components/food/MealMacroBar";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
@@ -144,7 +142,6 @@ export default function Food() {
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   // Training-aware: returns planned values when adjustCaloriesForTraining is
@@ -802,51 +799,14 @@ export default function Food() {
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
     >
-      {/* Date Switcher */}
-      <motion.div
-        variants={itemVariant}
-        className="sticky z-30 bg-background flex items-center justify-between rounded-xl py-2 px-3"
-        style={{ top: "env(safe-area-inset-top, 0px)" }}
-      >
-        <button
-          onClick={() => {
-            haptic();
-            changeDate(-1);
-          }}
-          aria-label="Previous day"
-          className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
-        >
-          <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
-        </button>
-        <button
-          onClick={() => dateInputRef.current?.showPicker?.()}
-          aria-label="Select date"
-          className="text-center flex items-center gap-2"
-        >
-          <CalendarDays aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
-          <p className="text-xs font-medium text-foreground">
-            {isToday ? "Today" : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
-          </p>
-        </button>
-        <input
-          ref={dateInputRef}
-          type="date"
-          value={selectedDate}
-          aria-label="Select date"
-          onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-          className="sr-only"
-        />
-        <button
-          onClick={() => {
-            haptic();
-            changeDate(1);
-          }}
-          aria-label="Next day"
-          className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
-        >
-          <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
-        </button>
-      </motion.div>
+      <FoodDateBar
+        selectedDate={selectedDate}
+        isToday={isToday}
+        onPrev={() => changeDate(-1)}
+        onNext={() => changeDate(1)}
+        onPick={(next) => setSelectedDate(next)}
+        itemVariant={itemVariant}
+      />
 
       {/* Header */}
       <motion.div variants={itemVariant}>
