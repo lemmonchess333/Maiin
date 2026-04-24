@@ -853,27 +853,24 @@ export default function Food() {
             onFocus={() => { setSuggestionsActive(true); setInputFocused(true); }}
             onBlur={() => { setInputFocused(false); setTimeout(() => setSuggestionsActive(false), 200); }}
             onKeyDown={(e) => {
-              // Shift+Enter intentionally allows newline for multi-line
-              // input ("chicken\n200g rice, 2 eggs"). Plain Enter submits,
-              // but with a two-tap confirm pattern when the suggestion
-              // dropdown is active: first Enter dismisses suggestions,
-              // second Enter submits. Avoids accidentally firing the NL
-              // parser while the user is still mid-selection.
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (showSuggestions) {
-                  setSuggestionsActive(false);
-                  return;
-                }
-                if (!nlInput.trim() || nlParsing) return;
-                haptic();
-                handleNLParse();
-              } else if (e.key === "Escape") {
-                if (showSuggestions) {
-                  e.preventDefault();
-                  setSuggestionsActive(false);
-                }
+              // Return / Enter submits. Two-tap confirm when the
+              // suggestion dropdown is active so the parser doesn't
+              // fire while the user is still mid-selection — first
+              // tap dismisses, second tap sends.
+              //
+              // No Shift+Enter newline or Escape branch: this app is
+              // mobile-first and those keys don't exist on iOS/Android
+              // software keyboards. Commas in a single line cover the
+              // multi-item use case ("chicken, rice, 2 eggs").
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              if (showSuggestions) {
+                setSuggestionsActive(false);
+                return;
               }
+              if (!nlInput.trim() || nlParsing) return;
+              haptic();
+              handleNLParse();
             }}
             placeholder={
               targetMeal
@@ -900,9 +897,7 @@ export default function Food() {
           />
           {nlInput.trim() && (
             <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
-              aria-label="Log meal (Enter)"
-              aria-keyshortcuts="Enter"
-              title="Enter to log · Shift+Enter for new line"
+              aria-label="Log meal"
               className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
               style={{ color: THEME.semantic.nutrition }}>
               <SendHorizontal className="w-5 h-5" />
