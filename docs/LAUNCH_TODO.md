@@ -335,38 +335,86 @@ includes:
 
 ---
 
-## When you're back at a computer — execution order
+## Environment reality — Windows only, no iOS branch
 
-Code side is ready. These are all browser / CLI tasks, no code changes:
+I'm on Windows with no Mac or Xcode access. There is no separate iOS
+branch; all iOS-related files (`ios/App/App/Info.plist`,
+`ios/App/App/PrivacyInfo.xcprivacy`, `capacitor.config.ts`, the
+Capacitor deps in `package.json`) live on this branch. They're
+prepared but unbuildable until someone opens the `.xcworkspace` in
+Xcode on a Mac.
 
-### Once (prerequisites)
-1. Open Cloud Shell and apply CORS (`#1` above) — fixes Progress
-   photo upload
-2. `firebase functions:config:set apple.*` with the `.p8` contents
-   (`#2` above) — IAP crashes without this
+**The hard truth:** App Store submission is physically impossible
+without a Mac. Xcode is the only way to produce the `.ipa` that
+TestFlight accepts. Options:
+- Borrow a Mac for a day
+- Rent MacinCloud / MacStadium (~$20-40 for a day)
+- Buy a used Mac mini (~$400 M1)
+- Partner with someone who has one
+
+Everything below is filtered by what's actually doable from Windows.
+
+---
+
+## Windows-doable now (~2 hours of browser + CLI work)
+
+Code side is ready. No code changes needed for any of these.
+
+### Cloud Shell (browser — works on mobile in a pinch)
+1. Apply CORS (`#1` above) — fixes Progress photo upload
+
+### Firebase CLI (works on Windows via `npm i -g firebase-tools`)
+2. `firebase functions:config:set apple.*` with `.p8` contents
+   (`#2` above) — needs the `.p8` downloaded from App Store Connect
 3. `firebase deploy --only functions:verifyApplePurchase,functions:appleIAPWebhook,functions:restoreApplePurchases,functions:deleteMyAccount`
 4. `firebase deploy --only firestore:rules` — activates tightened
    rules + fixes the `/crews/` → `/groups/` path bug
 
-### App Store Connect (browser, parallel to above)
+### App Store Connect (browser — needs active Apple Dev membership)
 5. Register IAP products `com.tropos.app.pro.monthly` and
-   `com.tropos.app.pro.yearly`
-6. Point App Store Server Notifications V2 (Production + Sandbox)
-   at the deployed `appleIAPWebhook` URL
+   `com.tropos.app.pro.yearly` → "Ready to Submit"
+6. Generate App Store Server API key (download `.p8` once, save
+   Key ID + Issuer ID) — this `.p8` is what item 2 consumes
+7. Point App Store Server Notifications V2 (Production + Sandbox)
+   at the deployed `appleIAPWebhook` URL from item 3
 
-### reCAPTCHA + App Check (~30 min, do gradually)
-7. Register reCAPTCHA v3 site at
+### reCAPTCHA + App Check (browser, ~30 min, do gradually)
+8. Register reCAPTCHA v3 site at
    https://www.google.com/recaptcha/admin — domains
    `lemmonchess333.github.io`, `troposfit.com`, `localhost`
-8. Paste site key into GitHub Actions secret
+9. Paste site key into GitHub Actions secret
    `VITE_RECAPTCHA_V3_SITE_KEY` + Firebase console App Check provider
-9. Firebase console → App Check → enforce **Firestore first**, wait
-   a day, then Storage, then Functions (gradual rollout so in-flight
-   clients aren't locked out mid-deploy)
+10. Firebase console → App Check → enforce **Firestore first**, wait
+    a day, then Storage, then Functions (gradual rollout so in-flight
+    clients aren't locked out mid-deploy)
 
-### Native App Check (Mac + Xcode required)
-10. `npm install @capacitor-firebase/app-check && npx cap sync ios`
-11. Firebase console → App Check → iOS → register App Attest
-12. Ping me to swap the 7-line native stub in `src/lib/appCheck.ts`
-    for a real `CustomProvider` — I can't do this until the plugin is
-    actually installed
+That's the whole Windows-doable list. Everything else needs a Mac.
+
+---
+
+## Mac required (parking lot)
+
+Pick these up when you have Mac access:
+
+- Open `ios/App.xcworkspace` in Xcode and build to a real iPhone
+  (`npm run build:ios` → `npx cap sync ios` → `npx cap open ios`)
+- Verify `Info.plist` has the three usage descriptions
+  (`NSCameraUsageDescription`, `NSLocationWhenInUseUsageDescription`,
+  `NSPhotoLibraryUsageDescription`) — auto-picked up from
+  `capacitor.config.ts` but worth eyeballing in Xcode's issue nav
+- Verify `PrivacyInfo.xcprivacy` appears in the target's Resources
+  and Xcode shows no "missing privacy manifest" warning
+- Test haptics on a real iPhone (commit `79233a1` — can't verify on
+  web)
+- Install native App Check plugin + wire iOS App Attest:
+  `npm install @capacitor-firebase/app-check && npx cap sync ios` →
+  Firebase console iOS App Attest provider → ping me to swap the
+  7-line stub in `src/lib/appCheck.ts`
+- End-to-end IAP sandbox test: sandbox Apple ID on iPhone →
+  subscribe → verify Firestore flips `subscriptionTier` → wait for
+  sandbox renewal → confirm webhook fires → cancel → confirm
+  `EXPIRED` flips to free
+- TestFlight internal build → App Store review submission
+
+No point grinding any of this in parallel from Windows — the native
+side will surface its own set of surprises that only show up in Xcode.
