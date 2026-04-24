@@ -147,13 +147,19 @@ export default function RunMap({
       // Current position marker (live tracking)
       if (currentPoint) {
         if (!markerRef.current) {
-          const el = document.createElement('div');
-          el.innerHTML = `
-            <div style="width:24px;height:24px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;">
-              <div style="width:12px;height:12px;border-radius:50%;background:${THEME.teal};border:2px solid white;"></div>
-            </div>
-          `;
-          markerRef.current = new maplibregl.Marker({ element: el })
+          // Safe DOM construction instead of innerHTML. The values
+          // here come from THEME and aren't user-controlled, so the
+          // XSS surface is zero today — but innerHTML is a habit we
+          // don't want to carry into an app with UGC (runs, photos,
+          // comments), because any future refactor that threads a
+          // user string through this path would silently turn into
+          // an XSS sink.
+          const outer = document.createElement('div');
+          outer.style.cssText = `width:24px;height:24px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
+          const inner = document.createElement('div');
+          inner.style.cssText = `width:12px;height:12px;border-radius:50%;background:${THEME.teal};border:2px solid white;`;
+          outer.appendChild(inner);
+          markerRef.current = new maplibregl.Marker({ element: outer })
             .setLngLat([currentPoint.lon, currentPoint.lat])
             .addTo(map);
         } else {
