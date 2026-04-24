@@ -323,5 +323,50 @@ includes:
   crews rule path fixed to match `/groups/`, privacy manifest
   extended with 5 missing data types, innerHTML → safe DOM
 - Component extractions: FoodDateBar, EditServingsSheet with tests
+- App-shell hardening (`af8b5a9`): `--tab-bar-height` / `--page-x` /
+  `--safe-top` / `--safe-bottom` / `--page-bottom-pad` CSS vars,
+  defensive `overflow-x: hidden` on html/body, missing `.safe-area-pt`
+  utility defined, Layout bottom padding now clears the home indicator
+- Env surface documented (`a2db0dc`): `.env.example` lists
+  `VITE_RECAPTCHA_V3_SITE_KEY`, `VITE_APP_CHECK_DEBUG_TOKEN`, and
+  the server-side `firebase functions:config:set` reference
 
-**26 commits on branch, 1140 tests green, lint + build clean.**
+**28 commits on branch, 1140 tests green, lint + build clean.**
+
+---
+
+## When you're back at a computer — execution order
+
+Code side is ready. These are all browser / CLI tasks, no code changes:
+
+### Once (prerequisites)
+1. Open Cloud Shell and apply CORS (`#1` above) — fixes Progress
+   photo upload
+2. `firebase functions:config:set apple.*` with the `.p8` contents
+   (`#2` above) — IAP crashes without this
+3. `firebase deploy --only functions:verifyApplePurchase,functions:appleIAPWebhook,functions:restoreApplePurchases,functions:deleteMyAccount`
+4. `firebase deploy --only firestore:rules` — activates tightened
+   rules + fixes the `/crews/` → `/groups/` path bug
+
+### App Store Connect (browser, parallel to above)
+5. Register IAP products `com.tropos.app.pro.monthly` and
+   `com.tropos.app.pro.yearly`
+6. Point App Store Server Notifications V2 (Production + Sandbox)
+   at the deployed `appleIAPWebhook` URL
+
+### reCAPTCHA + App Check (~30 min, do gradually)
+7. Register reCAPTCHA v3 site at
+   https://www.google.com/recaptcha/admin — domains
+   `lemmonchess333.github.io`, `troposfit.com`, `localhost`
+8. Paste site key into GitHub Actions secret
+   `VITE_RECAPTCHA_V3_SITE_KEY` + Firebase console App Check provider
+9. Firebase console → App Check → enforce **Firestore first**, wait
+   a day, then Storage, then Functions (gradual rollout so in-flight
+   clients aren't locked out mid-deploy)
+
+### Native App Check (Mac + Xcode required)
+10. `npm install @capacitor-firebase/app-check && npx cap sync ios`
+11. Firebase console → App Check → iOS → register App Attest
+12. Ping me to swap the 7-line native stub in `src/lib/appCheck.ts`
+    for a real `CustomProvider` — I can't do this until the plugin is
+    actually installed
