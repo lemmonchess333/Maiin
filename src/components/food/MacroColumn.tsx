@@ -134,7 +134,7 @@ export default function MacroColumn({
 
       {/* Big number */}
       <p
-        className="text-3xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2"
+        className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2"
         style={{ color: overColor }}
       >
         <AnimatedNumber
@@ -142,7 +142,7 @@ export default function MacroColumn({
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        <span className="text-3xl">g</span>
+        <span className="text-2xl">g</span>
       </p>
 
       {/* Left/over label — suppressed in eaten mode (displayLabel === null) */}
