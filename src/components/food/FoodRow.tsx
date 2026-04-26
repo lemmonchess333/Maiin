@@ -148,8 +148,7 @@ export default function FoodRow({
           <p className="text-sm text-foreground truncate">{group.foodName}</p>
           {group.count > 1 && (
             <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white tabular-nums"
-              style={{ backgroundColor: "#7C6BF0" }}
+              className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums"
             >
               {quantityLabel}
             </span>
@@ -243,8 +242,7 @@ export default function FoodRow({
             <p className="text-sm text-foreground truncate">{group.foodName}</p>
             {group.count > 1 && (
               <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 text-white tabular-nums"
-                style={{ backgroundColor: "#7C6BF0" }}
+                className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums"
               >
                 {quantityLabel}
               </span>
