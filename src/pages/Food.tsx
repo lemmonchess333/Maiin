@@ -718,7 +718,22 @@ export default function Food() {
   const handleInputKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== "Enter") return;
     if (e.shiftKey) return;
+    if ((e.nativeEvent as { isComposing?: boolean }).isComposing) return;
     e.preventDefault();
+
+    if (showSuggestions) {
+      if (suggestions.length > 0) {
+        haptic("light");
+        handleSuggestionSelect(suggestions[0]);
+        return;
+      }
+      if (offResults.length > 0) {
+        haptic("light");
+        handleOFFSelect(offResults[0]);
+        return;
+      }
+    }
+
     if (!nlInput.trim() || nlParsing) return;
     haptic("light");
     handleNLParse();
@@ -742,6 +757,16 @@ export default function Food() {
     }
     return latest;
   }, [meals]);
+
+
+  const repeatMealMeta = useMemo(() => {
+    if (!latestMeal) return null;
+    return {
+      name: latestMeal.foodName || "Last meal",
+      calories: safeNum(latestMeal.totalCalories),
+      dateLabel: latestMeal.date === format(new Date(), "yyyy-MM-dd") ? "today" : format(new Date(latestMeal.date + "T12:00:00"), "MMM d"),
+    };
+  }, [latestMeal]);
 
   const handleRepeatLastMeal = async () => {
     if (!user || !latestMeal || quickAdding) return;
@@ -942,15 +967,21 @@ export default function Food() {
             </div>
           )}
         </div>
-        {latestMeal && (
+        {repeatMealMeta && !nlInput.trim() && (
           <div className="mt-2">
             <button
               type="button"
               onClick={() => { haptic("light"); void handleRepeatLastMeal(); }}
               disabled={quickAdding !== null}
-              className="w-full h-8 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:bg-muted/60 active:scale-[0.99] transition-all disabled:opacity-50"
+              className="w-full h-8 rounded-lg border border-border bg-card px-3 text-xs text-muted-foreground hover:bg-muted/60 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center"
             >
-              Repeat last meal: {latestMeal.foodName}
+              <span className="font-semibold text-foreground">Repeat</span>
+              <span className="mx-1">•</span>
+              <span className="truncate">{repeatMealMeta.name}</span>
+              <span className="mx-1">•</span>
+              <span className="tabular-nums">{formatCalories(repeatMealMeta.calories)} {CALORIE_UNIT}</span>
+              <span className="mx-1">•</span>
+              <span>{repeatMealMeta.dateLabel}</span>
             </button>
           </div>
         )}
