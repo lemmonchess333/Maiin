@@ -739,59 +739,6 @@ export default function Food() {
     handleNLParse();
   };
 
-  const latestMeal = useMemo(() => {
-    if (meals.length === 0) return null;
-    let latest = meals[0];
-    const toMillis = (m: (typeof meals)[number]) => {
-      const ts = m.createdAt as { toDate?: () => Date } | undefined;
-      if (ts && typeof ts.toDate === "function") return ts.toDate().getTime();
-      return new Date(m.date + "T12:00:00").getTime();
-    };
-    let latestMs = toMillis(latest);
-    for (const meal of meals) {
-      const ms = toMillis(meal);
-      if (ms > latestMs) {
-        latest = meal;
-        latestMs = ms;
-      }
-    }
-    return latest;
-  }, [meals]);
-
-
-  const repeatMealMeta = useMemo(() => {
-    if (!latestMeal) return null;
-    return {
-      name: latestMeal.foodName || "Last meal",
-      calories: safeNum(latestMeal.totalCalories),
-      dateLabel: latestMeal.date === format(new Date(), "yyyy-MM-dd") ? "today" : format(new Date(latestMeal.date + "T12:00:00"), "MMM d"),
-    };
-  }, [latestMeal]);
-
-  const handleRepeatLastMeal = async () => {
-    if (!user || !latestMeal || quickAdding) return;
-    setQuickAdding(latestMeal.foodName || "last");
-    try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        meal: targetMeal || latestMeal.meal || getMealCategory(latestMeal),
-        foodName: latestMeal.foodName,
-        items: latestMeal.items ?? [],
-        totalCalories: latestMeal.totalCalories ?? 0,
-        totalProtein: latestMeal.totalProtein ?? 0,
-        totalCarbs: latestMeal.totalCarbs ?? 0,
-        totalFat: latestMeal.totalFat ?? 0,
-        confidence: "repeat-last",
-        createdAt: Timestamp.now(),
-      });
-      setTargetMeal(null);
-    } catch {
-      toast.error("Failed to repeat last meal. Please try again.", { id: "food-save-error" });
-    } finally {
-      setQuickAdding(null);
-    }
-  };
-
 
   return (
     <motion.div
@@ -967,24 +914,6 @@ export default function Food() {
             </div>
           )}
         </div>
-        {repeatMealMeta && !nlInput.trim() && (
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={() => { haptic("light"); void handleRepeatLastMeal(); }}
-              disabled={quickAdding !== null}
-              className="w-full h-8 rounded-lg border border-border bg-card px-3 text-xs text-muted-foreground hover:bg-muted/60 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center"
-            >
-              <span className="font-semibold text-foreground">Repeat</span>
-              <span className="mx-1">•</span>
-              <span className="truncate">{repeatMealMeta.name}</span>
-              <span className="mx-1">•</span>
-              <span className="tabular-nums">{formatCalories(repeatMealMeta.calories)} {CALORIE_UNIT}</span>
-              <span className="mx-1">•</span>
-              <span>{repeatMealMeta.dateLabel}</span>
-            </button>
-          </div>
-        )}
         <div className="mt-3">
           <ScanMealButton
             onClick={() => { haptic(); scanOverrides.onClick(); }}
