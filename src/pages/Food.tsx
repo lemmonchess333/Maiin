@@ -238,9 +238,6 @@ export default function Food() {
       fat,
     };
   }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
-  const caloriesLeft = Math.max(0, Math.round((dailyTargets.finalTarget || 0) - dailyTotals.calories));
-  const caloriesOver = Math.max(0, Math.round(dailyTotals.calories - (dailyTargets.finalTarget || 0)));
-  const visibleMealCount = visibleTodaysMeals.length;
 
   const mealSegmentedMeals = useMemo(() => {
     const segments: Record<string, typeof visibleTodaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
@@ -809,23 +806,6 @@ export default function Food() {
             fat: dailyTotals.fat,
           }}
         />
-      </motion.div>
-
-      <motion.div variants={itemVariant} className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border/70 bg-card px-3 py-2.5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Energy</p>
-          <p className="text-sm font-semibold text-foreground mt-0.5">
-            {caloriesOver > 0
-              ? `${formatCalories(caloriesOver)} ${CALORIE_UNIT} over`
-              : `${formatCalories(caloriesLeft)} ${CALORIE_UNIT} left`}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/70 bg-card px-3 py-2.5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Meals Logged</p>
-          <p className="text-sm font-semibold text-foreground mt-0.5">
-            {visibleMealCount} {visibleMealCount === 1 ? "entry" : "entries"}
-          </p>
-        </div>
       </motion.div>
 
       {/* Input area — text field stacked above full-width Scan CTA.
