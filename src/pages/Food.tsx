@@ -247,6 +247,19 @@ export default function Food() {
     return segments;
   }, [visibleTodaysMeals]);
 
+  // Split meal keys into populated vs empty so the renderer can show
+  // populated cards in MEAL_ORDER and roll empty slots into a single
+  // compact chip row at the bottom — instead of three dashed boxes
+  // sandwiching the actual content.
+  const populatedMealKeys = useMemo(
+    () => MEAL_ORDER.filter((k) => mealSegmentedMeals[k].length > 0),
+    [mealSegmentedMeals],
+  );
+  const emptyMealKeys = useMemo(
+    () => MEAL_ORDER.filter((k) => mealSegmentedMeals[k].length === 0),
+    [mealSegmentedMeals],
+  );
+
   // Yesterday's meals for "Copy from yesterday" feature
   const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
   const yesterdayMeals = getMealsForDate(yesterdayDate);
@@ -980,15 +993,16 @@ export default function Food() {
       </motion.div>
 
 
-      {/* Meal sections — populated ones render as full white cards,
-          empty ones as slim rows (change #1). Each section uses Framer
-          Motion `layout` (plain, not layoutId) so height transitions
-          animate smoothly when entries come and go. */}
+      {/* Meal sections — only populated meals render as full cards.
+          Empty slots collapse into a single chip row below (see the
+          emptyMealKeys block) instead of dashed placeholders that used
+          to sandwich the real data. Framer Motion `layout` (plain, not
+          layoutId) so height transitions animate smoothly when entries
+          come and go. */}
       {todaysMeals.length > 0 && (
         <motion.div variants={itemVariant} className="space-y-2">
-          {MEAL_ORDER.map((mealKey) => {
+          {populatedMealKeys.map((mealKey) => {
             const meals = mealSegmentedMeals[mealKey];
-            const isEmpty = meals.length === 0;
             const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
 
             // Aggregate macros for the micro-bar (change #8)
@@ -1003,18 +1017,16 @@ export default function Food() {
             // more useful reading, and it matches the user's mental
             // model of "most recent activity in this section".
             let latestDate: Date | null = null;
-            if (!isEmpty) {
-              for (const m of meals) {
-                const ts = m.createdAt;
-                if (
-                  ts &&
-                  typeof ts === "object" &&
-                  "toDate" in ts &&
-                  typeof (ts as { toDate: unknown }).toDate === "function"
-                ) {
-                  const d = (ts as { toDate: () => Date }).toDate();
-                  if (!latestDate || d > latestDate) latestDate = d;
-                }
+            for (const m of meals) {
+              const ts = m.createdAt;
+              if (
+                ts &&
+                typeof ts === "object" &&
+                "toDate" in ts &&
+                typeof (ts as { toDate: unknown }).toDate === "function"
+              ) {
+                const d = (ts as { toDate: () => Date }).toDate();
+                if (!latestDate || d > latestDate) latestDate = d;
               }
             }
             const timeLabel = latestDate
@@ -1056,50 +1068,6 @@ export default function Food() {
               }
             }
             const groupedEntries = Array.from(grouped.values());
-
-            // ── Slim empty-state row (change #1) ────────────────────────
-            //
-            // The outer row element is a <div> with role="button" rather
-            // than a <button>, because it contains a real <button> (the
-            // Copy-from-yesterday ghost pill from change #4). A button
-            // cannot nest another button in valid HTML, but a
-            // role="button" div can, and the copy pill's e.stopPropagation()
-            // guarantees its tap doesn't trigger the parent's add handler.
-            if (isEmpty) {
-              return (
-                <motion.div
-                  key={mealKey}
-                  layout
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                >
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleTargetMeal(mealKey)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleTargetMeal(mealKey);
-                      }
-                    }}
-                    aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className="w-full flex items-center justify-between h-9 px-3 rounded-lg bg-muted/40 border border-dashed border-border text-left active:bg-muted transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                  >
-                    <span className="text-micro uppercase tracking-wider text-muted-foreground/70">
-                      {MEAL_LABELS[mealKey]}
-                    </span>
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground/60" aria-hidden="true" />
-                  </div>
-                  {/* Per-section "Copy yesterday's <meal>" pill removed in
-                      favour of the single global "Copy yesterday's meals"
-                      button at the bottom of the day. The page used to
-                      sprinkle the pill under every empty meal section,
-                      which read as noise and forced the user to think one
-                      slot at a time. The bottom button copies every
-                      missing slot at once. */}
-                </motion.div>
-              );
-            }
 
             // ── Populated full card ─────────────────────────────────────
             return (
@@ -1179,6 +1147,32 @@ export default function Food() {
               </motion.div>
             );
           })}
+
+          {/* Compact "add a meal" chip row — replaces the per-slot dashed
+              boxes that used to sit between populated cards. Each chip
+              targets a specific empty slot via handleTargetMeal so the
+              user keeps one-tap targeting; the visual weight is much
+              lighter than three stacked rows competing with real data. */}
+          {emptyMealKeys.length > 0 && (
+            <motion.div
+              layout
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="flex flex-wrap gap-2 pt-1"
+            >
+              {emptyMealKeys.map((mealKey) => (
+                <button
+                  key={mealKey}
+                  type="button"
+                  onClick={() => handleTargetMeal(mealKey)}
+                  aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-muted/50 border border-border/60 text-xs font-medium text-muted-foreground active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  <Plus className="w-3 h-3" aria-hidden="true" />
+                  <span>{MEAL_LABELS[mealKey]}</span>
+                </button>
+              ))}
+            </motion.div>
+          )}
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
               has slots today is missing. Label is intentionally short:
