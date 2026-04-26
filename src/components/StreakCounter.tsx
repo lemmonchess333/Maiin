@@ -24,8 +24,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
       animate={{ scale: 1, opacity: 1 }}
       role="status"
       aria-label={`${streak} day streak`}
-      className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/10 border border-orange-500/30"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
+      className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/10 border border-orange-500/30 shadow-sm"
     >
       <motion.div
         aria-hidden="true"

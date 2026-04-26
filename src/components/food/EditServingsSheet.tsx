@@ -82,8 +82,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
         role="dialog"
         aria-modal="true"
         aria-label={`Edit servings for ${foodName}`}
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-5"
-        style={{ boxShadow: "var(--ds-shadow-elevated)" }}
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-5 shadow-2xl"
       >
         <div className="w-10 h-1 rounded-full bg-border mx-auto" />
         <div className="text-center space-y-1">
