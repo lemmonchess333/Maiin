@@ -149,7 +149,8 @@ function PrimingDialog({
         exit={{ scale: 0.9, opacity: 0, y: 10 }}
         transition={{ type: "spring", damping: 22, stiffness: 280 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xs rounded-3xl p-6 text-center space-y-4 shadow-2xl bg-card"
+        className="w-full max-w-xs rounded-2xl p-6 text-center space-y-4 bg-card"
+        style={{ boxShadow: "var(--ds-shadow-elevated)" }}
       >
         <div className="flex justify-center">
           <div
