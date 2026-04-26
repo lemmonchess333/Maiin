@@ -539,8 +539,10 @@ export function AdaptiveSummary({
 
             {/* Performance Insight (phase-aware, quantitative) */}
             <div
-              className="rounded-3xl p-6 border border-border/50 bg-card"
-              style={{ boxShadow: "var(--ds-shadow-card)" }}
+              className="rounded-3xl p-6 border border-border/50 shadow-sm bg-card"
+              style={{
+                boxShadow: "0 1px 12px rgba(0,0,0,0.04)",
+              }}
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-foreground">Performance Insight</p>

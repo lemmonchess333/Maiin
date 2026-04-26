@@ -90,13 +90,7 @@ export default function AccountSection({
             onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowDeleteModal(false); setDeleteConfirmText(""); } }}
           />
-          <div
-            ref={deleteModalRef}
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto"
-            style={{ boxShadow: "var(--ds-shadow-elevated)" }}
-          >
+          <div ref={deleteModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-destructive">Delete Account</h3>
             <p className="text-sm text-muted-foreground">
               This will permanently delete your account and all associated data including workouts, meals, runs, and social activity. This action cannot be undone.

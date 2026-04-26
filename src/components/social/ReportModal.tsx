@@ -47,8 +47,7 @@ export default function ReportModal({ targetType, targetId, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-modal-title"
-        className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto"
-        style={{ boxShadow: "var(--ds-shadow-elevated)" }}
+        className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

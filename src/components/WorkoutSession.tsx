@@ -606,8 +606,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           <motion.div
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5"
-            style={{ boxShadow: "var(--ds-shadow-elevated)" }}
+            className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 shadow-xl"
           >
             <h3 className="text-lg font-bold text-foreground">Resume workout?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
