@@ -238,9 +238,6 @@ export default function Food() {
       fat,
     };
   }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
-  const caloriesLeft = Math.max(0, Math.round((dailyTargets.finalTarget || 0) - dailyTotals.calories));
-  const caloriesOver = Math.max(0, Math.round(dailyTotals.calories - (dailyTargets.finalTarget || 0)));
-  const visibleMealCount = visibleTodaysMeals.length;
 
   const mealSegmentedMeals = useMemo(() => {
     const segments: Record<string, typeof visibleTodaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
@@ -811,23 +808,6 @@ export default function Food() {
         />
       </motion.div>
 
-      <motion.div variants={itemVariant} className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl border border-border/70 bg-card px-3 py-2.5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Energy</p>
-          <p className="text-sm font-semibold text-foreground mt-0.5">
-            {caloriesOver > 0
-              ? `${formatCalories(caloriesOver)} ${CALORIE_UNIT} over`
-              : `${formatCalories(caloriesLeft)} ${CALORIE_UNIT} left`}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border/70 bg-card px-3 py-2.5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Meals Logged</p>
-          <p className="text-sm font-semibold text-foreground mt-0.5">
-            {visibleMealCount} {visibleMealCount === 1 ? "entry" : "entries"}
-          </p>
-        </div>
-      </motion.div>
-
       {/* Input area — text field stacked above full-width Scan CTA.
           Leading PenLine icon signals "write / input" without the
           Sparkles+purple AI-chatbot connotation (the previous iteration
@@ -1132,7 +1112,7 @@ export default function Food() {
                 layout
                 transition={{ duration: 0.22, ease: "easeOut" }}
                 className="bg-card rounded-xl overflow-hidden"
-                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04)" }}
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
               >
                 {/* Header caption — small uppercase grey matching the hero
                     card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
