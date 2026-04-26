@@ -14,6 +14,7 @@ const itemVariant = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
+const TAP_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
 import { useMeals, type Meal } from "@/hooks/useMeals";
@@ -776,7 +777,7 @@ export default function Food() {
 
   return (
     <motion.div
-      className="space-y-4 pb-28"
+      className="space-y-4.5 pb-28"
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
@@ -879,7 +880,7 @@ export default function Food() {
             aria-label="What did you eat"
             rows={1}
             maxLength={500}
-            className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all"
+            className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
             style={{
               // Pure white (bg-card) instead of the grey --input-fill so
               // the composer reads as a peer of the calorie hero card and
@@ -890,8 +891,8 @@ export default function Food() {
                 : "rgba(0,0,0,0.06)",
               outline: "none",
               boxShadow: inputFocused
-                ? "0 4px 14px -4px rgba(217,136,78,0.3), 0 0 0 3px rgba(217,136,78,0.12)"
-                : "0 2px 6px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)",
+                ? "0 4px 14px -8px rgba(217,136,78,0.28), 0 0 0 2.5px rgba(217,136,78,0.11)"
+                : "0 1px 6px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.025)",
             }}
           />
           {nlInput.trim() && (
@@ -938,6 +939,31 @@ export default function Food() {
             </div>
           )}
         </div>
+        {(inputFocused || !!nlInput.trim() || !!targetMeal) && (
+          <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">Add to</span>
+            {MEAL_ORDER.map((mealKey) => {
+              const selected = targetMeal === mealKey;
+              return (
+                <button
+                  key={mealKey}
+                  type="button"
+                  onClick={() => handleTargetMeal(mealKey)}
+                  className={cn(
+                    "h-7 px-3 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95",
+                    selected
+                      ? "border-transparent text-white"
+                      : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
+                  )}
+                  style={selected ? { backgroundColor: THEME.semantic.nutrition } : undefined}
+                  aria-pressed={selected}
+                >
+                  {MEAL_LABELS[mealKey]}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="mt-3">
           <ScanMealButton
             onClick={() => { haptic(); scanOverrides.onClick(); }}
@@ -985,7 +1011,7 @@ export default function Food() {
           this was two stacked rows ("Quick add" recents + a separate
           "Quick Add" favourites strip via QuickRelog) which duplicated any
           food that was both recent and favourited. */}
-      <motion.div variants={itemVariant} style={{ marginTop: "14px" }}>
+      <motion.div variants={itemVariant} className="mt-3.5">
         <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
           <Star className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
           Quick Add
@@ -998,7 +1024,8 @@ export default function Food() {
             {quickMeals.map((meal, i) => (
               <motion.button
                 key={`${meal.name}-${i}`}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.16, ease: TAP_EASE }}
                 onClick={() => { haptic(); handleQuickMealAdd(meal); }}
                 disabled={quickAdding !== null}
                 className={cn(
@@ -1029,7 +1056,7 @@ export default function Food() {
           layoutId) so height transitions animate smoothly when entries
           come and go. */}
       {todaysMeals.length > 0 && (
-        <motion.div variants={itemVariant} className="space-y-2">
+        <motion.div variants={itemVariant} className="space-y-3">
           {populatedMealKeys.map((mealKey) => {
             const meals = mealSegmentedMeals[mealKey];
             const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
@@ -1103,14 +1130,14 @@ export default function Food() {
               <motion.div
                 key={mealKey}
                 layout
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
                 className="bg-card rounded-xl overflow-hidden"
-                style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)" }}
+                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04)" }}
               >
                 {/* Header caption — small uppercase grey matching the hero
                     card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
-                <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                  <p className="text-micro uppercase tracking-wider text-muted-foreground font-mono tabular-nums">
+                <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
                     <span className="font-semibold">{MEAL_LABELS[mealKey].toUpperCase()}</span>
                     {timeLabel && <> · {timeLabel}</>}
                     {" · "}
@@ -1132,7 +1159,7 @@ export default function Food() {
 
                 {/* Macro micro-bar (change #8) — 3 segments P/C/F. Sits
                     directly below the caption with 4px breathing room. */}
-                <div className="px-3 pb-1">
+                <div className="px-3.5 pb-1.5">
                   <MealMacroBar
                     totalProtein={totalPro}
                     totalCarbs={totalCarb}
@@ -1142,7 +1169,7 @@ export default function Food() {
 
                 {/* Food rows with swipe-to-delete (change #2). Each row
                     receives the lifted `isOpen` + `onOpenChange` props. */}
-                <div className="divide-y divide-border/20">
+                <div className="divide-y divide-border/12">
                   {groupedEntries.map((group) => {
                     const rowGroup: FoodRowGroup = {
                       id: group.id,

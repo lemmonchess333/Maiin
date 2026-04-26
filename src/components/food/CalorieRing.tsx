@@ -26,15 +26,12 @@ interface CalorieRingProps {
   trainingBurnToast?: { delta: number; source: string } | null;
 }
 
-// Ring dimensions — 128px diameter, 8px stroke. Was 160/10 originally;
-// reduced ~20% so the calorie card stops eating ~50% of the viewport
-// and the macros + Scan CTA + Quick Add row sit closer to the fold.
-// The 36px (text-4xl) centre number is unchanged — it's only the ring
-// that shrinks. Stroke-to-size ratio is preserved (1:16) so the visual
-// weight of the arc stays balanced.
-const RADIUS = 60;
-const STROKE = 8;
-const SIZE = 128;
+// Ring dimensions — restore a larger focal ring so the hero reads as the
+// primary surface again on the Food page. Keeps the same 1:16-ish visual
+// stroke ratio and preserves centre typography hierarchy.
+const SIZE = 160;
+const RADIUS = 75;
+const STROKE = 10;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -117,7 +114,7 @@ export default function CalorieRing({
       type="button"
       onClick={onToggleMode}
       aria-label={ariaLabel + ". Tap to toggle between calories left and calories eaten."}
-      className="relative w-32 h-32 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+      className="relative w-40 h-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
       style={{
         // Celebration glow — purple matching the ring itself.
         filter: glowing ? "drop-shadow(0 0 16px rgba(123, 114, 233, 0.4))" : undefined,
