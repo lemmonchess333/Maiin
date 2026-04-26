@@ -1132,7 +1132,7 @@ export default function Food() {
                 layout
                 transition={{ duration: 0.22, ease: "easeOut" }}
                 className="bg-card rounded-xl overflow-hidden"
-                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04)" }}
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
               >
                 {/* Header caption — small uppercase grey matching the hero
                     card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
