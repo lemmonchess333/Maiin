@@ -78,6 +78,7 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
         className="p-4 rounded-2xl bg-card space-y-3"
+        style={{ boxShadow: "var(--ds-shadow-card)" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between">

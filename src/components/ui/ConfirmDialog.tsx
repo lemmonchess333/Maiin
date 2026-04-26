@@ -49,7 +49,8 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={description ? "confirm-desc" : undefined}
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(320px,calc(100vw-48px))] rounded-2xl bg-card p-5 space-y-3 shadow-xl"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[min(320px,calc(100vw-48px))] rounded-2xl bg-card p-5 space-y-3"
+        style={{ boxShadow: "var(--ds-shadow-elevated)" }}
       >
         <p id="confirm-title" className="text-base font-semibold text-foreground">
           {title}
