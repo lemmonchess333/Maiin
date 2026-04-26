@@ -970,25 +970,34 @@ export default function Food() {
           <Star className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
           Quick Add
         </p>
-        <div
-          className="flex gap-2 pb-1 -mx-1 px-1"
-          style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
-        >
-          {quickMeals.map((meal, i) => (
-            <motion.button
-              key={`${meal.name}-${i}`}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-              disabled={quickAdding !== null}
-              className={cn(
-                "shrink-0 h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
-                quickAdding !== null && "opacity-60 cursor-not-allowed"
-              )}
-            >
-              {meal.name} · {meal.cal} kcal
-            </motion.button>
-          ))}
-          <div className="shrink-0 w-4" aria-hidden="true" />
+        <div className="relative">
+          <div
+            className="flex gap-2 pb-1 -mx-1 px-1"
+            style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+          >
+            {quickMeals.map((meal, i) => (
+              <motion.button
+                key={`${meal.name}-${i}`}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
+                disabled={quickAdding !== null}
+                className={cn(
+                  "shrink-0 h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95",
+                  quickAdding !== null && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                {meal.name} · {meal.cal} kcal
+              </motion.button>
+            ))}
+            <div className="shrink-0 w-4" aria-hidden="true" />
+          </div>
+          {/* Right-edge fade — signals more chips off-screen instead of
+              hard-cutting "Pasta with Sauce · 400 kcal" mid-word. Mirrors
+              the History.tsx FilterPills pattern. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent"
+          />
         </div>
       </motion.div>
 
