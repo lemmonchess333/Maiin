@@ -306,6 +306,16 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               <p className="text-xs text-muted-foreground mb-3">{feedItem.summary}</p>
             )}
 
+            {/* Author caption — optional note attached at share time
+                via ShareComposerSheet. Sits between the title and the
+                stats so it reads as the author's voice on the activity,
+                separate from the auto-generated stat blocks below. */}
+            {typeof activity?.caption === 'string' && activity.caption.trim().length > 0 && (
+              <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap mb-3">
+                {activity.caption}
+              </p>
+            )}
+
             {/* Run stats */}
             {isRun && activity && (
               <div className="flex gap-5 mb-3">
