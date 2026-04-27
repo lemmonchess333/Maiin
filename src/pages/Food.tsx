@@ -1060,28 +1060,6 @@ export default function Food() {
             const totalCarb = meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0);
             const totalFat = meals.reduce((s, m) => s + safeNum(m.totalFat), 0);
 
-            // Latest createdAt for the inline section time. Previously
-            // this was the EARLIEST — so adding a second item at 10:10
-            // to a section whose first item was at 9:50 left the header
-            // stuck at 9:50. "When did you last eat this meal" is the
-            // more useful reading, and it matches the user's mental
-            // model of "most recent activity in this section".
-            let latestDate: Date | null = null;
-            for (const m of meals) {
-              const ts = m.createdAt;
-              if (
-                ts &&
-                typeof ts === "object" &&
-                "toDate" in ts &&
-                typeof (ts as { toDate: unknown }).toDate === "function"
-              ) {
-                const d = (ts as { toDate: () => Date }).toDate();
-                if (!latestDate || d > latestDate) latestDate = d;
-              }
-            }
-            const timeLabel = latestDate
-              ? format(latestDate, "h:mm a").toUpperCase()
-              : null;
 
             // Group populated items by food name
             const grouped = new Map<
@@ -1131,9 +1109,17 @@ export default function Food() {
                 {/* Header caption — small uppercase grey matching the hero
                     card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
                 <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
+                  {/* Header caption — meal name · item count · total kcal.
+                      Previously the middle slot was wall-clock time of the
+                      latest log; for users logging meals in clusters that
+                      reads as redundant ("BREAKFAST · 12:09 AM"). Item
+                      count is more glanceable and answers "did I log all
+                      five things?" at a glance. */}
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
                     <span className="font-semibold">{MEAL_LABELS[mealKey].toUpperCase()}</span>
-                    {timeLabel && <> · {timeLabel}</>}
+                    {groupedEntries.length > 0 && (
+                      <> · {groupedEntries.length} {groupedEntries.length === 1 ? "item" : "items"}</>
+                    )}
                     {" · "}
                     {formatCalories(mealCals)} {CALORIE_UNIT.toUpperCase()}
                   </p>
