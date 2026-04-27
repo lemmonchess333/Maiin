@@ -8,10 +8,7 @@ import { haptic } from "@/lib/haptic";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
-import MacroRing from "./MacroRing";
-// MacroColumn (the bar variant) is left in the codebase intentionally
-// after the all-rings switch — keeps a one-line revert path open for
-// one ship cycle. Re-import here if reverting.
+import MacroColumn from "./MacroColumn";
 
 interface DailyTotals {
   calories: number;
@@ -378,22 +375,14 @@ export default function FoodHeroCard({
         />
       </div>
 
-      {/* ── MACRO ROW — three independent floating tiles ───────────────
-          mt-4 provides 16px gap to the calorie card above.
-          gap-4 provides 16px between individual tiles.
-          The variants motion.div in Food.tsx animates both as one unit. */}
-      {/* Macro tile row — three rings sharing the same visual language as
-          the calorie hero (one large ring + three smaller). Mode-locked
-          fill direction and overshoot tail are implemented in MacroRing
-          to mirror the calorie ring. The legacy MacroColumn (bar) is
-          left in the codebase for one ship cycle so a revert is a
-          one-line swap each side. */}
+      {/* Macro tile row — three independent floating tiles. mt-4 = 16px
+          gap to the calorie card above; gap-4 = 16px between tiles. */}
       <div className="flex gap-4 mt-4">
         <div
           className="flex-1 flex p-3 rounded-2xl bg-card"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
-          <MacroRing
+          <MacroColumn
             macroKey="protein"
             Icon={Beef}
             consumed={dailyTotals.protein}
@@ -409,7 +398,7 @@ export default function FoodHeroCard({
           className="flex-1 flex p-3 rounded-2xl bg-card"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
-          <MacroRing
+          <MacroColumn
             macroKey="carbs"
             Icon={Wheat}
             consumed={dailyTotals.carbs}
@@ -425,7 +414,7 @@ export default function FoodHeroCard({
           className="flex-1 flex p-3 rounded-2xl bg-card"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
-          <MacroRing
+          <MacroColumn
             macroKey="fat"
             Icon={Avocado}
             consumed={dailyTotals.fat}
