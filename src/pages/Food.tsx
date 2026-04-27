@@ -593,7 +593,7 @@ export default function Food() {
   // Edit-servings state. The sheet itself (EditServingsSheet) owns
   // the stepper's target value — Food.tsx just tracks which group is
   // open and persists the change when the user taps Save.
-  const [editingGroup, setEditingGroup] = useState<{ foodName: string; meals: Meal[] } | null>(null);
+  const [editingGroup, setEditingGroup] = useState<{ id: string; foodName: string; meals: Meal[] } | null>(null);
 
   const applyServingsChange = async (targetCount: number) => {
     if (!user || !editingGroup) return;
@@ -1249,15 +1249,22 @@ export default function Food() {
         onConfirm={handleOFFConfirm}
       />
 
-      <EditServingsSheet
-        source={editingGroup ? {
-          foodName: editingGroup.foodName,
-          currentCount: editingGroup.meals.length,
-          currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
-        } : null}
-        onCancel={() => setEditingGroup(null)}
-        onSave={applyServingsChange}
-      />
+      {/* Mount the sheet only while a group is being edited and key it
+          on the group id. Each open gets a fresh component instance so
+          the stepper's local target state can't be stomped by a parent
+          re-render rebuilding the `source` prop with a new identity. */}
+      {editingGroup && (
+        <EditServingsSheet
+          key={editingGroup.id}
+          source={{
+            foodName: editingGroup.foodName,
+            currentCount: editingGroup.meals.length,
+            currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
+          }}
+          onCancel={() => setEditingGroup(null)}
+          onSave={applyServingsChange}
+        />
+      )}
     </motion.div>
   );
 }

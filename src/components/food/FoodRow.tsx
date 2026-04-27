@@ -37,11 +37,16 @@ interface FoodRowProps {
 // redundant "Copy" action; removed because Copy just added +1 serving,
 // which the Edit stepper does natively and which Quick Add / the NL
 // composer do in fewer taps anyway.
-const OPEN_OFFSET = -128;
-const OPEN_THRESHOLD = -80;
-const DELETE_COLOR = "#EF4444";
-const EDIT_COLOR = "#4B5563";
-const ACTION_WIDTH = 64;
+//
+// Colours are iOS-system aligned (Apple's HIG swipe-action palette):
+// system red for destructive, neutral dark-grey for the secondary
+// edit. They sit better against the warm light surfaces than the
+// previous saturated #EF4444 / slate #4B5563 pair.
+const OPEN_OFFSET = -144;
+const OPEN_THRESHOLD = -88;
+const DELETE_COLOR = "#FF3B30";
+const EDIT_COLOR = "#48484A";
+const ACTION_WIDTH = 72;
 
 /**
  * Quantity label formatter (change #5).
@@ -200,10 +205,10 @@ export default function FoodRow({
               type="button"
               onClick={onEdit}
               aria-label={`Edit ${group.foodName}`}
-              className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold"
+              className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide active:opacity-80 transition-opacity"
               style={{ background: EDIT_COLOR, width: ACTION_WIDTH }}
             >
-              <Pencil className="w-4 h-4" aria-hidden="true" />
+              <Pencil className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
               Edit
             </button>
           )}
@@ -211,10 +216,10 @@ export default function FoodRow({
             type="button"
             onClick={onDelete}
             aria-label={`Delete ${group.foodName}`}
-            className="flex flex-col items-center justify-center gap-0.5 text-white text-[10px] font-semibold flex-1"
+            className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide flex-1 active:opacity-80 transition-opacity"
             style={{ background: DELETE_COLOR }}
           >
-            <Trash2 className="w-4 h-4" aria-hidden="true" />
+            <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
             Delete
           </button>
         </div>
