@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import { THEME } from '../lib/theme';
 import Avatar from '../components/Avatar';
 import ReportModal from '../components/social/ReportModal';
+import ProgressPhotos from '../components/social/ProgressPhotos';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export default function UserProfile() {
@@ -259,6 +260,19 @@ export default function UserProfile() {
         <p className="text-xs text-muted-foreground">
           <Flame size={14} className="text-orange-500 inline" /> <strong className="text-foreground">{streak}-day</strong> streak
         </p>
+      )}
+
+      {/* Progress Photos — own-profile only. Moved here from the
+          Social page (used to be a top-level tab) because progress
+          photos are private/personal artefacts that belong with the
+          owner's stats and activity history, not in a public-facing
+          social destination. The component handles upload, encryption,
+          and the compare/empty states internally. */}
+      {isOwnProfile && (
+        <section aria-label="Progress photos" className="space-y-2">
+          <h3 className="text-sm font-semibold">Progress photos</h3>
+          <ProgressPhotos />
+        </section>
       )}
 
       <h3 className="text-sm font-semibold">Activity</h3>
