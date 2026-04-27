@@ -89,7 +89,13 @@ describe("EditServingsSheet", function() {
     expect(screen.getByText(/\(\+1 serving\)/)).toBeInTheDocument();
   });
 
-  it("resets the stepper when source switches to a different group", function() {
+  it("preserves the stepper across in-place source rerenders (parent remounts via key)", function() {
+    // The parent (Food.tsx) is responsible for remounting the sheet
+    // when the user opens a different group, by keying the component
+    // on the group id. An in-place source change must NOT reset the
+    // user's stepper input — doing so would re-fire on every parent
+    // render (Firestore listeners run constantly) and stomp the
+    // user's tap-count mid-edit.
     const { rerender } = renderSheet();
     fireEvent.click(screen.getByLabelText("Increase servings"));
     expect(screen.getByLabelText(/3 servings/)).toBeInTheDocument();
@@ -100,6 +106,7 @@ describe("EditServingsSheet", function() {
         onSave={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText(/1 serving/)).toBeInTheDocument();
+    // Same component instance → stepper target persists.
+    expect(screen.getByLabelText(/3 servings/)).toBeInTheDocument();
   });
 });
