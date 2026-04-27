@@ -71,6 +71,12 @@ export default function MacroColumn({
     ? (isOver ? 1 : 1 - pct)
     : pct;
 
+  // Overshoot — only when consumed exceeds target. Capped at one full
+  // extra lap; going 3× over wouldn't read any differently than 2×.
+  // Layered on top of the base bar in a darker shade of the macro
+  // colour, mirroring the calorie ring's overshoot arc (CalorieRing.tsx).
+  const overshootPct = isOver ? Math.min((consumed - target) / target, 1) : 0;
+
   // LEFT mode:
   //   under target → remaining   (e.g. "151")
   //   over target  → overshoot   (e.g. "5")
@@ -169,7 +175,7 @@ export default function MacroColumn({
           empty (consumed === 0) the whole track fades to reduce visual
           noise without causing a layout jump on first log. */}
       <div
-        className="w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
+        className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
         style={{
           background: "#F2F2F7",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
@@ -185,6 +191,29 @@ export default function MacroColumn({
             width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
           }}
         />
+        {/* Overshoot overlay — darker shade layered from the left,
+            width = overshoot %. Mirrors CalorieRing.tsx's overshoot
+            arc. Slight delay so it reads as "filled, then leaked over"
+            rather than racing the base bar. */}
+        {isOver && (
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{
+              background: overColor,
+              filter: "brightness(0.65) saturate(1.2)",
+              opacity: pulseOpacity,
+            }}
+            initial={{ width: reduce ? `${overshootPct * 100}%` : "0%" }}
+            animate={{ width: `${overshootPct * 100}%` }}
+            transition={{
+              width: {
+                duration: reduce ? 0 : barDurationSec,
+                ease: RING_EASE,
+                delay: reduce ? 0 : 0.15,
+              },
+            }}
+          />
+        )}
       </div>
 
       {/* Uppercase macro label — intentionally muted. The card's colour

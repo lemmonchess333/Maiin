@@ -23,6 +23,13 @@ interface FoodHeroCardProps {
   /** From useEffectiveTargets() — includes effective finalTarget and caption */
   dailyTargets: EffectiveTargets;
   dailyTotals: DailyTotals;
+  /**
+   * When true, the macro tile row collapses out of view to give the
+   * input + Scan CTA more vertical breathing room. Calorie ring stays
+   * as a context anchor. Driven by `inputFocused` on the Food page so
+   * the user typing/scanning isn't pushed below the fold.
+   */
+  compact?: boolean;
 }
 
 interface TrainingBurnToast {
@@ -52,6 +59,7 @@ export default function FoodHeroCard({
   isToday,
   dailyTargets,
   dailyTotals,
+  compact = false,
 }: FoodHeroCardProps) {
   // Synchronous init prevents first-paint flash of wrong mode
   const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
@@ -378,57 +386,75 @@ export default function FoodHeroCard({
       {/* ── MACRO ROW — three independent floating tiles ───────────────
           mt-4 provides 16px gap to the calorie card above.
           gap-4 provides 16px between individual tiles.
-          The variants motion.div in Food.tsx animates both as one unit. */}
-      <div className="flex gap-4 mt-4">
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
-          <MacroColumn
-            macroKey="protein"
-            Icon={Beef}
-            consumed={dailyTotals.protein}
-            target={dailyTargets.protein}
-            label="PROTEIN"
-            color={THEME.macros.protein}
-            mode={mode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </div>
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
-          <MacroColumn
-            macroKey="carbs"
-            Icon={Wheat}
-            consumed={dailyTotals.carbs}
-            target={dailyTargets.carbs}
-            label="CARBS"
-            color={THEME.macros.carbs}
-            mode={mode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </div>
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
-          <MacroColumn
-            macroKey="fat"
-            Icon={Avocado}
-            consumed={dailyTotals.fat}
-            target={dailyTargets.fat}
-            label="FAT"
-            color={THEME.macros.fat}
-            mode={mode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </div>
-      </div>
+          The variants motion.div in Food.tsx animates both as one unit.
+
+          Collapses to height 0 when `compact` is true (driven by the
+          input being focused on the Food page) so the user typing
+          isn't pushed below the fold. Calorie ring stays visible as
+          the context anchor — macro detail isn't actionable mid-type. */}
+      <AnimatePresence initial={false}>
+        {!compact && (
+          <motion.div
+            key="macro-row"
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="flex gap-4">
+              <div
+                className="flex-1 flex p-3 rounded-2xl bg-card"
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
+              >
+                <MacroColumn
+                  macroKey="protein"
+                  Icon={Beef}
+                  consumed={dailyTotals.protein}
+                  target={dailyTargets.protein}
+                  label="PROTEIN"
+                  color={THEME.macros.protein}
+                  mode={mode}
+                  numberDurationSec={LOG_MOMENT_SEC}
+                  barDurationSec={LOG_MOMENT_SEC}
+                />
+              </div>
+              <div
+                className="flex-1 flex p-3 rounded-2xl bg-card"
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
+              >
+                <MacroColumn
+                  macroKey="carbs"
+                  Icon={Wheat}
+                  consumed={dailyTotals.carbs}
+                  target={dailyTargets.carbs}
+                  label="CARBS"
+                  color={THEME.macros.carbs}
+                  mode={mode}
+                  numberDurationSec={LOG_MOMENT_SEC}
+                  barDurationSec={LOG_MOMENT_SEC}
+                />
+              </div>
+              <div
+                className="flex-1 flex p-3 rounded-2xl bg-card"
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
+              >
+                <MacroColumn
+                  macroKey="fat"
+                  Icon={Avocado}
+                  consumed={dailyTotals.fat}
+                  target={dailyTargets.fat}
+                  label="FAT"
+                  color={THEME.macros.fat}
+                  mode={mode}
+                  numberDurationSec={LOG_MOMENT_SEC}
+                  barDurationSec={LOG_MOMENT_SEC}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
