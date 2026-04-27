@@ -22,11 +22,14 @@ interface MacroRingProps {
 }
 
 // Mini-ring dimensions tuned to fit the existing macro tile width
-// (~110px after p-3) without growing tile height. 60px ring with 5px
-// stroke keeps the same 1:12 ratio family the calorie hero uses.
-const RADIUS = 24;
-const STROKE = 5;
-const SIZE = 60;
+// while keeping the inner gram readout legible. 88px outer with 6px
+// stroke gives ~76px inner space — comfortably fits "1,205g" at 20px
+// tabular-nums extrabold. Stroke-to-size ratio (~1:14) sits in the
+// same family as the calorie hero (10:160 = 1:16) so the rings
+// visually belong to one set.
+const RADIUS = 36;
+const STROKE = 6;
+const SIZE = 88;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -144,14 +147,14 @@ export default function MacroRing({
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <p
             className="font-extrabold font-mono tabular-nums leading-none tracking-tight"
-            style={{ color, fontSize: 16 }}
+            style={{ color, fontSize: 20 }}
           >
             <AnimatedNumber
               value={displayValue}
               duration={numberDurationSec}
               ease={RING_EASE}
             />
-            <span style={{ fontSize: 10 }}>g</span>
+            <span style={{ fontSize: 12 }}>g</span>
           </p>
         </div>
       </div>
