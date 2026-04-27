@@ -57,6 +57,20 @@ export default function MacroColumn({
   const isOver = consumed > target && hasTarget;
   const isLeftMode = mode === "left";
 
+  // Bar fill direction is mode-locked to the big number's direction so
+  // both signals move in lockstep:
+  //   LEFT mode → fill = remaining %   (drains as you log; matches the
+  //                                    big number which counts down)
+  //   EATEN mode → fill = consumed %   (grows as you log; matches the
+  //                                    big number which counts up)
+  // Over-target in LEFT mode pins to 100% (a full bar reads as
+  // "maxed out + over by N" combined with the big number; an empty
+  // bar would falsely read as "nothing left to eat").
+  // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
+  const barFillPct = isLeftMode
+    ? (isOver ? 1 : 1 - pct)
+    : pct;
+
   // LEFT mode:
   //   under target → remaining   (e.g. "151")
   //   over target  → overshoot   (e.g. "5")
@@ -165,8 +179,8 @@ export default function MacroColumn({
         <motion.div
           className="h-full rounded-full"
           style={{ background: overColor, opacity: pulseOpacity }}
-          initial={{ width: reduce ? `${pct * 100}%` : "0%" }}
-          animate={{ width: `${pct * 100}%` }}
+          initial={{ width: reduce ? `${barFillPct * 100}%` : "0%" }}
+          animate={{ width: `${barFillPct * 100}%` }}
           transition={{
             width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
           }}
