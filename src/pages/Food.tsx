@@ -262,10 +262,6 @@ export default function Food() {
     () => MEAL_ORDER.filter((k) => mealSegmentedMeals[k].length > 0),
     [mealSegmentedMeals],
   );
-  const emptyMealKeys = useMemo(
-    () => MEAL_ORDER.filter((k) => mealSegmentedMeals[k].length === 0),
-    [mealSegmentedMeals],
-  );
 
   // Yesterday's meals for "Copy from yesterday" feature
   const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
@@ -939,9 +935,8 @@ export default function Food() {
             </div>
           )}
         </div>
-        {(inputFocused || !!nlInput.trim() || !!targetMeal) && (
-          <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">Add to</span>
+        <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">Add to</span>
             {MEAL_ORDER.map((mealKey) => {
               const selected = targetMeal === mealKey;
               return (
@@ -962,8 +957,7 @@ export default function Food() {
                 </button>
               );
             })}
-          </div>
-        )}
+        </div>
         <div className="mt-3">
           <ScanMealButton
             onClick={() => { haptic(); scanOverrides.onClick(); }}
@@ -1050,10 +1044,10 @@ export default function Food() {
 
 
       {/* Meal sections — only populated meals render as full cards.
-          Empty slots collapse into a single chip row below (see the
-          emptyMealKeys block) instead of dashed placeholders that used
-          to sandwich the real data. Framer Motion `layout` (plain, not
-          layoutId) so height transitions animate smoothly when entries
+          Empty slots are reachable via the always-visible ADD TO pill
+          row near the NL input, not via per-slot placeholder chips
+          (those competed with real data for attention). Framer Motion
+          `layout` so height transitions animate smoothly when entries
           come and go. */}
       {todaysMeals.length > 0 && (
         <motion.div variants={itemVariant} className="space-y-3">
@@ -1189,53 +1183,6 @@ export default function Food() {
               </motion.div>
             );
           })}
-
-          {/* Compact "add a meal" chip row — replaces the per-slot dashed
-              boxes that used to sit between populated cards. Each chip
-              targets a specific empty slot via handleTargetMeal so the
-              user keeps one-tap targeting; the visual weight is much
-              lighter than three stacked rows competing with real data. */}
-          {/* Compact "add a meal" chip row — replaces the per-slot dashed
-              boxes that used to sit between populated cards. Each chip
-              targets a specific empty slot via handleTargetMeal so the
-              user keeps one-tap targeting; the visual weight is much
-              lighter than three stacked rows competing with real data.
-
-              Hidden whenever the ADD TO pill row near the input is
-              active (same condition as that row's render predicate)
-              so the user never sees the same choice in two places at
-              once. AnimatePresence gives the chips a quick fade so
-              the swap reads sequentially — A fades, then B appears
-              up near the input — rather than overlapping. */}
-          <AnimatePresence initial={false}>
-            {emptyMealKeys.length > 0 &&
-              !inputFocused &&
-              !nlInput.trim() &&
-              !targetMeal && (
-                <motion.div
-                  key="empty-meal-chips"
-                  layout
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="flex flex-wrap gap-2 pt-1 overflow-hidden"
-                >
-                  {emptyMealKeys.map((mealKey) => (
-                    <button
-                      key={mealKey}
-                      type="button"
-                      onClick={() => handleTargetMeal(mealKey)}
-                      aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                      className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-muted/50 border border-border/60 text-xs font-medium text-muted-foreground active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                    >
-                      <Plus className="w-3 h-3" aria-hidden="true" />
-                      <span>{MEAL_LABELS[mealKey]}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-          </AnimatePresence>
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
               has slots today is missing. Label is intentionally short:
