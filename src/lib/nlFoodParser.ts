@@ -23,6 +23,8 @@ export interface ParsedFood {
   carbs: number;
   fat: number;
   unrecognized?: boolean;
+  /** Internal — canonical FOOD_DB key. Used for output dedup. Strip before persisting. */
+  _canonicalKey?: string;
 }
 
 type Macros = { calories: number; protein: number; carbs: number; fat: number; serving: string };
@@ -252,6 +254,54 @@ const FOOD_DB: Record<string, Macros> = {
 };
 
 /**
+ * Maps non-canonical FOOD_DB keys to their canonical equivalent. Only
+ * include pairs whose macros are byte-identical — different foods that
+ * happen to share macros (e.g. cheese/cheddar, yogurt/greek yogurt,
+ * protein powder/whey) are deliberately NOT aliased here, because the
+ * user typing both probably means two distinct things.
+ *
+ * Used by the post-parse merge in parseFoodText so that "eggs, boiled
+ * egg" doesn't produce two rows with identical totals.
+ */
+const FOOD_ALIASES: Record<string, string> = {
+  // ── Egg cluster (78 / 6 / 1 / 5) ──
+  eggs: "egg",
+  "boiled egg": "egg",
+  // (poached egg differs at 71 cal — not aliased)
+  // (fried/scrambled differ — not aliased)
+
+  // ── Plurals ──
+  pancakes: "pancake",
+  crackers: "cracker",
+  dumplings: "dumpling",
+  carrots: "carrot",
+  mushrooms: "mushroom",
+  tacos: "taco",
+  cookies: "cookie",
+
+  // ── Regional / spelling variants of the same product ──
+  prawns: "shrimp",                 // UK ↔ US
+  mince: "ground beef",             // UK ↔ US
+  beef: "ground beef",              // generic ↔ specific (DB treats equal)
+  toast: "bread",                   // toasted ↔ untoasted (DB treats equal)
+  oatmeal: "oats",
+  porridge: "oats",
+  crisps: "chips",                  // UK ↔ US (the snack, not fries)
+  "french fries": "fries",
+  courgette: "zucchini",            // UK ↔ US
+  aubergine: "eggplant",            // UK ↔ US
+  yoghurt: "yogurt",
+  "greek yoghurt": "greek yogurt",
+  mayo: "mayonnaise",
+  donut: "doughnut",
+};
+
+/** Canonical form of a FOOD_DB key. Non-aliased keys pass through. */
+function canonicalKey(key: string): string {
+  return FOOD_ALIASES[key] ?? key;
+}
+
+/**
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
  * Also handles "a" and "an" as qty=1.
  * Handles missing spaces: "2chocolate" → { qty: 2, rest: "chocolate" }
@@ -396,6 +446,49 @@ function findCompoundMatch(text: string): { macros: Macros; matchedKeys: string[
 }
 
 /**
+ * Merge parsed rows that resolved to the same canonical FOOD_DB key.
+ * Sums macros; preserves the first row's display name so the user sees
+ * what they actually typed first ("Eggs" wins over "Boiled egg").
+ *
+ * Rows with no _canonicalKey (unrecognized, or compound `with` rows)
+ * never merge.
+ *
+ * Strips `_canonicalKey` from every output row — the field is internal
+ * to the merge step and shouldn't leak into the public ParsedFood
+ * payload (where it would break `toEqual` test assertions and
+ * potentially leak into Firestore writes if a consumer ever spread
+ * the row).
+ */
+function mergeByCanonicalKey(rows: ParsedFood[]): ParsedFood[] {
+  const out: ParsedFood[] = [];
+  const idxByKey = new Map<string, number>();
+
+  for (const row of rows) {
+    const { _canonicalKey, ...clean } = row;
+    if (!_canonicalKey) {
+      out.push(clean);
+      continue;
+    }
+    const existing = idxByKey.get(_canonicalKey);
+    if (existing === undefined) {
+      idxByKey.set(_canonicalKey, out.length);
+      out.push(clean);
+      continue;
+    }
+    const merged = out[existing];
+    out[existing] = {
+      ...merged,
+      calories: merged.calories + clean.calories,
+      protein: merged.protein + clean.protein,
+      carbs: merged.carbs + clean.carbs,
+      fat: merged.fat + clean.fat,
+    };
+  }
+
+  return out;
+}
+
+/**
  * Parse a natural-language food description into structured items.
  * Splits on commas and newlines. Handles "with" compounds (e.g. "toast with butter")
  * and multi-word fallback matching (e.g. "ham sandwich").
@@ -435,6 +528,9 @@ export function parseFoodText(input: string): ParsedFood[] {
 
       if (anyMatch) {
         const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
+        // Compound `with` rows are a separate semantic from single-food rows;
+        // intentionally NOT setting _canonicalKey so they never merge with
+        // simple foods (the macros are sums, not 1:1 to a single FOOD_DB entry).
         results.push({
           name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
           calories: Math.round(totalCal * qty),
@@ -457,6 +553,7 @@ export function parseFoodText(input: string): ParsedFood[] {
         protein: Math.round(item.protein * qty),
         carbs: Math.round(item.carbs * qty),
         fat: Math.round(item.fat * qty),
+        _canonicalKey: canonicalKey(key),
       });
       continue;
     }
@@ -471,6 +568,7 @@ export function parseFoodText(input: string): ParsedFood[] {
         protein: Math.round(compound.macros.protein * qty),
         carbs: Math.round(compound.macros.carbs * qty),
         fat: Math.round(compound.macros.fat * qty),
+        _canonicalKey: canonicalKey(compound.matchedKeys[0]),
       });
       continue;
     }
@@ -488,7 +586,7 @@ export function parseFoodText(input: string): ParsedFood[] {
     });
   }
 
-  return results;
+  return mergeByCanonicalKey(results);
 }
 
 export interface FoodSuggestion {
