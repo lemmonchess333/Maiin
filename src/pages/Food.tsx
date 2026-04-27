@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
