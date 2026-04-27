@@ -4,6 +4,8 @@ import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { compose, enqueueShare } from "@/lib/shareComposer";
+import { showQueuedToast } from "@/components/social/ShareComposerSheet";
 import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
 import { normalizeProgramState } from "./programTypes";
 import {
@@ -309,33 +311,55 @@ export function useProgram() {
           createdAt: Timestamp.now(),
           source: "programme",
         });
-        // Post to social feed if autoPostWorkouts is enabled
-        if (profile?.autoPostWorkouts !== false) {
+        // Share composer: prompt the user (or replay their saved
+        // default) for visibility + caption. Returns null if they
+        // declined to share. Replaces the old autoPostWorkouts flag —
+        // see src/lib/shareComposer.ts for the preference store.
+        const effectiveDurationMin = durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+        const decision = await compose({
+          type: "workout",
+          title: day.dayName,
+          meta: [
+            `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
+            tonnage > 0 ? `${Math.round(tonnage).toLocaleString()}kg volume` : "",
+            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+          ].filter(Boolean),
+        });
+        if (decision) {
           const uniqueCategories = [...new Set(day.exercises.map(ex => ex.movementCategory).filter(Boolean))];
+          const payload = {
+            authorId: user.uid,
+            authorName: profile?.displayName || 'Athlete',
+            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
+            type: 'workout' as const,
+            visibility: decision.visibility,
+            ...(decision.caption ? { caption: decision.caption } : {}),
+            workoutName: day.dayName,
+            activityTitle: day.dayName,
+            exerciseCount: day.exercises.length,
+            totalVolume: tonnage,
+            duration: effectiveDurationMin * 60,
+            muscleGroups: uniqueCategories,
+            crewId: profile?.crewId,
+            exercises: exercises.slice(0, 3).map(ex => ({
+              name: ex.exerciseName,
+              summary: `${ex.sets.length}×${ex.sets[0]?.reps ?? 0}×${ex.sets[0]?.weightKg ?? 0}kg`,
+            })),
+          };
           try {
-            await postActivity({
-              authorId: user.uid,
-              authorName: profile?.displayName || 'Athlete',
-              ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-              type: 'workout',
-              visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
-              workoutName: day.dayName,
-              activityTitle: day.dayName,
-              exerciseCount: day.exercises.length,
-              totalVolume: tonnage,
-              // Social-post duration in seconds — reuse the same effective
-              // duration that was saved on the workout record so the
-              // displayed value matches the per-user history.
-              duration: (durationMinutes > 0 ? durationMinutes : completedSetCount * 3) * 60,
-              muscleGroups: uniqueCategories,
-              crewId: profile?.crewId,
-              exercises: exercises.slice(0, 3).map(ex => ({
-                name: ex.exerciseName,
-                summary: `${ex.sets.length}×${ex.sets[0]?.reps ?? 0}×${ex.sets[0]?.weightKg ?? 0}kg`,
-              })),
-            });
+            await postActivity(payload);
           } catch (socialErr) {
-            logger.warn("Failed to post workout to feed:", socialErr);
+            // Network failures (offline, transient) — queue and let
+            // ShareComposerSheet's drain effect retry on reconnect.
+            // Auth/identity errors still surface as a warning since
+            // those won't recover by retrying.
+            const isNetwork = typeof navigator !== "undefined" && navigator.onLine === false;
+            if (isNetwork) {
+              enqueueShare(payload);
+              showQueuedToast();
+            } else {
+              logger.warn("Failed to post workout to feed:", socialErr);
+            }
           }
         }
       } catch (err) {

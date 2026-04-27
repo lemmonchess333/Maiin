@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
+import ShareComposerSheet from "@/components/social/ShareComposerSheet";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
@@ -308,6 +309,7 @@ function App() {
           <AuthProvider>
             <NotificationBubbleProvider>
               <ToastProvider />
+              <ShareComposerSheet />
               <AppRoutes />
             </NotificationBubbleProvider>
           </AuthProvider>
