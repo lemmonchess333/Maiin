@@ -2,6 +2,7 @@ import { useId, type ComponentType, type SVGProps } from "react";
 import { motion } from "framer-motion";
 import { useReducedMotion as useFramerReducedMotion } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { MACROS_TEXT_LIGHT } from "@/lib/theme";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroRingKey = "protein" | "carbs" | "fat";
@@ -128,7 +129,7 @@ export default function MacroRing({
                 cy={CENTER}
                 r={RADIUS}
                 fill="none"
-                stroke={color}
+                stroke={MACROS_TEXT_LIGHT[macroKey]}
                 strokeWidth={STROKE}
                 strokeLinecap="round"
                 strokeDasharray={CIRCUMFERENCE}
@@ -139,7 +140,6 @@ export default function MacroRing({
                   ease: RING_EASE,
                   delay: reduce ? 0 : 0.15,
                 }}
-                style={{ filter: "brightness(0.65) saturate(1.2)" }}
               />
             )}
           </g>
