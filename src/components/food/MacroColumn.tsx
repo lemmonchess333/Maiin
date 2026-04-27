@@ -78,16 +78,19 @@ export default function MacroColumn({
   const overshootPct = isOver ? Math.min((consumed - target) / target, 1) : 0;
 
   // LEFT mode:
-  //   under target → remaining   (e.g. "151")
-  //   over target  → overshoot   (e.g. "5")
+  //   under target → remaining   (e.g. "151g left")
+  //   over target  → overshoot   (e.g. "5g over")
   // EATEN mode:
-  //   either       → consumed    (e.g. "14" or "170")
-  // Big number is the only readout — the previous "left/over" caption
-  // and the "consumed / target" fraction were redundant with the
-  // calorie ring's mode label and the bar fill respectively.
+  //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
   const displayValue = isLeftMode
     ? (isOver ? consumed - target : remaining)
     : consumed;
+
+  // "eaten" (the default eaten-mode label) is suppressed; the dynamic
+  // "over" state is preserved so users still see the over-target signal.
+  const displayLabel = isLeftMode
+    ? (isOver ? "over" : "left")
+    : null;
 
   // Macro number + bar stay in the macro's own colour regardless of
   // over/under target. Previously the colour ramped amber → deep red
@@ -149,13 +152,7 @@ export default function MacroColumn({
       {/* Icon */}
       <Icon className="w-6 h-6" style={{ color }} strokeWidth={2} aria-hidden="true" />
 
-      {/* Big number — semantics flips with `mode`:
-          LEFT mode: remaining (or magnitude over) — e.g. "138g"
-          EATEN mode: consumed — e.g. "86g"
-          Identity carried by icon + bar fill + uppercase label below.
-          The "left/over" caption + the consumed/target fraction were
-          removed: the calorie ring's mode label is the global signal,
-          and repeating it on every macro card was noise. */}
+      {/* Big number */}
       <p
         className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2"
         style={{ color: overColor }}
@@ -167,6 +164,13 @@ export default function MacroColumn({
         />
         <span className="text-2xl">g</span>
       </p>
+
+      {/* Left/over label — suppressed in eaten mode (displayLabel === null) */}
+      {displayLabel && (
+        <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+          {displayLabel}
+        </p>
+      )}
 
       {/* Progress bar */}
       {/* Track — inset shadow reads as a recessed channel cut into the
@@ -216,10 +220,22 @@ export default function MacroColumn({
         )}
       </div>
 
-      {/* Uppercase macro label — intentionally muted. The card's colour
-          identity is carried by the icon + big number + progress bar;
-          the label is a caption, not a headline. */}
-      <p className="text-[10px] font-semibold uppercase tracking-wider mt-2 text-muted-foreground">
+      {/* Tertiary line — consumed value tweens with the big number so all
+          three (big number, bar fill, tertiary) advance together during a log. */}
+      <p className="text-[10px] text-muted-foreground/70 font-mono tabular-nums mt-1.5">
+        <AnimatedNumber
+          value={Math.round(consumed)}
+          duration={numberDurationSec}
+          ease={RING_EASE}
+        />
+        {" / "}{Math.round(target)}g
+      </p>
+
+      {/* Uppercase macro label — intentionally muted (same tone as the
+          `X / Yg` ratio line above) so the card's colour identity is
+          carried by the icon + big number + progress bar, not duplicated
+          four times. The label is a caption, not a headline. */}
+      <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5 text-muted-foreground">
         {label}
       </p>
     </button>
