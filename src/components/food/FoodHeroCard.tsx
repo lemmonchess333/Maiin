@@ -9,6 +9,7 @@ import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
+import MacroRing from "./MacroRing";
 
 interface DailyTotals {
   calories: number;
@@ -380,11 +381,15 @@ export default function FoodHeroCard({
           gap-4 provides 16px between individual tiles.
           The variants motion.div in Food.tsx animates both as one unit. */}
       <div className="flex gap-4 mt-4">
+        {/* A/B EXPERIMENT — protein renders as a ring, carbs/fat as bars,
+            so the user can compare the two visual treatments side-by-side
+            on a real device. Revert by swapping MacroRing back to
+            MacroColumn (same prop interface). */}
         <div
           className="flex-1 flex p-3 rounded-2xl bg-card"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
-          <MacroColumn
+          <MacroRing
             macroKey="protein"
             Icon={Beef}
             consumed={dailyTotals.protein}
