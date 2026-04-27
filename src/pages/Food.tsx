@@ -819,13 +819,6 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
-          // Collapse the macro tile row while the user is typing or has
-          // a target meal selected — gives back ~150px so the input,
-          // ADD TO chips, and Scan CTA aren't pushed below the fold on
-          // iPhone with the keyboard up. Targeting a meal without focus
-          // (e.g. tapping "+ Lunch" then composing a quick mental note)
-          // also counts as "actively logging" for compaction purposes.
-          compact={inputFocused || !!targetMeal}
         />
       </motion.div>
 
