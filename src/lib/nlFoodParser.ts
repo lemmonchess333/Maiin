@@ -255,19 +255,45 @@ const FOOD_DB: Record<string, Macros> = {
 
 /**
  * Maps non-canonical FOOD_DB keys to their canonical equivalent. Only
- * include pairs whose macros are byte-identical — different macros mean
- * different foods, even if the names sound similar.
+ * include pairs whose macros are byte-identical — different foods that
+ * happen to share macros (e.g. cheese/cheddar, yogurt/greek yogurt,
+ * protein powder/whey) are deliberately NOT aliased here, because the
+ * user typing both probably means two distinct things.
  *
  * Used by the post-parse merge in parseFoodText so that "eggs, boiled
  * egg" doesn't produce two rows with identical totals.
  */
 const FOOD_ALIASES: Record<string, string> = {
+  // ── Egg cluster (78 / 6 / 1 / 5) ──
   eggs: "egg",
   "boiled egg": "egg",
-  prawns: "shrimp",
-  mince: "ground beef",
-  beef: "ground beef",
-  toast: "bread",
+  // (poached egg differs at 71 cal — not aliased)
+  // (fried/scrambled differ — not aliased)
+
+  // ── Plurals ──
+  pancakes: "pancake",
+  crackers: "cracker",
+  dumplings: "dumpling",
+  carrots: "carrot",
+  mushrooms: "mushroom",
+  tacos: "taco",
+  cookies: "cookie",
+
+  // ── Regional / spelling variants of the same product ──
+  prawns: "shrimp",                 // UK ↔ US
+  mince: "ground beef",             // UK ↔ US
+  beef: "ground beef",              // generic ↔ specific (DB treats equal)
+  toast: "bread",                   // toasted ↔ untoasted (DB treats equal)
+  oatmeal: "oats",
+  porridge: "oats",
+  crisps: "chips",                  // UK ↔ US (the snack, not fries)
+  "french fries": "fries",
+  courgette: "zucchini",            // UK ↔ US
+  aubergine: "eggplant",            // UK ↔ US
+  yoghurt: "yogurt",
+  "greek yoghurt": "greek yogurt",
+  mayo: "mayonnaise",
+  donut: "doughnut",
 };
 
 /** Canonical form of a FOOD_DB key. Non-aliased keys pass through. */

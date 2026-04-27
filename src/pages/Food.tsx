@@ -567,7 +567,21 @@ export default function Food() {
       });
       setNlInput("");
       setTargetMeal(null);
-      toast.success(`${items.length} item${items.length > 1 ? "s" : ""} logged!`, { id: "food-nl-success" });
+      // Compare input-segment count to stored item count so the toast
+      // doesn't silently drop the user's expectation when the parser
+      // merges duplicates (e.g. "eggs, boiled egg" → 1 row). Without
+      // this hint a user typing two things and seeing "1 item logged"
+      // could think the second one was missed.
+      const inputSegmentCount = nlInput
+        .split(/[,\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean).length;
+      const mergedCount = inputSegmentCount - items.length;
+      const itemNoun = items.length > 1 ? "items" : "item";
+      const mergedSuffix = mergedCount > 0
+        ? ` (${mergedCount} combined)`
+        : "";
+      toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, { id: "food-nl-success" });
     } catch {
       toast.error("Failed to save. Please try again.", { id: "food-save-error" });
     }
