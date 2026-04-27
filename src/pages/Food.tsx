@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -1196,26 +1196,47 @@ export default function Food() {
               targets a specific empty slot via handleTargetMeal so the
               user keeps one-tap targeting; the visual weight is much
               lighter than three stacked rows competing with real data. */}
-          {emptyMealKeys.length > 0 && (
-            <motion.div
-              layout
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex flex-wrap gap-2 pt-1"
-            >
-              {emptyMealKeys.map((mealKey) => (
-                <button
-                  key={mealKey}
-                  type="button"
-                  onClick={() => handleTargetMeal(mealKey)}
-                  aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-muted/50 border border-border/60 text-xs font-medium text-muted-foreground active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          {/* Compact "add a meal" chip row — replaces the per-slot dashed
+              boxes that used to sit between populated cards. Each chip
+              targets a specific empty slot via handleTargetMeal so the
+              user keeps one-tap targeting; the visual weight is much
+              lighter than three stacked rows competing with real data.
+
+              Hidden whenever the ADD TO pill row near the input is
+              active (same condition as that row's render predicate)
+              so the user never sees the same choice in two places at
+              once. AnimatePresence gives the chips a quick fade so
+              the swap reads sequentially — A fades, then B appears
+              up near the input — rather than overlapping. */}
+          <AnimatePresence initial={false}>
+            {emptyMealKeys.length > 0 &&
+              !inputFocused &&
+              !nlInput.trim() &&
+              !targetMeal && (
+                <motion.div
+                  key="empty-meal-chips"
+                  layout
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="flex flex-wrap gap-2 pt-1 overflow-hidden"
                 >
-                  <Plus className="w-3 h-3" aria-hidden="true" />
-                  <span>{MEAL_LABELS[mealKey]}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
+                  {emptyMealKeys.map((mealKey) => (
+                    <button
+                      key={mealKey}
+                      type="button"
+                      onClick={() => handleTargetMeal(mealKey)}
+                      aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
+                      className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-muted/50 border border-border/60 text-xs font-medium text-muted-foreground active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    >
+                      <Plus className="w-3 h-3" aria-hidden="true" />
+                      <span>{MEAL_LABELS[mealKey]}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+          </AnimatePresence>
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
               has slots today is missing. Label is intentionally short:
