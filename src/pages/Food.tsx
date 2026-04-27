@@ -166,6 +166,12 @@ export default function Food() {
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
     if (targetMeal) setTargetMeal(null);
+    // Clear any in-flight typed text on date change. Without this,
+    // typing "2 eggs" for today, then tapping yesterday on the date
+    // bar, would silently submit "2 eggs" against yesterday — a
+    // trust-destroying bug because the calorie totals on both days
+    // shift and the user can't see why.
+    if (nlInput) setNlInput("");
   }
 
   /**
