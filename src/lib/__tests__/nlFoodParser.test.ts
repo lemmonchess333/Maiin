@@ -89,6 +89,41 @@ describe("parseFoodText", () => {
     expect(result).toHaveLength(1);
     expect(result[0].calories).toBeGreaterThan(0);
   });
+
+  it("merges eggs and boiled egg into a single row", () => {
+    const result = parseFoodText("eggs, boiled egg");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBe(78 * 2);
+    expect(result[0].protein).toBe(12);
+  });
+
+  it("merges across quantity prefixes", () => {
+    const result = parseFoodText("2 eggs, 1 boiled egg");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBe(78 * 3);
+  });
+
+  it("does not merge fried egg with boiled egg (different macros)", () => {
+    const result = parseFoodText("1 fried egg, 1 boiled egg");
+    expect(result).toHaveLength(2);
+  });
+
+  it("preserves the first matched name on a merged row", () => {
+    const result = parseFoodText("boiled egg, eggs");
+    expect(result).toHaveLength(1);
+    expect(result[0].name.toLowerCase()).toContain("boiled egg");
+  });
+
+  it("does not merge unrecognized rows", () => {
+    const result = parseFoodText("glorpgorp, eggs");
+    expect(result).toHaveLength(2);
+    expect(result.some(r => r.unrecognized)).toBe(true);
+  });
+
+  it("merges prawns and shrimp", () => {
+    const result = parseFoodText("prawns, shrimp");
+    expect(result).toHaveLength(1);
+  });
 });
 
 describe("getFoodSuggestions", () => {
