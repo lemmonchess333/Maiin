@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 
@@ -39,19 +39,14 @@ interface EditServingsSheetProps {
  * aria-labels so screen readers announce the stepper action.
  */
 function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps) {
+  // The parent mounts this sheet conditionally and keys it on the
+  // group id, so each open is a fresh instance — useState's initial
+  // value is the source-of-truth for the stepper. No reset effect:
+  // an effect would re-fire whenever the parent re-renders with a
+  // new `source` object identity (which happens often via Firestore
+  // listeners) and stomp the user's stepper input mid-edit.
   const [target, setTarget] = useState<number>(source?.currentCount ?? 1);
   const [saving, setSaving] = useState(false);
-
-  // Reset the target whenever a new group is opened. Without this,
-  // reopening the sheet on a different row would show the previous
-  // row's target as the initial value — confusing and potentially
-  // dangerous if the user tapped Save assuming it was current.
-  useEffect(() => {
-    if (source) {
-      setTarget(source.currentCount);
-      setSaving(false);
-    }
-  }, [source]);
 
   if (!source) return null;
 
