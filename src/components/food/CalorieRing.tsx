@@ -195,11 +195,14 @@ export default function CalorieRing({
               }}
             />
           )}
-          {/* Overshoot overlap arc — only in LEFT mode when over target.
-              Intentional longer flourish (1.5s / 0.6s delay) — runs AFTER the
-              main 600ms log moment completes. Haptic fires via the main ring's
-              onComplete, not at the end of the overshoot. */}
-          {isLeftMode && isOver && (
+          {/* Overshoot overlap arc — renders in BOTH modes when over target.
+              Previously LEFT-only, which left EATEN-mode users with no
+              visual indication they'd gone over (the ring just sat at
+              100% indistinguishable from "hit your target exactly").
+              Intentional longer flourish (1.5s / 0.6s delay) — runs AFTER
+              the main 600ms log moment completes. Haptic fires via the
+              main ring's onComplete, not at the end of the overshoot. */}
+          {isOver && (
             <motion.circle
               cx={CENTER}
               cy={CENTER}
@@ -246,7 +249,7 @@ export default function CalorieRing({
                 className="text-[10px] font-semibold uppercase tracking-wider mt-1 flex items-center gap-1"
                 style={{ color: numberColor, opacity: 0.7 }}
               >
-                {CALORIE_UNIT} {isLeftMode ? (isOver ? "over" : "left") : "eaten"}
+                {CALORIE_UNIT} {isOver ? "over" : (isLeftMode ? "left" : "eaten")}
                 <ArrowLeftRight className="w-2.5 h-2.5 opacity-60" aria-hidden="true" />
               </p>
               {trajectoryLabel && (
