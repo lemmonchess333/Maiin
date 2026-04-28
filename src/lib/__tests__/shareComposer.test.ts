@@ -85,6 +85,17 @@ describe("compose / resolveCompose", function () {
     clearShareDefault("workout");
     expect(getShareDefault("workout")).toBeNull();
   });
+
+  it("supports the 'crews' visibility added in PR 3.5 — short-circuits when stored as the always-pref", async function () {
+    // Composer-side 'crews' is a real persisted preference. Callers
+    // (useProgram + RunSummary) map it to a followers-visibility post
+    // tagged with crewId; the composer just records the user's intent.
+    const first = compose(RUN_PREVIEW);
+    resolveCompose({ visibility: "crews", caption: "" }, true);
+    await first;
+    expect(getShareDefault("run")).toBe("crews");
+    await expect(compose(RUN_PREVIEW)).resolves.toEqual({ visibility: "crews", caption: "" });
+  });
 });
 
 describe("offline queue", function () {
