@@ -91,8 +91,8 @@ export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
   // Derived. cached covers the "already in module cache" path; fetched
   // covers an in-this-render-cycle resolution. The uid match guards
   // against showing the previous uid's data after a signin swap.
-  const prMap = cached ?? (fetched?.uid === uid ? fetched.map : null);
-  const error = errored?.uid === uid;
+  const prMap = cached ?? (fetched && fetched.uid === uid ? fetched.map : null);
+  const error = !!errored && errored.uid === uid;
   const loading = !!uid && !prMap && !error;
   return { prMap, loading, error };
 }
