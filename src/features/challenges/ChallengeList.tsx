@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useChallenges, getTimeRemaining, TIER_COLORS } from "./useChallenges";
 import { ChallengeCard } from "./ChallengeCard";
 import { Trophy } from "lucide-react";
-import { EmptyState } from "@/components/EmptyState";
 import { THEME } from "@/lib/theme";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -84,16 +83,34 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
     );
   }
 
-  // No friends at all → empty state
+  // No friends at all → compact inline prompt.
+  // Previously rendered as a full centered EmptyState. After PR 2's
+  // tab collapse, ChallengeList sits at the top of the Crews tab —
+  // a giant centered card pushed the actual crews list below the
+  // fold. Inline single-line prompt keeps the entry point without
+  // dominating the surface.
   if (weeklyRankings.length === 0 && !rankingsLoading && challenges.length === 0) {
     return (
-      <EmptyState
-        icon={<Trophy size={28} />}
-        title="Compete with friends"
-        description="Follow athletes to see how you rank against each other this week"
-        accentColor={THEME.brand}
-        action={onFindFriends ? { label: 'Find Friends', onClick: onFindFriends } : undefined}
-      />
+      <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${THEME.brand}14` }}>
+            <Trophy size={16} style={{ color: THEME.brand }} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">No active challenges</p>
+            <p className="text-xs text-muted-foreground truncate">Follow people to compete weekly</p>
+          </div>
+        </div>
+        {onFindFriends && (
+          <button
+            type="button"
+            onClick={onFindFriends}
+            className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+          >
+            Find people
+          </button>
+        )}
+      </div>
     );
   }
 

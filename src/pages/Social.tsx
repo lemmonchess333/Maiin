@@ -419,16 +419,27 @@ export default function Social() {
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
                 const IconComp = ICON_MAP[crew.icon];
+                /* Subtext priority:
+                   1. crew.description (set on creation) — gives the
+                      crew an actual purpose line.
+                   2. "Be the first to join" when no members — softer
+                      than "0 members" which reads as a dead room.
+                   3. Member count otherwise. */
+                const subtext = crew.description?.trim()
+                  ? crew.description
+                  : crew.memberCount === 0
+                    ? 'Be the first to join'
+                    : `${crew.memberCount} member${crew.memberCount === 1 ? '' : 's'}`;
                 return (
                   <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                     {IconComp ? (
-                      <IconComp size={24} className="text-muted-foreground" />
+                      <IconComp size={24} className="text-muted-foreground shrink-0" />
                     ) : (
-                      <span className="text-2xl">{crew.icon}</span>
+                      <span className="text-2xl shrink-0">{crew.icon}</span>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{crew.name}</p>
-                      <p className="text-xs text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{subtext}</p>
                     </div>
                     <button
                       onClick={() => {
@@ -438,7 +449,7 @@ export default function Social() {
                           joinCrew(crew.id);
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
                         isMember ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'
                       }`}>
                       {isMember ? 'Leave' : 'Join'}
@@ -546,31 +557,34 @@ export default function Social() {
       {tab === 'discover' && (
         <section aria-label="Find people">
         <div className="space-y-6">
-          {/* Section 1: Invite link CTA — primary growth path on web */}
+          {/* Section 1: Invite link CTA — primary growth path on web.
+              Compressed from py-4/mb-3 to py-3/mb-2 because at the
+              previous size it visually competed with the search +
+              suggested-people sections that come after it. */}
           <div
-            className="p-4 rounded-2xl border"
+            className="p-3 rounded-2xl border"
             style={{
               background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
               borderColor: `${THEME.brand}33`,
             }}
           >
-            <div className="flex items-start gap-3 mb-3">
+            <div className="flex items-start gap-3 mb-2">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: `${THEME.brand}25` }}
               >
-                <Share2 className="w-5 h-5" style={{ color: THEME.brand }} />
+                <Share2 className="w-4 h-4" style={{ color: THEME.brand }} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Bring a friend</p>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                  Share a link to invite someone to train and compete with you.
+                  Train together. Stay consistent.
                 </p>
               </div>
             </div>
             <button
               onClick={handleShareInvite}
-              className="w-full py-3 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+              className="w-full py-2.5 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
               style={{ background: THEME.brand }}
             >
               Share invite link
