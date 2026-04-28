@@ -16,7 +16,7 @@ import { isNativePlatform } from '../lib/platform';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
-import { RefreshCw, Share2, Users, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
+import { Share2, Users, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -293,13 +293,12 @@ export default function Social() {
             </div>
           )}
 
-          {activeFeed.items.length > 0 && !pullRefreshing && (
-            <button onClick={activeFeed.refresh}
-              aria-label="Refresh feed"
-              className="flex items-center justify-center w-full py-3 text-muted-foreground hover:text-foreground transition-colors">
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          )}
+          {/* The full-width refresh button that used to live here was
+              an unlabelled lone icon between the trajectory card and
+              the first activity row — looked like orphan chrome. The
+              feed already has pull-to-refresh wired via the touch
+              handlers on this container, so the button was redundant
+              affordance for the same action. Removed in PR-bug-fix. */}
 
           {feedSubTab === 'following' && followingFeed.error && (
             <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
