@@ -2,14 +2,16 @@ import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
+import { activityExercisesToRoutine, type SavedRoutineExercise } from '../../lib/savedRoutines';
 import CommentSheet from './CommentSheet';
+import SaveRoutineSheet from './SaveRoutineSheet';
 import ReportModal from './ReportModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
 import Avatar from '../Avatar';
 import { haptic } from '../../lib/haptic';
-import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, Target, Star, MoreHorizontal, Flag, Ban } from 'lucide-react';
+import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, Target, Star, MoreHorizontal, Flag, Ban, BookmarkPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getTimeAgo } from '../../lib/timeAgo';
@@ -52,7 +54,29 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showSaveRoutine, setShowSaveRoutine] = useState(false);
   const activity = feedItem.activity;
+
+  /* "Save as routine" gate.
+     - Only workout activities (runs aren't routines).
+     - Only when the activity has the structured PR-4 exercise payload —
+       activities posted before that ship had `{ name, summary }` only,
+       which can't reliably be reconstructed into a runnable routine.
+     - Hide on the user's own posts; saving your own workout as a
+       routine is what the program builder is for.
+     The gate is permissive about exerciseId because the save flow
+     doesn't strictly require it (PR 4.1 will).  */
+  const rawExercises = activity?.exercises as unknown[] | undefined;
+  const hasStructuredExercises =
+    Array.isArray(rawExercises) &&
+    rawExercises.length > 0 &&
+    typeof (rawExercises[0] as { setCount?: unknown }).setCount === "number";
+  const isAuthor = !!user?.uid && activity?.authorId === user.uid;
+  const canSaveRoutine =
+    feedItem.type === "workout" && hasStructuredExercises && !isAuthor;
+  const routineExercises: SavedRoutineExercise[] = canSaveRoutine
+    ? activityExercisesToRoutine(rawExercises)
+    : [];
 
   const activityTitle = (activity?.activityTitle || activity?.workoutName || activity?.runName) as string | undefined;
   const isRun = feedItem.type === 'run';
@@ -170,10 +194,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const renderWorkoutContent = () => (
     activity && (
       <div className="space-y-2">
-        {/* Exercise details — top 3 */}
+        {/* Exercise details — top 3 visually. PR 4 dropped the
+            slice(0, 3) cap on the persisted payload (full list goes
+            to the doc so feed viewers can save the routine), so the
+            slice now lives here on the render side for compactness. */}
         {exercises && exercises.length > 0 && (
           <div className="space-y-1">
-            {exercises.map((ex, i) => (
+            {exercises.slice(0, 3).map((ex, i) => (
               <div key={i} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
                 <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
@@ -421,6 +448,15 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               <span className="text-xs font-medium">{activity!.commentCount}</span>
             )}
           </button>
+          {canSaveRoutine && (
+            <button
+              onClick={() => setShowSaveRoutine(true)}
+              aria-label="Save as routine"
+              className="p-2 -m-2 text-muted-foreground active:scale-90 transition-transform"
+            >
+              <BookmarkPlus className="w-5 h-5" />
+            </button>
+          )}
           {onShare && (
             <button onClick={() => onShare(feedItem)}
               aria-label="Share activity"
@@ -459,6 +495,23 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         commentCount={activity?.commentCount}
         quickChips={chips}
       />
+
+      {/* Save-as-routine sheet — only mounts when the gate above
+          said the activity is eligible AND the user has tapped the
+          bookmark icon. Defaults the routine name to the source
+          workout's display name; user can rename inside the sheet. */}
+      {canSaveRoutine && showSaveRoutine && (
+        <SaveRoutineSheet
+          open={showSaveRoutine}
+          onClose={() => setShowSaveRoutine(false)}
+          defaultName={(activity?.workoutName as string | undefined) || activityTitle || "Saved routine"}
+          sourceActivityId={feedItem.activityId}
+          sourceAuthorId={(activity?.authorId as string) || ""}
+          sourceAuthorName={feedItem.authorName || "Athlete"}
+          sourceWorkoutName={(activity?.workoutName as string | undefined)}
+          exercises={routineExercises}
+        />
+      )}
 
       {/* Report Modal */}
       {showReport && (
