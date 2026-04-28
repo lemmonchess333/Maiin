@@ -1419,3 +1419,101 @@ exports.refreshMyCrewLeaderboard = functions.https.onCall(async (data, context) 
   });
   return { ok: true, count: top.length, weekIso };
 });
+
+// ══════════════════════════════════════════════
+// BACKFILL — activity muscleGroups
+// ══════════════════════════════════════════════
+//
+// Background: every workout activity posted before the
+// inferMovementCategory fix (commit 46127d5) inherited
+// "horizontal_push" from the template normalizer's hardcoded default.
+// The fix corrects new posts going forward but doesn't touch existing
+// docs in /activities — so a Pull A workout posted last week still
+// shows the wrong tag in the social feed.
+//
+// This callable lets a user re-tag their OWN activities. It's
+// scoped to the caller's authorId so one user can't mass-modify
+// someone else's posts. Idempotent: re-running just recomputes the
+// same field (or the same correct field if already fixed).
+//
+// Trigger from the browser DevTools console:
+//   const fns = firebase.functions ? firebase.functions() :
+//     getFunctions();
+//   await httpsCallable(fns, "backfillMyActivityCategories")();
+// or inside the app via a one-time admin button (not built — this
+// is a one-shot fix, not a permanent feature).
+
+/* Port of src/lib/exerciseMovementCategory.ts. Keep in sync if the
+ * source file gains new categories or rules. */
+const _BACKFILL_CATEGORY_RULES = [
+  { category: "hip_dominant", keywords: ["deadlift", "rdl", "good morning", "hip thrust", "glute bridge", "kettlebell swing", "swing"] },
+  { category: "knee_dominant", keywords: ["squat", "lunge", "leg press", "leg extension", "step up", "split squat", "pistol", "calf raise", "leg curl"] },
+  { category: "vertical_pull", keywords: ["pull-up", "pull up", "pullup", "chin-up", "chin up", "chinup", "lat pulldown", "pulldown"] },
+  { category: "horizontal_pull", keywords: ["row", "face pull"] },
+  { category: "vertical_push", keywords: ["overhead press", "shoulder press", "military press", "push press", "ohp", "lateral raise", "front raise", "upright row"] },
+  { category: "horizontal_push", keywords: ["bench press", "bench", "chest press", "push-up", "push up", "pushup", "dip", "fly", "flye", "incline press", "decline press"] },
+  { category: "arms_triceps", keywords: ["tricep", "skullcrusher", "skull crusher", "pushdown", "kickback", "extension"] },
+  { category: "arms_biceps", keywords: ["curl"] },
+  { category: "core", keywords: ["plank", "crunch", "sit-up", "sit up", "situp", "leg raise", "ab", "russian twist", "rollout", "hollow"] },
+];
+
+function _inferCategoryForBackfill(name, exerciseId) {
+  const haystack = `${name || ""} ${exerciseId || ""}`.toLowerCase();
+  for (const rule of _BACKFILL_CATEGORY_RULES) {
+    for (const kw of rule.keywords) {
+      if (haystack.includes(kw)) return rule.category;
+    }
+  }
+  return "core";
+}
+
+exports.backfillMyActivityCategories = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+
+  const activitiesSnap = await db.collection("activities")
+    .where("authorId", "==", uid)
+    .where("type", "==", "workout")
+    .limit(500)
+    .get();
+
+  let scanned = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const docSnap of activitiesSnap.docs) {
+    scanned++;
+    const data = docSnap.data();
+    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+    if (exercises.length === 0) {
+      skipped++;
+      continue;
+    }
+
+    const fresh = [];
+    for (const ex of exercises) {
+      const name = typeof ex.name === "string" ? ex.name : "";
+      const exerciseId = typeof ex.exerciseId === "string" ? ex.exerciseId : "";
+      const cat = _inferCategoryForBackfill(name, exerciseId);
+      if (!fresh.includes(cat)) fresh.push(cat);
+    }
+    if (fresh.length === 0) {
+      skipped++;
+      continue;
+    }
+
+    const existing = Array.isArray(data.muscleGroups) ? data.muscleGroups : [];
+    const same = existing.length === fresh.length && existing.every((m, i) => m === fresh[i]);
+    if (same) {
+      skipped++;
+      continue;
+    }
+
+    await docSnap.ref.update({ muscleGroups: fresh });
+    updated++;
+  }
+
+  return { ok: true, scanned, updated, skipped };
+});
