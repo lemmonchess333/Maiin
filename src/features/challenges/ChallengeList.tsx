@@ -3,7 +3,6 @@ import { useChallenges, getTimeRemaining, TIER_COLORS } from "./useChallenges";
 import { ChallengeCard } from "./ChallengeCard";
 import { Trophy } from "lucide-react";
 import { THEME } from "@/lib/theme";
-import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
@@ -15,9 +14,6 @@ interface EnrichedEntry extends LeaderboardEntry {
 export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void }) {
   const { user } = useAuth();
   const { challenges, myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge } = useChallenges();
-  const [notifyRequested, setNotifyRequested] = useState(
-    () => !!localStorage.getItem('tropos_challenge_notify')
-  );
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(true);
   const autoJoinedRef = useRef(false);
@@ -226,24 +222,13 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
         </div>
       )}
 
-      {/* More coming soon card */}
-      <div className="p-4 rounded-xl border border-border/30 bg-muted/30 text-center">
-        <p className="text-xs text-muted-foreground">
-          More challenges coming soon — we'll notify you
-        </p>
-        {!notifyRequested && (
-          <button
-            onClick={() => {
-              localStorage.setItem('tropos_challenge_notify', '1');
-              setNotifyRequested(true);
-              toast.success("You'll be notified when new challenges launch!");
-            }}
-            className="mt-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            Notify me
-          </button>
-        )}
-      </div>
+      {/* "More coming soon" placeholder removed in PR-bug-fix:
+          PR 5 actually shipped two new challenges (Fastest 5K,
+          Together 1,000km) so the caption was lying to users and the
+          "Notify me" button asked them to be notified about features
+          that already exist. ChallengeList already renders all
+          available challenges from the global collection, so no
+          replacement copy is needed. */}
     </div>
   );
 }

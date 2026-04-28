@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
@@ -87,7 +88,11 @@ function templateExToProgEx(te: TemplateExercise): ProgramExercise {
   return {
     name: te.name,
     exerciseId: te.exerciseId,
-    movementCategory: "horizontal_push",
+    /* Was hardcoded "horizontal_push" — caused every template-derived
+       day to mis-tag muscle groups on the social activity card (Pull A
+       showed "horizontal_push" because every exercise inherited the
+       default). Inference is name-based: see lib/exerciseMovementCategory. */
+    movementCategory: inferMovementCategory(te.name, te.exerciseId),
     sets: te.sets,
     reps: repNum,
     weight: 0,

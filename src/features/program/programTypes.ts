@@ -2,6 +2,8 @@
    PROGRAM ENGINE TYPES
 ================================ */
 
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+
 export type MovementCategory =
   | "horizontal_push"
   | "vertical_push"
@@ -196,7 +198,7 @@ export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string;
   return {
     name: ex.name,
     exerciseId: ex.exerciseId,
-    movementCategory: ex.movementCategory ?? "horizontal_push",
+    movementCategory: ex.movementCategory ?? inferMovementCategory(ex.name, ex.exerciseId),
     sets: ex.sets ?? 3,
     reps: ex.reps ?? 8,
     baseReps: ex.baseReps ?? ex.reps ?? 8,
