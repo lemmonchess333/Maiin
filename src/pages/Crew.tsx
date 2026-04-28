@@ -273,10 +273,12 @@ export default function Crew() {
                     if (refreshingLeaderboard) return;
                     setRefreshingLeaderboard(true);
                     try {
-                      const fns = getFunctions(undefined, "europe-west2");
-                      // Falls back to the default region if europe-west2
-                      // isn't where the function actually lives — Firebase
-                      // SDK reads the region from `firebase.json` at build.
+                      // No explicit region — Cloud Functions live at
+                      // us-central1 (the project default), and the SDK
+                      // constructs the URL from getFunctions's region
+                      // arg, so passing the wrong region just 404s
+                      // silently. Default = us-central1 matches deploy.
+                      const fns = getFunctions();
                       const refresh = httpsCallable(fns, "refreshMyCrewLeaderboard");
                       await refresh();
                       // Mutate the in-memory crew doc by re-fetching so
@@ -286,7 +288,11 @@ export default function Crew() {
                         setCrewDoc({ id: snap.id, ...(snap.data() as Omit<CrewType, "id">) });
                       }
                       toast.success("Leaderboard refreshed");
-                    } catch {
+                    } catch (err) {
+                      // Surface real failure modes to the console so
+                      // network/region/auth issues are debuggable
+                      // without re-instrumenting in prod.
+                      console.error("refreshMyCrewLeaderboard failed:", err);
                       toast.error("Couldn't refresh. Try again.");
                     } finally {
                       setRefreshingLeaderboard(false);
