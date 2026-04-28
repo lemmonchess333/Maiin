@@ -55,42 +55,45 @@ export interface UseUserPRMap {
 }
 
 /** Lazy fetch + module-level cache for the signed-in user's PR map.
- *  Pass a falsy `uid` to skip; only fires the fetch once enabled. */
+ *  Pass a falsy `uid` to skip; only fires the fetch once enabled.
+ *
+ *  All non-cache state is derived during render rather than synced
+ *  via setState-in-effect — the cache hit case, the no-uid case, and
+ *  the loading flag are all pure functions of uid + cache. setState
+ *  only fires inside async .then / .catch callbacks (which the
+ *  react-hooks/set-state-in-effect rule does not flag). The fetched/
+ *  error pieces of state carry the uid they were produced for, so a
+ *  uid change between mount and resolve doesn't show stale data for
+ *  the new uid. */
 export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
-  const [prMap, setPRMap] = useState<PRMap | null>(uid ? cache.get(uid) ?? null : null);
-  const [loading, setLoading] = useState(!!uid && !cache.has(uid));
-  const [error, setError] = useState(false);
+  const cached = uid ? cache.get(uid) ?? null : null;
+  const [fetched, setFetched] = useState<{ uid: string; map: PRMap } | null>(null);
+  const [errored, setErrored] = useState<{ uid: string } | null>(null);
 
   useEffect(() => {
-    if (!uid) {
-      setPRMap(null);
-      setLoading(false);
-      return;
-    }
-    const cached = cache.get(uid);
-    if (cached) {
-      setPRMap(cached);
-      setLoading(false);
-      return;
-    }
+    if (!uid || cache.has(uid)) return;
     let cancelled = false;
-    setLoading(true);
     void fetchPRMap(uid)
       .then((map) => {
         if (cancelled) return;
-        setPRMap(map);
-        setLoading(false);
+        setFetched({ uid, map });
+        setErrored(null);
       })
       .catch(() => {
         if (cancelled) return;
-        setError(true);
-        setLoading(false);
+        setErrored({ uid });
       });
     return () => {
       cancelled = true;
     };
   }, [uid]);
 
+  // Derived. cached covers the "already in module cache" path; fetched
+  // covers an in-this-render-cycle resolution. The uid match guards
+  // against showing the previous uid's data after a signin swap.
+  const prMap = cached ?? (fetched?.uid === uid ? fetched.map : null);
+  const error = errored?.uid === uid;
+  const loading = !!uid && !prMap && !error;
   return { prMap, loading, error };
 }
 
