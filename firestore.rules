@@ -105,9 +105,16 @@ service cloud.firestore {
     match /users/{uid}/streaks/{doc} {
       allow read, write: if isOwner(uid);
     }
-    match /users/{uid}/performanceWeeks/{doc} {
+    /* Performance data — written ONLY by Cloud Functions
+       (computeAndWritePerformanceForUser in functions/index.js writes
+       to users/{uid}/performance/{weekKey}). Path was previously named
+       "performanceWeeks" in this rules file but the code (server +
+       client) actually uses "performance" — meaning every client
+       read of TrajectoryCard / Home performance widgets was denied
+       by the catch-all and fell silently to empty state. Renamed to
+       match the real collection name. */
+    match /users/{uid}/performance/{doc} {
       allow read: if isOwner(uid);
-      // Only Cloud Functions should write performance data
       allow write: if false;
     }
 
@@ -371,6 +378,28 @@ service cloud.firestore {
     // ========================================
     match /users/{uid}/progressPhotos/{doc} {
       allow read, write: if isOwner(uid);
+    }
+
+    // User subcollection: GPS privacy zones — owner-only.
+    // Used by usePrivacyZones to redact run start/end points near
+    // home/work etc. Without this rule the catch-all denied reads
+    // and the privacy-zone feature silently produced empty arrays
+    // every session.
+    match /users/{uid}/privacyZones/{doc} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ========================================
+    // Scan usage — food-scan quota tracker.
+    // Written exclusively by Cloud Functions (analyzeFood /
+    // analyzeFoodText use Admin SDK to bump the count); the client
+    // reads it via useScanUsage to render the quota indicator.
+    // Without this rule the read was denied by the catch-all and
+    // the quota indicator silently fell back to "0 used".
+    // ========================================
+    match /scanUsage/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
     }
 
     // ========================================
