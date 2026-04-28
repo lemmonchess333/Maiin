@@ -381,6 +381,46 @@ export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapsh
   };
 }
 
+/**
+ * Crew-scoped activity feed. Filters the global activities collection
+ * by the crewId field that's auto-attached when a member of that crew
+ * posts a workout/run via the share composer.
+ *
+ * Visibility filter is `in ['public', 'followers']` so any non-private
+ * post tagged with this crewId surfaces. Private posts stay hidden as
+ * the author intended.
+ *
+ * Requires a Firestore composite index on (crewId asc, visibility asc,
+ * createdAt desc). Firestore will surface a console warning + a
+ * one-click index creation link the first time the query runs against
+ * a real database without the index.
+ */
+export async function getCrewActivities(
+  crewId: string,
+  limitCount = 20,
+  afterDoc?: DocumentSnapshot,
+) {
+  const baseConstraints = [
+    where('crewId', '==', crewId),
+    where('visibility', 'in', ['public', 'followers']),
+    orderBy('createdAt', 'desc'),
+  ];
+  let q = query(collection(db, 'activities'), ...baseConstraints, limit(limitCount));
+  if (afterDoc) {
+    q = query(
+      collection(db, 'activities'),
+      ...baseConstraints,
+      startAfter(afterDoc),
+      limit(limitCount),
+    );
+  }
+  const snap = await getDocs(q);
+  return {
+    items: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    lastDoc: snap.docs[snap.docs.length - 1],
+  };
+}
+
 // ============================================
 // User Search
 // ============================================

@@ -4,6 +4,7 @@ import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
@@ -25,18 +26,9 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 type SocialTab = 'feed' | 'crews' | 'discover';
 type FeedSubTab = 'following' | 'discover';
 
-// Icon map for crew icons (#18)
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  dumbbell: Dumbbell,
-  footprints: Footprints,
-  zap: Zap,
-  target: Target,
-  flame: Flame,
-  salad: Salad,
-  person: PersonStanding,
-  medal: Medal,
-  sunrise: Sunrise,
-};
+// Crew icons live in src/lib/crewIcons so the Crew page can render
+// the same glyph the list row shows.
+import { CREW_ICON_MAP as ICON_MAP } from '../lib/crewIcons';
 
 export default function Social() {
   const { user, profile } = useAuth();
@@ -433,18 +425,25 @@ export default function Social() {
                     ? 'Be the first to join'
                     : `${crew.memberCount} member${crew.memberCount === 1 ? '' : 's'}`;
                 return (
+                  /* Crew row — body links to the per-crew page; the
+                     Join/Leave button is a sibling so its click
+                     doesn't bubble into the navigation. */
                   <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    {IconComp ? (
-                      <IconComp size={24} className="text-muted-foreground shrink-0" />
-                    ) : (
-                      <span className="text-2xl shrink-0">{crew.icon}</span>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{subtext}</p>
-                    </div>
+                    <Link to={`/crew/${crew.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      {IconComp ? (
+                        <IconComp size={24} className="text-muted-foreground shrink-0" />
+                      ) : (
+                        <span className="text-2xl shrink-0">{crew.icon}</span>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{subtext}</p>
+                      </div>
+                    </Link>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         if (isMember) {
                           setLeavingCrewId(crew.id);
                         } else {
