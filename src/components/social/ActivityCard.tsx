@@ -5,6 +5,7 @@ import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../
 import { activityExercisesToRoutine, type SavedRoutineExercise } from '../../lib/savedRoutines';
 import CommentSheet from './CommentSheet';
 import SaveRoutineSheet from './SaveRoutineSheet';
+import ExerciseCompareSheet from './ExerciseCompareSheet';
 import ReportModal from './ReportModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { FeedItem } from '../../hooks/useSocialFeed';
@@ -55,6 +56,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showSaveRoutine, setShowSaveRoutine] = useState(false);
+  const [compareTarget, setCompareTarget] = useState<{
+    name: string;
+    summary: string;
+    setCount: number;
+    targetReps: number;
+    targetWeightKg: number;
+  } | null>(null);
   const activity = feedItem.activity;
 
   /* "Save as routine" gate.
@@ -139,7 +147,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
   const avatarColor = isRun ? THEME.running : THEME.lifting;
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
 
-  const exercises = activity?.exercises as { name: string; summary: string }[] | undefined;
+  const exercises = activity?.exercises as Array<{
+    name: string;
+    summary: string;
+    setCount?: number;
+    targetReps?: number;
+    targetWeightKg?: number;
+  }> | undefined;
   const prCount = activity?.prCount as number | undefined;
 
   // Render run content (map + stats)
@@ -195,15 +209,48 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         {/* Exercise details — top 3 visually. PR 4 dropped the
             slice(0, 3) cap on the persisted payload (full list goes
             to the doc so feed viewers can save the routine), so the
-            slice now lives here on the render side for compactness. */}
+            slice now lives here on the render side for compactness.
+            PR 4.5: rows are tappable for compare-this-lift when the
+            payload has structured fields and the user isn't the
+            author (no point comparing yourself to yourself). */}
         {exercises && exercises.length > 0 && (
           <div className="space-y-1">
-            {exercises.slice(0, 3).map((ex, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
-                <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
-              </div>
-            ))}
+            {exercises.slice(0, 3).map((ex, i) => {
+              const canCompare =
+                !!user?.uid &&
+                activity?.authorId !== user.uid &&
+                typeof ex.setCount === "number" &&
+                typeof ex.targetReps === "number" &&
+                typeof ex.targetWeightKg === "number";
+              if (!canCompare) {
+                return (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
+                    <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
+                  </div>
+                );
+              }
+              return (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() =>
+                    setCompareTarget({
+                      name: ex.name,
+                      summary: ex.summary,
+                      setCount: ex.setCount as number,
+                      targetReps: ex.targetReps as number,
+                      targetWeightKg: ex.targetWeightKg as number,
+                    })
+                  }
+                  aria-label={`Compare your ${ex.name}`}
+                  className="w-full flex items-center justify-between text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
+                >
+                  <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
+                  <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -508,6 +555,21 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           sourceAuthorName={feedItem.authorName || "Athlete"}
           sourceWorkoutName={(activity?.workoutName as string | undefined)}
           exercises={routineExercises}
+        />
+      )}
+
+      {/* Compare-this-lift sheet (PR 4.5) — opens when the user taps
+          a tappable exercise row above. compareTarget being non-null
+          drives both open state and content. */}
+      {compareTarget && (
+        <ExerciseCompareSheet
+          open={compareTarget !== null}
+          onClose={() => setCompareTarget(null)}
+          exerciseName={compareTarget.name}
+          authorSummary={compareTarget.summary}
+          authorSetCount={compareTarget.setCount}
+          authorTargetReps={compareTarget.targetReps}
+          authorTargetWeightKg={compareTarget.targetWeightKg}
         />
       )}
 
