@@ -220,6 +220,21 @@ export function useChallenges() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    /* Gated on `user` so we only seed and subscribe AFTER Firebase
+       auth has resolved. Previously this effect ran on first mount
+       with an empty deps array, which fired before AuthProvider had
+       a uid — Firestore rejected the writes/reads as anonymous and
+       the silent .catch swallowed the errors. Net effect: the
+       challenges collection was never created on the project (the
+       Weekly Workout Challenge UI rendered anyway because it's
+       computed locally from the user's workouts data, not from the
+       challenges collection — masked the bug for months).
+
+       The dep on `user` is the uid object reference; AuthProvider
+       holds it stable for the session so this doesn't re-run
+       gratuitously. */
+    if (!user) return;
+
     seedChallenges().catch(e => logger.error(e));
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
@@ -239,7 +254,7 @@ export function useChallenges() {
       () => { clearTimeout(timeout); setChallenges([]); setLoading(false); }
     );
     return () => { clearTimeout(timeout); unsub(); };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!user || challenges.length === 0) return;
