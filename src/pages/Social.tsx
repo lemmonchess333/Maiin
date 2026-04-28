@@ -4,6 +4,7 @@ import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
@@ -25,18 +26,9 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 type SocialTab = 'feed' | 'crews' | 'discover';
 type FeedSubTab = 'following' | 'discover';
 
-// Icon map for crew icons (#18)
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  dumbbell: Dumbbell,
-  footprints: Footprints,
-  zap: Zap,
-  target: Target,
-  flame: Flame,
-  salad: Salad,
-  person: PersonStanding,
-  medal: Medal,
-  sunrise: Sunrise,
-};
+// Crew icons live in src/lib/crewIcons so the Crew page can render
+// the same glyph the list row shows.
+import { CREW_ICON_MAP as ICON_MAP } from '../lib/crewIcons';
 
 export default function Social() {
   const { user, profile } = useAuth();
@@ -365,30 +357,32 @@ export default function Social() {
                   action={{ label: 'Start a workout', href: '/program' }}
                 />
               ) : (
-                <div className="text-center py-12 px-6 space-y-4">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-                    style={{ background: `${THEME.brand}15`, border: `1px solid ${THEME.brand}25` }}
-                  >
-                    <Users size={32} style={{ color: THEME.brand }} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-semibold text-foreground">Follow someone to start competing</p>
-                    <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
-                      Their workouts, runs, and milestones will show up here
+                /* Inline prompt — sits as a supporting element under
+                   TrajectoryCard. Was previously a full centered empty
+                   state with a primary-purple "Find people to follow"
+                   button which competed visually with the trajectory
+                   card above it (two heroes stacked). Compressed to
+                   one row with a text-link CTA so the trajectory card
+                   stays the hero of the surface. Same compact pattern
+                   as ChallengeList's empty state on the Crews tab. */
+                <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: `${THEME.brand}14` }}
+                    >
+                      <Users size={16} style={{ color: THEME.brand }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      Follow people to see their workouts and compete this week
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setTab('discover')}
-                    className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
                   >
-                    Find people to follow
-                  </button>
-                  <button
-                    onClick={() => setFeedSubTab('discover')}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Or explore the community &rarr;
+                    Find people
                   </button>
                 </div>
               )}
@@ -431,18 +425,25 @@ export default function Social() {
                     ? 'Be the first to join'
                     : `${crew.memberCount} member${crew.memberCount === 1 ? '' : 's'}`;
                 return (
+                  /* Crew row — body links to the per-crew page; the
+                     Join/Leave button is a sibling so its click
+                     doesn't bubble into the navigation. */
                   <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    {IconComp ? (
-                      <IconComp size={24} className="text-muted-foreground shrink-0" />
-                    ) : (
-                      <span className="text-2xl shrink-0">{crew.icon}</span>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{subtext}</p>
-                    </div>
+                    <Link to={`/crew/${crew.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      {IconComp ? (
+                        <IconComp size={24} className="text-muted-foreground shrink-0" />
+                      ) : (
+                        <span className="text-2xl shrink-0">{crew.icon}</span>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{subtext}</p>
+                      </div>
+                    </Link>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         if (isMember) {
                           setLeavingCrewId(crew.id);
                         } else {
