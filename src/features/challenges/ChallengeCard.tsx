@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut } from "lucide-react";
+import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut, Footprints, Sprout, Sun, Leaf, Snowflake } from "lucide-react";
 import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
 import { TIER_COLORS, computeTier, getTimeRemaining } from "./useChallenges";
 import { THEME } from "@/lib/theme";
@@ -16,6 +16,20 @@ interface ChallengeCardProps {
 }
 
 const TIER_LABELS: Record<ChallengeTier, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
+
+/* Icon map for challenge cards. The seed definitions in
+   useChallenges.ts store lucide icon names as strings ("footprints",
+   "trophy", etc.) — the previous render just printed those strings
+   as text inside the icon container, producing visible "ootprints"
+   leakage on the Crews tab once challenges actually started seeding. */
+const CHALLENGE_ICON_MAP: Record<string, ComponentType<{ size?: number; className?: string }>> = {
+  trophy: Trophy,
+  footprints: Footprints,
+  sprout: Sprout,
+  sun: Sun,
+  leaf: Leaf,
+  snowflake: Snowflake,
+};
 
 /** Format a challenge progress value with units appropriate to the
  *  metric. PR 5 introduces fastest_effort (seconds → mm:ss) and
@@ -68,10 +82,21 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         {/* Header */}
         <div className="flex items-start gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: THEME.brand + "20" }}
           >
-            {challenge.icon}
+            {(() => {
+              const IconComp = CHALLENGE_ICON_MAP[challenge.icon];
+              return IconComp ? (
+                <IconComp size={18} className="text-primary" />
+              ) : (
+                /* Unknown icon name → fall back to a Trophy so the card
+                   doesn't render bare text in the slot. Adding a new
+                   challenge with an unmapped icon name now degrades
+                   gracefully instead of leaking the string. */
+                <Trophy size={18} className="text-primary" />
+              );
+            })()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">{challenge.name}</p>
