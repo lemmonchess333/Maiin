@@ -1,0 +1,123 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import {
+  compose,
+  resolveCompose,
+  getShareDefault,
+  clearShareDefault,
+  enqueueShare,
+  getQueueLength,
+  drainQueue,
+  type ActivityPreview,
+} from "../shareComposer";
+
+const WORKOUT_PREVIEW: ActivityPreview = {
+  type: "workout",
+  title: "Push Day",
+  meta: ["1h 12m", "12,840kg volume"],
+};
+
+const RUN_PREVIEW: ActivityPreview = {
+  type: "run",
+  title: "Run",
+  meta: ["5.20km", "28:14"],
+};
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
+describe("compose / resolveCompose", function () {
+  it("opens the sheet (returns an unresolved promise) when no preference is stored", async function () {
+    const promise = compose(WORKOUT_PREVIEW);
+    let settled = false;
+    void promise.then(() => {
+      settled = true;
+    });
+    // Microtask flush — promise should not resolve without an explicit
+    // resolveCompose call from the sheet.
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    resolveCompose({ visibility: "followers", caption: "" }, false);
+    await expect(promise).resolves.toEqual({ visibility: "followers", caption: "" });
+  });
+
+  it("short-circuits with the saved 'always' preference instead of opening the sheet", async function () {
+    resolveCompose({ visibility: "public", caption: "" }, true);
+    // Above call had no in-flight compose; it just persists the default
+    // when remember is true and a type is in state. Repro the contract:
+    // user opens the sheet once, picks "Make public" with remember,
+    // closes; the next compose() should resolve immediately.
+    const first = compose(WORKOUT_PREVIEW);
+    resolveCompose({ visibility: "public", caption: "" }, true);
+    await first;
+    const second = compose(WORKOUT_PREVIEW);
+    await expect(second).resolves.toEqual({ visibility: "public", caption: "" });
+    expect(getShareDefault("workout")).toBe("public");
+  });
+
+  it("returns null without opening the sheet when 'never' is stored", async function () {
+    const first = compose(RUN_PREVIEW);
+    resolveCompose(null, true);
+    await first;
+    expect(getShareDefault("run")).toBe("never");
+    await expect(compose(RUN_PREVIEW)).resolves.toBeNull();
+  });
+
+  it("scopes preferences per type — workout default does not leak to runs", async function () {
+    const first = compose(WORKOUT_PREVIEW);
+    resolveCompose({ visibility: "followers", caption: "" }, true);
+    await first;
+    expect(getShareDefault("workout")).toBe("followers");
+    expect(getShareDefault("run")).toBeNull();
+  });
+
+  it("does not persist a preference when remember is false", async function () {
+    const first = compose(WORKOUT_PREVIEW);
+    resolveCompose({ visibility: "followers", caption: "yo" }, false);
+    await first;
+    expect(getShareDefault("workout")).toBeNull();
+  });
+
+  it("clearShareDefault removes the saved 'always' preference", async function () {
+    const first = compose(WORKOUT_PREVIEW);
+    resolveCompose({ visibility: "public", caption: "" }, true);
+    await first;
+    clearShareDefault("workout");
+    expect(getShareDefault("workout")).toBeNull();
+  });
+});
+
+describe("offline queue", function () {
+  it("enqueueShare appends payloads and getQueueLength reflects them", function () {
+    enqueueShare({ type: "workout", workoutName: "Push Day" });
+    enqueueShare({ type: "run", runName: "Easy 5k" });
+    expect(getQueueLength()).toBe(2);
+  });
+
+  it("drainQueue posts each item and empties the queue on success", async function () {
+    enqueueShare({ type: "workout", workoutName: "Push Day" });
+    enqueueShare({ type: "run", runName: "Easy 5k" });
+    const post = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(post);
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(getQueueLength()).toBe(0);
+  });
+
+  it("drainQueue keeps failed items in the queue for the next attempt", async function () {
+    enqueueShare({ id: "a" });
+    enqueueShare({ id: "b" });
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("network"));
+    await drainQueue(post);
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(getQueueLength()).toBe(1);
+  });
+
+  it("drainQueue is a no-op on an empty queue", async function () {
+    const post = vi.fn();
+    await drainQueue(post);
+    expect(post).not.toHaveBeenCalled();
+  });
+});

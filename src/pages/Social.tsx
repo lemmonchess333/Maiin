@@ -12,7 +12,6 @@ import TrajectoryCard from '../components/social/TrajectoryCard';
 import Avatar from '../components/Avatar';
 import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
 import { isNativePlatform } from '../lib/platform';
-import ProgressPhotos from '../components/social/ProgressPhotos';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
@@ -23,7 +22,7 @@ import { EmptyState } from '../components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
-type SocialTab = 'feed' | 'photos' | 'find' | 'challenges';
+type SocialTab = 'feed' | 'crews' | 'discover';
 type FeedSubTab = 'following' | 'discover';
 
 // Icon map for crew icons (#18)
@@ -86,9 +85,9 @@ export default function Social() {
   const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
-  // Suggested People — fetches lazily only when the Find tab is shown.
+  // Suggested People — fetches lazily only when the Discover tab is shown.
   const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions, remove: removeSuggestion } =
-    useSuggestedPeople(tab === 'find', blockedUsers);
+    useSuggestedPeople(tab === 'discover', blockedUsers);
 
   // Crews
   const { crews, currentCrew, joinCrew, leaveCrew, createCrew } = useCrews();
@@ -223,7 +222,7 @@ export default function Social() {
           >
             <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-purple-200 dark:border-purple-900/40"
               style={{ background: `${THEME.brand}14` }}>
-              <button onClick={() => setTab('find')} className="flex items-center gap-3 flex-1 text-left">
+              <button onClick={() => setTab('crews')} className="flex items-center gap-3 flex-1 text-left">
                 <Users className="w-5 h-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
@@ -246,7 +245,7 @@ export default function Social() {
       {/* Tab bar */}
       {!showFullLeaderboard && (<>
       <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        {(['feed', 'challenges', 'photos', 'find'] as SocialTab[]).map(t => (
+        {(['feed', 'crews', 'discover'] as SocialTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -254,7 +253,7 @@ export default function Social() {
               tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
-            {t === 'feed' ? 'Feed' : t === 'photos' ? 'Progress' : t === 'challenges' ? 'Challenges' : 'Find'}
+            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'Discover'}
           </button>
         ))}
       </div>
@@ -380,7 +379,7 @@ export default function Social() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setTab('find')}
+                    onClick={() => setTab('discover')}
                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
                   >
                     Find people to follow
@@ -399,14 +398,152 @@ export default function Social() {
         </section>
       )}
 
-      {/* ========== PROGRESS TAB ========== */}
-      {tab === 'photos' && <ProgressPhotos />}
+      {/* ========== CREWS TAB ==========
+          Crews + challenges share this tab. Long-term (PR 3) challenges
+          live inside individual crew pages and "Crews" becomes a list
+          of crew homes — for now they sit side-by-side so neither
+          feature loses an entry point. Progress photos used to be a
+          peer tab here; they moved to the user's own profile because
+          they're a private/personal artifact, not social content. */}
+      {tab === 'crews' && (
+        <section aria-label="Crews and challenges" className="space-y-6">
+          {/* Challenges — placed first because they're the active /
+              competitive surface. Empty-state CTA jumps to Discover so
+              users have a clear path to find people to challenge. */}
+          <ChallengeList onFindFriends={() => setTab('discover')} />
 
-      {/* ========== CHALLENGES TAB ========== */}
-      {tab === 'challenges' && <ChallengeList onFindFriends={() => setTab('find')} />}
+          {/* Crews list */}
+          <div className="space-y-3">
+            <p className="text-small font-semibold text-foreground">Crews</p>
+            <div className="space-y-2">
+              {crews.slice(0, 5).map((crew) => {
+                const isMember = currentCrew?.id === crew.id;
+                const IconComp = ICON_MAP[crew.icon];
+                return (
+                  <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                    {IconComp ? (
+                      <IconComp size={24} className="text-muted-foreground" />
+                    ) : (
+                      <span className="text-2xl">{crew.icon}</span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{crew.name}</p>
+                      <p className="text-xs text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (isMember) {
+                          setLeavingCrewId(crew.id);
+                        } else {
+                          joinCrew(crew.id);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        isMember ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'
+                      }`}>
+                      {isMember ? 'Leave' : 'Join'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
 
-      {/* ========== FIND TAB ========== */}
-      {tab === 'find' && (
+            <button onClick={() => setShowCreateGroup(true)}
+              className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              + Create a Crew
+            </button>
+          </div>
+
+          {/* Leave Crew Confirmation Modal */}
+          {leavingCrewId && (
+            <>
+              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
+              <div ref={leaveCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                <p className="text-base font-semibold text-foreground">Leave crew?</p>
+                <p className="text-sm text-muted-foreground">You can rejoin this crew later.</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setLeavingCrewId(null)}
+                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm">
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    await leaveCrew();
+                    setLeavingCrewId(null);
+                    toast.success('Left crew');
+                  }}
+                    className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm">
+                    Leave
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Create Crew Modal */}
+          {showCreateGroup && (
+            <>
+              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
+              <div ref={createCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
+                <input type="text" placeholder="Crew name" value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
+                <input type="text" placeholder="Description" value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { name: 'dumbbell', Icon: Dumbbell },
+                    { name: 'footprints', Icon: Footprints },
+                    { name: 'zap', Icon: Zap },
+                    { name: 'target', Icon: Target },
+                    { name: 'flame', Icon: Flame },
+                    { name: 'salad', Icon: Salad },
+                    { name: 'person', Icon: PersonStanding },
+                    { name: 'medal', Icon: Medal },
+                    { name: 'sunrise', Icon: Sunrise },
+                  ].map(({ name, Icon }) => (
+                    <button key={name} onClick={() => setNewGroupIcon(name)}
+                      className={`p-2.5 rounded-lg ${newGroupIcon === name ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
+                      <Icon size={24} className={newGroupIcon === name ? 'text-primary' : 'text-muted-foreground'} />
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!newGroupName.trim() || creatingCrew) return;
+                    setCreatingCrew(true);
+                    try {
+                      await createCrew(newGroupName, newGroupDesc, newGroupIcon || 'dumbbell');
+                      setShowCreateGroup(false);
+                      setNewGroupName('');
+                      setNewGroupDesc('');
+                      setNewGroupIcon('');
+                      toast.success('Crew created!');
+                    } catch {
+                      toast.error('Failed to create crew. Please try again.');
+                    } finally {
+                      setCreatingCrew(false);
+                    }
+                  }}
+                  disabled={!newGroupName.trim() || creatingCrew}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50">
+                  {creatingCrew ? 'Creating...' : 'Create Crew'}
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {/* ========== DISCOVER TAB ==========
+          Renamed from "Find". Holds the discovery affordances that
+          aren't crews: invite link, search, contact sync, suggested
+          people. Crews moved to their own tab so this surface stays
+          focused on "find a person, bring a friend in." */}
+      {tab === 'discover' && (
         <section aria-label="Find people">
         <div className="space-y-6">
           {/* Section 1: Invite link CTA — primary growth path on web */}
@@ -568,130 +705,6 @@ export default function Social() {
             </>
           )}
 
-          {/* Crews Section */}
-          <div className="space-y-3">
-            <p className="text-small font-semibold text-foreground">Crews</p>
-            <div className="space-y-2">
-              {crews.slice(0, 5).map((crew) => {
-                const isMember = currentCrew?.id === crew.id;
-                const IconComp = ICON_MAP[crew.icon];
-                return (
-                  <div key={crew.id} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    {/* Crew icon — render Lucide component if available (#18) */}
-                    {IconComp ? (
-                      <IconComp size={24} className="text-muted-foreground" />
-                    ) : (
-                      <span className="text-2xl">{crew.icon}</span>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{crew.name}</p>
-                      <p className="text-xs text-muted-foreground">{crew.memberCount} member{crew.memberCount !== 1 ? 's' : ''}</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (isMember) {
-                          setLeavingCrewId(crew.id);
-                        } else {
-                          joinCrew(crew.id);
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        isMember ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'
-                      }`}>
-                      {isMember ? 'Leave' : 'Join'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button onClick={() => setShowCreateGroup(true)}
-              className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              + Create a Crew
-            </button>
-          </div>
-
-          {/* Leave Crew Confirmation Modal (#19) */}
-          {leavingCrewId && (
-            <>
-              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setLeavingCrewId(null)} />
-              <div ref={leaveCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <p className="text-base font-semibold text-foreground">Leave crew?</p>
-                <p className="text-sm text-muted-foreground">You can rejoin this crew later.</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setLeavingCrewId(null)}
-                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm">
-                    Cancel
-                  </button>
-                  <button onClick={async () => {
-                    await leaveCrew();
-                    setLeavingCrewId(null);
-                    toast.success('Left crew');
-                  }}
-                    className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm">
-                    Leave
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Create Crew Modal (#10 — error handling + loading) */}
-          {showCreateGroup && (
-            <>
-              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setShowCreateGroup(false)} />
-              <div ref={createCrewRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <h3 className="text-base font-semibold text-foreground">Create a Crew</h3>
-                <input type="text" placeholder="Crew name" value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
-                <input type="text" placeholder="Description" value={newGroupDesc}
-                  onChange={(e) => setNewGroupDesc(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground" />
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { name: 'dumbbell', Icon: Dumbbell },
-                    { name: 'footprints', Icon: Footprints },
-                    { name: 'zap', Icon: Zap },
-                    { name: 'target', Icon: Target },
-                    { name: 'flame', Icon: Flame },
-                    { name: 'salad', Icon: Salad },
-                    { name: 'person', Icon: PersonStanding },
-                    { name: 'medal', Icon: Medal },
-                    { name: 'sunrise', Icon: Sunrise },
-                  ].map(({ name, Icon }) => (
-                    <button key={name} onClick={() => setNewGroupIcon(name)}
-                      className={`p-2.5 rounded-lg ${newGroupIcon === name ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'}`}>
-                      <Icon size={24} className={newGroupIcon === name ? 'text-primary' : 'text-muted-foreground'} />
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={async () => {
-                    if (!newGroupName.trim() || creatingCrew) return;
-                    setCreatingCrew(true);
-                    try {
-                      await createCrew(newGroupName, newGroupDesc, newGroupIcon || 'dumbbell');
-                      setShowCreateGroup(false);
-                      setNewGroupName('');
-                      setNewGroupDesc('');
-                      setNewGroupIcon('');
-                      toast.success('Crew created!');
-                    } catch {
-                      toast.error('Failed to create crew. Please try again.');
-                    } finally {
-                      setCreatingCrew(false);
-                    }
-                  }}
-                  disabled={!newGroupName.trim() || creatingCrew}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50">
-                  {creatingCrew ? 'Creating...' : 'Create Crew'}
-                </button>
-              </div>
-            </>
-          )}
         </div>
         </section>
       )}

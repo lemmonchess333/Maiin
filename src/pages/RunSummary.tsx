@@ -7,6 +7,8 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { logger } from '../lib/logger';
 import { calculatePace, detectBestEfforts, toGPX, estimateRunCalories } from '../lib/gps';
 import { postActivity } from '../lib/socialApi';
+import { compose, enqueueShare } from '../lib/shareComposer';
+import { showQueuedToast } from '../components/social/ShareComposerSheet';
 import type { GPSPoint, Split } from '../lib/gps';
 import type { RunConfig } from '../components/run/RunSetupModal';
 import RunMap from '../components/run/RunMapLazy';
@@ -44,7 +46,6 @@ export default function RunSummary() {
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [shareToFeed, setShareToFeed] = useState(profile?.autoPostRuns !== false);
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -116,15 +117,37 @@ export default function RunSummary() {
       // Firestore queues the write offline automatically via IndexedDB persistence
       await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
 
-      if (isOnline && shareToFeed) {
-        await postActivity({
+      // Share composer: prompts the user (or replays their saved
+      // default) for visibility + caption. When offline, the post is
+      // queued and replayed by ShareComposerSheet's drain effect.
+      const runName =
+        runConfig?.activityType === 'intervals'
+          ? 'Interval Run'
+          : runConfig?.activityType === 'guided'
+            ? 'Guided Run'
+            : 'Run';
+      const km = distance / 1000;
+      const mins = Math.floor(elapsed / 60);
+      const secs = Math.round(elapsed % 60);
+      const decision = await compose({
+        type: 'run',
+        title: runName,
+        meta: [
+          `${km.toFixed(2)}km`,
+          `${mins}:${secs.toString().padStart(2, '0')}`,
+          calories ? `${Math.round(calories)} cal` : '',
+        ].filter(Boolean),
+      });
+      if (decision) {
+        const payload = {
           authorId: user.uid,
           authorName: profile?.displayName || 'Athlete',
           ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-          type: 'run',
-          visibility: (profile?.defaultVisibility as 'public' | 'followers' | 'private') || 'public',
-          runName: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
-          activityTitle: runConfig?.activityType === 'intervals' ? 'Interval Run' : runConfig?.activityType === 'guided' ? 'Guided Run' : 'Run',
+          type: 'run' as const,
+          visibility: decision.visibility,
+          ...(decision.caption ? { caption: decision.caption } : {}),
+          runName,
+          activityTitle: runName,
           distance,
           duration: elapsed,
           avgPace,
@@ -135,7 +158,23 @@ export default function RunSummary() {
             points.length > 20
               ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
               : points.map((p) => ({ lat: p.lat, lon: p.lon })),
-        });
+        };
+        if (isOnline) {
+          try {
+            await postActivity(payload);
+          } catch (socialErr) {
+            const lostNet = typeof navigator !== 'undefined' && navigator.onLine === false;
+            if (lostNet) {
+              enqueueShare(payload);
+              showQueuedToast();
+            } else {
+              logger.warn('[RunSave] postActivity failed:', socialErr);
+            }
+          }
+        } else {
+          enqueueShare(payload);
+          showQueuedToast();
+        }
       }
 
       // Update shoe mileage against whichever shoe was resolved above.
@@ -356,22 +395,12 @@ export default function RunSummary() {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Actions — the inline "Share to feed" toggle was replaced by
+          the ShareComposerSheet that opens after Save. The composer
+          covers the same surface (feed visibility + remembered default)
+          plus optional caption, so duplicating the toggle here would
+          be confusing. */}
       <div className="px-4 space-y-2">
-        {/* Share toggle */}
-        <div className="flex items-center justify-between p-3 rounded-xl bg-card">
-          <div>
-            <p className="text-sm font-medium text-foreground">Share to feed</p>
-            <p className="text-xs text-muted-foreground">Post this run to your followers</p>
-          </div>
-          <button
-            onClick={() => setShareToFeed(v => !v)}
-            className={`w-10 h-6 rounded-full transition-colors relative ${shareToFeed ? 'bg-primary' : 'bg-muted border border-border'}`}
-          >
-            <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${shareToFeed ? 'translate-x-5' : 'translate-x-1'}`} />
-          </button>
-        </div>
-
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
