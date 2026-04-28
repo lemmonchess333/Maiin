@@ -29,6 +29,15 @@ export interface Challenge {
   endDate: Timestamp;
   participantCount: number;
   season?: string;
+  /** PR 5: target distance in metres for `fastest_effort` challenges
+   *  (e.g. 5000 = fastest 5K). Ignored for other metrics. */
+  targetDistance?: number;
+  /** PR 5: shared collective target for `group_goal` challenges (e.g.
+   *  "100km combined this month"). When present, the UI renders a
+   *  collective progress bar above the leaderboard instead of the
+   *  per-user tier ladder. The `tiers` field is still set to a stub
+   *  (gold = collectiveTarget) so existing sync logic doesn't break. */
+  collectiveTarget?: number;
 }
 
 export interface ChallengeParticipant {
@@ -157,6 +166,39 @@ async function seedChallenges() {
       tiers: season.tiers,
       startDate: Timestamp.fromDate(seasonStart),
       endDate: Timestamp.fromDate(seasonEnd),
+    },
+    /* PR 5: fastest 5K this month. Pace-based challenge; lower
+       currentValue is better. Tiers are pace targets in seconds —
+       gold = sub-25min, silver = sub-30min, bronze = sub-35min for
+       a 5K. Sync logic in functions/index.js MIN-updates currentValue
+       instead of incrementing it for fastest_effort metric. */
+    {
+      docId: `fastest-5k-${monthStart.toISOString().split("T")[0]}`,
+      name: "Fastest 5K",
+      description: "Quickest 5km this month — set your benchmark",
+      type: "monthly",
+      metric: "fastest_effort",
+      icon: "footprints",
+      targetDistance: 5000,
+      tiers: { bronze: 35 * 60, silver: 30 * 60, gold: 25 * 60 },
+      startDate: Timestamp.fromDate(monthStart),
+      endDate: Timestamp.fromDate(monthEnd),
+    },
+    /* PR 5: group goal — collective km this month from everyone who
+       opts in. Uses the same total_km sync path as the individual
+       Mileage challenge so we don't duplicate sync logic; the UI
+       differentiates by checking collectiveTarget. */
+    {
+      docId: `group-goal-${monthStart.toISOString().split("T")[0]}`,
+      name: "Together: 1,000km",
+      description: "Combined distance from everyone running this month",
+      type: "monthly",
+      metric: "total_km",
+      icon: "footprints",
+      collectiveTarget: 1000,
+      tiers: { bronze: 1000, silver: 1000, gold: 1000 },
+      startDate: Timestamp.fromDate(monthStart),
+      endDate: Timestamp.fromDate(monthEnd),
     },
   ];
 

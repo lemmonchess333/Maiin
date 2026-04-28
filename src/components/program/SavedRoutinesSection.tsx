@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Bookmark, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bookmark, Trash2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { listSavedRoutines, deleteSavedRoutine, type SavedRoutine } from "@/lib/savedRoutines";
@@ -77,21 +78,39 @@ export default function SavedRoutinesSection() {
         {routines.map((routine) => {
           const setCount = routine.exercises.reduce((s, ex) => s + (ex.setCount || 0), 0);
           return (
+            /* Row body links to the runnable session; trash icon is a
+               sibling so its click doesn't bubble through the Link. */
             <div
               key={routine.id}
               className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40"
             >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{routine.name}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  From {routine.sourceAuthorName} · {routine.exercises.length} exercise
-                  {routine.exercises.length === 1 ? "" : "s"}
-                  {setCount > 0 ? ` · ${setCount} sets` : ""}
-                </p>
-              </div>
+              <Link
+                to={`/routine/${routine.id}`}
+                className="flex items-center gap-3 flex-1 min-w-0"
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `${THEME.brand}14` }}
+                  aria-hidden="true"
+                >
+                  <Play className="w-4 h-4" style={{ color: THEME.brand }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{routine.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    From {routine.sourceAuthorName} · {routine.exercises.length} exercise
+                    {routine.exercises.length === 1 ? "" : "s"}
+                    {setCount > 0 ? ` · ${setCount} sets` : ""}
+                  </p>
+                </div>
+              </Link>
               <button
                 type="button"
-                onClick={() => void handleDelete(routine.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void handleDelete(routine.id);
+                }}
                 disabled={deletingId === routine.id}
                 aria-label={`Remove ${routine.name}`}
                 className="p-2 -m-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
@@ -102,13 +121,6 @@ export default function SavedRoutinesSection() {
           );
         })}
       </div>
-
-      {/* PR 4 ships save + view; the runnable path is PR 4.1.
-          Surfacing this caption keeps users from tapping rows
-          expecting a workout-start action. */}
-      <p className="text-[11px] text-muted-foreground/70 pt-1">
-        Tap-to-run is coming soon. For now this is a saved snapshot you can refer back to.
-      </p>
     </section>
   );
 }

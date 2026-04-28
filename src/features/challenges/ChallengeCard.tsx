@@ -17,6 +17,21 @@ interface ChallengeCardProps {
 
 const TIER_LABELS: Record<ChallengeTier, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
+/** Format a challenge progress value with units appropriate to the
+ *  metric. PR 5 introduces fastest_effort (seconds → mm:ss) and
+ *  group_goal (still numeric km, just summed collectively). */
+function formatChallengeValue(metric: string, value: number): string {
+  if (metric === "fastest_effort") {
+    if (value <= 0) return "—";
+    const m = Math.floor(value / 60);
+    const s = Math.round(value % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+  if (metric === "total_km") return `${value.toFixed(1)}km`;
+  if (metric === "total_volume") return `${Math.round(value).toLocaleString()}kg`;
+  return Math.round(value).toLocaleString();
+}
+
 function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value: number; max: number; achieved: boolean }) {
   const pct = Math.min((value / max) * 100, 100);
   return (
@@ -99,7 +114,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   <span className="w-4 text-right font-medium text-muted-foreground">{i + 1}</span>
                   <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                   <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
-                  <span className="font-medium tabular-nums">{p.currentValue}</span>
+                  <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
                   {tier && (
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] }} />
                   )}
@@ -118,14 +133,63 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
           >
             Join Challenge
           </button>
+        ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
+          /* PR 5: group_goal challenge.
+             Renders a single collective progress bar instead of the
+             per-user tier ladder. Total = sum of every participant's
+             currentValue (we have it in `leaderboard`); target lives
+             on `challenge.collectiveTarget`. The user's individual
+             contribution is surfaced underneath as a "you contributed"
+             line so the personal stake is still legible. */
+          (() => {
+            const collectiveTotal = leaderboard.reduce((s, p) => s + (p.currentValue || 0), 0);
+            const target = challenge.collectiveTarget!;
+            const collPct = Math.min((collectiveTotal / target) * 100, 100);
+            const reached = collectiveTotal >= target;
+            return (
+              <div className="space-y-2">
+                <div className="relative pt-1 pb-1">
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${collPct}%` }}
+                      transition={{ duration: 0.6 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: reached ? TIER_COLORS.gold : THEME.brand }}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-center font-mono tabular-nums text-muted-foreground">
+                  <span className="text-foreground font-semibold">
+                    {formatChallengeValue(challenge.metric, collectiveTotal)}
+                  </span>{" "}
+                  / {formatChallengeValue(challenge.metric, target)} together
+                </p>
+                <p className="text-[11px] text-center text-muted-foreground/70">
+                  You contributed {formatChallengeValue(challenge.metric, currentValue)}
+                </p>
+              </div>
+            );
+          })()
         ) : (
           <div className="space-y-2">
-            {/* Tiered progress bar */}
+            {/* Tiered progress bar.
+                For fastest_effort the metric is "lower is better" —
+                tier "achievement" is currentValue <= tier threshold,
+                NOT >=. Sync logic in the Cloud Function already
+                computes tierAchieved correctly; we just stop the
+                progress bar from rendering nonsense width when
+                currentValue is 0 (no qualifying run yet). */}
             <div className="relative pt-1 pb-5">
               <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
+                  animate={{
+                    width:
+                      challenge.metric === "fastest_effort"
+                        ? `${currentValue > 0 ? Math.min(((maxTier / Math.max(currentValue, 1)) * 100), 100) : 0}%`
+                        : `${pct}%`,
+                  }}
                   transition={{ duration: 0.6 }}
                   className="h-full rounded-full"
                   style={{
@@ -135,24 +199,44 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               </div>
               {/* Tier markers */}
               <div className="relative mt-1">
-                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier} achieved={currentValue >= challenge.tiers.bronze} />
-                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier} achieved={currentValue >= challenge.tiers.silver} />
-                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier} achieved={currentValue >= challenge.tiers.gold} />
+                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier} achieved={
+                  challenge.metric === "fastest_effort"
+                    ? currentValue > 0 && currentValue <= challenge.tiers.bronze
+                    : currentValue >= challenge.tiers.bronze
+                } />
+                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier} achieved={
+                  challenge.metric === "fastest_effort"
+                    ? currentValue > 0 && currentValue <= challenge.tiers.silver
+                    : currentValue >= challenge.tiers.silver
+                } />
+                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier} achieved={
+                  challenge.metric === "fastest_effort"
+                    ? currentValue > 0 && currentValue <= challenge.tiers.gold
+                    : currentValue >= challenge.tiers.gold
+                } />
               </div>
             </div>
 
-            {/* Personal stat */}
+            {/* Personal stat. Uses formatChallengeValue so each metric
+                renders with its native units (kg / km / sessions / mm:ss). */}
             <p className="text-xs text-muted-foreground text-center">
               {currentTier === "gold" ? (
                 <span>
-                  <Trophy size={14} className="inline text-yellow-500" /> <span className="font-semibold" style={{ color: TIER_COLORS.gold }}>Gold achieved!</span> — {currentValue} {challenge.metric.replace("_", " ")}
+                  <Trophy size={14} className="inline text-yellow-500" />{" "}
+                  <span className="font-semibold" style={{ color: TIER_COLORS.gold }}>Gold achieved!</span>
+                  {" — "}
+                  {formatChallengeValue(challenge.metric, currentValue)}
                 </span>
               ) : nextTier && nextValue ? (
                 <span>
-                  You're at <span className="font-semibold text-foreground">{currentValue}</span> — {TIER_LABELS[nextTier]} at {nextValue}
+                  You&apos;re at{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatChallengeValue(challenge.metric, currentValue)}
+                  </span>
+                  {" — "}{TIER_LABELS[nextTier]} at {formatChallengeValue(challenge.metric, nextValue)}
                 </span>
               ) : (
-                <span>Progress: {currentValue}</span>
+                <span>Progress: {formatChallengeValue(challenge.metric, currentValue)}</span>
               )}
             </p>
           </div>
@@ -187,7 +271,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                     <span className="w-5 text-right font-medium text-muted-foreground">{i + 1}</span>
                     <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                     <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
-                    <span className="font-medium tabular-nums">{p.currentValue}</span>
+                    <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
                     {tier && (
                       <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] + "20", color: TIER_COLORS[tier] }}>
                         {TIER_LABELS[tier]}

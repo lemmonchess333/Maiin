@@ -1011,6 +1011,63 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
   }
 }
 
+/* PR 5: fastest_effort sync.
+ *
+ * Doesn't fit the standard SUM-based syncChallengeProgress pattern —
+ * fastest is MIN(currentValue, this_run_time), and only counts when
+ * the run actually meets the challenge's targetDistance. Tier comparison
+ * is also flipped: lower time = better tier.
+ *
+ * Caller is the onRunCreated trigger; this is its own function rather
+ * than an extension of syncChallengeProgress so the SUM logic stays
+ * boring and obvious for the four metrics that use it. */
+async function syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds) {
+  try {
+    if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
+
+    const challengesSnap = await db.collection("challenges")
+      .where("metric", "==", "fastest_effort")
+      .get();
+    const now = new Date();
+
+    for (const doc of challengesSnap.docs) {
+      const challenge = doc.data();
+      const endDate = challenge.endDate && challenge.endDate.toDate
+        ? challenge.endDate.toDate()
+        : null;
+      if (endDate && endDate < now) continue;
+
+      const target = challenge.targetDistance || 0;
+      if (target <= 0) continue;
+      if (runDistanceMeters < target) continue; // run didn't reach target
+
+      const participantRef = db.collection("challenges").doc(doc.id)
+        .collection("participants").doc(uid);
+      const participantSnap = await participantRef.get();
+      if (!participantSnap.exists()) continue;
+
+      const existingBest = participantSnap.data().currentValue || 0;
+      // 0 = no best yet, so first qualifying run always wins.
+      // Otherwise keep the lower (faster) time.
+      const newBest = existingBest === 0
+        ? Math.round(runDurationSeconds)
+        : Math.min(existingBest, Math.round(runDurationSeconds));
+
+      // For fastest_effort, tiers are time thresholds: lower is better.
+      // Gold tier = quickest threshold; user qualifies if newBest <= tier.
+      const tiers = challenge.tiers || {};
+      let tierAchieved = null;
+      if (tiers.gold && newBest <= tiers.gold) tierAchieved = "gold";
+      else if (tiers.silver && newBest <= tiers.silver) tierAchieved = "silver";
+      else if (tiers.bronze && newBest <= tiers.bronze) tierAchieved = "bronze";
+
+      await participantRef.set({ currentValue: newBest, tierAchieved }, { merge: true });
+    }
+  } catch (err) {
+    console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
+  }
+}
+
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions.firestore
@@ -1080,6 +1137,15 @@ exports.onRunCreated = functions.firestore
       const distanceKm = data.distanceKm || (data.distance ? data.distance / 1000 : 0);
       if (distanceKm > 0) {
         await syncChallengeProgress(uid, "total_km", Math.round(distanceKm * 100) / 100);
+      }
+
+      // PR 5: fastest_effort uses MIN-update semantics, separate sync
+      // path. Pass distance in metres + duration in seconds; the helper
+      // gates on runDistance >= challenge.targetDistance.
+      const runDistanceMeters = data.distance || (distanceKm * 1000) || 0;
+      const runDurationSeconds = data.duration || 0;
+      if (runDistanceMeters > 0 && runDurationSeconds > 0) {
+        await syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds);
       }
 
       if (data.completedAt) {
