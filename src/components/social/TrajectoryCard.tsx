@@ -78,27 +78,35 @@ export default function TrajectoryCard() {
 
       {!loading && thisWeek && lastWeek && (
         <>
-          {/* Hero row — this week's score + delta chip */}
+          {/* Hero row — this week's score + delta chip.
+              Suppress the delta chip entirely when this week's score
+              is 0 — showing "-100%" before the user has logged anything
+              for the new week reads as a failure-state in red. The
+              "Start your week" zero-state nudge below is the calmer
+              prompt to action. */}
           <div className="flex items-baseline gap-3 mb-3">
             <span
               className="text-3xl font-mono tabular-nums font-extrabold"
               style={{ color: THEME.brand }}
             >
-              {thisWeek.score.toLocaleString()}
+              {thisWeek.score === 0 ? '0' : thisWeek.score.toLocaleString()}
             </span>
             <span className="text-sm text-muted-foreground font-medium">pts</span>
-            <span
-              className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-              style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
-            >
-              <DeltaIcon size={12} />
-              {deltaPct == null
-                ? 'new'
-                : `${deltaPct > 0 ? '+' : ''}${deltaPct}%`}
-            </span>
+            {thisWeek.score > 0 && (
+              <span
+                className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
+              >
+                <DeltaIcon size={12} />
+                {deltaPct == null
+                  ? 'new'
+                  : `${deltaPct > 0 ? '+' : ''}${deltaPct}%`}
+              </span>
+            )}
           </div>
 
-          {/* Last week baseline */}
+          {/* Last week baseline — kept even at zero so the user has
+              a target to beat. */}
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
             <span>Last week</span>
             <span className="font-mono tabular-nums">{lastWeek.score.toLocaleString()} pts</span>
@@ -124,8 +132,8 @@ export default function TrajectoryCard() {
           {thisWeek.score === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-3">
               {lastWeek.score > 0
-                ? 'Log a workout or run to beat last week'
-                : 'Log your first workout or run to start your trajectory'}
+                ? 'Start your week — beat last week'
+                : 'Start your week with your first workout or run'}
             </p>
           )}
         </>
