@@ -4,8 +4,7 @@ import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
-import { compose, enqueueShare } from "@/lib/shareComposer";
-import { showQueuedToast } from "@/components/social/ShareComposerSheet";
+import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
 import { normalizeProgramState } from "./programTypes";
 import {

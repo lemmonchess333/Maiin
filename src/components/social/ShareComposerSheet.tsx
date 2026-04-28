@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
 import { Users, Globe, EyeOff } from "lucide-react";
-import { toast } from "sonner";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/lib/auth";
@@ -191,14 +190,4 @@ export default function ShareComposerSheet() {
       </Drawer.Portal>
     </Drawer.Root>
   );
-}
-
-/** Small helper used by the save chains to surface the offline-queue
- *  toast after enqueueing. Lives here so the wording stays in one
- *  place across workout + run callers. */
-export function showQueuedToast() {
-  toast.success("Post queued — will share when you're back online.", {
-    id: "share-queued",
-    duration: 3000,
-  });
 }

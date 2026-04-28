@@ -21,6 +21,8 @@
  * is mounted once at app root.
  */
 
+import { toast } from "sonner";
+
 export type ShareType = "workout" | "run";
 
 /** Visibility options surfaced in PR 1. "crews" deferred until crew
@@ -189,4 +191,14 @@ export async function drainQueue(
     }
   }
   writeQueue(remaining);
+}
+
+/** Toast surfaced after enqueueing an offline share. Lives here (not
+ *  in ShareComposerSheet) so the sheet file only exports its component
+ *  — react-refresh/only-export-components doesn't allow mixed exports. */
+export function showQueuedToast(): void {
+  toast.success("Post queued — will share when you're back online.", {
+    id: "share-queued",
+    duration: 3000,
+  });
 }
