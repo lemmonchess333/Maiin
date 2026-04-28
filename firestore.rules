@@ -196,6 +196,33 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Challenges — global, auto-seeded by seedChallenges() on the
+    // client. Without these rules the client write was silently
+    // denied by the catch-all and the entire challenges feature never
+    // existed in Firestore (the Weekly Workout Challenge UI rendered
+    // anyway because it's computed locally from workouts data).
+    //
+    // Read: any authed user. Challenges are global metadata.
+    // Write to challenge docs: any authed user. Challenges are
+    //   client-seeded; setDoc is idempotent (existing docs aren't
+    //   overwritten by seedChallenges thanks to the snap.exists()
+    //   guard). Acceptable risk: a malicious client could create
+    //   junk challenge docs but they wouldn't show meaningfully in
+    //   the UI which renders only known seeded entries.
+    // Participant docs: read by any authed user (leaderboard reads
+    //   need to see other people's progress); write only by the
+    //   participant themselves.
+    match /challenges/{challengeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+
+      match /participants/{uid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ========================================
     // Social: Feeds — user can only read/write their own feed
     //
     // Feed writes happen during fan-out from postActivity — the
