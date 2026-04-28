@@ -62,18 +62,16 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
      - Only when the activity has the structured PR-4 exercise payload —
        activities posted before that ship had `{ name, summary }` only,
        which can't reliably be reconstructed into a runnable routine.
-     - Hide on the user's own posts; saving your own workout as a
-       routine is what the program builder is for.
-     The gate is permissive about exerciseId because the save flow
-     doesn't strictly require it (PR 4.1 will).  */
+     Self-author is intentionally NOT excluded: bookmarking your own
+     past workout to re-run it later is a primary use case (lightweight
+     programming via the feed), not a footgun. */
   const rawExercises = activity?.exercises as unknown[] | undefined;
   const hasStructuredExercises =
     Array.isArray(rawExercises) &&
     rawExercises.length > 0 &&
     typeof (rawExercises[0] as { setCount?: unknown }).setCount === "number";
-  const isAuthor = !!user?.uid && activity?.authorId === user.uid;
   const canSaveRoutine =
-    feedItem.type === "workout" && hasStructuredExercises && !isAuthor;
+    feedItem.type === "workout" && hasStructuredExercises;
   const routineExercises: SavedRoutineExercise[] = canSaveRoutine
     ? activityExercisesToRoutine(rawExercises)
     : [];
