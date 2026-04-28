@@ -1111,3 +1111,245 @@ exports.onRunCreated = functions.firestore
     }
     return null;
   });
+
+// ══════════════════════════════════════════════
+// CREW WEEKLY LEADERBOARD ROLLUP
+// ══════════════════════════════════════════════
+//
+// For every crew with at least one member, compute each member's
+// this-week score on the crew's chosen `leaderboardMetric` and write
+// the top-10 standings back to the crew doc as `currentLeaderboard`.
+//
+// Read paths:
+//   - groups/{crewId}                  (crew metadata + leaderboardMetric)
+//   - groups/{crewId}/members/{uid}    (member list, denormalised displayName)
+//   - users/{uid}/workouts             (this-week, for total_volume / count / hybrid)
+//   - users/{uid}/runs                 (this-week, for total_km / hybrid)
+//
+// Write path: groups/{crewId}.currentLeaderboard
+//
+// Scheduled daily so users see ~current-day standings during the week,
+// not just a frozen end-of-week snapshot. Cost is bounded by the
+// memberCount filter (limit(50) crews) and the per-member week-window
+// queries (limit(100) each); for 50 crews × ~10 members × 2 colls = at
+// most ~1000 small reads per run.
+
+const CREW_LEADERBOARD_TOP_N = 10;
+const CREW_MAX_PER_RUN = 50;
+
+function _startOfIsoWeekUtc(date) {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  const dow = d.getUTCDay() || 7; // Sunday → 7 so Monday is the start
+  d.setUTCDate(d.getUTCDate() - (dow - 1));
+  return d;
+}
+
+function _isoWeekKey(date) {
+  // ISO week year-week — used as the leaderboardWeek tag so the client
+  // can show "Week of …" without a separate parse.
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+function _toDateKey(date) {
+  const yyyy = date.getUTCFullYear();
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
+  const [runsSnap, workoutsSnap] = await Promise.all([
+    db.collection("users").doc(uid).collection("runs")
+      .where("completedAt", ">=", weekStartTs)
+      .orderBy("completedAt")
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] })),
+    db.collection("users").doc(uid).collection("workouts")
+      .where("date", ">=", weekStartKey)
+      .orderBy("date")
+      .limit(100)
+      .get()
+      .catch(() => ({ docs: [] })),
+  ]);
+
+  let km = 0;
+  for (const d of runsSnap.docs) {
+    km += (Number(d.data().distance) || 0) / 1000;
+  }
+  let kg = 0;
+  for (const d of workoutsSnap.docs) {
+    const exercises = d.data().exercises || [];
+    for (const ex of exercises) {
+      for (const set of ex.sets || []) {
+        kg += (Number(set.weightKg) || 0) * (Number(set.reps) || 0);
+      }
+    }
+  }
+  return {
+    km: Math.round(km * 10) / 10,
+    kg: Math.round(kg),
+    workoutCount: workoutsSnap.docs.length,
+    runCount: runsSnap.docs.length,
+  };
+}
+
+function _scoreFor(metric, totals) {
+  switch (metric) {
+    case "workout_count":
+      return totals.workoutCount;
+    case "total_volume":
+      return totals.kg;
+    case "total_km":
+      return totals.km;
+    case "hybrid_score":
+    default:
+      // Mirrors src/lib/personalTrajectory.ts so the crew leaderboard
+      // and the user's solo trajectory card use the same formula.
+      return Math.round(totals.km * 100 + totals.kg * 0.1);
+  }
+}
+
+exports.crewWeeklyLeaderboardRollup = functions.pubsub
+  .schedule("30 2 * * *")
+  .timeZone("UTC")
+  .onRun(async () => {
+    try {
+      console.log("crewWeeklyLeaderboardRollup: starting");
+
+      const now = new Date();
+      const weekStart = _startOfIsoWeekUtc(now);
+      const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
+      const weekStartKey = _toDateKey(weekStart);
+      const weekIso = _isoWeekKey(weekStart);
+
+      let crewsSnap;
+      try {
+        crewsSnap = await db.collection("groups")
+          .where("memberCount", ">", 0)
+          .limit(CREW_MAX_PER_RUN)
+          .get();
+      } catch (err) {
+        console.error("crewWeeklyLeaderboardRollup: crews query failed:", err.message);
+        return null;
+      }
+
+      console.log(`crewWeeklyLeaderboardRollup: rolling up ${crewsSnap.size} crews for ${weekIso}`);
+
+      for (const crewDoc of crewsSnap.docs) {
+        try {
+          const crew = crewDoc.data();
+          const metric = crew.leaderboardMetric || "hybrid_score";
+
+          const membersSnap = await crewDoc.ref.collection("members").limit(100).get();
+          if (membersSnap.empty) continue;
+
+          const standings = [];
+          for (const memberDoc of membersSnap.docs) {
+            const uid = memberDoc.id;
+            const memberData = memberDoc.data();
+            try {
+              const totals = await _computeMemberWeekTotals(uid, weekStartTs, weekStartKey);
+              standings.push({
+                uid,
+                displayName: memberData.displayName || "Athlete",
+                score: _scoreFor(metric, totals),
+                km: totals.km,
+                kg: totals.kg,
+                workoutCount: totals.workoutCount,
+                runCount: totals.runCount,
+              });
+            } catch (err) {
+              console.warn(`crewWeeklyLeaderboardRollup: member ${uid} compute failed:`, err.message);
+            }
+          }
+
+          standings.sort((a, b) => b.score - a.score);
+          const top = standings.slice(0, CREW_LEADERBOARD_TOP_N).map((s, i) => ({ ...s, rank: i + 1 }));
+
+          await crewDoc.ref.update({
+            currentLeaderboard: top,
+            leaderboardMetric: metric,
+            leaderboardWeek: weekIso,
+            leaderboardUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        } catch (err) {
+          console.error(`crewWeeklyLeaderboardRollup: failed for crew ${crewDoc.id}:`, err.message);
+        }
+      }
+
+      console.log("crewWeeklyLeaderboardRollup: done");
+    } catch (err) {
+      console.error("crewWeeklyLeaderboardRollup: fatal:", { message: err.message, stack: err.stack });
+    }
+    return null;
+  });
+
+// On-demand companion: lets a logged-in user trigger a rollup for
+// their own crew without waiting for the next 02:30 UTC run. Used by
+// the "Refresh leaderboard" affordance on the Crew page (a manual
+// pull-to-refresh-like fallback when you've just logged something
+// and want the standings to reflect it). Only the user's primary
+// crewId is allowed — no arbitrary crew computes from the client.
+exports.refreshMyCrewLeaderboard = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+  const userSnap = await db.collection("users").doc(uid).get();
+  const userCrewId = userSnap.exists ? userSnap.data().crewId : null;
+  if (!userCrewId) {
+    throw new functions.https.HttpsError("failed-precondition", "Not in a crew.");
+  }
+
+  const crewRef = db.collection("groups").doc(userCrewId);
+  const crewSnap = await crewRef.get();
+  if (!crewSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "Crew not found.");
+  }
+  const crew = crewSnap.data();
+  const metric = crew.leaderboardMetric || "hybrid_score";
+
+  const now = new Date();
+  const weekStart = _startOfIsoWeekUtc(now);
+  const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
+  const weekStartKey = _toDateKey(weekStart);
+  const weekIso = _isoWeekKey(weekStart);
+
+  const membersSnap = await crewRef.collection("members").limit(100).get();
+  const standings = [];
+  for (const memberDoc of membersSnap.docs) {
+    const memberUid = memberDoc.id;
+    const memberData = memberDoc.data();
+    try {
+      const totals = await _computeMemberWeekTotals(memberUid, weekStartTs, weekStartKey);
+      standings.push({
+        uid: memberUid,
+        displayName: memberData.displayName || "Athlete",
+        score: _scoreFor(metric, totals),
+        km: totals.km,
+        kg: totals.kg,
+        workoutCount: totals.workoutCount,
+        runCount: totals.runCount,
+      });
+    } catch (err) {
+      console.warn(`refreshMyCrewLeaderboard: member ${memberUid} compute failed:`, err.message);
+    }
+  }
+  standings.sort((a, b) => b.score - a.score);
+  const top = standings.slice(0, CREW_LEADERBOARD_TOP_N).map((s, i) => ({ ...s, rank: i + 1 }));
+
+  await crewRef.update({
+    currentLeaderboard: top,
+    leaderboardMetric: metric,
+    leaderboardWeek: weekIso,
+    leaderboardUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return { ok: true, count: top.length, weekIso };
+});

@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Users } from "lucide-react";
+import { ChevronLeft, Users, Trophy, RefreshCw } from "lucide-react";
+import { httpsCallable, getFunctions } from "firebase/functions";
 import { doc, getDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
+import { useCrews, type Crew as CrewType, type CrewLeaderboardEntry } from "../hooks/useCrews";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
@@ -18,6 +19,24 @@ const itemVariant = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
 };
+
+/** How a member's score is rendered next to their name on the crew
+ *  leaderboard. Each crew picks its leaderboardMetric on creation
+ *  (Lifters = total_volume, Runners = total_km, etc.) so the unit
+ *  matters — "12,540 kg" reads differently from "12 sessions". */
+function formatScore(metric: string, entry: CrewLeaderboardEntry): string {
+  switch (metric) {
+    case "workout_count":
+      return `${entry.score} ${entry.score === 1 ? "session" : "sessions"}`;
+    case "total_volume":
+      return `${Math.round(entry.score).toLocaleString()} kg`;
+    case "total_km":
+      return `${entry.score.toFixed(1)} km`;
+    case "hybrid_score":
+    default:
+      return `${entry.score.toLocaleString()} pts`;
+  }
+}
 
 /**
  * Per-crew home page (PR 3 core).
@@ -48,6 +67,7 @@ export default function Crew() {
   const [activities, setActivities] = useState<FeedItem[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [leaving, setLeaving] = useState(false);
+  const [refreshingLeaderboard, setRefreshingLeaderboard] = useState(false);
 
   // Try the in-memory crews list first (covers the navigated-from-Social
   // case without a refetch); fall back to a direct read if the user
@@ -230,6 +250,96 @@ export default function Crew() {
           {isMember ? (leaving ? "Leaving…" : "Leave crew") : "Join crew"}
         </button>
       </motion.div>
+
+      {/* Weekly leaderboard.
+          Sourced from currentLeaderboard on the crew doc, written by
+          crewWeeklyLeaderboardRollup (functions/index.js). The "Refresh"
+          affordance only renders for members of THIS crew (the callable
+          enforces it server-side too — anyone else gets a 403). For
+          crews with no leaderboard yet (rollup hasn't run, or no
+          members have logged anything this week) we render an inline
+          empty prompt instead of a dead empty card. */}
+      {(() => {
+        const board = crewDoc.currentLeaderboard ?? [];
+        const metric = crewDoc.leaderboardMetric || "hybrid_score";
+        return (
+          <motion.div variants={itemVariant} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-foreground">This week</h2>
+              {isMember && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (refreshingLeaderboard) return;
+                    setRefreshingLeaderboard(true);
+                    try {
+                      const fns = getFunctions(undefined, "europe-west2");
+                      // Falls back to the default region if europe-west2
+                      // isn't where the function actually lives — Firebase
+                      // SDK reads the region from `firebase.json` at build.
+                      const refresh = httpsCallable(fns, "refreshMyCrewLeaderboard");
+                      await refresh();
+                      // Mutate the in-memory crew doc by re-fetching so
+                      // the standings re-render without a page reload.
+                      const snap = await getDoc(doc(db, "groups", crewId));
+                      if (snap.exists()) {
+                        setCrewDoc({ id: snap.id, ...(snap.data() as Omit<CrewType, "id">) });
+                      }
+                      toast.success("Leaderboard refreshed");
+                    } catch {
+                      toast.error("Couldn't refresh. Try again.");
+                    } finally {
+                      setRefreshingLeaderboard(false);
+                    }
+                  }}
+                  disabled={refreshingLeaderboard}
+                  aria-label="Refresh leaderboard"
+                  className="text-xs font-medium text-primary disabled:opacity-50 flex items-center gap-1"
+                >
+                  <RefreshCw size={12} className={refreshingLeaderboard ? "animate-spin" : undefined} />
+                  Refresh
+                </button>
+              )}
+            </div>
+
+            {board.length === 0 ? (
+              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: `${THEME.brand}14` }}
+                >
+                  <Trophy size={16} style={{ color: THEME.brand }} />
+                </div>
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Standings appear once members log workouts or runs this week
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-card border border-border/40 divide-y divide-border/20">
+                {board.map((entry) => (
+                  <div key={entry.uid} className="flex items-center gap-3 px-3.5 py-2.5">
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0"
+                      style={{
+                        background: entry.rank === 1 ? `${THEME.brand}1f` : "transparent",
+                        color: entry.rank === 1 ? THEME.brand : "var(--text-muted)",
+                      }}
+                    >
+                      {entry.rank}
+                    </span>
+                    <p className="text-sm font-medium text-foreground flex-1 min-w-0 truncate">
+                      {entry.displayName}
+                    </p>
+                    <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+                      {formatScore(metric, entry)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        );
+      })()}
 
       {/* Recent activity */}
       <motion.div variants={itemVariant} className="space-y-2">

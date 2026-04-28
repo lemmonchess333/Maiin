@@ -138,12 +138,17 @@ export default function RunSummary() {
         ].filter(Boolean),
       });
       if (decision) {
+        // See useProgram.ts for visibility-mapping rationale; same rules
+        // apply here so workouts and runs follow identical share semantics.
+        const apiVisibility = decision.visibility === 'crews' ? 'followers' : decision.visibility;
+        const includeCrewId =
+          (decision.visibility === 'crews' || decision.visibility === 'public') && !!profile?.crewId;
         const payload = {
           authorId: user.uid,
           authorName: profile?.displayName || 'Athlete',
           ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
           type: 'run' as const,
-          visibility: decision.visibility,
+          visibility: apiVisibility,
           ...(decision.caption ? { caption: decision.caption } : {}),
           runName,
           activityTitle: runName,
@@ -152,7 +157,7 @@ export default function RunSummary() {
           avgPace,
           elevationGain,
           calories,
-          crewId: profile?.crewId,
+          ...(includeCrewId ? { crewId: profile?.crewId } : {}),
           routePreview:
             points.length > 20
               ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))

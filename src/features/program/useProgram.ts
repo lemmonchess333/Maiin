@@ -326,12 +326,22 @@ export function useProgram() {
         });
         if (decision) {
           const uniqueCategories = [...new Set(day.exercises.map(ex => ex.movementCategory).filter(Boolean))];
+          // Map composer-side visibility → postActivity API visibility.
+          // 'crews' is composer-only; under the hood it's a followers
+          // post tagged with crewId so it surfaces on the crew page.
+          // 'public' also tags with crewId so crew members see public
+          // posts on the crew surface; 'followers' explicitly does not
+          // (the user picked the broader audience without opting in
+          // to the crew page).
+          const apiVisibility = decision.visibility === 'crews' ? 'followers' : decision.visibility;
+          const includeCrewId =
+            (decision.visibility === 'crews' || decision.visibility === 'public') && !!profile?.crewId;
           const payload = {
             authorId: user.uid,
             authorName: profile?.displayName || 'Athlete',
             ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
             type: 'workout' as const,
-            visibility: decision.visibility,
+            visibility: apiVisibility,
             ...(decision.caption ? { caption: decision.caption } : {}),
             workoutName: day.dayName,
             activityTitle: day.dayName,
@@ -339,7 +349,7 @@ export function useProgram() {
             totalVolume: tonnage,
             duration: effectiveDurationMin * 60,
             muscleGroups: uniqueCategories,
-            crewId: profile?.crewId,
+            ...(includeCrewId ? { crewId: profile?.crewId } : {}),
             exercises: exercises.slice(0, 3).map(ex => ({
               name: ex.exerciseName,
               summary: `${ex.sets.length}×${ex.sets[0]?.reps ?? 0}×${ex.sets[0]?.weightKg ?? 0}kg`,

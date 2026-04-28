@@ -8,6 +8,17 @@ import { useAuth } from '@/lib/auth';
 import { parseCrew } from '@/lib/firestoreGuards';
 import { logger } from '@/lib/logger';
 
+export interface CrewLeaderboardEntry {
+  uid: string;
+  displayName: string;
+  score: number;
+  km: number;
+  kg: number;
+  workoutCount: number;
+  runCount: number;
+  rank: number;
+}
+
 export interface Crew {
   id: string;
   name: string;
@@ -18,6 +29,11 @@ export interface Crew {
   type: 'default' | 'custom';
   createdAt: unknown;
   createdBy: string;
+  /** Top-N standings written by the crewWeeklyLeaderboardRollup CF.
+   *  Absent until the CF has run at least once for this crew. */
+  currentLeaderboard?: CrewLeaderboardEntry[];
+  leaderboardWeek?: string;
+  leaderboardUpdatedAt?: unknown;
 }
 
 const DEFAULT_CREWS: Omit<Crew, 'id' | 'memberCount' | 'createdAt'>[] = [

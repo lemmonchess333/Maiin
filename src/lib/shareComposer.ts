@@ -25,10 +25,22 @@ import { toast } from "sonner";
 
 export type ShareType = "workout" | "run";
 
-/** Visibility options surfaced in PR 1. "crews" deferred until crew
- *  feeds exist (see PR 2). Maps directly to socialApi.postActivity's
- *  visibility field. */
-export type ShareVisibility = "followers" | "public";
+/** Visibility options surfaced in the composer.
+ *
+ *  - `followers`: classic feed share. Goes to the user's followers'
+ *    feeds. Does NOT surface on any crew page.
+ *  - `crews`: same fan-out as `followers` (the underlying postActivity
+ *    API only writes to followers' feeds), plus the activity is tagged
+ *    with the user's primary crewId so it appears on that crew's page.
+ *    Only offered when the user has a crewId.
+ *  - `public`: discoverable via the Discover sub-tab and tagged with
+ *    crewId so crew members see it too.
+ *
+ *  The "crews" value is composer-side only. socialApi.postActivity
+ *  still takes the underlying `'public' | 'followers' | 'private'`
+ *  union — callers map `'crews'` → `{ visibility: 'followers',
+ *  crewId }` before calling postActivity. */
+export type ShareVisibility = "followers" | "crews" | "public";
 
 export interface ActivityPreview {
   type: ShareType;
@@ -77,7 +89,7 @@ function prefKey(type: ShareType): string {
 function readAlways(type: ShareType): AlwaysPref {
   try {
     const raw = localStorage.getItem(prefKey(type));
-    if (raw === "followers" || raw === "public" || raw === "never") return raw;
+    if (raw === "followers" || raw === "crews" || raw === "public" || raw === "never") return raw;
   } catch {
     /* localStorage unavailable (private mode, etc.) */
   }
@@ -107,7 +119,7 @@ export function getShareDefault(type: ShareType): AlwaysPref {
 export function compose(preview: ActivityPreview): Promise<ShareDecision | null> {
   const pref = readAlways(preview.type);
   if (pref === "never") return Promise.resolve(null);
-  if (pref === "followers" || pref === "public") {
+  if (pref === "followers" || pref === "crews" || pref === "public") {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
   state = { open: true, type: preview.type, preview };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Drawer } from "vaul";
-import { Users, Globe, EyeOff } from "lucide-react";
+import { Users, Globe, EyeOff, Trophy } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import {
   resolveCompose,
   drainQueue,
   type ShareType,
+  type ShareVisibility,
   type ActivityPreview,
 } from "@/lib/shareComposer";
 
@@ -43,7 +44,7 @@ export default function ShareComposerSheet() {
   const [caption, setCaption] = useState("");
   const [remember, setRemember] = useState(false);
   const { isOnline } = useOnlineStatus();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -79,7 +80,12 @@ export default function ShareComposerSheet() {
     return null;
   }
 
-  const choose = (visibility: "followers" | "public") => {
+  // "Share to my crew" is only meaningful when the user has joined a
+  // crew. Hide the row otherwise — listing a destination with no
+  // payload would be a dead button.
+  const hasCrew = !!profile?.crewId;
+
+  const choose = (visibility: ShareVisibility) => {
     haptic("light");
     resolveCompose({ visibility, caption: caption.trim() }, remember);
   };
@@ -149,6 +155,16 @@ export default function ShareComposerSheet() {
                 <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="text-sm font-semibold">Share to followers</span>
               </button>
+              {hasCrew && (
+                <button
+                  type="button"
+                  onClick={() => choose("crews")}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform"
+                >
+                  <Trophy className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span className="text-sm font-semibold">Share to my crew</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => choose("public")}
