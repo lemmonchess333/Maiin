@@ -6,6 +6,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
+import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
@@ -717,6 +718,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </div>
         )}
       </div>
+
+      {/* Saved routines (PR 4) — workouts the user copied from the
+          social feed via "Save as routine". Hides itself entirely
+          when the user has no saved entries, so users who don't use
+          the feature never see the section. */}
+      <SavedRoutinesSection />
 
       {/* ── Context Menu ── */}
       <AnimatePresence>

@@ -67,6 +67,12 @@ service cloud.firestore {
     match /users/{uid}/meals/{doc} {
       allow read, write: if isOwner(uid);
     }
+    // Saved routines — workouts the user copied from the social feed
+    // via PR 4's "Save as routine". Owner-only, identical posture to
+    // workouts/runs/etc.
+    match /users/{uid}/savedRoutines/{doc} {
+      allow read, write: if isOwner(uid);
+    }
     match /users/{uid}/workouts/{doc} {
       allow read, write: if isOwner(uid);
     }

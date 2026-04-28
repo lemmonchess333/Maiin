@@ -350,10 +350,25 @@ export function useProgram() {
             duration: effectiveDurationMin * 60,
             muscleGroups: uniqueCategories,
             ...(includeCrewId ? { crewId: profile?.crewId } : {}),
-            exercises: exercises.slice(0, 3).map(ex => ({
-              name: ex.exerciseName,
-              summary: `${ex.sets.length}×${ex.sets[0]?.reps ?? 0}×${ex.sets[0]?.weightKg ?? 0}kg`,
-            })),
+            // Exercises — full list (was previously sliced to 3) with
+            // structured fields per exercise so feed viewers can
+            // "Save as routine" (PR 4) without parsing the summary
+            // string. ActivityCard renders only the top 3 visually
+            // for compactness; the rest sit on the doc for the routine
+            // copy flow.
+            exercises: exercises.map(ex => {
+              const setCount = ex.sets.length;
+              const targetReps = ex.sets[0]?.reps ?? 0;
+              const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
+              return {
+                name: ex.exerciseName,
+                exerciseId: ex.exerciseId,
+                summary: `${setCount}×${targetReps}×${targetWeightKg}kg`,
+                setCount,
+                targetReps,
+                targetWeightKg,
+              };
+            }),
           };
           try {
             await postActivity(payload);
