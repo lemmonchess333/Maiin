@@ -9,9 +9,10 @@
  * activity is later edited or deleted, the saved routine doesn't drift —
  * it's a snapshot, not a pointer.
  *
- * The "run this routine" path is deferred to PR 4.1; for now this file
- * just covers create / list / delete and the preview shape Program.tsx
- * renders.
+ * The "run this routine" path lives in src/pages/Routine.tsx (PR 4.1)
+ * and reuses the existing WorkoutSession component with a synthetic
+ * dayIndex (-1) so saved-routine sessions don't collide with program
+ * day drafts.
  */
 
 import {
@@ -19,6 +20,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -98,6 +100,15 @@ export async function listSavedRoutines(uid: string): Promise<SavedRoutine[]> {
 
 export async function deleteSavedRoutine(uid: string, routineId: string): Promise<void> {
   await deleteDoc(doc(db, "users", uid, "savedRoutines", routineId));
+}
+
+export async function getSavedRoutine(
+  uid: string,
+  routineId: string,
+): Promise<SavedRoutine | null> {
+  const snap = await getDoc(doc(db, "users", uid, "savedRoutines", routineId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...(snap.data() as Omit<SavedRoutine, "id">) };
 }
 
 /**

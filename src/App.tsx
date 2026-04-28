@@ -64,6 +64,7 @@ const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Crew = lazyRetry(() => import("@/pages/Crew"));
+const Routine = lazyRetry(() => import("@/pages/Routine"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 
@@ -285,6 +286,7 @@ function AppRoutes() {
           <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />
           <Route path="/user/:uid" element={<RouteErrorBoundary><UserProfile /></RouteErrorBoundary>} />
           <Route path="/crew/:crewId" element={<RouteErrorBoundary><Crew /></RouteErrorBoundary>} />
+          <Route path="/routine/:routineId" element={<RouteErrorBoundary><Routine /></RouteErrorBoundary>} />
           <Route path="/run/:runId" element={<RouteErrorBoundary><RunDetail /></RouteErrorBoundary>} />
         </Route>
         <Route path="/run" element={<RouteErrorBoundary><Run /></RouteErrorBoundary>} />
