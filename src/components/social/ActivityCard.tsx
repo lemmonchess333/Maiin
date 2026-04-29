@@ -2,6 +2,7 @@ import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
+import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { activityExercisesToRoutine, type SavedRoutineExercise } from '../../lib/savedRoutines';
 import { formatExerciseSummary } from '../../lib/exerciseSummary';
 import { movementCategoryLabel } from '../../lib/exerciseMovementCategory';
@@ -48,6 +49,7 @@ const LIFT_CHIPS = ['Great lift!', 'Beast mode!', 'Strong work!'];
 
 function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (item: FeedItem) => void }) {
   const { user, profile } = useAuth();
+  const { addBlocked } = useBlockedUsers();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
   const [showCommentSheet, setShowCommentSheet] = useState(false);
@@ -611,6 +613,12 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           haptic('heavy');
           try {
             await blockUser(user.uid, activity.authorId as string);
+            // Push the new uid into the shared useBlockedUsers cache so
+            // every subscriber (Social.tsx feed filters, suggested
+            // people, etc.) sees the block immediately. Without this,
+            // the user would write to Firestore but their feed kept
+            // showing the blocked user's posts until the next refresh.
+            addBlocked(activity.authorId as string);
             toast.success(`Blocked ${feedItem.authorName}`);
           } catch {
             toast.error(`Couldn't block ${feedItem.authorName}. Try again.`);

@@ -125,7 +125,16 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
       if (refresh) {
         setItems(enriched);
       } else {
-        setItems(prev => [...prev, ...enriched]);
+        // Dedup by id when appending — a refresh + load-more race or a
+        // duplicate write across the activities + feeds collections
+        // could otherwise produce two cards for the same activity.
+        // Existing items always win on order; new items only appear
+        // if their id isn't already present.
+        setItems(prev => {
+          const seen = new Set(prev.map(i => i.id));
+          const fresh = enriched.filter(i => !seen.has(i.id));
+          return fresh.length === enriched.length ? [...prev, ...enriched] : [...prev, ...fresh];
+        });
       }
       lastDocRef.current = result.lastDoc;
       setHasMore(feedItems.length >= 20);

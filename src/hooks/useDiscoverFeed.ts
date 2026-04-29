@@ -65,7 +65,12 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
       if (refresh) {
         setItems(feedItems);
       } else {
-        setItems(prev => [...prev, ...feedItems]);
+        // Dedup by id on append; see useSocialFeed.ts for rationale.
+        setItems(prev => {
+          const seen = new Set(prev.map(i => i.id));
+          const fresh = feedItems.filter(i => !seen.has(i.id));
+          return fresh.length === feedItems.length ? [...prev, ...feedItems] : [...prev, ...fresh];
+        });
       }
       lastDocRef.current = result.lastDoc;
       setHasMore(rawItems.length === 20);

@@ -32,7 +32,12 @@ import { CREW_ICON_MAP as ICON_MAP } from '../lib/crewIcons';
 
 export default function Social() {
   const { user, profile } = useAuth();
-  const blockedUsers = useBlockedUsers();
+  /* useBlockedUsers now returns { blocked, addBlocked, removeBlocked }
+     so ActivityCard can mutate the shared set after a block write
+     completes. We only care about the Set here for filtering — the
+     mutators are consumed by ActivityCard which calls useBlockedUsers
+     itself. The module-level cache keeps the two instances in sync. */
+  const { blocked: blockedUsers } = useBlockedUsers();
   const [tab, setTab] = useState<SocialTab>('feed');
   /**
    * Smart default: new / zero-follow users land on Discover; users

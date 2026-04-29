@@ -429,13 +429,28 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   // readable. Search the `users/{uid}/public/profile` projection via a
   // collection group query — every profile doc lives at the same leaf
   // collection name (`public`), so collectionGroup('public') spans them all.
+  /* Primary: displayNameLower \u2014 a normalised lowercase mirror written
+     by auth.tsx + the OneTimeMaintenance backfill. Firestore range
+     queries are case-sensitive, so without this field a search for
+     "myl" missed "Myles" / "MYLES" entirely. Wrapped in catch in
+     case the user's profile docs predate the migration and the
+     index hasn't been built yet \u2014 the fallback queries below carry
+     the load until the backfill catches up. */
+  const lower = queryStr.toLowerCase();
+  const qLower = query(
+    collectionGroup(db, 'public'),
+    where('displayNameLower', '>=', lower),
+    where('displayNameLower', '<=', lower + '\uf8ff'),
+    limit(limitCount)
+  );
+  // Legacy fallbacks against displayName (raw + capitalized) \u2014 kept
+  // for users whose public profile hasn't been migrated yet.
   const q1 = query(
     collectionGroup(db, 'public'),
     where('displayName', '>=', queryStr),
     where('displayName', '<=', queryStr + '\uf8ff'),
     limit(limitCount)
   );
-  // Case-insensitive fallback: also search with first letter capitalized.
   const capitalized = queryStr.charAt(0).toUpperCase() + queryStr.slice(1).toLowerCase();
   const q2 = query(
     collectionGroup(db, 'public'),
@@ -444,10 +459,17 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
     limit(limitCount)
   );
 
-  const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+  const [snapLower, snap1, snap2] = await Promise.all([
+    getDocs(qLower).catch(() => null),
+    getDocs(q1),
+    getDocs(q2),
+  ]);
   const seen = new Set<string>();
   const results: { uid: string; [key: string]: unknown }[] = [];
-  for (const snap of [snap1, snap2]) {
+  // Order matters: the displayNameLower path is the most accurate, so
+  // walk it first; legacy fallbacks fill in users not yet migrated.
+  const snaps = [snapLower, snap1, snap2].filter((s): s is NonNullable<typeof s> => !!s);
+  for (const snap of snaps) {
     for (const d of snap.docs) {
       // Public docs live at `users/{uid}/public/profile` — the owner uid
       // is the grandparent doc id. Fall back to the `uid` field if present.

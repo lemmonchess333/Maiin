@@ -479,6 +479,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         publicPatch[key] = value ?? null;
       }
     }
+    /* When displayName is in the patch, also write displayNameLower —
+       a normalised lowercase mirror used by searchUsers for case-
+       insensitive prefix matching. Without this field, searches like
+       "myl" for "Myles" miss because Firestore's range queries are
+       case-sensitive. The public profile gets the field written
+       alongside displayName so the two are committed atomically. */
+    if ("displayName" in writeData) {
+      const dn = (writeData as Record<string, unknown>)["displayName"];
+      publicPatch["displayNameLower"] = typeof dn === "string" ? dn.toLowerCase() : null;
+    }
 
     // Wrap the write in try/catch so silent call sites (toggleDark, TDEE
      // auto-sync, dozens of Settings fire-and-forgets) surface a toast and
