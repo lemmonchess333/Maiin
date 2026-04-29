@@ -66,28 +66,28 @@ export interface FeedItem {
 export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>, enabled = true) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(enabled);
+  /* `internalLoading` reflects whether a fetch is in flight; the
+     publicly-returned `loading` is derived from it AND `enabled`.
+     When the surface is disabled, loading is always false — the
+     consumer doesn't render a forever-skeleton without us needing
+     to setState(false) inside the effect body (which trips
+     react-hooks/set-state-in-effect). */
+  const [internalLoading, setInternalLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  // Reset cursor and items when user changes to prevent cross-user data
-  // leaks. Was previously written as a setState-during-render guard (the
-  // `if (user?.uid !== prevUserId) { setItems([]); ... }` pattern at the
-  // top of the function body), which violates React's render-purity rule
-  // and trips the same react-hooks/set-state-in-effect lint that hit
-  // useUserPRMap. Effect-based reset achieves the same guarantee:
-  // when uid flips, the effect fires before the next paint and clears
-  // the per-user state.
-  useEffect(() => {
-    setItems([]);
-    setHasMore(true);
-    lastDocRef.current = undefined;
-  }, [user?.uid]);
+  /* Cross-user reset is handled by loadFeed itself: when `user`
+     identity changes, loadFeed's identity changes (it depends on
+     `user`), which retriggers the post-mount effect below with
+     refresh=true. That call resets lastDocRef and overwrites items
+     with the new user's data. No separate reset effect needed —
+     and no setState-in-effect-body lint violation. */
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;
-    setLoading(true);
+    if (refresh) lastDocRef.current = undefined;
+    setInternalLoading(true);
     setError(null);
     try {
       const result = await getFeed(user.uid, 20, refresh ? undefined : lastDocRef.current);
@@ -149,21 +149,23 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
       logger.error('Feed error:', e);
       setError(e instanceof Error ? e.message : 'Failed to load feed');
     }
-    setLoading(false);
+    setInternalLoading(false);
   }, [user, highlightsOnly, blockedUsers]);
 
   useEffect(() => {
-    /* enabled-gate the initial fetch. When the feed is mounted but
-       not visible (Social tab default Following=false case), skip the
-       network read entirely; loading flips to false so the consumer
-       doesn't render a forever-skeleton. */
-    if (!enabled) {
-      setLoading(false);
-      return;
-    }
+    /* When disabled, skip the network read entirely. Don't setState
+       to clear loading here — `loading` is derived from `enabled`
+       below so the consumer never sees a stuck skeleton, and the
+       effect body stays free of synchronous setState (which trips
+       react-hooks/set-state-in-effect). */
+    if (!enabled) return;
     const init = async () => { await loadFeed(true); };
     void init();
   }, [loadFeed, enabled]);
+
+  // Public loading is derived: only true while a fetch is genuinely
+  // in flight on an enabled surface.
+  const loading = enabled && internalLoading;
 
   return {
     items, loading, hasMore, error,

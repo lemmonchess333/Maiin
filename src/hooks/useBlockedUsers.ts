@@ -15,10 +15,13 @@ import { captureError } from '../lib/errorReporting';
  * every subscriber so feed-hook deps re-fire and filter the user
  * out within the next loadFeed cycle. */
 const cache = new Map<string, Set<string>>();
-const listeners = new Map<string, Set<(s: Set<string>) => void>>();
+/* Listeners are no-arg force-render bumps. The blocked Set itself
+ * lives only in `cache`; consumers read from cache during render and
+ * use these listeners to know when to re-render after a mutation. */
+const listeners = new Map<string, Set<() => void>>();
 
-function notify(uid: string, set: Set<string>) {
-  listeners.get(uid)?.forEach((fn) => fn(set));
+function notify(uid: string) {
+  listeners.get(uid)?.forEach((fn) => fn());
 }
 
 export interface UseBlockedUsersReturn {
@@ -29,33 +32,34 @@ export interface UseBlockedUsersReturn {
 
 export function useBlockedUsers(): UseBlockedUsersReturn {
   const { user } = useAuth();
-  const [blocked, setBlocked] = useState<Set<string>>(() => {
-    return user ? cache.get(user.uid) ?? new Set() : new Set();
-  });
+  const uid = user?.uid;
+  /* Force-render counter. Listeners bump this when the cache mutates
+     (addBlocked / removeBlocked / fetch resolution); the actual
+     `blocked` value is derived from cache during render so we never
+     need to setState synchronously inside the effect body. Same
+     pattern other hooks in this codebase use to satisfy
+     react-hooks/set-state-in-effect. */
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (!user) {
-      setBlocked(new Set());
-      return;
-    }
-    // Subscribe this component to future updates for this uid.
-    let bucket = listeners.get(user.uid);
+    if (!uid) return;
+
+    let bucket = listeners.get(uid);
     if (!bucket) {
       bucket = new Set();
-      listeners.set(user.uid, bucket);
+      listeners.set(uid, bucket);
     }
-    bucket.add(setBlocked);
+    const force = () => setTick((t) => t + 1);
+    bucket.add(force);
 
-    // Seed from cache or fetch on first call for this uid.
-    const cached = cache.get(user.uid);
-    if (cached) {
-      setBlocked(cached);
-    } else {
-      getBlockedUsers(user.uid)
+    /* Initial fetch on first call for this uid. Cache hit case
+       requires no work — the next render reads from cache directly. */
+    if (!cache.has(uid)) {
+      getBlockedUsers(uid)
         .then((ids) => {
           const set = new Set(ids);
-          cache.set(user.uid, set);
-          notify(user.uid, set);
+          cache.set(uid, set);
+          notify(uid);
         })
         .catch((e) => {
           captureError(e instanceof Error ? e : new Error(String(e)), 'network', { hook: 'useBlockedUsers' });
@@ -63,16 +67,19 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     }
 
     return () => {
-      bucket?.delete(setBlocked);
+      bucket?.delete(force);
     };
-  }, [user]);
+  }, [uid]);
+
+  // Derived during render. Pure; uid change → empty set automatically.
+  const blocked: Set<string> = uid ? cache.get(uid) ?? new Set() : new Set();
 
   const addBlocked = useCallback((uid: string) => {
     if (!user) return;
     const next = new Set(cache.get(user.uid) ?? new Set());
     next.add(uid);
     cache.set(user.uid, next);
-    notify(user.uid, next);
+    notify(user.uid);
   }, [user]);
 
   const removeBlocked = useCallback((uid: string) => {
@@ -80,7 +87,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     const next = new Set(cache.get(user.uid) ?? new Set());
     next.delete(uid);
     cache.set(user.uid, next);
-    notify(user.uid, next);
+    notify(user.uid);
   }, [user]);
 
   return { blocked, addBlocked, removeBlocked };
