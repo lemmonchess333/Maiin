@@ -2,7 +2,7 @@ import { useState, type ComponentType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut, Footprints, Sprout, Sun, Leaf, Snowflake } from "lucide-react";
 import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
-import { TIER_COLORS, computeTier, getTimeRemaining } from "./useChallenges";
+import { TIER_COLORS, computeTier, getTimeRemaining, isTierAchieved } from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import Avatar from "@/components/Avatar";
 
@@ -51,13 +51,23 @@ function formatChallengeValue(metric: string, value: number): string {
 
 function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value: number; max: number; achieved: boolean }) {
   const pct = Math.min((value / max) * 100, 100);
+  /* The unachieved fallback used to be a hardcoded
+     `rgba(255,255,255,0.2)` which rendered invisibly on the white
+     light-mode card surface (white on white). Switching the
+     unachieved state to a theme-aware muted pair fixes the bug where
+     the bronze/silver/gold tick marks effectively disappeared on
+     light mode — the markers should always be visible, just dim
+     until they're achieved. */
   return (
     <div className="absolute top-0 -translate-x-1/2 flex flex-col items-center" style={{ left: `${pct}%` }}>
       <div
-        className="w-2.5 h-2.5 rounded-full border-2 border-background"
-        style={{ backgroundColor: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.2)" }}
+        className={`w-2.5 h-2.5 rounded-full border-2 border-background ${achieved ? "" : "bg-muted-foreground/30"}`}
+        style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
-      <span className="text-xs mt-0.5 font-medium" style={{ color: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.35)" }}>
+      <span
+        className={`text-xs mt-0.5 font-medium ${achieved ? "" : "text-muted-foreground/60"}`}
+        style={achieved ? { color: TIER_COLORS[tier] } : undefined}
+      >
         {value}
       </span>
     </div>
@@ -114,7 +124,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">{challenge.name}</p>
-            <p className="text-xs text-muted-foreground">{challenge.description}</p>
+            <p className="text-[13px] text-muted-foreground">{challenge.description}</p>
           </div>
           {currentTier && (
             <div
@@ -127,13 +137,13 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3.5 h-3.5" />
             {timeLeft}
           </span>
           <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
+            <Users className="w-3.5 h-3.5" />
             {challenge.participantCount} joined
           </span>
           {challenge.season && (
@@ -144,11 +154,13 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         </div>
 
         {/* Top 3 leaderboard preview.
-            Suppressed in the compact zero-progress branch (joined but
-            no qualifying activity yet) — the card stays a single
-            "next tier at X" hint without a half-empty board competing
-            for attention. */}
-        {leaderboard.length > 0 && !(joined && currentValue === 0) && (
+            Only rendered for *joined and progressing* participants.
+            Available (not-joined) cards drop it to stay compact —
+            the leaderboard is a goal-state preview, not a sales tool
+            for joining; without context for the numbers it just adds
+            visual weight. Joined-but-zero also drops it (the
+            half-empty board competes with the single "next tier" hint). */}
+        {leaderboard.length > 0 && joined && currentValue > 0 && (
           <div className="space-y-1">
             {leaderboard.slice(0, 3).map((p, i) => {
               const tier = computeTier(p.currentValue, challenge.tiers);
@@ -173,7 +185,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             onClick={handleJoin}
             disabled={busy === "joining"}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: THEME.brand }}
+            style={{ backgroundColor: THEME.brandStrong }}
           >
             {busy === "joining" ? "Joining…" : "Join Challenge"}
           </button>
@@ -260,23 +272,17 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   }}
                 />
               </div>
-              {/* Tier markers */}
+              {/* Tier markers — `isTierAchieved` encapsulates the
+                  lower-is-better semantic for fastest_effort so each
+                  marker is just a comparison instead of repeating the
+                  metric branch three times. */}
               <div className="relative mt-1">
-                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.bronze
-                    : currentValue >= challenge.tiers.bronze
-                } />
-                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.silver
-                    : currentValue >= challenge.tiers.silver
-                } />
-                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.gold
-                    : currentValue >= challenge.tiers.gold
-                } />
+                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.bronze, challenge.metric)} />
+                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.silver, challenge.metric)} />
+                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.gold, challenge.metric)} />
               </div>
             </div>
 

@@ -113,6 +113,19 @@ export function computeTier(value: number, tiers: { bronze: number; silver: numb
   return null;
 }
 
+/* Tier-achievement helper. Encapsulates the lower-is-better semantic
+ * for `fastest_effort` (a time-based metric where smaller is faster
+ * and a value of 0 means "no qualifying effort yet") and the standard
+ * higher-is-better semantic for cumulative metrics. ChallengeCard
+ * used to inline this comparison three times — once per tier marker —
+ * with the same `metric === "fastest_effort"` branch each time. */
+export function isTierAchieved(value: number, tierThreshold: number, metric: string): boolean {
+  if (metric === "fastest_effort") {
+    return value > 0 && value <= tierThreshold;
+  }
+  return value >= tierThreshold;
+}
+
 export function getTimeRemaining(endDate: Timestamp | Date): string {
   const end = endDate instanceof Date ? endDate : endDate.toDate();
   const ms = end.getTime() - Date.now();

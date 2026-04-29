@@ -82,7 +82,7 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
       className={`inline-flex items-center justify-center h-8 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-80 ${
         following
           ? 'bg-muted text-muted-foreground border border-border'
-          : 'bg-purple-500 text-white'
+          : 'bg-primary-strong text-white'
       }`}
     >
       {showSpinner ? (

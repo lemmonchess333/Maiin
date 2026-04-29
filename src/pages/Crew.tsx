@@ -7,7 +7,8 @@ import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import { useCrews, type Crew as CrewType, type CrewLeaderboardEntry } from "../hooks/useCrews";
+import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
+import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
@@ -21,23 +22,6 @@ const itemVariant = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
 };
 
-/** How a member's score is rendered next to their name on the crew
- *  leaderboard. Each crew picks its leaderboardMetric on creation
- *  (Lifters = total_volume, Runners = total_km, etc.) so the unit
- *  matters — "12,540 kg" reads differently from "12 sessions". */
-function formatScore(metric: string, entry: CrewLeaderboardEntry): string {
-  switch (metric) {
-    case "workout_count":
-      return `${entry.score} ${entry.score === 1 ? "session" : "sessions"}`;
-    case "total_volume":
-      return `${Math.round(entry.score).toLocaleString()} kg`;
-    case "total_km":
-      return `${entry.score.toFixed(1)} km`;
-    case "hybrid_score":
-    default:
-      return `${entry.score.toLocaleString()} pts`;
-  }
-}
 
 /**
  * Per-crew home page (PR 3 core).
@@ -204,15 +188,16 @@ export default function Crew() {
      separate query. currentLeaderboard is written by the rollup CF
      and contains every active member's score. Active = currentValue
      > 0, which means they've logged something this week toward the
-     crew metric. Falls back to plain member count when there's no
-     leaderboard yet (rollup hasn't run, or no activity at all). */
+     crew metric. */
   const activeThisWeek = (crewDoc.currentLeaderboard ?? []).filter((e) => (e.score ?? 0) > 0).length;
+  /* The "active this week · N members" inline header used to repeat
+     what the This-week stat band now shows numerically, so the header
+     is reduced to a plain member count to avoid redundancy on iPhone
+     SE width where the longer string risked wrapping. */
   const memberLabel =
     crewDoc.memberCount === 0
       ? "No members yet"
-      : activeThisWeek > 0
-        ? `${activeThisWeek} active this week · ${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`
-        : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
+      : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
 
   /* Invite handler — uses the Web Share API on platforms that
      support it (mobile native + Capacitor), falls back to copying a
@@ -280,8 +265,8 @@ export default function Crew() {
                 {crewDoc.description}
               </p>
             )}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-              <Users size={12} />
+            <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-2">
+              <Users size={13} />
               <span>{memberLabel}</span>
             </div>
           </div>
@@ -329,7 +314,7 @@ export default function Crew() {
                   toast.error("Couldn't join. Try again.");
                 }
               }}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white active:scale-[0.98] transition-transform"
             >
               Join crew
             </button>
@@ -339,7 +324,7 @@ export default function Crew() {
             <button
               type="button"
               onClick={handleInvite}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <Share2 className="w-4 h-4" />
               Invite friends
@@ -379,7 +364,7 @@ export default function Crew() {
         return (
           <motion.div variants={itemVariant} className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">This week</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">This week</h2>
               {isMember && (
                 <button
                   type="button"
@@ -422,6 +407,41 @@ export default function Crew() {
               )}
             </div>
 
+            {/* This-week pulse band — gives the crew page a numeric
+                identity beyond just the leaderboard rows. Even with no
+                activity yet, framing the zero state ("Be the first to
+                put {crew} on the board") is calmer than a passive
+                "standings will appear" caption. */}
+            {(() => {
+              const totalScore = board.reduce((s, e) => s + (e.score ?? 0), 0);
+              const totalLabel = formatTotalForMetric(metric, totalScore);
+              const hasActivity = board.length > 0 && totalScore > 0;
+              return (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-card border border-border/40 p-3">
+                    <p className="text-xs text-muted-foreground">Active this week</p>
+                    <p className="text-lg font-mono tabular-nums font-bold text-foreground mt-0.5">
+                      {activeThisWeek}
+                      <span className="text-xs font-sans text-muted-foreground font-normal ml-1">
+                        / {crewDoc.memberCount}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-card border border-border/40 p-3">
+                    <p className="text-xs text-muted-foreground">{totalLabel.label}</p>
+                    <p className="text-lg font-mono tabular-nums font-bold text-foreground mt-0.5">
+                      {hasActivity ? totalLabel.value : "—"}
+                      {hasActivity && totalLabel.unit && (
+                        <span className="text-xs font-sans text-muted-foreground font-normal ml-1">
+                          {totalLabel.unit}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
             {board.length === 0 ? (
               <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
                 <div
@@ -430,8 +450,8 @@ export default function Crew() {
                 >
                   <Trophy size={16} style={{ color: THEME.brand }} />
                 </div>
-                <p className="text-xs text-muted-foreground leading-snug">
-                  Standings appear once members log workouts or runs this week
+                <p className="text-[13px] text-muted-foreground leading-snug">
+                  No activity yet this week. Be the first to put {crewDoc.name} on the board.
                 </p>
               </div>
             ) : (
@@ -463,7 +483,7 @@ export default function Crew() {
 
       {/* Recent activity */}
       <motion.div variants={itemVariant} className="space-y-2">
-        <h2 className="text-sm font-semibold text-foreground">Recent activity</h2>
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Recent activity</h2>
 
         {activitiesLoading && (
           <div className="space-y-2">
@@ -485,7 +505,7 @@ export default function Crew() {
               >
                 <Users size={16} style={{ color: THEME.brand }} />
               </div>
-              <p className="text-xs text-muted-foreground leading-snug">
+              <p className="text-[13px] text-muted-foreground leading-snug">
                 {isMember
                   ? "Be the first to log a workout or run for this crew"
                   : "No activity yet — join to start posting here"}
