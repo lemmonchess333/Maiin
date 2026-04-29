@@ -2,7 +2,10 @@ import { useState, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../lib/socialApi';
+import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { activityExercisesToRoutine, type SavedRoutineExercise } from '../../lib/savedRoutines';
+import { formatExerciseSummary } from '../../lib/exerciseSummary';
+import { movementCategoryLabel } from '../../lib/exerciseMovementCategory';
 import CommentSheet from './CommentSheet';
 import SaveRoutineSheet from './SaveRoutineSheet';
 import ExerciseCompareSheet from './ExerciseCompareSheet';
@@ -46,6 +49,7 @@ const LIFT_CHIPS = ['Great lift!', 'Beast mode!', 'Strong work!'];
 
 function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (item: FeedItem) => void }) {
   const { user, profile } = useAuth();
+  const { addBlocked } = useBlockedUsers();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
   const [showCommentSheet, setShowCommentSheet] = useState(false);
@@ -216,17 +220,28 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         {exercises && exercises.length > 0 && (
           <div className="space-y-1">
             {exercises.slice(0, 3).map((ex, i) => {
-              const canCompare =
-                !!user?.uid &&
-                activity?.authorId !== user.uid &&
+              const hasStructured =
                 typeof ex.setCount === "number" &&
                 typeof ex.targetReps === "number" &&
                 typeof ex.targetWeightKg === "number";
+              /* Recompute the summary from structured fields when
+                 available so the "0kg" leakage in old posts gets
+                 fixed at render time without a backfill. Pre-PR-4
+                 activities lack structured fields and fall back to
+                 the persisted string. */
+              const displaySummary = hasStructured
+                ? formatExerciseSummary({
+                    setCount: ex.setCount as number,
+                    targetReps: ex.targetReps as number,
+                    targetWeightKg: ex.targetWeightKg as number,
+                  })
+                : ex.summary;
+              const canCompare = !!user?.uid && activity?.authorId !== user.uid && hasStructured;
               if (!canCompare) {
                 return (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
-                    <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
+                    <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{displaySummary}</span>
                   </div>
                 );
               }
@@ -237,7 +252,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   onClick={() =>
                     setCompareTarget({
                       name: ex.name,
-                      summary: ex.summary,
+                      summary: displaySummary,
                       setCount: ex.setCount as number,
                       targetReps: ex.targetReps as number,
                       targetWeightKg: ex.targetWeightKg as number,
@@ -247,20 +262,23 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   className="w-full flex items-center justify-between text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
                   <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
-                  <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{ex.summary}</span>
+                  <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{displaySummary}</span>
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* Muscle groups */}
+        {/* Muscle groups — internal taxonomy keys (horizontal_push, etc.)
+            mapped to user-facing labels via movementCategoryLabel.
+            Was previously rendering the raw key, leaking implementation
+            tokens into the feed. */}
         {activity.muscleGroups && (
           <div className="flex flex-wrap gap-1.5">
-            {activity.muscleGroups.map((mg: string) => (
+            {(activity.muscleGroups as string[]).map((mg) => (
               <span key={mg} className="text-xs px-2 py-0.5 rounded-full font-medium"
                 style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
-                {mg}
+                {movementCategoryLabel(mg)}
               </span>
             ))}
           </div>
@@ -466,7 +484,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               onClick={handleHighFive}
               disabled={liked}
               aria-label={liked ? "Props given" : "Give props"}
-              className="p-2 -m-2 transition-transform"
+              /* p-3 -m-3 keeps the visible icon size but expands the
+                 hit area to ~44×44 (12px padding × 2 + 20px icon).
+                 The negative margin pulls the button back into the
+                 row's spacing so the inflated tap zone is invisible
+                 to layout. Same pattern applied to all action buttons
+                 in this row. */
+              className="p-3 -m-3 transition-transform"
               style={{
                 transform: flameAnimating ? 'scale(1.3)' : 'scale(1)',
                 transition: 'transform 200ms ease-out',
@@ -487,7 +511,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           </div>
           <button onClick={() => setShowCommentSheet(true)}
             aria-label="View comments"
-            className="flex items-center gap-1.5 p-2 -m-2 text-muted-foreground active:scale-90 transition-transform">
+            className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform">
             <MessageCircle className="w-5 h-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium">{activity!.commentCount}</span>
@@ -497,7 +521,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             <button
               onClick={() => setShowSaveRoutine(true)}
               aria-label="Save as routine"
-              className="p-2 -m-2 text-muted-foreground active:scale-90 transition-transform"
+              className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
               <BookmarkPlus className="w-5 h-5" />
             </button>
@@ -505,7 +529,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           {onShare && (
             <button onClick={() => onShare(feedItem)}
               aria-label="Share activity"
-              className="ml-auto p-2 -m-2 text-muted-foreground active:scale-90 transition-transform">
+              className="ml-auto p-3 -m-3 text-muted-foreground active:scale-90 transition-transform">
               <Share2 className="w-5 h-5" />
             </button>
           )}
@@ -595,6 +619,12 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           haptic('heavy');
           try {
             await blockUser(user.uid, activity.authorId as string);
+            // Push the new uid into the shared useBlockedUsers cache so
+            // every subscriber (Social.tsx feed filters, suggested
+            // people, etc.) sees the block immediately. Without this,
+            // the user would write to Firestore but their feed kept
+            // showing the blocked user's posts until the next refresh.
+            addBlocked(activity.authorId as string);
             toast.success(`Blocked ${feedItem.authorName}`);
           } catch {
             toast.error(`Couldn't block ${feedItem.authorName}. Try again.`);

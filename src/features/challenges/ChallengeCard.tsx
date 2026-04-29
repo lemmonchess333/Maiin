@@ -11,8 +11,11 @@ interface ChallengeCardProps {
   myProgress?: ChallengeParticipant;
   leaderboard?: ChallengeParticipant[];
   joined: boolean;
-  onJoin: () => void;
-  onLeave: () => void;
+  /* Both action callbacks may return a promise. The card awaits it
+     to flip the local busy flag, so the button label becomes
+     "Joining…" / "Leaving…" and double-tap is suppressed. */
+  onJoin: () => void | Promise<void>;
+  onLeave: () => void | Promise<void>;
 }
 
 const TIER_LABELS: Record<ChallengeTier, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
@@ -63,6 +66,17 @@ function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value
 
 export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined, onJoin, onLeave }: ChallengeCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
+  const handleJoin = async () => {
+    if (busy) return;
+    setBusy("joining");
+    try { await onJoin(); } finally { setBusy(null); }
+  };
+  const handleLeave = async () => {
+    if (busy) return;
+    setBusy("leaving");
+    try { await onLeave(); } finally { setBusy(null); }
+  };
   const currentValue = myProgress?.currentValue || 0;
   const currentTier = myProgress?.tierAchieved;
   const maxTier = challenge.tiers.gold;
@@ -152,11 +166,12 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         {/* Join button or progress */}
         {!joined ? (
           <button
-            onClick={onJoin}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+            onClick={handleJoin}
+            disabled={busy === "joining"}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
             style={{ backgroundColor: THEME.brand }}
           >
-            Join Challenge
+            {busy === "joining" ? "Joining…" : "Join Challenge"}
           </button>
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.
@@ -314,11 +329,12 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
       {joined && (
         <div className="px-4 pb-3">
           <button
-            onClick={onLeave}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto"
+            onClick={handleLeave}
+            disabled={busy === "leaving"}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto disabled:opacity-60"
           >
             <LogOut className="w-3 h-3" />
-            Leave Challenge
+            {busy === "leaving" ? "Leaving…" : "Leave Challenge"}
           </button>
         </div>
       )}

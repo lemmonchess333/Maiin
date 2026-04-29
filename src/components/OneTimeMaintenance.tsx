@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
@@ -76,6 +78,43 @@ export default function OneTimeMaintenance() {
     };
 
     void run();
+
+    /* displayNameLower self-backfill.
+       Adds the normalised lowercase mirror to the caller's public
+       profile if missing. searchUsers queries displayNameLower as
+       its primary path; without this, users whose profile predates
+       the field are unfindable via case-insensitive search. Cheap:
+       one read + at most one merge-write per user, gated by a
+       localStorage flag. */
+    const LOWER_FLAG = "tropos.displayNameLower.backfilled.v1";
+    void (async () => {
+      try {
+        if (localStorage.getItem(LOWER_FLAG)) return;
+      } catch {
+        return;
+      }
+      try {
+        const ref = doc(db, "users", user.uid, "public", "profile");
+        const snap = await getDoc(ref);
+        if (cancelled) return;
+        if (!snap.exists()) {
+          // No public profile to migrate; mark done so we don't keep
+          // hitting the read on every session.
+          try { localStorage.setItem(LOWER_FLAG, "1"); } catch { /* ignore */ }
+          return;
+        }
+        const data = snap.data() as Record<string, unknown>;
+        const dn = typeof data.displayName === "string" ? data.displayName : "";
+        const existingLower = data.displayNameLower;
+        const targetLower = dn ? dn.toLowerCase() : "";
+        if (existingLower !== targetLower) {
+          await setDoc(ref, { displayNameLower: targetLower || null }, { merge: true });
+        }
+        try { localStorage.setItem(LOWER_FLAG, "1"); } catch { /* ignore */ }
+      } catch (err) {
+        logger.warn("[OneTimeMaintenance] displayNameLower backfill skipped", err);
+      }
+    })();
 
     return () => {
       cancelled = true;

@@ -71,3 +71,35 @@ export function inferMovementCategory(name: string, exerciseId?: string): Moveme
   }
   return FALLBACK;
 }
+
+/**
+ * User-facing label for a MovementCategory. Internal taxonomy keys
+ * (e.g. "horizontal_push") were leaking into the activity-card chip
+ * row — those are implementation tokens, not product copy.
+ *
+ * Mapping is deliberately short and scannable. Falls back to a
+ * title-cased version of the raw key when no entry matches, so a
+ * future category we forget to label still renders something
+ * readable rather than a snake_case string.
+ */
+const MOVEMENT_CATEGORY_LABELS: Record<MovementCategory, string> = {
+  horizontal_push: "Bench",
+  vertical_push: "Press",
+  horizontal_pull: "Row",
+  vertical_pull: "Pull",
+  knee_dominant: "Squat",
+  hip_dominant: "Hinge",
+  arms_biceps: "Biceps",
+  arms_triceps: "Triceps",
+  core: "Core",
+};
+
+export function movementCategoryLabel(key: string): string {
+  if (key in MOVEMENT_CATEGORY_LABELS) {
+    return MOVEMENT_CATEGORY_LABELS[key as MovementCategory];
+  }
+  return key
+    .split("_")
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+}

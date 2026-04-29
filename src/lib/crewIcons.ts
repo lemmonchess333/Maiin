@@ -16,6 +16,7 @@ import {
   PersonStanding,
   Medal,
   Sunrise,
+  Star,
 } from "lucide-react";
 
 export const CREW_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -28,4 +29,8 @@ export const CREW_ICON_MAP: Record<string, React.ComponentType<{ size?: number; 
   person: PersonStanding,
   medal: Medal,
   sunrise: Sunrise,
+  /* "star" is the seed icon for General Fitness in useCrews.ts but
+     was missing here, so the crew row was falling through to the
+     emoji fallback and rendering the literal text "star". */
+  star: Star,
 };

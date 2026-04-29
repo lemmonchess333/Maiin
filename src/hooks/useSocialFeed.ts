@@ -56,21 +56,34 @@ export interface FeedItem {
   challengeMilestone?: string;
 }
 
-export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>) {
+/* `enabled` defaults true for backwards compatibility but lets the
+ * caller defer the network read when the feed isn't visible. Social.tsx
+ * mounts both useSocialFeed (Following) and useDiscoverFeed; previously
+ * the Following fetch fired on every Social tab open even when the
+ * user immediately landed on Discover and never saw Following. The
+ * gate skips the loadFeed effect when enabled is false; flipping it
+ * to true triggers a refresh-style fetch. */
+export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>, enabled = true) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  // Reset cursor and items when user changes to prevent cross-user data leaks
-  const [prevUserId, setPrevUserId] = useState<string | undefined>(undefined);
-  if (user?.uid !== prevUserId) {
-    setPrevUserId(user?.uid);
+  // Reset cursor and items when user changes to prevent cross-user data
+  // leaks. Was previously written as a setState-during-render guard (the
+  // `if (user?.uid !== prevUserId) { setItems([]); ... }` pattern at the
+  // top of the function body), which violates React's render-purity rule
+  // and trips the same react-hooks/set-state-in-effect lint that hit
+  // useUserPRMap. Effect-based reset achieves the same guarantee:
+  // when uid flips, the effect fires before the next paint and clears
+  // the per-user state.
+  useEffect(() => {
     setItems([]);
     setHasMore(true);
-  }
+    lastDocRef.current = undefined;
+  }, [user?.uid]);
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;
@@ -119,7 +132,16 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
       if (refresh) {
         setItems(enriched);
       } else {
-        setItems(prev => [...prev, ...enriched]);
+        // Dedup by id when appending — a refresh + load-more race or a
+        // duplicate write across the activities + feeds collections
+        // could otherwise produce two cards for the same activity.
+        // Existing items always win on order; new items only appear
+        // if their id isn't already present.
+        setItems(prev => {
+          const seen = new Set(prev.map(i => i.id));
+          const fresh = enriched.filter(i => !seen.has(i.id));
+          return fresh.length === enriched.length ? [...prev, ...enriched] : [...prev, ...fresh];
+        });
       }
       lastDocRef.current = result.lastDoc;
       setHasMore(feedItems.length >= 20);
@@ -130,7 +152,18 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
     setLoading(false);
   }, [user, highlightsOnly, blockedUsers]);
 
-  useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
+  useEffect(() => {
+    /* enabled-gate the initial fetch. When the feed is mounted but
+       not visible (Social tab default Following=false case), skip the
+       network read entirely; loading flips to false so the consumer
+       doesn't render a forever-skeleton. */
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    const init = async () => { await loadFeed(true); };
+    void init();
+  }, [loadFeed, enabled]);
 
   return {
     items, loading, hasMore, error,
