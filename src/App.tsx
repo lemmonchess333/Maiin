@@ -4,6 +4,7 @@ import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ToastProvider";
 import ShareComposerSheet from "@/components/social/ShareComposerSheet";
+import OneTimeMaintenance from "@/components/OneTimeMaintenance";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
@@ -314,6 +315,7 @@ function App() {
             <NotificationBubbleProvider>
               <ToastProvider />
               <ShareComposerSheet />
+              <OneTimeMaintenance />
               <AppRoutes />
             </NotificationBubbleProvider>
           </AuthProvider>
