@@ -76,7 +76,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
 
   const addBlocked = useCallback((uid: string) => {
     if (!user) return;
-    const next = new Set(cache.get(user.uid) ?? new Set());
+    const next = new Set<string>(cache.get(user.uid) ?? []);
     next.add(uid);
     cache.set(user.uid, next);
     notify(user.uid);
@@ -84,7 +84,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
 
   const removeBlocked = useCallback((uid: string) => {
     if (!user) return;
-    const next = new Set(cache.get(user.uid) ?? new Set());
+    const next = new Set<string>(cache.get(user.uid) ?? []);
     next.delete(uid);
     cache.set(user.uid, next);
     notify(user.uid);
