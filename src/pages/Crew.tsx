@@ -7,7 +7,8 @@ import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import { useCrews, type Crew as CrewType, type CrewLeaderboardEntry } from "../hooks/useCrews";
+import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
+import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
@@ -21,44 +22,6 @@ const itemVariant = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
 };
 
-/** How a member's score is rendered next to their name on the crew
- *  leaderboard. Each crew picks its leaderboardMetric on creation
- *  (Lifters = total_volume, Runners = total_km, etc.) so the unit
- *  matters — "12,540 kg" reads differently from "12 sessions". */
-function formatScore(metric: string, entry: CrewLeaderboardEntry): string {
-  switch (metric) {
-    case "workout_count":
-      return `${entry.score} ${entry.score === 1 ? "session" : "sessions"}`;
-    case "total_volume":
-      return `${Math.round(entry.score).toLocaleString()} kg`;
-    case "total_km":
-      return `${entry.score.toFixed(1)} km`;
-    case "hybrid_score":
-    default:
-      return `${entry.score.toLocaleString()} pts`;
-  }
-}
-
-/* Aggregated total for the "This week" stats band — splits the value
- * from the unit so the band can render numbers in JetBrains Mono and
- * the unit in Plus Jakarta. Returns the field label too so callers
- * don't have to keep a parallel switch in JSX. */
-function formatTotalForMetric(
-  metric: string,
-  total: number,
-): { label: string; value: string; unit: string } {
-  switch (metric) {
-    case "workout_count":
-      return { label: "Sessions logged", value: String(Math.round(total)), unit: "" };
-    case "total_volume":
-      return { label: "Volume lifted", value: Math.round(total).toLocaleString(), unit: "kg" };
-    case "total_km":
-      return { label: "Distance run", value: total.toFixed(1), unit: "km" };
-    case "hybrid_score":
-    default:
-      return { label: "Hybrid score", value: Math.round(total).toLocaleString(), unit: "pts" };
-  }
-}
 
 /**
  * Per-crew home page (PR 3 core).
@@ -225,15 +188,16 @@ export default function Crew() {
      separate query. currentLeaderboard is written by the rollup CF
      and contains every active member's score. Active = currentValue
      > 0, which means they've logged something this week toward the
-     crew metric. Falls back to plain member count when there's no
-     leaderboard yet (rollup hasn't run, or no activity at all). */
+     crew metric. */
   const activeThisWeek = (crewDoc.currentLeaderboard ?? []).filter((e) => (e.score ?? 0) > 0).length;
+  /* The "active this week · N members" inline header used to repeat
+     what the This-week stat band now shows numerically, so the header
+     is reduced to a plain member count to avoid redundancy on iPhone
+     SE width where the longer string risked wrapping. */
   const memberLabel =
     crewDoc.memberCount === 0
       ? "No members yet"
-      : activeThisWeek > 0
-        ? `${activeThisWeek} active this week · ${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`
-        : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
+      : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
 
   /* Invite handler — uses the Web Share API on platforms that
      support it (mobile native + Capacitor), falls back to copying a

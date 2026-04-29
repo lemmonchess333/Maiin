@@ -51,13 +51,23 @@ function formatChallengeValue(metric: string, value: number): string {
 
 function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value: number; max: number; achieved: boolean }) {
   const pct = Math.min((value / max) * 100, 100);
+  /* The unachieved fallback used to be a hardcoded
+     `rgba(255,255,255,0.2)` which rendered invisibly on the white
+     light-mode card surface (white on white). Switching the
+     unachieved state to a theme-aware muted pair fixes the bug where
+     the bronze/silver/gold tick marks effectively disappeared on
+     light mode — the markers should always be visible, just dim
+     until they're achieved. */
   return (
     <div className="absolute top-0 -translate-x-1/2 flex flex-col items-center" style={{ left: `${pct}%` }}>
       <div
-        className="w-2.5 h-2.5 rounded-full border-2 border-background"
-        style={{ backgroundColor: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.2)" }}
+        className={`w-2.5 h-2.5 rounded-full border-2 border-background ${achieved ? "" : "bg-muted-foreground/30"}`}
+        style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
-      <span className="text-xs mt-0.5 font-medium" style={{ color: achieved ? TIER_COLORS[tier] : "rgba(255,255,255,0.35)" }}>
+      <span
+        className={`text-xs mt-0.5 font-medium ${achieved ? "" : "text-muted-foreground/60"}`}
+        style={achieved ? { color: TIER_COLORS[tier] } : undefined}
+      >
         {value}
       </span>
     </div>
