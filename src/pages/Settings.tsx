@@ -6,6 +6,7 @@ import type { ActivityLevel } from "@/lib/tdee";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { logger } from "@/lib/logger";
 import {
   Crown,
@@ -37,6 +38,72 @@ import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
 
 declare const __APP_VERSION__: string;
+
+/**
+ * One-shot button that triggers the backfillMyActivityCategories
+ * Cloud Function to re-tag the caller's old workout activities with
+ * correct muscleGroups (fixing the historical "horizontal_push"
+ * inheritance bug from before commit 46127d5).
+ *
+ * Lives in Settings rather than as a debug utility because it's the
+ * obvious place users land when looking for "my old data looks
+ * wrong" actions, and the function is safe to leave callable
+ * indefinitely — it's idempotent (no-op when already correct) and
+ * scoped to the caller's own activities.
+ */
+function BackfillActivityTagsButton() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const handleClick = async () => {
+    if (busy) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const fns = getFunctions();
+      const fn = httpsCallable<unknown, { ok: boolean; scanned: number; updated: number; skipped: number }>(
+        fns,
+        "backfillMyActivityCategories",
+      );
+      const r = await fn({});
+      const { scanned, updated, skipped } = r.data;
+      setResult(`Scanned ${scanned} · Fixed ${updated} · Already ok ${skipped}`);
+      if (updated > 0) {
+        toast.success(`Re-tagged ${updated} workout${updated === 1 ? "" : "s"}`);
+      } else {
+        toast.success("All workouts already tagged correctly");
+      }
+    } catch (err) {
+      logger.error("[Settings] backfill failed", err);
+      toast.error("Couldn't refresh tags. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border border-border/40 p-4 space-y-2">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Refresh activity tags</p>
+        <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+          Re-categorise muscle groups on your old workout posts. Run this once if old activities show
+          the wrong tag (e.g. a Pull workout tagged as &ldquo;horizontal_push&rdquo;).
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={busy}
+        className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
+      >
+        {busy ? "Refreshing…" : "Refresh tags"}
+      </button>
+      {result && (
+        <p className="text-[11px] text-muted-foreground tabular-nums text-center">{result}</p>
+      )}
+    </div>
+  );
+}
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -362,6 +429,16 @@ export default function Settings() {
         user={user}
         signOut={signOut}
       />
+
+      {/* One-shot historical-data fix.
+          Calls backfillMyActivityCategories to re-tag the user's old
+          workout activities with correct muscleGroups (the bug where
+          everything inherited "horizontal_push" from the template
+          normalizer's hardcoded default — fixed forward in 46127d5,
+          this fixes already-posted activities). Permanent surface
+          since the function is idempotent: pressing it after all
+          posts are correct just returns "0 updated" — no harm. */}
+      <BackfillActivityTagsButton />
 
       {/* Footer */}
       <p className="text-center text-xs text-muted-foreground">
