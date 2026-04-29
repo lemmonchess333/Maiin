@@ -211,6 +211,25 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               </div>
             );
           })()
+        ) : currentValue === 0 ? (
+          /* Compact zero-progress state.
+             When the user has joined but logged nothing toward the
+             challenge yet, the full tiered progress bar + leaderboard
+             slot reads as broken (an empty bar, "You're at 0",
+             markers with no fill). Especially loud on fastest_effort
+             where a 0 currentValue means "no qualifying run yet" —
+             the rest of the chrome is irrelevant until they log one.
+             Compact variant: just the next-tier hint + leave action,
+             so the card stays informative without occupying half a
+             screen. The full progress bar reappears the moment the
+             user has any progress to show. */
+          <div className="space-y-1.5">
+            <p className="text-sm text-muted-foreground">
+              {nextTier && nextValue
+                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue)}`
+                : "Log your first qualifying activity to start the board"}
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {/* Tiered progress bar.
