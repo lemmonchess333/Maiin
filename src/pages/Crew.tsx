@@ -274,7 +274,7 @@ export default function Crew() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-extrabold text-foreground truncate">{crewDoc.name}</h1>
+            <h1 className="text-xl font-extrabold text-foreground truncate">{crewDoc.name}</h1>
             {crewDoc.description?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
                 {crewDoc.description}
@@ -310,16 +310,44 @@ export default function Crew() {
           </div>
         )}
 
-        {/* Action row — Join/Leave on the left, Invite on the right.
-            Invite is member-only since you can only invite to a crew
-            you're in. Both buttons share the same height so they
-            visually match. */}
-        <div className="flex gap-2 mt-4">
-          <button
-            type="button"
-            onClick={async () => {
-              if (!user) return;
-              if (isMember) {
+        {/* Action row.
+            Non-member view: full-width Join CTA.
+            Member view: Invite is the primary CTA (the action you
+            actually want members taking) and Leave is demoted to a
+            small secondary text button below — visible but not
+            visually competing with Invite. */}
+        {!isMember ? (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) return;
+                try {
+                  await joinCrew(crewDoc.id);
+                  toast.success("Joined!");
+                } catch {
+                  toast.error("Couldn't join. Try again.");
+                }
+              }}
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
+            >
+              Join crew
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            <button
+              type="button"
+              onClick={handleInvite}
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <Share2 className="w-4 h-4" />
+              Invite friends
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user) return;
                 setLeaving(true);
                 try {
                   await leaveCrew();
@@ -327,35 +355,14 @@ export default function Crew() {
                 } finally {
                   setLeaving(false);
                 }
-              } else {
-                try {
-                  await joinCrew(crewDoc.id);
-                  toast.success("Joined!");
-                } catch {
-                  toast.error("Couldn't join. Try again.");
-                }
-              }
-            }}
-            disabled={leaving}
-            className={`flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60 ${
-              isMember
-                ? "bg-muted text-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
-          >
-            {isMember ? (leaving ? "Leaving…" : "Leave crew") : "Join crew"}
-          </button>
-          {isMember && (
-            <button
-              type="button"
-              onClick={handleInvite}
-              aria-label="Invite to crew"
-              className="h-12 w-12 rounded-xl bg-muted text-foreground flex items-center justify-center active:scale-[0.95] transition-transform"
+              }}
+              disabled={leaving}
+              className="w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1.5 disabled:opacity-60"
             >
-              <Share2 className="w-4 h-4" />
+              {leaving ? "Leaving…" : "Leave crew"}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Weekly leaderboard.

@@ -143,8 +143,12 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
           )}
         </div>
 
-        {/* Top 3 leaderboard preview */}
-        {leaderboard.length > 0 && (
+        {/* Top 3 leaderboard preview.
+            Suppressed in the compact zero-progress branch (joined but
+            no qualifying activity yet) — the card stays a single
+            "next tier at X" hint without a half-empty board competing
+            for attention. */}
+        {leaderboard.length > 0 && !(joined && currentValue === 0) && (
           <div className="space-y-1">
             {leaderboard.slice(0, 3).map((p, i) => {
               const tier = computeTier(p.currentValue, challenge.tiers);

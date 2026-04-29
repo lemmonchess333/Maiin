@@ -186,8 +186,8 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
       {/* Other joined challenges */}
       {otherMy.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Your Challenges
+          <p className="text-sm font-semibold text-muted-foreground">
+            Your challenges
           </p>
           {otherMy.map((ch) => (
             <ChallengeCard
@@ -209,7 +209,7 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
       {/* Other available challenges */}
       {otherAvailable.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-sm font-semibold text-muted-foreground">
             Available
           </p>
           {otherAvailable.map((ch) => (
