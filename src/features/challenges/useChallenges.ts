@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   collection, query, onSnapshot, doc, setDoc, deleteDoc,
   updateDoc, Timestamp, getDocs, orderBy, limit, getDoc,
-  serverTimestamp, increment,
+  serverTimestamp, increment, where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -274,9 +274,32 @@ export function useChallenges() {
     const load = async () => {
       const boards: Record<string, ChallengeParticipant[]> = {};
       for (const ch of challenges) {
-        const snap = await getDocs(
-          query(collection(db, "challenges", ch.id, "participants"), orderBy("currentValue", "desc"), limit(20))
-        );
+        /* Sort direction depends on the challenge's metric semantics.
+           For SUM-style metrics (workout_count / total_volume / total_km
+           / hybrid_score / streak_days / combined_score) higher is
+           better, so the leaderboard is descending. For fastest_effort
+           the metric is time-in-seconds where lower wins, so the
+           leaderboard must sort ascending — and entries with
+           currentValue == 0 (no qualifying run yet) need to be
+           excluded entirely rather than ranked first. Without this
+           gate the slowest runner appeared at #1 on Fastest 5K. */
+        const isTimeBased = ch.metric === "fastest_effort";
+        let qRef;
+        if (isTimeBased) {
+          qRef = query(
+            collection(db, "challenges", ch.id, "participants"),
+            where("currentValue", ">", 0),
+            orderBy("currentValue", "asc"),
+            limit(20),
+          );
+        } else {
+          qRef = query(
+            collection(db, "challenges", ch.id, "participants"),
+            orderBy("currentValue", "desc"),
+            limit(20),
+          );
+        }
+        const snap = await getDocs(qRef);
         boards[ch.id] = snap.docs.map(d => ({ uid: d.id, ...d.data() } as ChallengeParticipant));
       }
       setLeaderboards(boards);

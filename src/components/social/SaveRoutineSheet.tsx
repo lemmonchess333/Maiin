@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Drawer } from "vaul";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -40,6 +41,7 @@ export default function SaveRoutineSheet({
   exercises,
 }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
 
@@ -53,7 +55,7 @@ export default function SaveRoutineSheet({
     setSaving(true);
     haptic("light");
     try {
-      await saveRoutine(user.uid, {
+      const routineId = await saveRoutine(user.uid, {
         name: trimmed,
         sourceActivityId,
         sourceAuthorId,
@@ -61,7 +63,20 @@ export default function SaveRoutineSheet({
         ...(sourceWorkoutName ? { sourceWorkoutName } : {}),
         exercises,
       });
-      toast.success("Saved to your routines");
+      /* Post-save continuity: instead of a fire-and-forget toast, give
+         the user a "View in Program" action on the toast so the social
+         → training bridge feels intentional. Tap takes them straight
+         to the routine ready to run; Sonner's action prop persists the
+         toast until they choose. */
+      toast.success("Saved to your routines", {
+        action: {
+          label: "View in Program",
+          onClick: () => {
+            navigate(`/routine/${routineId}`);
+          },
+        },
+        duration: 5000,
+      });
       onClose();
     } catch (err) {
       console.error("saveRoutine failed:", err);

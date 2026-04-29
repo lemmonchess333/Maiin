@@ -22,8 +22,12 @@ import { EmptyState } from '../components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
-type SocialTab = 'feed' | 'crews' | 'discover';
-type FeedSubTab = 'following' | 'discover';
+/* "discover" used to mean two different things: a top-level tab AND
+   a feed sub-tab. The top-level tab is now `find` (search + invite +
+   suggestions) and the feed sub-tab is `explore` (public activity).
+   Naming collision audited and removed. */
+type SocialTab = 'feed' | 'crews' | 'find';
+type FeedSubTab = 'following' | 'explore';
 
 // Crew icons live in src/lib/crewIcons so the Crew page can render
 // the same glyph the list row shows.
@@ -43,12 +47,12 @@ export default function Social() {
    * with any follows land on Following. One cheap limit(2) read
    * decides both "do I have any follows" (smart default tab) AND
    * "do I have ≥2 follows" (leaderboard vs trajectory card).
-   * While we wait, we default to 'discover' so a brand-new user
+   * While we wait, we default to 'explore' so a brand-new user
    * never sees a flash of the empty Following state before
    * resolution. `followingCount` is bounded at 2 — we only care
    * about the threshold, not the exact number.
    */
-  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('discover');
+  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>('explore');
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   useEffect(() => {
     if (!user || followingCount !== null) return;
@@ -57,7 +61,7 @@ export default function Social() {
       .then((n) => {
         if (cancelled) return;
         setFollowingCount(n);
-        setFeedSubTab(n > 0 ? 'following' : 'discover');
+        setFeedSubTab(n > 0 ? 'following' : 'explore');
       })
       .catch(() => {
         // On error, treat as zero — safe empty state + trajectory card.
@@ -82,12 +86,12 @@ export default function Social() {
      mount even when the user landed straight on Discover and never
      opened Following — wasted reads on the cold start. */
   const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following');
-  const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
-  const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
+  const exploreFeed = useDiscoverFeed(feedSubTab === 'explore', blockedUsers);
+  const activeFeed = feedSubTab === 'following' ? followingFeed : exploreFeed;
 
   // Suggested People — fetches lazily only when the Discover tab is shown.
   const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions, remove: removeSuggestion } =
-    useSuggestedPeople(tab === 'discover', blockedUsers);
+    useSuggestedPeople(tab === 'find', blockedUsers);
 
   // Crews
   const { crews, currentCrew, joinCrew, leaveCrew, createCrew } = useCrews();
@@ -121,26 +125,49 @@ export default function Social() {
   const leaveCrewRef = useFocusTrap<HTMLDivElement>(!!leavingCrewId);
   const createCrewRef = useFocusTrap<HTMLDivElement>(showCreateGroup);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  /* Sequencing guard: a slow request followed by a faster one could
+     otherwise have its stale results overwrite the fresh ones. Each
+     handleSearch invocation increments this counter; the resolution
+     handler only writes results when the counter is still equal to
+     the value captured at start. */
+  const searchSeqRef = useRef(0);
+
+  const MIN_SEARCH_LEN = 2;
 
   const handleSearch = useCallback(async (q?: string) => {
     const query = (q ?? searchQuery).trim();
-    if (!query) return;
+    /* Min-length gate: 1-char queries hit the index hard and rarely
+       produce useful results. Anything shorter just clears stale UI. */
+    if (query.length < MIN_SEARCH_LEN) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearching(false);
+      return;
+    }
+    const seq = ++searchSeqRef.current;
     setSearching(true);
     setSearchError(null);
     try {
       const results = await searchUsers(query);
-      setSearchResults(results.filter((u) => u.uid !== user?.uid));
+      if (seq !== searchSeqRef.current) return; // stale, newer search in flight
+      const filtered = results
+        .filter((u) => u.uid !== user?.uid)
+        // Don't surface blocked users in search hits — same shared cache
+        // the feed filters use, so a block from one surface flows here.
+        .filter((u) => !blockedUsers.has(u.uid));
+      setSearchResults(filtered);
     } catch {
+      if (seq !== searchSeqRef.current) return;
       setSearchResults([]);
       setSearchError("Couldn't search right now. Try again.");
     }
-    setSearching(false);
-  }, [searchQuery, user?.uid]);
+    if (seq === searchSeqRef.current) setSearching(false);
+  }, [searchQuery, user?.uid, blockedUsers]);
 
   const handleSearchInputChange = (value: string) => {
     setSearchQuery(value);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    if (value.trim()) {
+    if (value.trim().length >= MIN_SEARCH_LEN) {
       searchDebounceRef.current = setTimeout(() => handleSearch(value), 300);
     } else {
       /* Empty input → clear results immediately. Previously the input
@@ -274,7 +301,7 @@ export default function Social() {
       {/* Tab bar */}
       {!showFullLeaderboard && (<>
       <div className="flex gap-1 p-1 rounded-xl bg-muted">
-        {(['feed', 'crews', 'discover'] as SocialTab[]).map(t => (
+        {(['feed', 'crews', 'find'] as SocialTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -282,7 +309,7 @@ export default function Social() {
               tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
-            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'Discover'}
+            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'Find'}
           </button>
         ))}
       </div>
@@ -291,16 +318,16 @@ export default function Social() {
       {tab === 'feed' && (
         <section aria-label="Activity feed">
         <div ref={feedContainerRef} className="!mt-3" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-          {/* Feed sub-tabs: Following | Discover */}
+          {/* Feed sub-tabs: Following | Explore */}
           <div className="flex gap-2">
-            {(['following', 'discover'] as FeedSubTab[]).map(st => (
+            {(['following', 'explore'] as FeedSubTab[]).map(st => (
               <button key={st} onClick={() => setFeedSubTab(st)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   feedSubTab === st
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
                 }`}>
-                {st === 'following' ? 'Following' : 'Discover'}
+                {st === 'following' ? 'Following' : 'Explore'}
               </button>
             ))}
           </div>
@@ -384,7 +411,7 @@ export default function Social() {
           {/* Empty state — show when no results (including silenced errors) */}
           {!activeFeed.loading && activeFeed.items.length === 0 && (
             <div className="mt-6" aria-live="polite">
-              {feedSubTab === 'discover' ? (
+              {feedSubTab === 'explore' ? (
                 <EmptyState
                   icon={<Globe size={32} />}
                   title="Be the first to share"
@@ -415,7 +442,7 @@ export default function Social() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setTab('discover')}
+                    onClick={() => setTab('find')}
                     className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
                   >
                     Find people
@@ -440,7 +467,7 @@ export default function Social() {
           {/* Challenges — placed first because they're the active /
               competitive surface. Empty-state CTA jumps to Discover so
               users have a clear path to find people to challenge. */}
-          <ChallengeList onFindFriends={() => setTab('discover')} />
+          <ChallengeList onFindFriends={() => setTab('find')} />
 
           {/* Crews list */}
           <div className="space-y-3">
@@ -612,12 +639,12 @@ export default function Social() {
         </section>
       )}
 
-      {/* ========== DISCOVER TAB ==========
-          Renamed from "Find". Holds the discovery affordances that
-          aren't crews: invite link, search, contact sync, suggested
-          people. Crews moved to their own tab so this surface stays
-          focused on "find a person, bring a friend in." */}
-      {tab === 'discover' && (
+      {/* ========== FIND TAB ==========
+          Holds the people-discovery affordances that aren't crews:
+          invite link, search, suggested people. Renamed from
+          "Discover" to remove the naming collision with the Feed
+          sub-tab also called Discover (now Explore). */}
+      {tab === 'find' && (
         <section aria-label="Find people">
         <div className="space-y-6">
           {/* Section 1: Invite link CTA — primary growth path on web.
@@ -656,17 +683,32 @@ export default function Social() {
 
           {/* Section 2: Search */}
           <div className="space-y-3">
-            <p className="text-small font-semibold text-foreground">Search by name</p>
+            <p className="text-small font-semibold text-foreground">Find someone</p>
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Search by name..."
-                value={searchQuery}
-                onChange={e => handleSearchInputChange(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
-                className="flex-1 h-12 px-4 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
-              />
-              <button onClick={() => handleSearch()} disabled={searching || !searchQuery.trim()}
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search athletes"
+                  value={searchQuery}
+                  onChange={e => handleSearchInputChange(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
+                  className="w-full h-12 pl-4 pr-10 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
+                />
+                {searchQuery.length > 0 && (
+                  /* Inline clear affordance — quicker than holding
+                     backspace on mobile and clears results in one tap
+                     via the empty-input branch of handleSearchInputChange. */
+                  <button
+                    type="button"
+                    onClick={() => handleSearchInputChange('')}
+                    aria-label="Clear search"
+                    className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button onClick={() => handleSearch()} disabled={searching || searchQuery.trim().length < MIN_SEARCH_LEN}
                 className="h-12 w-12 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 shrink-0">
                 {searching ? '...' : 'Go'}
               </button>
@@ -674,12 +716,22 @@ export default function Social() {
             {searchResults.length > 0 && (
               <div className="space-y-2">
                 {searchResults.map((u) => (
+                  /* Tap-through to profile: avatar + name link to the
+                     user's profile so search becomes the start of a
+                     real social action, not just "see name → follow".
+                     FollowButton stays a sibling so its click doesn't
+                     bubble through the Link. */
                   <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
-                      {u.crewId && <p className="text-xs text-muted-foreground">Crew member</p>}
-                    </div>
+                    <Link
+                      to={`/user/${u.uid}`}
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                    >
+                      <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
+                        {u.crewId && <p className="text-xs text-muted-foreground">Crew member</p>}
+                      </div>
+                    </Link>
                     <FollowButton targetUid={u.uid} />
                   </div>
                 ))}
