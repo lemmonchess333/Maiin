@@ -64,13 +64,19 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  // Reset cursor and items when user changes to prevent cross-user data leaks
-  const [prevUserId, setPrevUserId] = useState<string | undefined>(undefined);
-  if (user?.uid !== prevUserId) {
-    setPrevUserId(user?.uid);
+  // Reset cursor and items when user changes to prevent cross-user data
+  // leaks. Was previously written as a setState-during-render guard (the
+  // `if (user?.uid !== prevUserId) { setItems([]); ... }` pattern at the
+  // top of the function body), which violates React's render-purity rule
+  // and trips the same react-hooks/set-state-in-effect lint that hit
+  // useUserPRMap. Effect-based reset achieves the same guarantee:
+  // when uid flips, the effect fires before the next paint and clears
+  // the per-user state.
+  useEffect(() => {
     setItems([]);
     setHasMore(true);
-  }
+    lastDocRef.current = undefined;
+  }, [user?.uid]);
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (!user) return;

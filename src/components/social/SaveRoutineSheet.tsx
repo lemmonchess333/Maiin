@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
+import { formatExerciseSummary } from "@/lib/exerciseSummary";
 
 interface Props {
   open: boolean;
@@ -116,7 +117,11 @@ export default function SaveRoutineSheet({
                   <div key={i} className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-foreground truncate">{ex.name}</span>
                     <span className="font-mono tabular-nums text-muted-foreground shrink-0 text-xs">
-                      {ex.summary}
+                      {formatExerciseSummary({
+                        setCount: ex.setCount,
+                        targetReps: ex.targetReps,
+                        targetWeightKg: ex.targetWeightKg,
+                      })}
                     </span>
                   </div>
                 ))}
