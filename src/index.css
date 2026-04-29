@@ -10,6 +10,7 @@
   --color-card-foreground: hsl(var(--card-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-strong: hsl(var(--primary-strong));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -38,6 +39,12 @@
   --card-foreground: 240 10% 3.9%;
   --primary: 246 88% 70%;
   --primary-foreground: 0 0% 98%;
+  /* Darker step of the brand purple, used on filled primary CTAs and
+     high-emphasis pressable surfaces (Join, Follow, Invite, etc.).
+     Approximately #6560C8 — clears WCAG AA for white text where the
+     lighter --primary (#7B72E9) is borderline. Kept separate from
+     --primary so tinted accents (`${THEME.brand}14`) stay light. */
+  --primary-strong: 243 49% 58%;
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
@@ -55,6 +62,9 @@
   --card-foreground: 240 5% 90%;
   --primary: 244 72% 66%;
   --primary-foreground: 0 0% 98%;
+  /* Dark-mode pairing for --primary-strong. Same hue, slightly more
+     saturated to keep filled buttons readable against #1A-#16 cards. */
+  --primary-strong: 243 55% 60%;
   --muted: 240 3% 15%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 16%;

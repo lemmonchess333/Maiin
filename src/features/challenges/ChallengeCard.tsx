@@ -2,7 +2,7 @@ import { useState, type ComponentType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut, Footprints, Sprout, Sun, Leaf, Snowflake } from "lucide-react";
 import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
-import { TIER_COLORS, computeTier, getTimeRemaining } from "./useChallenges";
+import { TIER_COLORS, computeTier, getTimeRemaining, isTierAchieved } from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import Avatar from "@/components/Avatar";
 
@@ -173,7 +173,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             onClick={handleJoin}
             disabled={busy === "joining"}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: THEME.brand }}
+            style={{ backgroundColor: THEME.brandStrong }}
           >
             {busy === "joining" ? "Joining…" : "Join Challenge"}
           </button>
@@ -260,23 +260,17 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   }}
                 />
               </div>
-              {/* Tier markers */}
+              {/* Tier markers — `isTierAchieved` encapsulates the
+                  lower-is-better semantic for fastest_effort so each
+                  marker is just a comparison instead of repeating the
+                  metric branch three times. */}
               <div className="relative mt-1">
-                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.bronze
-                    : currentValue >= challenge.tiers.bronze
-                } />
-                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.silver
-                    : currentValue >= challenge.tiers.silver
-                } />
-                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier} achieved={
-                  challenge.metric === "fastest_effort"
-                    ? currentValue > 0 && currentValue <= challenge.tiers.gold
-                    : currentValue >= challenge.tiers.gold
-                } />
+                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.bronze, challenge.metric)} />
+                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.silver, challenge.metric)} />
+                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier}
+                  achieved={isTierAchieved(currentValue, challenge.tiers.gold, challenge.metric)} />
               </div>
             </div>
 

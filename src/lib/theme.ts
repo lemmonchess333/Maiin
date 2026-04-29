@@ -13,6 +13,11 @@ export const THEME = {
   liftingLight: '#9590E0',
   brand: '#7B72E9',
   brandLight: '#9590E0',
+  /* Darker brand step for filled primary CTAs (Join, Follow, Invite,
+     post-confirm pills). Use when text sits *on* the colour — the
+     lighter `brand` is borderline for WCAG AA on white text at 14–15px.
+     Tints (`${THEME.brand}14`) keep using `brand`. */
+  brandStrong: '#6560C8',
 
   // Semantic — harmonised hues, calmer saturation
   semantic: {

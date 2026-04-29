@@ -298,14 +298,16 @@ export default function Social() {
         <FullLeaderboard onBack={() => setShowFullLeaderboard(false)} />
       )}
 
-      {/* Tab bar */}
+      {/* Tab bar — primary navigation, sized for the 44pt iOS / 48dp
+          Material touch-target floor. Was previously 12px on py-2 (~32px
+          tall) which read like metadata. */}
       {!showFullLeaderboard && (<>
-      <div className="flex gap-1 p-1 rounded-xl bg-muted">
+      <div className="flex gap-1 p-1.5 rounded-xl bg-muted">
         {(['feed', 'crews', 'find'] as SocialTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
               tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
@@ -324,7 +326,7 @@ export default function Social() {
               <button key={st} onClick={() => setFeedSubTab(st)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   feedSubTab === st
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-primary-strong text-white'
                     : 'bg-muted text-muted-foreground'
                 }`}>
                 {st === 'following' ? 'Following' : 'Explore'}
@@ -554,7 +556,7 @@ export default function Social() {
                       }}
                       disabled={!isMember && joiningCrewId === crew.id}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-60 ${
-                        isMember ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'
+                        isMember ? 'bg-muted text-muted-foreground' : 'bg-primary-strong text-white'
                       }`}>
                       {isMember
                         ? 'Joined'
@@ -658,7 +660,7 @@ export default function Social() {
                     }
                   }}
                   disabled={!newGroupName.trim() || creatingCrew}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50">
+                  className="w-full py-3 rounded-xl bg-primary-strong text-white font-medium text-sm disabled:opacity-50">
                   {creatingCrew ? 'Creating...' : 'Create Crew'}
                 </button>
               </div>
@@ -909,8 +911,8 @@ export default function Social() {
             </div>
             <button
               onClick={handleShareInvite}
-              className="w-full py-2.5 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
-              style={{ background: THEME.brand }}
+              className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
+              style={{ background: THEME.brandStrong }}
             >
               Share invite link
             </button>

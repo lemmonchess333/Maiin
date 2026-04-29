@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Drawer } from "vaul";
 import { toast } from "sonner";
+import { Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
+import { THEME } from "@/lib/theme";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
 
 /**
@@ -96,9 +98,15 @@ export default function SaveRoutineSheet({
   const navigate = useNavigate();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
+  /* `saved` holds the post-success state for ~600ms so the sheet flashes
+     a "Saved" affordance on the primary button before closing. Without
+     it the sheet snapped shut the moment the Firestore write resolved
+     and the only confirmation was a toast that's easy to miss when the
+     user has already moved on. */
+  const [saved, setSaved] = useState(false);
 
   const handleSave = async () => {
-    if (!user || saving) return;
+    if (!user || saving || saved) return;
     const trimmed = name.trim();
     if (!trimmed) {
       toast.error("Give the routine a name");
@@ -115,11 +123,13 @@ export default function SaveRoutineSheet({
         ...(sourceWorkoutName ? { sourceWorkoutName } : {}),
         exercises,
       });
-      /* Post-save continuity: instead of a fire-and-forget toast, give
-         the user a "View in Program" action on the toast so the social
-         → training bridge feels intentional. Tap takes them straight
-         to the routine ready to run; Sonner's action prop persists the
-         toast until they choose. */
+      /* Post-save continuity: hold the sheet open briefly with a
+         visible "Saved" state, then close. The toast still fires with
+         a "View in Program" action so a user who looks up after the
+         sheet has gone has a clear path back to the routine. */
+      setSaving(false);
+      setSaved(true);
+      haptic("success");
       toast.success("Saved to your routines", {
         action: {
           label: "View in Program",
@@ -129,17 +139,19 @@ export default function SaveRoutineSheet({
         },
         duration: 5000,
       });
-      onClose();
+      window.setTimeout(() => {
+        setSaved(false);
+        onClose();
+      }, 650);
     } catch (err) {
       console.error("saveRoutine failed:", err);
       toast.error("Couldn't save. Try again.");
-    } finally {
       setSaving(false);
     }
   };
 
   const handleOpenChange = (next: boolean) => {
-    if (!next && !saving) onClose();
+    if (!next && !saving && !saved) onClose();
   };
 
   return (
@@ -204,7 +216,7 @@ export default function SaveRoutineSheet({
               <button
                 type="button"
                 onClick={onClose}
-                disabled={saving}
+                disabled={saving || saved}
                 className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
               >
                 Cancel
@@ -212,10 +224,23 @@ export default function SaveRoutineSheet({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving || !name.trim()}
-                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] disabled:opacity-60"
+                disabled={saving || saved || !name.trim()}
+                aria-live="polite"
+                className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition-colors flex items-center justify-center gap-1.5"
+                style={{
+                  backgroundColor: saved ? THEME.success : THEME.brandStrong,
+                }}
               >
-                {saving ? "Saving…" : "Save"}
+                {saved ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Saved
+                  </>
+                ) : saving ? (
+                  "Saving…"
+                ) : (
+                  "Save"
+                )}
               </button>
             </div>
           </div>

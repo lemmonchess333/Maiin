@@ -329,7 +329,7 @@ export default function Crew() {
                   toast.error("Couldn't join. Try again.");
                 }
               }}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white active:scale-[0.98] transition-transform"
             >
               Join crew
             </button>
@@ -339,7 +339,7 @@ export default function Crew() {
             <button
               type="button"
               onClick={handleInvite}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <Share2 className="w-4 h-4" />
               Invite friends

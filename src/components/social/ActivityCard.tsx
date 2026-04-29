@@ -270,19 +270,26 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
         )}
 
         {/* Muscle groups — internal taxonomy keys (horizontal_push, etc.)
-            mapped to user-facing labels via movementCategoryLabel.
-            Was previously rendering the raw key, leaking implementation
-            tokens into the feed. */}
-        {activity.muscleGroups && (
-          <div className="flex flex-wrap gap-1.5">
-            {(activity.muscleGroups as string[]).map((mg) => (
-              <span key={mg} className="text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
-                {movementCategoryLabel(mg)}
-              </span>
-            ))}
-          </div>
-        )}
+            mapped to session-level labels via movementCategoryLabel
+            (Push / Pull / Legs / Arms / Core). Multiple raw categories
+            now collapse to the same label (horizontal_push and
+            vertical_push both → "Push"), so we dedupe the labels here
+            to avoid showing duplicate chips on a typical push day. */}
+        {activity.muscleGroups && activity.muscleGroups.length > 0 && (() => {
+          const labels = Array.from(
+            new Set((activity.muscleGroups as string[]).map(movementCategoryLabel))
+          );
+          return (
+            <div className="flex flex-wrap gap-1.5">
+              {labels.map((label) => (
+                <span key={label} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: `${THEME.lifting}15`, color: THEME.lifting }}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Workout volume/duration/PR count */}
         <div className="flex gap-4">

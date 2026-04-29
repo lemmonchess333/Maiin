@@ -82,16 +82,25 @@ export function inferMovementCategory(name: string, exerciseId?: string): Moveme
  * future category we forget to label still renders something
  * readable rather than a snake_case string.
  */
+/* Session-level labels rather than per-pattern labels. The previous
+   table mapped each movement category to a literal name ("Bench",
+   "Press", "Row") which on activity-feed chips ended up restating the
+   exercise name (e.g. a "Bench Press" workout got a "Bench" chip).
+   Session-level labels — Push / Pull / Legs / Arms / Core — describe
+   what *kind of session* it was, which is the social-card chip's job.
+   Callers that render multiple categories from one workout should
+   dedupe the resulting label list, since e.g. horizontal_push and
+   vertical_push now collapse to the same chip. */
 const MOVEMENT_CATEGORY_LABELS: Record<MovementCategory, string> = {
-  horizontal_push: "Bench",
-  vertical_push: "Press",
-  horizontal_pull: "Row",
-  vertical_pull: "Pull",
-  knee_dominant: "Squat",
-  hip_dominant: "Hinge",
-  arms_biceps: "Biceps",
-  arms_triceps: "Triceps",
-  core: "Core",
+  horizontal_push: "Push",
+  vertical_push:   "Push",
+  horizontal_pull: "Pull",
+  vertical_pull:   "Pull",
+  knee_dominant:   "Legs",
+  hip_dominant:    "Legs",
+  arms_biceps:     "Arms",
+  arms_triceps:    "Arms",
+  core:            "Core",
 };
 
 export function movementCategoryLabel(key: string): string {
