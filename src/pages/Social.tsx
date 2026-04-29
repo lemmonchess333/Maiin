@@ -12,11 +12,10 @@ import LeaderboardCard from '../components/social/LeaderboardCard';
 import TrajectoryCard from '../components/social/TrajectoryCard';
 import Avatar from '../components/Avatar';
 import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
-import { isNativePlatform } from '../lib/platform';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
-import { Share2, Users, Smartphone, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
+import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -78,7 +77,11 @@ export default function Social() {
   };
 
   // Feed hooks — discover only fetches when active (#7)
-  const followingFeed = useSocialFeed(false, blockedUsers);
+  /* Following feed is enabled only when the user is on the Feed tab
+     AND the Following sub-tab. Previously it fetched on every Social
+     mount even when the user landed straight on Discover and never
+     opened Following — wasted reads on the cold start. */
+  const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following');
   const discoverFeed = useDiscoverFeed(feedSubTab === 'discover', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : discoverFeed;
 
@@ -96,13 +99,25 @@ export default function Social() {
 
   // Leave crew modal (#19)
   const [leavingCrewId, setLeavingCrewId] = useState<string | null>(null);
+  /* Per-crew busy state — tracks the crew the user is currently
+     joining so the row button can disable + show "Joining…". Without
+     this, double-taps would double-fire joinCrew. */
+  const [joiningCrewId, setJoiningCrewId] = useState<string | null>(null);
+  /* Busy flag for the leave-confirm sheet so a slow Firestore write
+     can't be triggered twice (Cancel/Leave double tap would otherwise
+     race). */
+  const [leavingInFlight, setLeavingInFlight] = useState(false);
 
   // Find tab state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ uid: string; displayName?: string; photoURL?: string; crewId?: string }[]>([]);
   const [searching, setSearching] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const contactModalRef = useFocusTrap<HTMLDivElement>(showContactModal);
+  /* Distinct error state lets the empty-results UI distinguish "no
+     match for this query" (legitimate empty state) from "the network
+     ate the request" (retryable). Previously failures collapsed into
+     setSearchResults([]) which surfaced the same "No users found"
+     copy as a real empty result, which lied to the user. */
+  const [searchError, setSearchError] = useState<string | null>(null);
   const leaveCrewRef = useFocusTrap<HTMLDivElement>(!!leavingCrewId);
   const createCrewRef = useFocusTrap<HTMLDivElement>(showCreateGroup);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -111,11 +126,13 @@ export default function Social() {
     const query = (q ?? searchQuery).trim();
     if (!query) return;
     setSearching(true);
+    setSearchError(null);
     try {
       const results = await searchUsers(query);
       setSearchResults(results.filter((u) => u.uid !== user?.uid));
     } catch {
       setSearchResults([]);
+      setSearchError("Couldn't search right now. Try again.");
     }
     setSearching(false);
   }, [searchQuery, user?.uid]);
@@ -125,8 +142,23 @@ export default function Social() {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     if (value.trim()) {
       searchDebounceRef.current = setTimeout(() => handleSearch(value), 300);
+    } else {
+      /* Empty input → clear results immediately. Previously the input
+         clearing left stale results on screen because the debounce
+         block only fired for non-empty values, so the previous query's
+         results stayed up indefinitely. */
+      setSearchResults([]);
+      setSearchError(null);
     }
   };
+
+  /* Clean up any pending debounced search on unmount so a tab change
+     mid-typing doesn't fire setState on an unmounted component. */
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
 
   // Pull-to-refresh with iOS conflict fix (#9)
   const [pullRefreshing, setPullRefreshing] = useState(false);
@@ -445,19 +477,35 @@ export default function Social() {
                       </div>
                     </Link>
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (isMember) {
+                          /* Tapping a member crew opens the leave-confirm sheet
+                             rather than firing leaveCrew directly. The button
+                             label stays positive ("Joined") because membership
+                             is the success state — destructive copy belongs
+                             behind the confirm flow. */
                           setLeavingCrewId(crew.id);
-                        } else {
-                          joinCrew(crew.id);
+                          return;
+                        }
+                        if (joiningCrewId) return;
+                        setJoiningCrewId(crew.id);
+                        try {
+                          await joinCrew(crew.id);
+                        } finally {
+                          setJoiningCrewId(null);
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 ${
+                      disabled={!isMember && joiningCrewId === crew.id}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 disabled:opacity-60 ${
                         isMember ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'
                       }`}>
-                      {isMember ? 'Leave' : 'Join'}
+                      {isMember
+                        ? 'Joined'
+                        : joiningCrewId === crew.id
+                          ? 'Joining…'
+                          : 'Join'}
                     </button>
                   </div>
                 );
@@ -480,16 +528,26 @@ export default function Social() {
                 <p className="text-sm text-muted-foreground">You can rejoin this crew later.</p>
                 <div className="flex gap-2">
                   <button onClick={() => setLeavingCrewId(null)}
-                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm">
+                    disabled={leavingInFlight}
+                    className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm disabled:opacity-60">
                     Cancel
                   </button>
                   <button onClick={async () => {
-                    await leaveCrew();
-                    setLeavingCrewId(null);
-                    toast.success('Left crew');
+                    if (leavingInFlight) return;
+                    setLeavingInFlight(true);
+                    try {
+                      await leaveCrew();
+                      setLeavingCrewId(null);
+                      toast.success('Left crew');
+                    } catch {
+                      toast.error("Couldn't leave. Try again.");
+                    } finally {
+                      setLeavingInFlight(false);
+                    }
                   }}
-                    className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm">
-                    Leave
+                    disabled={leavingInFlight}
+                    className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm disabled:opacity-60">
+                    {leavingInFlight ? 'Leaving…' : 'Leave'}
                   </button>
                 </div>
               </div>
@@ -627,33 +685,30 @@ export default function Social() {
                 ))}
               </div>
             )}
-            {searchQuery.trim() && !searching && searchResults.length === 0 && (
+            {searchQuery.trim() && !searching && searchResults.length === 0 && !searchError && (
               <p className="text-xs text-muted-foreground text-center py-4" aria-live="polite">
                 No users found for &ldquo;{searchQuery.trim()}&rdquo;
               </p>
             )}
+            {searchError && (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
+                <p className="text-xs text-destructive">{searchError}</p>
+                <button onClick={() => handleSearch()}
+                  className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
+              </div>
+            )}
           </div>
 
-          {/*
-            Section 3: Contact Sync — hidden on web because the
-            implementation lives behind a Capacitor contacts plugin
-            that isn't available in a browser. Rather than surface a
-            button that opens a modal saying "only in the iOS app",
-            we just hide the section until the user is in the native
-            shell. Surfaces back automatically on iOS / Android builds.
-          */}
-          {isNativePlatform() && (
-            <div className="space-y-2">
-              <p className="text-small font-semibold text-foreground">Find friends from contacts</p>
-              <button onClick={() => setShowContactModal(true)}
-                className="w-full py-3 rounded-lg border border-border/50 bg-muted text-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
-                style={{ borderLeft: `3px solid ${THEME.brand}80` }}>
-                Sync Contacts
-              </button>
-            </div>
-          )}
+          {/* Contact Sync section was removed: it rendered a "Sync
+              Contacts" button on native platforms that opened a modal
+              saying "available in the Tropos iOS app — download it,"
+              which is circular when the user is already IN the iOS
+              app. No real Capacitor contacts plugin flow existed
+              behind it. Per the audit, hide until properly
+              implemented; surfaces (and the modal + state) re-add
+              cleanly when there's a real flow to attach. */}
 
-          {/* Section 4: Suggested People */}
+          {/* Suggested People */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-small font-semibold text-foreground">Suggested people</p>
@@ -703,26 +758,6 @@ export default function Social() {
               </div>
             )}
           </div>
-
-          {/* Contact Sync Modal */}
-          {showContactModal && (
-            <>
-              <div className="fixed inset-0 bg-black/50 z-40" role="presentation" onClick={() => setShowContactModal(false)} />
-              <div ref={contactModalRef} role="dialog" aria-modal="true" className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <div className="text-center space-y-3 py-4">
-                  <Smartphone className="w-10 h-10 text-primary mx-auto" />
-                  <p className="text-base font-semibold text-foreground">Contact syncing</p>
-                  <p className="text-sm text-muted-foreground">Contact syncing is available in the Tropos iOS app. Download it to find friends from your phone.</p>
-                  <p className="text-xs text-muted-foreground">In the meantime, you can search by name above.</p>
-                </div>
-                <button onClick={() => setShowContactModal(false)}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm">
-                  Got it
-                </button>
-              </div>
-            </>
-          )}
 
         </div>
         </section>

@@ -198,6 +198,9 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
               joined
               onJoin={() => {}}
               onLeave={() => leaveChallenge(ch.id)}
+              /* leaveChallenge is async; ChallengeCard awaits it for
+                 the busy flag. Wrapping in arrow keeps the type as
+                 `() => Promise<void>` rather than the `(id) =>` shape. */
             />
           ))}
         </div>

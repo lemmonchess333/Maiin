@@ -56,10 +56,17 @@ export interface FeedItem {
   challengeMilestone?: string;
 }
 
-export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>) {
+/* `enabled` defaults true for backwards compatibility but lets the
+ * caller defer the network read when the feed isn't visible. Social.tsx
+ * mounts both useSocialFeed (Following) and useDiscoverFeed; previously
+ * the Following fetch fired on every Social tab open even when the
+ * user immediately landed on Discover and never saw Following. The
+ * gate skips the loadFeed effect when enabled is false; flipping it
+ * to true triggers a refresh-style fetch. */
+export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>, enabled = true) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
@@ -145,7 +152,18 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
     setLoading(false);
   }, [user, highlightsOnly, blockedUsers]);
 
-  useEffect(() => { const init = async () => { await loadFeed(true); }; init(); }, [loadFeed]);
+  useEffect(() => {
+    /* enabled-gate the initial fetch. When the feed is mounted but
+       not visible (Social tab default Following=false case), skip the
+       network read entirely; loading flips to false so the consumer
+       doesn't render a forever-skeleton. */
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    const init = async () => { await loadFeed(true); };
+    void init();
+  }, [loadFeed, enabled]);
 
   return {
     items, loading, hasMore, error,

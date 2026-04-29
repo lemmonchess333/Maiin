@@ -484,7 +484,13 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
               onClick={handleHighFive}
               disabled={liked}
               aria-label={liked ? "Props given" : "Give props"}
-              className="p-2 -m-2 transition-transform"
+              /* p-3 -m-3 keeps the visible icon size but expands the
+                 hit area to ~44×44 (12px padding × 2 + 20px icon).
+                 The negative margin pulls the button back into the
+                 row's spacing so the inflated tap zone is invisible
+                 to layout. Same pattern applied to all action buttons
+                 in this row. */
+              className="p-3 -m-3 transition-transform"
               style={{
                 transform: flameAnimating ? 'scale(1.3)' : 'scale(1)',
                 transition: 'transform 200ms ease-out',
@@ -505,7 +511,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           </div>
           <button onClick={() => setShowCommentSheet(true)}
             aria-label="View comments"
-            className="flex items-center gap-1.5 p-2 -m-2 text-muted-foreground active:scale-90 transition-transform">
+            className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform">
             <MessageCircle className="w-5 h-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium">{activity!.commentCount}</span>
@@ -515,7 +521,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
             <button
               onClick={() => setShowSaveRoutine(true)}
               aria-label="Save as routine"
-              className="p-2 -m-2 text-muted-foreground active:scale-90 transition-transform"
+              className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
               <BookmarkPlus className="w-5 h-5" />
             </button>
@@ -523,7 +529,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           {onShare && (
             <button onClick={() => onShare(feedItem)}
               aria-label="Share activity"
-              className="ml-auto p-2 -m-2 text-muted-foreground active:scale-90 transition-transform">
+              className="ml-auto p-3 -m-3 text-muted-foreground active:scale-90 transition-transform">
               <Share2 className="w-5 h-5" />
             </button>
           )}
