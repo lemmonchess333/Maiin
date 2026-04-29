@@ -281,8 +281,8 @@ export default function Social() {
               <button onClick={() => setTab('crews')} className="flex items-center gap-3 flex-1 text-left">
                 <Users className="w-5 h-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground">Join a crew to connect with others</p>
-                  <p className="text-xs text-muted-foreground">Browse crews</p>
+                  <p className="text-[13px] font-medium text-foreground">Join a crew to connect with others</p>
+                  <p className="text-[13px] text-muted-foreground">Browse crews</p>
                 </div>
               </button>
               <button onClick={dismissCrewBanner} className="p-1 text-muted-foreground hover:text-foreground transition-colors" aria-label="Dismiss">
@@ -365,7 +365,7 @@ export default function Social() {
                     >
                       <Users size={16} style={{ color: THEME.brand }} />
                     </div>
-                    <p className="text-xs text-muted-foreground leading-snug">
+                    <p className="text-[13px] text-muted-foreground leading-snug">
                       Follow people or join a crew to compete this week
                     </p>
                   </div>
@@ -466,8 +466,8 @@ export default function Social() {
                     >
                       <Users size={16} style={{ color: THEME.brand }} />
                     </div>
-                    <p className="text-xs text-muted-foreground leading-snug">
-                      Follow people to see their workouts and compete this week
+                    <p className="text-[13px] text-muted-foreground leading-snug">
+                      Follow athletes to see their workouts, runs and challenge progress here
                     </p>
                   </div>
                   <button
@@ -501,7 +501,7 @@ export default function Social() {
 
           {/* Crews list */}
           <div className="space-y-3">
-            <p className="text-small font-semibold text-foreground">Crews</p>
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Crews</p>
             <div className="space-y-2">
               {crews.slice(0, 5).map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
@@ -694,7 +694,7 @@ export default function Social() {
               still fires immediately — so it's been folded into the
               field instead of competing for visual weight beside it. */}
           <div className="space-y-3">
-            <p className="text-small font-semibold text-foreground">Find someone</p>
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Find someone</p>
             <div className="relative">
               <Search
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
@@ -755,9 +755,14 @@ export default function Social() {
               </div>
             )}
             {searchQuery.trim() && !searching && searchResults.length === 0 && !searchError && (
-              <p className="text-xs text-muted-foreground text-center py-4" aria-live="polite">
-                No users found for &ldquo;{searchQuery.trim()}&rdquo;
-              </p>
+              <div className="py-4 text-center space-y-1" aria-live="polite">
+                <p className="text-[13px] text-foreground">
+                  No matches for &ldquo;{searchQuery.trim()}&rdquo;
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Try a full name.
+                </p>
+              </div>
             )}
             {searchError && (
               <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
@@ -778,9 +783,9 @@ export default function Social() {
               cleanly when there's a real flow to attach. */}
 
           {/* Suggested People */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-small font-semibold text-foreground">Suggested people</p>
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Suggested people</p>
               {suggestedPeople.length > 0 && !suggestedLoading && (
                 <button
                   onClick={refreshSuggestions}
@@ -855,7 +860,7 @@ export default function Social() {
             if (otherCrews.length === 0) return null;
             return (
               <div className="space-y-2">
-                <p className="text-small font-semibold text-foreground">Popular crews</p>
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Popular crews</p>
                 <div className="space-y-2">
                   {otherCrews.map((crew) => {
                     const IconComp = ICON_MAP[crew.icon];
@@ -888,6 +893,8 @@ export default function Social() {
               path but no longer the dominant element on the page; the
               previous arrangement put it above search which is wrong
               for high-intent users trying to find someone specific. */}
+          <div className="space-y-3">
+            <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Bring a friend</p>
           <div
             className="p-3 rounded-2xl border"
             style={{
@@ -903,9 +910,9 @@ export default function Social() {
                 <Share2 className="w-4 h-4" style={{ color: THEME.brand }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Bring a friend</p>
-                <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">
-                  Train together. Stay consistent.
+                <p className="text-sm font-semibold text-foreground">Invite a training partner</p>
+                <p className="text-[13px] text-muted-foreground leading-relaxed mt-0.5">
+                  Share your link and compare lifts, runs and challenge progress.
                 </p>
               </div>
             </div>
@@ -916,6 +923,7 @@ export default function Social() {
             >
               Share invite link
             </button>
+          </div>
           </div>
 
         </div>

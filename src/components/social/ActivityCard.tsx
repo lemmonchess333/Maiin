@@ -237,11 +237,19 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   })
                 : ex.summary;
               const canCompare = !!user?.uid && activity?.authorId !== user.uid && hasStructured;
+              /* BW rows are quieter than weighted rows so a list of
+                 mixed bodyweight + loaded movements doesn't read with
+                 the same visual weight per row — kg numbers should
+                 stand out more than "BW" strings. */
+              const isBodyweight = displaySummary.endsWith(" BW");
+              const summaryClass = `text-sm font-mono tabular-nums ml-2 shrink-0 ${
+                isBodyweight ? "text-muted-foreground/60" : "text-muted-foreground"
+              }`;
               if (!canCompare) {
                 return (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
-                    <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{displaySummary}</span>
+                    <span className={summaryClass}>{displaySummary}</span>
                   </div>
                 );
               }
@@ -262,7 +270,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   className="w-full flex items-center justify-between text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
                   <span className="text-sm font-medium text-foreground truncate">{ex.name}</span>
-                  <span className="text-sm font-mono tabular-nums text-muted-foreground ml-2 shrink-0">{displaySummary}</span>
+                  <span className={summaryClass}>{displaySummary}</span>
                 </button>
               );
             })}
@@ -353,7 +361,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
-                  <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                  <p className="text-[13px] text-muted-foreground">{timeAgo}</p>
                 </div>
               </Link>
               {renderMenuButton()}
@@ -386,9 +394,9 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
                   <p className="text-sm font-semibold truncate text-foreground">{feedItem.authorName}</p>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     {isRun
-                      ? <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
-                      : <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />}
-                    <p className="text-xs">{timeAgo}</p>
+                      ? <Footprints className="w-3.5 h-3.5" style={{ color: THEME.running }} />
+                      : <Dumbbell className="w-3.5 h-3.5" style={{ color: THEME.lifting }} />}
+                    <p className="text-[13px]">{timeAgo}</p>
                   </div>
                 </div>
               </Link>
@@ -400,7 +408,7 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
 
             {/* Summary line (fallback for old activities without title) */}
             {!activityTitle && feedItem.summary && (
-              <p className="text-xs text-muted-foreground mb-3">{feedItem.summary}</p>
+              <p className="text-[13px] text-muted-foreground mb-3">{feedItem.summary}</p>
             )}
 
             {/* Author caption — optional note attached at share time
@@ -484,8 +492,10 @@ function ActivityCard({ feedItem, onShare }: { feedItem: FeedItem; onShare?: (it
           </div>
         )}
 
-        {/* Actions — social bar */}
-        <div className="flex items-center gap-5 pt-2.5 border-t border-border/30">
+        {/* Actions — social bar. Divider sits at /20 (subtle hairline)
+            so the action row reads as a continuation of the card
+            rather than a hard split. */}
+        <div className="flex items-center gap-5 pt-2.5 border-t border-border/20">
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleHighFive}

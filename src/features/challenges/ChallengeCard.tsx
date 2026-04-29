@@ -114,7 +114,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">{challenge.name}</p>
-            <p className="text-xs text-muted-foreground">{challenge.description}</p>
+            <p className="text-[13px] text-muted-foreground">{challenge.description}</p>
           </div>
           {currentTier && (
             <div
@@ -127,13 +127,13 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3.5 h-3.5" />
             {timeLeft}
           </span>
           <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
+            <Users className="w-3.5 h-3.5" />
             {challenge.participantCount} joined
           </span>
           {challenge.season && (
@@ -144,11 +144,13 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         </div>
 
         {/* Top 3 leaderboard preview.
-            Suppressed in the compact zero-progress branch (joined but
-            no qualifying activity yet) — the card stays a single
-            "next tier at X" hint without a half-empty board competing
-            for attention. */}
-        {leaderboard.length > 0 && !(joined && currentValue === 0) && (
+            Only rendered for *joined and progressing* participants.
+            Available (not-joined) cards drop it to stay compact —
+            the leaderboard is a goal-state preview, not a sales tool
+            for joining; without context for the numbers it just adds
+            visual weight. Joined-but-zero also drops it (the
+            half-empty board competes with the single "next tier" hint). */}
+        {leaderboard.length > 0 && joined && currentValue > 0 && (
           <div className="space-y-1">
             {leaderboard.slice(0, 3).map((p, i) => {
               const tier = computeTier(p.currentValue, challenge.tiers);
