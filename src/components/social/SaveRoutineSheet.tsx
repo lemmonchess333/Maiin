@@ -5,7 +5,59 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
-import { formatExerciseSummary } from "@/lib/exerciseSummary";
+
+/**
+ * Renders the per-exercise summary with numbers in JetBrains Mono and
+ * units ("kg", "BW", "sets") in Plus Jakarta — Tropos's "numerals in
+ * mono, words in sans" convention. The shared lib formatter returns a
+ * pure string and would render the units in mono too, which read as
+ * cramped on the routine preview rows. Branching at render time lets
+ * each fragment pick its own font without forking the formatter used
+ * by the activity feed.
+ */
+function ExerciseSummary({
+  setCount,
+  targetReps,
+  targetWeightKg,
+}: {
+  setCount: number;
+  targetReps: number;
+  targetWeightKg: number;
+}) {
+  const sets = Math.max(0, Math.round(setCount || 0));
+  const reps = Math.max(0, Math.round(targetReps || 0));
+  const weight = Math.max(0, Number(targetWeightKg) || 0);
+
+  const num = "font-mono tabular-nums text-foreground/80";
+  const unit = "text-muted-foreground/80";
+
+  if (sets === 0 && reps === 0) {
+    return <span className="text-muted-foreground/70">—</span>;
+  }
+  if (reps === 0) {
+    return (
+      <span>
+        <span className={num}>{sets}</span>
+        <span className={unit}> {sets === 1 ? "set" : "sets"}</span>
+      </span>
+    );
+  }
+  if (weight === 0) {
+    return (
+      <span>
+        <span className={num}>{sets}×{reps}</span>
+        <span className={unit}> BW</span>
+      </span>
+    );
+  }
+  const weightStr = Number.isInteger(weight) ? String(weight) : weight.toFixed(1);
+  return (
+    <span>
+      <span className={num}>{sets}×{reps}×{weightStr}</span>
+      <span className={unit}>kg</span>
+    </span>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -131,12 +183,12 @@ export default function SaveRoutineSheet({
                 {exercises.slice(0, 6).map((ex, i) => (
                   <div key={i} className="flex items-center justify-between gap-2 text-sm">
                     <span className="text-foreground truncate">{ex.name}</span>
-                    <span className="font-mono tabular-nums text-muted-foreground shrink-0 text-xs">
-                      {formatExerciseSummary({
-                        setCount: ex.setCount,
-                        targetReps: ex.targetReps,
-                        targetWeightKg: ex.targetWeightKg,
-                      })}
+                    <span className="shrink-0 text-xs">
+                      <ExerciseSummary
+                        setCount={ex.setCount}
+                        targetReps={ex.targetReps}
+                        targetWeightKg={ex.targetWeightKg}
+                      />
                     </span>
                   </div>
                 ))}

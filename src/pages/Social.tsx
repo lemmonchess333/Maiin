@@ -15,7 +15,7 @@ import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
 import FollowButton from '../components/social/FollowButton';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
-import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X } from 'lucide-react';
+import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -260,9 +260,9 @@ export default function Social() {
   return (
     <motion.div className="space-y-4" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
-      <motion.header variants={itemVariant}>
+      <motion.header variants={itemVariant} className="pt-1">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-extrabold">Social</h1>
+          <h1 className="text-xl font-extrabold text-foreground">Social</h1>
         </div>
       </motion.header>
 
@@ -333,7 +333,7 @@ export default function Social() {
           </div>
 
           {feedSubTab === 'following' && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
               {/*
                 If the user has <2 follows, a real leaderboard would just
                 show them (and maybe one other person) — reads as "app is
@@ -347,6 +347,34 @@ export default function Social() {
                 followingCount >= 2
                   ? <LeaderboardCard challenge="weekly_hybrid" onViewFull={() => setShowFullLeaderboard(true)} />
                   : <TrajectoryCard />
+              )}
+              {/* Trajectory pairing: when the slot is the solo
+                  trajectory card (thin social graph), follow it with
+                  a low-key social next-step so the surface points
+                  somewhere instead of dead-ending on personal stats.
+                  One row, text-link CTA — same compact pattern as
+                  the empty-feed prompt below. */}
+              {followingCount !== null && followingCount < 2 && (
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/40">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: `${THEME.brand}14` }}
+                    >
+                      <Users size={16} style={{ color: THEME.brand }} />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      Follow people or join a crew to compete this week
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTab('find')}
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+                  >
+                    Find people
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -656,37 +684,49 @@ export default function Social() {
               section: still accessible, but no longer the dominant
               visual element. */}
 
-          {/* Search */}
+          {/* Search.
+              Single field with an embedded search icon prefix and an
+              inline clear/spinner affordance on the right. The
+              previously-separate "Go" submit button was redundant —
+              the input auto-searches after 300ms of typing and Enter
+              still fires immediately — so it's been folded into the
+              field instead of competing for visual weight beside it. */}
           <div className="space-y-3">
             <p className="text-small font-semibold text-foreground">Find someone</p>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search athletes"
-                  value={searchQuery}
-                  onChange={e => handleSearchInputChange(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
-                  className="w-full h-12 pl-4 pr-10 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
-                />
-                {searchQuery.length > 0 && (
-                  /* Inline clear affordance — quicker than holding
-                     backspace on mobile and clears results in one tap
-                     via the empty-input branch of handleSearchInputChange. */
-                  <button
-                    type="button"
-                    onClick={() => handleSearchInputChange('')}
-                    aria-label="Clear search"
-                    className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <button onClick={() => handleSearch()} disabled={searching || searchQuery.trim().length < MIN_SEARCH_LEN}
-                className="h-12 w-12 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 shrink-0">
-                {searching ? '...' : 'Go'}
-              </button>
+            <div className="relative">
+              <Search
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                placeholder="Search athletes"
+                value={searchQuery}
+                onChange={e => handleSearchInputChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); handleSearch(); } }}
+                aria-label="Search athletes"
+                className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+              {searching ? (
+                <div
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                </div>
+              ) : searchQuery.length > 0 ? (
+                /* Inline clear affordance — quicker than holding
+                   backspace on mobile and clears results in one tap
+                   via the empty-input branch of handleSearchInputChange. */
+                <button
+                  type="button"
+                  onClick={() => handleSearchInputChange('')}
+                  aria-label="Clear search"
+                  className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : null}
             </div>
             {searchResults.length > 0 && (
               <div className="space-y-2">
