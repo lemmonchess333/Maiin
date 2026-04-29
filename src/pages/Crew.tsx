@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Users, Trophy, RefreshCw } from "lucide-react";
+import { ChevronLeft, Users, Trophy, RefreshCw, Share2 } from "lucide-react";
 import { httpsCallable, getFunctions } from "firebase/functions";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query } from "firebase/firestore";
+import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
@@ -68,6 +69,10 @@ export default function Crew() {
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [leaving, setLeaving] = useState(false);
   const [refreshingLeaderboard, setRefreshingLeaderboard] = useState(false);
+  /* Top members for the preview row beneath the crew header. Just
+     the first ~5 by join order — gives the page some human texture
+     without an N+1 read against each user's public profile. */
+  const [memberPreviews, setMemberPreviews] = useState<{ uid: string; displayName: string }[]>([]);
 
   // Try the in-memory crews list first (covers the navigated-from-Social
   // case without a refetch); fall back to a direct read if the user
@@ -135,6 +140,35 @@ export default function Crew() {
     void loadActivities();
   }, [loadActivities]);
 
+  /* Member preview fetch. Limits at 5 because that's enough for an
+     avatar stack; full member browsing would belong on a dedicated
+     /crew/{id}/members page if it ever lands. Members rule allows
+     authed reads. Failures fall through silently — the page works
+     without the preview row. */
+  useEffect(() => {
+    if (!crewId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const snap = await getDocs(
+          query(collection(db, "groups", crewId, "members"), limit(5)),
+        );
+        if (cancelled) return;
+        setMemberPreviews(
+          snap.docs.map((d) => ({
+            uid: d.id,
+            displayName: (d.data().displayName as string) || "Athlete",
+          })),
+        );
+      } catch {
+        if (!cancelled) setMemberPreviews([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [crewId]);
+
   if (!crewId) {
     return null;
   }
@@ -166,10 +200,44 @@ export default function Crew() {
 
   const isMember = currentCrew?.id === crewDoc.id;
   const Icon = CREW_ICON_MAP[crewDoc.icon];
+  /* "This week" pulse — derived from the leaderboard rather than a
+     separate query. currentLeaderboard is written by the rollup CF
+     and contains every active member's score. Active = currentValue
+     > 0, which means they've logged something this week toward the
+     crew metric. Falls back to plain member count when there's no
+     leaderboard yet (rollup hasn't run, or no activity at all). */
+  const activeThisWeek = (crewDoc.currentLeaderboard ?? []).filter((e) => (e.score ?? 0) > 0).length;
   const memberLabel =
     crewDoc.memberCount === 0
       ? "No members yet"
-      : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
+      : activeThisWeek > 0
+        ? `${activeThisWeek} active this week · ${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`
+        : `${crewDoc.memberCount} member${crewDoc.memberCount === 1 ? "" : "s"}`;
+
+  /* Invite handler — uses the Web Share API on platforms that
+     support it (mobile native + Capacitor), falls back to copying a
+     deep link to the clipboard with a toast confirmation otherwise.
+     URL is the canonical /crew/{id} route on the deployed app, so
+     the recipient lands on this same page. */
+  const handleInvite = async () => {
+    if (!crewDoc) return;
+    const url = `${window.location.origin}${import.meta.env.BASE_URL || "/"}#/crew/${crewDoc.id}`;
+    const shareText = `Join "${crewDoc.name}" on Tropos`;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: shareText, text: shareText, url });
+      } catch {
+        /* user cancelled or share unsupported — fall through */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Crew link copied");
+    } catch {
+      toast.error("Couldn't copy link");
+    }
+  };
 
   return (
     <motion.div
@@ -208,7 +276,7 @@ export default function Crew() {
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-extrabold text-foreground truncate">{crewDoc.name}</h1>
             {crewDoc.description?.trim() && (
-              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
                 {crewDoc.description}
               </p>
             )}
@@ -219,36 +287,75 @@ export default function Crew() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={async () => {
-            if (!user) return;
-            if (isMember) {
-              setLeaving(true);
-              try {
-                await leaveCrew();
-                toast.success("Left crew");
-              } finally {
-                setLeaving(false);
+        {/* Member preview row — gives the crew header some human
+            texture beyond the bare member count. Stacked avatars +
+            a "+N more" pill when there are more members than fit. */}
+        {memberPreviews.length > 0 && (
+          <div className="flex items-center gap-2 mt-3">
+            <div className="flex -space-x-2">
+              {memberPreviews.map((m) => (
+                <Avatar
+                  key={m.uid}
+                  displayName={m.displayName}
+                  size="sm"
+                  className="ring-2 ring-card"
+                />
+              ))}
+            </div>
+            {crewDoc.memberCount > memberPreviews.length && (
+              <span className="text-xs text-muted-foreground">
+                +{crewDoc.memberCount - memberPreviews.length} more
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Action row — Join/Leave on the left, Invite on the right.
+            Invite is member-only since you can only invite to a crew
+            you're in. Both buttons share the same height so they
+            visually match. */}
+        <div className="flex gap-2 mt-4">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!user) return;
+              if (isMember) {
+                setLeaving(true);
+                try {
+                  await leaveCrew();
+                  toast.success("Left crew");
+                } finally {
+                  setLeaving(false);
+                }
+              } else {
+                try {
+                  await joinCrew(crewDoc.id);
+                  toast.success("Joined!");
+                } catch {
+                  toast.error("Couldn't join. Try again.");
+                }
               }
-            } else {
-              try {
-                await joinCrew(crewDoc.id);
-                toast.success("Joined!");
-              } catch {
-                toast.error("Couldn't join. Try again.");
-              }
-            }
-          }}
-          disabled={leaving}
-          className={`w-full mt-4 py-3 rounded-xl text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60 ${
-            isMember
-              ? "bg-muted text-foreground"
-              : "bg-primary text-primary-foreground"
-          }`}
-        >
-          {isMember ? (leaving ? "Leaving…" : "Leave crew") : "Join crew"}
-        </button>
+            }}
+            disabled={leaving}
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-60 ${
+              isMember
+                ? "bg-muted text-foreground"
+                : "bg-primary text-primary-foreground"
+            }`}
+          >
+            {isMember ? (leaving ? "Leaving…" : "Leave crew") : "Join crew"}
+          </button>
+          {isMember && (
+            <button
+              type="button"
+              onClick={handleInvite}
+              aria-label="Invite to crew"
+              className="h-12 w-12 rounded-xl bg-muted text-foreground flex items-center justify-center active:scale-[0.95] transition-transform"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </motion.div>
 
       {/* Weekly leaderboard.

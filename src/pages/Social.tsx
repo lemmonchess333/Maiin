@@ -500,7 +500,7 @@ export default function Social() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{subtext}</p>
+                        <p className="text-sm text-muted-foreground truncate">{subtext}</p>
                       </div>
                     </Link>
                     <button
@@ -647,41 +647,16 @@ export default function Social() {
       {tab === 'find' && (
         <section aria-label="Find people">
         <div className="space-y-6">
-          {/* Section 1: Invite link CTA — primary growth path on web.
-              Compressed from py-4/mb-3 to py-3/mb-2 because at the
-              previous size it visually competed with the search +
-              suggested-people sections that come after it. */}
-          <div
-            className="p-3 rounded-2xl border"
-            style={{
-              background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
-              borderColor: `${THEME.brand}33`,
-            }}
-          >
-            <div className="flex items-start gap-3 mb-2">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${THEME.brand}25` }}
-              >
-                <Share2 className="w-4 h-4" style={{ color: THEME.brand }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Bring a friend</p>
-                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                  Train together. Stay consistent.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleShareInvite}
-              className="w-full py-2.5 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
-              style={{ background: THEME.brand }}
-            >
-              Share invite link
-            </button>
-          </div>
+          {/* Section order rebuilt per audit: search-first because
+              that's the highest-intent task on this surface. Suggested
+              people next (most relevant social action). Popular crews
+              third — always shown so the page never dead-ends when
+              suggestions are empty (the previous IA left a mostly-
+              blank page on cold-start users). Invite is the last
+              section: still accessible, but no longer the dominant
+              visual element. */}
 
-          {/* Section 2: Search */}
+          {/* Search */}
           <div className="space-y-3">
             <p className="text-small font-semibold text-foreground">Find someone</p>
             <div className="flex items-center gap-2">
@@ -729,7 +704,7 @@ export default function Social() {
                       <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
-                        {u.crewId && <p className="text-xs text-muted-foreground">Crew member</p>}
+                        {u.crewId && <p className="text-sm text-muted-foreground">Crew member</p>}
                       </div>
                     </Link>
                     <FollowButton targetUid={u.uid} />
@@ -779,12 +754,26 @@ export default function Social() {
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : suggestedPeople.length === 0 ? (
-              <div className="p-4 rounded-xl bg-card border border-border/50 text-center">
-                <p className="text-xs text-muted-foreground">
+              /* Empty state with a real next step rather than a
+                 dead-end caption. Falls through to the always-shown
+                 Popular crews section below, but adds an explicit
+                 jump to Crews so users on this surface understand
+                 where the suggestion engine pulls from. */
+              <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
                   {profile?.crewId && currentCrew
-                    ? 'Suggestions appear as more athletes join your crew'
-                    : 'Suggestions appear as you join crews and follow athletes'}
+                    ? "Suggestions show up as people in your crew get active."
+                    : "Join a crew or follow people to start seeing suggestions."}
                 </p>
+                {!profile?.crewId && (
+                  <button
+                    type="button"
+                    onClick={() => setTab('crews')}
+                    className="text-sm font-medium text-primary hover:text-primary/80"
+                  >
+                    Browse crews
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-2">
@@ -793,7 +782,7 @@ export default function Social() {
                     <Avatar photoURL={p.photoURL} displayName={p.displayName} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
                       </p>
                     </div>
@@ -809,6 +798,82 @@ export default function Social() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Popular crews — fallback discovery when suggestions are
+              empty AND a permanent surface for users to find groups
+              they could join. Sorted by memberCount desc, excluding
+              crews the user is already a member of. Limit 3 so the
+              section stays compact. Hidden entirely if every crew
+              is one the user already belongs to. */}
+          {(() => {
+            const otherCrews = crews
+              .filter((c) => c.id !== currentCrew?.id)
+              .slice(0, 3);
+            if (otherCrews.length === 0) return null;
+            return (
+              <div className="space-y-2">
+                <p className="text-small font-semibold text-foreground">Popular crews</p>
+                <div className="space-y-2">
+                  {otherCrews.map((crew) => {
+                    const IconComp = ICON_MAP[crew.icon];
+                    return (
+                      <Link
+                        key={crew.id}
+                        to={`/crew/${crew.id}`}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-card"
+                      >
+                        {IconComp ? (
+                          <IconComp size={24} className="text-muted-foreground shrink-0" />
+                        ) : (
+                          <span className="text-2xl shrink-0">{crew.icon}</span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{crew.name}</p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {crew.description?.trim() || `${crew.memberCount} member${crew.memberCount === 1 ? '' : 's'}`}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Bring a friend — moved to bottom. Still the primary growth
+              path but no longer the dominant element on the page; the
+              previous arrangement put it above search which is wrong
+              for high-intent users trying to find someone specific. */}
+          <div
+            className="p-3 rounded-2xl border"
+            style={{
+              background: `linear-gradient(135deg, ${THEME.brand}18, ${THEME.brand}08)`,
+              borderColor: `${THEME.brand}33`,
+            }}
+          >
+            <div className="flex items-start gap-3 mb-2">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `${THEME.brand}25` }}
+              >
+                <Share2 className="w-4 h-4" style={{ color: THEME.brand }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Bring a friend</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">
+                  Train together. Stay consistent.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleShareInvite}
+              className="w-full py-2.5 rounded-xl text-primary-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+              style={{ background: THEME.brand }}
+            >
+              Share invite link
+            </button>
           </div>
 
         </div>
