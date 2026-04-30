@@ -14,11 +14,18 @@ const SIZE_CLASSES: Record<AvatarSize, string> = {
 interface AvatarProps {
   /** The user's uploaded photo URL, if any. Falls back to initials when absent or on image load failure. */
   photoURL?: string | null;
-  /** Display name — used for initial + alt text. "You" renders a `Y` initial. */
+  /** Display name — used for initial + alt text. "You" renders a `Y` initial unless `fallbackInitial` overrides. */
   displayName?: string | null;
   size?: AvatarSize;
   /** Optional ring colour — pass when this avatar represents the current user ("You" highlight). */
   ringColor?: string;
+  /**
+   * Override the initial-fallback character. Used when the visible label
+   * is something like "You" but the fallback should still show the
+   * user's actual first letter (so "Y" doesn't mask the real identity).
+   * Falls back to `displayName.charAt(0)` when absent.
+   */
+  fallbackInitial?: string | null;
   /**
    * Override the initial-fallback background colour. Defaults to the
    * Tailwind `bg-muted` grey. ActivityCard passes a sport-coded tint
@@ -52,11 +59,20 @@ export default function Avatar({
   ringColor,
   fallbackBg,
   fallbackColor,
+  fallbackInitial,
   className,
 }: AvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
 
-  const initial = (displayName || '?').trim().charAt(0).toUpperCase() || '?';
+  /* `fallbackInitial` takes precedence over the displayName-derived
+     letter so a "You" row in a leaderboard can still show the user's
+     real initial in the fallback circle. Falls through to the
+     displayName-first-letter, then '?' if both are empty. */
+  const initial = (
+    fallbackInitial?.trim().charAt(0)
+    || displayName?.trim().charAt(0)
+    || '?'
+  ).toUpperCase();
   const sizeCls = SIZE_CLASSES[size];
 
   const showImage = photoURL && !imageFailed;

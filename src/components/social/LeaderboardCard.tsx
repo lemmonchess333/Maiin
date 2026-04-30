@@ -101,6 +101,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 <Avatar
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
                   size="sm"
                 />
 
@@ -132,6 +133,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 <Avatar
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
                   size="sm"
                 />
 
@@ -151,7 +153,12 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 </div>
                 <div className="flex items-center gap-2.5 p-2 rounded-lg bg-primary/5 border border-primary/15">
                   <span className="w-5 text-xs font-bold text-center shrink-0">{selfEntry.rank}</span>
-                  <Avatar photoURL={selfEntry.photoURL} displayName="You" size="sm" />
+                  <Avatar
+                    photoURL={selfEntry.photoURL}
+                    displayName="You"
+                    fallbackInitial={user?.displayName?.charAt(0)}
+                    size="sm"
+                  />
                   <span className="text-sm font-medium flex-1 truncate">You</span>
                   <span className="text-sm font-mono tabular-nums font-bold">
                     {selfEntry.value.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">{unit}</span>
