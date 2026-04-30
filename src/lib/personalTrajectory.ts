@@ -29,10 +29,22 @@ export interface PersonalTrajectory {
   thisWeek: TrajectoryBreakdown;
   lastWeek: TrajectoryBreakdown;
   /**
-   * Percent change from last week's score to this week's. Positive =
-   * improvement, negative = regression. `null` when last week's score
-   * is zero (division-by-zero — caller should show an absolute delta
-   * or "new baseline" copy instead).
+   * Last week's running total at the same elapsed point in the week —
+   * i.e. summed from `lastWeekStart` to `lastWeekStart + (now -
+   * thisWeekStart)`. Used as the *fair* baseline for the week-over-week
+   * delta: comparing a Tuesday cumulative against a full prior week's
+   * total guarantees a misleading negative percentage.
+   *
+   * `lastWeek.score` is still kept around for the "Last week 287 pts"
+   * informational baseline row — it's the right number for that row,
+   * just not for the delta.
+   */
+  lastWeekToDate: TrajectoryBreakdown;
+  /**
+   * Percent change from `lastWeekToDate.score` to `thisWeek.score`.
+   * Positive = improvement, negative = regression. `null` when last
+   * week's same-day-of-week running total is zero (division-by-zero —
+   * caller should show an absolute delta or "new baseline" copy).
    */
   deltaPct: number | null;
 }
@@ -108,18 +120,27 @@ async function computeRangeBreakdown(
 }
 
 export async function getPersonalTrajectory(uid: string): Promise<PersonalTrajectory> {
-  const thisWeekStart = startOfWeek(new Date());
+  const now = new Date();
+  const thisWeekStart = startOfWeek(now);
   const nextWeekStart = addDays(thisWeekStart, 7);
   const lastWeekStart = addDays(thisWeekStart, -7);
+  /* Same-elapsed-time-into-the-week marker for last week. If today is
+     Tuesday 14:00, this is last Tuesday 14:00. The delta then compares
+     "cumulative this week so far" against "cumulative last week at the
+     same point" — a fair like-for-like rather than the previous
+     "Tuesday vs full week" apples-to-oranges comparison. */
+  const elapsedMs = now.getTime() - thisWeekStart.getTime();
+  const lastWeekToDateEnd = new Date(lastWeekStart.getTime() + elapsedMs);
 
-  const [thisWeek, lastWeek] = await Promise.all([
+  const [thisWeek, lastWeek, lastWeekToDate] = await Promise.all([
     computeRangeBreakdown(uid, thisWeekStart, nextWeekStart),
     computeRangeBreakdown(uid, lastWeekStart, thisWeekStart),
+    computeRangeBreakdown(uid, lastWeekStart, lastWeekToDateEnd),
   ]);
 
-  const deltaPct = lastWeek.score > 0
-    ? Math.round(((thisWeek.score - lastWeek.score) / lastWeek.score) * 100)
+  const deltaPct = lastWeekToDate.score > 0
+    ? Math.round(((thisWeek.score - lastWeekToDate.score) / lastWeekToDate.score) * 100)
     : null;
 
-  return { thisWeek, lastWeek, deltaPct };
+  return { thisWeek, lastWeek, lastWeekToDate, deltaPct };
 }

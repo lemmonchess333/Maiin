@@ -159,6 +159,10 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
                 <Avatar
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
+                  /* "You" rows would otherwise render a "Y" fallback
+                     letter — pass the actual user's first initial so
+                     the fallback reflects identity, not the row label. */
+                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
                   size="sm"
                 />
                 <div className="flex-1 min-w-0">

@@ -84,6 +84,16 @@ export async function getFollowingIds(uid: string): Promise<Set<string>> {
   return new Set(snap.docs.map((d) => d.id));
 }
 
+/* Mirror of getFollowingIds for the inverse direction: who follows
+ * *me*. Used by the "Follows you" badge in suggested-people rows and
+ * search results — a row reads as more compelling when the candidate
+ * is already engaging with the current user, so surface that signal
+ * inline. Reads users/{uid}/followers — same fan-out pattern. */
+export async function getFollowerIds(uid: string): Promise<Set<string>> {
+  const snap = await getDocs(collection(db, 'followers', uid, 'users'));
+  return new Set(snap.docs.map((d) => d.id));
+}
+
 // ============================================
 // Post Activity + Fan-out to Followers
 // ============================================

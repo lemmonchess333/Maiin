@@ -13,6 +13,7 @@ import TrajectoryCard from '../components/social/TrajectoryCard';
 import Avatar from '../components/Avatar';
 import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
 import FollowButton from '../components/social/FollowButton';
+import FollowsYouBadge from '../components/social/FollowsYouBadge';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
 import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X, Search } from 'lucide-react';
@@ -406,7 +407,11 @@ export default function Social() {
 
           <div className="space-y-3">
             {activeFeed.items.map(item => (
-              <ActivityCard key={item.id} feedItem={item} />
+              /* feedSource lets ActivityCard render the "From your
+                 crew" trust chip on Explore only — Following posts
+                 are by definition from people the user already
+                 chose, so the chip would be redundant noise there. */
+              <ActivityCard key={item.id} feedItem={item} feedSource={feedSubTab} />
             ))}
           </div>
 
@@ -737,7 +742,10 @@ export default function Social() {
                      user's profile so search becomes the start of a
                      real social action, not just "see name → follow".
                      FollowButton stays a sibling so its click doesn't
-                     bubble through the Link. */
+                     bubble through the Link. The "Follows you" badge
+                     surfaces a real social signal — the candidate
+                     already engaged with the current user — that
+                     materially improves follow-back conversion. */
                   <div key={u.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                     <Link
                       to={`/user/${u.uid}`}
@@ -745,7 +753,10 @@ export default function Social() {
                     >
                       <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
+                          <FollowsYouBadge uid={u.uid} />
+                        </div>
                         {u.crewId && <p className="text-sm text-muted-foreground">Crew member</p>}
                       </div>
                     </Link>
@@ -828,7 +839,10 @@ export default function Social() {
                   <div key={p.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
                     <Avatar photoURL={p.photoURL} displayName={p.displayName} size="md" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>
+                        <FollowsYouBadge uid={p.uid} />
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {p.reason === 'in_your_crew' ? 'In your crew' : 'Recent post'}
                       </p>

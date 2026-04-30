@@ -93,9 +93,22 @@ export default function TrajectoryCard() {
             </span>
             <span className="text-sm text-muted-foreground font-medium">pts</span>
             {thisWeek.score > 0 && (
+              /* The delta now compares against last week's running
+                 total at the same elapsed point in the week (fair
+                 like-for-like) rather than its full-week total. The
+                 aria-label spells out the comparison so screen readers
+                 — and curious users — can resolve why the percentage
+                 doesn't match the visible "Last week N pts" baseline
+                 row below it (which is intentionally the full prior
+                 week, kept as an aspirational target). */
               <span
                 className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
                 style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
+                aria-label={
+                  deltaPct == null
+                    ? 'New baseline this week'
+                    : `${deltaPct > 0 ? '+' : ''}${deltaPct}% vs last week so far`
+                }
               >
                 <DeltaIcon size={12} />
                 {deltaPct == null
