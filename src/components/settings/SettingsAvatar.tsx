@@ -60,8 +60,24 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
              concrete remediation the user can act on. */
           toast.error(err.message);
         } else {
+          /* Storage / Firestore failures land here. The most common
+             failure mode in early production is a permission-denied
+             from Storage rules (typically because the deployed
+             rules pre-date the profile-photos/{uid}/ path). Surface
+             the error code so users can self-diagnose without us
+             needing remote logs — Firebase errors carry a `code`
+             field like 'storage/unauthorized' or 'permission-denied'. */
           console.error("uploadProfilePhoto failed:", err);
-          toast.error("Couldn't upload. Try again.");
+          const code = (err as { code?: string } | null)?.code;
+          if (code === "storage/unauthorized" || code === "permission-denied") {
+            toast.error("Upload not permitted. Try again in a minute — the server may need to update.");
+          } else if (code === "storage/canceled") {
+            toast.error("Upload cancelled.");
+          } else if (code === "storage/retry-limit-exceeded") {
+            toast.error("Network is slow. Try again on a stronger connection.");
+          } else {
+            toast.error(code ? `Couldn't upload (${code}). Try again.` : "Couldn't upload. Try again.");
+          }
         }
       } finally {
         setBusy(null);
