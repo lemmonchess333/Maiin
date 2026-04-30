@@ -14,7 +14,7 @@ interface EnrichedEntry extends LeaderboardEntry {
 }
 
 export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFull }: { challenge?: ChallengeType; onViewFull?: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +101,11 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 <Avatar
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
+                  fallbackInitial={
+                    entry.uid === user?.uid
+                      ? profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)
+                      : undefined
+                  }
                   size="sm"
                 />
 
@@ -133,7 +137,11 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                 <Avatar
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
+                  fallbackInitial={
+                    entry.uid === user?.uid
+                      ? profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)
+                      : undefined
+                  }
                   size="sm"
                 />
 
@@ -156,7 +164,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   <Avatar
                     photoURL={selfEntry.photoURL}
                     displayName="You"
-                    fallbackInitial={user?.displayName?.charAt(0)}
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
                     size="sm"
                   />
                   <span className="text-sm font-medium flex-1 truncate">You</span>

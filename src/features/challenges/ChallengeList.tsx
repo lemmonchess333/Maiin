@@ -12,7 +12,7 @@ interface EnrichedEntry extends LeaderboardEntry {
 }
 
 export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { challenges, myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge } = useChallenges();
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(true);
@@ -160,9 +160,17 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
                   photoURL={entry.photoURL}
                   displayName={entry.uid === user?.uid ? 'You' : entry.name}
                   /* "You" rows would otherwise render a "Y" fallback
-                     letter — pass the actual user's first initial so
-                     the fallback reflects identity, not the row label. */
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
+                     letter. Prefer the Firestore profile.displayName
+                     because Firebase Auth's user.displayName is often
+                     empty for email/password signups (it's only set
+                     during onboarding into the profile doc). Falling
+                     back through user.displayName keeps Google/Apple
+                     OAuth users covered when profile hasn't loaded yet. */
+                  fallbackInitial={
+                    entry.uid === user?.uid
+                      ? profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)
+                      : undefined
+                  }
                   size="sm"
                 />
                 <div className="flex-1 min-w-0">
