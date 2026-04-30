@@ -6,6 +6,7 @@ import { THEME } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
+import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
@@ -156,23 +157,24 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
                 >
                   {entry.rank}
                 </span>
-                <Avatar
-                  photoURL={entry.photoURL}
-                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  /* "You" rows would otherwise render a "Y" fallback
-                     letter. Prefer the Firestore profile.displayName
-                     because Firebase Auth's user.displayName is often
-                     empty for email/password signups (it's only set
-                     during onboarding into the profile doc). Falling
-                     back through user.displayName keeps Google/Apple
-                     OAuth users covered when profile hasn't loaded yet. */
-                  fallbackInitial={
-                    entry.uid === user?.uid
-                      ? profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)
-                      : undefined
-                  }
-                  size="sm"
-                />
+                {entry.uid === user?.uid ? (
+                  <Avatar
+                    photoURL={entry.photoURL}
+                    displayName="You"
+                    /* Prefer Firestore profile.displayName because
+                       Firebase Auth's user.displayName is often
+                       empty for email/password signups. */
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
+                    size="sm"
+                  />
+                ) : (
+                  <BlockAwareAvatar
+                    uid={entry.uid}
+                    photoURL={entry.photoURL}
+                    displayName={entry.name}
+                    size="sm"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium truncate">

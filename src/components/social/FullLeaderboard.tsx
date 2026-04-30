@@ -6,6 +6,7 @@ import { db } from '../../lib/firebase';
 import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
 import { Skeleton } from '../LoadingSkeleton';
 import Avatar from '../Avatar';
+import BlockAwareAvatar from './BlockAwareAvatar';
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
@@ -21,7 +22,7 @@ const TABS: { key: ChallengeType; label: string; unit: string }[] = [
 const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ChallengeType>('weekly_hybrid');
   const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,11 +127,21 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
             >
               {entry.rank}
             </span>
-            <Avatar
-              photoURL={entry.photoURL}
-              displayName={entry.uid === user?.uid ? 'You' : entry.name}
-              size="sm"
-            />
+            {entry.uid === user?.uid ? (
+              <Avatar
+                photoURL={entry.photoURL}
+                displayName="You"
+                fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
+                size="sm"
+              />
+            ) : (
+              <BlockAwareAvatar
+                uid={entry.uid}
+                photoURL={entry.photoURL}
+                displayName={entry.name}
+                size="sm"
+              />
+            )}
             <span className="text-sm font-medium flex-1 truncate">
               {entry.uid === user?.uid ? 'You' : entry.name}
             </span>

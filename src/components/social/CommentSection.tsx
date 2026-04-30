@@ -3,12 +3,13 @@ import { useAuth } from '../../lib/auth';
 import { getComments, addComment } from '../../lib/socialApi';
 import { getTimeAgo } from '../../lib/timeAgo';
 import type { DocumentSnapshot } from 'firebase/firestore';
-import Avatar from '../Avatar';
+import BlockAwareAvatar from './BlockAwareAvatar';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
 
 interface Comment {
   id: string;
+  authorId?: string;
   authorName?: string;
   authorPhotoURL?: string;
   text?: string;
@@ -74,7 +75,7 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
         const timeAgo = c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : '';
         return (
           <div key={c.id} className="flex gap-2">
-            <Avatar photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" className="w-6 h-6" />
+            <BlockAwareAvatar uid={c.authorId} photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" className="w-6 h-6" />
             <div>
               <p className="text-xs">
                 <span className="font-semibold">{c.authorName}</span>{' '}

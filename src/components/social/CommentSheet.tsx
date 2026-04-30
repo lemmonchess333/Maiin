@@ -7,7 +7,7 @@ import { getComments, addComment, deleteComment } from '../../lib/socialApi';
 import { getTimeAgo } from '../../lib/timeAgo';
 import { haptic } from '../../lib/haptic';
 import type { DocumentSnapshot } from 'firebase/firestore';
-import Avatar from '../Avatar';
+import BlockAwareAvatar from './BlockAwareAvatar';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
 
@@ -136,7 +136,7 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
                     transition={{ duration: 0.2 }}
                     className="flex gap-2 group"
                   >
-                    <Avatar photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" />
+                    <BlockAwareAvatar uid={c.authorId} photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs">
                         <span className="font-semibold text-foreground">{c.authorName}</span>{' '}
