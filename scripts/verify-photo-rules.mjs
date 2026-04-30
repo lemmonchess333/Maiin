@@ -18,7 +18,7 @@ import {
   assertFails,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+import { setDoc, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 
 const env = await initializeTestEnvironment({
   projectId: "demo-rules-verify",
@@ -183,6 +183,48 @@ await check("Null photoStoragePath is allowed (OAuth-only users)", async () =>
     }),
   ),
 );
+
+console.log("\n[E] PR K mirror-write — both docs in one writeBatch:");
+
+/* Seed both docs first. The main doc needs a baseline because its
+   rule checks `affectedKeys` against an existing resource. */
+await assertSucceeds(
+  setDoc(doc(alice, "users/alice"), {
+    uid: "alice",
+    displayName: "Alice",
+    email: "alice@example.com",
+    athleteType: "Lifter",
+    photoURL: null,
+    subscriptionTier: "free",
+    createdAt: serverTimestamp(),
+  }),
+);
+await assertSucceeds(
+  setDoc(profileRef, {
+    ...base,
+    photoURL: null,
+    photoStoragePath: null,
+  }),
+);
+
+await check("writeBatch updates both public mirror AND main doc with photoURL", async () => {
+  const batch = writeBatch(alice);
+  batch.update(profileRef, {
+    photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+    photoStoragePath: "profile-photos/alice/2.jpg",
+  });
+  batch.update(doc(alice, "users/alice"), {
+    photoURL: "https://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  });
+  await assertSucceeds(batch.commit());
+});
+
+await check("writeBatch with empty photoURL (removal flow) succeeds", async () => {
+  const batch = writeBatch(alice);
+  batch.update(profileRef, { photoURL: "", photoStoragePath: null });
+  batch.update(doc(alice, "users/alice"), { photoURL: "" });
+  await assertSucceeds(batch.commit());
+});
 
 console.log(`\n${pass} passed, ${fail} failed\n`);
 await env.cleanup();

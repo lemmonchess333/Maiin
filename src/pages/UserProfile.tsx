@@ -50,7 +50,21 @@ export default function UserProfile() {
     // below doesn't throw, and the public-doc read carries the cross-user-
     // visible fields regardless.
     const profilePromise = getDoc(doc(db, 'users', uid)).then(snap => {
-      if (snap.exists()) setProfile({ uid: snap.id, ...snap.data() });
+      if (snap.exists()) {
+        const data = snap.data();
+        /* Translate the canonical Firestore field name `photoURL` to
+           the local state field `avatarUrl`. Without this map step,
+           own-profile reads spread `photoURL` into state but never
+           populate `avatarUrl`, so the Avatar at line ~174 falls
+           back to the initial letter even when the user has a real
+           photo set. The cross-user fallback path below already does
+           this mapping correctly; this brings own-profile in line. */
+        setProfile({
+          uid: snap.id,
+          ...data,
+          avatarUrl: (data.photoURL as string | null | undefined) ?? undefined,
+        });
+      }
     }).catch(() => {});
     getFollowerCount(uid).then(setFollowers);
     getFollowingCount(uid).then(setFollowingCount);
