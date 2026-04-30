@@ -4,7 +4,7 @@ import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut, Footprints, Sprou
 import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
 import { TIER_COLORS, computeTier, getTimeRemaining, isTierAchieved } from "./useChallenges";
 import { THEME } from "@/lib/theme";
-import Avatar from "@/components/Avatar";
+import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -167,7 +167,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               return (
                 <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-right font-medium text-muted-foreground">{i + 1}</span>
-                  <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
+                  <BlockAwareAvatar uid={p.uid} photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                   <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
                   <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
                   {tier && (
@@ -338,7 +338,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                 return (
                   <div key={p.uid || i} className="flex items-center gap-2 text-xs">
                     <span className="w-5 text-right font-medium text-muted-foreground">{i + 1}</span>
-                    <Avatar photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
+                    <BlockAwareAvatar uid={p.uid} photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
                     <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
                     <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
                     {tier && (

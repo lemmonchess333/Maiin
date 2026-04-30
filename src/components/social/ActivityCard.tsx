@@ -14,6 +14,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import type { FeedItem } from '../../hooks/useSocialFeed';
 import { THEME } from '../../lib/theme';
 import Avatar from '../Avatar';
+import BlockAwareAvatar from './BlockAwareAvatar';
 import { haptic } from '../../lib/haptic';
 import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, Target, Star, MoreHorizontal, Flag, Ban, BookmarkPlus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -610,7 +611,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <p className="text-xs text-muted-foreground py-1">Couldn&apos;t load props right now. Try again.</p>
             ) : kudosUsers.map(u => (
               <div key={u.userId} className="flex items-center gap-2">
-                <Avatar photoURL={u.photoURL} displayName={u.userName} size="sm" />
+                <BlockAwareAvatar uid={u.userId} photoURL={u.photoURL} displayName={u.userName} size="sm" />
                 <span className="text-xs font-medium text-foreground">{u.userName}</span>
               </div>
             ))}

@@ -10,7 +10,7 @@ import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
 import LeaderboardCard from '../components/social/LeaderboardCard';
 import TrajectoryCard from '../components/social/TrajectoryCard';
-import Avatar from '../components/Avatar';
+import BlockAwareAvatar from '../components/social/BlockAwareAvatar';
 import { ActivityCardSkeleton } from '../components/LoadingSkeleton';
 import FollowButton from '../components/social/FollowButton';
 import FollowsYouBadge from '../components/social/FollowsYouBadge';
@@ -751,7 +751,7 @@ export default function Social() {
                       to={`/user/${u.uid}`}
                       className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      <Avatar photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
+                      <BlockAwareAvatar uid={u.uid} photoURL={u.photoURL} displayName={u.displayName || 'Athlete'} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{u.displayName || 'Athlete'}</p>
@@ -837,7 +837,7 @@ export default function Social() {
               <div className="space-y-2">
                 {suggestedPeople.map((p) => (
                   <div key={p.uid} className="flex items-center gap-3 p-3 rounded-xl bg-card">
-                    <Avatar photoURL={p.photoURL} displayName={p.displayName} size="md" />
+                    <BlockAwareAvatar uid={p.uid} photoURL={p.photoURL} displayName={p.displayName} size="md" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{p.displayName}</p>

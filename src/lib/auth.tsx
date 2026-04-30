@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -204,6 +205,19 @@ export interface PublicProfile {
   uid: string;
   displayName: string | null;
   photoURL: string | null;
+  /**
+   * Storage path of the user's currently-active uploaded profile photo,
+   * e.g. `profile-photos/{uid}/1714521600000.jpg`. Tracked separately
+   * from `photoURL` because:
+   *   1. The cleanup path on next upload needs the path to call
+   *      `deleteObject(storageRef)` on the prior blob — without
+   *      tracking it, orphans accumulate (the bug ProgressPhotos has).
+   *   2. The download URL embeds a token; if we ever rotate tokens
+   *      (admin-side), we keep the path as the authoritative pointer.
+   * Null when the user has never uploaded a custom photo (empty, or
+   * using an OAuth-provider photoURL).
+   */
+  photoStoragePath: string | null;
   athleteType: string;
   currentStreak: number;
   longestStreak: number;
@@ -217,6 +231,7 @@ export const PUBLIC_PROFILE_FIELDS = [
   "uid",
   "displayName",
   "photoURL",
+  "photoStoragePath",
   "athleteType",
   "currentStreak",
   "longestStreak",
@@ -251,12 +266,22 @@ function createDefaultProfile(
   uid: string,
   displayName: string,
   email: string,
+  /* OAuth providers (Google, Apple) populate the auth user's photoURL
+     at sign-in. Email/password signups don't. Accepting this as an
+     optional 4th arg lets the OAuth flows seed a usable avatar
+     without any additional UX. The user can override via the upload
+     flow in Settings; this is just the default. The Firestore rule
+     regex on photoURL already constrains the value to known-good
+     hosts (Firebase Storage, lh3.googleusercontent.com,
+     appleid.cdn-apple.com), so an unexpected value gets rejected at
+     the rule layer rather than silently stored. */
+  photoURL: string | null = null,
 ): UserProfile {
   return {
     uid,
     displayName,
     email,
-    photoURL: null,
+    photoURL,
     athleteType: "Lifter",
     weightKg: 70,
     heightCm: 170,
@@ -326,6 +351,13 @@ interface AuthContextType {
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => Promise<void>;
+  /**
+   * Re-fetch the user's Firestore profile and update local state.
+   * For mutations that go directly to Firestore (e.g. profile-photo
+   * upload, which writes to `users/{uid}/public/profile` via its own
+   * Storage-aware service rather than through `updateProfile`).
+   */
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -400,6 +432,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       uid,
       displayName: newProfile.displayName || null,
       photoURL: newProfile.photoURL ?? null,
+      /* photoStoragePath tracks the user's currently-active
+         self-uploaded photo path so the next upload can delete the
+         prior blob. Null for new users (or OAuth users seeded with an
+         external photoURL — Google/Apple host those, we don't track
+         a path). The rule constrains this to `profile-photos/{uid}/.*`. */
+      photoStoragePath: null,
       athleteType: newProfile.athleteType,
       currentStreak: newProfile.currentStreak,
       longestStreak: newProfile.longestStreak,
@@ -421,7 +459,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
     if (!profileDoc.exists()) {
-      const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
+      /* Seed photoURL from the Google identity. The Firestore rule
+         only accepts URLs from `lh3.googleusercontent.com` (Google's
+         CDN) or `firebasestorage.googleapis.com` (own uploads), so
+         any other value would be rejected at the rule layer. The
+         user can override later via the Settings upload flow. */
+      const newProfile = createDefaultProfile(
+        cred.user.uid,
+        cred.user.displayName || "",
+        cred.user.email || "",
+        cred.user.photoURL || null,
+      );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
@@ -438,7 +486,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
     if (!profileDoc.exists()) {
-      const newProfile = createDefaultProfile(cred.user.uid, cred.user.displayName || "", cred.user.email || "");
+      /* Apple Sign In is privacy-conservative — `cred.user.photoURL`
+         is usually null. Pass it through anyway so the rare case
+         where Apple does provide a value gets seeded. */
+      const newProfile = createDefaultProfile(
+        cred.user.uid,
+        cred.user.displayName || "",
+        cred.user.email || "",
+        cred.user.photoURL || null,
+      );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
@@ -523,6 +579,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (!auth.currentUser) return;
+    const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    if (snap.exists()) {
+      setProfile(hydrateProfile(
+        auth.currentUser.uid,
+        snap.data() as Record<string, unknown>,
+        auth.currentUser.displayName ?? "",
+        auth.currentUser.email ?? "",
+      ));
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -535,6 +604,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithApple,
         signOut: signOutUser,
         updateProfile,
+        refreshProfile,
       }}
     >
       {children}

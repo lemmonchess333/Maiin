@@ -6,13 +6,14 @@ import { THEME } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
+import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
 }
 
 export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { challenges, myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge } = useChallenges();
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(true);
@@ -156,15 +157,24 @@ export function ChallengeList({ onFindFriends }: { onFindFriends?: () => void })
                 >
                   {entry.rank}
                 </span>
-                <Avatar
-                  photoURL={entry.photoURL}
-                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  /* "You" rows would otherwise render a "Y" fallback
-                     letter — pass the actual user's first initial so
-                     the fallback reflects identity, not the row label. */
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
-                  size="sm"
-                />
+                {entry.uid === user?.uid ? (
+                  <Avatar
+                    photoURL={entry.photoURL}
+                    displayName="You"
+                    /* Prefer Firestore profile.displayName because
+                       Firebase Auth's user.displayName is often
+                       empty for email/password signups. */
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
+                    size="sm"
+                  />
+                ) : (
+                  <BlockAwareAvatar
+                    uid={entry.uid}
+                    photoURL={entry.photoURL}
+                    displayName={entry.name}
+                    size="sm"
+                  />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium truncate">

@@ -6,6 +6,7 @@ import { db } from '../../lib/firebase';
 import { THEME } from '../../lib/theme';
 import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
 import Avatar from '../Avatar';
+import BlockAwareAvatar from './BlockAwareAvatar';
 
 const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
@@ -14,7 +15,7 @@ interface EnrichedEntry extends LeaderboardEntry {
 }
 
 export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFull }: { challenge?: ChallengeType; onViewFull?: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,12 +99,21 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   style={{ color: RANK_COLORS[entry.rank - 1] || undefined }}>
                   {entry.rank}
                 </span>
-                <Avatar
-                  photoURL={entry.photoURL}
-                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
-                  size="sm"
-                />
+                {entry.uid === user?.uid ? (
+                  <Avatar
+                    photoURL={entry.photoURL}
+                    displayName="You"
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
+                    size="sm"
+                  />
+                ) : (
+                  <BlockAwareAvatar
+                    uid={entry.uid}
+                    photoURL={entry.photoURL}
+                    displayName={entry.name}
+                    size="sm"
+                  />
+                )}
 
                 <span className="text-sm font-medium flex-1 truncate">
                   {entry.uid === user?.uid ? 'You' : entry.name}
@@ -130,12 +140,21 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   style={{ color: RANK_COLORS[entry.rank - 1] }}>
                   {entry.rank}
                 </span>
-                <Avatar
-                  photoURL={entry.photoURL}
-                  displayName={entry.uid === user?.uid ? 'You' : entry.name}
-                  fallbackInitial={entry.uid === user?.uid ? user?.displayName?.charAt(0) : undefined}
-                  size="sm"
-                />
+                {entry.uid === user?.uid ? (
+                  <Avatar
+                    photoURL={entry.photoURL}
+                    displayName="You"
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
+                    size="sm"
+                  />
+                ) : (
+                  <BlockAwareAvatar
+                    uid={entry.uid}
+                    photoURL={entry.photoURL}
+                    displayName={entry.name}
+                    size="sm"
+                  />
+                )}
 
                 <span className="text-sm font-medium flex-1 truncate">
                   {entry.uid === user?.uid ? 'You' : entry.name}
@@ -156,7 +175,7 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
                   <Avatar
                     photoURL={selfEntry.photoURL}
                     displayName="You"
-                    fallbackInitial={user?.displayName?.charAt(0)}
+                    fallbackInitial={profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)}
                     size="sm"
                   />
                   <span className="text-sm font-medium flex-1 truncate">You</span>

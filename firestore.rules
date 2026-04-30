@@ -148,12 +148,47 @@ service cloud.firestore {
           'uid',
           'displayName',
           'photoURL',
+          'photoStoragePath',
           'athleteType',
           'currentStreak',
           'longestStreak',
           'createdAt',
           'badgeSummary'
-        ]);
+        ])
+        /* photoURL value gate.
+           Blocks tracking-pixel injection / arbitrary external URLs.
+           Allowed:
+           - field absent (partial update without touching photoURL)
+           - null or empty string (no photo / removal — both are real
+             states; null is what createDefaultProfile writes for
+             email signups before any upload, '' is what removeProfilePhoto
+             writes when the user clears their custom upload)
+           - own-bucket Firebase Storage URLs (custom uploads)
+           - Google OAuth CDN (lh3.googleusercontent.com)
+           - Apple OAuth CDN (appleid.cdn-apple.com)
+           The null check has to come BEFORE any `.matches()` call —
+           in Firestore rules `null.matches(...)` is an evaluation
+           error, not a falsy short-circuit, so the order matters. */
+        && (
+          !('photoURL' in request.resource.data)
+          || request.resource.data.photoURL == null
+          || request.resource.data.photoURL == ''
+          || request.resource.data.photoURL.matches('^https://firebasestorage\\.googleapis\\.com/.*')
+          || request.resource.data.photoURL.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          || request.resource.data.photoURL.matches('^https://appleid\\.cdn-apple\\.com/.*')
+        )
+        /* photoStoragePath gate — must point to the owner's own
+           profile-photos folder. Prevents writing a value that would
+           trick the cleanup path into deleting someone else's blob.
+           Same null-before-matches ordering as above; null is the
+           legitimate state for OAuth-only users (we don't host their
+           photo) and for cleared photos. */
+        && (
+          !('photoStoragePath' in request.resource.data)
+          || request.resource.data.photoStoragePath == null
+          || request.resource.data.photoStoragePath == ''
+          || request.resource.data.photoStoragePath.matches('^profile-photos/' + uid + '/.*')
+        );
     }
 
     // Collection-group read access: user search (`searchUsers`) runs a
