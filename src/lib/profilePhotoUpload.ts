@@ -41,7 +41,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, storage, auth } from "./firebase";
 
@@ -103,10 +103,29 @@ export async function uploadProfilePhoto(
   const baseURL = await getDownloadURL(newRef);
   const photoURL = `${baseURL}&v=${Date.now()}`;
 
-  /* Step 3 — write the new pointer. If Firestore fails here the new
-     blob exists but no consumer sees it; the user can retry and the
-     prior-path deletion below won't have happened yet. */
-  await updateDoc(profileRef, { photoURL, photoStoragePath: newPath });
+  /* Step 3 — write the new pointer. Mirror-write to BOTH the
+     owner-only main doc (`users/{uid}`) and the cross-user-readable
+     public profile mirror (`users/{uid}/public/profile`). The
+     owner-only doc is what `useAuth().profile` reads for local UI
+     (Settings avatar, etc.); the public mirror is what every other
+     user reads (leaderboard, feed, comments, search). Skipping
+     either side leaves the photo half-visible — leaderboard updates
+     but Settings doesn't, or vice versa.
+
+     `photoStoragePath` only goes on the public mirror — it's an
+     internal pointer for the cleanup flow, and the main doc's rule
+     allowlist doesn't include it. The cleanup logic reads from the
+     public mirror anyway.
+
+     writeBatch makes the two writes atomic from Firestore's
+     perspective: either both land or neither does. If Firestore
+     fails here the new blob exists but no consumer sees it; the
+     user can retry and the prior-path deletion below won't have
+     happened yet. */
+  const batch = writeBatch(db);
+  batch.update(profileRef, { photoURL, photoStoragePath: newPath });
+  batch.update(doc(db, "users", uid), { photoURL });
+  await batch.commit();
 
   /* Step 4 — best-effort: keep Firebase Auth's user object in sync.
      The Auth profile is what `cred.user.photoURL` returns elsewhere
@@ -155,9 +174,19 @@ export async function removeProfilePhoto(uid: string): Promise<void> {
   const snap = await getDoc(profileRef);
   const path = (snap.data()?.photoStoragePath as string | null) ?? null;
 
-  /* Clear the visible state first. If Storage delete fails after this,
-     the user already sees the change and can retry later. */
-  await updateDoc(profileRef, { photoURL: "", photoStoragePath: null });
+  /* Clear the visible state first. Mirror-write to BOTH the
+     owner-only main doc and the cross-user-readable public mirror,
+     same as uploadProfilePhoto. If we only cleared the public mirror
+     the leaderboard would lose the photo but the user's own Settings
+     avatar would keep showing it (until the next refresh). Atomic
+     writeBatch keeps the two surfaces in sync.
+
+     If Storage delete fails after this, the user already sees the
+     change and can retry later. */
+  const batch = writeBatch(db);
+  batch.update(profileRef, { photoURL: "", photoStoragePath: null });
+  batch.update(doc(db, "users", uid), { photoURL: "" });
+  await batch.commit();
   try {
     await updateProfile(auth.currentUser, { photoURL: "" });
   } catch {
