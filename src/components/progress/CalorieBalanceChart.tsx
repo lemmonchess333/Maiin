@@ -207,9 +207,9 @@ export default function CalorieBalanceChart() {
       {(goal === "lean bulk" || goal === "cut" || goal === "recomp") && (
         <p className="text-xs font-medium text-center pt-1" style={{ color: getBalanceColor(avgBalance, goal) }}>
           {goal === "lean bulk"
-            ? avgBalance > 0 ? "Below surplus target" : "On track for surplus"
+            ? avgBalance > 0 ? "Currently in deficit" : "On track for surplus"
             : goal === "cut"
-              ? avgBalance > 0 ? "On track for deficit" : "Above deficit target"
+              ? avgBalance > 0 ? "On track for deficit" : "Currently in surplus"
               : Math.abs(avgBalance) <= 200 ? "Eating near maintenance" : avgBalance > 0 ? "Slight deficit" : "Slight surplus"}
         </p>
       )}
