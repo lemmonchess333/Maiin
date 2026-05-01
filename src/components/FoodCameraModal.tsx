@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { X, Image as ImageIcon, RefreshCw, CameraOff, Keyboard } from "lucide-react";
@@ -428,9 +429,32 @@ export default function FoodCameraModal({
             ))}
           </div>
 
-          {tab === "barcode" && (
-            <p className="text-center text-xs text-white/80">{barcodeHint}</p>
-          )}
+          {/* Barcode-mode hint slot.
+              Always rendered with a fixed line-height so switching
+              tabs doesn't shift the segmented control above it.
+              Previously this was a `{tab === 'barcode' && <p>...}` —
+              when the hint appeared the bar above lifted by ~28px and
+              when it disappeared it dropped, which read as a layout
+              jump every time the user toggled tabs. Reserving the
+              row's height + crossfading the text keeps the scaffold
+              stable; AnimatePresence is keyed on the hint string so a
+              hint change ("Scanning…" → "Found!") also crossfades. */}
+          <div className="h-4 flex items-center justify-center" aria-live="polite">
+            <AnimatePresence mode="wait">
+              {tab === "barcode" && (
+                <motion.p
+                  key={barcodeHint}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-center text-xs text-white/80"
+                >
+                  {barcodeHint}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* capture row — library · shutter · flip-camera (symmetrical) */}
           <div className="flex items-center justify-between">
@@ -444,19 +468,31 @@ export default function FoodCameraModal({
               <ImageIcon className="w-5 h-5" />
             </button>
 
-            {/* Shutter (only for food/label) — white fill + scan-coral ring */}
-            <button
-              onClick={() => { haptic("medium"); takePhoto(); }}
-              disabled={disableShutter}
-              className={cn(
-                "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
-                disableShutter && "opacity-50"
-              )}
-              style={{ borderColor: "#FF6B4A" }}
-              aria-label="Capture"
-            >
-              <div className="w-[60px] h-[60px] rounded-full bg-white" />
-            </button>
+            {/* Shutter — only rendered in modes that actually capture
+                (Scan Food, Food label). Barcode mode auto-detects, so
+                showing a disabled "shutter" + helper copy explaining
+                that it doesn't work was confusing UX — users would
+                tap and nothing would happen. We render an empty
+                placeholder of the same footprint instead so the
+                library + flip-camera buttons stay anchored at the
+                edges and the layout doesn't shift when switching
+                modes. */}
+            {tab !== "barcode" ? (
+              <button
+                onClick={() => { haptic("medium"); takePhoto(); }}
+                disabled={disableShutter}
+                className={cn(
+                  "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                  disableShutter && "opacity-50"
+                )}
+                style={{ borderColor: "#FF6B4A" }}
+                aria-label="Capture"
+              >
+                <div className="w-[60px] h-[60px] rounded-full bg-white" />
+              </button>
+            ) : (
+              <div className="h-[72px] w-[72px]" aria-hidden="true" />
+            )}
 
             {/* Flip camera — balances the library icon on the left */}
             <button
@@ -468,13 +504,30 @@ export default function FoodCameraModal({
             </button>
           </div>
 
-          <p className="text-center text-xs text-white/70">
-            {tab === "barcode"
-              ? "Auto-detects barcode (no shutter)"
-              : tab === "label"
-                ? "Align the nutrition label"
-                : "Point at your meal"}
-          </p>
+          {/* Per-mode helper text under the shutter. Crossfaded on tab
+              change so the swap doesn't read as a hard content flash —
+              the modes are about user intent (point / align / scan)
+              and a soft transition reinforces "you switched tools"
+              instead of "the screen reset". Container height is
+              reserved (h-4) for layout stability across modes. */}
+          <div className="h-4 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={tab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="text-center text-xs text-white/70"
+              >
+                {tab === "barcode"
+                  ? "Aim at the barcode — auto-detects"
+                  : tab === "label"
+                    ? "Align the nutrition label"
+                    : "Point at your meal"}
+              </motion.p>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
