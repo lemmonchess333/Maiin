@@ -23,6 +23,8 @@ const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"))
 const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
 const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
 const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSection"));
+const RecentLifts = lazy(() => import("@/components/analytics/RecentLifts"));
+const RecentMeals = lazy(() => import("@/components/analytics/RecentMeals"));
 const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
@@ -673,6 +675,7 @@ export default function History() {
                   </div>
                 )}
               </div>
+              <RecentLifts workouts={workouts} />
               </>
               )}
             </section>
@@ -790,6 +793,7 @@ export default function History() {
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
+              <RecentMeals meals={meals} />
               </>
               )}
             </section>
