@@ -212,8 +212,40 @@ export default function History() {
           paceSamples.reduce((a, b) => a + b, 0) / paceSamples.length
         )
       : 0;
-    return { runCount, runDistance, avgPace };
-  }, [weeklyData]);
+
+    // Zero-padded weekly distance across every Sunday-anchored week
+    // in the time range. Distance is a count metric — a week with no
+    // runs is legitimately 0 km, so the sparkline shape correctly
+    // tells the consistency story (valleys at 0 = rest weeks, spikes
+    // = training weeks).
+    const distanceByWeek: Record<string, number> = {};
+    for (const w of weeklyData) {
+      distanceByWeek[w.week] = w.totalDistance;
+    }
+    const allWeekKeys: string[] = [];
+    {
+      const since = new Date();
+      since.setDate(since.getDate() - rangeDays);
+      const cursor = new Date(since);
+      cursor.setDate(cursor.getDate() - cursor.getDay());
+      const end = new Date();
+      end.setDate(end.getDate() - end.getDay());
+      while (cursor <= end) {
+        allWeekKeys.push(cursor.toISOString().split("T")[0]);
+        cursor.setDate(cursor.getDate() + 7);
+      }
+    }
+    const distanceSparkline = allWeekKeys.map((k) => distanceByWeek[k] ?? 0);
+
+    // Pace is a RATE metric — a week with no runs has no pace, not 0
+    // sec/km (which would mean infinite speed). Don't zero-pad. Use
+    // only the weeks that actually had runs, in order.
+    const paceSparkline = weeklyData
+      .filter((w) => w.avgPace > 0)
+      .map((w) => w.avgPace);
+
+    return { runCount, runDistance, avgPace, distanceSparkline, paceSparkline };
+  }, [weeklyData, rangeDays]);
 
   const runningPRs = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -319,8 +351,25 @@ export default function History() {
     });
     const sortedWeekKeys = Object.keys(weekMap).sort((a, b) => a.localeCompare(b));
     const weeklyVolume = sortedWeekKeys.map((week) => ({ week, volume: weekMap[week] }));
-    const volumeSparkline = sortedWeekKeys.map((w) => weekMap[w]);
-    const sessionsSparkline = sortedWeekKeys.map((w) => sessionWeekMap[w] || 0);
+
+    // Zero-pad sparklines across every Sunday-anchored week in the
+    // range. For activity (volume + sessions), missing weeks are
+    // legitimately zero — the user didn't lift that week — so the
+    // sparkline shape correctly tells the consistency story instead
+    // of compressing logged-only weeks into an uninterrupted line.
+    const allWeekKeys: string[] = [];
+    {
+      const cursor = new Date(since);
+      cursor.setDate(cursor.getDate() - cursor.getDay());
+      const end = new Date();
+      end.setDate(end.getDate() - end.getDay());
+      while (cursor <= end) {
+        allWeekKeys.push(cursor.toISOString().split('T')[0]);
+        cursor.setDate(cursor.getDate() + 7);
+      }
+    }
+    const volumeSparkline = allWeekKeys.map((w) => weekMap[w] ?? 0);
+    const sessionsSparkline = allWeekKeys.map((w) => sessionWeekMap[w] ?? 0);
 
     // Build all-time best e1rm per exercise
     const allTimeBest: Record<string, number> = {};
@@ -411,16 +460,36 @@ export default function History() {
     const prevAvgFat = avg(prevDays, "fat");
 
     const daysLogged = Object.keys(byDate).length;
+    const prevDaysLogged = Object.keys(prevByDate).length;
     const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
 
-    // Sparkline series: daily values, chronological. Zero-pad missing
-    // days so the sparkline shows a real shape rather than clustering
-    // only the logged entries.
+    // Sparkline series: daily values from logged days only, in
+    // chronological order. We deliberately do NOT zero-pad missing
+    // days because for an intake metric, a missing log day is "unknown
+    // intake," not "ate zero." Plotting zero would invent data.
+    //
+    // Instead, the sparkline is GATED on sufficient data density (see
+    // showSparklines below). Below the threshold the sparkline hides
+    // entirely rather than render a misleading shape from too few
+    // points anchored to logged days. ≥7 logged days AND ≥50%
+    // adherence is the floor at which the trend is robust enough to
+    // visualise.
     const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));
     const caloriesSparkline = sortedDates.map((d) => byDate[d].cal);
     const proteinSparkline = sortedDates.map((d) => byDate[d].prot);
     const carbsSparkline = sortedDates.map((d) => byDate[d].carbs);
     const fatSparkline = sortedDates.map((d) => byDate[d].fat);
+
+    // ≥7 days = one weekly cycle, the minimum for any trend signal to
+    // average out. ≥50% = the point at which the unobserved days
+    // could no longer plausibly invert the visible trend.
+    const showSparklines = daysLogged >= 7 && adherence >= 50;
+
+    // Period-over-period delta requires comparable samples in BOTH
+    // windows. Below 7 logged days in either, the comparison is just
+    // noise — a single high day in the previous window makes the
+    // current "vs last" arrow meaningless. Suppress.
+    const showDelta = daysLogged >= 7 && prevDaysLogged >= 7;
 
     return {
       avgCalories,
@@ -433,6 +502,9 @@ export default function History() {
       prevAvgFat,
       adherence,
       daysLogged,
+      prevDaysLogged,
+      showSparklines,
+      showDelta,
       caloriesSparkline,
       proteinSparkline,
       carbsSparkline,
@@ -519,9 +591,8 @@ export default function History() {
                       label="Weekly Distance"
                       value={formatDistance(runningTotals.runDistance)}
                       unit="km"
-                      sparklineData={weeklyData
-                        .map((w) => w.totalDistance)
-                        .slice(-6)}
+                      direction="up-good"
+                      sparklineData={runningTotals.distanceSparkline}
                       accentColor={THEME.running}
                     />
                     <StatCard
@@ -536,9 +607,8 @@ export default function History() {
                           : "--:--"
                       }
                       unit="/km"
-                      sparklineData={weeklyData
-                        .map((w) => w.avgPace || 0)
-                        .slice(-6)}
+                      direction="down-good"
+                      sparklineData={runningTotals.paceSparkline}
                       accentColor={THEME.running}
                     />
                   </div>
@@ -675,7 +745,7 @@ export default function History() {
                   </div>
                 )}
               </div>
-              <RecentLifts workouts={workouts} />
+              <RecentLifts workouts={workouts} rangeDays={rangeDays} rangeLabel={timeRange} />
               </>
               )}
             </section>
@@ -720,63 +790,94 @@ export default function History() {
                 </>
               ) : (
               <>
-              {/* Sample-size caveat — averages over a sparse log can be
-                  misleading (a user who logged 4/30 days at 1,800 kcal
-                  isn't really "averaging 1,800 kcal"). One shared line
-                  above the four macro cards beats repeating the same
-                  fraction four times. */}
-              {nutrition.daysLogged < rangeDays && (
-                <p className="text-[11px] text-muted-foreground mt-2 -mb-1">
-                  Based on {nutrition.daysLogged} of {rangeDays} days logged
+              {/* Adherence row — first-class signal, not a footnote.
+                  For a sparse logger this IS the headline metric: the
+                  averages below can't be trusted until logging is more
+                  consistent. For a consistent logger it's quiet
+                  reassurance. Tone scales with adherence:
+                    ≥80%   → green (data is reliable)
+                    50–80% → muted (data is decent)
+                    <50%   → amber (averages below are under-sampled) */}
+              {(() => {
+                const adh = nutrition.adherence;
+                const tone =
+                  adh >= 80
+                    ? { color: "#22c55e", bg: "#22c55e1A" }
+                    : adh >= 50
+                      ? { color: "var(--muted-foreground)", bg: "transparent" }
+                      : { color: "#f59e0b", bg: "#f59e0b1A" };
+                return (
+                  <div
+                    className="flex items-center justify-between mt-2 px-3 py-2 rounded-xl"
+                    style={{ background: tone.bg }}
+                  >
+                    <p className="text-xs text-foreground">
+                      Logged{" "}
+                      <span className="font-semibold font-mono tabular-nums">
+                        {nutrition.daysLogged}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-mono tabular-nums">{rangeDays}</span>{" "}
+                      days
+                    </p>
+                    <p
+                      className="text-xs font-semibold font-mono tabular-nums"
+                      style={{ color: tone.color }}
+                    >
+                      {adh}%
+                    </p>
+                  </div>
+                );
+              })()}
+              {nutrition.adherence < 50 && (
+                <p className="text-[11px] text-amber-600 -mt-1 italic">
+                  Averages below are based on too few logged days to be reliable.
                 </p>
               )}
-              {/* Top row: calories + protein with trend deltas. */}
+              {/* Top row: calories + protein. Sparkline + delta both
+                  conditionally suppressed when sample is too thin (see
+                  showSparklines / showDelta in the nutrition memo). */}
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Avg Calories"
                   value={nutrition.avgCalories.toLocaleString()}
                   unit="kcal/day"
-                  delta={buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories)}
+                  delta={nutrition.showDelta ? buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories) : null}
                   direction={calorieDirection}
                   target={macroTargets?.calories ? `target ${macroTargets.calories.toLocaleString()} kcal` : undefined}
-                  sparklineData={nutrition.caloriesSparkline}
+                  sparklineData={nutrition.showSparklines ? nutrition.caloriesSparkline : undefined}
                   accentColor={THEME.success}
                 />
                 <StatCard
                   label="Protein"
                   value={nutrition.avgProtein.toString()}
                   unit="g/day"
-                  delta={buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein)}
+                  delta={nutrition.showDelta ? buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein) : null}
                   direction="up-good"
                   target={macroTargets?.protein ? `target ${macroTargets.protein}g` : undefined}
-                  sparklineData={nutrition.proteinSparkline}
+                  sparklineData={nutrition.showSparklines ? nutrition.proteinSparkline : undefined}
                   accentColor={THEME.macros.protein}
                 />
               </div>
-              {/* Second row: carbs + fat. Matches the Food page's three-tile
-                  macro breakdown so users see the same palette everywhere.
-                  Deltas + sparklines here for parity with the Calories +
-                  Protein row above — all four macro stat cards now carry
-                  the same trend vocabulary. */}
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
                   label="Carbs"
                   value={nutrition.avgCarbs.toString()}
                   unit="g/day"
-                  delta={buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs)}
+                  delta={nutrition.showDelta ? buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs) : null}
                   direction={calorieDirection}
                   target={macroTargets?.carbs ? `target ${macroTargets.carbs}g` : undefined}
-                  sparklineData={nutrition.carbsSparkline}
+                  sparklineData={nutrition.showSparklines ? nutrition.carbsSparkline : undefined}
                   accentColor={THEME.macros.carbs}
                 />
                 <StatCard
                   label="Fat"
                   value={nutrition.avgFat.toString()}
                   unit="g/day"
-                  delta={buildDelta(nutrition.avgFat, nutrition.prevAvgFat)}
+                  delta={nutrition.showDelta ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat) : null}
                   direction={calorieDirection}
                   target={macroTargets?.fat ? `target ${macroTargets.fat}g` : undefined}
-                  sparklineData={nutrition.fatSparkline}
+                  sparklineData={nutrition.showSparklines ? nutrition.fatSparkline : undefined}
                   accentColor={THEME.macros.fat}
                 />
               </div>
@@ -793,7 +894,7 @@ export default function History() {
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
-              <RecentMeals meals={meals} />
+              <RecentMeals meals={meals} rangeDays={rangeDays} rangeLabel={timeRange} />
               </>
               )}
             </section>
