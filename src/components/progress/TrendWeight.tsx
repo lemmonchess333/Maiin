@@ -206,6 +206,9 @@ export function TrendWeight() {
                 entries with valid positive values eliminates the phantom row. */}
             <Tooltip
               cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
+              offset={20}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ outline: "none", zIndex: 10 }}
               content={(props) => {
                 if (!props.active || !props.payload?.length) return null;
 

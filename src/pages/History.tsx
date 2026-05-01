@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
@@ -20,6 +21,7 @@ const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
 const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
 const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
+const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSection"));
 const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
@@ -67,7 +69,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
               key={f}
               onClick={() => setFilter(f)}
               className={[
-                "shrink-0 text-xs px-4 py-2 rounded-full font-medium transition-all",
+                "shrink-0 text-xs px-4 py-2.5 rounded-full font-medium transition-all",
                 active ? "text-white" : "bg-muted text-muted-foreground",
               ].join(" ")}
               style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
@@ -150,7 +152,32 @@ export default function History() {
   const { weeklyData, runs, loading: runsLoading } = useRunningStats(rangeDays);
   const { workouts, loading: workoutsLoading } = useWorkouts();
   const { meals, loading: mealsLoading } = useMeals();
+  const lifetimeRuns = useLifetimeRunStats();
   const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+
+  // Lifetime totals — all-time aggregates shown only on the "All" tab,
+  // pinned at the very bottom as a quiet "you've come this far" footer.
+  // Uses unfiltered workouts/meals (both hooks return everything) plus
+  // a one-shot lifetime run query so pre-window runs aren't excluded.
+  const lifetimeTotals = useMemo(() => {
+    let liftVolume = 0;
+    workouts.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        ex.sets?.forEach((set) => {
+          liftVolume += (set.weightKg || 0) * (set.reps || 0);
+        });
+      });
+    });
+    const daysLogged = new Set(meals.map((m) => m.date)).size;
+    return {
+      runCount: lifetimeRuns.runCount,
+      runKm: lifetimeRuns.totalDistanceM / 1000,
+      liftCount: workouts.length,
+      liftVolume,
+      mealCount: meals.length,
+      daysLogged,
+    };
+  }, [workouts, meals, lifetimeRuns.runCount, lifetimeRuns.totalDistanceM]);
 
   const runningTotals = useMemo(() => {
     const runCount = weeklyData.reduce(
@@ -402,7 +429,7 @@ export default function History() {
     <motion.div className="space-y-4 pt-2" initial="hidden" animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
       <motion.header variants={itemVariant}>
-        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
+        <h1 className="text-lg font-extrabold text-foreground">History</h1>
       </motion.header>
 
       <motion.div variants={itemVariant}>
@@ -503,6 +530,7 @@ export default function History() {
                     prs={runningPRs}
                     accentColor={THEME.running}
                   />
+                  <ShoeMileageSection />
                   <RunningHistorySection />
                 </>
               )}
@@ -526,6 +554,16 @@ export default function History() {
                     <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
                   <ChartSkeleton />
+                </div>
+              ) : liftingData.liftCount === 0 ? (
+                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+                  <Trophy className="w-5 h-5 shrink-0" style={{ color: THEME.lifting }} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Log a workout to see your lifting analytics here</p>
+                  </div>
+                  <Link to="/program" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.lifting }}>
+                    Start Lift
+                  </Link>
                 </div>
               ) : (
               <>
@@ -641,6 +679,25 @@ export default function History() {
                   </div>
                   <ChartSkeleton />
                 </div>
+              ) : nutrition.avgCalories === 0 ? (
+                <>
+                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+                    <UtensilsCrossed className="w-5 h-5 shrink-0" style={{ color: THEME.success }} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">Log meals to see your nutrition trends here</p>
+                    </div>
+                    <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.success }}>
+                      Log Meal
+                    </Link>
+                  </div>
+                  {/* Weight tracking is independent of meal logging, so we
+                      keep TrendWeight visible even when there's no nutrition
+                      data yet — a user logging weight without meals still
+                      gets a chart. */}
+                  <SectionErrorBoundary sectionName="trend-weight">
+                    <TrendWeight />
+                  </SectionErrorBoundary>
+                </>
               ) : (
               <>
               {/* Top row: calories + protein with trend deltas. */}
@@ -698,20 +755,54 @@ export default function History() {
               <SectionErrorBoundary sectionName="calorie-balance">
                 <CalorieBalanceChart />
               </SectionErrorBoundary>
-
-              {nutrition.avgCalories === 0 && (
-                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <UtensilsCrossed className="w-5 h-5 shrink-0" style={{ color: THEME.success }} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Log meals to see your nutrition trends here</p>
-                  </div>
-                  <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.success }}>
-                    Log Meal
-                  </Link>
-                </div>
-              )}
               </>
               )}
+            </section>
+          )}
+
+          {filter === "all" && !dataLoading && (
+            lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0
+          ) && (
+            <section aria-label="Lifetime totals">
+              <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
+                Lifetime
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+                  <Footprints className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.running }} />
+                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                    {lifetimeTotals.runKm >= 1000
+                      ? (lifetimeTotals.runKm / 1000).toFixed(1) + "k"
+                      : Math.round(lifetimeTotals.runKm).toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    km · {lifetimeTotals.runCount} runs
+                  </p>
+                </div>
+                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+                  <Trophy className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.lifting }} />
+                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                    {formatVolume(lifetimeTotals.liftVolume).value}
+                    {formatVolume(lifetimeTotals.liftVolume).unit && (
+                      <span className="text-xs font-bold ml-0.5">
+                        {formatVolume(lifetimeTotals.liftVolume).unit}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    lifted · {lifetimeTotals.liftCount} sessions
+                  </p>
+                </div>
+                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+                  <UtensilsCrossed className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.success }} />
+                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                    {lifetimeTotals.daysLogged.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    days logged
+                  </p>
+                </div>
+              </div>
             </section>
           )}
         </>
