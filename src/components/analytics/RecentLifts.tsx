@@ -1,13 +1,25 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight } from "lucide-react";
 import { type Workout } from "@/hooks/useWorkouts";
 import { THEME } from "@/lib/theme";
 import { formatVolume } from "@/utils/formatters";
 
+/** Hard ceiling on the expanded list — beyond this it stops being a list
+ *  and starts being a haystack. The analytics + charts above already
+ *  serve the "see all my data" job; Recent Lifts is for the most recent
+ *  sessions, not lifetime browse. */
+const HARD_MAX = 30;
+const COLLAPSED = 5;
+
 interface RecentLiftsProps {
   workouts: Workout[];
-  /** How many recent sessions to render. Default 8 — matches Recent Runs. */
-  limit?: number;
+  /** Active analytics window in days, used to cap the expanded list so
+   *  it never exceeds what the page above is summarising. */
+  rangeDays: number;
+  /** Human-readable label for the range, e.g. "1M". Used in the
+   *  expander button copy. */
+  rangeLabel?: string;
 }
 
 function workoutVolume(w: Workout): number {
@@ -52,17 +64,30 @@ function headlineExercise(w: Workout): string | null {
   return bestName;
 }
 
-export default function RecentLifts({ workouts, limit = 8 }: RecentLiftsProps) {
-  const sorted = [...workouts]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, limit);
+export default function RecentLifts({ workouts, rangeDays, rangeLabel }: RecentLiftsProps) {
+  const [expanded, setExpanded] = useState(false);
 
-  if (sorted.length === 0) return null;
+  // Cap the FULL pool to workouts inside the active analytics window
+  // so "Show all" can't surface ancient sessions when the user has
+  // 1W selected. Then cap further at HARD_MAX (30) so a 1Y view stays
+  // a list, not a haystack.
+  const since = new Date();
+  since.setDate(since.getDate() - rangeDays);
+  const inWindow = workouts.filter((w) => new Date(w.date) >= since);
+  const sortedAll = [...inWindow]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, HARD_MAX);
+
+  if (sortedAll.length === 0) return null;
+
+  const visibleCount = expanded ? sortedAll.length : Math.min(COLLAPSED, sortedAll.length);
+  const visible = sortedAll.slice(0, visibleCount);
+  const hiddenCount = sortedAll.length - visibleCount;
 
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground font-medium">Recent Lifts</p>
-      {sorted.map((w) => {
+      {visible.map((w) => {
         const vol = workoutVolume(w);
         const sets = workoutSetCount(w);
         const exerciseCount = w.exercises?.length ?? 0;
@@ -120,6 +145,25 @@ export default function RecentLifts({ workouts, limit = 8 }: RecentLiftsProps) {
           </Link>
         );
       })}
+      {hiddenCount > 0 && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full text-center text-xs font-semibold text-muted-foreground hover:text-foreground py-2 active:scale-[0.98] transition-all"
+          style={{ color: THEME.lifting }}
+        >
+          Show all{rangeLabel ? ` in ${rangeLabel}` : ""} ({sortedAll.length})
+        </button>
+      )}
+      {expanded && sortedAll.length > COLLAPSED && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="w-full text-center text-xs font-medium text-muted-foreground hover:text-foreground py-2 active:scale-[0.98] transition-all"
+        >
+          Show less
+        </button>
+      )}
     </div>
   );
 }

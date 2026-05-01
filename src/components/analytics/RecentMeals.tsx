@@ -1,12 +1,19 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { UtensilsCrossed, ChevronRight } from "lucide-react";
 import { type Meal } from "@/hooks/useMeals";
 import { THEME } from "@/lib/theme";
 
+const HARD_MAX = 30;
+const COLLAPSED = 5;
+
 interface RecentMealsProps {
   meals: Meal[];
-  /** How many recent days to render. Default 7. */
-  limit?: number;
+  /** Active analytics window in days, used to cap the expanded list. */
+  rangeDays: number;
+  /** Human-readable label for the range, e.g. "1M". Used in the
+   *  expander button copy. */
+  rangeLabel?: string;
 }
 
 interface DayBucket {
@@ -68,14 +75,28 @@ function MacroBar({ p, c, f }: { p: number; c: number; f: number }) {
   );
 }
 
-export default function RecentMeals({ meals, limit = 7 }: RecentMealsProps) {
-  const days = bucketByDay(meals).slice(0, limit);
-  if (days.length === 0) return null;
+export default function RecentMeals({ meals, rangeDays, rangeLabel }: RecentMealsProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Cap to days inside the active analytics window so "Show all"
+  // can't surface ancient days when the user has 1W selected. Then
+  // cap further at HARD_MAX (30) to keep the list scannable.
+  const since = new Date();
+  since.setDate(since.getDate() - rangeDays);
+  const inWindow = meals.filter(
+    (m) => m.date && new Date(m.date + "T00:00:00") >= since,
+  );
+  const allDays = bucketByDay(inWindow).slice(0, HARD_MAX);
+  if (allDays.length === 0) return null;
+
+  const visibleCount = expanded ? allDays.length : Math.min(COLLAPSED, allDays.length);
+  const visible = allDays.slice(0, visibleCount);
+  const hiddenCount = allDays.length - visibleCount;
 
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground font-medium">Recent Days</p>
-      {days.map((d) => {
+      {visible.map((d) => {
         const dateObj = new Date(d.date + "T12:00:00");
         const dateLabel = dateObj.toLocaleDateString("en-GB", {
           day: "numeric",
@@ -126,6 +147,25 @@ export default function RecentMeals({ meals, limit = 7 }: RecentMealsProps) {
           </Link>
         );
       })}
+      {hiddenCount > 0 && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full text-center text-xs font-semibold py-2 active:scale-[0.98] transition-all"
+          style={{ color: THEME.success }}
+        >
+          Show all{rangeLabel ? ` in ${rangeLabel}` : ""} ({allDays.length})
+        </button>
+      )}
+      {expanded && allDays.length > COLLAPSED && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="w-full text-center text-xs font-medium text-muted-foreground py-2 active:scale-[0.98] transition-all"
+        >
+          Show less
+        </button>
+      )}
     </div>
   );
 }
