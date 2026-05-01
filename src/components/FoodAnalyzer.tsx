@@ -3,7 +3,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { cn } from "@/lib/utils";
-import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download } from "lucide-react";
+import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -158,6 +158,115 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
 
   const isBarcode = activeResult?.confidence === "barcode";
 
+  /* ── Per-item edit state (PR N) ───────────────────────────────────────
+     AI photo / text-parse results often need correction before save —
+     e.g. the model detected a side dish that wasn't actually on the
+     plate, or got the portion size wrong on one item. Without the
+     ability to fix it inline, the user's only option was Reset → re-
+     scan, or Save and live with bad data.
+
+     `itemEdits` is a sparse map keyed by the item's index in
+     `activeResult.items`. Missing entries default to {multiplier: 1,
+     removed: false} — i.e. the item passes through untouched. The
+     state is reset whenever `activeResult` changes (a new analysis
+     comes back) so edits don't bleed between scans. */
+  type ItemEdit = { multiplier: number; removed: boolean };
+  const [itemEdits, setItemEdits] = useState<Record<number, ItemEdit>>({});
+
+  useEffect(() => {
+    setItemEdits({});
+  }, [activeResult]);
+
+  /* The per-item editor only renders for multi-item AI / text results.
+     - Barcode results are by definition single-item; their existing
+       global servings stepper is the right control there.
+     - Single-item AI results would mean only one row to edit, and the
+       global totals are already the per-item totals — adding an editor
+       would be redundant chrome. */
+  const isMultiItem = !!activeResult && activeResult.items.length > 1 && !isBarcode;
+
+  /* Derived: each item annotated with its current multiplier + removed
+     flag. The base item is preserved untouched so `saveMeal` can
+     reconstruct the persisted shape from the original + edits. */
+  type EditedItem = MealResult["items"][number] & {
+    multiplier: number;
+    removed: boolean;
+    index: number;
+  };
+  const editedItems = useMemo<EditedItem[]>(() => {
+    if (!activeResult) return [];
+    return activeResult.items.map((item, i) => ({
+      ...item,
+      multiplier: itemEdits[i]?.multiplier ?? 1,
+      removed: itemEdits[i]?.removed ?? false,
+      index: i,
+    }));
+  }, [activeResult, itemEdits]);
+
+  const activeItems = useMemo(
+    () => editedItems.filter((it) => !it.removed),
+    [editedItems],
+  );
+
+  /* When the user has removed every item, saving a 0-calorie meal is
+     never what they want — disable Save and show a small recovery
+     prompt below the totals. They can either restore a row or reset
+     the whole analysis. */
+  const allRemoved = isMultiItem && activeItems.length === 0;
+
+  /* Display totals.
+     - Multi-item AI: sum of (item × per-item multiplier) over active items.
+     - Single-item AI: pass-through totals × 1 (current behaviour).
+     - Barcode: pass-through totals × global servings (current behaviour).
+     The single source of truth for what's rendered AND what's saved. */
+  const displayTotals = useMemo(() => {
+    if (!activeResult) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    if (isMultiItem) {
+      return activeItems.reduce(
+        (sum, item) => ({
+          calories: sum.calories + safeNum(item.calories) * item.multiplier,
+          protein: sum.protein + safeNum(item.protein) * item.multiplier,
+          carbs: sum.carbs + safeNum(item.carbs) * item.multiplier,
+          fat: sum.fat + safeNum(item.fat) * item.multiplier,
+        }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      );
+    }
+    const factor = isBarcode ? servings : 1;
+    return {
+      calories: safeNum(activeResult.totalCalories) * factor,
+      protein: safeNum(activeResult.totalProtein) * factor,
+      carbs: safeNum(activeResult.totalCarbs) * factor,
+      fat: safeNum(activeResult.totalFat) * factor,
+    };
+  }, [activeResult, activeItems, isMultiItem, isBarcode, servings]);
+
+  const setItemMultiplier = (i: number, next: number) => {
+    setItemEdits((prev) => ({
+      ...prev,
+      [i]: {
+        multiplier: Math.max(0.5, Math.min(4, Math.round(next * 2) / 2)),
+        removed: prev[i]?.removed ?? false,
+      },
+    }));
+  };
+
+  const removeItem = (i: number) => {
+    haptic("light");
+    setItemEdits((prev) => ({
+      ...prev,
+      [i]: { multiplier: prev[i]?.multiplier ?? 1, removed: true },
+    }));
+  };
+
+  const restoreItem = (i: number) => {
+    haptic("light");
+    setItemEdits((prev) => ({
+      ...prev,
+      [i]: { multiplier: prev[i]?.multiplier ?? 1, removed: false },
+    }));
+  };
+
   // Hero photo shown at the top of the result card. Prefer the user's own
   // captured photo (AI food scan); fall back to the product image pulled
   // from OpenFoodFacts for barcode results. Null means no hero band.
@@ -183,24 +292,45 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     if (!user) return;
     setSaving(true);
 
+    /* For barcode + single-item AI we keep the original "scale by global
+       servings stepper" behaviour. For multi-item AI we use the per-item
+       multiplier edits and skip removed items entirely. The two paths
+       converge on the same persisted shape. */
     const s = isBarcode ? servings : 1;
+
+    const persistedItems = isMultiItem
+      ? activeItems.map((item) => ({
+          name: item.name,
+          /* Annotate the portionSize with the multiplier when it isn't
+             1× so the saved entry reads accurately in the diary
+             ("1.5x 1 cup pasta"). Mirrors the existing barcode treatment. */
+          portionSize:
+            item.multiplier !== 1
+              ? `${item.multiplier}x ${item.portionSize}`
+              : item.portionSize,
+          calories: Math.round(safeNum(item.calories) * item.multiplier),
+          protein: Math.round(safeNum(item.protein) * item.multiplier),
+          carbs: Math.round(safeNum(item.carbs) * item.multiplier),
+          fat: Math.round(safeNum(item.fat) * item.multiplier),
+        }))
+      : meal.items.map((item) => ({
+          ...item,
+          portionSize: s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
+          calories: Math.round(item.calories * s),
+          protein: Math.round(item.protein * s),
+          carbs: Math.round(item.carbs * s),
+          fat: Math.round(item.fat * s),
+        }));
 
     const mealRef = doc(collection(db, "users", user.uid, "meals"));
     await setDoc(mealRef, {
       date,
       foodName: meal.foodName,
-      items: meal.items.map((item) => ({
-        ...item,
-        portionSize: s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
-        calories: Math.round(item.calories * s),
-        protein: Math.round(item.protein * s),
-        carbs: Math.round(item.carbs * s),
-        fat: Math.round(item.fat * s),
-      })),
-      totalCalories: Math.round(meal.totalCalories * s),
-      totalProtein: Math.round(meal.totalProtein * s),
-      totalCarbs: Math.round(meal.totalCarbs * s),
-      totalFat: Math.round(meal.totalFat * s),
+      items: persistedItems,
+      totalCalories: Math.round(displayTotals.calories),
+      totalProtein: Math.round(displayTotals.protein),
+      totalCarbs: Math.round(displayTotals.carbs),
+      totalFat: Math.round(displayTotals.fat),
       confidence: meal.confidence,
       barcode: meal.barcode || null,
       brand: meal.brand || null,
@@ -209,14 +339,16 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
       ...(targetMealCategory ? { meal: targetMealCategory } : {}),
     });
 
-    // Preserve favourites functionality
+    // Preserve favourites functionality — favourite reflects the
+    // edited totals, not the original AI estimate, so a re-log via
+    // the favourite chip lands on the same numbers the user saved.
     await addFavourite({
       name: meal.foodName,
-      calories: Math.round(meal.totalCalories * s),
-      protein: Math.round(meal.totalProtein * s),
-      carbs: Math.round(meal.totalCarbs * s),
-      fat: Math.round(meal.totalFat * s),
-      servingSize: meal.items[0]?.portionSize ?? "1 serving",
+      calories: Math.round(displayTotals.calories),
+      protein: Math.round(displayTotals.protein),
+      carbs: Math.round(displayTotals.carbs),
+      fat: Math.round(displayTotals.fat),
+      servingSize: persistedItems[0]?.portionSize ?? "1 serving",
       source: meal.barcode ? "barcode" : "photo",
     });
 
@@ -305,8 +437,6 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     }
   };
 
-  const s = isBarcode ? servings : 1;
-
   return (
     <div className="space-y-4">
       <FoodCameraModal
@@ -393,51 +523,123 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                   )}
                 </div>
 
-                {/* Per-item breakdown — only when the model returned multiple
-                    items. Single-item meals would just duplicate the title. */}
+                {/* Per-item breakdown — editable for multi-item AI results
+                    (PR N), read-only for single-item or barcode. The
+                    edit affordances let the user remove a wrongly-detected
+                    item and bump per-item portions before save without
+                    rescanning. */}
                 {activeResult.items.length > 1 && (
                   <div className="space-y-1.5 border-t border-border/40 pt-2.5">
-                    {activeResult.items.map((item, i) => (
-                      <div
-                        key={`${item.name}-${i}`}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-foreground truncate">{item.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {item.portionSize}
-                          </p>
+                    {editedItems.map((item) => {
+                      const i = item.index;
+                      const itemCal = Math.round(safeNum(item.calories) * item.multiplier);
+                      if (item.removed) {
+                        return (
+                          <div
+                            key={`${item.name}-${i}-removed`}
+                            className="flex items-center justify-between gap-2 py-1"
+                          >
+                            <p className="text-sm text-muted-foreground/60 line-through truncate flex-1">
+                              {item.name}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => restoreItem(i)}
+                              aria-label={`Restore ${item.name}`}
+                              className="flex items-center gap-1 text-xs font-medium text-primary hover:opacity-80 transition-opacity active:scale-95 shrink-0"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Restore
+                            </button>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={`${item.name}-${i}`}
+                          className="flex items-center gap-2"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-foreground truncate">{item.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.portionSize}
+                            </p>
+                          </div>
+                          {isMultiItem && (
+                            <div className="flex items-center gap-1 shrink-0" aria-label={`${item.name} portion`}>
+                              <button
+                                type="button"
+                                onClick={() => setItemMultiplier(i, item.multiplier - 0.5)}
+                                aria-label={`Decrease ${item.name} portion`}
+                                disabled={item.multiplier <= 0.5}
+                                className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-xs font-mono tabular-nums text-foreground w-9 text-center">
+                                {item.multiplier}×
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setItemMultiplier(i, item.multiplier + 0.5)}
+                                aria-label={`Increase ${item.name} portion`}
+                                disabled={item.multiplier >= 4}
+                                className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                          <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0 w-14 text-right">
+                            {itemCal} cal
+                          </span>
+                          {isMultiItem && (
+                            <button
+                              type="button"
+                              onClick={() => removeItem(i)}
+                              aria-label={`Remove ${item.name}`}
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
-                        <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
-                          {Math.round(item.calories * s)} cal
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* "All items removed" recovery prompt. Only shown for
+                    multi-item AI results when every row has been removed —
+                    saving a 0-calorie meal is never the user's intent. */}
+                {allRemoved && (
+                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground text-center">
+                    All items removed. Restore one above or Reset to scan again.
                   </div>
                 )}
 
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
                     <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
-                      {Math.round(safeNum(activeResult.totalCalories) * s)}
+                      {Math.round(displayTotals.calories)}
                     </p>
                     <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
                   </div>
                   <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
                     <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
-                      {Math.round(safeNum(activeResult.totalProtein) * s)}g
+                      {Math.round(displayTotals.protein)}g
                     </p>
                     <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
                   </div>
                   <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
                     <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
-                      {Math.round(safeNum(activeResult.totalCarbs) * s)}g
+                      {Math.round(displayTotals.carbs)}g
                     </p>
                     <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
                   </div>
                   <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
                     <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
-                      {Math.round(safeNum(activeResult.totalFat) * s)}g
+                      {Math.round(displayTotals.fat)}g
                     </p>
                     <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
                   </div>
@@ -495,13 +697,18 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
 
               <button
                 onClick={handleSave}
-                disabled={saving}
+                /* Disabled when:
+                   - already saving (prevents double-tap)
+                   - all items removed (would persist a 0-calorie meal —
+                     never the user's intent; the recovery prompt above
+                     points them at Restore or Reset). */
+                disabled={saving || allRemoved}
                 className={cn(
                   "flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
                   saved
                     ? "bg-green-500 text-white"
                     : "bg-primary text-primary-foreground hover:opacity-90",
-                  saving && "opacity-50 cursor-not-allowed"
+                  (saving || allRemoved) && "opacity-50 cursor-not-allowed"
                 )}
               >
                 {saved ? (
