@@ -639,37 +639,53 @@ export default function Food() {
     }
   };
 
-  const handleDeleteMeal = (mealId: string, foodName: string) => {
-    // 1. Optimistic hide — the row disappears instantly and the hero card
-    //    totals update as if the meal is gone. Close any open swipe state
-    //    so the UI settles cleanly.
+  const handleDeleteMeal = (mealIds: string[], foodName: string) => {
+    /* Accepts a list of meal IDs because each FoodRow visually represents
+       a *grouped* set of identical meal entries (e.g. "Rice ×3"). The
+       previous implementation only deleted the last entry in the group,
+       leaving "Rice ×2" behind — an obvious correctness bug from the
+       user's perspective. Looping over every ID in the group makes the
+       row's visible state and the underlying data agree.
+
+       Optimistic hide / 3-second undo / Firestore delete logic is
+       symmetric across all IDs — they go in and out of pending together
+       so the toast's "Undo" action restores the entire group. */
+    if (mealIds.length === 0) return;
+
+    // 1. Optimistic hide for every meal in the group.
     setPendingDeleteIds((prev) => {
       const next = new Set(prev);
-      next.add(mealId);
+      for (const id of mealIds) next.add(id);
       return next;
     });
     setOpenRowId(null);
 
-    // 2. Schedule the actual Firestore delete after the undo window.
+    // 2. Schedule the Firestore deletes after the undo window.
     const timeoutId = setTimeout(() => {
-      deleteMeal(mealId);
+      for (const id of mealIds) deleteMeal(id);
       // Don't remove from pendingDeleteIds here. The Firestore onSnapshot
-      // will drop the meal from the meals array, making the pending ID a
-      // harmless no-op filter on a non-existent entry. Removing from pending
-      // BEFORE onSnapshot confirms the delete causes a brief flash where the
-      // meal reappears in the list (the "automatically adds back" bug).
+      // will drop the meals from the meals array, making the pending IDs a
+      // harmless no-op filter on non-existent entries. Removing from
+      // pending BEFORE onSnapshot confirms the delete causes a brief flash
+      // where the rows reappear in the list (the "automatically adds back"
+      // bug).
     }, 3000);
 
-    // 3. Toast with Undo. If the user taps it, cancel the timer AND remove
-    //    the id from pending — the row reappears, ring ticks back up, done.
-    toast(`${foodName} deleted`, {
+    // 3. Toast with Undo — pluralised when the group held multiple
+    //    servings so the user knows how many entries the action covered.
+    const message =
+      mealIds.length === 1
+        ? `${foodName} deleted`
+        : `${mealIds.length} servings of ${foodName} deleted`;
+
+    toast(message, {
       action: {
         label: "Undo",
         onClick: () => {
           clearTimeout(timeoutId);
           setPendingDeleteIds((prev) => {
             const next = new Set(prev);
-            next.delete(mealId);
+            for (const id of mealIds) next.delete(id);
             return next;
           });
         },
@@ -1171,7 +1187,7 @@ export default function Food() {
                         }
                         onDelete={() =>
                           handleDeleteMeal(
-                            group.meals[group.meals.length - 1].id,
+                            group.meals.map((m) => m.id),
                             group.foodName
                           )
                         }

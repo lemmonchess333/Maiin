@@ -86,11 +86,19 @@ export default function MacroColumn({
     ? (isOver ? consumed - target : remaining)
     : consumed;
 
-  // "eaten" (the default eaten-mode label) is suppressed; the dynamic
-  // "over" state is preserved so users still see the over-target signal.
+  // LEFT mode:
+  //   under target → "left"   (e.g. "151g left")
+  //   over target  → "over"   (e.g. "5g over")
+  // EATEN mode:
+  //   either       → "eaten"  (e.g. "14g eaten")
+  // Without a label in eaten mode the big number reads ambiguously
+  // (a user who didn't notice the toggle sees "85g" with no qualifier).
+  // Rendering "eaten" makes the mode self-documenting at the cost of
+  // one short word; over-target is signalled by the bar overshoot and
+  // the tertiary "X / Yg" line.
   const displayLabel = isLeftMode
     ? (isOver ? "over" : "left")
-    : null;
+    : "eaten";
 
   // Macro number + bar stay in the macro's own colour regardless of
   // over/under target. Previously the colour ramped amber → deep red
@@ -165,12 +173,12 @@ export default function MacroColumn({
         <span className="text-2xl">g</span>
       </p>
 
-      {/* Left/over label — suppressed in eaten mode (displayLabel === null) */}
-      {displayLabel && (
-        <p className="text-xs text-muted-foreground mt-0.5 lowercase">
-          {displayLabel}
-        </p>
-      )}
+      {/* Mode-aware label sits below the big number. Always-rendered
+          rather than conditionally suppressed so the line height stays
+          stable across mode toggles. */}
+      <p className="text-xs text-muted-foreground mt-0.5 lowercase">
+        {displayLabel}
+      </p>
 
       {/* Progress bar */}
       {/* Track — inset shadow reads as a recessed channel cut into the
