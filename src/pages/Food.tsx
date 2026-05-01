@@ -138,6 +138,7 @@ export default function Food() {
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const quickAddScrollRef = useRef<HTMLDivElement>(null);
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -795,8 +796,23 @@ export default function Food() {
       return b.lastLogged.localeCompare(a.lastLogged);
     });
     for (const entry of ranked) {
+      /* Smart display label for multi-item meals.
+         AI-detected meals from photo scans return verbose foodNames
+         like "Plate with Fish, Fries, Salad, and Roasted Vegetables"
+         that read poorly in a chip — even with truncation. The items
+         array carries individual food names ("Fish", "Fries", "Salad",
+         "Roasted Vegetables"), so we can build a tight summary:
+         "Fish, Fries +2" when the meal has 3+ items.
+         Two-item and single-item meals keep their foodName because
+         a 2-item summary "Fish, Fries" isn't shorter than a clean
+         foodName like "Bacon and Eggs". */
+      const items = entry.meal.items ?? [];
+      const smartName =
+        items.length > 2 && items[0]?.name && items[1]?.name
+          ? `${items[0].name}, ${items[1].name} +${items.length - 2}`
+          : entry.meal.foodName;
       push({
-        name: entry.meal.foodName,
+        name: smartName,
         cal: entry.meal.totalCalories || 0,
         pro: entry.meal.totalProtein || 0,
         carb: entry.meal.totalCarbs || 0,
@@ -814,6 +830,18 @@ export default function Food() {
 
     return items;
   }, [meals, getTimeRelevant]);
+
+  /* Reset Quick Add scroll position whenever the rendered chips
+     change. Without this, the carousel keeps its previous scrollLeft
+     across re-renders — so when the frequency-ranked ordering
+     reshuffles after a new log, the user can land on a half-scrolled
+     state where the leftmost visible chip is mid-clipped (e.g.
+     "rink · 160 kcal" instead of the start of "Energy Drink").
+     auto behaviour (no animation) — the layout shouldn't appear to
+     "scroll back" on update; it should just be at the start. */
+  useEffect(() => {
+    quickAddScrollRef.current?.scrollTo({ left: 0, behavior: "auto" });
+  }, [quickMeals]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
 
@@ -1075,40 +1103,37 @@ export default function Food() {
         </p>
         <div className="relative">
           <div
+            ref={quickAddScrollRef}
             className="flex gap-2 pb-1 -mx-1 px-1 snap-x snap-mandatory"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
-            {quickMeals.map((meal, i) => {
-              /* Truncate verbose names (typically AI-generated, e.g.
-                 "Plate with Fish, Fries, Salad, and Roasted vegetables")
-                 in JS so the rendered chip stays a sensible width.
-                 22 chars is conservative enough that the truncated chip
-                 (with " · NNN kcal" suffix and the chip's px-3.5 padding)
-                 fits within an iPhone-width viewport even when a wide
-                 first chip is sitting next to it. The CSS overflow path
-                 (`max-w-[85vw] overflow-hidden text-ellipsis`) is kept
-                 as defense-in-depth. */
-              const MAX_CHIP_NAME = 22;
-              const displayName =
-                meal.name.length > MAX_CHIP_NAME
-                  ? `${meal.name.slice(0, MAX_CHIP_NAME - 1).trimEnd()}…`
-                  : meal.name;
-              return (
-                <motion.button
-                  key={`${meal.name}-${i}`}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ duration: 0.16, ease: TAP_EASE }}
-                  onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                  disabled={quickAdding !== null}
-                  className={cn(
-                    "shrink-0 snap-start h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[85vw] overflow-hidden text-ellipsis",
-                    quickAdding !== null && "opacity-60 cursor-not-allowed"
-                  )}
-                >
-                  {displayName} · {meal.cal} kcal
-                </motion.button>
-              );
-            })}
+            {quickMeals.map((meal, i) => (
+              /* Pill structure: outer pill caps width via `max-w-[240px]`,
+                 inside an inline-flex with the food name (truncate +
+                 min-w-0 so the ellipsis works inside flex) and the
+                 calorie suffix (shrink-0 so it stays visible even when
+                 the name truncates). Replaces the previous JS char-
+                 count truncation, which was brittle across viewport
+                 widths and put the trailing "…" wherever the count
+                 landed regardless of actual rendered width. CSS
+                 truncation handles all those cases automatically. */
+              <motion.button
+                key={`${meal.name}-${i}`}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.16, ease: TAP_EASE }}
+                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
+                disabled={quickAdding !== null}
+                className={cn(
+                  "shrink-0 snap-start h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px]",
+                  quickAdding !== null && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <span className="inline-flex items-center gap-1 max-w-full min-w-0">
+                  <span className="truncate min-w-0 text-foreground">{meal.name}</span>
+                  <span className="shrink-0 text-muted-foreground">· {meal.cal} kcal</span>
+                </span>
+              </motion.button>
+            ))}
             <div className="shrink-0 w-4" aria-hidden="true" />
           </div>
           {/* Right-edge fade gradient was here. Removed because in
