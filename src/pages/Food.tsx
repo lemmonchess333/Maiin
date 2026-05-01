@@ -1081,14 +1081,14 @@ export default function Food() {
             {quickMeals.map((meal, i) => {
               /* Truncate verbose names (typically AI-generated, e.g.
                  "Plate with Fish, Fries, Salad, and Roasted vegetables")
-                 in JS so the rendered chip stays a sensible width and
-                 the trailing "…" actually shows. The CSS path
-                 (`max-w-[85vw] overflow-hidden text-ellipsis`) was
-                 cutting the ellipsis off underneath the right-edge
-                 fade gradient on long names — visually read as a hard
-                 clip rather than a "more here" cue. The CSS overflow
-                 stays as belt-and-braces; this is the user-visible fix. */
-              const MAX_CHIP_NAME = 28;
+                 in JS so the rendered chip stays a sensible width.
+                 22 chars is conservative enough that the truncated chip
+                 (with " · NNN kcal" suffix and the chip's px-3.5 padding)
+                 fits within an iPhone-width viewport even when a wide
+                 first chip is sitting next to it. The CSS overflow path
+                 (`max-w-[85vw] overflow-hidden text-ellipsis`) is kept
+                 as defense-in-depth. */
+              const MAX_CHIP_NAME = 22;
               const displayName =
                 meal.name.length > MAX_CHIP_NAME
                   ? `${meal.name.slice(0, MAX_CHIP_NAME - 1).trimEnd()}…`
@@ -1111,13 +1111,14 @@ export default function Food() {
             })}
             <div className="shrink-0 w-4" aria-hidden="true" />
           </div>
-          {/* Right-edge fade — signals more chips off-screen instead of
-              hard-cutting "Pasta with Sauce · 400 kcal" mid-word. Mirrors
-              the History.tsx FilterPills pattern. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent"
-          />
+          {/* Right-edge fade gradient was here. Removed because in
+              practice it sat on top of the rightmost chip's text and
+              read as a layout bug ("text covered by a grey overlay")
+              rather than a "more content scroll right" cue. The
+              horizontal-scroll affordance is enough on its own — chip
+              cards spilling past viewport is a familiar mobile pattern
+              and the JS truncation above keeps individual chips from
+              extending unreasonably far. */}
         </div>
       </motion.div>
 
