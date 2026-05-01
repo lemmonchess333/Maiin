@@ -709,13 +709,26 @@ export default function Food() {
     }, 50);
   };
 
-  // Merged Quick Add source: time-relevant favourites first (they're tagged
-  // by time of day so breakfast foods bubble up at breakfast), then fill
-  // from recent meal history (top unique names), then a seeded fallback.
-  // Dedupe is by normalized food name across all three sources — previously
-  // a "Pasta with Sauce" favourite was listed twice (once via QuickRelog,
-  // once via the history-derived row) which was the duplicate the user
-  // flagged. Cap at 5 entries to keep the row scannable.
+  // Merged Quick Add source.
+  //
+  // Three layers, in priority order:
+  //   1. Time-relevant favourites — foods the user has explicitly
+  //      starred, filtered by time-of-day. Favourites are the
+  //      strongest user signal (explicit), so they go first.
+  //   2. Frequency-ranked history (last 30 days) — the foods the user
+  //      actually relies on day-to-day. Was previously sorted by
+  //      simple recency (chronological), which let a one-off meal
+  //      (e.g. takeaway pizza last night) bubble above habitual
+  //      foods like daily Greek yoghurt. Frequency over a rolling
+  //      window better matches the "Quick Add" promise: surface the
+  //      foods I quick-add the most. Tie-broken by last-logged so
+  //      ties favour the more recent of two equally-frequent items
+  //      (handles "I switched from oats to yoghurt" gracefully).
+  //   3. Seeded defaults — first-time users with no history still
+  //      see suggestions.
+  //
+  // Dedupe is by normalized food name across all three sources.
+  // Capped at 5 to keep the row scannable.
   const quickMeals = useMemo(() => {
     const seen = new Set<string>();
     const items: Array<{
@@ -746,14 +759,48 @@ export default function Food() {
       });
     }
 
-    // 2. Recent meal history
+    // 2. Frequency-ranked history over the last 30 days.
+    //    `meal.date` is a `YYYY-MM-DD` string; lexical comparison
+    //    against the cutoff string is correct (and avoids parsing
+    //    every meal's date into a Date object).
+    const cutoff = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    })();
+    const freq = new Map<
+      string,
+      { count: number; lastLogged: string; meal: typeof meals[number] }
+    >();
     for (const meal of meals) {
+      if (!meal.date || meal.date < cutoff) continue;
+      const key = meal.foodName.toLowerCase().trim();
+      if (!key) continue;
+      const existing = freq.get(key);
+      if (existing) {
+        existing.count += 1;
+        // Keep the latest version's macros — they may differ if the
+        // user logged the same name with different portions.
+        if (meal.date > existing.lastLogged) {
+          existing.lastLogged = meal.date;
+          existing.meal = meal;
+        }
+      } else {
+        freq.set(key, { count: 1, lastLogged: meal.date, meal });
+      }
+    }
+    const ranked = Array.from(freq.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      // tie → most recent wins
+      return b.lastLogged.localeCompare(a.lastLogged);
+    });
+    for (const entry of ranked) {
       push({
-        name: meal.foodName,
-        cal: meal.totalCalories || 0,
-        pro: meal.totalProtein || 0,
-        carb: meal.totalCarbs || 0,
-        fat: meal.totalFat || 0,
+        name: entry.meal.foodName,
+        cal: entry.meal.totalCalories || 0,
+        pro: entry.meal.totalProtein || 0,
+        carb: entry.meal.totalCarbs || 0,
+        fat: entry.meal.totalFat || 0,
         portionSize: "1 serving",
       });
     }
@@ -1031,21 +1078,37 @@ export default function Food() {
             className="flex gap-2 pb-1 -mx-1 px-1 snap-x snap-mandatory"
             style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
           >
-            {quickMeals.map((meal, i) => (
-              <motion.button
-                key={`${meal.name}-${i}`}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.16, ease: TAP_EASE }}
-                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                disabled={quickAdding !== null}
-                className={cn(
-                  "shrink-0 snap-start h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[85vw] overflow-hidden text-ellipsis",
-                  quickAdding !== null && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                {meal.name} · {meal.cal} kcal
-              </motion.button>
-            ))}
+            {quickMeals.map((meal, i) => {
+              /* Truncate verbose names (typically AI-generated, e.g.
+                 "Plate with Fish, Fries, Salad, and Roasted vegetables")
+                 in JS so the rendered chip stays a sensible width and
+                 the trailing "…" actually shows. The CSS path
+                 (`max-w-[85vw] overflow-hidden text-ellipsis`) was
+                 cutting the ellipsis off underneath the right-edge
+                 fade gradient on long names — visually read as a hard
+                 clip rather than a "more here" cue. The CSS overflow
+                 stays as belt-and-braces; this is the user-visible fix. */
+              const MAX_CHIP_NAME = 28;
+              const displayName =
+                meal.name.length > MAX_CHIP_NAME
+                  ? `${meal.name.slice(0, MAX_CHIP_NAME - 1).trimEnd()}…`
+                  : meal.name;
+              return (
+                <motion.button
+                  key={`${meal.name}-${i}`}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ duration: 0.16, ease: TAP_EASE }}
+                  onClick={() => { haptic(); handleQuickMealAdd(meal); }}
+                  disabled={quickAdding !== null}
+                  className={cn(
+                    "shrink-0 snap-start h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[85vw] overflow-hidden text-ellipsis",
+                    quickAdding !== null && "opacity-60 cursor-not-allowed"
+                  )}
+                >
+                  {displayName} · {meal.cal} kcal
+                </motion.button>
+              );
+            })}
             <div className="shrink-0 w-4" aria-hidden="true" />
           </div>
           {/* Right-edge fade — signals more chips off-screen instead of
