@@ -385,8 +385,19 @@ export default function FoodCameraModal({
           outside because the crop matters to the decoder. Food mode uses
           a larger square-ish frame with lighter darkening — the corner
           brackets just help you centre the plate without forcing it into
-          a tiny box. */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          a tiny box.
+
+          The container reserves 220px of bottom space so the reticle
+          centres in the *visible* viewfinder area rather than across
+          the whole screen. Without this the bottom edge of the
+          square food reticle (86% width × aspect-square ≈ 335px tall on
+          iPhone 14) extended down behind the segmented control bar,
+          which read as a layout bug — corner brackets visibly clipped
+          by the tabs row. The padding leaves clear separation between
+          the reticle and the bar across all phone sizes (verified
+          down to iPhone SE 568px tall: the smallest reticle still has
+          ~80px of clearance). */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center pb-[220px]">
         {tab === "food" ? (
           <div className="w-[86%] max-w-[420px] aspect-square relative rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]">
             <div className="absolute top-0 left-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white/90 rounded-tl-2xl" />
