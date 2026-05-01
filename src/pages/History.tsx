@@ -5,6 +5,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
@@ -153,7 +154,20 @@ export default function History() {
   const { workouts, loading: workoutsLoading } = useWorkouts();
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
+  const { profile } = useAuth();
   const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+
+  // Goal-aware sentiment for nutrition deltas. On a cut, eating more is
+  // off-plan (red), eating less is on-plan (green). On a lean bulk it
+  // flips. On recomp the sign doesn't carry sentiment, so we mute it.
+  // Protein is special-cased on the call site below — more protein is
+  // generally good for any goal, so it's always "up-good".
+  const goal = profile?.program?.goal;
+  const calorieDirection: "up-good" | "down-good" | "neutral" =
+    goal === "cut" ? "down-good"
+    : goal === "lean bulk" ? "up-good"
+    : "neutral";
+  const macroTargets = profile?.macroTargets;
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
@@ -416,6 +430,7 @@ export default function History() {
       prevAvgCarbs,
       prevAvgFat,
       adherence,
+      daysLogged,
       caloriesSparkline,
       proteinSparkline,
       carbsSparkline,
@@ -573,6 +588,7 @@ export default function History() {
                   value={formatVolume(liftingData.liftVolume).value}
                   unit={formatVolume(liftingData.liftVolume).unit}
                   delta={buildDelta(liftingData.liftVolume, liftingData.prevLiftVolume)}
+                  direction="up-good"
                   sparklineData={liftingData.volumeSparkline}
                   accentColor={THEME.lifting}
                 />
@@ -581,6 +597,7 @@ export default function History() {
                   value={String(liftingData.liftCount)}
                   unit={timeRange === "1W" ? "/week" : timeRange === "1M" ? "/month" : timeRange === "3M" ? "/3mo" : timeRange === "6M" ? "/6mo" : "/year"}
                   delta={buildDelta(liftingData.liftCount, liftingData.prevLiftCount)}
+                  direction="up-good"
                   sparklineData={liftingData.sessionsSparkline}
                   accentColor={THEME.lifting}
                 />
@@ -700,6 +717,16 @@ export default function History() {
                 </>
               ) : (
               <>
+              {/* Sample-size caveat — averages over a sparse log can be
+                  misleading (a user who logged 4/30 days at 1,800 kcal
+                  isn't really "averaging 1,800 kcal"). One shared line
+                  above the four macro cards beats repeating the same
+                  fraction four times. */}
+              {nutrition.daysLogged < rangeDays && (
+                <p className="text-[11px] text-muted-foreground mt-2 -mb-1">
+                  Based on {nutrition.daysLogged} of {rangeDays} days logged
+                </p>
+              )}
               {/* Top row: calories + protein with trend deltas. */}
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
@@ -707,6 +734,8 @@ export default function History() {
                   value={nutrition.avgCalories.toLocaleString()}
                   unit="kcal/day"
                   delta={buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories)}
+                  direction={calorieDirection}
+                  target={macroTargets?.calories ? `target ${macroTargets.calories.toLocaleString()} kcal` : undefined}
                   sparklineData={nutrition.caloriesSparkline}
                   accentColor={THEME.success}
                 />
@@ -715,6 +744,8 @@ export default function History() {
                   value={nutrition.avgProtein.toString()}
                   unit="g/day"
                   delta={buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein)}
+                  direction="up-good"
+                  target={macroTargets?.protein ? `target ${macroTargets.protein}g` : undefined}
                   sparklineData={nutrition.proteinSparkline}
                   accentColor={THEME.macros.protein}
                 />
@@ -730,6 +761,8 @@ export default function History() {
                   value={nutrition.avgCarbs.toString()}
                   unit="g/day"
                   delta={buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs)}
+                  direction={calorieDirection}
+                  target={macroTargets?.carbs ? `target ${macroTargets.carbs}g` : undefined}
                   sparklineData={nutrition.carbsSparkline}
                   accentColor={THEME.macros.carbs}
                 />
@@ -738,6 +771,8 @@ export default function History() {
                   value={nutrition.avgFat.toString()}
                   unit="g/day"
                   delta={buildDelta(nutrition.avgFat, nutrition.prevAvgFat)}
+                  direction={calorieDirection}
+                  target={macroTargets?.fat ? `target ${macroTargets.fat}g` : undefined}
                   sparklineData={nutrition.fatSparkline}
                   accentColor={THEME.macros.fat}
                 />
