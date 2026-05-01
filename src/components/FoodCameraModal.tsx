@@ -468,19 +468,31 @@ export default function FoodCameraModal({
               <ImageIcon className="w-5 h-5" />
             </button>
 
-            {/* Shutter (only for food/label) — white fill + scan-coral ring */}
-            <button
-              onClick={() => { haptic("medium"); takePhoto(); }}
-              disabled={disableShutter}
-              className={cn(
-                "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
-                disableShutter && "opacity-50"
-              )}
-              style={{ borderColor: "#FF6B4A" }}
-              aria-label="Capture"
-            >
-              <div className="w-[60px] h-[60px] rounded-full bg-white" />
-            </button>
+            {/* Shutter — only rendered in modes that actually capture
+                (Scan Food, Food label). Barcode mode auto-detects, so
+                showing a disabled "shutter" + helper copy explaining
+                that it doesn't work was confusing UX — users would
+                tap and nothing would happen. We render an empty
+                placeholder of the same footprint instead so the
+                library + flip-camera buttons stay anchored at the
+                edges and the layout doesn't shift when switching
+                modes. */}
+            {tab !== "barcode" ? (
+              <button
+                onClick={() => { haptic("medium"); takePhoto(); }}
+                disabled={disableShutter}
+                className={cn(
+                  "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                  disableShutter && "opacity-50"
+                )}
+                style={{ borderColor: "#FF6B4A" }}
+                aria-label="Capture"
+              >
+                <div className="w-[60px] h-[60px] rounded-full bg-white" />
+              </button>
+            ) : (
+              <div className="h-[72px] w-[72px]" aria-hidden="true" />
+            )}
 
             {/* Flip camera — balances the library icon on the left */}
             <button
@@ -509,7 +521,7 @@ export default function FoodCameraModal({
                 className="text-center text-xs text-white/70"
               >
                 {tab === "barcode"
-                  ? "Auto-detects barcode (no shutter)"
+                  ? "Aim at the barcode — auto-detects"
                   : tab === "label"
                     ? "Align the nutrition label"
                     : "Point at your meal"}
