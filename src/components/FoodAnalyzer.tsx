@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
-import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { cn } from "@/lib/utils";
 import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +12,7 @@ import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
+import MealMacroBar from "./food/MealMacroBar";
 
 interface Props {
   date: string;
@@ -125,7 +125,6 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
-  const { accent, text: macroText } = useMacroPalette();
 
   const {
     analyzeFood,
@@ -512,14 +511,46 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
               )}
 
               <div className="p-4 space-y-3">
+                {/* Title block.
+                    - Barcode results carry a clean product name like
+                      "Big Mac" — keep it as the prominent title.
+                    - AI photo / text results return a verbose
+                      auto-generated label (e.g. "Plate with Fish,
+                      Fries, Salad, and Roasted vegetables") that
+                      truncates awkwardly and reads as machine-written.
+                      Use a stable header instead, with the AI's
+                      label demoted to a muted subtitle so the user
+                      still sees what the model thought it saw.
+                    Trust copy: a one-line "AI estimate — adjust
+                    before logging" cue under non-barcode titles
+                    sets the expectation that the result is a draft
+                    the user is meant to correct, not a final answer. */}
                 <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-foreground truncate">
-                    {activeResult.foodName}
-                  </h3>
-                  {activeResult.brand && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {activeResult.brand}
-                    </p>
+                  {isBarcode ? (
+                    <>
+                      <h3 className="text-base font-semibold text-foreground truncate">
+                        {activeResult.foodName}
+                      </h3>
+                      {activeResult.brand && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {activeResult.brand}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-base font-semibold text-foreground">
+                        Scanned meal
+                      </h3>
+                      {activeResult.foodName && (
+                        <p className="text-xs text-muted-foreground line-clamp-1 italic">
+                          {activeResult.foodName}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground/70 mt-1">
+                        AI estimate — adjust portions before logging.
+                      </p>
+                    </>
                   )}
                 </div>
 
@@ -618,31 +649,49 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                   </div>
                 )}
 
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
-                      {Math.round(displayTotals.calories)}
+                {/* Unified macro summary.
+                    Replaces an older four-box pastel grid (cal / protein
+                    / carbs / fat each in its own coloured tile) that
+                    looked stylistically detached from the rest of the
+                    Food page. The new layout matches the design
+                    language used elsewhere — mono numerals + sans
+                    units, single neutral surface, and a thin three-
+                    segment MealMacroBar carrying the P/C/F proportional
+                    read instead of separate coloured chips. The
+                    underlying values are the same `displayTotals`
+                    consumed elsewhere. */}
+                <div className="rounded-xl bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                    <p className="text-foreground">
+                      <span className="text-xl font-extrabold font-mono tabular-nums">
+                        {Math.round(displayTotals.calories)}
+                      </span>
+                      <span className="text-sm text-muted-foreground font-normal ml-1">
+                        cal
+                      </span>
                     </p>
-                    <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
-                  </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
-                      {Math.round(displayTotals.protein)}g
+                    <p className="text-[13px] text-muted-foreground">
+                      <span className="font-mono tabular-nums text-foreground/80">
+                        {Math.round(displayTotals.protein)}
+                      </span>
+                      g protein
+                      {" · "}
+                      <span className="font-mono tabular-nums text-foreground/80">
+                        {Math.round(displayTotals.carbs)}
+                      </span>
+                      g carbs
+                      {" · "}
+                      <span className="font-mono tabular-nums text-foreground/80">
+                        {Math.round(displayTotals.fat)}
+                      </span>
+                      g fat
                     </p>
-                    <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
                   </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
-                      {Math.round(displayTotals.carbs)}g
-                    </p>
-                    <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
-                  </div>
-                  <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
-                    <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
-                      {Math.round(displayTotals.fat)}g
-                    </p>
-                    <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
-                  </div>
+                  <MealMacroBar
+                    totalProtein={displayTotals.protein}
+                    totalCarbs={displayTotals.carbs}
+                    totalFat={displayTotals.fat}
+                  />
                 </div>
 
                 {/* Serving size adjuster — shown for barcode results */}
@@ -671,11 +720,19 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
               </div>
             </div>
 
-            <div className="flex gap-2">
+            {/* Action row.
+                Previously three equal-weight bordered buttons (Reset /
+                Save photo / Log meal). Only Log meal is the primary
+                action; flat-equal weight underplayed it. New hierarchy:
+                  - Reset → small ghost text button (left)
+                  - Save photo → icon-only secondary (when supported)
+                  - Log meal → flex-1 primary fill (dominant)
+                Behaviour unchanged; this is purely visual reweighting. */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleResetAll}
                 aria-label="Reset food analysis"
-                className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                className="px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
               >
                 Reset
               </button>
@@ -688,10 +745,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                 <button
                   onClick={handleSavePhoto}
                   aria-label="Save photo to Photos library"
-                  className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
+                  className="w-11 h-11 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center shrink-0 active:scale-95"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  Save photo
+                  <Download className="w-4 h-4" />
                 </button>
               )}
 
@@ -704,7 +760,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                      points them at Restore or Reset). */
                 disabled={saving || allRemoved}
                 className={cn(
-                  "flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2",
+                  "flex-1 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98]",
                   saved
                     ? "bg-green-500 text-white"
                     : "bg-primary text-primary-foreground hover:opacity-90",
