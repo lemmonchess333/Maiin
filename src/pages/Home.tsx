@@ -394,7 +394,7 @@ export default function Home() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Dumbbell className="w-4 h-4 text-primary shrink-0" />
-              <span>Tap <strong className="text-foreground">Program</strong> to start a workout</span>
+              <span>Tap <strong className="text-foreground">Programme</strong> to start a workout</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Footprints className="w-4 h-4 shrink-0" style={{ color: THEME.running }} />

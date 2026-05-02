@@ -165,7 +165,7 @@ export default function SaveRoutineSheet({
               Save as routine
             </Drawer.Title>
             <Drawer.Description className="text-xs text-muted-foreground -mt-2">
-              Snapshot of {sourceAuthorName}&apos;s workout. You can run it later from your Program.
+              Snapshot of {sourceAuthorName}&apos;s workout. You can run it later from your Programme.
             </Drawer.Description>
 
             {/* Name input */}

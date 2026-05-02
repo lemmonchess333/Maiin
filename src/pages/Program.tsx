@@ -467,6 +467,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             ) : (
               <button
                 onClick={() => setReorderMode(true)}
+                aria-label="Reorder exercises"
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
