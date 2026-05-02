@@ -86,7 +86,9 @@ export default function RecentMeals({ meals, rangeDays, rangeLabel }: RecentMeal
   const inWindow = meals.filter(
     (m) => m.date && new Date(m.date + "T00:00:00") >= since,
   );
-  const allDays = bucketByDay(inWindow).slice(0, HARD_MAX);
+  const allDaysFull = bucketByDay(inWindow);
+  const allDays = allDaysFull.slice(0, HARD_MAX);
+  const wasCapped = allDaysFull.length > HARD_MAX;
   if (allDays.length === 0) return null;
 
   const visibleCount = expanded ? allDays.length : Math.min(COLLAPSED, allDays.length);
@@ -154,7 +156,9 @@ export default function RecentMeals({ meals, rangeDays, rangeLabel }: RecentMeal
           className="w-full text-center text-xs font-semibold py-2 active:scale-[0.98] transition-all"
           style={{ color: THEME.success }}
         >
-          Show all{rangeLabel ? ` in ${rangeLabel}` : ""} ({allDays.length})
+          {wasCapped
+            ? `Show ${HARD_MAX} most recent`
+            : `Show all${rangeLabel ? ` in ${rangeLabel}` : ""} (${allDays.length})`}
         </button>
       )}
       {expanded && allDays.length > COLLAPSED && (
