@@ -24,16 +24,30 @@ const CATEGORY_DISPLAY: Record<string, string> = {
   core: "Core",
 };
 
-/** Map friendly muscle group names → react-body-highlighter muscle IDs */
+/** Map friendly muscle group names → react-body-highlighter muscle IDs.
+ *  Keyed on the EXERCISE_CATEGORIES taxonomy from src/lib/exercises.ts
+ *  ("Chest" / "Back" / "Shoulders" / "Biceps" / "Triceps" / "Legs" /
+ *  "Core" / "Full Body" / "Cardio") — those are the strings actually
+ *  written to saved workout docs.
+ *
+ *  Older alias keys ("Quads & Glutes", "Hamstrings & Back", "Lats",
+ *  "Calves", "Traps") are kept for backward compatibility with the
+ *  legacy CATEGORY_DISPLAY translation above, in case any historical
+ *  workout doc was saved against the previous movement-key taxonomy. */
 const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
-  "Quads & Glutes": ["quadriceps", "gluteal"],
-  "Hamstrings & Back": ["hamstring", "upper-back", "lower-back"],
-  "Core": ["abs", "obliques"],
-  "Shoulders": ["front-deltoids", "back-deltoids"],
+  // Current taxonomy (EXERCISE_CATEGORIES)
   "Chest": ["chest"],
+  "Back": ["upper-back", "lower-back"],
+  "Shoulders": ["front-deltoids", "back-deltoids"],
   "Biceps": ["biceps"],
   "Triceps": ["triceps"],
-  "Back": ["upper-back", "lower-back"],
+  "Legs": ["quadriceps", "gluteal", "hamstring", "calves"],
+  "Core": ["abs", "obliques"],
+  "Full Body": ["chest", "upper-back", "quadriceps", "abs"],
+  "Cardio": [],
+  // Legacy aliases via CATEGORY_DISPLAY
+  "Quads & Glutes": ["quadriceps", "gluteal"],
+  "Hamstrings & Back": ["hamstring", "upper-back", "lower-back"],
   "Lats": ["upper-back"],
   "Calves": ["calves"],
   "Traps": ["trapezius"],

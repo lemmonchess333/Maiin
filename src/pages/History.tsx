@@ -315,7 +315,15 @@ export default function History() {
         ex.sets?.forEach((set) => {
           liftVolume += set.weightKg * set.reps;
         });
-        const group = ex.category || "Other";
+        // Look up category from the static EXERCISES list as the
+        // primary source. The saved `ex.category` field is unreliable
+        // — seed/test data has shipped with every exercise tagged
+        // "Chest" regardless of actual movement, which collapsed the
+        // muscle heatmap to chest-only. EXERCISES is the authoritative
+        // taxonomy; fall back to the saved field only if the exercise
+        // isn't in the static list (e.g. a custom exercise).
+        const exDef = EXERCISES.find((e) => e.name === ex.exerciseName);
+        const group = exDef?.category || ex.category || "Other";
         muscleData[group] = (muscleData[group] || 0) + (ex.sets?.length || 0);
       });
     });
