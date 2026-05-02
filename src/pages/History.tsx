@@ -716,7 +716,7 @@ export default function History() {
                 <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
                   <Trophy size={16} className="text-amber-500" />
                   <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
-                  <span className="text-xs text-muted-foreground">This week</span>
+                  <span className="text-xs text-muted-foreground">Last 7 days</span>
                 </div>
                 {liftingData.prTimeline.length > 0 ? (
                   <div className="divide-y divide-border/20">
