@@ -54,45 +54,46 @@ export default function StatCard({
       style={{ boxShadow: "var(--ds-shadow-card)" }}>
       <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">{label}</p>
 
-      {/* Top row: value + unit on the left, sparkline on the right.
-          Delta + target are NOT in this row — they wrap to their own
-          full-width rows below so a long target string ("target 3,598
-          kcal") can never collide with the sparkline. */}
-      <div className="flex items-end justify-between gap-2">
-        <div className="flex items-baseline gap-1 min-w-0">
-          <span className="text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none truncate">{value}</span>
-          {unit && <span className="text-xs text-muted-foreground shrink-0">{unit}</span>}
-        </div>
-        {showSparkline && (
-          // Sparkline is decorative — no tooltip, no active dot, no
-          // cursor. The big number above IS the metric. The sparkline
-          // is a glance at the shape of the trend, not an interactive
-          // chart. `pointerEvents: none` removes the misleading hover
-          // affordance.
-          <div className="w-16 h-9 flex-shrink-0" style={{ pointerEvents: "none" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sparklineData!.map((v, i) => ({ v, i }))}>
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={accentColor} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="v"
-                  stroke={accentColor}
-                  strokeWidth={1.5}
-                  fill={`url(#${gradientId})`}
-                  dot={false}
-                  activeDot={false}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+      {/* Value + unit on their own full-width row. Side-by-side layout
+          with the sparkline doesn't fit on phone-sized stat cards once
+          the value is more than 3 digits — "2,143 kcal/day" plus a 64px
+          sparkline overflows the ~152px content area. Stacking the
+          sparkline below as a thin full-width band gives every realistic
+          value enough room without truncation. */}
+      <div className="flex items-baseline gap-1">
+        <span className="text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap">{value}</span>
+        {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
       </div>
+
+      {showSparkline && (
+        // Sparkline is decorative — no tooltip, no active dot, no
+        // cursor. The big number above IS the metric. The sparkline
+        // is a glance at the shape of the trend, not an interactive
+        // chart. `pointerEvents: none` removes the misleading hover
+        // affordance.
+        <div className="w-full h-5 mt-2 -mx-1" style={{ pointerEvents: "none" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sparklineData!.map((v, i) => ({ v, i }))} margin={{ top: 1, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={accentColor} stopOpacity={0.35} />
+                  <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke={accentColor}
+                strokeWidth={1.5}
+                fill={`url(#${gradientId})`}
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {delta && (
         <p className={`text-xs mt-1.5 font-medium flex items-center gap-0.5 ${deltaColor}`}>
