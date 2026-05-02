@@ -7,9 +7,16 @@ interface WeeklyOverviewProps {
   runDistance: number;
   liftCount: number;
   liftVolume: number;
-  caloriesBurned: number;
+  /** Average daily calories from logged meals — surfaced under the
+   *  Nutrition icon so the sub-line is nutrition-relevant rather than
+   *  showing the burn estimate (which lived under nutrition by accident
+   *  and read as "calories eaten"). */
+  avgCalories: number;
   nutritionAdherence: number;
   timeRange?: string;
+  /** Range size in days, used to scale ring targets with timeframe so
+   *  the rings don't always max out beyond 1W. */
+  rangeDays: number;
 }
 
 function Ring({ value, max, color, size = 44 }: { value: number; max: number; color: string; size?: number }) {
@@ -26,7 +33,7 @@ function Ring({ value, max, color, size = 44 }: { value: number; max: number; co
 }
 
 export default function WeeklyOverview({
-  runCount, runDistance, liftCount, liftVolume, caloriesBurned, nutritionAdherence, timeRange,
+  runCount, runDistance, liftCount, liftVolume, avgCalories, nutritionAdherence, timeRange, rangeDays,
 }: WeeklyOverviewProps) {
   const rangeLabel = timeRange === "1W" ? "This Week"
     : timeRange === "1M" ? "This Month"
@@ -34,20 +41,31 @@ export default function WeeklyOverview({
     : timeRange === "6M" ? "Last 6 Months"
     : timeRange === "1Y" ? "This Year"
     : "This Week";
+
+  // Targets prorated from a 5/week aspirational rate. Keeping the ring
+  // hardcoded at max=5 meant any range longer than 1W maxed out the
+  // ring on the first ~5 sessions/runs and stayed full for the rest of
+  // the period — a meaningless visualisation. Scaling with rangeDays
+  // gives the ring a real proportional fill at every range.
+  const sessionsTarget = Math.max(1, Math.round(5 * (rangeDays / 7)));
+  const runsTarget = Math.max(1, Math.round(5 * (rangeDays / 7)));
+
   const stats = [
     {
       icon: <Footprints className="w-4 h-4" style={{ color: THEME.running }} />,
-      label: 'Runs', value: runCount, sub: `${runDistance.toFixed(1)} km`,
-      color: THEME.running, ringVal: runCount, ringMax: 5,
+      label: 'Runs', value: runCount,
+      sub: runDistance > 0 ? `${runDistance.toFixed(1)} km` : '—',
+      color: THEME.running, ringVal: runCount, ringMax: runsTarget,
     },
     {
       icon: <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />,
       label: 'Sessions', value: liftCount, sub: formatVolumeSub(liftVolume),
-      color: THEME.lifting, ringVal: liftCount, ringMax: 5,
+      color: THEME.lifting, ringVal: liftCount, ringMax: sessionsTarget,
     },
     {
       icon: <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />,
-      label: 'Adherence', value: `${nutritionAdherence}%`, sub: `${caloriesBurned.toLocaleString()} cal`,
+      label: 'Adherence', value: `${nutritionAdherence}%`,
+      sub: avgCalories > 0 ? `${avgCalories.toLocaleString()} kcal/day` : '—',
       color: THEME.semantic.nutrition, ringVal: nutritionAdherence, ringMax: 100,
     },
   ];

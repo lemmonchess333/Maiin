@@ -128,6 +128,9 @@ export default function CalorieBalanceChart() {
                 "22 Mar 2026 / Deficit: 1,736 cal" template. */}
             <Tooltip
               cursor={false}
+              offset={20}
+              allowEscapeViewBox={{ x: false, y: false }}
+              wrapperStyle={{ outline: "none", zIndex: 10 }}
               content={(props) => {
                 if (!props.active || !props.payload?.length) return null;
                 const entry = props.payload[0];

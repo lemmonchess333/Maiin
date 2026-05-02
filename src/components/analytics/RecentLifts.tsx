@@ -74,9 +74,9 @@ export default function RecentLifts({ workouts, rangeDays, rangeLabel }: RecentL
   const since = new Date();
   since.setDate(since.getDate() - rangeDays);
   const inWindow = workouts.filter((w) => new Date(w.date) >= since);
-  const sortedAll = [...inWindow]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, HARD_MAX);
+  const sortedFull = [...inWindow].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedAll = sortedFull.slice(0, HARD_MAX);
+  const wasCapped = sortedFull.length > HARD_MAX;
 
   if (sortedAll.length === 0) return null;
 
@@ -152,7 +152,9 @@ export default function RecentLifts({ workouts, rangeDays, rangeLabel }: RecentL
           className="w-full text-center text-xs font-semibold text-muted-foreground hover:text-foreground py-2 active:scale-[0.98] transition-all"
           style={{ color: THEME.lifting }}
         >
-          Show all{rangeLabel ? ` in ${rangeLabel}` : ""} ({sortedAll.length})
+          {wasCapped
+            ? `Show ${HARD_MAX} most recent`
+            : `Show all${rangeLabel ? ` in ${rangeLabel}` : ""} (${sortedAll.length})`}
         </button>
       )}
       {expanded && sortedAll.length > COLLAPSED && (

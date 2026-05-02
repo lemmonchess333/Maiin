@@ -485,11 +485,18 @@ export default function History() {
     // could no longer plausibly invert the visible trend.
     const showSparklines = daysLogged >= 7 && adherence >= 50;
 
-    // Period-over-period delta requires comparable samples in BOTH
-    // windows. Below 7 logged days in either, the comparison is just
-    // noise — a single high day in the previous window makes the
-    // current "vs last" arrow meaningless. Suppress.
-    const showDelta = daysLogged >= 7 && prevDaysLogged >= 7;
+    // Period-over-period delta requires comparable, well-sampled
+    // windows. The selection-bias risk on intake metrics is real:
+    // a user logging 17/30 days isn't logging a random sample —
+    // they're logging the days they cared about tracking, which
+    // tends to skew the mean. Below 60% adherence in either window
+    // the comparison can't be trusted, so suppress the chip rather
+    // than assert a number that's mostly artifact.
+    const showDelta =
+      daysLogged >= 7 &&
+      prevDaysLogged >= 7 &&
+      daysLogged / rangeDays >= 0.6 &&
+      prevDaysLogged / rangeDays >= 0.6;
 
     return {
       avgCalories,
@@ -513,6 +520,22 @@ export default function History() {
   }, [meals, rangeDays]);
 
   const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
+  // Range-adaptive prefix for stat-card labels. The values inside
+  // those cards are TOTALS for the selected window (e.g. "Volume" is
+  // the sum across rangeDays, not a weekly average), so a static
+  // "Weekly" prefix on a 1M view reads as a label bug. Adapt the
+  // prefix to match the window the data actually covers.
+  const periodLabel = (() => {
+    switch (timeRange) {
+      case "1W": return "Weekly";
+      case "1M": return "Monthly";
+      case "3M": return "3-Month";
+      case "6M": return "6-Month";
+      case "1Y": return "Annual";
+      default: return "Weekly";
+    }
+  })();
 
   return (
     <motion.div className="space-y-4 pt-2" initial="hidden" animate="visible"
@@ -550,11 +573,10 @@ export default function History() {
                 runDistance={runningTotals.runDistance}
                 liftCount={liftingData.liftCount}
                 liftVolume={liftingData.liftVolume}
-                caloriesBurned={Math.round(
-                  runningTotals.runDistance * 65 + liftingData.liftCount * 200
-                )}
+                avgCalories={nutrition.avgCalories}
                 nutritionAdherence={nutrition.adherence}
                 timeRange={timeRange}
+                rangeDays={rangeDays}
               />
             )
           )}
@@ -588,7 +610,7 @@ export default function History() {
                 <>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <StatCard
-                      label="Weekly Distance"
+                      label={`${periodLabel} Distance`}
                       value={formatDistance(runningTotals.runDistance)}
                       unit="km"
                       direction="up-good"
@@ -656,7 +678,7 @@ export default function History() {
               <>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <StatCard
-                  label="Weekly Volume"
+                  label={`${periodLabel} Volume`}
                   value={formatVolume(liftingData.liftVolume).value}
                   unit={formatVolume(liftingData.liftVolume).unit}
                   delta={buildDelta(liftingData.liftVolume, liftingData.prevLiftVolume)}
@@ -665,9 +687,8 @@ export default function History() {
                   accentColor={THEME.lifting}
                 />
                 <StatCard
-                  label="Sessions"
+                  label={`${periodLabel} Sessions`}
                   value={String(liftingData.liftCount)}
-                  unit={timeRange === "1W" ? "/week" : timeRange === "1M" ? "/month" : timeRange === "3M" ? "/3mo" : timeRange === "6M" ? "/6mo" : "/year"}
                   delta={buildDelta(liftingData.liftCount, liftingData.prevLiftCount)}
                   direction="up-good"
                   sparklineData={liftingData.sessionsSparkline}
