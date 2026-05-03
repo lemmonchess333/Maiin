@@ -82,4 +82,42 @@ export function countByType(schedule: ScheduleDay[]): { lift: number; run: numbe
   );
 }
 
+/**
+ * Resolve the user's weekly run-day target across two profile fields.
+ *
+ * Historical drift: onboarding writes BOTH `weeklyRunsTarget` and
+ * `weeklyRunDaysTarget` (Onboarding.tsx:378-379). The Settings schedule-
+ * apply path only writes `weeklyRunsTarget` (Settings.tsx:126, 140), so
+ * once a user edits their schedule the two diverge. Different surfaces
+ * read different fields:
+ *   - useProgram (5 sites)        → weeklyRunDaysTarget
+ *   - Home / useDailyTargets      → weeklyRunsTarget
+ * After any Settings edit, Home and Program disagree about how many run
+ * days the user wants.
+ *
+ * This helper resolves both. Prefer the run-day-specific field when
+ * present; fall back to the legacy field; default to 0. Migration path
+ * is to write both via `runTargetWriteFields()` so the two stay in sync
+ * on every save.
+ */
+type ProfileLike = {
+  weeklyRunDaysTarget?: number;
+  weeklyRunsTarget?: number;
+};
+export function getWeeklyRunTarget(profile: ProfileLike | null | undefined): number {
+  return profile?.weeklyRunDaysTarget ?? profile?.weeklyRunsTarget ?? 0;
+}
+
+/**
+ * Patch object that writes BOTH legacy and new run-target fields.
+ * Use anywhere a save changes the user's run-day count so the two
+ * fields stay in lockstep until we deprecate one.
+ */
+export function runTargetWriteFields(target: number): {
+  weeklyRunsTarget: number;
+  weeklyRunDaysTarget: number;
+} {
+  return { weeklyRunsTarget: target, weeklyRunDaysTarget: target };
+}
+
 

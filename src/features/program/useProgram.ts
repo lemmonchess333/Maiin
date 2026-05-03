@@ -16,6 +16,7 @@ import {
 } from "./programEngine";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -83,7 +84,7 @@ export function useProgram() {
         if (!normalized.runDays && profile.runMode && profile.runMode !== "freeform") {
           const liftCount = normalized.workouts.length;
           const liftIndices = getLiftDayIndices(profile.weekSchedule);
-          const runTarget = profile.weeklyRunDaysTarget ?? 3;
+          const runTarget = getWeeklyRunTarget(profile) || 3;
           let runDays: ScheduledRunDay[] = [];
           let runPlan = normalized.runPlan;
 
@@ -131,7 +132,7 @@ export function useProgram() {
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
         if (profile.runMode && profile.runMode !== "freeform") {
-          const runTarget = profile.weeklyRunDaysTarget ?? 3;
+          const runTarget = getWeeklyRunTarget(profile) || 3;
           const liftIndices = getLiftDayIndices(profile.weekSchedule);
           if (profile.runMode === "race_prep" && profile.raceGoal) {
             const plan = generateRacePlan(
@@ -157,6 +158,11 @@ export function useProgram() {
 
         const initial: ProgramState = {
           goal,
+          // Persist primaryGoal alongside the engine-derived workouts.
+          // Loading already backfills via normalizeProgramState (see
+          // line ~80) but the initial doc should write the field
+          // explicitly so the persisted shape matches reads.
+          ...(profile.primaryGoal !== undefined && { primaryGoal: profile.primaryGoal }),
           currentPhase: "base",
           weekNumber: 1,
           splitType,
@@ -434,7 +440,7 @@ export function useProgram() {
       if (profile?.runMode && profile.runMode !== "freeform") {
         const liftCount = advanced.workouts.length;
         const liftIndices = getLiftDayIndices(profile.weekSchedule);
-        const runTarget = profile.weeklyRunDaysTarget ?? 3;
+        const runTarget = getWeeklyRunTarget(profile) || 3;
 
         if (profile.runMode === "race_prep" && profile.raceGoal && advanced.runPlan?.totalWeeks) {
           const weekIdx = getCurrentRaceWeek(advanced.runPlan.totalWeeks, profile.raceGoal.targetDate);
@@ -479,7 +485,12 @@ export function useProgram() {
       await saveProgram(updated);
 
       const allRunsDone = updated.runDays!.every((rd) => rd.completed);
-      const allLiftsDone = updated.workouts.every((d) => d.completed);
+      // Skipped lifts count as "done for the week" — same rule as
+      // completeWorkoutDay's `allDone` check uses (`completed || skipped`).
+      // Without this parity, a user who skipped one lift but finished
+      // every run would never see "Ready for next week" from the run
+      // path even though they would from the lift path.
+      const allLiftsDone = updated.workouts.every((d) => d.completed || d.skipped);
       if (allRunsDone && allLiftsDone) {
         toast.success("All workouts & runs complete! Ready for next week.");
       }
@@ -593,9 +604,24 @@ export function useProgram() {
     [programState, saveProgram],
   );
 
-  // Regenerate program (goal or split change)
+  // Regenerate program (goal or split change).
+  //
+  // `overrides` lets callers pass FRESH state directly instead of
+  // relying on `profile` having already round-tripped through the
+  // hook. Settings → Apply schedule changes used to call
+  // `regenerateProgram(undefined, pendingLiftDays)` and then
+  // `updateProfile({ weekSchedule: ... })` — so the regenerate ran
+  // against the OLD schedule (liftIndices were computed from
+  // `profile.weekSchedule` before the new schedule was saved). The
+  // resulting run schedule didn't reflect the layout the user just
+  // confirmed. Passing schedule + run target via `overrides` makes
+  // the regenerate correct on the first call.
   const regenerateProgram = useCallback(
-    async (goalOverride?: string, weeklyTargetOverride?: number) => {
+    async (
+      goalOverride?: string,
+      weeklyTargetOverride?: number,
+      overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
+    ) => {
       if (!profile) return;
 
       const goal = (goalOverride ?? programState?.goal ?? profile.program?.goal ?? "recomp") as ProgramState["goal"];
@@ -610,12 +636,14 @@ export function useProgram() {
         primaryGoal,
       );
 
-      // Regenerate run schedule
+      // Regenerate run schedule using the override schedule when
+      // provided, falling back to the profile's persisted schedule.
       let runDays: ScheduledRunDay[] | undefined;
       let runPlan: ProgramState["runPlan"];
       if (profile.runMode && profile.runMode !== "freeform") {
-        const runTarget = profile.weeklyRunDaysTarget ?? 3;
-        const liftIndices = getLiftDayIndices(profile.weekSchedule);
+        const runTarget = overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+        const effectiveSchedule = overrides?.weekSchedule ?? profile.weekSchedule;
+        const liftIndices = getLiftDayIndices(effectiveSchedule);
         if (profile.runMode === "race_prep" && profile.raceGoal) {
           const plan = generateRacePlan(
             profile.raceGoal.distance,
@@ -640,6 +668,14 @@ export function useProgram() {
 
       const newState: ProgramState = {
         goal,
+        // Persist primaryGoal across regenerate. Without this, the
+        // engine USED primaryGoal to pick rep ranges when generating
+        // the new workouts (line above), but the saved state lost
+        // the field — so the Program header's "Built for {goal}" line
+        // (Program.tsx:381 → primaryGoalLabel) silently fell back to
+        // "General Fitness" after every Goal change / Refresh, even
+        // for a hypertrophy or strength user.
+        ...(primaryGoal !== undefined && { primaryGoal }),
         currentPhase: "base",
         weekNumber: 1,
         splitType,
@@ -675,7 +711,7 @@ export function useProgram() {
 
       const liftIndices = getLiftDayIndices(profile.weekSchedule);
       const liftCount = liftIndices?.length ?? programState.workouts.length;
-      const runTarget = profile.weeklyRunDaysTarget ?? 3;
+      const runTarget = getWeeklyRunTarget(profile) || 3;
       let runDays: ScheduledRunDay[];
       let runPlan = programState.runPlan;
 

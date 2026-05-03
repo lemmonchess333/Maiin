@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useProgram } from "@/features/program/useProgram";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
-import { generateSchedule } from "@/lib/scheduleUtils";
+import { generateSchedule, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
 import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import {
@@ -65,7 +65,7 @@ export default function Settings() {
   const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
     (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
   );
-  const [runsTarget, setRunsTarget] = useState(profile?.weeklyRunsTarget || 2);
+  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile) || 2);
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
     profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
   );
@@ -123,7 +123,7 @@ export default function Settings() {
       setPendingLiftDays(currentLiftDays);
       setShowRestructureModal(true);
     } else {
-      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
+      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, ...runTargetWriteFields(runsTarget) });
       if (profile?.runMode && profile.runMode !== "freeform") {
         await refreshRunSchedule();
       }
@@ -135,9 +135,25 @@ export default function Settings() {
     if (pendingLiftDays === null) return;
     setRestructuring(true);
     try {
-      await new Promise((r) => setTimeout(r, 1500));
-      await regenerateProgram(undefined, pendingLiftDays);
-      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, weeklyRunsTarget: runsTarget });
+      // Save profile FIRST so subsequent reads (and the
+      // refreshRunSchedule fallback) see the new schedule. Then pass
+      // the new schedule directly into regenerateProgram via the
+      // `overrides` param so the run scheduler uses the user's
+      // confirmed layout, not the pre-edit profile state. Previously
+      // the order was inverted (regenerate → update profile) and the
+      // regenerate ran against stale liftIndices. The artificial
+      // 1.5s setTimeout was fake-spinner UX padding — the
+      // setRestructuring(true) state already shows "Rebuilding..."
+      // on the confirm button, so we don't need to slow the work down.
+      await updateProfile({
+        weekSchedule: schedule,
+        weeklyWorkoutsTarget: workoutsTarget,
+        ...runTargetWriteFields(runsTarget),
+      });
+      await regenerateProgram(undefined, pendingLiftDays, {
+        weekSchedule: schedule,
+        weeklyRunDaysTarget: runsTarget,
+      });
       if (profile?.runMode && profile.runMode !== "freeform") {
         await refreshRunSchedule();
       }

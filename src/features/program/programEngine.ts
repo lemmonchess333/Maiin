@@ -665,7 +665,12 @@ export function advanceWeek(state: ProgramState): ProgramState {
   const snapshot = { weekNumber: state.weekNumber, workouts: state.workouts };
   const history = [...(state.weekHistory ?? []), snapshot].slice(-8);
 
-  let workouts = state.workouts.map((day) => ({ ...day, completed: false }));
+  // Reset BOTH completed and skipped for the new week. Carrying
+  // `skipped: true` forward meant a user who skipped Day 3 last week
+  // would still see Day 3 as skipped on the fresh week — even though
+  // the week and prescription are new. Previously only `completed`
+  // was reset, leaving `skipped` to leak across weeks.
+  let workouts: WorkoutDay[] = state.workouts.map((day) => ({ ...day, completed: false, skipped: false }));
 
   if (prescription.deload) {
     workouts = applyDeload(workouts);

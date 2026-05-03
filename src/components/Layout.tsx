@@ -22,7 +22,7 @@ function useQueueCount(isOnline: boolean): number {
 
 const tabs: { to: string; icon: typeof Home; label: string }[] = [
   { to: "/", icon: Home, label: "Home" },
-  { to: "/program", icon: Dumbbell, label: "Program" },
+  { to: "/program", icon: Dumbbell, label: "Programme" },
   { to: "/food", icon: UtensilsCrossed, label: "Food" },
   { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "History" },

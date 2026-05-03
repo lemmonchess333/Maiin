@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 
 interface DayStepperProps {
   days: Array<{
     dayNumber: number;
     label: string;
-    status: "completed" | "today" | "upcoming";
+    status: "completed" | "today" | "upcoming" | "skipped";
   }>;
   selectedIndex: number;
   todayIndex: number | null;
@@ -15,6 +15,10 @@ interface DayStepperProps {
 
 const GREEN = "#4CAF50";
 const PURPLE = "#7C6BF0";
+// Skipped uses muted-foreground hue (resolved at rgba via THEME-friendly
+// fallback) so the circle reads as "intentionally not done" rather than
+// "completed" or "upcoming". Ban icon (slashed circle) reinforces this.
+const SKIPPED = "#8E8E93";
 
 export default function DayStepper({
   days,
@@ -33,6 +37,7 @@ export default function DayStepper({
         const isToday = index === todayIndex;
         const isSelected = index === selectedIndex;
         const isCompleted = day.status === "completed";
+        const isSkipped = day.status === "skipped";
 
         // Circle evaluation order (first match wins). Today's circle is
         // 48px (vs 40px for peers) with a coloured glow — 20% bigger and
@@ -46,7 +51,21 @@ export default function DayStepper({
         let glow: string | undefined;
         let content: React.ReactNode;
 
-        if (isToday && isCompleted) {
+        if (isSkipped) {
+          // Rule 0: Skipped (regardless of selection) → grey filled
+          // with a slashed-circle (Ban) icon. Sized 40px so today is
+          // still visually dominant if a day is both skipped and
+          // (somehow) the active selection — the today badge in the
+          // session header still announces "Today" separately.
+          diameter = 40;
+          fill = SKIPPED + "33"; // 20% alpha
+          bWidth = 1;
+          bColor = SKIPPED + "55";
+          content = (
+            <Ban className="w-4 h-4" style={{ color: SKIPPED }} strokeWidth={2.25} />
+          );
+          labelColor = SKIPPED;
+        } else if (isToday && isCompleted) {
           // Rule 1: Today AND completed → 48px green + glow
           diameter = 48;
           fill = GREEN;
@@ -127,7 +146,7 @@ export default function DayStepper({
             <button
               role="tab"
               aria-selected={isSelected}
-              aria-label={`Day ${day.dayNumber}, ${day.label}${isToday ? ", Today" : ""}`}
+              aria-label={`Day ${day.dayNumber}, ${day.label}${isCompleted ? ", completed" : isSkipped ? ", skipped" : isToday ? ", today" : ""}`}
               onClick={() => {
                 haptic("light");
                 onSelect(index);

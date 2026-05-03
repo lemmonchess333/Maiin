@@ -84,10 +84,15 @@ export default function Home() {
     }
   }, [profile, isInTrial]);
 
+  // getWeeklyRunTarget would be cleaner here but the
+  // react-hooks/preserve-manual-memoization rule can't see field-level
+  // access through the helper. Inline the resolution so deps stay
+  // explicit; semantics are identical.
+  const runTarget = profile?.weeklyRunDaysTarget ?? profile?.weeklyRunsTarget ?? 2;
   const schedule = useMemo<ScheduleDay[]>(function() {
     if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
-    return generateSchedule(profile?.weeklyWorkoutsTarget || 3, profile?.weeklyRunsTarget || 2);
-  }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, profile?.weeklyRunsTarget]);
+    return generateSchedule(profile?.weeklyWorkoutsTarget || 3, runTarget);
+  }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, runTarget]);
 
   const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
   const streakDisplay = useCountUp(streak, { sessionKey: "streak", duration: 0.5 });
@@ -394,7 +399,7 @@ export default function Home() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Dumbbell className="w-4 h-4 text-primary shrink-0" />
-              <span>Tap <strong className="text-foreground">Program</strong> to start a workout</span>
+              <span>Tap <strong className="text-foreground">Programme</strong> to start a workout</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Footprints className="w-4 h-4 shrink-0" style={{ color: THEME.running }} />

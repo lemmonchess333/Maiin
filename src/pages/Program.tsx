@@ -129,6 +129,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
 
+  // Refresh-programme confirmation (overflow item) — separate from
+  // Settings → Training's restructure modal because that one fires only
+  // when day-count changes; this one rebuilds with the same params and
+  // is destructive in a different way (clears weekHistory, resets
+  // weekNumber). User should know before tapping.
+  const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+
   // Swipe navigation
   const touchStartRef = useRef({ x: 0, y: 0 });
 
@@ -177,9 +184,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const replaceExercise = async (dayIdx: number, exIndex: number, newEx: Exercise) => {
     if (!programState) return;
     const old = programState.workouts[dayIdx].exercises[exIndex];
+    // Don't preserve old.movementCategory — let normalizeExercise infer
+    // the new category from the new exercise's name. Replacing Lat
+    // Pulldown (vertical_pull) with Dumbbell Curl shouldn't keep the
+    // pull tag; downstream consumers (analytics, MuscleHeatMap, social
+    // posts) need the actual movement pattern. Sets / reps / weight
+    // carry over as the user's customisation — the user can re-tune
+    // them post-replacement if the new exercise needs different
+    // prescription.
     const replacement = normalizeExercise({
       name: newEx.name, exerciseId: newEx.id,
-      movementCategory: old.movementCategory, sets: old.sets, reps: old.reps, weight: old.weight,
+      sets: old.sets, reps: old.reps, weight: old.weight,
     });
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
@@ -190,7 +205,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   const addExercisesToDay = async (dayIdx: number, exercises: Exercise[]) => {
     if (!programState) return;
-    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, movementCategory: "horizontal_push", sets: 3, reps: 10, weight: 0 }));
+    // Don't hardcode movementCategory — normalizeExercise infers from
+    // the exercise name via inferMovementCategory. Forcing
+    // "horizontal_push" was tagging every added exercise (including
+    // pulls, legs, isolations) as a horizontal press, contaminating
+    // analytics, MuscleHeatMap input, and social-post muscle groups.
+    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, sets: 3, reps: 10, weight: 0 }));
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
     );
@@ -324,15 +344,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         ? "today"
         : "upcoming";
 
-  // Stepper data
+  // Stepper data — keep skipped distinct from completed. Collapsing
+  // them was misleading: a green check on a skipped day suggested
+  // "you trained" when the user explicitly skipped. DayStepper has a
+  // dedicated grey-with-Ban-icon visual for skipped.
   const stepperDays = displayWorkouts.map((w, i) => ({
     dayNumber: i + 1,
     label: w.dayName,
-    status: (w.completed || w.skipped
+    status: (w.completed
       ? "completed"
-      : !isViewingHistory && i === todayIndex
-        ? "today"
-        : "upcoming") as "completed" | "today" | "upcoming",
+      : w.skipped
+        ? "skipped"
+        : !isViewingHistory && i === todayIndex
+          ? "today"
+          : "upcoming") as "completed" | "today" | "upcoming" | "skipped",
   }));
 
   // Session metadata
@@ -444,7 +469,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <header>
         <div className="flex items-center justify-between pt-1 pb-1">
           <div>
-            <h1 className="text-xl font-extrabold text-foreground">Program</h1>
+            <h1 className="text-xl font-extrabold text-foreground">Programme</h1>
             <p className="text-xs text-muted-foreground">
               {programHeaderLine}
             </p>
@@ -460,6 +485,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             ) : (
               <button
                 onClick={() => setReorderMode(true)}
+                aria-label="Reorder exercises"
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
@@ -856,7 +882,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { handleRegenerate(); }
+                    if (phaseLocked) { setShowProSheet(true); } else { setShowRefreshConfirm(true); }
                   }}
                   disabled={regenerating}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
@@ -865,6 +891,55 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <RefreshCw className={cn("w-4.5 h-4.5 text-muted-foreground", regenerating && "animate-spin")} />
                   <span className="text-sm font-medium text-foreground flex-1">Refresh Programme</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Refresh Programme Confirmation — destructive: regenerateProgram
+          rebuilds the workouts array, resets weekNumber to 1, and
+          clears weekHistory (the user's "Browse Past Weeks" data).
+          Logged workouts in History are NOT affected. */}
+      <AnimatePresence>
+        {showRefreshConfirm && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowRefreshConfirm(false)}
+              className="fixed inset-0 bg-black/60 z-[60]"
+            />
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
+            >
+              <h3 className="text-sm font-semibold text-foreground">Refresh programme?</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                A new set of exercises will be generated for your current goal and training days. You&apos;ll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowRefreshConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowRefreshConfirm(false);
+                    await handleRegenerate();
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+                >
+                  Refresh
                 </button>
               </div>
             </motion.div>
