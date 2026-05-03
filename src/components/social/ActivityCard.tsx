@@ -5,6 +5,7 @@ import { giveHighFive, getKudosList, writeNotification, blockUser } from '../../
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { activityExercisesToRoutine, type SavedRoutineExercise } from '../../lib/savedRoutines';
 import { formatExerciseSummary } from '../../lib/exerciseSummary';
+import { EXERCISES } from '../../lib/exercises';
 import { movementCategoryLabel } from '../../lib/exerciseMovementCategory';
 import CommentSheet from './CommentSheet';
 import SaveRoutineSheet from './SaveRoutineSheet';
@@ -256,11 +257,18 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                  fixed at render time without a backfill. Pre-PR-4
                  activities lack structured fields and fall back to
                  the persisted string. */
+              // Look up exerciseId from the static EXERCISES catalogue
+              // by name so the BW-vs-uncalibrated decision in
+              // formatExerciseSummary uses the actual movement type.
+              // Activity posts don't carry exerciseId today; matching on
+              // name is the safe inference.
+              const exMeta = EXERCISES.find((e) => e.name === ex.name);
               const displaySummary = hasStructured
                 ? formatExerciseSummary({
                     setCount: ex.setCount as number,
                     targetReps: ex.targetReps as number,
                     targetWeightKg: ex.targetWeightKg as number,
+                    exerciseId: exMeta?.id,
                   })
                 : ex.summary;
               const canCompare = !!user?.uid && activity?.authorId !== user.uid && hasStructured;

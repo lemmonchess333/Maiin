@@ -56,6 +56,11 @@ export default function Program() {
 }
 
 function formatVolume(kg: number): string {
+  // 0kg isn't a meaningful "volume achievement" — it just means
+  // every exercise in the session was bodyweight or uncalibrated, in
+  // which case asserting "0kg" reads as a loss rather than as
+  // "weight wasn't the metric here." Show an em-dash instead.
+  if (kg <= 0) return "—";
   if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
   return `${Math.round(kg)}kg`;
 }
@@ -626,7 +631,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                 </p>
                                 {lastPerf && (
                                   <p className="text-xs mt-0.5 text-muted-foreground">
-                                    Last: {lastPerf.weight > 0 ? `${lastPerf.weight} kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
+                                    Last: {lastPerf.weight > 0
+                                      ? `${lastPerf.weight} kg × ${lastPerf.reps}`
+                                      : isBW
+                                        ? `BW × ${lastPerf.reps}`
+                                        : `— × ${lastPerf.reps}`}
                                   </p>
                                 )}
                               </div>

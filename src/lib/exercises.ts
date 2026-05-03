@@ -2362,6 +2362,29 @@ export function getExerciseById(id: string): Exercise | undefined {
   return EXERCISES.find((e) => e.id === id);
 }
 
+/**
+ * True iff the exercise is *intrinsically* bodyweight (Pull-Ups, Dips,
+ * Push-Ups, etc. — `equipment === "Bodyweight"`).
+ *
+ * This is the correct check for distinguishing "this is a bodyweight
+ * movement" from "this exercise doesn't have a calibrated working
+ * weight yet." A new Lat Pulldown has `weight: 0` but is NOT
+ * bodyweight — the 0 means uncalibrated, not BW. Treating
+ * `weight === 0` as BW (the previous default) silently labelled
+ * weighted exercises as "BW" in history and progress charts, dragging
+ * 1RM charts to 0 on uncalibrated days.
+ *
+ * Use this everywhere a BW vs weighted decision is made:
+ *   - Display ("BW × 10" vs "30 kg × 10")
+ *   - Progression (add reps for BW; add load for weighted)
+ *   - PR detection
+ *   - Volume calculation
+ */
+export function isBodyweightExerciseId(exerciseId: string | undefined): boolean {
+  if (!exerciseId) return false;
+  return getExerciseById(exerciseId)?.equipment === "Bodyweight";
+}
+
 export function estimateCalories(
   exerciseId: string,
   sets: number,

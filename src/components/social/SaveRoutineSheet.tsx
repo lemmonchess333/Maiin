@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
+import { isBodyweightExerciseId } from "@/lib/exercises";
 
 /**
  * Renders the per-exercise summary with numbers in JetBrains Mono and
@@ -21,10 +22,15 @@ function ExerciseSummary({
   setCount,
   targetReps,
   targetWeightKg,
+  exerciseId,
 }: {
   setCount: number;
   targetReps: number;
   targetWeightKg: number;
+  /** When provided, used to distinguish bodyweight movements from
+   *  uncalibrated weighted exercises. Without it, weight === 0 falls
+   *  back to "{sets}×{reps}" without a BW label. */
+  exerciseId?: string;
 }) {
   const sets = Math.max(0, Math.round(setCount || 0));
   const reps = Math.max(0, Math.round(targetReps || 0));
@@ -45,10 +51,19 @@ function ExerciseSummary({
     );
   }
   if (weight === 0) {
+    // Only label as BW for true bodyweight movements. An uncalibrated
+    // weighted exercise (Leg Press at 0kg) shouldn't claim "BW".
+    if (isBodyweightExerciseId(exerciseId)) {
+      return (
+        <span>
+          <span className={num}>{sets}×{reps}</span>
+          <span className={unit}> BW</span>
+        </span>
+      );
+    }
     return (
       <span>
         <span className={num}>{sets}×{reps}</span>
-        <span className={unit}> BW</span>
       </span>
     );
   }
@@ -200,6 +215,7 @@ export default function SaveRoutineSheet({
                         setCount={ex.setCount}
                         targetReps={ex.targetReps}
                         targetWeightKg={ex.targetWeightKg}
+                        exerciseId={ex.exerciseId}
                       />
                     </span>
                   </div>

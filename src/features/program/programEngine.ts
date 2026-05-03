@@ -10,6 +10,7 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
+import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
 /* ================================
@@ -530,7 +531,26 @@ export function applyProgression(
 
   const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
-  const isBodyweight = exercise.weight === 0;
+  // Use the static EXERCISES.equipment field to identify true
+  // bodyweight movements (Pull-Ups, Dips, etc.). The previous
+  // `weight === 0` shortcut couldn't distinguish bodyweight from
+  // "weighted exercise with no calibrated starting weight yet" — so
+  // a fresh Lat Pulldown or Leg Press at 0kg got progressed via the
+  // BW path (rep increases instead of load increases) and rendered
+  // in history as "BW × 10" with 0kg volume.
+  const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
+  // Uncalibrated weighted exercise — skip progression entirely. We
+  // can't add a sensible load increment from 0, and the "add reps"
+  // BW fallback would mislabel the movement going forward.
+  const isUncalibrated = !isBodyweight && exercise.weight === 0;
+  if (isUncalibrated) {
+    return {
+      ...updated,
+      lastSuccessfulWeight: actualWeight,
+      consecutiveFailures: 0,
+      plateauCount: 0,
+    };
+  }
   const resetReps = exercise.baseReps ?? exercise.reps; // anchor to original prescription
 
   if (exercise.progressionType === "double") {
@@ -645,8 +665,9 @@ export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
     exercises: day.exercises.map((ex) => ({
       ...ex,
       sets: Math.max(2, ex.sets - 1),
-      // Bodyweight exercises (weight=0): reduce sets only, no weight change
-      // Weighted: round to 2.5kg increments (standard plate size)
+      // 0 weight (bodyweight or uncalibrated): no weight to deload
+      // — leave at 0. Sets reduction above is the deload signal.
+      // Weighted: round to 2.5kg increments (standard plate size).
       weight: ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
     })),
   }));
