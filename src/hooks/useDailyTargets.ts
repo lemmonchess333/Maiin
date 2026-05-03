@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useAuth } from "@/lib/auth";
-import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import { generateSchedule, getWeeklyRunTarget, type ScheduleDay } from "@/lib/scheduleUtils";
 import { getAdjustedTargets, getDayAdjustment } from "@/lib/phaseNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import type { DayType } from "@/lib/types";
@@ -64,7 +64,7 @@ export function useDailyTargets(date?: Date): DailyTargets {
         ? profile.weekSchedule
         : generateSchedule(
             profile?.weeklyWorkoutsTarget || 3,
-            profile?.weeklyRunsTarget || 2,
+            getWeeklyRunTarget(profile) || 2,
           );
 
     const dayType = getDayTypeForDate(targetDate, schedule);

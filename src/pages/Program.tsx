@@ -184,9 +184,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const replaceExercise = async (dayIdx: number, exIndex: number, newEx: Exercise) => {
     if (!programState) return;
     const old = programState.workouts[dayIdx].exercises[exIndex];
+    // Don't preserve old.movementCategory — let normalizeExercise infer
+    // the new category from the new exercise's name. Replacing Lat
+    // Pulldown (vertical_pull) with Dumbbell Curl shouldn't keep the
+    // pull tag; downstream consumers (analytics, MuscleHeatMap, social
+    // posts) need the actual movement pattern. Sets / reps / weight
+    // carry over as the user's customisation — the user can re-tune
+    // them post-replacement if the new exercise needs different
+    // prescription.
     const replacement = normalizeExercise({
       name: newEx.name, exerciseId: newEx.id,
-      movementCategory: old.movementCategory, sets: old.sets, reps: old.reps, weight: old.weight,
+      sets: old.sets, reps: old.reps, weight: old.weight,
     });
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
@@ -197,7 +205,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   const addExercisesToDay = async (dayIdx: number, exercises: Exercise[]) => {
     if (!programState) return;
-    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, movementCategory: "horizontal_push", sets: 3, reps: 10, weight: 0 }));
+    // Don't hardcode movementCategory — normalizeExercise infers from
+    // the exercise name via inferMovementCategory. Forcing
+    // "horizontal_push" was tagging every added exercise (including
+    // pulls, legs, isolations) as a horizontal press, contaminating
+    // analytics, MuscleHeatMap input, and social-post muscle groups.
+    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, sets: 3, reps: 10, weight: 0 }));
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
     );
@@ -331,15 +344,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         ? "today"
         : "upcoming";
 
-  // Stepper data
+  // Stepper data — keep skipped distinct from completed. Collapsing
+  // them was misleading: a green check on a skipped day suggested
+  // "you trained" when the user explicitly skipped. DayStepper has a
+  // dedicated grey-with-Ban-icon visual for skipped.
   const stepperDays = displayWorkouts.map((w, i) => ({
     dayNumber: i + 1,
     label: w.dayName,
-    status: (w.completed || w.skipped
+    status: (w.completed
       ? "completed"
-      : !isViewingHistory && i === todayIndex
-        ? "today"
-        : "upcoming") as "completed" | "today" | "upcoming",
+      : w.skipped
+        ? "skipped"
+        : !isViewingHistory && i === todayIndex
+          ? "today"
+          : "upcoming") as "completed" | "today" | "upcoming" | "skipped",
   }));
 
   // Session metadata

@@ -27,10 +27,10 @@ function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
      surface with safe defaults — the UI uses these for progression
      hints which don't apply to a one-off routine run, and for the
      workout-doc write which only consumes name / exerciseId / sets /
-     reps / weight in practice. movementCategory defaults to
-     "horizontal_push" because WorkoutSession itself never reads it
-     (the value flows through to the workout doc's per-exercise
-     `category` field where it's purely informational). */
+     reps / weight in practice. movementCategory is inferred from
+     the exercise name via normalizeExercise → inferMovementCategory;
+     the saved category flows into the workout doc and is read by
+     analytics + MuscleHeatMap, so getting it right matters. */
   return normalizeExercise({
     name: ex.name,
     exerciseId: ex.exerciseId || `routine-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
@@ -39,7 +39,6 @@ function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
     weight: ex.targetWeightKg || 0,
     lastAttemptedWeight: ex.targetWeightKg || 0,
     lastSuccessfulWeight: ex.targetWeightKg || 0,
-    movementCategory: "horizontal_push",
   });
 }
 
