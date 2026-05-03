@@ -142,30 +142,44 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         </div>
       </div>
 
-      {/* Primary / Secondary muscle pills */}
-      <div className="mt-4">
-        {demo.primaryMuscles.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Primary:</span>
-            {demo.primaryMuscles.map((m) => (
-              <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium"
-                style={{ backgroundColor: THEME.lifting + "14", color: THEME.lifting }}>
-                {m}
-              </span>
-            ))}
+      {/* Primary / Secondary muscle pills.
+          Dedup secondary against primary — LOCAL_MUSCLE_MAP intentionally
+          expands "Upper Chest" → ["chest", "shoulders"] so the body
+          diagram highlights front delts for Incline Bench Press, but
+          the same expansion produces a duplicate "shoulders" chip
+          when secondaryMuscles already lists Front Delts → shoulders.
+          The diagram still gets both regions; the chip row reads as
+          one canonical placement per muscle. Primary wins ties since
+          it's the more emphatic categorisation. */}
+      {(() => {
+        const primarySet = new Set(demo.primaryMuscles);
+        const secondaryDedup = demo.secondaryMuscles.filter((m) => !primarySet.has(m));
+        return (
+          <div className="mt-4">
+            {demo.primaryMuscles.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Primary:</span>
+                {demo.primaryMuscles.map((m) => (
+                  <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium"
+                    style={{ backgroundColor: THEME.lifting + "14", color: THEME.lifting }}>
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
+            {secondaryDedup.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Secondary:</span>
+                {secondaryDedup.map((m) => (
+                  <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-muted text-foreground/70">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-        {demo.secondaryMuscles.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">Secondary:</span>
-            {demo.secondaryMuscles.map((m) => (
-              <span key={m} className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-muted text-foreground/70">
-                {m}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Instructions */}
       {demo.instructions.length > 0 && (
