@@ -35,7 +35,6 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 src/
 ├── components/         # Shared UI components (87 files total)
 │   ├── analytics/      # Performance charts & stats (12 components)
-│   ├── calendar/       # Training calendar (WeekView, SessionCard)
 │   ├── home/           # Home screen cards & widgets (10 components)
 │   ├── nutrition/      # Nutrition UI (HealthScore, Water, Barcode, Serving)
 │   ├── program/        # Workout program builder (ExercisePicker, CustomDayBuilder)
@@ -85,7 +84,6 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `RunDetail.tsx` | `/run/:runId` | Historical run detail view |
 | `Social.tsx` | `/social` | Social feed, crews, leaderboards |
 | `UserProfile.tsx` | `/user/:uid` | User profile viewing |
-| `TrainingCalendar.tsx` | *(no route)* | Weekly training calendar view (file exists, not routed in App.tsx) |
 | `Settings.tsx` | `/settings` | User settings & preferences |
 | `Onboarding.tsx` | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete) |
 | `Login.tsx` | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated) |
