@@ -654,7 +654,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         <div key={`ex-${idx}-${i}`} data-swipe-card="true">
                           <SortableExerciseRow id={`ex-${idx}-${i}`} showHandle={false} onDelete={() => removeExFromDay(idx, i)}>
                             <button
-                              onClick={() => navigate(`/history/exercise/${encodeURIComponent(ex.name)}`)}
+                              onClick={() => navigate(`/history/exercise/${encodeURIComponent(ex.name)}`, { state: { initialTab: "form" } })}
                               className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
                               onTouchStart={(e) => handleLongPressStart(idx, i, e)}
                               onTouchMove={handleLongPressCancel}
