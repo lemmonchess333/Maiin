@@ -9,7 +9,7 @@ import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
-import RunningChip from "@/components/program/RunningChip";
+import RunningNavIcon from "@/components/program/RunningNavIcon";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
 import {
@@ -474,20 +474,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <div>
         <header>
         <div className="flex items-center justify-between pt-1 pb-1">
-          <div className="min-w-0">
-            {/* Title + Running chip on the same baseline. The chip is
-                a small status-pill affordance next to the heading, NOT
-                a wide row below it. min-w-0 + flex-wrap-nowrap + the
-                truncating h1 keeps both visible at 375px width. */}
-            <div className="flex items-center gap-2 min-w-0">
-              <h1 className="text-xl font-extrabold text-foreground truncate">Programme</h1>
-              <RunningChip />
-            </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-foreground">Programme</h1>
             <p className="text-xs text-muted-foreground">
               {programHeaderLine}
             </p>
           </div>
+          {/* Right utility cluster — running entry leads, then reorder
+              + overflow. Running icon is colour-distinct (coral) but
+              smaller than its greyscale neighbours; the tint carries
+              the affordance so size doesn't have to. */}
           <div className="flex items-center gap-1">
+            <RunningNavIcon />
             {reorderMode ? (
               <button
                 onClick={() => setReorderMode(false)}
@@ -500,6 +498,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 onClick={() => setReorderMode(true)}
                 aria-label="Reorder exercises"
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
+                style={{ minWidth: 44, minHeight: 44 }}
               >
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
               </button>
