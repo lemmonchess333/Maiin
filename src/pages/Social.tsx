@@ -312,7 +312,7 @@ export default function Social() {
               tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
-            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'Find'}
+            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'People'}
           </button>
         ))}
       </div>
@@ -680,7 +680,7 @@ export default function Social() {
           "Discover" to remove the naming collision with the Feed
           sub-tab also called Discover (now Explore). */}
       {tab === 'find' && (
-        <section aria-label="Find people">
+        <section aria-label="People">
         <div className="space-y-6">
           {/* Section order rebuilt per audit: search-first because
               that's the highest-intent task on this surface. Suggested
