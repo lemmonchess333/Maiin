@@ -3,6 +3,7 @@ import { Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { getPersonalTrajectory, type PersonalTrajectory } from '@/lib/personalTrajectory';
 import { THEME } from '@/lib/theme';
+import Tooltip from '@/components/ui/Tooltip';
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
@@ -93,28 +94,32 @@ export default function TrajectoryCard() {
             </span>
             <span className="text-sm text-muted-foreground font-medium">pts</span>
             {thisWeek.score > 0 && (
-              /* The delta now compares against last week's running
-                 total at the same elapsed point in the week (fair
-                 like-for-like) rather than its full-week total. The
-                 aria-label spells out the comparison so screen readers
-                 — and curious users — can resolve why the percentage
-                 doesn't match the visible "Last week N pts" baseline
-                 row below it (which is intentionally the full prior
-                 week, kept as an aspirational target). */
-              <span
-                className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
-                aria-label={
-                  deltaPct == null
-                    ? 'New baseline this week'
-                    : `${deltaPct > 0 ? '+' : ''}${deltaPct}% vs last week so far`
-                }
+              /* The delta compares against last week's running total at
+                 the same elapsed point in the week (fair like-for-like)
+                 rather than its full-week total. Tap surfaces a Tooltip
+                 spelling out the comparison so curious users can
+                 resolve why the percentage doesn't match the visible
+                 "Last week N pts" baseline row below it (which is
+                 intentionally the full prior week, kept as an
+                 aspirational target). The chip is a real <button> so
+                 the Tooltip can wire aria-describedby and keyboard
+                 focus correctly — Tooltip provides the accessible
+                 name so the prior aria-label has been dropped. */
+              <Tooltip
+                content="Compared against last week's running total at this same point in the week. The full prior week is shown below as the baseline."
+                placement="bottom"
               >
-                <DeltaIcon size={12} />
-                {deltaPct == null
-                  ? 'new'
-                  : `${deltaPct > 0 ? '+' : ''}${deltaPct}%`}
-              </span>
+                <button
+                  type="button"
+                  className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
+                >
+                  <DeltaIcon size={12} />
+                  {deltaPct == null
+                    ? 'new'
+                    : `${deltaPct > 0 ? '+' : ''}${deltaPct}%`}
+                </button>
+              </Tooltip>
             )}
           </div>
 
