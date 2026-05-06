@@ -9,7 +9,7 @@ import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
-import RunningModalityStrip from "@/components/program/RunningModalityStrip";
+import RunningChip from "@/components/program/RunningChip";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
 import {
@@ -474,8 +474,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <div>
         <header>
         <div className="flex items-center justify-between pt-1 pb-1">
-          <div>
-            <h1 className="text-xl font-extrabold text-foreground">Programme</h1>
+          <div className="min-w-0">
+            {/* Title + Running chip on the same baseline. The chip is
+                a small status-pill affordance next to the heading, NOT
+                a wide row below it. min-w-0 + flex-wrap-nowrap + the
+                truncating h1 keeps both visible at 375px width. */}
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-xl font-extrabold text-foreground truncate">Programme</h1>
+              <RunningChip />
+            </div>
             <p className="text-xs text-muted-foreground">
               {programHeaderLine}
             </p>
@@ -508,12 +515,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </div>
         </div>
       </header>
-
-        {/* Running modality entry — quiet coral-tinted strip in the
-            gap between the page title and lifting content. Lives here
-            (above WeekPhaseRow) because it's page-level navigation
-            between modalities; what follows is lifting-specific. */}
-        <RunningModalityStrip />
 
         {/* Week + Phase Row */}
         <div>
