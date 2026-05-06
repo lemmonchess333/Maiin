@@ -104,6 +104,12 @@ export default function Social() {
 
   // Leave crew modal (#19)
   const [leavingCrewId, setLeavingCrewId] = useState<string | null>(null);
+  /* Crew list sort. Default is 'popular' (memberCount desc) which is
+     also the order Firestore returns rows in, so the initial render
+     matches the user's first impression. 'new' surfaces recently-
+     created crews so they don't get permanently buried under
+     established ones. 'alpha' is the predictable browse mode. */
+  const [crewSort, setCrewSort] = useState<'popular' | 'new' | 'alpha'>('popular');
   /* Per-crew busy state — tracks the crew the user is currently
      joining so the row button can disable + show "Joining…". Without
      this, double-taps would double-fire joinCrew. */
@@ -312,7 +318,7 @@ export default function Social() {
               tab === t ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
             }`}
           >
-            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'Find'}
+            {t === 'feed' ? 'Feed' : t === 'crews' ? 'Crews' : 'People'}
           </button>
         ))}
       </div>
@@ -506,9 +512,54 @@ export default function Social() {
 
           {/* Crews list */}
           <div className="space-y-3">
-            <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Crews</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Crews</p>
+              {/* Sort pills. Mirrors the visual language of the feed
+                  sub-tabs (rounded-full, muted background, active state
+                  in card-on-muted). Three options keep the bar narrow
+                  enough to sit beside the section eyebrow without
+                  wrapping on a 320px viewport. */}
+              <div className="flex gap-1 p-1 rounded-full bg-muted shrink-0">
+                {(['popular', 'new', 'alpha'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setCrewSort(s)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                      crewSort === s ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
+                    }`}
+                    aria-pressed={crewSort === s}
+                  >
+                    {s === 'popular' ? 'Popular' : s === 'new' ? 'New' : 'A–Z'}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="space-y-2">
-              {crews.slice(0, 5).map((crew) => {
+              {(() => {
+                /* Client-side re-sort over the full fetched array.
+                   The Firestore query already returns every crew (no
+                   limit), so sorting here is just an array reorder —
+                   no extra reads. The slice cap stays at 5 across all
+                   sort modes to keep the surface curated; users who
+                   want the long tail can use the sort to peek at
+                   different slices without an "expand" affordance. */
+                const sorted = [...crews];
+                if (crewSort === 'new') {
+                  sorted.sort((a, b) => {
+                    const at = (a.createdAt as { toMillis?: () => number } | Date | null);
+                    const bt = (b.createdAt as { toMillis?: () => number } | Date | null);
+                    const am = at instanceof Date ? at.getTime() : at?.toMillis?.() ?? 0;
+                    const bm = bt instanceof Date ? bt.getTime() : bt?.toMillis?.() ?? 0;
+                    return bm - am;
+                  });
+                } else if (crewSort === 'alpha') {
+                  sorted.sort((a, b) => a.name.localeCompare(b.name));
+                }
+                /* 'popular' falls through — Firestore already ordered
+                   by memberCount desc, so the initial array is the
+                   correct order. */
+                return sorted.slice(0, 5);
+              })().map((crew) => {
                 const isMember = currentCrew?.id === crew.id;
                 const IconComp = ICON_MAP[crew.icon];
                 /* Subtext priority:
@@ -680,7 +731,7 @@ export default function Social() {
           "Discover" to remove the naming collision with the Feed
           sub-tab also called Discover (now Explore). */}
       {tab === 'find' && (
-        <section aria-label="Find people">
+        <section aria-label="People">
         <div className="space-y-6">
           {/* Section order rebuilt per audit: search-first because
               that's the highest-intent task on this surface. Suggested

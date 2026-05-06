@@ -1,5 +1,5 @@
 import { useMemo, useState, lazy, Suspense, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, Trophy } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -77,13 +77,18 @@ export default function ExerciseHistory() {
   const decodedName = params.name ? decodeURIComponent(params.name) : "";
   const { workouts, loading } = useWorkouts();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [timeRange, setTimeRange] = useState<typeof RANGE_ORDER[number]>("3M");
   const [metric, setMetric] = useState<Metric>("1RM");
   // Top-level tab: "progress" (chart + sessions) or "form" (muscle
-  // diagrams + instructions). Users from the PR list default to
-  // progress; users coming from Program who want form cues tap across.
-  const [tab, setTab] = useState<"progress" | "form">("progress");
+  // diagrams + instructions). Default depends on entry point — opening
+  // from Program (where the user is asking "how do I do this?") starts
+  // on Form; from History / PR list (where the user is asking "how am
+  // I trending?") starts on Progress. The caller threads the intent
+  // through `navigate(..., { state: { initialTab: "form" } })`.
+  const initialTab = (location.state as { initialTab?: "progress" | "form" } | null)?.initialTab;
+  const [tab, setTab] = useState<"progress" | "form">(initialTab ?? "progress");
 
   const exercise = useMemo(
     () => EXERCISES.find((e) => e.name === decodedName),
