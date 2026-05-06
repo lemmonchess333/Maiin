@@ -9,6 +9,7 @@ import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
+import RunningModalityStrip from "@/components/program/RunningModalityStrip";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
 import {
@@ -507,6 +508,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </div>
         </div>
       </header>
+
+        {/* Running modality entry — quiet coral-tinted strip in the
+            gap between the page title and lifting content. Lives here
+            (above WeekPhaseRow) because it's page-level navigation
+            between modalities; what follows is lifting-specific. */}
+        <RunningModalityStrip />
 
         {/* Week + Phase Row */}
         <div>
