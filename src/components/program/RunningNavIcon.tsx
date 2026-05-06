@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Footprints } from "lucide-react";
@@ -7,6 +8,9 @@ import { THEME } from "@/lib/theme";
 
 interface Props {
   className?: string;
+  /** Forwarded so Coachmark / Tooltip can attach floating-ui's anchor
+   *  ref to the underlying button (React 19 ref-as-prop pattern). */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /**
@@ -26,12 +30,13 @@ interface Props {
  * codebase; building one is a separate task). Revisit if data shows
  * the icon is being missed.
  */
-export default function RunningNavIcon({ className }: Props) {
+export default function RunningNavIcon({ className, ref }: Props) {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
 
   return (
     <motion.button
+      ref={ref}
       type="button"
       whileTap={reduced ? undefined : { scale: 0.92 }}
       onClick={() => {
