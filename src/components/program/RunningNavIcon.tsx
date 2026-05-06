@@ -30,6 +30,12 @@ export default function RunningNavIcon({ className }: Props) {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
 
+  // TODO(onboarding): wire a first-use coachmark when a positioned
+  // tooltip primitive lands. Use useCoachMarks("program-running-nav-v1")
+  // for dismissal state — the hook is ready; only the rendering layer
+  // is missing. Bump the v1 suffix if the icon's position or behaviour
+  // changes so dismissed users see the new explainer.
+
   return (
     <motion.button
       type="button"
