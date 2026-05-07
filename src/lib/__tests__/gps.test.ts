@@ -3,6 +3,7 @@ import {
   haversine,
   isValidReading,
   calculatePace,
+  rollingPace,
   paceAsNumber,
   calculateSplits,
   totalElevationGain,
@@ -388,5 +389,56 @@ describe("KalmanFilter", () => {
     const result = kf.process(52.0, 0.0, 10);
     expect(result.lat).toBe(52.0);
     expect(result.lon).toBe(0.0);
+  });
+});
+
+describe("rollingPace", () => {
+  /* 1° latitude ≈ 111,320m. So 0.001° ≈ 111.32m. We synthesise points
+   * with lat increments and timestamps to control distance + time
+   * within the rolling window. */
+  const baseTs = 1_700_000_000_000;
+
+  function pointAt(lat: number, secondsOffset: number): GPSPoint {
+    return makePoint({
+      lat,
+      lon: 0,
+      timestamp: baseTs + secondsOffset * 1000,
+    });
+  }
+
+  it("returns '--:--' for fewer than two points", () => {
+    expect(rollingPace([])).toBe("--:--");
+    expect(rollingPace([pointAt(0, 0)])).toBe("--:--");
+  });
+
+  it("returns '--:--' when the rolling distance is below 10m", () => {
+    /* Two points 1m apart over 30s — under the distance floor. */
+    const a = pointAt(0, 0);
+    const b = pointAt(0.0000089, 30); // ~1m north
+    expect(rollingPace([a, b], 30)).toBe("--:--");
+  });
+
+  it("computes a rolling pace from points within the window", () => {
+    /* Two points 100m apart, 30s apart → pace 5:00/km. */
+    const a = pointAt(0, 0);
+    const b = pointAt(0.0008983, 30); // ~100m north
+    expect(rollingPace([a, b], 30)).toBe("5:00");
+  });
+
+  it("only sums points within the window — older points are ignored", () => {
+    /* First point is 60s ago (outside a 30s window). Within the
+       window: two points 100m apart over 20s → pace 200s/km = 3:20/km. */
+    const old = pointAt(0, 0);
+    const start = pointAt(0, 40); // 20s before the latest at t=60
+    const end = pointAt(0.0008983, 60);
+    expect(rollingPace([old, start, end], 30)).toBe("3:20");
+  });
+
+  it("returns '--:--' when only the latest point falls inside the window", () => {
+    /* All older points outside → only the latest survives → can't
+       compute pace from a single point. */
+    const a = pointAt(0, 0);
+    const b = pointAt(0.001, 100); // 100s later, well outside a 30s window
+    expect(rollingPace([a, b], 30)).toBe("--:--");
   });
 });

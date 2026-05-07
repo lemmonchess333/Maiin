@@ -86,6 +86,44 @@ export function calculatePace(distanceMeters: number, timeSeconds: number): stri
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+/**
+ * Pace over the last `windowSeconds` of GPS points. Returns the same
+ * "M:SS" format as `calculatePace` so the consumer can drop it into
+ * the same UI slot.
+ *
+ * The all-time average pace `calculatePace(distance, elapsed)` lags
+ * badly mid-run — once you've banked 3km at 5:00/km, a 4:00/km fourth
+ * km only nudges the average. The rolling window answers "what am I
+ * doing right now" instead, which is what runners actually want on
+ * the live screen. The full-run average still drives the saved record.
+ *
+ * Returns '--:--' when there's not enough data (need ≥10m AND ≥5s
+ * within the window) — same convention as `calculatePace`.
+ */
+export function rollingPace(points: GPSPoint[], windowSeconds: number = 30): string {
+  if (points.length < 2) return '--:--';
+  const now = points[points.length - 1].timestamp;
+  const windowMs = windowSeconds * 1000;
+  /* Find the first point within the rolling window. Points are kept
+     in chronological order by useGPS so a linear scan from the start
+     is fine; the array is also bounded by the run duration. */
+  const startIdx = points.findIndex((p) => now - p.timestamp <= windowMs);
+  if (startIdx === -1 || startIdx === points.length - 1) return '--:--';
+
+  let dist = 0;
+  for (let i = startIdx + 1; i < points.length; i++) {
+    dist += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
+  }
+  const elapsedSec = (now - points[startIdx].timestamp) / 1000;
+
+  if (dist < 10 || elapsedSec < 5) return '--:--';
+
+  const paceSecsPerKm = (elapsedSec / dist) * 1000;
+  const mins = Math.floor(paceSecsPerKm / 60);
+  const secs = Math.floor(paceSecsPerKm % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 export function paceAsNumber(distanceMeters: number, timeSeconds: number): number {
   if (distanceMeters < 10) return 0;
   return (timeSeconds / distanceMeters) * 1000;
