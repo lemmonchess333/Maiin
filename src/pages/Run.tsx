@@ -253,6 +253,29 @@ export default function Run() {
     setPhase('active');
   };
 
+  const handleSwitchToManual = useCallback(() => {
+    /* User waited 15s+ for a GPS lock that never came. Rather than
+       start an outdoor run with zero fixes (the canonical 0km bug),
+       transition to manual distance entry: stop the geolocation
+       watcher, flip the activity type so TreadmillMode mounts on the
+       next render, jump straight to 'active' (NOT 'waiting' — that
+       would re-prompt the setup modal) and start the timer.
+
+       Note: this writes activityType='treadmill' to runConfig because
+       introducing a separate 'manual' type is out of scope for P0.
+       The user-visible behaviour (record time, enter distance after)
+       is identical. P1 follow-up: add activityType='manual' so the
+       post-run summary doesn't mis-label outdoor-no-GPS runs as
+       'Treadmill'. audioCues.prime() / wakeLock.request() were called
+       when the run originally entered the acquiring phase and don't
+       need to fire again. */
+    gps.stop();
+    setRunConfig((prev) => prev ? { ...prev, activityType: 'treadmill' } : prev);
+    setPhase('active');
+    timer.start();
+    haptic('heavy');
+  }, [gps, timer]);
+
   if (locked && (phase === 'active' || phase === 'paused')) {
     return (
       <div
@@ -373,12 +396,22 @@ export default function Run() {
 
             <div className="mt-8 flex flex-col items-center gap-3 w-full">
               {acquiringSeconds >= 15 && (
-                <button
-                  onClick={() => { setPhase('countdown'); setCountdown(3); }}
-                  className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
-                  style={{ background: THEME.teal, color: '#000' }}>
-                  Start without GPS {acc ? `(\u00B1${Math.round(acc)}m)` : ''}
-                </button>
+                /* Replaces the old "Start without GPS" CTA. That one
+                   started an outdoor run with zero GPS fixes \u2014 the
+                   canonical 0km production bug. This sends the user
+                   to manual distance entry (TreadmillMode) instead so
+                   they record a real time and add distance after. */
+                <div className="w-full">
+                  <button
+                    onClick={handleSwitchToManual}
+                    className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
+                    style={{ background: THEME.teal, color: '#000' }}>
+                    Track without GPS
+                  </button>
+                  <p className="text-xs text-center mt-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                    Record time now and enter distance after.
+                  </p>
+                </div>
               )}
               <button
                 onClick={() => { gps.stop(); setPhase('waiting'); }}
