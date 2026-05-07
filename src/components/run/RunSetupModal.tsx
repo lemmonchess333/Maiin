@@ -5,10 +5,16 @@ import { getCurrentWeather, getWeatherIcon, getRunningTip, type WeatherData } fr
 import ShoeSelector from './ShoeSelector';
 import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
+import type { ActivityType } from '@/types/run';
+
+/* `ActivityType` now lives in `@/types/run` so non-component modules
+   (e.g. `runGuards.ts`) can import it without pulling this component
+   into their dep graph. The re-export below preserves backward
+   compatibility for any code that imports `ActivityType` from here. */
+export type { ActivityType };
 
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
-export type ActivityType = 'easy' | 'tempo' | 'intervals' | 'long' | 'race' | 'treadmill' | 'freerun' | 'guided';
 
 export interface RunConfig {
   activityType: ActivityType;
