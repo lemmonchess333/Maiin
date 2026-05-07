@@ -470,6 +470,36 @@ export default function Run() {
             </div>
           )}
 
+          {(() => {
+            /* GPS-loss banner. isValidReading() drops poor fixes
+               silently — the accuracy reading can keep showing the
+               last value even when no real fixes are landing. We
+               surface "GPS recovering" when the gap since the last
+               *valid* fix exceeds 8s during an active run.
+               timer.elapsed re-renders this component every second
+               so the comparison stays current without a separate
+               interval. The treadmill case is already excluded by
+               the parent JSX block at the start of this section. */
+            if (phase !== 'active') return null;
+            if (gps.lastFixAt === null) return null; // pre-first-fix; covered by 'Acquiring GPS'
+            /* Reading the wall clock during render is flagged as
+               impure by react-hooks/purity. The render is bounded by
+               the per-second timer.elapsed re-render, so staleness is
+               at most ~1s — the banner will appear / refresh on the
+               next tick. The dependency on Date.now() is intentional. */
+            // eslint-disable-next-line react-hooks/purity
+            const gapSeconds = (Date.now() - gps.lastFixAt) / 1000;
+            if (gapSeconds < 8) return null;
+            return (
+              <div className="absolute top-32 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-4 rounded-full bg-red-500/20 animate-pulse"
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-xs text-red-300">GPS recovering · last fix {Math.round(gapSeconds)}s ago</p>
+              </div>
+            );
+          })()}
+
           {runConfig?.activityType === 'guided' && (
             <GuidedRunOverlay
               currentSegment={guidedRun.currentSegment}

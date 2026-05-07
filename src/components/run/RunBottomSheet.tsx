@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, type ReactNode } from 'react';
 import { THEME } from '../../lib/theme';
-import { calculatePace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
+import { calculatePace, rollingPace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { GPSPoint, Split } from '../../lib/gps';
 
@@ -88,6 +88,13 @@ export default function RunBottomSheet({
   const isExpanded = snapIdx === 2;
 
   const pace = calculatePace(distance, elapsed);
+  /* Rolling 30s pace = "what am I doing right now" — the live signal
+     runners actually want during a run. The all-time average lags
+     badly once you've banked a few km, so it's demoted to a small
+     "AVG" caption beneath the live pace. The post-run summary still
+     records the all-time average — that's the right number for the
+     historical entry. */
+  const livePace = rollingPace(points, 30);
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
   const splits = useMemo(() => calculateSplits(points), [points]);
@@ -159,9 +166,14 @@ export default function RunBottomSheet({
                 </div>
                 <div className="text-center">
                   <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                    {pace}
+                    {livePace}
                   </p>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>/KM</p>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>/KM · LIVE</p>
+                  {pace !== '--:--' && pace !== livePace && (
+                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
+                      AVG {pace}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -269,7 +281,7 @@ export default function RunBottomSheet({
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>KM</p>
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{pace}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{livePace}</p>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>/KM</p>
             </div>
             <button
