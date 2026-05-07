@@ -373,11 +373,24 @@ export default function Run() {
 
             <div className="mt-8 flex flex-col items-center gap-3 w-full">
               {acquiringSeconds >= 15 && (
+                /* Was "Start without GPS" \u2014 that flow produced 0.00km
+                   recordings because the timer ran but distance never
+                   accumulated. Replaced with an explicit treadmill
+                   switch: stops GPS, flips the activity type to
+                   treadmill (which routes through TreadmillMode's
+                   manual-entry path), and resets to the waiting phase
+                   so the user can start cleanly. Indoor freeform
+                   without distance tracking is a separate
+                   activityType we can add later if there's demand. */
                 <button
-                  onClick={() => { setPhase('countdown'); setCountdown(3); }}
+                  onClick={() => {
+                    gps.stop();
+                    setRunConfig((prev) => prev ? { ...prev, activityType: 'treadmill' } : prev);
+                    setPhase('waiting');
+                  }}
                   className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
                   style={{ background: THEME.teal, color: '#000' }}>
-                  Start without GPS {acc ? `(\u00B1${Math.round(acc)}m)` : ''}
+                  Switch to treadmill
                 </button>
               )}
               <button
