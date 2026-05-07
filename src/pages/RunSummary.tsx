@@ -417,7 +417,10 @@ export default function RunSummary() {
   };
 
   return (
-    <div className="min-h-screen pb-24 bg-background text-foreground">
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={{ paddingBottom: 'var(--page-bottom-pad)' }}
+    >
       <div className="px-4 pt-4">
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
           <ChevronLeft className="w-4 h-4" />
