@@ -24,7 +24,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
             id="treadmill-distance"
             type="number"
             step={0.01}
-            min={0}
+            min={0.05}
             value={distance}
             onChange={(e) => setDistance(e.target.value)}
             placeholder="0.00"
@@ -32,12 +32,17 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
           />
           <span className="text-white/60 text-sm">km</span>
         </div>
+        {/* 50m floor matches the treadmill threshold in
+            src/pages/run/guards.ts isInvalidRun — entries below this
+            are almost certainly accidental taps, and saving them
+            pollutes weekly totals + the activity feed. */}
+        <p className="text-xs text-white/40">Minimum 0.05 km (50 m).</p>
       </div>
 
       <div className="space-y-2">
         <button
           onClick={() => onSave(Number(distance) * 1000)}
-          disabled={!distance || Number(distance) <= 0}
+          disabled={!distance || Number(distance) < 0.05}
           className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium disabled:opacity-40"
         >
           Save Treadmill Run
