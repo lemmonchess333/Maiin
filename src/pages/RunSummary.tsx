@@ -25,12 +25,149 @@ import { toast } from 'sonner';
 import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import {
+  canExportGpx,
   canShowDiscard,
   canShowDone,
   canShowNormalSave,
   canShowRetrySave,
+  canShowSaveAnyway,
+  canShowShare,
+  isInvalidRun,
+  isOutdoorGpsRun,
   type SaveStatus,
 } from '../lib/runGuards';
+
+/* Reusable retry banner. Shown above the action row on a save
+ * failure. Coral-tinted to read as in-flow rather than modal-alert.
+ * Used by both the valid-summary action stack and the InvalidRunReview
+ * card when its "Save anyway" attempt fails. */
+function RetryBanner({ error, onRetry }: { error: string | null; onRetry: () => void }) {
+  return (
+    <div
+      className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+      style={{
+        background: `${THEME.running}1a`,
+        border: `1px solid ${THEME.running}40`,
+      }}
+      role="alert"
+    >
+      <AlertCircle size={18} className="mt-0.5 shrink-0" style={{ color: THEME.running }} aria-hidden="true" />
+      <div className="flex-1 text-xs text-foreground/80">
+        <p className="font-medium" style={{ color: THEME.running }}>Couldn&apos;t save your run</p>
+        <p className="mt-0.5 text-muted-foreground">
+          {error || "We couldn't save this run."}
+        </p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+        style={{ background: THEME.running }}
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+/* Focused review card for runs that fall below the
+ * isInvalidRun thresholds (under 50m or under 30s). Replaces the
+ * weak `distance===0 && elapsed<30 && !saved` guard the file used
+ * to carry. Restrained / informational styling — no destructive red
+ * on the title; the run was simply too short, not broken.
+ *
+ * Saving anyway does NOT promote the run to the full summary —
+ * InvalidRunReview owns its own saved-state UI ("Saved anyway" +
+ * Done). Sharing / GPX export / map / charts are deliberately absent
+ * because none of them make sense for sub-50m noise. */
+interface InvalidRunReviewProps {
+  distanceKm: number;
+  elapsedSeconds: number;
+  formatTime: (s: number) => string;
+  outdoorGps: boolean;
+  saveStatus: SaveStatus;
+  saveError: string | null;
+  isOnline: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+  onDone: () => void;
+}
+
+function InvalidRunReview({
+  distanceKm,
+  elapsedSeconds,
+  formatTime,
+  outdoorGps,
+  saveStatus,
+  saveError,
+  isOnline,
+  onSave,
+  onDiscard,
+  onDone,
+}: InvalidRunReviewProps) {
+  const formattedDuration = formatTime(elapsedSeconds);
+  const formattedDistance = `${distanceKm.toFixed(2)}km`;
+  const bodyCopy = outdoorGps
+    ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
+    : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
+
+  const showSaveAnyway = canShowSaveAnyway({ isInvalid: true, saveStatus });
+  const showDiscard = canShowDiscard({ saveStatus });
+  const showRetry = canShowRetrySave({ saveStatus });
+  const showDone = canShowDone({ saveStatus });
+
+  return (
+    <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3">
+      <div className="space-y-1.5">
+        <p className="text-base font-semibold text-foreground">Run too short</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{bodyCopy}</p>
+      </div>
+
+      {showRetry && <RetryBanner error={saveError} onRetry={onSave} />}
+
+      {showDone && (
+        <div className="space-y-3 pt-1">
+          <p className="text-xs text-muted-foreground text-center">
+            {isOnline ? 'Saved anyway.' : 'Saved locally — will sync when online.'}
+          </p>
+          <button
+            onClick={onDone}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            style={{
+              background: `${THEME.success}20`,
+              color: THEME.success,
+              border: `1px solid ${THEME.success}4d`,
+            }}
+          >
+            <CheckCircle size={16} aria-hidden="true" />
+            Done
+          </button>
+        </div>
+      )}
+
+      {(showSaveAnyway || showDiscard) && (
+        <div className="space-y-2 pt-1">
+          {showSaveAnyway && (
+            <button
+              onClick={onSave}
+              disabled={saveStatus === 'saving'}
+              className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-muted text-foreground border border-border"
+            >
+              {saveStatus === 'saving' ? 'Saving…' : 'Save anyway'}
+            </button>
+          )}
+          {showDiscard && (
+            <button
+              onClick={onDiscard}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
+            >
+              Discard
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface RunData {
   points: GPSPoint[];
@@ -98,6 +235,21 @@ export default function RunSummary() {
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(points, distance);
+
+  /* `distance` is metres throughout the run flow (useGPS.ts:118-120
+     accumulates via Haversine in metres, RunSummary already converts
+     for display via /1000). isInvalidRun expects km. */
+  const distanceKm = (distance ?? 0) / 1000;
+  const elapsedSeconds = elapsed ?? 0;
+  const activityType = runConfig?.activityType;
+
+  /* When activityType is missing (legacy runs / malformed payload),
+     treat as valid. Better to show a real summary than trap the user
+     in InvalidRunReview because we can't reason about the mode. */
+  const isInvalid = activityType
+    ? isInvalidRun({ activityType, distanceKm, elapsedSeconds })
+    : false;
+  const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
 
   const handleSave = async () => {
     if (!user) return;
@@ -272,6 +424,28 @@ export default function RunSummary() {
           Back
         </button>
       </div>
+
+      {isInvalid ? (
+        /* InvalidRunReview supplies its own title + body + action stack
+           and is the entire visible content for sub-threshold runs. The
+           weak `distance===0 && elapsed<30 && !saved` warning that
+           previously lived here is gone — InvalidRunReview replaces it
+           and gates correctly on actual thresholds (50m / 30s) instead
+           of the both-conditions-must-be-true bypass. */
+        <InvalidRunReview
+          distanceKm={distanceKm}
+          elapsedSeconds={elapsedSeconds}
+          formatTime={formatTime}
+          outdoorGps={outdoorGps}
+          saveStatus={saveStatus}
+          saveError={saveError}
+          isOnline={isOnline}
+          onSave={handleSave}
+          onDiscard={handleDiscard}
+          onDone={() => navigate('/')}
+        />
+      ) : (
+      <>
       <div className="text-center pb-4 px-4">
         <h1 className="text-xl font-extrabold text-foreground">
           {(distance || 0) > 200 && (elapsed || 0) > 60
@@ -284,26 +458,6 @@ export default function RunSummary() {
           weekday: 'long', month: 'long', day: 'numeric'
         })}</p>
       </div>
-
-      {(distance || 0) === 0 && (elapsed || 0) < 30 && !saved && (
-        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted text-center space-y-3">
-          <p className="text-sm text-muted-foreground">Run too short to save. Discard?</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted text-foreground"
-            >
-              Save anyway
-            </button>
-            <button
-              onClick={handleDiscard}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
-            >
-              Discard
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Offline notice */}
       {!isOnline && !saved && (
@@ -450,34 +604,11 @@ export default function RunSummary() {
         />
 
         {canShowRetrySave({ saveStatus }) && (
-          /* Inline retry banner — durable affordance for save failures.
-             Toast still fires but can be hidden behind Safari PWA
-             bottom chrome; the banner sits in the action row where the
-             user is already looking. Coral-tinted to match THEME.running
-             so it reads as the in-flow surface, not a modal alert. */
-          <div
-            className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-            style={{
-              background: `${THEME.running}1a`,
-              border: `1px solid ${THEME.running}40`,
-            }}
-            role="alert"
-          >
-            <AlertCircle size={18} className="mt-0.5 shrink-0" style={{ color: THEME.running }} aria-hidden="true" />
-            <div className="flex-1 text-xs text-foreground/80">
-              <p className="font-medium" style={{ color: THEME.running }}>Couldn't save your run</p>
-              <p className="mt-0.5 text-muted-foreground">
-                {saveError || "We couldn't save this run."}
-              </p>
-            </div>
-            <button
-              onClick={handleSave}
-              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-              style={{ background: THEME.running }}
-            >
-              Retry
-            </button>
-          </div>
+          /* Same RetryBanner used by InvalidRunReview — durable
+             affordance for save failures. Toast still fires but can be
+             hidden behind Safari PWA bottom chrome; the banner sits in
+             the action row where the user is already looking. */
+          <RetryBanner error={saveError} onRetry={handleSave} />
         )}
 
         {canShowNormalSave({ isInvalid: false, saveStatus }) && (
@@ -504,22 +635,40 @@ export default function RunSummary() {
           </button>
         )}
 
-        <div className="flex gap-2">
-          <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
-            Export GPX
-          </button>
-          <button
-            onClick={handleShare}
-            disabled={sharing}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform">
-            {sharing ? 'Sharing…' : 'Share'}
-          </button>
-        </div>
+        {(() => {
+          /* Share + Export GPX gated together so the wrapping flex row
+             collapses to nothing when neither is renderable (e.g. a
+             treadmill run pre-save → both hidden). Treadmill never
+             shows GPX (no track to export); both only show after
+             saveStatus === 'saved'. */
+          const showShare = canShowShare({ isInvalid: false, saveStatus });
+          const showGpx = canExportGpx({ isInvalid: false, isOutdoorGpsRun: outdoorGps, saveStatus });
+          if (!showShare && !showGpx) return null;
+          return (
+            <div className="flex gap-2">
+              {showGpx && (
+                <button onClick={handleExportGPX}
+                  className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
+                  Export GPX
+                </button>
+              )}
+              {showShare && (
+                <button
+                  onClick={handleShare}
+                  disabled={sharing}
+                  className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform">
+                  {sharing ? 'Sharing…' : 'Share'}
+                </button>
+              )}
+            </div>
+          );
+        })()}
         {canShowDiscard({ saveStatus }) && (
           <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
         )}
       </div>
+      </>
+      )}
 
       {/* Offscreen share card rendered for html-to-image */}
       <div style={{ position: 'absolute', left: -9999, top: -9999, pointerEvents: 'none' }}>
