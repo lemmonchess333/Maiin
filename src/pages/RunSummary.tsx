@@ -22,8 +22,14 @@ import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
-import { WifiOff, CheckCircle, Trophy, ChevronLeft } from 'lucide-react';
+import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertTriangle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import {
+  canExportGpx,
+  canShowFullSummary,
+  canShowShare,
+  isInvalidRun,
+} from './run/guards';
 
 interface RunData {
   points: GPSPoint[];
@@ -79,6 +85,18 @@ export default function RunSummary() {
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds = elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
   const bestEfforts = detectBestEfforts(points, distance);
+
+  /* Derived UI guards. The "full summary" surface (map, splits,
+     elevation, share, GPX export) only makes sense for runs that
+     actually contain meaningful data. Invalid runs (the 0.00km/14s
+     case from the screenshots) collapse to a focused "Run too short"
+     panel with Save anyway / Discard. Saving anyway unlocks the full
+     surface — the user explicitly owns the call at that point. */
+  const activityType = runConfig?.activityType;
+  const isInvalid = isInvalidRun({ distanceMeters: distance, elapsedSeconds: elapsed, activityType });
+  const showFullSummary = canShowFullSummary({ isInvalid, saved });
+  const showShare = canShowShare({ isInvalid });
+  const showGpxExport = canExportGpx({ isInvalid, activityType });
 
   const handleSave = async () => {
     if (!user) return;
@@ -239,32 +257,49 @@ export default function RunSummary() {
       </div>
       <div className="text-center pb-4 px-4">
         <h1 className="text-xl font-extrabold text-foreground">
-          {(distance || 0) > 200 && (elapsed || 0) > 60
-            ? "Great run!"
-            : (distance || 0) > 0
-              ? "Run saved"
-              : "Run recorded"}
+          {isInvalid
+            ? "Run too short"
+            : (distance || 0) > 200 && (elapsed || 0) > 60
+              ? "Great run!"
+              : "Run saved"}
         </h1>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-US', {
           weekday: 'long', month: 'long', day: 'numeric'
         })}</p>
       </div>
 
-      {(distance || 0) === 0 && (elapsed || 0) < 30 && !saved && (
-        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted text-center space-y-3">
-          <p className="text-sm text-muted-foreground">Run too short to save. Discard?</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-muted text-foreground"
-            >
-              Save anyway
-            </button>
+      {isInvalid && !saved && (
+        /* Focused "too short" panel for invalid runs. Replaces the
+           previous guard at this position which only fired when both
+           distance=0 AND elapsed<30, letting a 0km / 31s run land on
+           the full summary screen. Now any run below the thresholds in
+           guards.ts (100m / 30s outdoor; 50m treadmill) collapses here
+           with Save anyway / Discard as the only options. */
+        <div className="mx-4 mt-3 p-4 rounded-xl bg-muted/60 border border-border/40 space-y-3">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" aria-hidden="true" />
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">This run looks too short to be useful.</p>
+              <p className="mt-1">
+                {(distance || 0) === 0
+                  ? "We didn't record any distance — likely a GPS issue or an accidental start."
+                  : `${(distance / 1000).toFixed(2)}km in ${formatTime(elapsed)}.`}
+                {" "}You can save it anyway if you want it on record, or discard it.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
             <button
               onClick={handleDiscard}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
             >
               Discard
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-card text-foreground border border-border"
+            >
+              Save anyway
             </button>
           </div>
         </div>
@@ -296,7 +331,7 @@ export default function RunSummary() {
       )}
 
       {/* Pace-coloured route map */}
-      {points.length > 1 && (
+      {showFullSummary && points.length > 1 && (
         <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
           <RunMap
             points={points}
@@ -340,7 +375,7 @@ export default function RunSummary() {
       </div>
 
       {/* Pace Trend Badge */}
-      {paceTrend && paceTrend.trend !== 'no-data' && (
+      {showFullSummary && paceTrend && paceTrend.trend !== 'no-data' && (
         <div className="mx-4 mb-4 flex justify-center">
           <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
             style={{ background: paceTrend.bgColor, color: paceTrend.color }}>
@@ -350,7 +385,7 @@ export default function RunSummary() {
       )}
 
       {/* Best Efforts */}
-      {bestEfforts.length > 0 && (
+      {showFullSummary && bestEfforts.length > 0 && (
         <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">Best Efforts</h3>
           <div className="grid grid-cols-3 gap-2">
@@ -365,7 +400,7 @@ export default function RunSummary() {
       )}
 
       {/* Splits bar chart */}
-      {splits.length > 0 && (
+      {showFullSummary && splits.length > 0 && (
         <div className="px-4 mb-4">
           <SplitsBarChart splits={splits} avgPaceSeconds={avgPaceSeconds} accentColor={THEME.teal} />
 
@@ -393,7 +428,7 @@ export default function RunSummary() {
       )}
 
       {/* Elevation profile */}
-      {points.length > 0 && (
+      {showFullSummary && points.length > 0 && (
         <div className="px-4 mb-4">
           <ElevationProfile points={points} accentColor={THEME.running} />
         </div>
@@ -403,41 +438,54 @@ export default function RunSummary() {
           the ShareComposerSheet that opens after Save. The composer
           covers the same surface (feed visibility + remembered default)
           plus optional caption, so duplicating the toggle here would
-          be confusing. */}
-      <div className="px-4 space-y-2">
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="How did it feel? Any notes about this run..."
-          aria-label="Run notes"
-          rows={3}
-          className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
-        />
+          be confusing.
 
-        <button
-          onClick={handleSave}
-          disabled={saved}
-          className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97]"
-          style={saved
-            ? { background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }
-            : { background: THEME.running, color: 'white' }
-          }>
-          {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
-        </button>
-        <div className="flex gap-2">
-          <button onClick={handleExportGPX}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
-            Export GPX
-          </button>
+          When the run is invalid (and not yet saved-anyway), the
+          focused panel above renders Save anyway / Discard already, so
+          we suppress this entire action stack to avoid two competing
+          decision points on the same screen. */}
+      {!isInvalid || saved ? (
+        <div className="px-4 space-y-2">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="How did it feel? Any notes about this run..."
+            aria-label="Run notes"
+            rows={3}
+            className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
+          />
+
           <button
-            onClick={handleShare}
-            disabled={sharing}
-            className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform">
-            {sharing ? 'Sharing…' : 'Share'}
+            onClick={handleSave}
+            disabled={saved}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97]"
+            style={saved
+              ? { background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }
+              : { background: THEME.running, color: 'white' }
+            }>
+            {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
           </button>
+          {(showGpxExport || showShare) && (
+            <div className="flex gap-2">
+              {showGpxExport && (
+                <button onClick={handleExportGPX}
+                  className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
+                  Export GPX
+                </button>
+              )}
+              {showShare && (
+                <button
+                  onClick={handleShare}
+                  disabled={sharing}
+                  className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform">
+                  {sharing ? 'Sharing…' : 'Share'}
+                </button>
+              )}
+            </div>
+          )}
+          <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
         </div>
-        <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
-      </div>
+      ) : null}
 
       {/* Offscreen share card rendered for html-to-image */}
       <div style={{ position: 'absolute', left: -9999, top: -9999, pointerEvents: 'none' }}>
