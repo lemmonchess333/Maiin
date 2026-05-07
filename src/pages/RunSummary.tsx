@@ -22,7 +22,7 @@ import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
-import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertTriangle, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import {
   canExportGpx,
@@ -30,6 +30,8 @@ import {
   canShowShare,
   isInvalidRun,
 } from './run/guards';
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface RunData {
   points: GPSPoint[];
@@ -50,7 +52,16 @@ export default function RunSummary() {
   const { updateMileage, defaultShoe } = useShoes();
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  /* Save flow status. Replaces a single `saved: boolean` so the UI can
+     distinguish "still working", "succeeded", and "failed — retry". A
+     toast was the only failure signal previously; on Safari PWA the
+     toast can race-render behind the bottom chrome and the user is
+     left without feedback. The `error` state drives an inline banner
+     above the action stack with a Retry button. */
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saved = saveStatus === 'saved';
+  const saving = saveStatus === 'saving';
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -99,7 +110,9 @@ export default function RunSummary() {
   const showGpxExport = canExportGpx({ isInvalid, activityType });
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || saving || saved) return;
+    setSaveStatus('saving');
+    setSaveError(null);
 
     // Resolve the shoe this run should attribute mileage to. If the user
     // picked one in RunSetupModal, honour that; otherwise fall back to the
@@ -209,12 +222,17 @@ export default function RunSummary() {
         }
       }
 
-      setSaved(true);
+      setSaveStatus('saved');
       // Short delay so user sees the confirmation, then go home
       setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
     } catch (error) {
       logger.error('[RunSave] Failed:', error);
-      toast.error('Failed to save run. Please try again.');
+      const message = error instanceof Error ? error.message : 'Save failed.';
+      setSaveStatus('error');
+      setSaveError(message);
+      /* Toast still fires — useful for users who scrolled away — but
+         the inline banner is the durable affordance. */
+      toast.error('Failed to save run. Tap Retry below.');
     }
   };
 
@@ -455,15 +473,43 @@ export default function RunSummary() {
             className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
           />
 
+          {saveStatus === 'error' && (
+            /* Inline error banner — the durable affordance for save
+               failures. Toast still fires but can be hidden behind
+               Safari PWA bottom chrome; the banner sits in the action
+               row where the user is already looking. */
+            <div
+              className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
+              role="alert"
+            >
+              <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-500" aria-hidden="true" />
+              <div className="flex-1 text-xs text-foreground/80">
+                <p className="font-medium text-red-500">Couldn't save your run</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  {saveError || 'Tap Retry below to try again. Your run hasn’t been lost.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleSave}
-            disabled={saved}
+            disabled={saved || saving}
             className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97]"
             style={saved
               ? { background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }
-              : { background: THEME.running, color: 'white' }
+              : saveStatus === 'error'
+                ? { background: THEME.running, color: 'white' }
+                : { background: THEME.running, color: 'white' }
             }>
-            {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
+            {saved
+              ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online')
+              : saving
+                ? 'Saving…'
+                : saveStatus === 'error'
+                  ? 'Retry save'
+                  : 'Save Run'}
           </button>
           {(showGpxExport || showShare) && (
             <div className="flex gap-2">
