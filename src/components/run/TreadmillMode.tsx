@@ -24,7 +24,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
             id="treadmill-distance"
             type="number"
             step={0.01}
-            min={0}
+            min={0.05}
             value={distance}
             onChange={(e) => setDistance(e.target.value)}
             placeholder="0.00"
@@ -32,12 +32,22 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
           />
           <span className="text-white/60 text-sm">km</span>
         </div>
+        {/* 50m floor matches MIN_TREADMILL_DISTANCE_KM in
+            src/lib/runGuards.ts. Defending at the input means users
+            see feedback immediately instead of after they tap Save and
+            land in InvalidRunReview. Empty input shows nothing — only
+            below-floor entries trigger the message. */}
+        {distance && Number(distance) < 0.05 && (
+          <p className="text-xs text-white/50 mt-1">
+            Distance must be at least 0.05km.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
         <button
           onClick={() => onSave(Number(distance) * 1000)}
-          disabled={!distance || Number(distance) <= 0}
+          disabled={!distance || Number(distance) < 0.05}
           className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium disabled:opacity-40"
         >
           Save Treadmill Run
