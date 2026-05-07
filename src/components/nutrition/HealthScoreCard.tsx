@@ -1,11 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ChevronDown, ChevronUp } from "lucide-react";
+import { Heart, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { calculateHealthScore, getScoreColor, getScoreLabel } from "@/lib/healthScore";
 import { useMeals } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { format } from "date-fns";
+import Tooltip from "@/components/ui/Tooltip";
+
+/* Distilled from `src/lib/healthScore.ts`'s 35/30/15/20 split (workouts /
+ * nutrition / water / activity). Names the four inputs without leaking
+ * the exact weights — the breakdown drawer below already shows users
+ * how they're scoring on each, which is the more useful signal. */
+const HEALTH_SCORE_EXPLAINER =
+  "0–100 daily score from your workouts, nutrition, water, and activity. Tap the card to see how each contributes today.";
 
 export function HealthScoreCard() {
   const { profile } = useAuth();
@@ -38,18 +46,51 @@ export function HealthScoreCard() {
     { label: "Activity", pts: breakdown.activity, max: 20 },
   ];
 
+  /* Outer card was a single <button> wrapping all content; we needed
+     to nest a real <button> for the Info / tooltip trigger and that
+     would have produced invalid HTML. Switching to <div role="button">
+     with explicit keyboard handlers preserves the same UX (tap or
+     Enter/Space toggles the breakdown) while letting Info sit inside
+     as a sibling button without nesting. */
+  const toggle = () => {
+    if (score != null) setExpanded(!expanded);
+  };
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (score == null) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setExpanded(!expanded);
+    }
+  };
+
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <button
-        onClick={() => score != null && setExpanded(!expanded)}
-        className="w-full flex items-center gap-3"
+      <div
+        role={score != null ? "button" : undefined}
+        tabIndex={score != null ? 0 : -1}
+        aria-expanded={score != null ? expanded : undefined}
+        onClick={toggle}
+        onKeyDown={onKey}
+        className="w-full flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl"
       >
         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: THEME.iconBg }}>
           <Heart className="w-5 h-5" style={{ color: THEME.semantic.vitals }} />
         </div>
 
         <div className="flex-1 text-left">
-          <p className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs uppercase tracking-wider font-medium" style={{ color: THEME.text.muted }}>Health Score</p>
+            <Tooltip content={HEALTH_SCORE_EXPLAINER}>
+              <button
+                type="button"
+                aria-label="About Health Score"
+                onClick={(e) => e.stopPropagation()}
+                className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+              >
+                <Info className="w-3 h-3" aria-hidden="true" />
+              </button>
+            </Tooltip>
+          </div>
           {score != null ? (
             <div className="flex items-center gap-2">
               <p className="text-3xl font-extrabold leading-none font-mono tabular-nums" style={{ color: scoreColor }}>
@@ -81,7 +122,7 @@ export function HealthScoreCard() {
             )}
           </>
         )}
-      </button>
+      </div>
 
       <AnimatePresence>
         {expanded && score != null && (

@@ -355,3 +355,20 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Section headers use 10px uppercase with tracking — this is a deliberate typographic choice, not an error
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
+
+## Pre-launch QA backlog
+
+Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
+
+### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
+
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus four wire-ups (Performance Index in `PerformanceTab.tsx`, Nutrition HealthScore in `nutrition/HealthScoreCard.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, Running nav coachmark in `pages/Program.tsx`).
+
+- [ ] Light + dark mode visibility on all 4 wire-ups — tooltip body and arrow must register in both themes
+- [ ] 375px viewport — body wraps at `max-w-[280px]`, never overflows the screen
+- [ ] Open a vaul drawer while a tooltip is showing — the drawer should occlude (z-50 > z-40)
+- [ ] VoiceOver: body content is announced when the anchor receives focus (via `aria-describedby`)
+- [ ] Keyboard flow: Tab to anchor → Enter opens → Escape closes → focus returns to anchor
+- [ ] iOS Safari + Capacitor build: rubber-band scroll doesn't drift the portal
+- [ ] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays
+- [ ] First-use Coachmark on the Programme page running icon dismisses correctly via all paths (anchor tap, outside tap, Escape, 6s timeout) and persists across reloads

@@ -10,6 +10,7 @@ import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import RunningNavIcon from "@/components/program/RunningNavIcon";
+import Coachmark from "@/components/ui/Coachmark";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import { THEME } from "@/lib/theme";
 import {
@@ -483,9 +484,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           {/* Right utility cluster — running entry leads, then reorder
               + overflow. Running icon is colour-distinct (coral) but
               smaller than its greyscale neighbours; the tint carries
-              the affordance so size doesn't have to. */}
+              the affordance so size doesn't have to. First-use
+              Coachmark explains the otherwise-unlabelled icon —
+              storage key versioned so a later redesign can re-trigger
+              by bumping the suffix. */}
           <div className="flex items-center gap-1">
-            <RunningNavIcon />
+            <Coachmark
+              storageKey="program-running-nav-v1"
+              content="Track a run from here"
+              placement="bottom"
+            >
+              <RunningNavIcon />
+            </Coachmark>
             {reorderMode ? (
               <button
                 onClick={() => setReorderMode(false)}

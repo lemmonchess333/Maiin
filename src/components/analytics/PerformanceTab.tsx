@@ -5,8 +5,17 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
-import { ChevronDown, Flame, Dumbbell, Footprints } from "lucide-react";
+import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import UITooltip from "@/components/ui/Tooltip";
+
+/* Body copy reused at both render sites (gauge headline + summary card)
+ * so they stay in sync. PI = 65% load + 25% recovery + 10% adherence
+ * per `src/lib/performanceTypes.ts`; the tooltip distils that without
+ * leaking the weights, which would invite over-optimisation against
+ * a single dimension. */
+const PI_EXPLAINER =
+  "0–100 score combining your training load, recovery, and consistency over the last 4 weeks. Higher = better progression with sustainable recovery.";
 
 function pctSigned(x: number) {
   const v = Math.round(x * 100);
@@ -94,7 +103,18 @@ function PIGauge({ score }: { score: number }) {
         <p className="text-xs font-semibold mt-0.5" style={{ color }}>
           {band}
         </p>
-        <p className="text-xs text-muted-foreground">Performance Index</p>
+        <div className="inline-flex items-center justify-center gap-1">
+          <p className="text-xs text-muted-foreground">Performance Index</p>
+          <UITooltip content={PI_EXPLAINER}>
+            <button
+              type="button"
+              aria-label="About Performance Index"
+              className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+            >
+              <Info className="w-3 h-3" aria-hidden="true" />
+            </button>
+          </UITooltip>
+        </div>
       </div>
     </div>
   );
@@ -230,6 +250,15 @@ export default function PerformanceTab() {
             {pi}
           </span>
           <span className="text-xs text-muted-foreground">/100 Performance Index</span>
+          <UITooltip content={PI_EXPLAINER}>
+            <button
+              type="button"
+              aria-label="About Performance Index"
+              className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+            >
+              <Info className="w-3 h-3" aria-hidden="true" />
+            </button>
+          </UITooltip>
         </div>
       </div>
 
