@@ -13,6 +13,14 @@ interface GPSState {
   gpsAccuracy: number | null;
   permissionState: PermissionState | null;
   signalQuality: GPSSignalQuality;
+  /**
+   * Wall-clock ms of the last *valid* fix (the one that actually moved
+   * `distanceRef.current`). `null` until the first valid fix arrives.
+   * Consumers compare `Date.now() - lastFixAt` to detect mid-run GPS
+   * loss — `isValidReading` drops poor fixes silently so the visible
+   * accuracy reading can stay stale even when real reception is gone.
+   */
+  lastFixAt: number | null;
 }
 
 function getSignalQuality(accuracy: number | null): GPSSignalQuality {
@@ -33,6 +41,7 @@ export function useGPS(elapsedSeconds = 0) {
     gpsAccuracy: null,
     permissionState: null,
     signalQuality: 'searching',
+    lastFixAt: null,
   });
 
   const watchIdRef = useRef<number | null>(null);
@@ -81,6 +90,10 @@ export function useGPS(elapsedSeconds = 0) {
       kalmanRef.current.reset();
       pointsRef.current = [];
       distanceRef.current = 0;
+      /* Reset lastFixAt on a fresh tracking session so a 'GPS lost'
+         flag from a previous run doesn't bleed into this one. The
+         first valid fix in this session will populate it. */
+      setState((s) => ({ ...s, lastFixAt: null }));
     }
 
     const options: PositionOptions = {
@@ -129,6 +142,7 @@ export function useGPS(elapsedSeconds = 0) {
           error: null,
           gpsAccuracy: accuracy,
           signalQuality: quality,
+          lastFixAt: point.timestamp,
         }));
       },
       (err) => setState((s) => ({ ...s, error: err.message, signalQuality: 'searching' })),
