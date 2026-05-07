@@ -22,8 +22,15 @@ import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { toast } from 'sonner';
-import { WifiOff, CheckCircle, Trophy, ChevronLeft } from 'lucide-react';
+import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import {
+  canShowDiscard,
+  canShowDone,
+  canShowNormalSave,
+  canShowRetrySave,
+  type SaveStatus,
+} from '../lib/runGuards';
 
 interface RunData {
   points: GPSPoint[];
@@ -44,7 +51,19 @@ export default function RunSummary() {
   const { updateMileage, defaultShoe } = useShoes();
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  /* Save flow state. Replaces a single `saved: boolean` so the UI can
+     distinguish "still working", "succeeded", and "failed — retry".
+     A toast was the only failure signal previously; on Safari PWA the
+     toast can race-render behind the bottom chrome and the user is
+     left without feedback. The `error` state drives an inline banner
+     above the action stack with a Retry button. `saved` is kept as a
+     derived const so out-of-scope readers (the H1 copy, the
+     'Run saved!' confirmation strip, the offline notice) keep working
+     without rippling the migration through every condition in
+     this commit. */
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saved = saveStatus === 'saved';
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -82,6 +101,12 @@ export default function RunSummary() {
 
   const handleSave = async () => {
     if (!user) return;
+    /* Double-submit guard. The Save button is also disabled while
+       saving, but the inline Retry banner can call handleSave again —
+       this stops a flap if the user mashes it. */
+    if (saveStatus === 'saving') return;
+    setSaveStatus('saving');
+    setSaveError(null);
 
     // Resolve the shoe this run should attribute mileage to. If the user
     // picked one in RunSetupModal, honour that; otherwise fall back to the
@@ -191,12 +216,22 @@ export default function RunSummary() {
         }
       }
 
-      setSaved(true);
-      // Short delay so user sees the confirmation, then go home
-      setTimeout(() => navigate('/'), isOnline ? 800 : 1800);
+      setSaveStatus('saved');
+      setSaveError(null);
+      /* Auto-navigation timeouts (800ms online / 1800ms offline) were
+         removed: they teleported the user back to home without their
+         consent, often before they could read the confirmation, and
+         broke a "review your run" UX entirely. The user now stays on
+         the screen until they tap Done. */
     } catch (error) {
       logger.error('[RunSave] Failed:', error);
-      toast.error('Failed to save run. Please try again.');
+      const message = error instanceof Error ? error.message : 'Failed to save run';
+      setSaveStatus('error');
+      setSaveError(message);
+      /* Toast still fires as supplementary feedback for users who
+         scrolled away or have the app backgrounded; the inline retry
+         banner above the action row is the durable affordance. */
+      toast.error('Failed to save run. Tap Retry below.');
     }
   };
 
@@ -414,16 +449,61 @@ export default function RunSummary() {
           className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
         />
 
-        <button
-          onClick={handleSave}
-          disabled={saved}
-          className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97]"
-          style={saved
-            ? { background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }
-            : { background: THEME.running, color: 'white' }
-          }>
-          {saved ? (isOnline ? '✓ Saved' : '✓ Saved locally — syncing when online') : 'Save Run'}
-        </button>
+        {canShowRetrySave({ saveStatus }) && (
+          /* Inline retry banner — durable affordance for save failures.
+             Toast still fires but can be hidden behind Safari PWA
+             bottom chrome; the banner sits in the action row where the
+             user is already looking. Coral-tinted to match THEME.running
+             so it reads as the in-flow surface, not a modal alert. */
+          <div
+            className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
+            style={{
+              background: `${THEME.running}1a`,
+              border: `1px solid ${THEME.running}40`,
+            }}
+            role="alert"
+          >
+            <AlertCircle size={18} className="mt-0.5 shrink-0" style={{ color: THEME.running }} aria-hidden="true" />
+            <div className="flex-1 text-xs text-foreground/80">
+              <p className="font-medium" style={{ color: THEME.running }}>Couldn't save your run</p>
+              <p className="mt-0.5 text-muted-foreground">
+                {saveError || "We couldn't save this run."}
+              </p>
+            </div>
+            <button
+              onClick={handleSave}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+              style={{ background: THEME.running }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {canShowNormalSave({ isInvalid: false, saveStatus }) && (
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === 'saving'}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90"
+            style={{ background: THEME.running, color: 'white' }}>
+            {saveStatus === 'saving' ? 'Saving…' : 'Save Run'}
+          </button>
+        )}
+
+        {canShowDone({ saveStatus }) && (
+          /* Replaces the removed auto-navigation timeouts. Sits in the
+             same primary-action slot as Save Run so the user's eye
+             doesn't move when the state transitions saved → saved. */
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            style={{ background: `${THEME.success}20`, color: THEME.success, border: `1px solid ${THEME.success}4d` }}
+          >
+            <CheckCircle size={16} aria-hidden="true" />
+            Done
+          </button>
+        )}
+
         <div className="flex gap-2">
           <button onClick={handleExportGPX}
             className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform">
@@ -436,7 +516,9 @@ export default function RunSummary() {
             {sharing ? 'Sharing…' : 'Share'}
           </button>
         </div>
-        <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
+        {canShowDiscard({ saveStatus }) && (
+          <button onClick={handleDiscard} className="w-full py-2 text-sm text-red-400">Discard</button>
+        )}
       </div>
 
       {/* Offscreen share card rendered for html-to-image */}
