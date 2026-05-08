@@ -3,6 +3,7 @@ import {
   isOutdoorGpsRun,
   requiresManualDistance,
   isInvalidRun,
+  getInvalidRunReason,
   canShowFullSummary,
   canShowNormalSave,
   canShowSaveAnyway,
@@ -98,26 +99,76 @@ describe('isInvalidRun', () => {
       expect(isInvalidRun({ activityType: 'treadmill', distanceKm: 0.04, elapsedSeconds: 60 })).toBe(true);
     });
 
-    it('does NOT enforce the elapsed-time floor (manual entry, brief warmup is real)', () => {
-      /* A 100m / 0:20 treadmill warmup is a legitimate save. The
-         original implementation incorrectly flagged this — this test
-         pins the corrected contract. */
-      expect(isInvalidRun({ activityType: 'treadmill', distanceKm: 0.1, elapsedSeconds: 20 })).toBe(false);
+    it('flags runs under the elapsed-time floor (uniform 30s contract)', () => {
+      /* For user-entered distance, elapsed time is the only measured
+         signal we have to catch accidental taps. The 30s floor applies
+         the same way it does for outdoor. A 100m / 0:20 entry is
+         flagged. */
+      expect(isInvalidRun({ activityType: 'treadmill', distanceKm: 0.1, elapsedSeconds: 20 })).toBe(true);
+    });
+
+    it('passes treadmill runs above both floors', () => {
+      expect(isInvalidRun({ activityType: 'treadmill', distanceKm: 0.05, elapsedSeconds: 60 })).toBe(false);
     });
   });
 
   describe('manual', () => {
-    it('mirrors treadmill: distance floor only, no elapsed gate', () => {
+    it('mirrors treadmill: enforces both distance and elapsed-time floors', () => {
       expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.04, elapsedSeconds: 60 })).toBe(true);
-      /* 100m / 0:20 = 5 m/s — under the 30s outdoor elapsed floor,
-         but manual doesn't enforce that. Implied pace plausible. */
-      expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.1, elapsedSeconds: 20 })).toBe(false);
-      /* Note: the original 0.05km / 1s case (50 m/s) now correctly
-         fires 'too-fast' via the pace-sanity guard added in PR #475.
-         Test inputs were rewritten to isolate the no-elapsed-floor
-         contract from the speed check — see runGuards.paceSanity.test
-         for explicit pace coverage. */
+      expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.1, elapsedSeconds: 20 })).toBe(true);
+      expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.05, elapsedSeconds: 60 })).toBe(false);
     });
+  });
+});
+
+describe('getInvalidRunReason — uniform contract', () => {
+  /* Reason-explicit coverage for the contract change. Sub-30s and
+     sub-0.05km both produce 'too-short' regardless of activityType;
+     'too-fast' (12 m/s aggregate) only fires on manual-distance modes
+     because outdoor is bounded by isValidReading()'s per-fix filter. */
+  it("flags treadmill 0.05km / 10s as 'too-short'", () => {
+    expect(getInvalidRunReason({ activityType: 'treadmill', distanceKm: 0.05, elapsedSeconds: 10 })).toBe('too-short');
+  });
+
+  it("flags manual 0.05km / 10s as 'too-short'", () => {
+    expect(getInvalidRunReason({ activityType: 'manual', distanceKm: 0.05, elapsedSeconds: 10 })).toBe('too-short');
+  });
+
+  it('passes treadmill 0.05km / 60s', () => {
+    expect(getInvalidRunReason({ activityType: 'treadmill', distanceKm: 0.05, elapsedSeconds: 60 })).toBeNull();
+  });
+
+  it('passes manual 0.05km / 60s', () => {
+    expect(getInvalidRunReason({ activityType: 'manual', distanceKm: 0.05, elapsedSeconds: 60 })).toBeNull();
+  });
+
+  it("flags treadmill 20km / 8s as 'too-fast' (speed branch wins over elapsed)", () => {
+    expect(getInvalidRunReason({ activityType: 'treadmill', distanceKm: 20, elapsedSeconds: 8 })).toBe('too-fast');
+  });
+
+  it("flags manual 20km / 8s as 'too-fast'", () => {
+    expect(getInvalidRunReason({ activityType: 'manual', distanceKm: 20, elapsedSeconds: 8 })).toBe('too-fast');
+  });
+
+  it("flags outdoor 0.5km / 10s as 'too-short'", () => {
+    expect(getInvalidRunReason({ activityType: 'easy', distanceKm: 0.5, elapsedSeconds: 10 })).toBe('too-short');
+  });
+
+  it("flags outdoor 20km / 8s as 'too-short' (outdoor never returns 'too-fast')", () => {
+    /* The 'too-fast' branch is gated on requiresManualDistance, so
+       outdoor falls through to the elapsed-time floor regardless of
+       the implied aggregate speed. */
+    expect(getInvalidRunReason({ activityType: 'freerun', distanceKm: 20, elapsedSeconds: 8 })).toBe('too-short');
+  });
+
+  it("flags treadmill 5km / 0s as 'too-short' without throwing (divide-by-zero guard)", () => {
+    expect(() => getInvalidRunReason({ activityType: 'treadmill', distanceKm: 5, elapsedSeconds: 0 })).not.toThrow();
+    expect(getInvalidRunReason({ activityType: 'treadmill', distanceKm: 5, elapsedSeconds: 0 })).toBe('too-short');
+  });
+
+  it("flags manual 5km / 0s as 'too-short' without throwing", () => {
+    expect(() => getInvalidRunReason({ activityType: 'manual', distanceKm: 5, elapsedSeconds: 0 })).not.toThrow();
+    expect(getInvalidRunReason({ activityType: 'manual', distanceKm: 5, elapsedSeconds: 0 })).toBe('too-short');
   });
 });
 

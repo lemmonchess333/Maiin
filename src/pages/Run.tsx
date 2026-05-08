@@ -435,6 +435,7 @@ export default function Run() {
       {(phase === 'active' || phase === 'paused') && requiresManualDistance(runConfig?.activityType) && (
         <div className="flex-1 flex items-center text-white" style={{ backgroundColor: THEME.bg }}>
           <TreadmillMode
+            mode={runConfig?.activityType === 'manual' ? 'manual' : 'treadmill'}
             elapsed={timer.elapsed}
             formatTime={timer.formatTime}
             onSave={(distance) => { setTreadmillDistance(distance); haptic('success'); finishRun(distance); }}

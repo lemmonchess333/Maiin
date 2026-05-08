@@ -50,49 +50,40 @@ export function requiresManualDistance(activityType: ActivityType | undefined): 
  * `isInvalidRun` (which drives routing) and the `InvalidRunReview`
  * body copy (which drives explanation) read from the same source.
  *
+ * Uniform contract: a run is invalid if `elapsedSeconds < 30` OR
+ * `distanceKm < 0.05`, applied to all activity types. For
+ * user-entered distance (treadmill / manual) elapsed time is the only
+ * measured signal — the floor is what catches accidental taps and
+ * misclicks, exactly as it does for outdoor.
+ *
  * Order matters: `'too-fast'` is checked first because it's the more
  * specific failure mode. A 20km / 0:08 treadmill entry triggers BOTH
- * speed AND distance predicates depending on inputs — calling it
- * "too short" would be technically true in some cases but useless to
- * the user, who actually fat-fingered the distance.
+ * the speed and the duration predicates — calling it "too short" is
+ * technically true but useless to the user, who actually fat-fingered
+ * the distance.
  *
- * Per-mode rules:
- *   outdoor    → distance < MIN_OUTDOOR OR elapsed < MIN_DURATION
- *   treadmill  → distance < MIN_TREADMILL (no elapsed floor — manual
- *                entry, brief warmups are real runs)
- *   manual     → distance < MIN_MANUAL (same as treadmill)
+ * The pace-sanity check applies only to manual-distance modes;
+ * outdoor's per-fix 12 m/s filter in `isValidReading()` (gps.ts) keeps
+ * the aggregate from ever reaching the threshold legitimately, so a
+ * second check would be redundant.
  *
- * Plus an aggregate-speed check on manual-distance modes only (outdoor
- * is bounded by `isValidReading`'s per-fix filter at the same 12 m/s
- * threshold).
+ * `elapsedSeconds === 0` skips the divide and falls through to the
+ * elapsed-time floor — returns 'too-short' rather than throwing.
  */
 export function getInvalidRunReason(args: {
   activityType: ActivityType;
   distanceKm: number;
   elapsedSeconds: number;
 }): InvalidRunReason | null {
-  if (requiresManualDistance(args.activityType)) {
-    /* Pace-sanity first — catches the "20 instead of 2.0" typo
-       case. */
-    if (args.elapsedSeconds > 0) {
-      const impliedSpeedMS = (args.distanceKm * 1000) / args.elapsedSeconds;
-      if (impliedSpeedMS > MAX_PLAUSIBLE_SPEED_MS) return 'too-fast';
-    }
-    /* Distance floor — manual / treadmill don't apply the outdoor
-       elapsed-time floor because a 100m / 0:30 treadmill warmup is a
-       legitimate save. */
-    const min = args.activityType === 'treadmill'
-      ? MIN_TREADMILL_DISTANCE_KM
-      : MIN_MANUAL_DISTANCE_KM;
-    if (args.distanceKm < min) return 'too-short';
-    return null;
+  if (requiresManualDistance(args.activityType) && args.elapsedSeconds > 0) {
+    const impliedSpeedMS = (args.distanceKm * 1000) / args.elapsedSeconds;
+    if (impliedSpeedMS > MAX_PLAUSIBLE_SPEED_MS) return 'too-fast';
   }
-
-  /* Outdoor: both floors apply. The accidental "tap Start, tap Stop"
-     case needs the elapsed gate; an opening-pace burst before GPS
-     locks needs the distance gate. */
   if (args.elapsedSeconds < MIN_RUN_DURATION_SECONDS) return 'too-short';
-  if (args.distanceKm < MIN_OUTDOOR_DISTANCE_KM) return 'too-short';
+  const minDistance = requiresManualDistance(args.activityType)
+    ? (args.activityType === 'treadmill' ? MIN_TREADMILL_DISTANCE_KM : MIN_MANUAL_DISTANCE_KM)
+    : MIN_OUTDOOR_DISTANCE_KM;
+  if (args.distanceKm < minDistance) return 'too-short';
   return null;
 }
 
