@@ -229,6 +229,19 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                 <input id="target-distance" type="number" step="0.5" min="0.5" max="100"
                   value={config.target.value ? config.target.value / 1000 : 5}
                   onChange={(e) => updateConfig({ target: { type: 'distance', value: Number(e.target.value) * 1000 } })}
+                  /* HTML `min` / `max` are validation hints — typing
+                     freely bypasses them. QA caught a 0.005km target
+                     persisting because the onChange writes whatever
+                     the user typed. Snap to the valid range when the
+                     input loses focus so users keep mid-edit freedom
+                     but can't ship an out-of-range target. */
+                  onBlur={(e) => {
+                    const km = Number(e.target.value);
+                    const clamped = Number.isFinite(km) ? Math.max(0.5, Math.min(100, km)) : 5;
+                    if (clamped !== km) {
+                      updateConfig({ target: { type: 'distance', value: clamped * 1000 } });
+                    }
+                  }}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
               </div>
             )}
@@ -238,6 +251,13 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                 <input id="target-time" type="number" step="5" min="5" max="300"
                   value={config.target.value ? Math.round(config.target.value / 60) : 30}
                   onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
+                  onBlur={(e) => {
+                    const mins = Number(e.target.value);
+                    const clamped = Number.isFinite(mins) ? Math.max(5, Math.min(300, mins)) : 30;
+                    if (clamped !== mins) {
+                      updateConfig({ target: { type: 'time', value: clamped * 60 } });
+                    }
+                  }}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
               </div>
             )}
@@ -358,7 +378,13 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         </button>
 
         {showTypeSheet && (
-          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1">
+          /* Cap the picker height so the sticky CTA can't grow taller
+             than ~half the viewport — otherwise the open picker pushes
+             the CTA's top edge above the modal header, overlapping
+             "Pick a type or just go" with the orange Start Run button.
+             The list scrolls internally; tap-outside the row collapses
+             the sheet via the existing toggle on Change type. */
+          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1 max-h-[45vh] overflow-y-auto overscroll-contain">
             {ACTIVITY_TYPES.map((at) => {
               const IC = ICON_MAP[at.icon];
               const isActive = config.activityType === at.type;
