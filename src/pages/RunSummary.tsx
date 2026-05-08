@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { stripUndefined } from '../lib/firestoreGuards';
 import { useAuth } from '../lib/auth';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { logger } from '../lib/logger';
@@ -290,8 +291,14 @@ export default function RunSummary() {
       shoeId: effectiveShoeId,
     };
     try {
-      // Firestore queues the write offline automatically via IndexedDB persistence
-      await addDoc(collection(db, 'users', user.uid, 'runs'), runData);
+      // Firestore queues the write offline automatically via IndexedDB
+      // persistence. Strip undefined fields first — Firestore rejects
+      // any document with explicit undefined values, and runData
+      // routinely carries them (intervalData on non-interval runs,
+      // runConfig.target.value on `target.type === 'none'`, etc.).
+      // Surfaced in QA as "addDoc() called with invalid data" failures
+      // that landed users in the retry banner with no recovery path.
+      await addDoc(collection(db, 'users', user.uid, 'runs'), stripUndefined(runData));
 
       // Share composer: prompts the user (or replays their saved
       // default) for visibility + caption. When offline, the post is
