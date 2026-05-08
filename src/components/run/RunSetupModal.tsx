@@ -378,7 +378,13 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         </button>
 
         {showTypeSheet && (
-          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1">
+          /* Cap the picker height so the sticky CTA can't grow taller
+             than ~half the viewport — otherwise the open picker pushes
+             the CTA's top edge above the modal header, overlapping
+             "Pick a type or just go" with the orange Start Run button.
+             The list scrolls internally; tap-outside the row collapses
+             the sheet via the existing toggle on Change type. */
+          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1 max-h-[45vh] overflow-y-auto overscroll-contain">
             {ACTIVITY_TYPES.map((at) => {
               const IC = ICON_MAP[at.icon];
               const isActive = config.activityType === at.type;
