@@ -70,10 +70,11 @@ describe('getInvalidRunReason — pace-sanity (treadmill)', () => {
     /* Defensive: TreadmillMode requires the timer to start before the
        distance input is enabled, so elapsed is always > 0 when this
        runs. Belt-and-braces — the helper just needs to not throw.
-       With elapsed===0 the speed check is skipped, and treadmill has
-       no elapsed-time floor (a 50m / 0s run only fails the distance
-       check, which a 5km entry passes), so the deterministic answer
-       here is null. The test's purpose is the no-throw assertion. */
+       With elapsed===0 the speed check is skipped (the
+       requiresManualDistance branch is gated on `elapsedSeconds > 0`)
+       and the helper falls through to the uniform 30s elapsed-time
+       floor, so a 5km / 0s entry now resolves to 'too-short'. The
+       test's primary purpose is still the no-throw assertion. */
     expect(() => getInvalidRunReason({
       activityType: 'treadmill',
       distanceKm: 5,
@@ -83,7 +84,7 @@ describe('getInvalidRunReason — pace-sanity (treadmill)', () => {
       activityType: 'treadmill',
       distanceKm: 5,
       elapsedSeconds: 0,
-    })).toBeNull();
+    })).toBe('too-short');
   });
 });
 

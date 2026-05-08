@@ -129,10 +129,16 @@ function InvalidRunReview({
   const showRetry = canShowRetrySave({ saveStatus });
   const showDone = canShowDone({ saveStatus });
 
+  /* Heading mirrors the body's reason split — "Run too short" reads
+     wrong for the 'too-fast' fat-finger case ("you ran 20km in 8s,
+     which is too short" is nonsense), so we surface the more honest
+     "Run looks invalid" framing in that branch. */
+  const heading = reason === 'too-fast' ? 'Run looks invalid' : 'Run too short';
+
   return (
     <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3">
       <div className="space-y-1.5">
-        <p className="text-base font-semibold text-foreground">Run too short</p>
+        <p className="text-base font-semibold text-foreground">{heading}</p>
         <p className="text-sm text-muted-foreground leading-relaxed">{bodyCopy}</p>
       </div>
 
@@ -309,6 +315,16 @@ export default function RunSummary() {
       intervalData,
       runConfig,
       shoeId: effectiveShoeId,
+      /* Persist the validity verdict alongside the run document so
+         downstream consumers (History filtering, PR computation, weekly
+         stats) have a stable boolean to filter on without re-deriving
+         from distance/duration. Valid runs explicitly get
+         { isInvalid: false, invalidReason: null, savedAnyway: false }
+         so the field shape doesn't bifurcate; null survives
+         stripUndefined per firestoreGuards.ts:83. */
+      isInvalid,
+      invalidReason: invalidReason ?? null,
+      savedAnyway: isInvalid,
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB

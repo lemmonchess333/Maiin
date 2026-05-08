@@ -5,15 +5,23 @@ interface TreadmillModeProps {
   formatTime: (s: number) => string;
   onSave: (distance: number) => void;
   onDiscard: () => void;
+  /* The same component renders for both `activityType: 'treadmill'`
+     (user picked Treadmill in the setup modal) and `'manual'` (GPS
+     never locked outdoors and the user chose "Track without GPS").
+     Branch only the user-visible copy — the input id stays
+     `treadmill-distance` to keep accessibility selectors stable. */
+  mode?: 'treadmill' | 'manual';
 }
 
-export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }: TreadmillModeProps) {
+export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, mode = 'treadmill' }: TreadmillModeProps) {
   const [distance, setDistance] = useState('');
+  const title = mode === 'manual' ? 'Manual Run' : 'Treadmill Run';
+  const saveLabel = mode === 'manual' ? 'Save Manual Run' : 'Save Treadmill Run';
 
   return (
     <div className="space-y-6 px-6">
       <div className="text-center">
-        <p className="text-xs text-white/50 uppercase tracking-widest">Treadmill Run</p>
+        <p className="text-xs text-white/50 uppercase tracking-widest">{title}</p>
         <p className="text-6xl font-mono tabular-nums font-bold mt-2">{formatTime(elapsed)}</p>
       </div>
 
@@ -50,7 +58,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard }
           disabled={!distance || Number(distance) < 0.05}
           className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium disabled:opacity-40"
         >
-          Save Treadmill Run
+          {saveLabel}
         </button>
         <button onClick={onDiscard} className="w-full py-2 text-sm text-red-400">
           Discard
