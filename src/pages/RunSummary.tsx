@@ -33,8 +33,9 @@ import {
   canShowRetrySave,
   canShowSaveAnyway,
   canShowShare,
-  isInvalidRun,
+  getInvalidRunReason,
   isOutdoorGpsRun,
+  type InvalidRunReason,
   type SaveStatus,
 } from '../lib/runGuards';
 
@@ -85,6 +86,10 @@ interface InvalidRunReviewProps {
   elapsedSeconds: number;
   formatTime: (s: number) => string;
   outdoorGps: boolean;
+  /** Drives the body-copy variant. 'too-short' is the original
+   *  shipped reason; 'too-fast' surfaces when the user fat-fingers
+   *  the manual distance input (typing 20 instead of 2.0). */
+  reason: InvalidRunReason;
   saveStatus: SaveStatus;
   saveError: string | null;
   isOnline: boolean;
@@ -98,6 +103,7 @@ function InvalidRunReview({
   elapsedSeconds,
   formatTime,
   outdoorGps,
+  reason,
   saveStatus,
   saveError,
   isOnline,
@@ -107,9 +113,16 @@ function InvalidRunReview({
 }: InvalidRunReviewProps) {
   const formattedDuration = formatTime(elapsedSeconds);
   const formattedDistance = `${distanceKm.toFixed(2)}km`;
-  const bodyCopy = outdoorGps
-    ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
-    : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
+  /* Three-way body copy. 'too-fast' only fires for manual-distance
+     modes (treadmill / future manual) when the implied speed exceeds
+     12 m/s — the canonical fat-finger case. The other two variants
+     stay as shipped: outdoor uses the GPS-lock framing; treadmill
+     too-short uses the generic floor message. */
+  const bodyCopy = reason === 'too-fast'
+    ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
+    : outdoorGps
+      ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
+      : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
 
   const showSaveAnyway = canShowSaveAnyway({ isInvalid: true, saveStatus });
   const showDiscard = canShowDiscard({ saveStatus });
@@ -246,10 +259,17 @@ export default function RunSummary() {
 
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
-     in InvalidRunReview because we can't reason about the mode. */
-  const isInvalid = activityType
-    ? isInvalidRun({ activityType, distanceKm, elapsedSeconds })
-    : false;
+     in InvalidRunReview because we can't reason about the mode.
+
+     `invalidReason` is derived alongside `isInvalid` so InvalidRunReview
+     can speak truthfully about WHY a run was rejected. 'too-fast' fires
+     when the user fat-fingers the manual distance input on a
+     treadmill (e.g. types `20` instead of `2.0`); 'too-short' covers
+     the original sub-50m / sub-30s thresholds. */
+  const invalidReason = activityType
+    ? getInvalidRunReason({ activityType, distanceKm, elapsedSeconds })
+    : null;
+  const isInvalid = invalidReason !== null;
   const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
 
   const handleSave = async () => {
@@ -456,6 +476,7 @@ export default function RunSummary() {
           elapsedSeconds={elapsedSeconds}
           formatTime={formatTime}
           outdoorGps={outdoorGps}
+          reason={invalidReason ?? 'too-short'}
           saveStatus={saveStatus}
           saveError={saveError}
           isOnline={isOnline}
