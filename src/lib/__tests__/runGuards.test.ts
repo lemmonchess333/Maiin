@@ -109,8 +109,14 @@ describe('isInvalidRun', () => {
   describe('manual', () => {
     it('mirrors treadmill: distance floor only, no elapsed gate', () => {
       expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.04, elapsedSeconds: 60 })).toBe(true);
+      /* 100m / 0:20 = 5 m/s — under the 30s outdoor elapsed floor,
+         but manual doesn't enforce that. Implied pace plausible. */
       expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.1, elapsedSeconds: 20 })).toBe(false);
-      expect(isInvalidRun({ activityType: 'manual', distanceKm: 0.05, elapsedSeconds: 1 })).toBe(false);
+      /* Note: the original 0.05km / 1s case (50 m/s) now correctly
+         fires 'too-fast' via the pace-sanity guard added in PR #475.
+         Test inputs were rewritten to isolate the no-elapsed-floor
+         contract from the speed check — see runGuards.paceSanity.test
+         for explicit pace coverage. */
     });
   });
 });
