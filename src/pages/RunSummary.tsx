@@ -300,68 +300,77 @@ export default function RunSummary() {
       // that landed users in the retry banner with no recovery path.
       await addDoc(collection(db, 'users', user.uid, 'runs'), stripUndefined(runData));
 
-      // Share composer: prompts the user (or replays their saved
-      // default) for visibility + caption. When offline, the post is
-      // queued and replayed by ShareComposerSheet's drain effect.
-      const runName =
-        runConfig?.activityType === 'intervals'
-          ? 'Interval Run'
-          : runConfig?.activityType === 'guided'
-            ? 'Guided Run'
-            : 'Run';
-      const km = distance / 1000;
-      const mins = Math.floor(elapsed / 60);
-      const secs = Math.round(elapsed % 60);
-      const decision = await compose({
-        type: 'run',
-        title: runName,
-        meta: [
-          `${km.toFixed(2)}km`,
-          `${mins}:${secs.toString().padStart(2, '0')}`,
-          calories ? `${Math.round(calories)} cal` : '',
-        ].filter(Boolean),
-      });
-      if (decision) {
-        // See useProgram.ts for visibility-mapping rationale; same rules
-        // apply here so workouts and runs follow identical share semantics.
-        const apiVisibility = decision.visibility === 'crews' ? 'followers' : decision.visibility;
-        const includeCrewId =
-          (decision.visibility === 'crews' || decision.visibility === 'public') && !!profile?.crewId;
-        const payload = {
-          authorId: user.uid,
-          authorName: profile?.displayName || 'Athlete',
-          ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-          type: 'run' as const,
-          visibility: apiVisibility,
-          ...(decision.caption ? { caption: decision.caption } : {}),
-          runName,
-          activityTitle: runName,
-          distance,
-          duration: elapsed,
-          avgPace,
-          elevationGain,
-          calories,
-          ...(includeCrewId ? { crewId: profile?.crewId } : {}),
-          routePreview:
-            points.length > 20
-              ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
-              : points.map((p) => ({ lat: p.lat, lon: p.lon })),
-        };
-        if (isOnline) {
-          try {
-            await postActivity(payload);
-          } catch (socialErr) {
-            const lostNet = typeof navigator !== 'undefined' && navigator.onLine === false;
-            if (lostNet) {
-              enqueueShare(payload);
-              showQueuedToast();
-            } else {
-              logger.warn('[RunSave] postActivity failed:', socialErr);
+      /* Skip the share-composer for invalid runs. The user chose
+         "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
+         we keep the record on their account but a 0km run has no
+         business prompting a "Share with followers / crew / public"
+         decision. Surfaced in QA: the composer was auto-firing on
+         every Save anyway, even though the InvalidRunReview saved-
+         state UI deliberately hides Share / GPX / map. */
+      if (!isInvalid) {
+        // Share composer: prompts the user (or replays their saved
+        // default) for visibility + caption. When offline, the post is
+        // queued and replayed by ShareComposerSheet's drain effect.
+        const runName =
+          runConfig?.activityType === 'intervals'
+            ? 'Interval Run'
+            : runConfig?.activityType === 'guided'
+              ? 'Guided Run'
+              : 'Run';
+        const km = distance / 1000;
+        const mins = Math.floor(elapsed / 60);
+        const secs = Math.round(elapsed % 60);
+        const decision = await compose({
+          type: 'run',
+          title: runName,
+          meta: [
+            `${km.toFixed(2)}km`,
+            `${mins}:${secs.toString().padStart(2, '0')}`,
+            calories ? `${Math.round(calories)} cal` : '',
+          ].filter(Boolean),
+        });
+        if (decision) {
+          // See useProgram.ts for visibility-mapping rationale; same rules
+          // apply here so workouts and runs follow identical share semantics.
+          const apiVisibility = decision.visibility === 'crews' ? 'followers' : decision.visibility;
+          const includeCrewId =
+            (decision.visibility === 'crews' || decision.visibility === 'public') && !!profile?.crewId;
+          const payload = {
+            authorId: user.uid,
+            authorName: profile?.displayName || 'Athlete',
+            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
+            type: 'run' as const,
+            visibility: apiVisibility,
+            ...(decision.caption ? { caption: decision.caption } : {}),
+            runName,
+            activityTitle: runName,
+            distance,
+            duration: elapsed,
+            avgPace,
+            elevationGain,
+            calories,
+            ...(includeCrewId ? { crewId: profile?.crewId } : {}),
+            routePreview:
+              points.length > 20
+                ? points.filter((_, i) => i % Math.ceil(points.length / 20) === 0).map((p) => ({ lat: p.lat, lon: p.lon }))
+                : points.map((p) => ({ lat: p.lat, lon: p.lon })),
+          };
+          if (isOnline) {
+            try {
+              await postActivity(payload);
+            } catch (socialErr) {
+              const lostNet = typeof navigator !== 'undefined' && navigator.onLine === false;
+              if (lostNet) {
+                enqueueShare(payload);
+                showQueuedToast();
+              } else {
+                logger.warn('[RunSave] postActivity failed:', socialErr);
+              }
             }
+          } else {
+            enqueueShare(payload);
+            showQueuedToast();
           }
-        } else {
-          enqueueShare(payload);
-          showQueuedToast();
         }
       }
 
