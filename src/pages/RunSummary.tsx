@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addDoc, collection, getDocs, orderBy, query, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -113,31 +113,38 @@ function InvalidRunReview({
 }: InvalidRunReviewProps) {
   const formattedDuration = formatTime(elapsedSeconds);
   const formattedDistance = `${distanceKm.toFixed(2)}km`;
-  /* Three-way body copy. 'too-fast' only fires for manual-distance
-     modes (treadmill / future manual) when the implied speed exceeds
-     12 m/s — the canonical fat-finger case. The other two variants
-     stay as shipped: outdoor uses the GPS-lock framing; treadmill
-     too-short uses the generic floor message. */
-  const bodyCopy = reason === 'too-fast'
-    ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
-    : outdoorGps
-      ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
-      : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
-
   const showSaveAnyway = canShowSaveAnyway({ isInvalid: true, saveStatus });
   const showDiscard = canShowDiscard({ saveStatus });
   const showRetry = canShowRetrySave({ saveStatus });
   const showDone = canShowDone({ saveStatus });
+  const isSaved = saveStatus === 'saved';
 
-  /* Heading mirrors the body's reason split — "Run too short" reads
-     wrong for the 'too-fast' fat-finger case ("you ran 20km in 8s,
-     which is too short" is nonsense), so we surface the more honest
-     "Run looks invalid" framing in that branch. */
-  const heading = reason === 'too-fast' ? 'Run looks invalid' : 'Run too short';
+  /* Heading + body are reason-aware before save and saved-aware after.
+     Once the run is on the user's account the warning-style copy
+     would mislead — the run isn't being rejected, it's been saved.
+     Heading priority: saved > too-fast > too-short. Body mirrors.
+     'too-fast' only fires for manual-distance modes (treadmill /
+     manual) when the implied speed exceeds 12 m/s — the canonical
+     fat-finger case. */
+  const heading = isSaved
+    ? 'Saved'
+    : reason === 'too-fast'
+      ? 'Run looks invalid'
+      : 'Run too short';
+  const bodyCopy = isSaved
+    ? "We've kept this run on your account."
+    : reason === 'too-fast'
+      ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
+      : outdoorGps
+        ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
+        : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;
 
   return (
     <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3">
-      <div className="space-y-1.5">
+      {/* aria-live wraps both heading and body so VoiceOver announces
+          the saved transition as a unit ("Saved. We've kept this run
+          on your account.") rather than just the heading change. */}
+      <div className="space-y-1.5" aria-live="polite">
         <p className="text-base font-semibold text-foreground">{heading}</p>
         <p className="text-sm text-muted-foreground leading-relaxed">{bodyCopy}</p>
       </div>
@@ -146,9 +153,15 @@ function InvalidRunReview({
 
       {showDone && (
         <div className="space-y-3 pt-1">
-          <p className="text-xs text-muted-foreground text-center">
-            {isOnline ? 'Saved anyway.' : 'Saved locally — will sync when online.'}
-          </p>
+          {/* Drop the redundant online "Saved anyway." note now that
+              the heading is the authoritative saved state. The
+              offline variant stays — it conveys real sync status the
+              heading copy doesn't. */}
+          {!isOnline && (
+            <p className="text-xs text-muted-foreground text-center">
+              Saved locally — will sync when online.
+            </p>
+          )}
           <button
             onClick={onDone}
             className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
@@ -224,7 +237,6 @@ export default function RunSummary() {
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const handleDiscard = useCallback(() => setShowDiscardConfirm(true), []);
 
   // Fetch past runs to compute pace trend badge
   useEffect(() => {
@@ -277,6 +289,18 @@ export default function RunSummary() {
     : null;
   const isInvalid = invalidReason !== null;
   const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
+
+  /* Skip the ConfirmDialog gate when the run is already sub-threshold
+     — there's nothing meaningful to lose, and adding a second
+     confirmation on top of InvalidRunReview's own action stack just
+     gates the user out of the only safe exit. Valid runs still hit
+     the confirm so a stray Discard tap doesn't blow away real data.
+     Plain const, not useCallback — sits below the `if (!state)` early
+     return, so a hook call would violate rules-of-hooks. */
+  const handleDiscard = () => {
+    if (isInvalid) navigate('/');
+    else setShowDiscardConfirm(true);
+  };
 
   const handleSave = async () => {
     if (!user) return;

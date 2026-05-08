@@ -91,14 +91,19 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 overflow-y-auto px-5 py-4 pb-36 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
-        {/* Back */}
+      {/* Back lives in a non-scrolling header row so it stays visible
+          regardless of how far the content scrolls. Previously sat
+          inside the scroll container and disappeared when users
+          scrolled past it (seen on the empty/short-content layout
+          where the sticky CTA pulls upward). */}
+      <header className="px-5 pt-4 pb-2">
         <button onClick={onCancel}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground self-start active:scale-95">
+          className="flex items-center gap-1.5 text-sm text-muted-foreground active:scale-95">
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-
+      </header>
+      <div className="flex-1 overflow-y-auto px-5 pt-2 pb-36 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
         {/* Header */}
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight">Ready to run?</h2>

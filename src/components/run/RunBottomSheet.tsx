@@ -15,6 +15,14 @@ interface RunBottomSheetProps {
   onResume: () => void;
   onStop: () => void;
   onDiscard?: () => void;
+  /* Drives the End-run dialog's primary-action choice. When the live
+     run is sub-threshold (the misclick case: tapped Stop at 0:05/0km),
+     surface Discard Run as the red primary CTA and demote ending the
+     run to a small "End anyway" text link below — defaulting the
+     user toward not-saving rather than routing them through the
+     summary + InvalidRunReview path. Derived once in Run.tsx via
+     getInvalidRunReason; the dialog never re-derives. */
+  isInvalid?: boolean;
   intervalDisplay?: ReactNode;
   weightKg: number;
 }
@@ -79,6 +87,7 @@ function KmProgress({ distance }: { distance: number }) {
 export default function RunBottomSheet({
   elapsed, distance, points, formatTime,
   onPause, onLock, isPaused, onResume, onStop, onDiscard,
+  isInvalid = false,
   intervalDisplay, weightKg,
 }: RunBottomSheetProps) {
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
@@ -315,25 +324,53 @@ export default function RunBottomSheet({
                 <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/KM</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <button onClick={() => { setShowStopConfirm(false); onStop(); }}
-                className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: '#EF4444' }}>
-                End Run
-              </button>
-              {onDiscard && (
+            {/* Primary-action swap: for sub-threshold runs the safest
+                default is to discard, so Discard Run becomes the red
+                CTA and ending the run drops to a small text link
+                ("End anyway"). DOM order matches visual priority so
+                VoiceOver reaches the primary action first. The link
+                still calls onStop() — naming it "End anyway" rather
+                than "Save anyway" because no save has happened yet
+                (the next screen still asks for confirmation). */}
+            {isInvalid && onDiscard ? (
+              <div className="space-y-2">
                 <button onClick={() => { setShowStopConfirm(false); onDiscard(); }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm"
-                  style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
+                  style={{ background: '#EF4444' }}>
                   Discard Run
                 </button>
-              )}
-              <button onClick={() => setShowStopConfirm(false)}
-                className="w-full py-3.5 rounded-xl font-semibold text-sm"
-                style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                Keep Going
-              </button>
-            </div>
+                <button onClick={() => setShowStopConfirm(false)}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm"
+                  style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  Keep Going
+                </button>
+                <button onClick={() => { setShowStopConfirm(false); onStop(); }}
+                  className="w-full py-2 text-xs"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  End anyway
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button onClick={() => { setShowStopConfirm(false); onStop(); }}
+                  className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
+                  style={{ background: '#EF4444' }}>
+                  End Run
+                </button>
+                {onDiscard && (
+                  <button onClick={() => { setShowStopConfirm(false); onDiscard(); }}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm"
+                    style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                    Discard Run
+                  </button>
+                )}
+                <button onClick={() => setShowStopConfirm(false)}
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm"
+                  style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  Keep Going
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
