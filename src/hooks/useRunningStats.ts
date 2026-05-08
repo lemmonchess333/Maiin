@@ -22,6 +22,42 @@ export interface RunSummaryItem {
   routePreview?: { lat: number; lon: number }[];
 }
 
+/**
+ * Bucket a flat run list into Sunday-anchored weeks. Pure function —
+ * extracted so the bug it carries is unit-testable without mocking
+ * Firestore + auth + the hook lifecycle.
+ *
+ * `count` reflects every run regardless of distance — keeps History's
+ * "total runs" tile honest. `avgPace` is averaged ONLY across runs
+ * that actually moved (positive distance + positive pace), so
+ * "Save anyway" 0km zombies don't drag the weekly pace toward zero
+ * (the bug that produced "AVG PACE 0:40/km" on History after a few
+ * sub-threshold saves).
+ */
+export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
+  const weeks: Record<string, { distance: number; count: number; paceSum: number; paceCount: number }> = {};
+  for (const run of runs) {
+    const weekStart = new Date(run.completedAt);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const key = weekStart.toISOString().split('T')[0];
+    if (!weeks[key]) weeks[key] = { distance: 0, count: 0, paceSum: 0, paceCount: 0 };
+    weeks[key].distance += run.distance / 1000;
+    weeks[key].count += 1;
+    if (run.distance > 0 && run.avgPace > 0) {
+      weeks[key].paceSum += run.avgPace;
+      weeks[key].paceCount += 1;
+    }
+  }
+  return Object.entries(weeks)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([week, d]) => ({
+      week,
+      totalDistance: Math.round(d.distance * 10) / 10,
+      runCount: d.count,
+      avgPace: d.paceCount > 0 ? Math.round(d.paceSum / d.paceCount) : 0,
+    }));
+}
+
 export function useRunningStats(days: number = 30) {
   const { user } = useAuth();
   const [weeklyData, setWeeklyData] = useState<RunningWeekData[]>([]);
@@ -43,7 +79,6 @@ export function useRunningStats(days: number = 30) {
       );
       const snap = await getDocs(q);
 
-      const weeks: Record<string, { distance: number; count: number; paceSum: number }> = {};
       const runList: RunSummaryItem[] = [];
 
       snap.docs.forEach(d => {
@@ -60,7 +95,6 @@ export function useRunningStats(days: number = 30) {
         }
         if (!date) return;
 
-        // Individual run entry
         runList.push({
           id: d.id,
           distance: data.distance || 0,
@@ -76,27 +110,9 @@ export function useRunningStats(days: number = 30) {
                 .map((p: { lat: number; lon: number }) => ({ lat: p.lat, lon: p.lon }))
             : undefined,
         });
-
-        // Weekly aggregate
-        const weekStart = new Date(date);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        const key = weekStart.toISOString().split('T')[0];
-        if (!weeks[key]) weeks[key] = { distance: 0, count: 0, paceSum: 0 };
-        weeks[key].distance += (data.distance || 0) / 1000;
-        weeks[key].count += 1;
-        weeks[key].paceSum += data.avgPace || 0;
       });
 
-      const sorted = Object.entries(weeks)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([week, d]) => ({
-          week,
-          totalDistance: Math.round(d.distance * 10) / 10,
-          runCount: d.count,
-          avgPace: d.count > 0 ? Math.round(d.paceSum / d.count) : 0,
-        }));
-
-      setWeeklyData(sorted);
+      setWeeklyData(aggregateWeeklyData(runList));
       setRuns(runList);
       setLoading(false);
     };
