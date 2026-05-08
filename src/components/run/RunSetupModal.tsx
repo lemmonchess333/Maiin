@@ -6,6 +6,7 @@ import ShoeSelector from './ShoeSelector';
 import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
 import type { ActivityType } from '@/types/run';
+import { requiresManualDistance } from '@/lib/runGuards';
 
 /* `ActivityType` now lives in `@/types/run` so non-component modules
    (e.g. `runGuards.ts`) can import it without pulling this component
@@ -296,20 +297,30 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               ))}
               {config.audioCues && (
                 <>
-                  <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
-                    <span className="text-sm">Pace alerts</span>
-                    <button
-                      onClick={() => updateConfig({ paceAlerts: !config.paceAlerts })}
-                      role="switch"
-                      aria-checked={config.paceAlerts}
-                      aria-label="Pace alerts"
-                      className="w-11 h-6 rounded-full transition-colors relative"
-                      style={{ background: config.paceAlerts ? '#7B72E9' : 'rgba(0,0,0,0.1)' }}
-                    >
-                      <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
-                        style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />
-                    </button>
-                  </div>
+                  {/* Pace alerts hidden for manual-distance modes
+                      (treadmill today; manual once that activityType
+                      ships). Pace alerts depend on GPS-derived current
+                      pace via `audioCues.checkPaceAlert` in Run.tsx —
+                      with no GPS the toggle was a visible no-op. Using
+                      requiresManualDistance() (not an inline equality
+                      check) so the gate auto-extends to 'manual' when
+                      that lands. */}
+                  {!requiresManualDistance(config.activityType) && (
+                    <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
+                      <span className="text-sm">Pace alerts</span>
+                      <button
+                        onClick={() => updateConfig({ paceAlerts: !config.paceAlerts })}
+                        role="switch"
+                        aria-checked={config.paceAlerts}
+                        aria-label="Pace alerts"
+                        className="w-11 h-6 rounded-full transition-colors relative"
+                        style={{ background: config.paceAlerts ? '#7B72E9' : 'rgba(0,0,0,0.1)' }}
+                      >
+                        <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                          style={{ transform: config.paceAlerts ? 'translateX(20px)' : 'translateX(2px)' }} />
+                      </button>
+                    </div>
+                  )}
                   <div className="p-3.5 rounded-xl border border-border/50 bg-card">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
