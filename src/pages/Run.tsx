@@ -18,7 +18,8 @@ import GuidedRunOverlay from '../components/run/GuidedRunOverlay';
 import { useGuidedRun } from '../hooks/useGuidedRun';
 import { THEME } from '../lib/theme';
 import { RUN_TEMPLATES } from '../lib/workoutTemplates';
-import { isOutdoorGpsRun, requiresManualDistance } from '../lib/runGuards';
+import { isOutdoorGpsRun, requiresManualDistance, getInvalidRunReason } from '../lib/runGuards';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
 
@@ -72,6 +73,7 @@ export default function Run() {
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Coordinate all subsystems on background/foreground transitions
   const handleHidden = useCallback(() => {
@@ -306,6 +308,21 @@ export default function Run() {
 
   const currentDistance = requiresManualDistance(runConfig?.activityType) ? treadmillDistance : gps.distance;
 
+  /* Single derivation reused by RunBottomSheet's End-dialog (which
+     swaps Discard to primary for sub-threshold runs to default the
+     misclick path toward not-saving) and the dialog's discard branch
+     (which skips ConfirmDialog when the run is already invalid).
+     `currentDistance` is metres throughout the active run; the helper
+     wants km. timer.elapsed is seconds. */
+  const liveInvalidReason = runConfig
+    ? getInvalidRunReason({
+        activityType: runConfig.activityType,
+        distanceKm: (currentDistance ?? 0) / 1000,
+        elapsedSeconds: timer.elapsed,
+      })
+    : null;
+  const isInvalid = liveInvalidReason !== null;
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {phase === 'waiting' && (
@@ -418,7 +435,7 @@ export default function Run() {
               )}
               <button
                 onClick={() => { gps.stop(); setPhase('waiting'); }}
-                className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 Cancel
               </button>
             </div>
@@ -525,12 +542,41 @@ export default function Run() {
             isPaused={phase === 'paused'}
             onResume={handleResume}
             onStop={() => { haptic('success'); finishRun(); }}
-            onDiscard={() => { timer.pause(); gps.stop(); wakeLock.release(); navigate('/'); }}
+            /* Sub-threshold runs route home immediately — there's
+               nothing meaningful to lose. Valid runs hit the
+               ConfirmDialog "Discard this run?" gate before tearing
+               down GPS / timer / wake-lock. */
+            onDiscard={() => {
+              if (isInvalid) {
+                timer.pause();
+                gps.stop();
+                wakeLock.release();
+                navigate('/');
+              } else {
+                setShowDiscardConfirm(true);
+              }
+            }}
+            isInvalid={isInvalid}
             intervalDisplay={runConfig?.activityType === 'intervals' ? <IntervalDisplay state={intervals.state} /> : undefined}
             weightKg={profile?.weightKg || 70}
           />
         </div>
       )}
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title="Discard this run?"
+        description="This cannot be undone."
+        confirmLabel="Discard"
+        destructive
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          timer.pause();
+          gps.stop();
+          wakeLock.release();
+          navigate('/');
+        }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </div>
   );
 }

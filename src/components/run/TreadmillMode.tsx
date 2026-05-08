@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface TreadmillModeProps {
   elapsed: number;
@@ -15,8 +16,20 @@ interface TreadmillModeProps {
 
 export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, mode = 'treadmill' }: TreadmillModeProps) {
   const [distance, setDistance] = useState('');
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const title = mode === 'manual' ? 'Manual Run' : 'Treadmill Run';
   const saveLabel = mode === 'manual' ? 'Save Manual Run' : 'Save Treadmill Run';
+
+  /* Confirm only when there's data at stake. A long timer running but
+     no distance entered still counts (the elapsed time is the user's
+     work). A typed distance even with elapsed under 30s also counts.
+     Below both thresholds — fresh entry, accidental tap — discard
+     immediately so the user isn't gated by a redundant confirm. */
+  const hasDataAtStake = elapsed >= 30 || (distance !== '' && Number(distance) > 0);
+  const handleDiscardClick = () => {
+    if (hasDataAtStake) setShowDiscardConfirm(true);
+    else onDiscard();
+  };
 
   return (
     <div className="space-y-6 px-6">
@@ -60,10 +73,19 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
         >
           {saveLabel}
         </button>
-        <button onClick={onDiscard} className="w-full py-2 text-sm text-red-400">
+        <button onClick={handleDiscardClick} className="w-full py-2 text-sm text-red-400">
           Discard
         </button>
       </div>
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title="Discard this run?"
+        description="This cannot be undone."
+        confirmLabel="Discard"
+        destructive
+        onConfirm={() => { setShowDiscardConfirm(false); onDiscard(); }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </div>
   );
 }
