@@ -43,6 +43,10 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
   const activityLabel: Record<string, string> = {
     freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo', intervals: 'Intervals',
     longrun: 'Long Run', race: 'Race', treadmill: 'Treadmill',
+    /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
+       locked. Labelled separately from treadmill so the history list
+       reads honestly. */
+    manual: 'Manual Run',
   };
 
   const trend = calculatePaceTrend(
