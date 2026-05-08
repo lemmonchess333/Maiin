@@ -14,6 +14,10 @@ import ShareCard from '../components/social/ShareCard';
 const ACTIVITY_LABELS: Record<string, string> = {
   freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo Run',
   intervals: 'Intervals', longrun: 'Long Run', race: 'Race', treadmill: 'Treadmill',
+  /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
+     locked. Distinguished from treadmill so the detail header reads
+     honestly. */
+  manual: 'Manual Run',
 };
 
 function StatPill({ value, label, color }: { value: string; label: string; color?: string }) {

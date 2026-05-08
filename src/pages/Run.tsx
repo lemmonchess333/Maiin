@@ -18,6 +18,7 @@ import GuidedRunOverlay from '../components/run/GuidedRunOverlay';
 import { useGuidedRun } from '../hooks/useGuidedRun';
 import { THEME } from '../lib/theme';
 import { RUN_TEMPLATES } from '../lib/workoutTemplates';
+import { isOutdoorGpsRun, requiresManualDistance } from '../lib/runGuards';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
 
@@ -74,7 +75,7 @@ export default function Run() {
 
   // Coordinate all subsystems on background/foreground transitions
   const handleHidden = useCallback(() => {
-    if (runConfig?.activityType !== 'treadmill') {
+    if (isOutdoorGpsRun(runConfig?.activityType)) {
       gps.stop(); // Stop GPS to save battery while backgrounded
     }
   }, [gps, runConfig?.activityType]);
@@ -87,7 +88,7 @@ export default function Run() {
     wakeLock.request();
 
     // Restart GPS tracking if we were actively tracking
-    if (runConfig?.activityType !== 'treadmill' && phase === 'active') {
+    if (isOutdoorGpsRun(runConfig?.activityType) && phase === 'active') {
       gps.start();
     }
 
@@ -123,7 +124,7 @@ export default function Run() {
     audioCues.prime();
     await wakeLock.request();
     setRunConfig(config);
-    if (config.activityType === 'treadmill') {
+    if (requiresManualDistance(config.activityType)) {
       setPhase('active');
       timer.start();
       haptic('heavy');
@@ -189,7 +190,7 @@ export default function Run() {
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
   useEffect(() => {
-    if (phase !== 'active' || !runConfig?.autoPause || runConfig.activityType === 'treadmill') return;
+    if (phase !== 'active' || !runConfig?.autoPause || requiresManualDistance(runConfig.activityType)) return;
     const speed = gps.currentPoint?.speed;
     if (speed !== null && speed !== undefined && speed < 0.5 && !autoPaused) {
       autoPauseTimer.current = setTimeout(() => {
@@ -242,13 +243,13 @@ export default function Run() {
   const handlePause = () => {
     haptic('medium');
     timer.pause();
-    if (runConfig?.activityType !== 'treadmill') gps.stop();
+    if (isOutdoorGpsRun(runConfig?.activityType)) gps.stop();
     setPhase('paused');
   };
 
   const handleResume = () => {
     haptic('medium');
-    if (runConfig?.activityType !== 'treadmill') gps.start();
+    if (isOutdoorGpsRun(runConfig?.activityType)) gps.start();
     timer.resume();
     setPhase('active');
   };
@@ -261,16 +262,18 @@ export default function Run() {
        next render, jump straight to 'active' (NOT 'waiting' — that
        would re-prompt the setup modal) and start the timer.
 
-       Note: this writes activityType='treadmill' to runConfig because
-       introducing a separate 'manual' type is out of scope for P0.
-       The user-visible behaviour (record time, enter distance after)
-       is identical. P1 follow-up: add activityType='manual' so the
-       post-run summary doesn't mis-label outdoor-no-GPS runs as
-       'Treadmill'. audioCues.prime() / wakeLock.request() were called
-       when the run originally entered the acquiring phase and don't
-       need to fire again. */
+       Writes activityType='manual' (not 'treadmill') so History,
+       RunDetail, etc. can label the run honestly: the user was
+       outdoors and intended a real run, GPS just didn't lock.
+       requiresManualDistance() and isOutdoorGpsRun() both treat
+       'manual' identically to 'treadmill' — this difference is
+       cosmetic / labelling only.
+
+       audioCues.prime() / wakeLock.request() were called when the run
+       originally entered the acquiring phase and don't need to fire
+       again. */
     gps.stop();
-    setRunConfig((prev) => prev ? { ...prev, activityType: 'treadmill' } : prev);
+    setRunConfig((prev) => prev ? { ...prev, activityType: 'manual' } : prev);
     setPhase('active');
     timer.start();
     haptic('heavy');
@@ -290,7 +293,7 @@ export default function Run() {
           </svg>
         </div>
         <p className="text-5xl font-mono tabular-nums text-white/40 font-bold">{timer.formatTime(timer.elapsed)}</p>
-        <p className="text-2xl font-mono tabular-nums text-white/30 mt-3">{((runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
+        <p className="text-2xl font-mono tabular-nums text-white/30 mt-3">{((requiresManualDistance(runConfig?.activityType) ? treadmillDistance : gps.distance) / 1000).toFixed(2)} km</p>
         <div className="mt-12 flex flex-col items-center gap-2">
           <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"><path d="M4 12h16M12 4v16" /></svg>
@@ -301,7 +304,7 @@ export default function Run() {
     );
   }
 
-  const currentDistance = runConfig?.activityType === 'treadmill' ? treadmillDistance : gps.distance;
+  const currentDistance = requiresManualDistance(runConfig?.activityType) ? treadmillDistance : gps.distance;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
@@ -429,7 +432,7 @@ export default function Run() {
         </div>
       )}
 
-      {(phase === 'active' || phase === 'paused') && runConfig?.activityType === 'treadmill' && (
+      {(phase === 'active' || phase === 'paused') && requiresManualDistance(runConfig?.activityType) && (
         <div className="flex-1 flex items-center text-white" style={{ backgroundColor: THEME.bg }}>
           <TreadmillMode
             elapsed={timer.elapsed}
@@ -440,7 +443,7 @@ export default function Run() {
         </div>
       )}
 
-      {(phase === 'active' || phase === 'paused') && runConfig?.activityType !== 'treadmill' && (
+      {(phase === 'active' || phase === 'paused') && isOutdoorGpsRun(runConfig?.activityType) && (
         <div className="fixed inset-0 z-50 text-white" style={{ backgroundColor: THEME.bg }}>
           <div className="absolute top-3 left-4 z-50">
             <GPSIndicator accuracy={gps.gpsAccuracy} isTracking={gps.isTracking} pointCount={gps.points.length} />
