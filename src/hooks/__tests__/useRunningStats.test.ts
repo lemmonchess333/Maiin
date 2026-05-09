@@ -1,22 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { aggregateWeeklyData, type RunSummaryItem } from '../useRunningStats';
 
-/* The History page was showing "AVG PACE 0:40 /km" after a few
- * "Save anyway" 0km runs (the P0 sprint's invalid-run save path).
- * Root cause: the weekly aggregator summed every run's avgPace —
- * including the zeros from 0km records — and divided by total count,
- * dragging the weekly value toward zero.
+/* As of Sprint 1 (run-stat eligibility matrix), the weekly
+ * aggregator applies `isVolumeEligible` internally — invalid,
+ * savedAnyway, and sub-threshold records contribute nothing to
+ * count, distance, or pace. The hook's `runs` array stays
+ * unfiltered (so Recent Runs can render transparency badges) and
+ * the aggregator is the place that enforces volume eligibility
+ * for the weekly tile.
  *
- * Pinning the corrected contract: zero-distance runs still count
- * toward `runCount` (so the History run-count tile stays honest about
- * how many entries the user has) but only positive-distance +
- * positive-pace runs contribute to `avgPace`. */
+ * The default fixture shape passes the volume floor (60s duration,
+ * sub-thresholds overridden per-test). */
 
 function run(args: Partial<RunSummaryItem> & { completedAt: Date }): RunSummaryItem {
   return {
     id: `run-${args.completedAt.toISOString()}`,
     distance: 0,
-    duration: 0,
+    duration: 60,
     avgPace: 0,
     elevationGain: 0,
     calories: 0,
@@ -26,11 +26,14 @@ function run(args: Partial<RunSummaryItem> & { completedAt: Date }): RunSummaryI
 }
 
 describe('aggregateWeeklyData', () => {
-  it('does NOT drag the weekly avgPace toward zero with 0km zombie runs', () => {
+  it('drops zero-distance zombies entirely from the week (volume eligibility)', () => {
     /* Same week: 1 legitimate 2km / 158s/km run + 3 zero-distance
-       "Save anyway" entries with avgPace=0. Pre-fix: paceSum=158,
-       count=4, avgPace=Math.round(158/4)=40 → "0:40/km". Post-fix:
-       only the legit run contributes → avgPace=158 → "2:38/km". */
+       "Save anyway" entries. The aggregator's volume filter drops
+       the zombies — they contribute nothing to count, distance, or
+       pace. Old contract counted them in runCount; new contract
+       (Sprint 1) excludes them so the tile reads honestly: "1 run,
+       2.0km, 2:38/km". The transparency UI is in Recent Runs
+       which reads the unfiltered `runs` array directly. */
     const week = new Date('2026-05-08T12:00:00Z'); // Friday
     const result = aggregateWeeklyData([
       run({ distance: 2000, avgPace: 158, completedAt: week }),
@@ -40,23 +43,38 @@ describe('aggregateWeeklyData', () => {
     ]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].runCount).toBe(4); // total runs unchanged — zombies still counted
-    expect(result[0].avgPace).toBe(158); // pace not dragged toward zero
-    expect(result[0].totalDistance).toBe(2); // distance unchanged — zombies legitimately added 0km
+    expect(result[0].runCount).toBe(1); // zombies excluded from count
+    expect(result[0].avgPace).toBe(158);
+    expect(result[0].totalDistance).toBe(2);
   });
 
-  it('returns avgPace=0 when EVERY run that week was a zombie', () => {
-    /* All zero-distance entries → no positive-pace samples → avgPace
-       falls back to 0 cleanly without dividing by zero. */
+  it('emits no week entry when EVERY run was a zombie', () => {
+    /* All zero-distance → all fail volume → the week bucket never
+       gets created. Different from the old behaviour where the
+       week was emitted with zero values. The History weekly chart
+       sees fewer bars; the empty week is honest about there being
+       no real activity. */
     const day = new Date('2026-05-08T12:00:00Z');
     const result = aggregateWeeklyData([
       run({ distance: 0, avgPace: 0, completedAt: day }),
       run({ distance: 0, avgPace: 0, completedAt: new Date('2026-05-08T12:01:00Z') }),
     ]);
+    expect(result).toHaveLength(0);
+  });
 
-    expect(result[0].avgPace).toBe(0);
-    expect(result[0].runCount).toBe(2);
-    expect(result[0].totalDistance).toBe(0);
+  it('drops invalid runs even when distance is positive', () => {
+    /* The Sprint 1 contract: the savedAnyway flag is what marks a
+       record as ineligible, not just distance. A 2km treadmill
+       saved-anyway run is real distance but the user already
+       acknowledged it shouldn't count. */
+    const week = new Date('2026-05-08T12:00:00Z');
+    const result = aggregateWeeklyData([
+      run({ distance: 5000, avgPace: 150, completedAt: week }),
+      run({ distance: 2000, avgPace: 158, isInvalid: true, savedAnyway: true, completedAt: new Date('2026-05-09T12:00:00Z') }),
+    ]);
+    expect(result[0].runCount).toBe(1);
+    expect(result[0].avgPace).toBe(150);
+    expect(result[0].totalDistance).toBe(5);
   });
 
   it('correctly averages multiple legitimate runs in the same week', () => {

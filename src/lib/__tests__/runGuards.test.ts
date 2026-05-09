@@ -4,7 +4,6 @@ import {
   requiresManualDistance,
   isInvalidRun,
   getInvalidRunReason,
-  isCountableRun,
   canShowFullSummary,
   canShowNormalSave,
   canShowSaveAnyway,
@@ -242,47 +241,8 @@ describe('action-visibility guards', () => {
   });
 });
 
-describe('isCountableRun', () => {
-  /* The post-fetch filter every aggregation surface uses. Two
-     concerns layered: drop saved-anyway records (`isInvalid: true`)
-     and drop pre-PR #480 zero-distance zombies that have no flag.
-     Treating missing `isInvalid` as false is what keeps legacy run
-     docs counted. */
-  it('counts a normal valid run', () => {
-    expect(isCountableRun({ distance: 5000, isInvalid: false })).toBe(true);
-  });
-
-  it('drops a saved-anyway record (isInvalid: true)', () => {
-    expect(isCountableRun({ distance: 5000, isInvalid: true })).toBe(false);
-  });
-
-  it('drops a zero-distance record', () => {
-    expect(isCountableRun({ distance: 0, isInvalid: false })).toBe(false);
-  });
-
-  it('counts a legacy doc with missing isInvalid (treated as not-invalid)', () => {
-    /* Pre-PR #480 docs lack the field entirely. Firestore returns
-       an undefined property for missing fields; the predicate must
-       not exclude legacy data or every old run vanishes from
-       totals. */
-    expect(isCountableRun({ distance: 5000 })).toBe(true);
-  });
-
-  it('drops a legacy zero-distance zombie (no flag, no distance)', () => {
-    /* The original "Save anyway" zombie shape from the pre-#480
-       era — no isInvalid field, distance: 0. The distance leg of
-       the predicate catches it. */
-    expect(isCountableRun({ distance: 0 })).toBe(false);
-  });
-
-  it('drops both-flagged records (isInvalid AND zero distance)', () => {
-    expect(isCountableRun({ distance: 0, isInvalid: true })).toBe(false);
-  });
-
-  it('drops a record with no distance field at all', () => {
-    /* Defensive: shouldn't happen on the runs collection, but the
-       `(data.distance ?? 0) > 0` half of the predicate handles it
-       anyway without throwing. */
-    expect(isCountableRun({ isInvalid: false })).toBe(false);
-  });
-});
+/* `isCountableRun` is now a back-compat alias of `isVolumeEligible`
+ * (see `src/lib/runStatsEligibility.ts`). Its full test surface
+ * lives in `runStatsEligibility.test.ts` — that suite covers the
+ * complete matrix (volume + pace) including the back-compat
+ * agreement check. Not duplicating cases here. */

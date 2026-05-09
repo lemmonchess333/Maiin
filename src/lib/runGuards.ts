@@ -1,4 +1,5 @@
 import type { ActivityType } from '@/types/run';
+import { isVolumeEligible } from './runStatsEligibility';
 
 export const MIN_RUN_DURATION_SECONDS = 30;
 export const MIN_OUTDOOR_DISTANCE_KM = 0.05;
@@ -139,20 +140,17 @@ export function canShowRetrySave(args: { saveStatus: SaveStatus }): boolean {
 }
 
 /**
- * Predicate for "does this run count toward aggregated stats?".
- * Post-fetch filter applied wherever runs feed user-facing
- * aggregates (weekly km, run-count tiles, leaderboard ranks, the
- * performance index, crew totals).
+ * Volume-eligibility predicate. Thin alias over `isVolumeEligible`
+ * in `src/lib/runStatsEligibility.ts` — kept here so the existing
+ * imports across hooks/lib don't have to churn. The stricter
+ * matrix introduced by Sprint 1 (savedAnyway flag + duration
+ * floor) applies through that delegation.
  *
- * Treats missing `isInvalid` as false so legacy docs (pre-PR #480,
- * which started persisting the field) stay included; the layered
- * `distance > 0` check then catches pre-#480 zero-distance zombies
- * that have neither flag. Together the two checks span both eras.
- *
- * Cloud functions (plain JS in `functions/`) inline this predicate
- * rather than importing — they're outside the TS path alias and
- * the rule is two lines.
+ * For pace / Best Pace / Fastest-K / Longest Run computations
+ * use `isPaceEligible` from `runStatsEligibility.ts` — that
+ * additionally constrains to outdoor GPS sources so a treadmill
+ * 2km / 5:17 record can't masquerade as a Fastest 1K.
  */
-export function isCountableRun(data: { isInvalid?: boolean; distance?: number }): boolean {
-  return data.isInvalid !== true && (data.distance ?? 0) > 0;
+export function isCountableRun(data: { isInvalid?: boolean; savedAnyway?: boolean; distance?: number; duration?: number }): boolean {
+  return isVolumeEligible(data);
 }

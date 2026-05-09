@@ -9,12 +9,17 @@ interface PR {
 
 interface PRCardProps {
   title: string;
+  /* Optional muted subtitle rendered under the title. Used by the
+     Running PRs card to disclose "Outdoor GPS only" so treadmill /
+     manual users understand why their PRs may be empty without
+     having to re-label every PR row. */
+  subtitle?: string;
   prs: PR[];
   accentColor?: string;
   icon?: string;
 }
 
-export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardProps) {
+export default function PRCard({ title, subtitle, prs, accentColor = '#FFB547' }: PRCardProps) {
   if (prs.length === 0) return null;
 
   return (
@@ -22,7 +27,12 @@ export default function PRCard({ title, prs, accentColor = '#FFB547' }: PRCardPr
       style={{ background: `linear-gradient(135deg, ${accentColor}08 0%, transparent 60%)` }}>
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy className="w-4 h-4 text-amber-500" />
-        <h3 className="text-sm font-semibold text-foreground flex-1">{title}</h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {subtitle && (
+            <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
       </div>
       <div className="divide-y divide-border/20">
         {prs.map((pr) => (
