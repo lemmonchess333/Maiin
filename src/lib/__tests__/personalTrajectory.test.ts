@@ -68,7 +68,10 @@ describe("getPersonalTrajectory.lastWeekToDate", () => {
 
        Pre-PR-G the delta was (200 - 1000) / 1000 = -80% — the
        misleading negative this test guards against. */
-    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000 }) });
+    /* `duration: 60` puts these above the volume floor (30s) so the
+       Sprint 1 eligibility filter in personalTrajectory passes them
+       through. Tests pre-Sprint-1 didn't need a duration. */
+    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000, duration: 60 }) });
     mockGetDocs
       .mockResolvedValueOnce({ docs: [runDoc(2)] })  // this-week runs
       .mockResolvedValueOnce(emptySnap)              // this-week workouts
@@ -91,7 +94,10 @@ describe("getPersonalTrajectory.lastWeekToDate", () => {
   it("returns deltaPct=null when lastWeekToDate.score is zero (no division)", async () => {
     vi.setSystemTime(new Date("2026-04-28T14:00:00Z"));
 
-    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000 }) });
+    /* `duration: 60` puts these above the volume floor (30s) so the
+       Sprint 1 eligibility filter in personalTrajectory passes them
+       through. Tests pre-Sprint-1 didn't need a duration. */
+    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000, duration: 60 }) });
     mockGetDocs
       .mockResolvedValueOnce({ docs: [runDoc(3)] })  // this-week runs
       .mockResolvedValueOnce(emptySnap)

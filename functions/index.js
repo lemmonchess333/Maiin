@@ -1247,16 +1247,20 @@ async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
 
   let km = 0;
   for (const d of runsSnap.docs) {
-    // Skip invalid + zero-distance records so crew leaderboards
-    // don't credit "Save anyway" misclicks. Plain JS inline
-    // equivalent of `isCountableRun` from src/lib/runGuards.ts;
-    // functions/ is excluded from the TS path alias so we can't
-    // import it. Missing `isInvalid` (legacy docs pre-PR #480)
-    // counts as false.
+    // Volume-eligibility filter: crew leaderboards exclude invalid,
+    // savedAnyway, and sub-threshold records. Plain JS inline
+    // equivalent of `isVolumeEligible` from
+    // src/lib/runStatsEligibility.ts; functions/ is excluded from
+    // the TS path alias so we can't import it. Missing flags /
+    // fields default to "not flagged" / 0 so legacy docs
+    // (pre-PR #480) keep counting honestly.
     const data = d.data();
     if (data.isInvalid === true) continue;
+    if (data.savedAnyway === true) continue;
     const distance = Number(data.distance) || 0;
-    if (distance <= 0) continue;
+    const duration = Number(data.duration) || 0;
+    if (distance < 50) continue;
+    if (duration < 30) continue;
     km += distance / 1000;
   }
   let kg = 0;

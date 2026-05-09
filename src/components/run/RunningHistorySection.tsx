@@ -4,6 +4,7 @@ import { useRunningStats, type RunSummaryItem } from '../../hooks/useRunningStat
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { THEME } from '../../lib/theme';
 import { calculatePaceTrend } from '../../lib/paceTrends';
+import { isVolumeEligible, isPaceEligible } from '../../lib/runStatsEligibility';
 
 function formatPace(secPerKm: number): string {
   if (!secPerKm) return '--:--';
@@ -67,13 +68,32 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           <span className="text-xs font-semibold text-foreground">
             {(run.distance / 1000).toFixed(2)} km
           </span>
           <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
             {activityLabel[run.activityType] || 'Run'}
           </span>
+          {/* Transparency badges. The record exists on the user's
+              account so it shows up here, but stat aggregations
+              (total km / total runs / Best Pace / Fastest 1K /
+              Fastest 5K / Longest Run) exclude these via the
+              eligibility helpers. Invalid + savedAnyway are usually
+              both true together (the InvalidRunReview "Save anyway"
+              path sets both); preferring the more specific
+              "Saved anyway" label when they coexist. */}
+          {run.savedAnyway ? (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+              style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>
+              Saved anyway
+            </span>
+          ) : run.isInvalid ? (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+              style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>
+              Invalid
+            </span>
+          ) : null}
           {trend.label && (
             <span className="text-xs font-bold px-1.5 py-0.5 rounded-full"
               style={{ color: trend.color, background: trend.bgColor }}>
@@ -130,30 +150,38 @@ export default function RunningHistorySection() {
         </div>
       )}
 
-      {runs.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          <div className="p-3 rounded-xl bg-card border border-border text-center">
-            <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
-              {(runs.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(1)}
-            </p>
-            <p className="text-xs text-muted-foreground">total km</p>
+      {runs.length > 0 && (() => {
+        /* total km + total runs use volume eligibility so treadmill /
+           manual count, and so do legacy 0km zombies stay excluded.
+           Best pace uses pace eligibility so a treadmill 2km / 5:17
+           record can't surface as "best pace 2:38/km" — outdoor GPS
+           only. The screenshot bug. */
+        const volume = runs.filter(isVolumeEligible);
+        const paceRuns = runs.filter(isPaceEligible);
+        const bestPace = paceRuns.length
+          ? Math.min(...paceRuns.map(r => r.avgPace))
+          : 0;
+        return (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg font-bold font-mono tabular-nums" style={{ color: THEME.running }}>
+                {(volume.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(1)}
+              </p>
+              <p className="text-xs text-muted-foreground">total km</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg font-bold font-mono tabular-nums">{volume.length}</p>
+              <p className="text-xs text-muted-foreground">total runs</p>
+            </div>
+            <div className="p-3 rounded-xl bg-card border border-border text-center">
+              <p className="text-lg font-bold font-mono tabular-nums text-purple-500">
+                {bestPace > 0 ? formatPace(bestPace) : '--:--'}
+              </p>
+              <p className="text-xs text-muted-foreground">best pace</p>
+            </div>
           </div>
-          <div className="p-3 rounded-xl bg-card border border-border text-center">
-            <p className="text-lg font-bold font-mono tabular-nums">{runs.length}</p>
-            <p className="text-xs text-muted-foreground">total runs</p>
-          </div>
-          <div className="p-3 rounded-xl bg-card border border-border text-center">
-            <p className="text-lg font-bold font-mono tabular-nums text-purple-500">
-              {(() => {
-                const paces = runs.filter(r => r.avgPace > 0).map(r => r.avgPace);
-                if (!paces.length) return '--:--';
-                return formatPace(Math.min(...paces));
-              })()}
-            </p>
-            <p className="text-xs text-muted-foreground">best pace</p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {runs.length > 0 && (
         <div className="space-y-2">

@@ -327,11 +327,13 @@ export default function RunBottomSheet({
             {/* Primary-action swap: for sub-threshold runs the safest
                 default is to discard, so Discard Run becomes the red
                 CTA and ending the run drops to a small text link
-                ("End anyway"). DOM order matches visual priority so
-                VoiceOver reaches the primary action first. The link
-                still calls onStop() — naming it "End anyway" rather
-                than "Save anyway" because no save has happened yet
-                (the next screen still asks for confirmation). */}
+                ("Review anyway"). DOM order matches visual priority
+                so VoiceOver reaches the primary action first. The
+                link calls onStop() and routes to RunSummary /
+                InvalidRunReview — it does NOT save the run, so
+                "Save anyway" would lie. "Review anyway" is honest
+                about what happens next: the user gets to see the
+                summary screen and choose then. */}
             {isInvalid && onDiscard ? (
               <div className="space-y-2">
                 <button onClick={() => { setShowStopConfirm(false); onDiscard(); }}
@@ -347,7 +349,7 @@ export default function RunBottomSheet({
                 <button onClick={() => { setShowStopConfirm(false); onStop(); }}
                   className="w-full py-2 text-xs"
                   style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  End anyway
+                  Review anyway
                 </button>
               </div>
             ) : (

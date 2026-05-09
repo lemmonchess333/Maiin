@@ -12,6 +12,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import WeeklyOverview from "@/components/analytics/WeeklyOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
+import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { Footprints, Trophy, UtensilsCrossed, ChevronRight } from "lucide-react";
 import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -255,18 +256,27 @@ export default function History() {
       return `${m}:${s.toString().padStart(2, "0")}`;
     };
 
-    const runs1k = runs.filter((r) => r.distance >= 1000 && r.avgPace > 0);
+    /* Pace and outdoor-distance PRs require pace eligibility:
+       outdoor GPS source (treadmill / manual record their distance
+       from user input, so a 2km / 5:17 treadmill entry shouldn't
+       claim "Fastest 1K 2:38/km"), valid + saved-properly + above
+       the volume floor + finite positive avgPace. Longest Run
+       reads outdoor only too — treadmill distance isn't
+       GPS-verified, so it can't set a distance PR. */
+    const paceEligible = runs.filter((r) => isPaceEligible(r));
+
+    const runs1k = paceEligible.filter((r) => r.distance >= 1000);
     const best1k = runs1k.length
       ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
       : null;
 
-    const runs5k = runs.filter((r) => r.distance >= 5000 && r.avgPace > 0);
+    const runs5k = paceEligible.filter((r) => r.distance >= 5000);
     const best5k = runs5k.length
       ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
       : null;
 
-    const longestRun = runs.length
-      ? runs.reduce((best, r) => (r.distance > best.distance ? r : best))
+    const longestRun = paceEligible.length
+      ? paceEligible.reduce((best, r) => (r.distance > best.distance ? r : best))
       : null;
 
     const fmtDate = (d: Date) =>
@@ -642,6 +652,7 @@ export default function History() {
                   </div>
                   <PRCard
                     title="Running PRs"
+                    subtitle="Outdoor GPS only"
                     prs={runningPRs}
                     accentColor={THEME.running}
                   />

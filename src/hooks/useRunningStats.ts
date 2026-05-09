@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
-import { isCountableRun } from '../lib/runGuards';
+import { isVolumeEligible } from '../lib/runStatsEligibility';
 
 export interface RunningWeekData {
   week: string;
@@ -21,6 +21,13 @@ export interface RunSummaryItem {
   activityType: string;
   completedAt: Date;
   routePreview?: { lat: number; lon: number }[];
+  /* Validity metadata persisted by PR #480. Carried on the item so
+     downstream UI (Recent Runs badges) can render transparency
+     labels without re-querying. Stat aggregations consult these
+     via the eligibility helpers. Optional because legacy docs
+     (pre-#480) don't have the fields. */
+  isInvalid?: boolean;
+  savedAnyway?: boolean;
 }
 
 /**
@@ -28,16 +35,17 @@ export interface RunSummaryItem {
  * extracted so the bug it carries is unit-testable without mocking
  * Firestore + auth + the hook lifecycle.
  *
- * `count` reflects every run regardless of distance — keeps History's
- * "total runs" tile honest. `avgPace` is averaged ONLY across runs
- * that actually moved (positive distance + positive pace), so
- * "Save anyway" 0km zombies don't drag the weekly pace toward zero
- * (the bug that produced "AVG PACE 0:40/km" on History after a few
- * sub-threshold saves).
+ * Volume eligibility is applied internally so the hook can return
+ * the unfiltered `runs` array for transparency UI (Recent Runs
+ * showing invalid/saved-anyway records with badges) while keeping
+ * the weekly tile aggregations honest. A run that fails
+ * `isVolumeEligible` contributes nothing to count, distance, or
+ * pace this week.
  */
 export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
   const weeks: Record<string, { distance: number; count: number; paceSum: number; paceCount: number }> = {};
   for (const run of runs) {
+    if (!isVolumeEligible(run)) continue;
     const weekStart = new Date(run.completedAt);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
     const key = weekStart.toISOString().split('T')[0];
@@ -84,14 +92,13 @@ export function useRunningStats(days: number = 30) {
 
       snap.docs.forEach(d => {
         const data = d.data();
-        /* Drop invalid + zero-distance records before they reach
-           aggregation. The downstream `aggregateWeeklyData` already
-           had a `distance > 0 && avgPace > 0` guard for pace; pulling
-           the filter up here keeps the semantics consistent across
-           runCount, totalDistance, and avgPace and matches the
-           predicate used by every other stat surface (Lifetime,
-           leaderboard, trajectory, crew totals). */
-        if (!isCountableRun(data)) return;
+        /* No source filter. `runs` is the transparent record-of-truth
+           list — Recent Runs renders all of them with Invalid /
+           Saved-anyway badges so the user can see entries they
+           saved exist on their account. Stat aggregations apply
+           `isVolumeEligible` (weekly tile, lifetime totals,
+           leaderboards, streaks) or `isPaceEligible` (Best Pace,
+           Fastest 1K/5K, Longest Run) downstream from this list. */
         let date: Date | undefined;
         if (data.completedAt instanceof Timestamp) {
           date = data.completedAt.toDate();
@@ -113,6 +120,8 @@ export function useRunningStats(days: number = 30) {
           calories: data.calories || 0,
           activityType: data.activityType || 'freerun',
           completedAt: date,
+          isInvalid: data.isInvalid === true,
+          savedAnyway: data.savedAnyway === true,
           routePreview: data.points?.length > 1
             ? data.points
                 .filter((_: { lat: number; lon: number }, i: number) => i % Math.ceil(data.points.length / 20) === 0)

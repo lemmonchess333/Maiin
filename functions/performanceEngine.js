@@ -73,12 +73,13 @@ const workoutsSnap = await userRef
 const workouts = workoutsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
 // Runs — completedAt is a Timestamp.
-// Filter invalid + zero-distance records post-fetch so the weekly
-// performance index doesn't credit "Save anyway" misclicks. Plain
-// JS inline equivalent of `isCountableRun` from
-// src/lib/runGuards.ts (functions/ is excluded from the TS path
-// alias so we can't import it directly). Treats missing
-// `isInvalid` as false to keep legacy docs (pre-PR #480) included.
+// Volume-eligibility filter: invalid, savedAnyway, sub-threshold
+// records don't feed the weekly performance index. Plain JS
+// inline equivalent of `isVolumeEligible` from
+// src/lib/runStatsEligibility.ts (functions/ is excluded from
+// the TS path alias so we can't import it directly). Missing
+// flags / fields default to "not flagged" / 0 to keep legacy
+// docs (pre-PR #480) accounted for honestly.
 const runsSnap = await userRef
 .collection("runs")
 .where("completedAt", ">=", startTs)
@@ -87,7 +88,11 @@ const runsSnap = await userRef
 const runs = runsSnap.docs
 .filter((d) => {
   const data = d.data();
-  return data.isInvalid !== true && (Number(data.distance) || 0) > 0;
+  if (data.isInvalid === true) return false;
+  if (data.savedAnyway === true) return false;
+  const distance = Number(data.distance) || 0;
+  const duration = Number(data.duration) || 0;
+  return distance >= 50 && duration >= 30;
 })
 .map((d) => ({ id: d.id, ...d.data() }));
 
