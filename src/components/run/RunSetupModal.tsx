@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Check, Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Drawer } from 'vaul';
 import { getCurrentWeather, getWeatherIcon, getRunningTip, type WeatherData } from '@/lib/weather';
 import ShoeSelector from './ShoeSelector';
 import GuidedRunPicker from './GuidedRunPicker';
@@ -54,15 +55,34 @@ const DEFAULT_CONFIG: RunConfig = {
   target: { type: 'none' },
 };
 
-const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: string; description: string }[] = [
-  { type: 'freerun', label: 'Free', icon: 'Footprints', description: 'Run at your own pace' },
-  { type: 'easy',    label: 'Easy', icon: 'PersonStanding', description: 'Recovery pace' },
-  { type: 'tempo',   label: 'Tempo', icon: 'Zap', description: 'Comfortably hard' },
-  { type: 'intervals', label: 'Intervals', icon: 'RefreshCw', description: 'Repeats + rest' },
-  { type: 'long',    label: 'Long', icon: 'Route', description: 'Distance-focused' },
-  { type: 'race',    label: 'Race', icon: 'Flag', description: 'All-out effort' },
-  { type: 'treadmill', label: 'Treadmill', icon: 'Dumbbell', description: 'Indoor, no GPS' },
-  { type: 'guided', label: 'Guided', icon: 'Headphones', description: 'Coach-led workout' },
+/* Run-type registry. `name` is the long-form label used by the
+   selected-run card, the chooser, and the Start CTA ("Start Free
+   Run"). `chip` discloses the measurement source so users
+   understand why pace metrics work for outdoor types but not for
+   treadmill — Outdoor GPS / Manual distance / Audio. `group`
+   drives the chooser's Outdoor / Other section split.
+   `'manual'` is deliberately absent — that activityType is set
+   programmatically by the GPS-fallback "Track without GPS" path,
+   never picked directly by the user. */
+type ActivityTypeOption = {
+  type: ActivityType;
+  label: string;
+  name: string;
+  icon: string;
+  description: string;
+  chip: string;
+  group: 'outdoor' | 'other';
+};
+
+const ACTIVITY_TYPES: ActivityTypeOption[] = [
+  { type: 'freerun',   label: 'Free',      name: 'Free Run',     icon: 'Footprints',     description: 'Run at your own pace', chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'easy',      label: 'Easy',      name: 'Easy Run',     icon: 'PersonStanding', description: 'Recovery pace',         chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'tempo',     label: 'Tempo',     name: 'Tempo Run',    icon: 'Zap',            description: 'Sustained effort',      chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'intervals', label: 'Intervals', name: 'Intervals',    icon: 'RefreshCw',      description: 'Repeats + rest',        chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'long',      label: 'Long',      name: 'Long Run',     icon: 'Route',          description: 'Distance-focused',      chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'race',      label: 'Race',      name: 'Race',         icon: 'Flag',           description: 'All-out effort',        chip: 'Outdoor GPS',     group: 'outdoor' },
+  { type: 'treadmill', label: 'Treadmill', name: 'Treadmill',    icon: 'Dumbbell',       description: 'Indoor',                chip: 'Manual distance', group: 'other' },
+  { type: 'guided',    label: 'Guided',    name: 'Guided Run',   icon: 'Headphones',     description: 'Coach-led workout',     chip: 'Audio',           group: 'other' },
 ];
 
 
@@ -75,7 +95,7 @@ interface RunSetupModalProps {
 export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
   const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showTypeSheet, setShowTypeSheet] = useState(false);
+  const [showChooser, setShowChooser] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(null);
@@ -117,6 +137,36 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           <h2 className="text-2xl font-extrabold tracking-tight">Ready to run?</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Pick a type or just go</p>
         </div>
+
+        {/* Selected-run card. Replaces the underlined "Change type"
+            link with a tappable native-feeling control showing the
+            chosen run type, its description, and the measurement
+            source chip. Tapping opens the chooser drawer below. */}
+        {(() => {
+          const selected = ACTIVITY_TYPES.find(a => a.type === config.activityType) ?? ACTIVITY_TYPES[1]; // Easy fallback
+          const SelectedIcon = ICON_MAP[selected.icon];
+          return (
+            <button
+              type="button"
+              onClick={() => setShowChooser(true)}
+              className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3 active:scale-[0.98] transition-transform text-left"
+              aria-label={`Selected run type: ${selected.name}. Tap to change.`}
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(123,114,233,0.10)' }}>
+                {SelectedIcon && <SelectedIcon className="w-5 h-5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold text-foreground">{selected.name}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs text-muted-foreground truncate">{selected.description}</span>
+                  <span className="text-xs text-muted-foreground/60">·</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{selected.chip}</span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+            </button>
+          );
+        })()}
 
         {/* Weather strip */}
         {!weatherLoading && weather && (
@@ -391,48 +441,90 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         </AnimatePresence>
       </div>
 
-      {/* Sticky CTA */}
+      {/* Sticky CTA. Underlined "Change type" link removed — the
+          selected-run card at the top now owns that affordance.
+          Start text is contextual per run type ("Start Free Run",
+          "Start Treadmill", "Start Guided Run") so the button
+          mirrors the user's selection. */}
       <div className="sticky bottom-0 px-5 pt-3 pb-5 safe-area-pb"
         style={{ background: 'linear-gradient(to top, var(--color-background) 80%, transparent)' }}>
-        <button
-          onClick={() => { if (!targetError) onStart(config); }}
-          disabled={!!targetError}
-          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
-          style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
-        >
-          {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
-        </button>
-        <button onClick={() => setShowTypeSheet(v => !v)} className="text-sm text-muted-foreground underline mt-2 block mx-auto hover:text-foreground transition-colors">
-          Change type ({ACTIVITY_TYPES.find(a => a.type === config.activityType)?.label || 'Easy'})
-        </button>
-
-        {showTypeSheet && (
-          /* Cap the picker height so the sticky CTA can't grow taller
-             than ~half the viewport — otherwise the open picker pushes
-             the CTA's top edge above the modal header, overlapping
-             "Pick a type or just go" with the orange Start Run button.
-             The list scrolls internally; tap-outside the row collapses
-             the sheet via the existing toggle on Change type. */
-          <div className="mt-2 p-3 rounded-xl border border-border bg-card space-y-1 max-h-[45vh] overflow-y-auto overscroll-contain">
-            {ACTIVITY_TYPES.map((at) => {
-              const IC = ICON_MAP[at.icon];
-              const isActive = config.activityType === at.type;
-              return (
-                <button key={at.type}
-                  onClick={() => { updateConfig({ activityType: at.type }); setShowTypeSheet(false); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors active:scale-[0.98]"
-                  style={isActive ? { background: 'rgba(139,92,246,0.12)' } : {}}>
-                  {IC && <IC className={`w-5 h-5 ${isActive ? 'text-purple-500' : 'text-muted-foreground'}`} />}
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: isActive ? '#7B72E9' : 'var(--color-foreground)' }}>{at.label}</p>
-                    <p className="text-xs" style={{ color: 'var(--color-muted-foreground)' }}>{at.description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {(() => {
+          const selected = ACTIVITY_TYPES.find(a => a.type === config.activityType) ?? ACTIVITY_TYPES[1];
+          const Icon = config.activityType === 'treadmill' ? Dumbbell : Footprints;
+          return (
+            <button
+              onClick={() => { if (!targetError) onStart(config); }}
+              disabled={!!targetError}
+              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
+            >
+              <Icon className="inline w-5 h-5 mr-1" /> Start {selected.name}
+            </button>
+          );
+        })()}
       </div>
+
+      {/* Run-type chooser drawer. Replaces the in-CTA inline picker.
+          Grouped Outdoor / Other rows; each shows icon + name +
+          description + measurement chip + selected check.
+          'manual' is deliberately excluded — that activityType is
+          set programmatically by the GPS-fallback "Track without
+          GPS" path, never picked by the user. */}
+      <Drawer.Root open={showChooser} onOpenChange={setShowChooser}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none max-h-[85vh] flex flex-col">
+            <div className="px-5 pt-3 pb-2 shrink-0">
+              <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3" aria-hidden="true" />
+              <Drawer.Title className="text-lg font-bold text-foreground">Choose run type</Drawer.Title>
+              <Drawer.Description className="sr-only">Pick how you want to record this run.</Drawer.Description>
+            </div>
+            <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-4">
+              {(['outdoor', 'other'] as const).map((group) => {
+                const items = ACTIVITY_TYPES.filter(a => a.group === group);
+                return (
+                  <div key={group} className="space-y-1">
+                    <p className="px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {group === 'outdoor' ? 'Outdoor' : 'Other'}
+                    </p>
+                    {items.map((at) => {
+                      const IC = ICON_MAP[at.icon];
+                      const isActive = config.activityType === at.type;
+                      return (
+                        <button
+                          key={at.type}
+                          onClick={() => { updateConfig({ activityType: at.type }); setShowChooser(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors active:scale-[0.98]"
+                          style={isActive ? { background: 'rgba(123,114,233,0.10)' } : {}}
+                        >
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ background: isActive ? 'rgba(123,114,233,0.18)' : 'var(--color-muted)' }}>
+                            {IC && <IC className={`w-5 h-5 ${isActive ? 'text-purple-500' : 'text-muted-foreground'}`} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold" style={{ color: isActive ? '#7B72E9' : 'var(--color-foreground)' }}>
+                                {at.name}
+                              </p>
+                              <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                                {at.chip}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{at.description}</p>
+                          </div>
+                          {isActive && (
+                            <Check className="w-4 h-4 shrink-0" style={{ color: '#7B72E9' }} aria-label="Selected" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     </div>
   );
 }
