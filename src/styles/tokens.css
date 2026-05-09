@@ -43,6 +43,15 @@
   /* Scan-meal CTA shadow — tinted to THEME.food.scan (#FF6B4A) at 30% alpha */
   --shadow-scan: 0 8px 24px #FF6B4A4D;
 
+  /* Input states — composed shadows + border colours so individual
+     pages don't ship hardcoded RGBA. The `nutrition` variant is
+     used on the Food page composer; analogous variants can be
+     added per-section without touching the consumer. */
+  --ds-shadow-input-rest: 0 1px 6px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.025);
+  --ds-shadow-input-focus-nutrition: 0 4px 14px -8px rgba(217,136,78,0.28), 0 0 0 2.5px rgba(217,136,78,0.11);
+  --ds-color-input-border-rest: rgba(0,0,0,0.06);
+  --ds-color-input-border-focus-nutrition: rgba(217,136,78,0.5);
+
   /* Font Weights
      ─ Use 700 (bold) for section headings, card titles, inline emphasis
      ─ Use 800 (extrabold) for hero stats, page titles, large numeric displays
@@ -63,4 +72,10 @@
 .dark {
   --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.15);
   --ds-shadow-elevated: 0 8px 28px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.20);
+  /* Input shadows + borders — slightly higher alphas in dark mode
+     so the nutrition tint reads against the darker surface. */
+  --ds-shadow-input-rest: 0 1px 6px rgba(0,0,0,0.30), 0 1px 2px rgba(0,0,0,0.20);
+  --ds-shadow-input-focus-nutrition: 0 4px 14px -8px rgba(217,136,78,0.40), 0 0 0 2.5px rgba(217,136,78,0.18);
+  --ds-color-input-border-rest: rgba(255,255,255,0.10);
+  --ds-color-input-border-focus-nutrition: rgba(217,136,78,0.65);
 }

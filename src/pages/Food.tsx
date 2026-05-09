@@ -881,7 +881,15 @@ export default function Food() {
 
   return (
     <motion.div
-      className="space-y-4.5 pb-28"
+      /* Bottom padding hooks into the canonical --page-bottom-pad
+         token (tab-bar height + env(safe-area-inset-bottom) +
+         1rem) so the last meal section / Copy yesterday button
+         clears the home indicator on notched iPhones. The previous
+         hardcoded `pb-28` (7rem / 112px) ignored safe-area inset
+         and could clip on devices with deeper insets. Same pattern
+         as RunSummary.tsx. */
+      className="space-y-4.5"
+      style={{ paddingBottom: 'var(--page-bottom-pad)' }}
       initial="hidden"
       animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
@@ -972,14 +980,17 @@ export default function Food() {
               // Pure white (bg-card) instead of the grey --input-fill so
               // the composer reads as a peer of the calorie hero card and
               // macro cards (all white) instead of melting into the grey
-              // grouped-background. Shadow bumped to match card elevation.
+              // grouped-background. Shadow + border tokens are defined
+              // in src/styles/tokens.css so the dark-mode variants
+              // flip automatically and the values are reusable
+              // wherever an input wants the nutrition focus accent.
               borderColor: inputFocused
-                ? "rgba(217,136,78,0.5)" // nutrition orange, 50%
-                : "rgba(0,0,0,0.06)",
+                ? "var(--ds-color-input-border-focus-nutrition)"
+                : "var(--ds-color-input-border-rest)",
               outline: "none",
               boxShadow: inputFocused
-                ? "0 4px 14px -8px rgba(217,136,78,0.28), 0 0 0 2.5px rgba(217,136,78,0.11)"
-                : "0 1px 6px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.025)",
+                ? "var(--ds-shadow-input-focus-nutrition)"
+                : "var(--ds-shadow-input-rest)",
             }}
           />
           {nlInput.trim() && (
