@@ -7,6 +7,7 @@ import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
 import type { ActivityType } from '@/types/run';
 import { requiresManualDistance } from '@/lib/runGuards';
+import { getTargetValidationError } from '@/lib/runTargetValidation';
 
 /* `ActivityType` now lives in `@/types/run` so non-component modules
    (e.g. `runGuards.ts`) can import it without pulling this component
@@ -80,6 +81,13 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
   const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(null);
   const updateConfig = (partial: Partial<RunConfig>) => setConfig((prev) => ({ ...prev, ...partial }));
   const intervalConfig = config.intervals ?? { reps: 5, workDistance: 1000, restDuration: 90 };
+
+  /* Pre-flight target validation. Catches the case where the user
+     types a sub-threshold distance / duration / pace and taps Start
+     before the input loses focus (which would have triggered the
+     existing onBlur clamp). Disables the Start CTA + surfaces an
+     inline error so the user understands why. */
+  const targetError = getTargetValidationError(config);
 
   // Fetch weather on mount
   useEffect(() => {
@@ -253,12 +261,17 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             {config.target.type === 'time' && (
               <div>
                 <label htmlFor="target-time" className="text-xs text-muted-foreground">Duration (minutes)</label>
-                <input id="target-time" type="number" step="5" min="5" max="300"
+                {/* HTML min lowered from 5 to 1 to match the
+                    runTargetValidation floor; onBlur clamp dropped
+                    its 5-min floor too. Brief warmups + flexible
+                    cooldowns are valid targets — under 1 minute is
+                    where it stops being a real run intention. */}
+                <input id="target-time" type="number" step="5" min="1" max="300"
                   value={config.target.value ? Math.round(config.target.value / 60) : 30}
                   onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
                   onBlur={(e) => {
                     const mins = Number(e.target.value);
-                    const clamped = Number.isFinite(mins) ? Math.max(5, Math.min(300, mins)) : 30;
+                    const clamped = Number.isFinite(mins) ? Math.max(1, Math.min(300, mins)) : 30;
                     if (clamped !== mins) {
                       updateConfig({ target: { type: 'time', value: clamped * 60 } });
                     }
@@ -279,6 +292,16 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                   }}
                   className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
               </div>
+            )}
+            {/* Inline target validation. Surfaces the
+                getTargetValidationError verdict so users see why
+                the Start button is disabled before tapping it.
+                Coral tint matches the running-flow accent without
+                being alarm-red. */}
+            {targetError && (
+              <p className="text-xs mt-1" style={{ color: '#D4637A' }} role="alert">
+                {targetError}
+              </p>
             )}
           </div>
         )}
@@ -372,8 +395,9 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
       <div className="sticky bottom-0 px-5 pt-3 pb-5 safe-area-pb"
         style={{ background: 'linear-gradient(to top, var(--color-background) 80%, transparent)' }}>
         <button
-          onClick={() => onStart(config)}
-          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97]"
+          onClick={() => { if (!targetError) onStart(config); }}
+          disabled={!!targetError}
+          className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg shadow-[var(--ds-shadow-orange-glow)] active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
           style={{ background: 'linear-gradient(135deg, #e87316, #d84588)' }}
         >
           {config.activityType === 'treadmill' ? <><Dumbbell className="inline w-5 h-5 mr-1" /> Start Treadmill</> : <><Footprints className="inline w-5 h-5 mr-1" /> Start Run</>}
