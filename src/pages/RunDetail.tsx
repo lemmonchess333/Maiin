@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
+import { Info } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { THEME } from '../lib/theme';
@@ -151,6 +152,33 @@ export default function RunDetail() {
       )}
 
       <div className="px-4 pt-4 space-y-4">
+
+        {/* Saved-anyway notice. Surfaces only when the run was
+            persisted with `isInvalid: true` (PR #480 metadata). The
+            user already saw InvalidRunReview at save time and chose
+            to keep the record — this banner is a historical
+            reminder so when they revisit a 0.00km / 0:02 entry they
+            know why it looks weird. Calm informational tone (muted
+            card, Info icon, not red/alarm) — these are records the
+            user deliberately kept, not warnings. Reason-aware body
+            mirrors the wording from InvalidRunReview to keep the
+            saved-state and historical-view voices consistent.
+            P0.5 stat hygiene already excludes these from totals,
+            so the banner is honest: the run is here, but it doesn't
+            count toward stats. */}
+        {run.isInvalid && (
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/60 border border-border">
+            <Info size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold text-foreground">Saved despite invalid metrics</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {run.invalidReason === 'too-fast'
+                  ? 'We saved this despite an unrealistic implied pace. Distance and time may not reflect a real run. Excluded from your weekly totals and stats.'
+                  : 'We saved this despite being below the minimum distance or duration for a normal summary. Excluded from your weekly totals and stats.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div>
