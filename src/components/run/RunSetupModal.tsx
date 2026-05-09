@@ -276,14 +276,19 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           )}
         </AnimatePresence>
 
-        {/* Target — for non-interval, non-treadmill */}
+        {/* Goal — for non-interval, non-treadmill */}
         {config.activityType !== 'intervals' && config.activityType !== 'treadmill' && (
           <div>
-            <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-widest">Target (optional)</p>
+            {/* Visible-label rename only ("Target (optional)" → "Goal").
+                The internal `target.type` config field is unchanged
+                (RunConfig, localStorage, Firestore, analytics events
+                all keep `target` as the key) so existing data and
+                callers stay working. */}
+            <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-widest">Goal</p>
             <div className="flex gap-2">
               {(['none', 'distance', 'time', 'pace'] as const).map((t) => (
                 <button key={t}
-                  onClick={() => updateConfig({ target: { type: t, value: t === 'distance' ? 5 : t === 'time' ? 1800 : t === 'pace' ? 330 : undefined } })}
+                  onClick={() => updateConfig({ target: { type: t, value: t === 'distance' ? 5000 : t === 'time' ? 1800 : t === 'pace' ? 330 : undefined } })}
                   className="flex-1 py-2 rounded-xl text-xs font-medium transition-all"
                   style={config.target.type === t
                     ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
@@ -296,66 +301,176 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           </div>
         )}
 
-        {/* Target value inputs */}
+        {/* Goal value inputs */}
         {config.target.type !== 'none' && config.activityType !== 'intervals' && config.activityType !== 'treadmill' && (
-          <div className="p-4 rounded-xl border border-border space-y-2 bg-card">
-            {config.target.type === 'distance' && (
-              <div>
-                <label htmlFor="target-distance" className="text-xs text-muted-foreground">Distance (km)</label>
-                <input id="target-distance" type="number" step="0.5" min="0.5" max="100"
-                  value={config.target.value ? config.target.value / 1000 : 5}
-                  onChange={(e) => updateConfig({ target: { type: 'distance', value: Number(e.target.value) * 1000 } })}
-                  /* HTML `min` / `max` are validation hints — typing
-                     freely bypasses them. QA caught a 0.005km target
-                     persisting because the onChange writes whatever
-                     the user typed. Snap to the valid range when the
-                     input loses focus so users keep mid-edit freedom
-                     but can't ship an out-of-range target. */
-                  onBlur={(e) => {
-                    const km = Number(e.target.value);
-                    const clamped = Number.isFinite(km) ? Math.max(0.5, Math.min(100, km)) : 5;
-                    if (clamped !== km) {
-                      updateConfig({ target: { type: 'distance', value: clamped * 1000 } });
-                    }
-                  }}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
-              </div>
-            )}
-            {config.target.type === 'time' && (
-              <div>
-                <label htmlFor="target-time" className="text-xs text-muted-foreground">Duration (minutes)</label>
-                {/* HTML min lowered from 5 to 1 to match the
-                    runTargetValidation floor; onBlur clamp dropped
-                    its 5-min floor too. Brief warmups + flexible
-                    cooldowns are valid targets — under 1 minute is
-                    where it stops being a real run intention. */}
-                <input id="target-time" type="number" step="5" min="1" max="300"
-                  value={config.target.value ? Math.round(config.target.value / 60) : 30}
-                  onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
-                  onBlur={(e) => {
-                    const mins = Number(e.target.value);
-                    const clamped = Number.isFinite(mins) ? Math.max(1, Math.min(300, mins)) : 30;
-                    if (clamped !== mins) {
-                      updateConfig({ target: { type: 'time', value: clamped * 60 } });
-                    }
-                  }}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
-              </div>
-            )}
-            {config.target.type === 'pace' && (
-              <div>
-                <label htmlFor="target-pace" className="text-xs text-muted-foreground">Target pace (/km)</label>
-                <input id="target-pace" type="text" placeholder="5:30"
-                  defaultValue={config.target.value ? `${Math.floor(config.target.value / 60)}:${String(config.target.value % 60).padStart(2, '0')}` : '5:30'}
-                  onChange={(e) => {
-                    const [m, s] = e.target.value.split(':').map(Number);
-                    if (Number.isFinite(m) && Number.isFinite(s)) {
-                      updateConfig({ target: { type: 'pace', value: m * 60 + s } });
-                    }
-                  }}
-                  className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
-              </div>
-            )}
+          <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+            {config.target.type === 'distance' && (() => {
+              /* Preset chips — selecting a preset populates the
+                 same `target.value` field the input writes to;
+                 Custom keeps the existing input visible. The
+                 active state ("Custom") is computed by checking
+                 whether the current value matches any preset.
+                 Validation from runTargetValidation.ts still
+                 applies — clicking a preset writes a valid value;
+                 typing 0.005 in Custom still blocks Start. */
+              const distancePresetsM = [1000, 3000, 5000, 10000];
+              const currentValueM = config.target.value ?? 0;
+              const isCustom = !distancePresetsM.includes(currentValueM);
+              return (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Distance</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {distancePresetsM.map((m) => {
+                      const active = currentValueM === m;
+                      return (
+                        <button key={m}
+                          onClick={() => updateConfig({ target: { type: 'distance', value: m } })}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                          style={active
+                            ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                            : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                          }>
+                          {m / 1000} km
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => { if (!isCustom) updateConfig({ target: { type: 'distance', value: 7500 } }); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                      style={isCustom
+                        ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                        : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                      }>
+                      Custom
+                    </button>
+                  </div>
+                  {isCustom && (
+                    <>
+                      <label htmlFor="target-distance" className="text-xs text-muted-foreground">Distance (km)</label>
+                      <input id="target-distance" type="number" step="0.5" min="0.5" max="100"
+                        value={config.target.value ? config.target.value / 1000 : 5}
+                        onChange={(e) => updateConfig({ target: { type: 'distance', value: Number(e.target.value) * 1000 } })}
+                        onBlur={(e) => {
+                          const km = Number(e.target.value);
+                          const clamped = Number.isFinite(km) ? Math.max(0.5, Math.min(100, km)) : 5;
+                          if (clamped !== km) {
+                            updateConfig({ target: { type: 'distance', value: clamped * 1000 } });
+                          }
+                        }}
+                        className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+            {config.target.type === 'time' && (() => {
+              const timePresetsS = [600, 1200, 1800, 2700, 3600];
+              const currentValueS = config.target.value ?? 0;
+              const isCustom = !timePresetsS.includes(currentValueS);
+              return (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Duration</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {timePresetsS.map((s) => {
+                      const active = currentValueS === s;
+                      return (
+                        <button key={s}
+                          onClick={() => updateConfig({ target: { type: 'time', value: s } })}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                          style={active
+                            ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                            : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                          }>
+                          {s / 60} min
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => { if (!isCustom) updateConfig({ target: { type: 'time', value: 1500 } }); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                      style={isCustom
+                        ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                        : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                      }>
+                      Custom
+                    </button>
+                  </div>
+                  {isCustom && (
+                    <>
+                      <label htmlFor="target-time" className="text-xs text-muted-foreground">Duration (minutes)</label>
+                      <input id="target-time" type="number" step="5" min="1" max="300"
+                        value={config.target.value ? Math.round(config.target.value / 60) : 30}
+                        onChange={(e) => updateConfig({ target: { type: 'time', value: Number(e.target.value) * 60 } })}
+                        onBlur={(e) => {
+                          const mins = Number(e.target.value);
+                          const clamped = Number.isFinite(mins) ? Math.max(1, Math.min(300, mins)) : 30;
+                          if (clamped !== mins) {
+                            updateConfig({ target: { type: 'time', value: clamped * 60 } });
+                          }
+                        }}
+                        className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+            {config.target.type === 'pace' && (() => {
+              const pacePresetsS = [300, 330, 360]; // 5:00, 5:30, 6:00 /km
+              const currentValueS = config.target.value ?? 0;
+              const isCustom = !pacePresetsS.includes(currentValueS);
+              const formatPace = (s: number) =>
+                `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+              return (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Pace</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {pacePresetsS.map((s) => {
+                      const active = currentValueS === s;
+                      return (
+                        <button key={s}
+                          onClick={() => updateConfig({ target: { type: 'pace', value: s } })}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                          style={active
+                            ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                            : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                          }>
+                          {formatPace(s)}/km
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => { if (!isCustom) updateConfig({ target: { type: 'pace', value: 315 } }); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                      style={isCustom
+                        ? { background: 'rgba(123,114,233,0.12)', color: '#7B72E9', border: '1px solid rgba(123,114,233,0.3)' }
+                        : { background: 'rgba(0,0,0,0.04)', color: 'var(--color-muted-foreground)', border: '1px solid rgba(0,0,0,0.08)' }
+                      }>
+                      Custom
+                    </button>
+                  </div>
+                  {isCustom && (
+                    <>
+                      <label htmlFor="target-pace" className="text-xs text-muted-foreground">Pace (/km)</label>
+                      <input id="target-pace" type="text" placeholder="5:30"
+                        /* `key` forces a remount when the user
+                           toggles back to Custom from a preset so
+                           defaultValue picks up the freshly-set
+                           preset value rather than the stale one
+                           from first mount. */
+                        key={`pace-${currentValueS}`}
+                        defaultValue={formatPace(currentValueS || 330)}
+                        onChange={(e) => {
+                          const [m, s] = e.target.value.split(':').map(Number);
+                          if (Number.isFinite(m) && Number.isFinite(s)) {
+                            updateConfig({ target: { type: 'pace', value: m * 60 + s } });
+                          }
+                        }}
+                        className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center" />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
             {/* Inline target validation. Surfaces the
                 getTargetValidationError verdict so users see why
                 the Start button is disabled before tapping it.
@@ -369,14 +484,41 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           </div>
         )}
 
-        {/* Advanced settings — collapsed by default */}
-        <button
-          onClick={() => setShowAdvanced(v => !v)}
-          className="flex items-center justify-between w-full py-2.5 text-sm text-muted-foreground"
-        >
-          <span>Advanced settings</span>
-          {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        {/* Run controls — collapsed by default. Internal state names
+            (autoPause / audioCues / paceAlerts) unchanged; only the
+            visible header copy + the Audio cues label change to
+            "Voice cues" — RunConfig fields, localStorage, analytics
+            stay stable. The summary line below the header reflects
+            the current toggle state when collapsed so users don't
+            have to expand to see the configuration. */}
+        {(() => {
+          const isManualDistance = requiresManualDistance(config.activityType);
+          const summaryParts: string[] = [];
+          if (!isManualDistance) {
+            /* Auto-pause is GPS-derived; surface it only when the
+               run will use GPS. */
+            summaryParts.push(`Auto-pause ${config.autoPause ? 'on' : 'off'}`);
+          }
+          summaryParts.push(`Voice cues ${config.audioCues ? 'on' : 'off'}`);
+          if (!isManualDistance && config.audioCues) {
+            summaryParts.push(`Pace alerts ${config.paceAlerts ? 'on' : 'off'}`);
+          }
+          const summary = summaryParts.join(' · ');
+          return (
+            <button
+              onClick={() => setShowAdvanced(v => !v)}
+              className="flex items-start justify-between w-full py-2.5 text-left gap-3"
+            >
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-muted-foreground">Run controls</span>
+                {!showAdvanced && (
+                  <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">{summary}</p>
+                )}
+              </div>
+              {showAdvanced ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />}
+            </button>
+          );
+        })()}
 
         <AnimatePresence>
           {showAdvanced && (
@@ -386,10 +528,16 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden space-y-2"
             >
+              {/* Auto-pause hides for manual-distance modes —
+                  treadmill/manual run on a fixed surface or have no
+                  GPS, so the GPS-derived auto-pause logic is a
+                  visible no-op. State is preserved (we don't reset
+                  config.autoPause) so toggling activityType back
+                  restores the user's choice. */}
               {[
-                { label: 'Auto-pause', key: 'autoPause' as const },
-                { label: 'Audio cues', key: 'audioCues' as const },
-              ].map((setting) => (
+                { label: 'Auto-pause', key: 'autoPause' as const, hidden: requiresManualDistance(config.activityType) },
+                { label: 'Voice cues', key: 'audioCues' as const, hidden: false },
+              ].filter((s) => !s.hidden).map((setting) => (
                 <div key={setting.key}
                   className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
                   <span className="text-sm">{setting.label}</span>
