@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Check, Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Drawer } from 'vaul';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth';
 import { getCurrentWeather, getWeatherIcon, getRunningTip, type WeatherData } from '@/lib/weather';
 import ShoeSelector from './ShoeSelector';
 import GuidedRunPicker from './GuidedRunPicker';
 import type { GuidedRunWorkout } from '@/lib/guidedRun';
 import type { ActivityType } from '@/types/run';
 import { requiresManualDistance } from '@/lib/runGuards';
+import { isVolumeEligible } from '@/lib/runStatsEligibility';
 import { getTargetValidationError } from '@/lib/runTargetValidation';
 
 /* `ActivityType` now lives in `@/types/run` so non-component modules
@@ -106,12 +110,24 @@ interface RunSetupModalProps {
 }
 
 export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
+  const { user } = useAuth();
   const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(null);
+  /* Last-run snapshot for the empty-state context card. Single
+     latest doc, volume-eligibility filtered (so a saved-anyway
+     misclick doesn't masquerade as the user's last real run).
+     Null while loading or when no eligible run exists; the card
+     renders nothing in either case rather than showing
+     "Last run: never" — neutral over filler. */
+  const [lastRun, setLastRun] = useState<{
+    distanceM: number;
+    durationS: number;
+    activityType: string;
+  } | null>(null);
   const updateConfig = (partial: Partial<RunConfig>) => setConfig((prev) => ({ ...prev, ...partial }));
   const intervalConfig = config.intervals ?? { reps: 5, workDistance: 1000, restDuration: 90 };
 
@@ -129,6 +145,39 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
       setWeatherLoading(false);
     });
   }, []);
+
+  /* Fetch the most recent volume-eligible run on mount. Cheap —
+     pulls 5 docs (oldest-first scans) and walks them for the
+     first eligible one in client memory rather than a Firestore
+     compound query that would need an index. Failure is silent;
+     the card just doesn't render. */
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'users', user.uid, 'runs'),
+          orderBy('completedAt', 'desc'),
+          limit(5),
+        ));
+        if (cancelled) return;
+        for (const d of snap.docs) {
+          const data = d.data() as { distance?: number; duration?: number; activityType?: string; isInvalid?: boolean; savedAnyway?: boolean };
+          if (!isVolumeEligible(data)) continue;
+          setLastRun({
+            distanceM: data.distance ?? 0,
+            durationS: data.duration ?? 0,
+            activityType: data.activityType ?? 'freerun',
+          });
+          return;
+        }
+      } catch {
+        // Silent — empty state stays neutral.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -178,6 +227,34 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
             </button>
+          );
+        })()}
+
+        {/* Last-run card — small empty-state context. Renders only
+            when an eligible last run exists; nothing otherwise.
+            Intentionally narrow surface (label + distance + duration
+            + type) so it doesn't compete with the selected-run card
+            visually. Read-only — tapping it doesn't navigate
+            anywhere from the launcher. */}
+        {lastRun && (() => {
+          const labelMap: Record<string, string> = {
+            freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo',
+            intervals: 'Intervals', long: 'Long Run', longrun: 'Long Run',
+            race: 'Race', treadmill: 'Treadmill', manual: 'Manual Run',
+            guided: 'Guided',
+          };
+          const km = (lastRun.distanceM / 1000).toFixed(2);
+          const mins = Math.floor(lastRun.durationS / 60);
+          const secs = Math.floor(lastRun.durationS % 60);
+          const time = `${mins}:${secs.toString().padStart(2, '0')}`;
+          const type = labelMap[lastRun.activityType] || 'Run';
+          return (
+            <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Last run</p>
+              <p className="text-sm font-mono tabular-nums text-foreground mt-0.5">
+                {km}km · {time} · <span className="font-sans text-muted-foreground">{type}</span>
+              </p>
+            </div>
           );
         })()}
 
