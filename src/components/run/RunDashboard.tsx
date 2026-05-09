@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'fi
 import { ArrowRight, Timer, Footprints } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
+import { isCountableRun } from '../../lib/runGuards';
 import { format } from 'date-fns';
 
 export default function RunDashboard() {
@@ -28,10 +29,17 @@ export default function RunDashboard() {
       startOfWeek.setHours(0, 0, 0, 0);
       const weeklyQ = query(runsRef, where('completedAt', '>=', Timestamp.fromDate(startOfWeek)), orderBy('completedAt', 'desc'));
       const weeklySnap = await getDocs(weeklyQ);
+      /* Filter invalid + zero-distance records out of both totals so
+         the weekly run-count tile doesn't credit "Save anyway"
+         misclicks. The km accumulator also picks up the filter
+         (previously fell back to 0 for zombies via `|| 0` so km was
+         already clean, but counting them anyway diverged the tile
+         from every other stat surface). */
+      const countable = weeklySnap.docs.filter(d => isCountableRun(d.data()));
       let totalDist = 0;
-      weeklySnap.docs.forEach(d => { totalDist += d.data().distance || 0; });
+      countable.forEach(d => { totalDist += d.data().distance || 0; });
       setWeeklyDistance(totalDist);
-      setWeeklyRunCount(weeklySnap.size);
+      setWeeklyRunCount(countable.length);
     };
 
     loadRuns();

@@ -137,3 +137,22 @@ export function canShowDone(args: { saveStatus: SaveStatus }): boolean {
 export function canShowRetrySave(args: { saveStatus: SaveStatus }): boolean {
   return args.saveStatus === 'error';
 }
+
+/**
+ * Predicate for "does this run count toward aggregated stats?".
+ * Post-fetch filter applied wherever runs feed user-facing
+ * aggregates (weekly km, run-count tiles, leaderboard ranks, the
+ * performance index, crew totals).
+ *
+ * Treats missing `isInvalid` as false so legacy docs (pre-PR #480,
+ * which started persisting the field) stay included; the layered
+ * `distance > 0` check then catches pre-#480 zero-distance zombies
+ * that have neither flag. Together the two checks span both eras.
+ *
+ * Cloud functions (plain JS in `functions/`) inline this predicate
+ * rather than importing — they're outside the TS path alias and
+ * the rule is two lines.
+ */
+export function isCountableRun(data: { isInvalid?: boolean; distance?: number }): boolean {
+  return data.isInvalid !== true && (data.distance ?? 0) > 0;
+}
