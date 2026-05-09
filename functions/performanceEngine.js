@@ -72,13 +72,24 @@ const workoutsSnap = await userRef
 .get();
 const workouts = workoutsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-// Runs — completedAt is a Timestamp
+// Runs — completedAt is a Timestamp.
+// Filter invalid + zero-distance records post-fetch so the weekly
+// performance index doesn't credit "Save anyway" misclicks. Plain
+// JS inline equivalent of `isCountableRun` from
+// src/lib/runGuards.ts (functions/ is excluded from the TS path
+// alias so we can't import it directly). Treats missing
+// `isInvalid` as false to keep legacy docs (pre-PR #480) included.
 const runsSnap = await userRef
 .collection("runs")
 .where("completedAt", ">=", startTs)
 .where("completedAt", "<=", endTs)
 .get();
-const runs = runsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+const runs = runsSnap.docs
+.filter((d) => {
+  const data = d.data();
+  return data.isInvalid !== true && (Number(data.distance) || 0) > 0;
+})
+.map((d) => ({ id: d.id, ...d.data() }));
 
 // Meals — date is a string "YYYY-MM-DD"
 let meals = [];

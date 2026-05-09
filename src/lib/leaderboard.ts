@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { isCountableRun } from './runGuards';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -32,7 +33,10 @@ export async function buildLeaderboard(
         query(collection(db, 'users', uid, 'runs'),
           where('completedAt', '>=', sinceTs), orderBy('completedAt'), limit(50))
       );
-      const km = runsSnap.docs.reduce((s, d) => s + (d.data().distance || 0) / 1000, 0);
+      const km = runsSnap.docs.reduce(
+        (s, d) => isCountableRun(d.data()) ? s + (d.data().distance || 0) / 1000 : s,
+        0,
+      );
       if (challenge === 'weekly_distance') value = Math.round(km * 10) / 10;
       else value += km * 100;
     }

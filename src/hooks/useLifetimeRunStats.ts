@@ -3,6 +3,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { isCountableRun } from "@/lib/runGuards";
 
 export interface LifetimeRunStats {
   runCount: number;
@@ -37,12 +38,10 @@ export function useLifetimeRunStats() {
         let total = 0;
         let count = 0;
         snap.docs.forEach((d) => {
-          const data = d.data() as { distance?: number };
-          const m = typeof data.distance === "number" ? data.distance : 0;
-          if (m > 0) {
-            total += m;
-            count += 1;
-          }
+          const data = d.data() as { distance?: number; isInvalid?: boolean };
+          if (!isCountableRun(data)) return;
+          total += data.distance ?? 0;
+          count += 1;
         });
         setStats({ runCount: count, totalDistanceM: total });
       } catch (err) {

@@ -1247,7 +1247,17 @@ async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
 
   let km = 0;
   for (const d of runsSnap.docs) {
-    km += (Number(d.data().distance) || 0) / 1000;
+    // Skip invalid + zero-distance records so crew leaderboards
+    // don't credit "Save anyway" misclicks. Plain JS inline
+    // equivalent of `isCountableRun` from src/lib/runGuards.ts;
+    // functions/ is excluded from the TS path alias so we can't
+    // import it. Missing `isInvalid` (legacy docs pre-PR #480)
+    // counts as false.
+    const data = d.data();
+    if (data.isInvalid === true) continue;
+    const distance = Number(data.distance) || 0;
+    if (distance <= 0) continue;
+    km += distance / 1000;
   }
   let kg = 0;
   for (const d of workoutsSnap.docs) {

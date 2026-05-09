@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
+import { isCountableRun } from '../lib/runGuards';
 
 export interface RunningWeekData {
   week: string;
@@ -83,6 +84,14 @@ export function useRunningStats(days: number = 30) {
 
       snap.docs.forEach(d => {
         const data = d.data();
+        /* Drop invalid + zero-distance records before they reach
+           aggregation. The downstream `aggregateWeeklyData` already
+           had a `distance > 0 && avgPace > 0` guard for pace; pulling
+           the filter up here keeps the semantics consistent across
+           runCount, totalDistance, and avgPace and matches the
+           predicate used by every other stat surface (Lifetime,
+           leaderboard, trajectory, crew totals). */
+        if (!isCountableRun(data)) return;
         let date: Date | undefined;
         if (data.completedAt instanceof Timestamp) {
           date = data.completedAt.toDate();

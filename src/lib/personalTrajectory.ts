@@ -18,6 +18,7 @@
 
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import { isCountableRun } from './runGuards';
 
 export interface TrajectoryBreakdown {
   km: number;
@@ -99,7 +100,7 @@ async function computeRangeBreakdown(
   ]);
 
   const km = runsSnap.docs.reduce(
-    (s, d) => s + (Number(d.data().distance) || 0) / 1000,
+    (s, d) => isCountableRun(d.data()) ? s + (Number(d.data().distance) || 0) / 1000 : s,
     0,
   );
   const kg = workoutsSnap.docs.reduce((s, d) => {
