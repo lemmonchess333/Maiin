@@ -93,9 +93,16 @@ interface InvalidRunReviewProps {
   saveStatus: SaveStatus;
   saveError: string | null;
   isOnline: boolean;
+  /** Set when the run came from treadmill / manual flows so the
+   *  Edit distance affordance only surfaces for runs whose
+   *  distance was user-typed (and therefore correctable). Outdoor
+   *  GPS runs aren't editable from this screen — the distance
+   *  came from a sensor, not a typo. */
+  canEditDistance: boolean;
   onSave: () => void;
   onDiscard: () => void;
   onDone: () => void;
+  onEditDistance: (newDistanceMeters: number) => void;
 }
 
 function InvalidRunReview({
@@ -107,9 +114,11 @@ function InvalidRunReview({
   saveStatus,
   saveError,
   isOnline,
+  canEditDistance,
   onSave,
   onDiscard,
   onDone,
+  onEditDistance,
 }: InvalidRunReviewProps) {
   const formattedDuration = formatTime(elapsedSeconds);
   const formattedDistance = `${distanceKm.toFixed(2)}km`;
@@ -118,6 +127,25 @@ function InvalidRunReview({
   const showRetry = canShowRetrySave({ saveStatus });
   const showDone = canShowDone({ saveStatus });
   const isSaved = saveStatus === 'saved';
+
+  /* Edit-distance state lives on the InvalidRunReview itself so
+     the rest of RunSummary doesn't have to know about the
+     in-progress edit until it commits. Pre-fills with the current
+     distance so users can adjust rather than re-enter. Validates
+     against the same 0.05km floor as TreadmillMode. */
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState<string>(distanceKm.toFixed(2));
+  const editValueNum = Number(editValue);
+  const editValid = Number.isFinite(editValueNum) && editValueNum >= 0.05 && editValueNum <= 100;
+  const startEditing = () => {
+    setEditValue(distanceKm.toFixed(2));
+    setEditing(true);
+  };
+  const commitEdit = () => {
+    if (!editValid) return;
+    onEditDistance(editValueNum * 1000);
+    setEditing(false);
+  };
 
   /* Heading + body are reason-aware before save and saved-aware after.
      Once the run is on the user's account the warning-style copy
@@ -174,6 +202,63 @@ function InvalidRunReview({
             <CheckCircle size={16} aria-hidden="true" />
             Done
           </button>
+        </div>
+      )}
+
+      {/* Edit-distance affordance — surfaces only for treadmill /
+          manual runs in pre-saved state. The most useful action
+          for a fat-finger 'too-fast' (e.g. typed 20 instead of 2.0)
+          is correcting the typo, not discarding or saving wrong
+          data. Outdoor GPS runs are skipped because the distance
+          came from a sensor — there's no typo to correct. When the
+          edit produces a valid run, RunSummary's parent re-derives
+          isInvalid from the new distance and the user lands on
+          the normal valid summary path. */}
+      {canEditDistance && (showSaveAnyway || showDiscard) && (
+        <div className="pt-1">
+          {!editing ? (
+            <button
+              onClick={startEditing}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground border border-border"
+            >
+              Edit distance
+            </button>
+          ) : (
+            <div className="p-3 rounded-xl border border-border bg-muted/40 space-y-2">
+              <label htmlFor="edit-distance" className="text-xs text-muted-foreground">Distance (km)</label>
+              <input
+                id="edit-distance"
+                type="number"
+                step="0.01"
+                min="0.05"
+                max="100"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-center"
+              />
+              {!editValid && editValue !== '' && (
+                <p className="text-xs" style={{ color: '#D4637A' }}>
+                  Distance must be between 0.05km and 100km.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="flex-1 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={commitEdit}
+                  disabled={!editValid}
+                  className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
+                  style={{ background: '#7B72E9' }}
+                >
+                  Update
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -237,6 +322,13 @@ export default function RunSummary() {
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  /* Sprint 3 Edit-distance: when the user corrects a fat-fingered
+     manual / treadmill distance from InvalidRunReview, the new
+     value overrides state.distance for every downstream
+     derivation (avgPace, invalidReason, runData on save). Null
+     means "use the original recorded distance". Outdoor GPS runs
+     never hit this path — the distance came from a sensor. */
+  const [editedDistanceMeters, setEditedDistanceMeters] = useState<number | null>(null);
 
   // Fetch past runs to compute pace trend badge
   useEffect(() => {
@@ -273,7 +365,14 @@ export default function RunSummary() {
     return null;
   }
 
-  const { points: rawPoints, distance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
+  const { points: rawPoints, distance: originalDistance, elapsed, splits, elevationGain, runConfig, intervalData } = state;
+  /* `distance` is the effective distance — either the original
+     recorded value or the user-edited override from
+     InvalidRunReview's Edit distance flow. Every downstream
+     derivation (pace, calories, invalid reason, runData on save)
+     reads from this so the edit propagates cleanly without
+     touching each call site. */
+  const distance = editedDistanceMeters ?? originalDistance;
   const points = applyPrivacyZones(rawPoints, privacyZones);
   const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
@@ -532,9 +631,13 @@ export default function RunSummary() {
           saveStatus={saveStatus}
           saveError={saveError}
           isOnline={isOnline}
+          /* Edit distance only for treadmill / manual — outdoor
+             GPS distance came from a sensor, no typo to fix. */
+          canEditDistance={activityType === 'treadmill' || activityType === 'manual'}
           onSave={handleSave}
           onDiscard={handleDiscard}
           onDone={() => navigate('/')}
+          onEditDistance={(newDistanceMeters) => setEditedDistanceMeters(newDistanceMeters)}
         />
       ) : (
       <>
