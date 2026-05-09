@@ -7,10 +7,32 @@ import { useAuth } from '../../lib/auth';
 import { isCountableRun } from '../../lib/runGuards';
 import { format } from 'date-fns';
 
+/* Activity-type labels mirror History/RunningHistorySection so the
+   dashboard recent-runs list reads consistently with the History
+   page's recent-runs section. Manual is the GPS-fallback path —
+   labelled honestly rather than as treadmill, even though it
+   shares the manual-distance flow. */
+const ACTIVITY_LABEL: Record<string, string> = {
+  freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo', intervals: 'Intervals',
+  long: 'Long Run', longrun: 'Long Run', race: 'Race', treadmill: 'Treadmill',
+  manual: 'Manual Run', guided: 'Guided',
+};
+
+interface RecentRun {
+  id: string;
+  distance?: number;
+  avgPace?: number;
+  duration?: number;
+  completedAt?: { toDate: () => Date };
+  activityType?: string;
+  isInvalid?: boolean;
+  savedAnyway?: boolean;
+}
+
 export default function RunDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [recentRuns, setRecentRuns] = useState<{ id: string; distance?: number; avgPace?: number; duration?: number; completedAt?: { toDate: () => Date } }[]>([]);
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([]);
   const [weeklyDistance, setWeeklyDistance] = useState(0);
   const [weeklyRunCount, setWeeklyRunCount] = useState(0);
 
@@ -22,7 +44,12 @@ export default function RunDashboard() {
 
       const recentQ = query(runsRef, orderBy('completedAt', 'desc'), limit(5));
       const snap = await getDocs(recentQ);
-      setRecentRuns(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      /* No source filter on the recent-runs list — Sprint 1's
+         transparency principle: invalid / savedAnyway records
+         exist on the user's account and should be visible (with
+         badges) so the user can see what they saved. The weekly
+         tile below is what filters via isCountableRun. */
+      setRecentRuns(snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<RecentRun, 'id'>) })));
 
       const startOfWeek = new Date();
       startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
@@ -104,9 +131,30 @@ export default function RunDashboard() {
                 <Footprints className="w-4 h-4 text-green-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {((run.distance || 0) / 1000).toFixed(2)} km
-                </p>
+                {/* Title row: distance + activity-type label + (when
+                    applicable) Saved-anyway / Invalid badge.
+                    Mirrors RunningHistorySection so the two
+                    surfaces stay consistent — Sprint 1 transparency
+                    principle. */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-foreground">
+                    {((run.distance || 0) / 1000).toFixed(2)} km
+                  </p>
+                  <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
+                    {ACTIVITY_LABEL[run.activityType ?? 'freerun'] || 'Run'}
+                  </span>
+                  {run.savedAnyway ? (
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>
+                      Saved anyway
+                    </span>
+                  ) : run.isInvalid ? (
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(239,68,68,0.10)', color: '#EF4444' }}>
+                      Invalid
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {run.completedAt?.toDate ? format(run.completedAt.toDate(), 'MMM d') : ''} · {formatPace(run.avgPace ?? 0)}/km
                 </p>
