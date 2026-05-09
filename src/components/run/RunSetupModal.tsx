@@ -57,10 +57,21 @@ const DEFAULT_CONFIG: RunConfig = {
 
 /* Run-type registry. `name` is the long-form label used by the
    selected-run card, the chooser, and the Start CTA ("Start Free
-   Run"). `chip` discloses the measurement source so users
-   understand why pace metrics work for outdoor types but not for
-   treadmill — Outdoor GPS / Manual distance / Audio. `group`
-   drives the chooser's Outdoor / Other section split.
+   Run"). Two chip fields:
+     `cardChip`    — long form for the selected-run card at the top
+                     of the setup ("Outdoor GPS", "Manual distance",
+                     "Audio"). The card has horizontal room for the
+                     fuller phrasing.
+     `chooserChip` — short form for the chooser rows ("GPS",
+                     "Manual", "Audio"). The chooser packs more
+                     info per row, so the chip stays terse.
+   Both disclose the measurement source so users understand why
+   pace metrics work for outdoor types but not for treadmill.
+   `cardDescription` and `chooserDescription` allow the chooser to
+   carry slightly more detail per row (e.g. "Indoor, manual
+   distance" in the chooser vs "Indoor" on the card where the chip
+   already says "Manual distance").
+   `group` drives the chooser's Outdoor / Other section split.
    `'manual'` is deliberately absent — that activityType is set
    programmatically by the GPS-fallback "Track without GPS" path,
    never picked directly by the user. */
@@ -69,20 +80,22 @@ type ActivityTypeOption = {
   label: string;
   name: string;
   icon: string;
-  description: string;
-  chip: string;
+  cardDescription: string;
+  cardChip: string;
+  chooserDescription: string;
+  chooserChip: string;
   group: 'outdoor' | 'other';
 };
 
 const ACTIVITY_TYPES: ActivityTypeOption[] = [
-  { type: 'freerun',   label: 'Free',      name: 'Free Run',     icon: 'Footprints',     description: 'Run at your own pace', chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'easy',      label: 'Easy',      name: 'Easy Run',     icon: 'PersonStanding', description: 'Recovery pace',         chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'tempo',     label: 'Tempo',     name: 'Tempo Run',    icon: 'Zap',            description: 'Sustained effort',      chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'intervals', label: 'Intervals', name: 'Intervals',    icon: 'RefreshCw',      description: 'Repeats + rest',        chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'long',      label: 'Long',      name: 'Long Run',     icon: 'Route',          description: 'Distance-focused',      chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'race',      label: 'Race',      name: 'Race',         icon: 'Flag',           description: 'All-out effort',        chip: 'Outdoor GPS',     group: 'outdoor' },
-  { type: 'treadmill', label: 'Treadmill', name: 'Treadmill',    icon: 'Dumbbell',       description: 'Indoor',                chip: 'Manual distance', group: 'other' },
-  { type: 'guided',    label: 'Guided',    name: 'Guided Run',   icon: 'Headphones',     description: 'Coach-led workout',     chip: 'Audio',           group: 'other' },
+  { type: 'freerun',   label: 'Free',      name: 'Free Run',     icon: 'Footprints',     cardDescription: 'Run at your own pace', cardChip: 'Outdoor GPS',     chooserDescription: 'Run at your own pace', chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'easy',      label: 'Easy',      name: 'Easy Run',     icon: 'PersonStanding', cardDescription: 'Recovery pace',         cardChip: 'Outdoor GPS',     chooserDescription: 'Recovery pace',         chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'tempo',     label: 'Tempo',     name: 'Tempo Run',    icon: 'Zap',            cardDescription: 'Sustained effort',      cardChip: 'Outdoor GPS',     chooserDescription: 'Sustained effort',      chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'intervals', label: 'Intervals', name: 'Intervals',    icon: 'RefreshCw',      cardDescription: 'Repeats + rest',        cardChip: 'Outdoor GPS',     chooserDescription: 'Repeats + rest',        chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'long',      label: 'Long',      name: 'Long Run',     icon: 'Route',          cardDescription: 'Distance-focused',      cardChip: 'Outdoor GPS',     chooserDescription: 'Distance-focused',      chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'race',      label: 'Race',      name: 'Race',         icon: 'Flag',           cardDescription: 'All-out effort',        cardChip: 'Outdoor GPS',     chooserDescription: 'All-out effort',        chooserChip: 'GPS',    group: 'outdoor' },
+  { type: 'treadmill', label: 'Treadmill', name: 'Treadmill',    icon: 'Dumbbell',       cardDescription: 'Indoor',                cardChip: 'Manual distance', chooserDescription: 'Indoor, manual distance', chooserChip: 'Manual', group: 'other' },
+  { type: 'guided',    label: 'Guided',    name: 'Guided Run',   icon: 'Headphones',     cardDescription: 'Coach-led workout',     cardChip: 'Audio',           chooserDescription: 'Coach-led workout',     chooserChip: 'Audio',  group: 'other' },
 ];
 
 
@@ -158,9 +171,9 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold text-foreground">{selected.name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-xs text-muted-foreground truncate">{selected.description}</span>
+                  <span className="text-xs text-muted-foreground truncate">{selected.cardDescription}</span>
                   <span className="text-xs text-muted-foreground/60">·</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{selected.chip}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{selected.cardChip}</span>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
@@ -507,10 +520,10 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                                 {at.name}
                               </p>
                               <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                                {at.chip}
+                                {at.chooserChip}
                               </span>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{at.description}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{at.chooserDescription}</p>
                           </div>
                           {isActive && (
                             <Check className="w-4 h-4 shrink-0" style={{ color: '#7B72E9' }} aria-label="Selected" />
