@@ -249,9 +249,21 @@ export default function RunSummary() {
           distance: data.distance ?? 0,
           avgPace: data.avgPace ?? 0,
           completedAt: data.completedAt?.toDate?.() ?? new Date(),
+          /* Source / validity fields plumbed through so paceTrends
+             can exclude treadmill / manual / invalid / savedAnyway
+             records — a treadmill 2:38/km can't masquerade as a PR
+             against historical outdoor runs. */
+          activityType: data.activityType,
+          isInvalid: data.isInvalid,
+          savedAnyway: data.savedAnyway,
         };
       });
-      const currentRun = { distance: state.distance, avgPace: state.elapsed > 0 && state.distance > 0 ? (state.elapsed / state.distance) * 1000 : 0, completedAt: new Date() };
+      const currentRun = {
+        distance: state.distance,
+        avgPace: state.elapsed > 0 && state.distance > 0 ? (state.elapsed / state.distance) * 1000 : 0,
+        completedAt: new Date(),
+        activityType: state.runConfig?.activityType,
+      };
       setPaceTrend(calculatePaceTrend(currentRun, allRuns));
     })();
   }, [user, state]);

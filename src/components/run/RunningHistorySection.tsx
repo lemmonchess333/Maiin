@@ -51,8 +51,22 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
   };
 
   const trend = calculatePaceTrend(
-    { distance: run.distance, avgPace: run.avgPace, completedAt: run.completedAt },
-    allRuns.map(r => ({ distance: r.distance, avgPace: r.avgPace, completedAt: r.completedAt })),
+    {
+      distance: run.distance,
+      avgPace: run.avgPace,
+      completedAt: run.completedAt,
+      activityType: run.activityType,
+      isInvalid: run.isInvalid,
+      savedAnyway: run.savedAnyway,
+    },
+    allRuns.map(r => ({
+      distance: r.distance,
+      avgPace: r.avgPace,
+      completedAt: r.completedAt,
+      activityType: r.activityType,
+      isInvalid: r.isInvalid,
+      savedAnyway: r.savedAnyway,
+    })),
   );
 
   return (

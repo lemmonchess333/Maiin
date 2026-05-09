@@ -173,4 +173,103 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("no-data");
     });
   });
+
+  describe("source / validity matrix (Sprint 1)", () => {
+    /* Trust cleanup: paceTrends now mirrors the Sprint 1 pace
+       eligibility matrix so a treadmill 2km / 5:17 record can't
+       fake an outdoor PR badge against historical outdoor runs. */
+    it("treadmill current run returns no-data (typed distance, not GPS-verified)", () => {
+      const current = {
+        ...makeRun(158, 2000, 0),
+        activityType: "treadmill" as const,
+      };
+      const allRuns = generateRuns(10, 300, 2000, 1); // outdoor outdoor outdoor
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("manual current run returns no-data (GPS never locked)", () => {
+      const current = {
+        ...makeRun(158, 2000, 0),
+        activityType: "manual" as const,
+      };
+      const allRuns = generateRuns(10, 300, 2000, 1);
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("isInvalid current run returns no-data", () => {
+      const current = {
+        ...makeRun(280, 5000, 0),
+        isInvalid: true,
+      };
+      const allRuns = generateRuns(10, 300, 5000, 1);
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("savedAnyway current run returns no-data", () => {
+      const current = {
+        ...makeRun(280, 5000, 0),
+        savedAnyway: true,
+      };
+      const allRuns = generateRuns(10, 300, 5000, 1);
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("treadmill comparables don't poison an outdoor PR check", () => {
+      /* If a user did one fast outdoor run after 9 slow treadmill
+         entries, the treadmill records shouldn't make the outdoor
+         run look like a PR — they're not eligible comparables. So
+         with only treadmill comparables the outdoor candidate gets
+         no-data (not enough eligible comparables). */
+      const current = makeRun(280, 5000, 0); // outdoor (no activityType set, defaults to outdoor)
+      const treadmillComparables = generateRuns(10, 300, 5000, 1).map(r => ({
+        ...r,
+        activityType: "treadmill" as const,
+      }));
+      const result = calculatePaceTrend(current, treadmillComparables);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("invalid comparables are excluded from the comparable pool", () => {
+      const current = makeRun(280, 5000, 0);
+      const invalidPool = generateRuns(10, 300, 5000, 1).map(r => ({
+        ...r,
+        isInvalid: true,
+      }));
+      const result = calculatePaceTrend(current, invalidPool);
+      expect(result.trend).toBe("no-data");
+    });
+
+    it("explicit outdoor activityType still produces a trend", () => {
+      /* Mirror of the back-compat case but with activityType
+         explicitly set — pins that passing the field through
+         doesn't accidentally break the outdoor path. Current
+         290s/km is faster than every comparable (300s/km) so the
+         outdoor path correctly produces a PR. */
+      const current = {
+        ...makeRun(290, 5000, 0),
+        activityType: "easy" as const,
+      };
+      const allRuns = generateRuns(10, 300, 5000, 1).map(r => ({
+        ...r,
+        activityType: "easy" as const,
+      }));
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("pr");
+    });
+
+    it("missing activityType still produces a trend (legacy compat)", () => {
+      /* Pre-Sprint-1 callers and existing tests don't set
+         activityType. The eligibility helper treats a missing
+         field as outdoor so legacy data and tests continue to
+         work. */
+      const current = makeRun(290, 5000, 0);
+      const allRuns = generateRuns(10, 300, 5000, 1);
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("pr");
+    });
+  });
 });
