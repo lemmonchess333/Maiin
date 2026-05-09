@@ -17,8 +17,21 @@ interface TreadmillModeProps {
 export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, mode = 'treadmill' }: TreadmillModeProps) {
   const [distance, setDistance] = useState('');
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  /* Mode-aware copy. Treadmill users read distance off the
+     machine display; manual users (GPS-fallback "Track without
+     GPS" path) recall distance covered themselves. The wording
+     differs because the source differs — keeping treadmill copy
+     in manual mode (or vice versa) reads wrong even when the
+     underlying input is identical. The helper text below the
+     input nudges the user toward the right action without making
+     it feel like a tutorial. */
   const title = mode === 'manual' ? 'Manual Run' : 'Treadmill Run';
   const saveLabel = mode === 'manual' ? 'Save Manual Run' : 'Save Treadmill Run';
+  const distanceLabel = mode === 'manual' ? 'Distance covered' : 'Distance from treadmill';
+  const helperCopy = mode === 'manual'
+    ? 'Record time now, then enter distance covered.'
+    : 'Enter the distance shown on the treadmill.';
 
   /* Confirm only when there's data at stake. A long timer running but
      no distance entered still counts (the elapsed time is the user's
@@ -39,7 +52,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="treadmill-distance" className="text-sm text-white/60">Distance covered</label>
+        <label htmlFor="treadmill-distance" className="text-sm text-white/60">{distanceLabel}</label>
         <div className="flex items-center gap-2">
           <input
             id="treadmill-distance"
@@ -53,15 +66,15 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
           />
           <span className="text-white/60 text-sm">km</span>
         </div>
-        {/* 50m floor matches MIN_TREADMILL_DISTANCE_KM in
-            src/lib/runGuards.ts. Defending at the input means users
-            see feedback immediately instead of after they tap Save and
-            land in InvalidRunReview. Empty input shows nothing — only
-            below-floor entries trigger the message. */}
-        {distance && Number(distance) < 0.05 && (
+        {/* Inline validation: empty input shows the helper copy
+            (so the user knows what to do); below-floor input shows
+            the validation copy (so they know what to fix). */}
+        {distance && Number(distance) < 0.05 ? (
           <p className="text-xs text-white/50 mt-1">
             Distance must be at least 0.05km.
           </p>
+        ) : (
+          <p className="text-xs text-white/40 mt-1">{helperCopy}</p>
         )}
       </div>
 
