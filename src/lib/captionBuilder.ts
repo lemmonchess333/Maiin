@@ -4,25 +4,23 @@ import type { DayType } from "@/lib/types";
  * Structured caption shape used by the Food hero card. Null on rest days.
  * Both `useDailyTargets` and `useEffectiveTargets` produce this shape.
  *
- * Sentence case for the decorative eyebrow: "Lift day · +150 Recovery" reads
+ * Sentence case for the decorative eyebrow: "Lift day · +150 cal" reads
  * as information rather than a heading, which matches how the caption is
  * actually used (an info line above a bigger number). Reserves all-caps for
  * structural dividers (BREAKFAST, PROTEIN, etc.) so uppercase stays a real
  * signal instead of ambient noise.
+ *
+ * Pre-F4 the suffix was a vague noun — "+150 Recovery" / "+200 Fuel" —
+ * which omitted the unit. Users read "Fuel" as the metric being shown
+ * rather than the unit being implied. Switched to a literal "cal"
+ * suffix so the value is unambiguous: "+150 cal" / "+200 cal".
  */
 export interface DailyTargetsCaption {
   /** Sentence case training type — "Lift day" / "Run day" / "Lift + Run" */
   trainingType: string;
-  /** Sentence case adjustment — "+150 Recovery" / "+200 Fuel" / "" */
+  /** Sentence case adjustment — "+150 cal" / "+200 cal" / "" */
   adjustment: string;
 }
-
-const DAY_NOUN: Record<DayType, string> = {
-  lift: "Recovery",
-  run: "Fuel",
-  both: "Fuel",
-  rest: "",
-};
 
 /**
  * Build a structured caption from a day type and calorie adjustment.
@@ -41,8 +39,6 @@ export function buildCaption(
       : dayType === "run"
         ? "Run day"
         : "Lift + Run";
-  const noun = DAY_NOUN[dayType];
-  const adjustment =
-    activityBonus > 0 && noun ? `+${activityBonus} ${noun}` : "";
+  const adjustment = activityBonus > 0 ? `+${activityBonus} cal` : "";
   return { trainingType, adjustment };
 }

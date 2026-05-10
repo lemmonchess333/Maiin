@@ -36,6 +36,7 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { orderQuickAddItems, type QuickAddItem } from "@/lib/quickAddOrder";
+import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -60,15 +61,17 @@ const DEFAULT_QUICK_MEALS = [
 ];
 
 // Rotating placeholder examples — shown in the NL input when empty +
-// unfocused. Each one is a real string the parser handles, so they
-// serve as both decoration and a working tutorial.
+// unfocused. The input does dual duty: short terms ("Eggs") surface
+// database/search suggestions, longer phrases ("200g chicken & rice")
+// parse as natural language. The first prompt makes both modes
+// explicit; subsequent rotations show real strings the parser
+// handles, which serve as both decoration and a working tutorial.
 const NL_EXAMPLE_PROMPTS = [
-  "What did you eat?",
+  "Search food or describe a meal",
+  "Eggs",
   "200g chicken & rice",
-  "2 eggs and toast",
-  "Protein shake with banana",
-  "Greek yoghurt & berries",
   "Large coffee, no sugar",
+  "Greek yoghurt & berries",
 ];
 
 // Meal slot ordering and display labels — true constants, defined at module
@@ -866,6 +869,16 @@ export default function Food() {
     const push = (entry: { name: string; cal: number; pro: number; carb: number; fat: number; portionSize: string }) => {
       const key = entry.name.toLowerCase().trim();
       if (!key || current.has(key)) return;
+      /* Legacy hygiene: filter generic / unidentifiable AI names
+         (e.g. "Unidentifiable", "Unknown food") at render time so
+         pre-F4 entries that may already exist in the user's
+         frequency map don't surface as Quick Add chips. Filter
+         lives here rather than in `orderQuickAddItems` so the
+         cached order in `quickAddOrderCache` stays untouched —
+         skipping at render preserves F2's stable-order contract.
+         New AI saves are blocked at the FoodAnalyzer source so
+         this filter is purely backstop for legacy data. */
+      if (isGenericAiFoodName(entry.name)) return;
       current.set(key, { key, ...entry });
     };
 
