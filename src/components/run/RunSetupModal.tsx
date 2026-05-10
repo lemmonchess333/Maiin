@@ -193,11 +193,15 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           Back
         </button>
       </header>
-      <div className="flex-1 overflow-y-auto px-5 pt-2 pb-36 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
-        {/* Header */}
+      <div className="flex-1 overflow-y-auto px-5 pt-2 pb-40 space-y-5 min-h-0" style={{ overscrollBehavior: "none" }}>
+        {/* Page header. Subhead removed — the selected-run card
+            below disclosed the run type and a chevron Change
+            affordance, making "Pick a type or just go" redundant
+            and visually casual. Defensive bump from pb-36 → pb-40
+            so the sticky-CTA gradient overlay can't fade into
+            content on short viewports. */}
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight">Ready to run?</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Pick a type or just go</p>
         </div>
 
         {/* Selected-run card. Replaces the underlined "Change type"
@@ -219,10 +223,15 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold text-foreground">{selected.name}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-xs text-muted-foreground truncate">{selected.cardDescription}</span>
-                  <span className="text-xs text-muted-foreground/60">·</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{selected.cardChip}</span>
+                {/* Description and chip sit tight against each
+                    other (gap-2, no separator dot) — the chip pill
+                    visually separates the metadata on its own, so
+                    the explicit "·" was making it feel detached.
+                    Description truncates first, chip is shrink-0
+                    so it stays whole on narrow viewports. */}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground truncate min-w-0">{selected.cardDescription}</span>
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{selected.cardChip}</span>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
@@ -570,6 +579,16 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             have to expand to see the configuration. */}
         {(() => {
           const isManualDistance = requiresManualDistance(config.activityType);
+          /* Pace alerts are only relevant when the user has set a
+             pace goal — that's the signal the alert reads against.
+             Without a pace target the toggle was a visible no-op
+             that misleadingly read "Pace alerts on" when there
+             were no alerts to fire. Gate both the summary entry
+             and the toggle (below) on outdoor + audioCues + pace
+             goal. State (config.paceAlerts) is preserved when
+             hidden so toggling Goal back to Pace restores the
+             user's choice. */
+          const paceAlertsRelevant = !isManualDistance && config.audioCues && config.target.type === 'pace';
           const summaryParts: string[] = [];
           if (!isManualDistance) {
             /* Auto-pause is GPS-derived; surface it only when the
@@ -577,7 +596,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
             summaryParts.push(`Auto-pause ${config.autoPause ? 'on' : 'off'}`);
           }
           summaryParts.push(`Voice cues ${config.audioCues ? 'on' : 'off'}`);
-          if (!isManualDistance && config.audioCues) {
+          if (paceAlertsRelevant) {
             summaryParts.push(`Pace alerts ${config.paceAlerts ? 'on' : 'off'}`);
           }
           const summary = summaryParts.join(' · ');
@@ -589,7 +608,10 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               <div className="flex-1 min-w-0">
                 <span className="text-sm text-muted-foreground">Run controls</span>
                 {!showAdvanced && (
-                  <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">{summary}</p>
+                  /* Bumped from /70 to full muted-foreground —
+                     /70 read as disabled rather than informational
+                     against the page background. */
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{summary}</p>
                 )}
               </div>
               {showAdvanced ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />}
@@ -633,15 +655,19 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
               ))}
               {config.audioCues && (
                 <>
-                  {/* Pace alerts hidden for manual-distance modes
-                      (treadmill today; manual once that activityType
-                      ships). Pace alerts depend on GPS-derived current
-                      pace via `audioCues.checkPaceAlert` in Run.tsx —
-                      with no GPS the toggle was a visible no-op. Using
-                      requiresManualDistance() (not an inline equality
-                      check) so the gate auto-extends to 'manual' when
-                      that lands. */}
-                  {!requiresManualDistance(config.activityType) && (
+                  {/* Pace alerts hidden when irrelevant. Three
+                      conditions must hold: outdoor (the alert is
+                      GPS-derived via audioCues.checkPaceAlert in
+                      Run.tsx), audioCues on (no voice = no alert),
+                      and Goal type === 'pace' (the alert reads
+                      against the pace target — without one it has
+                      nothing to compare to and previously surfaced
+                      as a misleading "Pace alerts on" in the
+                      collapsed Run controls summary).
+                      State (config.paceAlerts) is preserved when
+                      hidden so toggling Goal back to Pace restores
+                      the user's choice. */}
+                  {!requiresManualDistance(config.activityType) && config.target.type === 'pace' && (
                     <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
                       <span className="text-sm">Pace alerts</span>
                       <button
@@ -712,12 +738,19 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
           <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none max-h-[85vh] flex flex-col">
-            <div className="px-5 pt-3 pb-2 shrink-0">
+            {/* Header is shrink-0 with a faint bottom border so the
+                visual transition between fixed header and scrolling
+                content is explicit. The pb-3 below the title plus
+                the scroll container's pt-3 keeps the first row's
+                section header ("Outdoor") clear of the title — the
+                pre-fix screenshot showed Free Run clipping under
+                the title on small viewports. */}
+            <div className="px-5 pt-3 pb-3 shrink-0 border-b border-border/40">
               <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3" aria-hidden="true" />
               <Drawer.Title className="text-lg font-bold text-foreground">Choose run type</Drawer.Title>
               <Drawer.Description className="sr-only">Pick how you want to record this run.</Drawer.Description>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-4">
+            <div className="flex-1 overflow-y-auto px-3 pt-3 pb-6 space-y-4">
               {(['outdoor', 'other'] as const).map((group) => {
                 const items = ACTIVITY_TYPES.filter(a => a.group === group);
                 return (

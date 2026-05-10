@@ -82,7 +82,13 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
         <button
           onClick={() => onSave(Number(distance) * 1000)}
           disabled={!distance || Number(distance) < 0.05}
-          className="w-full py-3.5 rounded-xl bg-purple-500 text-white font-medium disabled:opacity-40"
+          /* Disabled state previously dropped the whole button to
+             40% opacity, which made the white text unreadable
+             against the faded purple. Distinct disabled style
+             (grey background, dimmed text) keeps the affordance
+             clearly disabled while the label remains legible —
+             matches the iOS / app convention for disabled CTAs. */
+          className="w-full py-3.5 rounded-xl font-medium transition-colors bg-purple-500 text-white disabled:bg-white/15 disabled:text-white/50 disabled:cursor-not-allowed"
         >
           {saveLabel}
         </button>
