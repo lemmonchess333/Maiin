@@ -552,11 +552,36 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
             transition={{ duration: 0.2 }}
             className="space-y-4"
           >
+            {/* Low-confidence pre-save banner. Renders ABOVE the
+                review card and sticks to the top of the modal
+                content area while the per-item list scrolls,
+                so the user keeps seeing the warning while
+                editing. Replaces the older corner pill on the
+                hero image (too easy to miss next to the food
+                title). Save stays enabled — banner informs,
+                doesn't block. */}
+            {activeResult.confidence === "low" && (
+              <div
+                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border flex items-start gap-2"
+                style={{
+                  background: "rgba(229,154,11,0.10)",
+                  borderColor: "rgba(229,154,11,0.30)",
+                  color: "#a26a05",
+                }}
+                role="status"
+              >
+                <span aria-hidden="true">⚠</span>
+                <div className="text-xs leading-relaxed">
+                  <span className="font-semibold">AI estimate — review carefully.</span>
+                  <span className="ml-1 opacity-80">Some items may need correcting before you save.</span>
+                </div>
+              </div>
+            )}
             <div className="bg-card rounded-2xl overflow-hidden">
               {/* Hero photo — user's captured image for AI scan, OpenFoodFacts
-                  product shot for barcode. The confidence label is dropped
-                  from the header (it read as a portion size next to "Rice");
-                  only low-confidence results surface a warning badge. */}
+                  product shot for barcode. Low-confidence warning has
+                  moved to the sticky banner above, so the hero stays
+                  clean. */}
               {heroImageSrc && (
                 <div className="relative aspect-[5/3] bg-muted">
                   <img
@@ -564,13 +589,6 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                     alt={activeResult.foodName}
                     className="w-full h-full object-cover"
                   />
-                  {activeResult.confidence === "low" && (
-                    <div className="absolute top-3 right-3">
-                      <span className="text-[11px] px-2.5 py-1 rounded-full font-medium bg-black/60 text-white backdrop-blur-sm">
-                        Low confidence — double-check
-                      </span>
-                    </div>
-                  )}
                 </div>
               )}
 
