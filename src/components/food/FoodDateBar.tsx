@@ -43,7 +43,10 @@ function FoodDateBar({
       <button
         onClick={() => { haptic(); onPrev(); }}
         aria-label="Previous day"
-        className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
+        /* min 44×44 hit area per iOS HIG / WCAG. Pre-F1 was p-2
+           (~36px) — the icon stays 16px so the visual weight is
+           unchanged, only the tappable region grows. */
+        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
       >
         <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
       </button>
@@ -68,7 +71,7 @@ function FoodDateBar({
       <button
         onClick={() => { haptic(); onNext(); }}
         aria-label="Next day"
-        className="p-2 rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
+        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
       >
         <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
       </button>

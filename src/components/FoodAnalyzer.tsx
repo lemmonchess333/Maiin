@@ -13,6 +13,8 @@ import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { validateFoodEntry } from "@/lib/foodValidation";
 
 interface Props {
   date: string;
@@ -69,11 +71,14 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
     `?fields=product_name,brands,nutriments,serving_size,image_url`;
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error("OpenFoodFacts request failed.");
+  if (!res.ok) throw new Error("Couldn't look up barcode. Try again.");
   const data = await res.json();
 
   if (!data || data.status !== 1 || !data.product) {
-    throw new Error("Product not found for this barcode.");
+    /* Throw message becomes the toast body when caught at the
+       call site (line 433 toast.error(msg)). Direct the user to
+       the manual fallback rather than a dead-end. */
+    throw new Error("Barcode not found. Log it manually instead.");
   }
 
   const p = data.product;
@@ -144,6 +149,11 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
   const [servings, setServings] = useState(1);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  /* Suspicious-value confirm state. Only fires for AI photo
+     results (barcode skips validation). */
+  const [warnTitle, setWarnTitle] = useState<string | null>(null);
+  const [warnDescription, setWarnDescription] = useState<string>("");
+  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
 
   // Auto-open camera with 150ms delay to avoid jarring
   useEffect(() => {
@@ -287,7 +297,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     resetAI();
   };
 
-  const saveMeal = async (meal: MealResult) => {
+  const performSave = async (meal: MealResult) => {
     if (!user) return;
     setSaving(true);
 
@@ -364,6 +374,33 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     }, 1200);
   };
 
+  /* Suspicious-value gate. AI photo + multi-item AI are user-input
+     boundaries (the user is committing AI-estimated numbers as
+     theirs). Barcode reuses already-validated OFF data — skip.
+     Negative / NaN displayTotals are blocked outright; high
+     positive values open the Save anyway dialog. */
+  const saveMeal = async (meal: MealResult) => {
+    if (meal.confidence !== "barcode") {
+      const verdict = validateFoodEntry({
+        calories: Math.round(displayTotals.calories),
+        protein: Math.round(displayTotals.protein),
+        carbs: Math.round(displayTotals.carbs),
+        fat: Math.round(displayTotals.fat),
+      });
+      if (verdict.kind === "blocked") {
+        toast.error(verdict.reason, { id: "food-validation-error" });
+        return;
+      }
+      if (verdict.kind === "warn") {
+        setWarnTitle(verdict.title);
+        setWarnDescription(verdict.description);
+        setPendingSave(() => () => performSave(meal));
+        return;
+      }
+    }
+    await performSave(meal);
+  };
+
   const handleSave = async () => {
     if (!activeResult) return;
 
@@ -399,7 +436,11 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
       setCameraOpen(false);
     } catch (e) {
       logger.error(e);
-      toast.error("Food analysis failed.");
+      /* Pre-F1 the toast was a dead-end ("Food analysis failed.").
+         Direct the user to the manual fallback so they have a
+         next action. The Log manually CTA on Food.tsx is the
+         visible entry point. */
+      toast.error("Couldn't analyse the photo. Try again or log manually.", { id: "food-ai-error" });
     }
   };
 
@@ -783,6 +824,27 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Suspicious-value override prompt for AI photo saves. The
+          pending save is captured at validation time so the
+          dialog commits the same totals the user was warned about
+          even if state shifts between prompt and confirm. */}
+      <ConfirmDialog
+        open={warnTitle !== null}
+        title={warnTitle ?? ""}
+        description={warnDescription}
+        confirmLabel="Save anyway"
+        cancelLabel="Edit"
+        onConfirm={async () => {
+          const save = pendingSave;
+          setWarnTitle(null);
+          setPendingSave(null);
+          if (save) await save();
+        }}
+        onCancel={() => {
+          setWarnTitle(null);
+          setPendingSave(null);
+        }}
+      />
     </div>
   );
 }
