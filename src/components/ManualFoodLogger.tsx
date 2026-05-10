@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Drawer } from "vaul";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { validateFoodEntry } from "@/lib/foodValidation";
 
 interface FoodEntry {
   name: string;
@@ -19,11 +21,16 @@ interface FoodEntry {
 
 interface Props {
   date?: string;
+  /* Meal slot ("breakfast" / "lunch" / "snacks" / "dinner") if the
+     user picked one before opening the drawer. Persisted as the
+     `meal` field on the doc when set; omitted when null/undefined
+     to match the NL / quick-add convention (no default slot). */
+  meal?: "breakfast" | "lunch" | "snacks" | "dinner" | null;
   open: boolean;
   onClose: () => void;
 }
 
-export function ManualFoodLogger({ date, open, onClose }: Props) {
+export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const { user } = useAuth();
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
@@ -32,20 +39,16 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
   const [fat, setFat] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  /* ConfirmDialog state for suspicious-but-possible high values
+     (>5000 cal etc). Negative / NaN values are blocked outright
+     via inline toast — they never reach this prompt. */
+  const [warnTitle, setWarnTitle] = useState<string | null>(null);
+  const [warnDescription, setWarnDescription] = useState<string>("");
 
-  const handleSave = async () => {
-    if (!user || !name.trim()) return;
-
+  const performSave = async (entry: FoodEntry) => {
+    if (!user) return;
     setSaving(true);
     try {
-      const entry: FoodEntry = {
-        name: name.trim(),
-        calories: Number(calories) || 0,
-        protein: Number(protein) || 0,
-        carbs: Number(carbs) || 0,
-        fat: Number(fat) || 0,
-      };
-
       const logDate = date || format(new Date(), "yyyy-MM-dd");
       const id = `${logDate}_${Date.now()}`;
       await setDoc(doc(db, "users", user.uid, "meals", id), {
@@ -57,12 +60,15 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
         totalCarbs: entry.carbs,
         totalFat: entry.fat,
         confidence: "manual",
+        /* Optional `meal` slot mirrors the NL / quick-add
+           convention — persisted only when the user explicitly
+           picked one. No default. */
+        ...(meal ? { meal } : {}),
         createdAt: Timestamp.now(),
       });
 
       setSaved(true);
-      // No success toast — drawer closes and the meal appears in the
-      // list, which is the confirmation.
+      toast.success("Logged manually", { id: "food-manual-success" });
 
       setTimeout(() => {
         setSaved(false);
@@ -74,13 +80,57 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
         onClose();
       }, 1500);
     } catch {
-      toast.error("Failed to save meal");
+      toast.error("Couldn't save this meal. Try again.", { id: "food-save-error" });
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSave = async () => {
+    if (!user || !name.trim()) return;
+
+    /* Coerce empty string → 0 (water, black coffee, 0-cal entries
+       are legitimate). Number("") returns NaN; we want 0. */
+    const numOrZero = (s: string) => (s.trim() === "" ? 0 : Number(s));
+    const entry: FoodEntry = {
+      name: name.trim(),
+      calories: numOrZero(calories),
+      protein: numOrZero(protein),
+      carbs: numOrZero(carbs),
+      fat: numOrZero(fat),
+    };
+
+    const verdict = validateFoodEntry(entry);
+    if (verdict.kind === "blocked") {
+      toast.error(verdict.reason, { id: "food-validation-error" });
+      return;
+    }
+    if (verdict.kind === "warn") {
+      /* Open ConfirmDialog with field-specific title + body. The
+         confirm path performs the save; cancel returns the user
+         to the form with all values intact. */
+      setWarnTitle(verdict.title);
+      setWarnDescription(verdict.description);
+      return;
+    }
+    await performSave(entry);
+  };
+
+  const handleConfirmOverride = async () => {
+    setWarnTitle(null);
+    const numOrZero = (s: string) => (s.trim() === "" ? 0 : Number(s));
+    const entry: FoodEntry = {
+      name: name.trim(),
+      calories: numOrZero(calories),
+      protein: numOrZero(protein),
+      carbs: numOrZero(carbs),
+      fat: numOrZero(fat),
+    };
+    await performSave(entry);
+  };
+
   return (
+    <>
     <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
@@ -165,5 +215,19 @@ export function ManualFoodLogger({ date, open, onClose }: Props) {
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
+    {/* Suspicious-but-possible high-value override prompt. Cancel
+        leaves the form intact so the user can adjust; Save anyway
+        commits the entry as typed. Negative / NaN values are
+        blocked outright via toast and never reach this dialog. */}
+    <ConfirmDialog
+      open={warnTitle !== null}
+      title={warnTitle ?? ""}
+      description={warnDescription}
+      confirmLabel="Save anyway"
+      cancelLabel="Edit"
+      onConfirm={handleConfirmOverride}
+      onCancel={() => setWarnTitle(null)}
+    />
+    </>
   );
 }

@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { validateFoodEntry } from "@/lib/foodValidation";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -142,9 +144,22 @@ export default function Food() {
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
+  /* OFF API outcome for the most recent query — surfaces inline
+     fallback states in the suggestions dropdown so the user
+     understands "we searched and there's nothing" vs "you haven't
+     typed enough yet". offError fires the toast separately. */
+  const [offEmpty, setOffEmpty] = useState(false);
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
+  /* Suspicious-value confirm state for the NL parse path. The
+     pending save closure is captured at validation time and
+     replayed on confirm — closures over `items` / `confidence` /
+     `targetMeal` so the eventual save uses the same data the user
+     was warned about, even if state changes mid-prompt. */
+  const [nlWarnTitle, setNlWarnTitle] = useState<string | null>(null);
+  const [nlWarnDescription, setNlWarnDescription] = useState<string>("");
+  const [nlPendingSave, setNlPendingSave] = useState<(() => Promise<void>) | null>(null);
 
   const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
   // Training-aware: returns planned values when adjustCaloriesForTraining is
@@ -388,13 +403,19 @@ export default function Food() {
     const lastPart = (parts[parts.length - 1] || "").trim();
     return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 4) : [];
   }, [nlInput]);
-  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0);
 
   const offSearchQuery = useMemo(() => {
     const parts = nlInput.split(/,/);
     const lastPart = (parts[parts.length - 1] || "").trim();
     return lastPart.length >= 2 && suggestionsActive ? lastPart : null;
   }, [nlInput, suggestionsActive]);
+
+  /* Dropdown surfaces local NL suggestions, OFF results, OR an
+     inline "No matches" fallback row when the OFF API completed
+     with zero matches and we have no local suggestions to show.
+     Without that fallback the dropdown silently disappeared and
+     the user had no signal that the search returned nothing. */
+  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0 || (offEmpty && offSearchQuery !== null));
 
   const [prevOffQuery, setPrevOffQuery] = useState(offSearchQuery);
   if (offSearchQuery !== prevOffQuery) {
@@ -406,7 +427,13 @@ export default function Food() {
   }
 
   useEffect(() => {
-    if (!offSearchQuery) return;
+    if (!offSearchQuery) {
+      /* Reset the inline empty state when the query clears so a
+         stale "No matches" doesn't linger after the user has
+         deleted their input. */
+      setOffEmpty(false);
+      return;
+    }
     if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
     offDebounceRef.current = setTimeout(async () => {
       setOffLoading(true);
@@ -439,8 +466,19 @@ export default function Food() {
             })
           );
         setOffResults(products);
+        setOffEmpty(products.length === 0);
       } catch {
+        /* Pre-F1 this caught silently with no user feedback. The
+           catch fires for OFF API timeouts / network errors /
+           5xx — distinct from a successful query that returned
+           zero matches. Surface the failure with a manual
+           fallback action so the user has somewhere to go. */
         setOffResults([]);
+        setOffEmpty(false);
+        toast.error("Couldn't search foods. Try again.", {
+          id: "food-off-error",
+          action: { label: "Log manually", onClick: () => setManualOpen(true) },
+        });
       }
       setOffLoading(false);
     }, 400);
@@ -544,51 +582,94 @@ export default function Food() {
         );
       }
     }
-    const totalCalories = items.reduce((s, i) => s + i.calories, 0);
-    const totalProtein = items.reduce((s, i) => s + i.protein, 0);
-    const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
-    const totalFat = items.reduce((s, i) => s + i.fat, 0);
-    try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
-        date: selectedDate,
-        foodName: items.map((i) => i.name).join(", "),
-        items: items.map((i) => ({
-          name: i.name,
-          portionSize: "1 serving",
-          calories: i.calories,
-          protein: i.protein,
-          carbs: i.carbs,
-          fat: i.fat,
-        })),
-        totalCalories,
-        totalProtein,
-        totalCarbs,
-        totalFat,
-        confidence,
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
+    /* Per-item suspicious-value validation. Runs only on freshly
+       parsed user-entered text — database / barcode / quick-add
+       paths skip validation (per F1 scope). Negative / NaN values
+       are blocked outright; high-but-possible values open the
+       Save anyway dialog with the offending item's verdict. The
+       first warn surfaces; we don't chain dialogs for multi-item
+       parses. */
+    let warnVerdict: { title: string; description: string } | null = null;
+    for (const item of items) {
+      const v = validateFoodEntry({
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fat: item.fat,
       });
-      setNlInput("");
-      setTargetMeal(null);
-      // Compare input-segment count to stored item count so the toast
-      // doesn't silently drop the user's expectation when the parser
-      // merges duplicates (e.g. "eggs, boiled egg" → 1 row). Without
-      // this hint a user typing two things and seeing "1 item logged"
-      // could think the second one was missed.
-      const inputSegmentCount = nlInput
-        .split(/[,\n]+/)
-        .map((s) => s.trim())
-        .filter(Boolean).length;
-      const mergedCount = inputSegmentCount - items.length;
-      const itemNoun = items.length > 1 ? "items" : "item";
-      const mergedSuffix = mergedCount > 0
-        ? ` (${mergedCount} combined)`
-        : "";
-      toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, { id: "food-nl-success" });
-    } catch {
-      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+      if (v.kind === "blocked") {
+        toast.error(v.reason, { id: "food-validation-error" });
+        setNlParsing(false);
+        return;
+      }
+      if (v.kind === "warn" && !warnVerdict) {
+        warnVerdict = { title: v.title, description: v.description };
+      }
     }
-    setNlParsing(false);
+
+    const performNLSave = async () => {
+      const totalCalories = items.reduce((s, i) => s + i.calories, 0);
+      const totalProtein = items.reduce((s, i) => s + i.protein, 0);
+      const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
+      const totalFat = items.reduce((s, i) => s + i.fat, 0);
+      try {
+        await addDoc(collection(db, "users", user.uid, "meals"), {
+          date: selectedDate,
+          foodName: items.map((i) => i.name).join(", "),
+          items: items.map((i) => ({
+            name: i.name,
+            portionSize: "1 serving",
+            calories: i.calories,
+            protein: i.protein,
+            carbs: i.carbs,
+            fat: i.fat,
+          })),
+          totalCalories,
+          totalProtein,
+          totalCarbs,
+          totalFat,
+          confidence,
+          createdAt: Timestamp.now(),
+          ...(targetMeal ? { meal: targetMeal } : {}),
+        });
+        setNlInput("");
+        setTargetMeal(null);
+        const inputSegmentCount = nlInput
+          .split(/[,\n]+/)
+          .map((s) => s.trim())
+          .filter(Boolean).length;
+        const mergedCount = inputSegmentCount - items.length;
+        const itemNoun = items.length > 1 ? "items" : "item";
+        const mergedSuffix = mergedCount > 0
+          ? ` (${mergedCount} combined)`
+          : "";
+        /* Source-aware success copy. AI-parsed entries surface
+           "Logged from AI estimate" so the user understands the
+           numbers came from an AI guess and can review them.
+           Local NL parser keeps the existing item-count copy
+           (the user typed it themselves). */
+        if (confidence === "ai-parse") {
+          toast.success("Logged from AI estimate", { id: "food-nl-success" });
+        } else {
+          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, { id: "food-nl-success" });
+        }
+      } catch {
+        toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+      }
+      setNlParsing(false);
+    };
+
+    if (warnVerdict) {
+      /* Park the save behind the confirm dialog. setNlParsing stays
+         true so the input stays disabled while the user decides;
+         performNLSave will reset it on resolve. */
+      setNlPendingSave(() => performNLSave);
+      setNlWarnTitle(warnVerdict.title);
+      setNlWarnDescription(warnVerdict.description);
+      return;
+    }
+
+    await performNLSave();
   };
 
   // Edit-servings state. The sheet itself (EditServingsSheet) owns
@@ -1034,6 +1115,22 @@ export default function Food() {
                   </button>
                 ))}
               </motion.div>)}
+              {/* "No matches" fallback row — surfaces only when the
+                  OFF API completed with zero matches AND no local
+                  suggestions exist. Gives the user an explicit
+                  next action (manual entry) rather than an
+                  empty/disappearing dropdown. */}
+              {suggestions.length === 0 && offResults.length === 0 && offEmpty && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { haptic(); setManualOpen(true); }}
+                  className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
+                >
+                  <span className="text-sm text-muted-foreground">No matches found</span>
+                  <span className="text-xs font-medium" style={{ color: THEME.semantic.nutrition }}>Log manually</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1047,7 +1144,7 @@ export default function Food() {
                   type="button"
                   onClick={() => handleTargetMeal(mealKey)}
                   className={cn(
-                    "h-7 px-3 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95",
+                    "min-h-[44px] px-4 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95",
                     selected
                       ? "border-transparent text-white"
                       : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
@@ -1067,6 +1164,19 @@ export default function Food() {
             styleOverride={scanOverrides.style}
             statusIcon={scanOverrides.icon}
           />
+          {/* Manual logging fallback. Visible secondary action — the
+              drawer is the only escape hatch when AI / barcode / OFF
+              search fail to find a match, so it needs a discoverable
+              entry point. Centered text-only treatment so it doesn't
+              compete with Scan or the NL composer. */}
+          <button
+            type="button"
+            onClick={() => { haptic(); setManualOpen(true); }}
+            className="w-full mt-2 py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
+            aria-label="Log a meal manually"
+          >
+            Log manually
+          </button>
         </div>
       </motion.div>
       {/* Scan quota indicator — free users only, 3-stage escalation */}
@@ -1135,7 +1245,7 @@ export default function Food() {
                 onClick={() => { haptic(); handleQuickMealAdd(meal); }}
                 disabled={quickAdding !== null}
                 className={cn(
-                  "shrink-0 snap-start h-9 px-3.5 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px]",
+                  "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
                   quickAdding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -1319,7 +1429,7 @@ export default function Food() {
                   onClick={handleCopyAllMissingFromYesterday}
                   disabled={inFlight}
                   aria-label={label}
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+                  className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   {label}
@@ -1354,6 +1464,12 @@ export default function Food() {
       <Suspense fallback={null}>
         <ManualFoodLogger
           date={selectedDate}
+          /* Pass the user's pre-selected meal slot through so a
+             manual entry honours the same "Add to Breakfast" pill
+             selection as NL / quick-add. Null when no slot is
+             selected — ManualFoodLogger omits the meal field in
+             that case (no default slot, matches NL convention). */
+          meal={targetMeal}
           open={manualOpen}
           onClose={() => setManualOpen(false)}
         />
@@ -1381,6 +1497,30 @@ export default function Food() {
           onSave={applyServingsChange}
         />
       )}
+      {/* Suspicious-value override prompt for the NL parse path.
+          AI-parsed and locally-parsed entries with a single item
+          above the warn threshold (5000 cal / 300g protein etc)
+          land here. Save anyway commits the entry as-is; Edit
+          dismisses the dialog and resets parsing state so the
+          user can adjust their input. */}
+      <ConfirmDialog
+        open={nlWarnTitle !== null}
+        title={nlWarnTitle ?? ""}
+        description={nlWarnDescription}
+        confirmLabel="Save anyway"
+        cancelLabel="Edit"
+        onConfirm={async () => {
+          const save = nlPendingSave;
+          setNlWarnTitle(null);
+          setNlPendingSave(null);
+          if (save) await save();
+        }}
+        onCancel={() => {
+          setNlWarnTitle(null);
+          setNlPendingSave(null);
+          setNlParsing(false);
+        }}
+      />
     </motion.div>
   );
 }
