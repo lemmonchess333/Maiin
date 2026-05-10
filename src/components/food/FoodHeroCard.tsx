@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Info, X } from "lucide-react";
+import { Beef, Wheat, Info, Settings as SettingsIcon, X } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
+import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 
@@ -53,6 +56,19 @@ export default function FoodHeroCard({
   dailyTargets,
   dailyTotals,
 }: FoodHeroCardProps) {
+  /* Targets-set detection. When a user hasn't customised
+     `profile.targetCalories`, useDailyTargets falls back to a
+     2200 cal default (and 160/250/60 macro defaults), which the
+     glance-line helper can't tell apart from a real personal
+     target. Reading `profile?.targetCalories` directly here is
+     the smallest-surface-area way to surface the distinction
+     without changing the useEffectiveTargets contract — a single
+     call site needs the signal today, so the leak is contained
+     to one line. If a second consumer ever needs it, promote to
+     the hook. */
+  const { profile } = useAuth();
+  const targetsAreDefault = !profile?.targetCalories;
+
   // Synchronous init prevents first-paint flash of wrong mode
   const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
 
@@ -267,63 +283,96 @@ export default function FoodHeroCard({
     !!caption.adjustment &&
     !showCelebrationCaption;
 
-  // Auto-dismiss the explainer after 10 seconds so it doesn't linger if the
-  // user ignores it. Marks it seen permanently, same as tapping the X.
-  useEffect(() => {
-    if (!shouldShowFuelExplainer) return;
-    const t = setTimeout(() => dismissFuelExplainer(), 10000);
-    return () => clearTimeout(t);
-  }, [shouldShowFuelExplainer, dismissFuelExplainer]);
+  /* Day-type explainer is sticky-until-dismissed (F3). Pre-F3 the
+     explainer auto-dismissed after 10s, which felt aggressive —
+     users could miss it without realising it had been there. The
+     existing `useCoachMarks("food-fuel-caption")` localStorage
+     flag (key `tropos-coach-marks-dismissed:food-fuel-caption`)
+     already tracks per-user dismissal; reusing it preserves
+     dismissal state for users who already tapped the X. The
+     spec suggested a new key (`tropos.foodCaptionDismissed`) but
+     using a fresh key would resurrect the explainer for every
+     existing dismissed user — explicitly approved deviation. */
   const celebrationCaptionText = `GOAL HIT ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
   // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
   const trajectoryLabel = null;
 
+  /* Today-at-a-glance line. Pure copy derived from totals +
+     targets; helper handles priority rules, on-track guard,
+     tiny-deficit suppression, and the missing-target prompt.
+     Renders inside the calorie card below the ring so it
+     summarises what the ring + macro tiles already show
+     without claiming a separate card surface. Skipped on
+     non-today views — past/future dates are diary-mode and
+     a "Still need 40g protein" line for yesterday's record
+     reads wrong. */
+  const glanceLine = isToday
+    ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
+    : null;
+
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
   // markup renders correctly in both themes.
   return (
     <>
-      {/* ── CALORIE CARD — caption, ring, no macros ────────────────────── */}
+      {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
       <div
         className="p-4 rounded-2xl bg-card"
         style={{ boxShadow: "var(--ds-shadow-card)" }}
       >
-        {/* Top row: caption */}
-        <div className="mb-4 min-h-[20px]">
-          <AnimatePresence mode="wait">
-            {showCelebrationCaption ? (
-              <motion.p
-                key="celebration"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="text-micro uppercase tracking-wider font-semibold"
-                style={{ color: "#4CAF50" }}
-              >
-                {celebrationCaptionText}
-              </motion.p>
-            ) : caption ? (
-              <motion.p
-                key="caption"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="text-xs font-medium text-muted-foreground/80"
-              >
-                {caption.trainingType}
-                {caption.adjustment && (
-                  <>
-                    {' · '}
-                    <span className="font-semibold" style={{ color: THEME.lifting }}>{caption.adjustment}</span>
-                  </>
-                )}
-              </motion.p>
-            ) : null}
-          </AnimatePresence>
+        {/* Top row: caption (left) + adjust-targets gear (right).
+            The gear is a small Settings shortcut so users can fix
+            a wrong target without hunting through nav → Settings →
+            scroll. Subtle muted-foreground colour so it doesn't
+            compete with the ring or glance line for attention.
+            Routes to the Settings page (top); deep-linking to the
+            NutritionSection isn't supported by the route today —
+            documented limitation. */}
+        <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {showCelebrationCaption ? (
+                <motion.p
+                  key="celebration"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-micro uppercase tracking-wider font-semibold"
+                  style={{ color: "#4CAF50" }}
+                >
+                  {celebrationCaptionText}
+                </motion.p>
+              ) : caption ? (
+                <motion.p
+                  key="caption"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-xs font-medium text-muted-foreground/80"
+                >
+                  {caption.trainingType}
+                  {caption.adjustment && (
+                    <>
+                      {' · '}
+                      <span className="font-semibold" style={{ color: THEME.lifting }}>{caption.adjustment}</span>
+                    </>
+                  )}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </div>
+          <Link
+            to="/settings"
+            aria-label="Adjust nutrition targets"
+            onClick={() => haptic("light")}
+            className="shrink-0 -mt-1 -mr-1 p-1.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+          >
+            <SettingsIcon className="w-4 h-4" aria-hidden="true" />
+          </Link>
         </div>
 
         {/* First-time explainer for the caption's calorie adjustment. */}
@@ -373,6 +422,21 @@ export default function FoodHeroCard({
           ringDurationMs={LOG_MOMENT_MS}
           trainingBurnToast={trainingBurnToast}
         />
+
+        {/* Today-at-a-glance line. One sentence, protein-priority,
+            neutral over-target language. Sits inside the calorie
+            card below the ring so it summarises what the ring +
+            macro tiles already show without claiming a separate
+            card surface. Helper handles the priority rules,
+            on-track guard, tiny-deficit suppression, and the
+            missing-target prompt copy; component just routes
+            inputs and renders the result. Skips on past/future
+            dates (diary-mode views). */}
+        {glanceLine && (
+          <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
+            {glanceLine}
+          </p>
+        )}
       </div>
 
       {/* Macro tile row — three independent floating tiles. mt-4 = 16px
