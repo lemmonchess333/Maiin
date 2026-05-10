@@ -1274,6 +1274,22 @@ export default function Food() {
             styleOverride={scanOverrides.style}
             statusIcon={scanOverrides.icon}
           />
+          {/* Scan quota footnote — directly under the Scan CTA so
+              it reads as informational helper text rather than a
+              competing feature. Free users only; paid/unlimited
+              skip rendering entirely. Pre-F5 this sat below
+              "Log manually" as a prominent amber pill that
+              competed with Scan even when the user had plenty of
+              scans left. */}
+          {!scanUsage.isUnlimited && !scanUsage.loading && (
+            <div className="mt-2">
+              <ScanQuotaIndicator
+                remaining={scanUsage.remaining}
+                resetDate={scanUsage.resetDate}
+                onUpgrade={handleUpgrade}
+              />
+            </div>
+          )}
           {/* Manual logging fallback. Visible secondary action — the
               drawer is the only escape hatch when AI / barcode / OFF
               search fail to find a match, so it needs a discoverable
@@ -1289,16 +1305,6 @@ export default function Food() {
           </button>
         </div>
       </motion.div>
-      {/* Scan quota indicator — free users only, 3-stage escalation */}
-      {!scanUsage.isUnlimited && !scanUsage.loading && (
-        <div className="mt-2">
-          <ScanQuotaIndicator
-            remaining={scanUsage.remaining}
-            resetDate={scanUsage.resetDate}
-            onUpgrade={handleUpgrade}
-          />
-        </div>
-      )}
 
       {scanOpen && (
         <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
