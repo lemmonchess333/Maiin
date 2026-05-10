@@ -164,6 +164,35 @@ export default function Food() {
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
+  /* Hour-of-day pinned at the moment the user opens (or switches
+     to) a date. F4 audit found that calling
+     `getTimeRelevant(new Date().getHours(), 10)` directly inside
+     the quickMeals useMemo was the F2 stable-ordering escape
+     hatch: the hour wasn't a memo dep, so as wall-clock time
+     advanced and the useMemo recomputed for unrelated reasons
+     (a meal logged or deleted), a different time-of-day window
+     could roll in via `getTimeRelevant`. The new favourite set
+     would drop a previously-cached key, the cache filter would
+     skip it at render, and a different chip would silently fill
+     the slot. The user saw "chips change seconds apart" without
+     touching anything that should have caused it. Pinning at
+     selectedDate change makes the favourite set stable across
+     the session for that date — the F2 stable-order contract
+     is now intact at both the cache layer AND its upstream
+     favourite-set computation. */
+  const timeRelevantHour = useMemo(() => {
+    /* selectedDate referenced here only to wire the recompute
+       trigger — the hour value doesn't derive from selectedDate,
+       it's "what's the wall-clock hour right now, at the moment
+       this date was opened". The eslint-exhaustive-deps rule
+       flags selectedDate as unnecessary because the body
+       doesn't read it; the void reference satisfies the linter
+       while keeping the freeze-on-date-change semantics
+       readable to future maintainers. */
+    void selectedDate;
+    return new Date().getHours();
+  }, [selectedDate]);
+
   /* Suspicious-value confirm state for the NL parse path. The
      pending save closure is captured at validation time and
      replayed on confirm — closures over `items` / `confidence` /
@@ -882,8 +911,12 @@ export default function Food() {
       current.set(key, { key, ...entry });
     };
 
-    // 1. Time-relevant favourites (richest data — known portion size)
-    for (const f of getTimeRelevant(new Date().getHours(), 10)) {
+    // 1. Time-relevant favourites (richest data — known portion size).
+    //    Hour pinned at `timeRelevantHour` (declared above, keyed on
+    //    selectedDate) — see that block's comment for why a fresh
+    //    `new Date().getHours()` here would re-introduce the F2 escape
+    //    hatch the F4 audit identified.
+    for (const f of getTimeRelevant(timeRelevantHour, 10)) {
       push({
         name: f.name,
         cal: f.calories,
@@ -977,7 +1010,11 @@ export default function Food() {
       current,
       5,
     );
-  }, [meals, getTimeRelevant, selectedDate]);
+    /* timeRelevantHour added explicitly so eslint-react-hooks
+       can verify the dep wiring — even though it derives from
+       selectedDate, an explicit dep makes the freeze contract
+       readable to future maintainers (and to the linter). */
+  }, [meals, getTimeRelevant, selectedDate, timeRelevantHour]);
 
   /* Reset Quick Add scroll position whenever the rendered chips
      change. Without this, the carousel keeps its previous scrollLeft
