@@ -14,7 +14,7 @@ import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { validateFoodEntry } from "@/lib/foodValidation";
+import { validateFoodEntry, checkAggregateAgainstTarget } from "@/lib/foodValidation";
 
 interface Props {
   date: string;
@@ -34,6 +34,14 @@ interface Props {
      scanner + opens the manual logger drawer. Optional — when not
      provided the toast renders without an action button. */
   onRequestManualLog?: () => void;
+  /* Effective daily calorie target — already includes day-type
+     fuel adjustments (effectiveBonus = max(strategicBonus,
+     actualBurn)). Drives the aggregate-vs-target sanity check
+     in saveMeal so a 5,700 cal AI scan on a 2,200 cal target
+     opens a "review items" prompt before persisting. Optional —
+     when omitted the aggregate check is skipped (parent still
+     loading targets, or caller doesn't want the gate). */
+  effectiveDailyTarget?: number;
 }
 
 type MealResult = {
@@ -135,7 +143,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
-export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput, onRequestManualLog }: Props) {
+export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput, onRequestManualLog, effectiveDailyTarget }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
 
@@ -161,6 +169,12 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
      results (barcode skips validation). */
   const [warnTitle, setWarnTitle] = useState<string | null>(null);
   const [warnDescription, setWarnDescription] = useState<string>("");
+  /* Per-trigger Cancel label so the per-entry warn (where the
+     user adjusts an obviously-wrong macro field) reads "Edit"
+     while the aggregate-vs-target warn (where the user reviews
+     AI-detected items in the editor) reads "Review items".
+     Defaults to "Edit" — matches the F1 wording. */
+  const [warnCancelLabel, setWarnCancelLabel] = useState<string>("Edit");
   const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
 
   // Auto-open camera with 150ms delay to avoid jarring
@@ -385,10 +399,37 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
   /* Suspicious-value gate. AI photo + multi-item AI are user-input
      boundaries (the user is committing AI-estimated numbers as
      theirs). Barcode reuses already-validated OFF data — skip.
-     Negative / NaN displayTotals are blocked outright; high
-     positive values open the Save anyway dialog. */
+     Two layered checks for non-barcode results:
+
+       1. Aggregate-vs-target sanity (target-relative). Catches
+          AI scans summing to >150% of the user's effective daily
+          calorie target — almost always a hallucination or a
+          misidentified recipe batch. Surfaces first because the
+          contextual copy ("over a full day's target") is more
+          useful than the absolute-threshold copy.
+
+       2. Per-entry suspicious-value validation (absolute floor).
+          Catches typos / outright invalid values regardless of
+          target — negative/NaN are blocked outright; >5000 cal /
+          >300g protein / etc surface a Save anyway prompt.
+
+     Save anyway on the aggregate prompt skips re-prompting on the
+     per-entry threshold — the user has already acknowledged the
+     high total once. */
   const saveMeal = async (meal: MealResult) => {
     if (meal.confidence !== "barcode") {
+      const aggregateVerdict = checkAggregateAgainstTarget(
+        displayTotals.calories,
+        effectiveDailyTarget,
+      );
+      if (aggregateVerdict) {
+        setWarnTitle(aggregateVerdict.title);
+        setWarnDescription(aggregateVerdict.description);
+        setWarnCancelLabel("Review items");
+        setPendingSave(() => () => performSave(meal));
+        return;
+      }
+
       const verdict = validateFoodEntry({
         calories: Math.round(displayTotals.calories),
         protein: Math.round(displayTotals.protein),
@@ -402,6 +443,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
       if (verdict.kind === "warn") {
         setWarnTitle(verdict.title);
         setWarnDescription(verdict.description);
+        setWarnCancelLabel("Edit");
         setPendingSave(() => () => performSave(meal));
         return;
       }
@@ -874,16 +916,18 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
         title={warnTitle ?? ""}
         description={warnDescription}
         confirmLabel="Save anyway"
-        cancelLabel="Edit"
+        cancelLabel={warnCancelLabel}
         onConfirm={async () => {
           const save = pendingSave;
           setWarnTitle(null);
           setPendingSave(null);
+          setWarnCancelLabel("Edit");
           if (save) await save();
         }}
         onCancel={() => {
           setWarnTitle(null);
           setPendingSave(null);
+          setWarnCancelLabel("Edit");
         }}
       />
     </div>

@@ -115,3 +115,54 @@ export function validateFoodEntry(values: FoodValuesToValidate): FoodValidationR
 
   return { kind: 'ok' };
 }
+
+/**
+ * Aggregate-vs-target sanity check for fresh AI/photo scans.
+ *
+ * The per-entry `validateFoodEntry` floor (5000 cal absolute)
+ * catches obvious typos but lets a 3500 cal AI-hallucinated meal
+ * through. A target-relative threshold catches those — a single
+ * scan summing to >150% of the user's effective daily calorie
+ * target is almost always a hallucination or a misidentified
+ * recipe batch (one user's whole-day food in one photo).
+ *
+ * Returns `{ kind: 'warn', ... }` with copy that nudges the
+ * user back to the per-item editor before they save. Returns
+ * null when the check doesn't apply (no target / disabled /
+ * within band) — the caller falls through to its normal save
+ * path.
+ *
+ * Scope: AI photo only. Barcode and database results re-use
+ * already-validated source data and are excluded by the call
+ * site (FoodAnalyzer.saveMeal gates on
+ * `meal.confidence !== "barcode"`). Quick-add / copy / duplicate
+ * paths live in Food.tsx and never reach this helper.
+ */
+export const AGGREGATE_VS_TARGET_RATIO = 1.5;
+
+export interface AggregateAgainstTargetResult {
+  title: string;
+  description: string;
+}
+
+export function checkAggregateAgainstTarget(
+  totalCalories: number,
+  effectiveDailyTarget: number | undefined,
+): AggregateAgainstTargetResult | null {
+  /* Defensive: skip if the target isn't ready yet (parent component
+     loading) or if the total is non-finite. The check is a polish
+     guard, not a save-blocker — never break the save flow on a
+     missing target. */
+  if (!Number.isFinite(totalCalories) || totalCalories <= 0) return null;
+  if (!effectiveDailyTarget || !Number.isFinite(effectiveDailyTarget) || effectiveDailyTarget <= 0) {
+    return null;
+  }
+
+  const limit = effectiveDailyTarget * AGGREGATE_VS_TARGET_RATIO;
+  if (totalCalories <= limit) return null;
+
+  return {
+    title: 'This meal looks unusually high',
+    description: `This scan totals about ${Math.round(totalCalories)} kcal, which is over a full day's target. Check the items before saving.`,
+  };
+}

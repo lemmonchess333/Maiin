@@ -1255,6 +1255,13 @@ export default function Food() {
           <FoodAnalyzer
             date={selectedDate}
             meal={targetMeal}
+            /* Pass the day's effective calorie target so AI scans
+               whose aggregate exceeds 150% of it open the
+               "review items" prompt before persisting. Already
+               includes day-type fuel adjustments (lift/run
+               bonus calories) via useEffectiveTargets, so the
+               threshold scales with the user's planned day. */
+            effectiveDailyTarget={dailyTargets.finalTarget}
             onSaved={() => { setScanOpen(false); setTargetMeal(null); }}
             onRequestManualLog={() => {
               // AI photo failure fallback. The camera modal stays
