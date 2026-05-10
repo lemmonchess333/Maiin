@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
 import { logger } from "@/lib/logger";
+import { qaLog } from "@/lib/quickAddDebugLog";
 
 export interface MealItem {
   name: string;
@@ -102,6 +103,18 @@ export function useMeals() {
       q,
       (snapshot) => {
         const data = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
+        /* F5.2 diagnostic: every meals snapshot emission logs
+           length + first 3 (foodName, date). The primary
+           candidate for post-F4.1 chip drift is this subscription
+           re-emitting on tab focus / background sync — those
+           re-emissions produce a new array reference even when
+           content is identical, triggering quickMeals's useMemo
+           to recompute and exposing a different `current` map
+           composition than the cached order. */
+        qaLog('useMeals snapshot', {
+          length: data.length,
+          first3: data.slice(0, 3).map((m) => ({ foodName: m.foodName, date: m.date })),
+        });
         setMeals(data);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length >= PAGE_SIZE);

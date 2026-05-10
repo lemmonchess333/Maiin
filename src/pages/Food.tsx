@@ -37,6 +37,13 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { orderQuickAddItems, type QuickAddItem } from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
+import {
+  qaLog,
+  qaLogGroup,
+  qaPersistVisibility,
+  qaReplayVisibilityTrail,
+  qaDepsDiff,
+} from "@/lib/quickAddDebugLog";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -122,6 +129,23 @@ export default function Food() {
     }, 2800);
     return () => window.clearInterval(id);
   }, [nlInput, inputFocused, targetMeal]);
+
+  /* F5.2 diagnostic: visibility-change listener captures tab
+     background/foreground transitions so we can correlate Quick
+     Add chip changes with phone-lock / app-switch events. Persists
+     to sessionStorage so transitions before DevTools was opened
+     are recoverable on the next reload. Entirely a no-op unless
+     `localStorage['tropos.debug.quickAdd'] === '1'`. */
+  useEffect(() => {
+    qaReplayVisibilityTrail();
+    const handler = () => {
+      const state = document.visibilityState === 'visible' ? 'visible' : 'hidden';
+      qaLog('visibility change', { state });
+      qaPersistVisibility(state);
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, []);
   // Swipe-to-delete: at most ONE row across the whole page can be open. State
   // lives here (at the page level), not per-row or per-section. Food rows
   // receive `isOpen` and `onOpenChange` as props — no context, no refs.
@@ -887,6 +911,16 @@ export default function Food() {
   //
   // Dedupe is by normalized food name across all three sources.
   // Capped at 5 to keep the row scannable.
+
+  /* F5.2 diagnostic: ref holding the previous useMemo deps array
+     so we can emit a `depsChanged` field telling us which dep
+     moved between recomputes. Without this we see the inputs at
+     A and B but don't know which one triggered the recompute —
+     and that's exactly the information needed to discriminate
+     between candidates (meals re-emit vs favourites re-emit vs
+     hour drift vs date change). */
+  const qaPrevDepsRef = useRef<readonly unknown[] | null>(null);
+
   const quickMeals = useMemo(() => {
     /* Build the live key→item map first. Cap is enforced AFTER
        cache application via orderQuickAddItems (was previously
@@ -1005,11 +1039,41 @@ export default function Food() {
       const seedOrder = Array.from(current.keys());
       quickAddOrderCache.current.set(selectedDate, seedOrder);
     }
-    return orderQuickAddItems(
+    const rendered = orderQuickAddItems(
       quickAddOrderCache.current.get(selectedDate) ?? [],
       current,
       5,
     );
+
+    /* F5.2 diagnostic: structured group log capturing every input
+       at the moment of this recompute plus a depsChanged diff
+       against the previous recompute. The depsChanged field is
+       the smoking gun — if a recompute fires with depsChanged:
+       ['meals'] during an idle 3-minute window, the meals
+       Firestore subscription re-emitted (tab focus / background
+       sync candidate). If depsChanged: ['getTimeRelevant'], the
+       favourites callback ref churned (useFoodFavourites
+       instability candidate). */
+    const currentDeps = [meals, getTimeRelevant, selectedDate, timeRelevantHour] as const;
+    const depsChanged = qaDepsDiff(
+      qaPrevDepsRef.current,
+      currentDeps,
+      ['meals', 'getTimeRelevant', 'selectedDate', 'timeRelevantHour'],
+    );
+    qaPrevDepsRef.current = currentDeps;
+    qaLogGroup('quickMeals recompute', {
+      selectedDate,
+      timeRelevantHour,
+      mealsLength: meals.length,
+      depsChanged,
+      timeRelevantReturn: getTimeRelevant(timeRelevantHour, 10).map((f) => f.name),
+      currentKeys: Array.from(current.keys()),
+      cachedOrder: quickAddOrderCache.current.get(selectedDate) ?? [],
+      renderedKeys: rendered.map((r) => r.key).slice(0, 5),
+      visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+    });
+
+    return rendered;
     /* timeRelevantHour added explicitly so eslint-react-hooks
        can verify the dep wiring — even though it derives from
        selectedDate, an explicit dep makes the freeze contract

@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { qaLog } from "@/lib/quickAddDebugLog";
 
 export interface FoodFavourite {
   id: string;
@@ -54,9 +55,18 @@ export function useFoodFavourites() {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        setFavourites(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodFavourite))
-        );
+        const next = snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodFavourite));
+        /* F5.2 diagnostic: log every favourites snapshot emission
+           with timestamp + length + top 5 names + useCount. If a
+           tab-focus or background-sync re-emits this with the
+           same content but a new array reference, we'll see two
+           emissions close together in the log around the chip
+           change window. */
+        qaLog('useFoodFavourites snapshot', {
+          length: next.length,
+          top5: next.slice(0, 5).map((f) => ({ name: f.name, useCount: f.useCount })),
+        });
+        setFavourites(next);
         setLoading(false);
       },
       // Favourites are a "nice to have" quick-log surface — if the
