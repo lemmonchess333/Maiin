@@ -9,49 +9,53 @@ function formatResetDate(date: Date): string {
 }
 
 /**
- * Three-stage scan quota indicator for free users.
- * Stage 1 (4–10 remaining): renders nothing.
- * Stage 2 (1–3 remaining): amber warning pill with reset date.
- * Stage 3 (0 remaining): muted "out of scans" text with upgrade link.
+ * Scan quota indicator for free users — informational helper text
+ * directly below the Scan CTA.
+ *
+ * Pre-F5 the >0 states rendered as a prominent amber pill that
+ * competed with the primary "Scan your meal" button visually,
+ * even though the user still had scans available. Quota is
+ * informational, not warning-level — only the 0-state warrants a
+ * call to action.
+ *
+ * Post-F5 states:
+ *   remaining > 0  → muted footnote ("[N] scans left this month").
+ *                    No reset date, no pill, no orange, no upgrade
+ *                    button. Reads as a footnote, not a feature.
+ *   remaining = 0  → muted upgrade prompt ("Out of scans — upgrade
+ *                    for unlimited"). Tappable button. Behaviour
+ *                    preserved from earlier sprints.
+ *
+ * Paid / unlimited users: parent gates rendering so this component
+ * never sees them — no nullish render needed here.
  */
 export default function ScanQuotaIndicator({ remaining, resetDate, onUpgrade }: ScanQuotaIndicatorProps) {
-  // Stage 1 — silent
-  if (remaining > 3) return null;
-
-  const resetStr = formatResetDate(resetDate);
-
-  // Stage 3 — out of scans
+  // 0 remaining — preserved from earlier behaviour. Muted upgrade
+  // CTA + reset date so the user knows when scans return.
   if (remaining === 0) {
+    const resetStr = formatResetDate(resetDate);
     return (
       <div className="flex justify-center">
         <button
           onClick={onUpgrade}
           className="text-xs text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
-          Out of scans — upgrade for unlimited
+          Out of scans — upgrade for unlimited (resets {resetStr})
         </button>
       </div>
     );
   }
 
-  // Stage 2 — gentle warning (1–3 remaining)
+  // > 0 remaining — quiet footnote. No upgrade tap; users with
+  // scans left can upgrade via Settings if they want preemptive
+  // unlimited. The footnote is purely informational.
   const label = remaining === 1
-    ? `1 scan left — resets ${resetStr}`
-    : `${remaining} scans left — resets ${resetStr}`;
+    ? "1 scan left this month"
+    : `${remaining} scans left this month`;
 
   return (
-    <div className="flex justify-center">
-      <button
-        onClick={onUpgrade}
-        className="text-xs font-medium px-3 py-1.5 rounded-full active:opacity-70 transition-opacity"
-        style={{
-          backgroundColor: "rgb(245 158 11 / 0.1)",
-          border: "1px solid rgb(245 158 11 / 0.25)",
-          color: "#B45309",
-        }}
-      >
-        {label}
-      </button>
-    </div>
+    <p className="text-center text-xs text-muted-foreground">
+      {label}
+    </p>
   );
 }
