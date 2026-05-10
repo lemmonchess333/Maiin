@@ -1144,7 +1144,13 @@ export default function Food() {
                   type="button"
                   onClick={() => handleTargetMeal(mealKey)}
                   className={cn(
-                    "min-h-[44px] px-4 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95",
+                    /* Visual stays diary-compact (h-8 = 32px) but
+                     the tap target hits 44px via a transparent
+                     before:pseudo-element extending the click
+                     region vertically. Inset-x stays 0 to avoid
+                     overlapping adjacent meal pills' tap areas
+                     in the horizontal row. */
+                  "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
                     selected
                       ? "border-transparent text-white"
                       : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
@@ -1196,6 +1202,16 @@ export default function Food() {
             date={selectedDate}
             meal={targetMeal}
             onSaved={() => { setScanOpen(false); setTargetMeal(null); }}
+            onRequestManualLog={() => {
+              // AI photo failure fallback. The camera modal stays
+              // open after AI errors (single-tap retry intent), so
+              // the toast's Log manually action needs to close the
+              // scanner AND open the manual drawer so the user has
+              // a clear next path without finding their way back to
+              // Food.tsx's CTA themselves.
+              setScanOpen(false);
+              setTimeout(() => setManualOpen(true), 50);
+            }}
             onRequestTypedInput={() => {
               // Camera denied fallback path — close the scanner and
               // focus the NL composer so the user can type the meal

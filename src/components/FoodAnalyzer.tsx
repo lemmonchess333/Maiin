@@ -26,6 +26,14 @@ interface Props {
    * and focuses the NL text composer.
    */
   onRequestTypedInput?: () => void;
+  /* Fired from the AI photo failure toast's action button. The
+     camera modal stays open on AI errors (so a retry is a single
+     shutter tap away — original product intent), which means the
+     user can't see Food.tsx's Log manually CTA from inside the
+     scanner. The action button bridges that gap: closes the
+     scanner + opens the manual logger drawer. Optional — when not
+     provided the toast renders without an action button. */
+  onRequestManualLog?: () => void;
 }
 
 type MealResult = {
@@ -127,7 +135,7 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
-export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput }: Props) {
+export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput, onRequestManualLog }: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
 
@@ -436,11 +444,26 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
       setCameraOpen(false);
     } catch (e) {
       logger.error(e);
-      /* Pre-F1 the toast was a dead-end ("Food analysis failed.").
-         Direct the user to the manual fallback so they have a
-         next action. The Log manually CTA on Food.tsx is the
-         visible entry point. */
-      toast.error("Couldn't analyse the photo. Try again or log manually.", { id: "food-ai-error" });
+      /* Camera modal stays open on AI failure (per the original
+         "retry is a single shutter tap away" intent), which means
+         the user can't see Food.tsx's Log manually CTA. The toast
+         action bridges that — closes the scanner and opens the
+         manual logger so the user has a clear next action that
+         doesn't require finding their way back to the page. */
+      toast.error("Couldn't analyse the photo. Try again or log manually.", {
+        id: "food-ai-error",
+        ...(onRequestManualLog
+          ? {
+              action: {
+                label: "Log manually",
+                onClick: () => {
+                  setCameraOpen(false);
+                  onRequestManualLog();
+                },
+              },
+            }
+          : {}),
+      });
     }
   };
 
