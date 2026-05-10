@@ -4,6 +4,7 @@ import { ArrowLeftRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
 
 export type CalorieRingMode = "left" | "eaten";
 
@@ -70,17 +71,24 @@ export default function CalorieRing({
 
   const hasTarget = target > 0;
   const remaining = hasTarget ? target - consumed : 0;
-  const isOver = hasTarget && remaining < 0;
 
   const isLeftMode = mode === "left";
   const progress = hasTarget ? Math.min(consumed / target, 1) : 0;
 
-  // Value shown in centre depends on mode
-  // LEFT: remaining (or magnitude if over)
-  // EATEN: consumed total
-  const displayValue = isLeftMode
-    ? (isOver ? Math.abs(remaining) : remaining)
-    : consumed;
+  /* Centre value + label derivation lives in a pure helper so the
+     label/value pairing is unit-testable without mounting the
+     component. Pre-F3.1 the inline label expression forced "over"
+     whenever isOver was true regardless of mode, which produced
+     "5700 KCAL OVER" in eaten mode + over target — the value
+     was the consumed amount, not the over amount. The helper now
+     anchors the contract: eaten mode always reads "eaten",
+     left mode reads "over" when the user has gone past target
+     (with the magnitude as the centre number) or "left" otherwise. */
+  const { displayValue, labelMode, isOver } = getCalorieRingDisplay({
+    consumed,
+    target,
+    isLeftMode,
+  });
 
   // Colour stays purple in both modes — the toggle changes the displayed
   // value, not the ring's visual identity. The centre label text is the
@@ -249,7 +257,7 @@ export default function CalorieRing({
                 className="text-[10px] font-semibold uppercase tracking-wider mt-1 flex items-center gap-1"
                 style={{ color: numberColor, opacity: 0.7 }}
               >
-                {CALORIE_UNIT} {isOver ? "over" : (isLeftMode ? "left" : "eaten")}
+                {CALORIE_UNIT} {labelMode}
                 <ArrowLeftRight className="w-2.5 h-2.5 opacity-60" aria-hidden="true" />
               </p>
               {trajectoryLabel && (
