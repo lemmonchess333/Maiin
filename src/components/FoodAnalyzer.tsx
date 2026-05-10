@@ -15,6 +15,7 @@ import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry, checkAggregateAgainstTarget } from "@/lib/foodValidation";
+import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 
 interface Props {
   date: string;
@@ -183,9 +184,34 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     return () => clearTimeout(timer);
   }, []);
 
+  /* Filter generic / unidentifiable AI items out of the result
+     before it reaches the editor or save flow. The AI photo path
+     can return a "Unidentifiable" item — sometimes with zero
+     macros, sometimes with a stray hallucinated 2-cal value —
+     and the editor would otherwise let the user save it as a
+     diary entry. The reliable signal is the NAME, not the
+     macros (real zero-cal foods like Water and Black coffee
+     must remain savable). When all items in the AI result are
+     generic, we set cleanedAiResult to null and surface the
+     empty-result state below. Barcode results are not filtered:
+     they go through OFF data with user-confirmed product names. */
+  const cleanedAiResult: MealResult | null = useMemo(() => {
+    if (!aiResult) return null;
+    const items = filterIdentifiableAiItems((aiResult as MealResult).items);
+    if (items.length === 0) return null;
+    return { ...(aiResult as MealResult), items };
+  }, [aiResult]);
+
+  /* True when the AI completed but every item it returned was
+     generic / unidentifiable. Drives the empty-result render
+     branch below. Distinct from `showError` (which fires on AI
+     network failure) — here the AI succeeded but produced
+     nothing usable. */
+  const aiResultIsEmpty = aiResult !== null && cleanedAiResult === null;
+
   const activeResult: MealResult | null = useMemo(() => {
-    return (aiResult as MealResult | null) || barcodeResult;
-  }, [aiResult, barcodeResult]);
+    return cleanedAiResult || barcodeResult;
+  }, [cleanedAiResult, barcodeResult]);
 
   const isBarcode = activeResult?.confidence === "barcode";
 
@@ -579,6 +605,50 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
               className="text-sm text-primary font-medium"
             >
               Switch to manual entry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Empty-result state. AI succeeded but returned only
+          generic / unidentifiable items ("Unidentifiable",
+          "Unknown food", or hallucinated stray macros on a
+          generic name). The editor + Save UI is intentionally
+          suppressed in favour of an explicit "Couldn't identify
+          food" copy with two recovery actions. The low-confidence
+          banner from F2 does NOT render above this state — the
+          empty state replaces it because there's nothing useful
+          to review. */}
+      {aiResultIsEmpty && !showError && !showLoading && (
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">Couldn't identify food</p>
+            <p className="text-sm text-muted-foreground">Try another photo, or log it manually.</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { handleResetAll(); setCameraOpen(true); }}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+              style={{ backgroundColor: "#7C6BF0" }}
+            >
+              <RotateCcw className="w-4 h-4" /> Try again
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                /* Mirrors the AI failure → manual fallback wired
+                   in F1's followup. Resets analyzer state, closes
+                   the camera, hands off to the parent's manual
+                   logger (which preserves selectedDate +
+                   targetMeal from the Food page state). */
+                handleResetAll();
+                setCameraOpen(false);
+                onRequestManualLog?.();
+              }}
+              className="flex-1 py-3 rounded-xl text-sm font-medium text-foreground bg-muted active:scale-95 transition-transform border border-border"
+            >
+              Log manually
             </button>
           </div>
         </div>
