@@ -16,6 +16,7 @@ import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry, checkAggregateAgainstTarget } from "@/lib/foodValidation";
 import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
+import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
 
 interface Props {
   date: string;
@@ -379,10 +380,29 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
           fat: Math.round(item.fat * s),
         }));
 
+    /* Diary row name derived from items, not from the AI's
+       generated container title. F4 audit found that the model
+       (Gemini 2.0 Flash) interprets the prompt's "name of the
+       food/meal" as a category label and returns titles like
+       "Breakfast Ingredients" or "Lunch Plate" — which then
+       surfaced in the diary row even though the actual
+       identified items (Granola, Blueberries, Hummus) were
+       correctly stored in `items`. The NL parse path already
+       built the foodName from items via
+       `items.map(i => i.name).join(", ")`; aligning the AI
+       scan persistence with the same shape (smart "+N" form
+       borrowed from Quick Add to avoid 200-char rows on
+       multi-item scans). Barcode results pass an explicit
+       fallback so single-product entries keep their product
+       name when items happen to be empty. */
+    const derivedFoodName = isBarcode
+      ? meal.foodName
+      : buildFoodNameFromItems(persistedItems, meal.foodName);
+
     const mealRef = doc(collection(db, "users", user.uid, "meals"));
     await setDoc(mealRef, {
       date,
-      foodName: meal.foodName,
+      foodName: derivedFoodName,
       items: persistedItems,
       totalCalories: Math.round(displayTotals.calories),
       totalProtein: Math.round(displayTotals.protein),
@@ -399,8 +419,14 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     // Preserve favourites functionality — favourite reflects the
     // edited totals, not the original AI estimate, so a re-log via
     // the favourite chip lands on the same numbers the user saved.
+    /* Favourite uses the same derived name as the diary row so
+       re-logging via the Quick Add chip lands on the same label
+       the user saw in the diary — pre-F5.1 the favourite carried
+       the AI's container title ("Breakfast Ingredients") while
+       the diary now reads correctly, which would have been a
+       confusing inconsistency. */
     await addFavourite({
-      name: meal.foodName,
+      name: derivedFoodName,
       calories: Math.round(displayTotals.calories),
       protein: Math.round(displayTotals.protein),
       carbs: Math.round(displayTotals.carbs),
