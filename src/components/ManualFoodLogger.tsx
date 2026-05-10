@@ -135,7 +135,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[60vh] flex flex-col">
-          <div className="overflow-y-auto flex-1 px-5 pt-4 pb-6">
+          <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
             {/* Drag handle */}
             <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
 
@@ -180,7 +180,15 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               ))}
             </div>
 
-            {/* Log This Meal button */}
+          </div>
+          {/* Sticky save footer. Pre-F2 the button lived inside the
+              overflow-y-auto container, so on small iPhone viewports
+              with the keyboard up + form filled the Save button
+              could scroll below the keyboard and become unreachable.
+              Lifting it into a non-scrolling footer with safe-area
+              bottom padding keeps it pinned regardless of scroll
+              state. */}
+          <div className="px-5 pt-3 pb-5 border-t border-border safe-area-pb">
             <AnimatePresence mode="wait">
               <motion.button
                 key={saved ? "saved" : "save"}
@@ -189,7 +197,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
                 className={cn(
-                  "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 mt-5",
+                  "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2",
                   saved
                     ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
                     : "text-white active:scale-95",

@@ -35,6 +35,7 @@ const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry } from "@/lib/foodValidation";
+import { orderQuickAddItems, type QuickAddItem } from "@/lib/quickAddOrder";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
@@ -141,6 +142,14 @@ export default function Food() {
   const { analyzeFoodText } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const quickAddScrollRef = useRef<HTMLDivElement>(null);
+  /* Stable per-date order cache. The frequency map underneath
+     would otherwise reshuffle chips on every log (each new entry
+     bumps a count and shifts ties). Snapshot the order ONCE per
+     selectedDate and apply it on every render until the date
+     changes — vanished items drop, new items append at the end
+     via `orderQuickAddItems` rather than rebuilding the whole
+     cache and reintroducing the reshuffle bug. */
+  const quickAddOrderCache = useRef<Map<string, string[]>>(new Map());
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -679,7 +688,7 @@ export default function Food() {
 
   const applyServingsChange = async (targetCount: number) => {
     if (!user || !editingGroup) return;
-    const { meals: groupMeals } = editingGroup;
+    const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
     if (targetCount === currentCount || targetCount < 1) {
       setEditingGroup(null);
@@ -688,6 +697,10 @@ export default function Food() {
     haptic("light");
     try {
       if (targetCount > currentCount) {
+        /* Increment branch — no undo needed. The user can
+           always step the count back down (which routes through
+           the decrement branch with its own undo window) or
+           swipe-delete an extra entry. */
         const source = groupMeals[groupMeals.length - 1];
         const adds = targetCount - currentCount;
         for (let i = 0; i < adds; i++) {
@@ -704,18 +717,49 @@ export default function Food() {
             ...(source.meal ? { meal: source.meal } : {}),
           });
         }
+        setEditingGroup(null);
+        setOpenRowId(null);
+        toast.success(`Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`, {
+          id: `food-edit-${foodName}`,
+        });
       } else {
+        /* Decrement branch — actual data loss. Mirrors the
+           handleDeleteMeal pattern (line 733+): optimistically
+           hide via pendingDeleteIds + schedule the real delete
+           after a 3s window + render an Undo action on the
+           toast. Without this, stepping a count down was
+           irreversible — asymmetric vs swipe-delete. */
         const removes = currentCount - targetCount;
         const toRemove = groupMeals.slice(-removes);
-        for (const m of toRemove) {
-          await deleteMeal(m.id);
-        }
+        const idsToRemove = toRemove.map((m) => m.id);
+
+        setPendingDeleteIds((prev) => {
+          const next = new Set(prev);
+          for (const id of idsToRemove) next.add(id);
+          return next;
+        });
+        setEditingGroup(null);
+        setOpenRowId(null);
+
+        const timeoutId = setTimeout(() => {
+          for (const id of idsToRemove) deleteMeal(id);
+        }, 3000);
+
+        toast.success(`Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`, {
+          id: `food-edit-${foodName}`,
+          action: {
+            label: "Undo",
+            onClick: () => {
+              clearTimeout(timeoutId);
+              setPendingDeleteIds((prev) => {
+                const next = new Set(prev);
+                for (const id of idsToRemove) next.delete(id);
+                return next;
+              });
+            },
+          },
+        });
       }
-      setEditingGroup(null);
-      setOpenRowId(null);
-      toast.success(`Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`, {
-        id: `food-edit-${editingGroup.foodName}`,
-      });
     } catch {
       toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
     }
@@ -812,21 +856,17 @@ export default function Food() {
   // Dedupe is by normalized food name across all three sources.
   // Capped at 5 to keep the row scannable.
   const quickMeals = useMemo(() => {
-    const seen = new Set<string>();
-    const items: Array<{
-      name: string;
-      cal: number;
-      pro: number;
-      carb: number;
-      fat: number;
-      portionSize: string;
-    }> = [];
+    /* Build the live key→item map first. Cap is enforced AFTER
+       cache application via orderQuickAddItems (was previously
+       enforced during ranking, which combined with the cache
+       would risk dropping cached keys before they got a chance
+       to claim their stable slot). */
+    const current = new Map<string, QuickAddItem>();
 
-    const push = (entry: typeof items[number]) => {
+    const push = (entry: { name: string; cal: number; pro: number; carb: number; fat: number; portionSize: string }) => {
       const key = entry.name.toLowerCase().trim();
-      if (!key || seen.has(key) || items.length >= 5) return;
-      seen.add(key);
-      items.push(entry);
+      if (!key || current.has(key)) return;
+      current.set(key, { key, ...entry });
     };
 
     // 1. Time-relevant favourites (richest data — known portion size)
@@ -903,14 +943,28 @@ export default function Food() {
     }
 
     // 3. Seeded defaults so first-time users still see suggestions
-    if (items.length < 3) {
+    if (current.size < 3) {
       for (const d of DEFAULT_QUICK_MEALS) {
         push({ ...d, portionSize: "1 serving" });
       }
     }
 
-    return items;
-  }, [meals, getTimeRelevant]);
+    /* Apply the stable per-date cache. First visit to a date:
+       seed the cache with the freshly-computed order. Subsequent
+       visits / re-renders within the same date: render the cached
+       order, with vanished keys dropped and new keys appended at
+       the end. Cap of 5 enforced at render. */
+    const cached = quickAddOrderCache.current.get(selectedDate);
+    if (!cached) {
+      const seedOrder = Array.from(current.keys());
+      quickAddOrderCache.current.set(selectedDate, seedOrder);
+    }
+    return orderQuickAddItems(
+      quickAddOrderCache.current.get(selectedDate) ?? [],
+      current,
+      5,
+    );
+  }, [meals, getTimeRelevant, selectedDate]);
 
   /* Reset Quick Add scroll position whenever the rendered chips
      change. Without this, the carousel keeps its previous scrollLeft
