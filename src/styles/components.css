@@ -23,12 +23,14 @@
 
 /* ─── BOTTOM NAV — SOLID ───────────────────────────────────── */
 .bottom-nav-frost {
-  background: var(--surface-solid);
+  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
   border-top: 1px solid var(--glass-border);
+  box-shadow: var(--ds-shadow-nav);
+  backdrop-filter: blur(18px);
 }
 
 .dark .bottom-nav-frost {
-  background: #161618;
+  background: rgba(22, 22, 24, 0.94);
 }
 
 /* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */
@@ -108,4 +110,110 @@
   stroke-dasharray: 213.6;
   stroke-dashoffset: calc(213.6 * (1 - var(--pct, 0)));
   transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── COHESIVE SURFACES ──────────────────────────────────────
+   Shared visual primitives used during the May 2026 UI audit.
+   These keep auth, shell, and feature cards on the same radius,
+   border, shadow, and focus vocabulary without forcing every page
+   to restyle at once. */
+.ds-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.ds-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.58);
+  border-radius: 1.25rem;
+  box-shadow: var(--ds-shadow-card);
+}
+
+.ds-card-interactive {
+  transition: transform var(--ds-transition-fast), box-shadow var(--ds-transition-fast), border-color var(--ds-transition-fast);
+}
+
+.ds-card-interactive:hover {
+  border-color: hsl(var(--primary) / 0.24);
+  box-shadow: var(--ds-shadow-card-hover);
+}
+
+.ds-card-interactive:active {
+  transform: scale(0.99);
+}
+
+.ds-input {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: var(--ds-shadow-input-rest);
+  transition: border-color var(--ds-transition-fast), box-shadow var(--ds-transition-fast), background var(--ds-transition-fast);
+}
+
+.ds-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.ds-input:focus {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.42);
+  box-shadow: 0 4px 14px -8px hsl(var(--primary) / 0.32), 0 0 0 2.5px hsl(var(--primary) / 0.13);
+}
+
+.ds-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: var(--ds-text-micro);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ds-status-banner--warning {
+  background: hsl(var(--warning-bg));
+  color: hsl(var(--warning));
+  border-bottom: 1px solid hsl(var(--warning) / 0.14);
+}
+
+.ds-status-banner--success {
+  background: hsl(var(--success-bg));
+  color: hsl(var(--success));
+  border-bottom: 1px solid hsl(var(--success) / 0.14);
+}
+
+.ds-auth-shell {
+  min-height: 100vh;
+  background: var(--background-ambient, hsl(var(--background)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, var(--safe-top)) 1rem max(1rem, var(--safe-bottom));
+}
+
+.ds-auth-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: clamp(1.25rem, 5vw, 1.75rem);
+  border-radius: 1.75rem;
+  background: hsl(var(--card) / 0.92);
+  border: 1px solid hsl(var(--border) / 0.72);
+  box-shadow: var(--ds-shadow-elevated);
+  backdrop-filter: blur(18px);
+}
+
+.ds-auth-logo {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 1.35rem;
+  display: grid;
+  place-items: center;
+  color: hsl(var(--primary-foreground));
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-strong)) 100%);
+  box-shadow: var(--ds-shadow-purple-glow);
 }

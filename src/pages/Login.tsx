@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -76,19 +76,20 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="ds-auth-shell">
+      <div className="ds-auth-card ds-page-stack">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Dumbbell className="w-8 h-8 text-primary" />
+          <div className="ds-auth-logo mx-auto">
+            <Dumbbell className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Tropos
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">Tropos</p>
+            <h1 className="text-h2 font-extrabold text-foreground mt-1">
+              {isSignUp ? "Create your account" : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Track your progress, crush your goals
+              Track training, nutrition, and progress in one calm place.
             </p>
           </div>
         </div>
@@ -96,8 +97,9 @@ export default function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-              {error}
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive text-sm font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -113,7 +115,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
+                className="ds-input pl-10 pr-4 py-3"
               />
             </div>
 
@@ -129,7 +131,7 @@ export default function Login() {
                 required
                 minLength={6}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
+                className="ds-input pl-10 pr-12 py-3"
               />
               <IconButton
                 onClick={() => setShowPassword(!showPassword)}
@@ -196,14 +198,14 @@ export default function Login() {
               setError("");
             }}
             aria-pressed={isSignUp}
-            className="text-primary font-medium hover:underline"
+            className="text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
 
         {/* Legal links */}
-        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground pt-1">
           <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
           <span aria-hidden="true">·</span>
           <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
