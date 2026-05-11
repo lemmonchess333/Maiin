@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 const { X509Certificate } = require("crypto");
 const { SignedDataVerifier, Environment } = require("@apple/app-store-server-library");
 
+// R1A-Deletion Chunk 2 — lock helpers for IAP / Apple webhook paths.
+const accountDeletionLocks = require("./lib/accountDeletionLocks");
+
 const BUNDLE_ID = "com.tropos.app";
 
 /**
@@ -199,6 +202,10 @@ exports.verifyApplePurchase = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. verifyApplePurchase writes users/{uid}
+  // subscription fields via applySubscriptionToUser → cannot run for
+  // a deleting account.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
   const signedTransactionInfo = data && data.signedTransactionInfo;
   if (!signedTransactionInfo || typeof signedTransactionInfo !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "signedTransactionInfo required.");
@@ -253,6 +260,20 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const uid = usersSnap.docs[0].id;
+    // R1A-Deletion: system-writer guard. If the resolved uid is mid-
+    // deletion or tombstoned, do NOT recreate the user doc via
+    // applySubscriptionToUser — log a minimised event to
+    // paymentEventsPostDeletion for operator review.
+    if (!(await accountDeletionLocks.shouldSystemWriteProceed(admin.firestore(), uid, "appleIAPWebhook"))) {
+      await accountDeletionLocks.recordPaymentEventPostDeletion(admin.firestore(), {
+        provider: "apple",
+        externalTxnId: originalTransactionId,
+        eventType: notificationType,
+        uid,
+      });
+      res.status(200).json({ ok: true });
+      return;
+    }
     await applySubscriptionToUser(uid, signedTransactionInfo);
     console.log(`appleIAPWebhook: ${notificationType} applied for uid=${uid}`);
     res.status(200).json({ ok: true });
@@ -268,9 +289,35 @@ exports.restoreApplePurchases = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. restoreApplePurchases writes users/{uid}
+  // subscription fields → cannot run for a deleting account.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
   const originalTransactionId = data && data.originalTransactionId;
   if (!originalTransactionId) {
     throw new functions.https.HttpsError("invalid-argument", "originalTransactionId required.");
+  }
+  // R1A-Deletion founder decision #3 (A/a2 support-assisted):
+  // If the originalTransactionId belongs to a tombstoned billing
+  // identity (the previous account was deleted), refuse the restore
+  // with a stable errorCode so the client renders the support copy.
+  // Implementation reads deletedBillingIdentities/{hash} — populated
+  // by the Chunk 3 executor when deleting an account with active
+  // billing.
+  {
+    const crypto = require("crypto");
+    const identifierHash = crypto.createHash("sha256").update(originalTransactionId).digest("hex");
+    const billingTombstoneSnap = await admin
+      .firestore()
+      .collection("deletedBillingIdentities")
+      .doc(identifierHash)
+      .get();
+    if (billingTombstoneSnap.exists) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This subscription was attached to a deleted account. Contact support to restore.",
+        { errorCode: "restore-requires-support" },
+      );
+    }
   }
   try {
     const status = await fetchSubscriptionStatus(originalTransactionId);
