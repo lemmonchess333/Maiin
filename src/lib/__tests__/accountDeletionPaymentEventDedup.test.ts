@@ -94,7 +94,12 @@ describe("recordPaymentEventPostDeletion — deterministic doc ID", () => {
       expect(db.writes[0].docId).toBe("stripe_sub_xyz_customer.subscription.deleted");
       expect(warn).toHaveBeenCalled();
       const warnArg = warn.mock.calls[0][0] as string;
-      expect(warnArg).toMatch(/providerEventId missing/);
+      // Chunk 2.C: warn is now structured JSON for Cloud Logging
+      // filterability. Parse and assert the r1aEvent key.
+      const parsed = JSON.parse(warnArg);
+      expect(parsed.r1aEvent).toBe("payment_event_missing_provider_event_id");
+      expect(parsed.provider).toBe("stripe");
+      expect(parsed.eventType).toBe("customer.subscription.deleted");
     } finally {
       warn.mockRestore();
     }

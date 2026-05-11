@@ -158,7 +158,10 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list is non-empty and covers at least 25 paths", () => {
-    expect(PROTECTED_PATHS.length).toBeGreaterThanOrEqual(25);
+  it("PROTECTED_PATHS list matches the canonical count (Chunk 2.C reconciliation: 27 paths)", () => {
+    // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
+    // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
+    // drift fails fast here, not silently in CI.
+    expect(PROTECTED_PATHS.length).toBe(27);
   });
 });

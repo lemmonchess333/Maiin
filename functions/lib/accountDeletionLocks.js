@@ -153,10 +153,22 @@ async function recordPaymentEventPostDeletion(db, event) {
   if (event.providerEventId && typeof event.providerEventId === "string") {
     docId = `${event.provider}_${event.providerEventId}`;
   } else {
+    // Structured Cloud Logging — Chunk 2.C operator-actionable
+    // warning. Plain console.warn is easy to miss; the JSON payload
+    // with a stable r1aEvent key makes it filterable in Cloud Logging
+    // and alertable via log-based metrics. Operators should configure
+    // an alert if the rate exceeds a small threshold (suggested:
+    // > 5 occurrences per 24h indicates a provider integration drift).
     // eslint-disable-next-line no-console
-    console.warn(
-      `[R1A] paymentEventsPostDeletion: providerEventId missing for ${event.provider}/${event.eventType}, falling back to composite key`,
-    );
+    console.warn(JSON.stringify({
+      r1aEvent: "payment_event_missing_provider_event_id",
+      provider: event.provider,
+      eventType: event.eventType,
+      // externalTxnId is provider-issued and safe to log; raw uid
+      // never leaves the hashed-prefix form below.
+      externalTxnId: event.externalTxnId,
+      hashedUidPrefix: record.hashedUidPrefix,
+    }));
     docId = `${event.provider}_${event.externalTxnId}_${event.eventType}`;
   }
   await db.collection("paymentEventsPostDeletion").doc(docId).set(record);

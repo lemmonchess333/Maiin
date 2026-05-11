@@ -299,6 +299,104 @@ of the deletion subsystem.
 
 ---
 
+## 10. Recent-auth threat model — exposure acknowledgement
+
+**Date:** 2026-05-11 (Chunk 2.C)  ·  **Status:** Decided (with documented exposure)
+
+**Question.** Is `assertRecentAuth` (300s `auth_time` check) the only
+challenge before `deleteMyAccount` proceeds, or is there also a
+server-issued deletion-intent token?
+
+**Decision.** Recent-auth-only for first release. No deletion-intent
+token in Chunk 3 / Chunk 4.
+
+**Exposure being accepted.** A 300-second window where any party with
+access to a fresh ID token can call `deleteMyAccount` without further
+deletion-specific challenge. Concretely:
+- An attacker with a browser session hijack (XSS, malicious extension,
+  stolen device cookies) within 300s of a fresh reauth can drive
+  deletion.
+- A family member or anyone with access to an unlocked device shortly
+  after the user reauths can tap Delete Account and complete the flow.
+- A malicious mobile-app extension or runtime injection with token
+  access during the recent-auth window can drive deletion via the
+  authenticated callable.
+- Shortening the threshold (e.g. 60s) narrows the window but does not
+  remove the session-token-only compromise risk. Lengthening makes
+  the UX more permissive but expands the attack surface.
+
+**Why this is acceptable for first release.** Tropos is a consumer
+fitness app, not a financial or healthcare data store. The deletion
+action is destructive but reversible to support-assisted recovery
+(via paymentEventsPostDeletion + accountDeletionLedger ledger entries
+during the 30-day retention window). A user who experiences malicious
+deletion can contact support and the operator can confirm legitimacy
+through other channels. The attack surface (session hijack within 300s
+of reauth) is narrow enough that the operational recovery path is the
+correct mitigation rather than a deletion-intent token.
+
+**Production deletion-intent token model (deferred, for reference).**
+If session compromise becomes a real problem post-launch, the deferred
+model is:
+1. User taps Delete Account.
+2. Client triggers reauthentication.
+3. Server mints a short-lived (≤ 5min), single-use deletion-intent
+   token bound to the user + a nonce + the reauth timestamp.
+4. Client must present BOTH a fresh ID token AND the deletion-intent
+   token to `deleteMyAccount`.
+5. Server consumes the token (one-shot) and verifies its binding
+   matches the calling uid.
+
+This requires a new short-lived token store and Chunk 4 client UI
+changes. Not in this sprint's scope.
+
+**Revisit conditions.** If session-compromise abuse is observed in
+support tickets, escalate to the deletion-intent token model as a
+follow-up sprint.
+
+---
+
+## 11. HMAC purpose separation
+
+**Date:** 2026-05-11 (Chunk 2.C)  ·  **Status:** Decided
+
+**Question.** Does the moderation HMAC secret (decision #2,
+`reportsAboutMe` targetId fingerprinting) share its secret with any
+other HMAC use (e.g. billing-identity tombstones, future abuse
+fingerprints)?
+
+**Decision.** Distinct secrets per purpose. Two named secrets:
+- `moderation.hmac_secret` — used ONLY for `reportsAboutMe`
+  targetIdHash and any future moderation-pseudonym keying.
+- `billing.hmac_secret` — reserved for future billing-identity HMAC
+  keying (NOT currently used; `deletedBillingIdentities` uses plain
+  SHA-256 with provider-namespacing in Chunk 2.C — see decision #4
+  revisit).
+
+**Reasoning.** A single shared secret would couple the two purposes
+operationally: rotating one would force re-hashing of records from
+the other. Distinct secrets allow independent rotation cycles aligned
+to each purpose's retention window (365d for moderation, 13mo for
+billing).
+
+**Provisioning.** Operator sets both via
+`firebase functions:config:set moderation.hmac_secret="<32-byte-hex>"`
+and `firebase functions:config:set billing.hmac_secret="<32-byte-hex>"`
+before Chunk 3 ships. Distinct random values, not derived from each
+other.
+
+**Rotation strategy.** Per purpose:
+- Moderation: secretVersion stored on each fingerprinted record;
+  fingerprint lookup tries active + previous secrets during the 365d
+  retention window. Documented in decision #2.
+- Billing: plain SHA-256 in Chunk 2.C (no secret). If HMAC is adopted
+  later, same secretVersion-with-fallback pattern within the 13mo
+  retention window.
+
+**Revisit conditions.** None. Use distinct secrets indefinitely.
+
+---
+
 ## 8. testCoverageStatus enforcement
 
 **Date:** 2026-05-11  ·  **Status:** Pending — Chunk 3 prerequisite

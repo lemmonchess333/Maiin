@@ -28,6 +28,16 @@ import { readFileSync } from "node:fs";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
+const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
+if (REQUIRE_EMULATOR && !EMULATOR_HOST) {
+  // CI gate: when REQUIRE_FIRESTORE_EMULATOR=1, missing FIRESTORE_EMULATOR_HOST
+  // is a hard failure, not a silent skip. Deployment-branch CI must
+  // set REQUIRE_FIRESTORE_EMULATOR=1 to ensure rules evidence is real.
+  throw new Error(
+    "FIRESTORE_EMULATOR_HOST is required when REQUIRE_FIRESTORE_EMULATOR=1. " +
+      "Start the Firestore emulator (e.g. `firebase emulators:exec --only firestore,auth ...`) before running this test.",
+  );
+}
 const suite = EMULATOR_HOST ? describe : describe.skip;
 
 const OWNER_UID = "owner-uid";

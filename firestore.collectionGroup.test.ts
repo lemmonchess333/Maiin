@@ -55,6 +55,13 @@ import {
 import { createRequire } from "node:module";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
+const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
+if (REQUIRE_EMULATOR && !EMULATOR_HOST) {
+  throw new Error(
+    "FIRESTORE_EMULATOR_HOST is required when REQUIRE_FIRESTORE_EMULATOR=1. " +
+      "Start the Firestore emulator before running this test.",
+  );
+}
 const suite = EMULATOR_HOST ? describe : describe.skip;
 
 const PROJECT_ID = "tropos-cg-test";
