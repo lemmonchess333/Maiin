@@ -49,7 +49,6 @@
 
 :root {
   --background: 240 5% 96%;
-  --background-ambient: radial-gradient(circle at 18% 0%, rgba(123, 114, 233, 0.10), transparent 32%), radial-gradient(circle at 92% 8%, rgba(217, 136, 78, 0.10), transparent 30%), hsl(var(--background));
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
@@ -89,7 +88,6 @@
 
 .dark {
   --background: 240 4% 7%;
-  --background-ambient: radial-gradient(circle at 20% 0%, rgba(123, 114, 233, 0.16), transparent 36%), radial-gradient(circle at 92% 6%, rgba(212, 99, 122, 0.12), transparent 32%), hsl(var(--background));
   --foreground: 240 5% 90%;
   --card: 240 4% 10%;
   --card-foreground: 240 5% 90%;
@@ -150,15 +148,17 @@ html, body {
 
 body {
   margin: 0;
-  /* Ambient background lives on the body element itself rather than
-     a fixed pseudo-layer. The Codex PR set `background-attachment:
-     fixed` to keep the radial gradients anchored as the page
-     scrolled, but that pattern is a well-known scroll-jank /
-     repaint hazard on mobile Safari and PWA installs (especially
-     with large radial gradients). The visible difference under
-     normal scrolling is minimal, so we drop the fixed attachment
-     in favour of guaranteed smoothness. */
-  background: var(--background-ambient, hsl(var(--background)));
+  /* The global app canvas is a clean neutral grey. PR #511's
+     attempt at a global radial-gradient ambient layer (purple +
+     warm) was reverted because it cast a muddy warm haze behind
+     every logged-in page (Home, Food, Programme, History, Social),
+     reducing perceived sharpness of cards and chart surfaces.
+     The product is data-dense — cards, charts, macros, food
+     colours, run/lift accents — and reads more premium on a
+     clean neutral canvas than on a tinted gradient. Ambience now
+     only lives on dedicated marketing surfaces (.ds-auth-shell)
+     where it has room to breathe without competing with data. */
+  background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: var(--ds-text-body);
