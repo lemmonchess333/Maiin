@@ -1,6 +1,23 @@
 /* =============================================================
    TROPOS DESIGN SYSTEM — BASE COMPONENTS
    Reusable component styles
+
+   Primitive usage (May 2026 visual cohesion pass):
+     .ds-card              Static grouped-card surfaces.
+     .ds-card-interactive  Pressable cards only. Pair with a real
+                           <button> or <a> — never wrap a div.
+     .ds-input             Text/email/password/search inputs.
+     .ds-status-banner     Global online/offline + app-state banners.
+     .ds-auth-shell        Full-page login/signup shell only.
+     .ds-auth-card         Login/signup elevated card surface only.
+     .ds-auth-logo         Auth-only brand mark container.
+     .ds-safe-top-occluder Fixed iOS safe-area cover for app shell only.
+
+   These exist to keep app-shell, auth, and feature cards on a
+   shared radius / border / shadow / focus vocabulary without
+   forcing every page to restyle at once. Reach for primitives
+   instead of one-off Tailwind class strings on shared surfaces;
+   for unique single-use surfaces, hand-roll Tailwind as before.
 ============================================================= */
 
 /* ─── STAT NUMBER — mono + tabular-nums for all numeric displays ── */
@@ -21,14 +38,24 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── BOTTOM NAV — SOLID ───────────────────────────────────── */
+/* ─── BOTTOM NAV — SOLID ─────────────────────────────────────
+   `color-mix()` is widely supported (Safari 16.4+, Chrome 111+,
+   Firefox 113+) but the fallback is one line so we provide it
+   anyway — older WebViews / older PWA installs that haven't been
+   reinstalled fall through to the solid colour. Same for the
+   -webkit-backdrop-filter prefix: Safari only stopped needing it
+   in 18.0 but the fallback costs nothing. */
 .bottom-nav-frost {
   background: var(--surface-solid);
+  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
   border-top: 1px solid var(--glass-border);
+  box-shadow: var(--ds-shadow-nav);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .dark .bottom-nav-frost {
-  background: #161618;
+  background: rgba(22, 22, 24, 0.94);
 }
 
 /* ─── FEATURE BUTTONS (replaces dashed borders) ─────────────── */
@@ -108,4 +135,198 @@
   stroke-dasharray: 213.6;
   stroke-dashoffset: calc(213.6 * (1 - var(--pct, 0)));
   transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── COHESIVE SURFACES ──────────────────────────────────────
+   Shared visual primitives used during the May 2026 UI audit.
+   These keep auth, shell, and feature cards on the same radius,
+   border, shadow, and focus vocabulary without forcing every page
+   to restyle at once. */
+.ds-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.ds-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.58);
+  border-radius: 1.25rem;
+  box-shadow: var(--ds-shadow-card);
+}
+
+.ds-card-interactive {
+  transition:
+    transform var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast),
+    border-color var(--ds-transition-fast);
+}
+
+/* Hover-only states gated behind `hover: hover` + `pointer: fine`.
+   On touch devices, `:hover` triggers on tap and the styles "stick"
+   until another tap clears the hover state — a familiar mobile-web
+   bug. Restricting hover to true pointer devices avoids it without
+   blocking desktop polish. */
+@media (hover: hover) and (pointer: fine) {
+  .ds-card-interactive:hover {
+    border-color: hsl(var(--primary) / 0.24);
+    box-shadow: var(--ds-shadow-card-hover);
+  }
+}
+
+.ds-card-interactive:active {
+  transform: scale(0.99);
+}
+
+/* `.ds-input` is intentionally tag-qualified so the rule beats the
+   broad `input:not(...):focus` selector in index.css. index.css is
+   imported before this file, but unqualified `.ds-input` has the
+   same specificity (0,1,0) as the global selector, and source
+   order would tie — meaning the layout/radius/focus-ring would
+   sometimes draw from the global rule rather than the primitive.
+   Adding the tag name bumps specificity to 0,1,1 so .ds-input
+   always wins. index.css also excludes `.ds-input` from its
+   global selector belt-and-braces. */
+input.ds-input,
+textarea.ds-input,
+select.ds-input {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: var(--ds-shadow-input-rest);
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast),
+    background var(--ds-transition-fast);
+}
+
+input.ds-input::placeholder,
+textarea.ds-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+input.ds-input:focus,
+textarea.ds-input:focus,
+select.ds-input:focus {
+  outline: none;
+  border-color: hsl(var(--primary) / 0.42);
+  box-shadow:
+    0 4px 14px -8px hsl(var(--primary) / 0.32),
+    0 0 0 2.5px hsl(var(--primary) / 0.13);
+}
+
+.ds-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: var(--ds-text-micro);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ds-status-banner--warning {
+  background: hsl(var(--warning-bg));
+  color: hsl(var(--warning));
+  border-bottom: 1px solid hsl(var(--warning) / 0.14);
+}
+
+.ds-status-banner--success {
+  background: hsl(var(--success-bg));
+  color: hsl(var(--success));
+  border-bottom: 1px solid hsl(var(--success) / 0.14);
+}
+
+/* `min-height` is layered for mobile Safari:
+     - 100vh   fallback for older browsers
+     - 100svh  small viewport (URL bar visible) — never overshoots
+     - 100dvh  dynamic viewport — follows the URL bar's collapsing
+   `overflow-y: auto` so when the on-screen keyboard opens and
+   compresses the viewport, the legal-links row at the bottom stays
+   reachable rather than getting clipped.
+   Padding uses `calc(safe-area + 1rem)` instead of
+   `max(1rem, safe-area)` so devices with a notch get extra
+   breathing room above the card, not just the bare safe-area inset. */
+.ds-auth-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overflow-y: auto;
+  background: var(--background-ambient, hsl(var(--background)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(var(--safe-top) + 1rem)
+    1rem
+    calc(var(--safe-bottom) + 1rem);
+}
+
+/* On short viewports (keyboard open on iPhone SE, landscape, etc.)
+   anchor the card to the top so its top edge stays visible — pure
+   `align-items: center` clips the top off when content is taller
+   than the viewport. */
+@media (max-height: 680px) {
+  .ds-auth-shell {
+    align-items: flex-start;
+  }
+}
+
+.ds-auth-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: clamp(1.25rem, 5vw, 1.75rem);
+  border-radius: 1.75rem;
+  background: hsl(var(--card) / 0.92);
+  border: 1px solid hsl(var(--border) / 0.72);
+  box-shadow: var(--ds-shadow-elevated);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* Fixed iOS safe-area cover. Replaces the inline
+   `bg-background/95 backdrop-blur-sm` Tailwind combo that was
+   rendering a hard 95%-opaque flat strip across the ambient
+   gradient (the ambient bg now lives in :root + .dark via
+   --background-ambient, and a flat band cutting it looked like
+   a colour seam). This translucent + blur recipe lets the
+   ambient bg show through faintly while still occluding
+   scrolling content under the iOS status bar / Dynamic Island. */
+.ds-safe-top-occluder {
+  background: hsl(var(--background) / 0.76);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.ds-auth-logo {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 1.35rem;
+  display: grid;
+  place-items: center;
+  color: hsl(var(--primary-foreground));
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-strong)) 100%);
+  box-shadow: var(--ds-shadow-purple-glow);
+}
+
+/* Reduced-motion safety net for the shared primitives. The
+   Framer Motion components in Layout.tsx already gate via the
+   useReducedMotion hook; this CSS belt-and-braces the primitives
+   so any future consumer that uses them outside of Framer Motion
+   also respects the preference. */
+@media (prefers-reduced-motion: reduce) {
+  .ds-card-interactive,
+  input.ds-input,
+  textarea.ds-input,
+  select.ds-input,
+  .bottom-nav-frost {
+    transition: none;
+  }
+  .ds-card-interactive:active {
+    transform: none;
+  }
 }

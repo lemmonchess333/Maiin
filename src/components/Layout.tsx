@@ -57,19 +57,21 @@ export default function Layout() {
 
   return (
     <div
-      className="min-h-screen bg-background transition-colors"
+      className="min-h-screen transition-colors"
       style={{
         paddingTop: "var(--safe-top)",
         paddingBottom: "var(--page-bottom-pad)",
       }}
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
-          Uses bg-background (page grey) so scrolling content disappears into
-          the same colour as the gaps between cards. Mirrors the role of the
-          bottom nav at the bottom of the screen. */}
+          Uses the shared `.ds-safe-top-occluder` class (translucent
+          background + backdrop-blur) so the ambient background gradient
+          flows continuously through the safe area rather than getting
+          cut by a 95%-opaque flat strip. Mirrors the role of the bottom
+          nav at the bottom of the screen. */}
       <div
         aria-hidden="true"
-        className="fixed top-0 left-0 right-0 z-30 bg-background"
+        className="fixed top-0 left-0 right-0 z-30 ds-safe-top-occluder"
         style={{ height: "var(--safe-top)" }}
       />
       {/* Sprint 5: removed the React-rendered skip link from this
@@ -81,19 +83,23 @@ export default function Layout() {
           stops with slightly different text ('Skip to main content'
           vs 'Skip to content') for the same destination. */}
 
-      {/* Offline / back-online banner */}
+      {/* Offline / back-online banner.
+          Animations gated on `prefersReducedMotion` — the
+          height/opacity reveal is decorative, not informational.
+          aria-live="polite" announces the banner text regardless of
+          whether the transition plays. */}
       <div aria-live="polite">
       <AnimatePresence>
         {!isOnline && (
           <motion.div
             key="offline"
-            initial={{ height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center justify-center gap-2 py-2 px-4 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-medium">
+            <div className="ds-status-banner ds-status-banner--warning">
               <WifiOff className="w-3.5 h-3.5 shrink-0" />
               <span>
                 You're offline
@@ -107,13 +113,13 @@ export default function Layout() {
         {isOnline && wasOffline && (
           <motion.div
             key="back-online"
-            initial={{ height: 0, opacity: 0 }}
+            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center justify-center gap-2 py-2 px-4 bg-green-500/15 text-green-600 dark:text-green-400 text-xs font-medium">
+            <div className="ds-status-banner ds-status-banner--success">
               <Check className="w-3.5 h-3.5 shrink-0" />
               <span>Back online — syncing changes</span>
             </div>
@@ -122,12 +128,15 @@ export default function Layout() {
       </AnimatePresence>
       </div>
 
-      <main id="main-content" className="max-w-md mx-auto px-4 py-6">
+      {/* Page fade also gated on reduced motion — the cross-page
+          opacity transition is purely cosmetic. Reduced-motion users
+          get an instant change. */}
+      <main id="main-content" className="max-w-md mx-auto px-4 py-6 sm:py-7">
         <motion.div
           key={location.pathname}
-          initial={{ opacity: 0 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.15 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
         >
           <Outlet />
         </motion.div>
@@ -142,7 +151,15 @@ export default function Layout() {
         style={{ overflow: "visible" }}
       >
         <LayoutGroup>
-        <div className="max-w-md mx-auto flex items-end" role="tablist">
+        {/* The wrapping <nav aria-label="Main navigation"> on the
+            parent element already gives this surface the correct
+            semantics. The Codex PR added role="tablist" but a real
+            tablist needs role="tab" + aria-selected + roving tabindex
+            + tabpanel relationships — none of which fit the
+            page-navigation pattern. Removing the role rather than
+            implementing a half-tablist that would confuse screen
+            readers. */}
+        <div className="max-w-md mx-auto flex items-end px-1.5">
           {tabs.map((tab) => {
             const hasBadge = tab.to === "/social" && unreadCount > 0;
             const Icon = tab.icon;
@@ -155,10 +172,14 @@ export default function Layout() {
                 onClick={() => { haptic('light'); if (tab.to === "/social") markSeen(); }}
                 className={({ isActive }) =>
                   cn(
-                    "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
+                    // `min-w-0` lets flex-1 actually shrink the cells
+                    // on iPhone SE width so the "Programme" label
+                    // (the longest of the five) doesn't push siblings
+                    // off-screen.
+                    "flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
                     isActive
                       ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
                   )
                 }
               >
@@ -198,7 +219,7 @@ export default function Layout() {
                         )
                       )}
                     </motion.div>
-                    <span className="text-xs font-medium tracking-wide">{tab.label}</span>
+                    <span className="max-w-full truncate text-xs font-medium tracking-wide">{tab.label}</span>
                   </>
                 )}
               </NavLink>

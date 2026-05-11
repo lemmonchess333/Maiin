@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+
+// Pre-recovery this page tracked a single `loading: boolean` shared
+// across the email submit, the Apple button, and the Google button.
+// The Button primitive's loading state only fired on the email
+// submit; Apple/Google merely went disabled with no spinner. That's
+// a polish gap on a conversion-critical surface — we use a single
+// LoadingAction value here so exactly one button shows the spinner
+// and the others stay disabled.
+type LoadingAction = "email" | "google" | "apple" | null;
 
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -12,12 +21,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
+
+  const isLoading = loadingAction !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setLoadingAction("email");
     try {
       if (isSignUp) {
         await signUp(email, password);
@@ -39,13 +50,13 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleGoogle = async () => {
     setError("");
-    setLoading(true);
+    setLoadingAction("google");
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
@@ -55,13 +66,13 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleApple = async () => {
     setError("");
-    setLoading(true);
+    setLoadingAction("apple");
     try {
       await signInWithApple();
     } catch (err: unknown) {
@@ -71,40 +82,53 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="ds-auth-shell">
+      <div className="ds-auth-card ds-page-stack">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Dumbbell className="w-8 h-8 text-primary" />
+          <div className="ds-auth-logo mx-auto">
+            <Dumbbell className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Tropos
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">Tropos</p>
+            <h1 className="text-h2 font-extrabold text-foreground mt-1">
+              {isSignUp ? "Create your account" : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Track your progress, crush your goals
+              Track food, lifting, running, and progress in one place.
             </p>
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form. When there's an error, the form is aria-describedby
+            the error banner so screen-reader users hear the error
+            associated with the form rather than as a free-floating
+            alert. */}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          aria-describedby={error ? "login-error" : undefined}
+        >
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-              {error}
+            <div
+              id="login-error"
+              role="alert"
+              className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive text-sm font-medium"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{error}</span>
             </div>
           )}
 
           <div className="space-y-3">
             <div className="relative">
               <label htmlFor="login-email" className="sr-only">Email address</label>
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <input
                 id="login-email"
                 type="email"
@@ -113,13 +137,13 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
+                className="ds-input pl-10 pr-4 py-3"
               />
             </div>
 
             <div className="relative">
               <label htmlFor="login-password" className="sr-only">Password</label>
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
@@ -129,13 +153,19 @@ export default function Login() {
                 required
                 minLength={6}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
+                className="ds-input pl-10 pr-12 py-3"
               />
+              {/* size="md" is the iOS HIG 44pt floor — the password
+                  toggle is a standalone control inside the input, so
+                  the IconButton docs' "sm acceptable only when the
+                  parent row provides extra tap area" caveat doesn't
+                  apply here. The input already has pr-12, so 44px
+                  fits without overlapping typed text. */}
               <IconButton
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                size="md"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
                 icon={showPassword ? <EyeOff /> : <Eye />}
               />
             </div>
@@ -143,7 +173,8 @@ export default function Login() {
 
           <Button
             type="submit"
-            loading={loading}
+            loading={loadingAction === "email"}
+            disabled={isLoading && loadingAction !== "email"}
             fullWidth
             size="md"
           >
@@ -162,7 +193,8 @@ export default function Login() {
         <div className="space-y-3">
           <Button
             onClick={handleApple}
-            disabled={loading}
+            loading={loadingAction === "apple"}
+            disabled={isLoading && loadingAction !== "apple"}
             fullWidth
             // Apple brand styling: black-on-white in light mode,
             // white-on-black in dark mode. The foreground/background
@@ -179,7 +211,8 @@ export default function Login() {
 
           <Button
             onClick={handleGoogle}
-            disabled={loading}
+            loading={loadingAction === "google"}
+            disabled={isLoading && loadingAction !== "google"}
             fullWidth
             variant="outline"
           >
@@ -191,19 +224,20 @@ export default function Login() {
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
+            type="button"
             onClick={() => {
               setIsSignUp(!isSignUp);
               setError("");
             }}
             aria-pressed={isSignUp}
-            className="text-primary font-medium hover:underline"
+            className="text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
 
         {/* Legal links */}
-        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground pt-1">
           <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
           <span aria-hidden="true">·</span>
           <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
