@@ -29,19 +29,25 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 const inventoryPath = resolve(repoRoot, "functions/accountDeletionInventory.json");
 const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 
+const require = createRequire(import.meta.url);
+const { matchesPathFilter } = require("../../../functions/lib/pathFilterMatcher.js");
+
+interface InventoryAlias { key: string; path: string; reason: string; }
 interface InventoryEntry {
   key: string;
   path?: string;
   collectionGroup?: string;
   pathFilter?: string;
-  legacyAliases?: string[];
+  aliases?: InventoryAlias[];
   sourcePath?: string;
+  testCoverageStatus?: string;
 }
 
 const ALL_ENTRIES: InventoryEntry[] = [
@@ -77,9 +83,11 @@ function buildKnownFirstSegments(): Set<string> {
       const first = entry.sourcePath.split("/")[0];
       if (first) segments.add(first);
     }
-    for (const alias of entry.legacyAliases || []) {
-      if (alias.includes("{uid}")) {
-        const first = alias.split("/")[0];
+    // Chunk 1.1 schema: aliases are {key, path, reason} objects
+    for (const alias of entry.aliases || []) {
+      const aliasPath = typeof alias === "string" ? alias : alias.path;
+      if (aliasPath && aliasPath.includes("{uid}")) {
+        const first = aliasPath.split("/")[0];
         if (first) segments.add(first);
       }
     }
@@ -97,8 +105,11 @@ function isUserSubcollectionClassified(sub: string): boolean {
   for (const entry of ALL_ENTRIES) {
     if (entry.path === target) return true;
     if (entry.path && entry.path.startsWith(`${target}/`)) return true;
-    for (const alias of entry.legacyAliases || []) {
-      if (alias === target) return true;
+    // userPublicSubcollection covers users/{uid}/public — also classifies users/{uid}/public/profile
+    if (entry.path && target.startsWith(`${entry.path}/`)) return true;
+    for (const alias of entry.aliases || []) {
+      const aliasPath = typeof alias === "string" ? alias : alias.path;
+      if (aliasPath === target) return true;
     }
   }
   return false;
@@ -327,15 +338,24 @@ function isStorageClassified(signature: string): boolean {
  * Classify a 3-segment cross-user-keyed signature like
  * "groups/{*}/members/{uid}" against an inventory entry with
  * pathFilter "groups/*\/members" + docIdEquals "{uid}".
+ *
+ * Uses the segment-aware matchesPathFilter helper rather than string
+ * equality so the matcher's blast-radius protection (rejecting
+ * admin/feeds_archive/x/items etc.) applies at classification time.
  */
 function isCrossUserKeyedClassified(signature: string): boolean {
   // signature shape: FIRST/{*}/SUB/{uid}
   const parts = signature.split("/");
   if (parts.length !== 4) return false;
   if (parts[1] !== "{*}" || parts[3] !== "{uid}") return false;
-  const expectedPathFilter = `${parts[0]}/*/${parts[2]}`;
+  // Build a candidate path the matcher will recognise: replace {*} with a
+  // placeholder and the leaf with another so matchesPathFilter has a
+  // well-formed candidate.
+  const candidatePath = `${parts[0]}/__wildcard__/${parts[2]}/__leaf__`;
   for (const entry of ALL_ENTRIES) {
-    if (entry.pathFilter === expectedPathFilter) return true;
+    if (entry.pathFilter && matchesPathFilter(entry.pathFilter, candidatePath)) {
+      return true;
+    }
   }
   return false;
 }

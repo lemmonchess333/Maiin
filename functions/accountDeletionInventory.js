@@ -31,11 +31,17 @@ function resolvePath(template, substitutions) {
 /**
  * Returns every path that should be swept for this uid, including
  * legacy aliases so renames don't silently leave orphan data behind.
+ *
+ * Reads `entry.aliases` (Chunk 1.1 schema): an array of
+ * `{ key, path, reason }` objects, each treated as an executable
+ * deletion target. Missing alias paths are handled as success by the
+ * executor (NotFound = no-op) — see accountDeletionLegacyAliases test.
  */
 function expandUserSubcollectionPaths(entry, uid) {
   const paths = [resolvePath(entry.path, { uid })];
-  for (const alias of entry.legacyAliases || []) {
-    paths.push(resolvePath(alias, { uid }));
+  for (const alias of entry.aliases || []) {
+    const aliasPath = typeof alias === "string" ? alias : alias.path;
+    if (aliasPath) paths.push(resolvePath(aliasPath, { uid }));
   }
   return paths;
 }
