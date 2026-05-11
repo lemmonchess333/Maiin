@@ -7,6 +7,7 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
+import { isCountableRun } from "@/lib/runGuards";
 
 interface WeightInfo {
   weight: string;
@@ -113,11 +114,17 @@ export function useHomeData(
         errors.push("Failed to load meals");
       }
 
-      // Runs
+      // Runs — today's run-calorie aggregate feeds the Home energy
+      // tile and the HybridBalanceCard. P0.5: skip non-countable
+      // runs so a saved-anyway "too-fast" 20km / 0:08 misclick
+      // doesn't credit the user ~1500kcal of phantom burn and
+      // distort the daily energy picture.
       if (results[1].status === "fulfilled") {
         const weightKg = profile?.weightKg || 70;
         results[1].value.docs.forEach(function (d) {
-          const distKm = (d.data().distance || 0) / 1000;
+          const data = d.data();
+          if (!isCountableRun(data)) return;
+          const distKm = (data.distance || 0) / 1000;
           rCals += Math.round(weightKg * distKm * 1.036);
         });
       } else {

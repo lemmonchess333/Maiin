@@ -142,7 +142,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("computes run calories using weight and distance", async () => {
-    const runsSnap = makeSnap([{ distance: 5000 }]);
+    const runsSnap = makeSnap([{ distance: 5000, duration: 1800 }]);
     mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
 
     const profile = makeProfile({ weightKg: 80 });
@@ -155,6 +155,68 @@ describe("useHomeData", { timeout: 5000 }, () => {
     });
 
     // 80 * 5 * 1.036 = 414.4 → 414
+    expect(result.current.todayRunCals).toBe(414);
+  });
+
+  // P0.5 run-stat hygiene: a saved-anyway invalid run (the
+  // misclick / fat-fingered-distance case from PR #480) must not
+  // contribute phantom calories to today's energy aggregate.
+  // Pre-fix this hook only read `distance` and the calorie estimate
+  // pulled in ~414kcal for a 5km "too-fast" save the user never
+  // actually ran.
+  it("excludes isInvalid runs from todayRunCals", async () => {
+    const runsSnap = makeSnap([
+      { distance: 5000, duration: 1800, isInvalid: true },
+    ]);
+    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+
+    const profile = makeProfile({ weightKg: 80 });
+    const { result } = renderHook(() =>
+      useHomeData({ uid: "u1" }, profile, [], "kg")
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.todayRunCals).toBe(0);
+  });
+
+  it("excludes savedAnyway runs from todayRunCals", async () => {
+    const runsSnap = makeSnap([
+      { distance: 5000, duration: 1800, savedAnyway: true },
+    ]);
+    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+
+    const profile = makeProfile({ weightKg: 80 });
+    const { result } = renderHook(() =>
+      useHomeData({ uid: "u1" }, profile, [], "kg")
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.todayRunCals).toBe(0);
+  });
+
+  it("still counts legacy runs (no isInvalid / savedAnyway fields)", async () => {
+    // Pre-PR-#480 docs have neither flag. The eligibility predicate
+    // treats missing flags as not-flagged so historic runs stay in
+    // the aggregate; the distance/duration floors (50m + 30s) still
+    // gate them. Regression guard for the missing-field branch.
+    const runsSnap = makeSnap([{ distance: 5000, duration: 1800 }]);
+    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+
+    const profile = makeProfile({ weightKg: 80 });
+    const { result } = renderHook(() =>
+      useHomeData({ uid: "u1" }, profile, [], "kg")
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
     expect(result.current.todayRunCals).toBe(414);
   });
 
@@ -193,8 +255,12 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("handles partial failures gracefully (Promise.allSettled)", async () => {
+    // P0.5: `duration` is required for the run to pass
+    // isCountableRun's 30s floor. Pre-fix this test only set
+    // distance and still aggregated; after the eligibility filter
+    // landed, missing duration drops the run from the aggregate.
     mockGetDocsWithMealFailure(
-      makeSnap([{ distance: 3000 }]),
+      makeSnap([{ distance: 3000, duration: 1200 }]),
       EMPTY_SNAP
     );
 

@@ -15,6 +15,7 @@ import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { computeEffectiveBonus } from "@/lib/effectiveTargets";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
+import { isCountableRun } from "@/lib/runGuards";
 import {
   useDailyTargets,
   type DailyTargets,
@@ -134,14 +135,29 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       limit(DOC_LIMIT),
     );
     const unsubRuns = onSnapshot(runsQ, (snap) => {
-      const rows: RunRow[] = snap.docs.map((d) => {
-        const raw = d.data() as { completedAt?: unknown; calories?: unknown };
-        const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
-        return {
-          completedAt: ts,
-          calories: typeof raw.calories === "number" ? raw.calories : 0,
-        };
-      });
+      // P0.5: drop non-countable runs at the snapshot stage so the
+      // downstream `actualRunBurn` reduce can stay simple. A
+      // saved-anyway "too-fast" 20km / 0:08 run with high calories
+      // would otherwise lower the effective calorie target — telling
+      // the user to eat less than they should based on a misclick.
+      const rows: RunRow[] = snap.docs
+        .map((d) => {
+          const raw = d.data() as {
+            completedAt?: unknown;
+            calories?: unknown;
+            isInvalid?: boolean;
+            savedAnyway?: boolean;
+            distance?: number;
+            duration?: number;
+          };
+          if (!isCountableRun(raw)) return null;
+          const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
+          return {
+            completedAt: ts,
+            calories: typeof raw.calories === "number" ? raw.calories : 0,
+          };
+        })
+        .filter((row): row is RunRow => row !== null);
       setRuns(rows);
       setRunsLoaded(true);
     });
