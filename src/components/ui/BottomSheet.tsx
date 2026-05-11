@@ -91,12 +91,23 @@ export function BottomSheet({
           )}
         >
           {hideHeader ? (
-            // When the caller hides the visible header strip, we
-            // still emit a visually-hidden Drawer.Title for the
-            // aria-labelledby wiring so SRs always have a name.
-            title ? (
-              <Drawer.Title className="sr-only">{title}</Drawer.Title>
-            ) : null
+            // When the caller hides the visible header strip we
+            // still emit visually-hidden Drawer.Title + Drawer.
+            // Description elements for the aria-labelledby and
+            // aria-describedby wiring vaul does automatically. Both
+            // are sr-only so they have zero visual impact but
+            // screen readers always get an accessible name AND, if
+            // the caller supplied one, a description.
+            <>
+              {title ? (
+                <Drawer.Title className="sr-only">{title}</Drawer.Title>
+              ) : null}
+              {description ? (
+                <Drawer.Description className="sr-only">
+                  {description}
+                </Drawer.Description>
+              ) : null}
+            </>
           ) : (
             <>
               {/* Drag handle — vaul styles this as the drag affordance

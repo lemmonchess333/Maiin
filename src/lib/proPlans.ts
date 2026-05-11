@@ -2,23 +2,28 @@
  * Pro pricing — single source of truth.
  *
  * Pre-recovery the price/period/badge metadata was duplicated across
- * `src/pages/Upgrade.tsx` (the marketing page) and
- * `src/components/ProModal.tsx` (the bottom-sheet checkout). Either
- * surface drifting from the other risked showing one price and
- * checking the user out at another. This module centralises the
- * display side; price IDs for the actual checkout call live in
+ * `src/pages/Upgrade.tsx` (the marketing page),
+ * `src/components/ProModal.tsx` (the bottom-sheet checkout), and
+ * `src/lib/subscription.ts` (the `pricing` object). Either surface
+ * drifting from the other risked showing one price and checking the
+ * user out at another. This module is the single display-side
+ * source of truth — price IDs for the actual checkout call live in
  * `src/lib/purchaseProvider.ts` (Stripe env vars / Apple IAP product
- * IDs) — those are payment-platform identifiers and stay there.
+ * IDs), which are payment-platform identifiers and stay there.
+ *
+ * `PlanId` lives here too so `purchaseProvider.ts` imports it rather
+ * than redefining the same string-literal union.
  *
  * Surfaces using this config:
- *   - src/pages/Upgrade.tsx                (marketing page)
+ *   - src/pages/Upgrade.tsx                (full pricing page)
  *   - src/components/ProModal.tsx          (gated-feature paywall)
+ *   - src/components/AdaptiveSummary.tsx   (locked-Pro pricing line)
+ *   - src/hooks/useProCheckout.ts          (shared checkout hook)
  *
  * If you change a price here, update the matching Stripe price /
- * Apple IAP product to match. The Pro tier audit pass also pings
- * App Store Connect because the IAP product subscription metadata
- * is what the App Store renders on the purchase confirmation sheet —
- * those have to agree with these strings.
+ * Apple IAP product to match. App Store Connect renders the
+ * subscription metadata it has on file on the confirm sheet — those
+ * have to agree with these strings.
  */
 
 export type PlanId = "monthly" | "yearly";
@@ -82,8 +87,37 @@ export function getCheckoutCtaLabel(id: PlanId): string {
   return `Start Pro — ${plan.price}/${plan.shortPeriod}`;
 }
 
-/** Disclosure copy ("Renews monthly..." / "Renews annually..."). */
-export function getRenewalDisclosure(id: PlanId): string {
+/**
+ * Disclosure copy below the CTA. Platform-aware:
+ *
+ *   - web / android (default): "Renews <freq>. Cancel anytime."
+ *   - ios:                     "Auto-renews <freq>. Manage or cancel
+ *                              in your Apple ID subscriptions."
+ *
+ * The iOS variant is closer to Apple's expected App Review wording
+ * because cancellation flows through Apple ID settings rather than
+ * an in-app billing portal. App Store Guideline 3.1.2(c) requires
+ * accurate auto-renew copy.
+ */
+export function getRenewalDisclosure(
+  id: PlanId,
+  platform: "web" | "ios" | "android" = "web",
+): string {
   const plan = getPlan(id);
+  if (platform === "ios") {
+    return `Auto-renews ${plan.billingFrequency}. Manage or cancel in your Apple ID subscriptions.`;
+  }
   return `Renews ${plan.billingFrequency}. Cancel anytime.`;
+}
+
+/**
+ * Short inline price summary used on locked-Pro cards that don't
+ * have room for a full plan tile (e.g. AdaptiveSummary). Renders as
+ * "£3.99/month or £34.99/year". Pulls from PRO_PLANS so the locked
+ * copy can't drift from the actual checkout prices.
+ */
+export function getInlinePriceSummary(): string {
+  const monthly = getPlan("monthly");
+  const yearly = getPlan("yearly");
+  return `${monthly.price}${monthly.period} or ${yearly.price}${yearly.period}`;
 }

@@ -3,14 +3,13 @@ import { useMemo } from "react";
 import { useAuth } from "./auth";
 
 /* ================================
-   PRICING & FEATURE ACCESS (from main)
+   FEATURE ACCESS
 ================================ */
-
-export const pricing = {
-  monthly: 3.99,
-  yearly: 34.99,
-  currency: "GBP",
-};
+//
+// Display pricing was previously duplicated here as a `pricing`
+// object. Pricing now lives in `src/lib/proPlans.ts` — the single
+// source of truth that ProModal, Upgrade.tsx, and AdaptiveSummary
+// all consume. This module owns tier / trial / access logic only.
 
 export const SCAN_LIMITS = {
   free: 10,

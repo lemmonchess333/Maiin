@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSubscriptionInfo, pricing, featureAccess } from '../subscription';
+import { getSubscriptionInfo, featureAccess } from '../subscription';
 import type { UserProfile } from '../auth';
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -149,13 +149,11 @@ describe('getSubscriptionInfo', () => {
   });
 });
 
-describe('pricing constants', () => {
-  it('has expected shape', () => {
-    expect(pricing.monthly).toBeGreaterThan(0);
-    expect(pricing.yearly).toBeGreaterThan(0);
-    expect(pricing.currency).toBe('GBP');
-  });
-});
+// Display pricing moved to src/lib/proPlans.ts in the paywall
+// architecture unification; its shape is now pinned by
+// proPlans.test.ts (PRO_PLANS shape + getCheckoutCtaLabel +
+// getRenewalDisclosure + getInlinePriceSummary). subscription.ts no
+// longer owns pricing — only tier / trial / feature-access logic.
 
 describe('featureAccess', () => {
   it('free tier lacks pro features', () => {
