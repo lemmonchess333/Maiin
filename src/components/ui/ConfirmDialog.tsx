@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Button } from "./Button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -60,22 +61,20 @@ export function ConfirmDialog({
           </p>
         )}
         <div className="flex gap-2 pt-1">
-          <button
+          <Button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm active:scale-[0.97] transition-transform"
+            variant="secondary"
+            className="flex-1"
           >
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onConfirm}
-            className={`flex-1 py-3 rounded-xl font-medium text-sm active:scale-[0.97] transition-transform ${
-              destructive
-                ? "bg-destructive text-destructive-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
+            variant={destructive ? "destructive" : "primary"}
+            className="flex-1"
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </>

@@ -8,6 +8,7 @@ import FollowButton from '../components/social/FollowButton';
 import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
 import { Skeleton } from '../components/LoadingSkeleton';
+import { Button } from '../components/ui/Button';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
 import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
@@ -174,13 +175,15 @@ export default function UserProfile() {
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
       {/* Back header */}
       <motion.div variants={itemVariant}>
-      <button
+      <Button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors -mb-2"
+        variant="ghost"
+        size="sm"
+        leftIcon={<ChevronLeft className="w-4 h-4" />}
+        className="-ml-2 text-muted-foreground hover:text-foreground"
       >
-        <ChevronLeft className="w-4 h-4" />
         Back
-      </button>
+      </Button>
       </motion.div>
 
       <motion.div variants={itemVariant} className="flex items-center gap-4">

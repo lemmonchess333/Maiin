@@ -1,0 +1,173 @@
+/**
+ * Tropos design-system Button primitive.
+ *
+ * Sprint 1 — single source of truth for app buttons. Replaces ~60
+ * hand-rolled Tailwind class strings across the app whose
+ * active:scale values, rounded radii, padding, focus rings, and
+ * minimum touch targets had drifted apart.
+ *
+ * Variants:
+ *   - primary     filled brand colour (uses --primary-strong for AA contrast)
+ *   - secondary   tinted on muted surface
+ *   - destructive filled --destructive (Sprint 0 token)
+ *   - ghost       transparent with hover tint
+ *   - outline     transparent with border
+ *
+ * Sizes:
+ *   - sm   36px tall — used for inline / compact contexts (chips,
+ *          inline filters). NOTE: under the 44px touch-target floor.
+ *          Only acceptable for non-critical actions or desktop-first
+ *          layouts; the default is `md` and that's what most call
+ *          sites should use.
+ *   - md   44px tall — DEFAULT. Meets iOS HIG 44pt touch-target rule.
+ *   - lg   52px tall — for hero CTAs.
+ *
+ * Loading state: pass `loading` to swap the content for a Loader2
+ * spinner. Sets `aria-busy="true"` and `disabled` together; the
+ * spinner is `aria-hidden` so screen readers announce the parent
+ * button's busy state, not the spinner itself.
+ *
+ * Icon-only buttons: use the dedicated `<IconButton>` component
+ * (./IconButton.tsx). It enforces `aria-label` at compile time, sets
+ * a square 44px touch target by default, and applies the same
+ * variant/loading semantics.
+ *
+ * Run-screen control surfaces (RunBottomSheet pause/stop/lock) are
+ * intentionally NOT migrated to this primitive yet — they need a
+ * dedicated `<RunControlButton>` with larger touch targets, less
+ * playful animation, and locked-state semantics. Tracked for a later
+ * sprint.
+ */
+import { forwardRef } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "destructive"
+  | "ghost"
+  | "outline";
+
+export type ButtonSize = "sm" | "md" | "lg";
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+}
+
+const BASE_CLASSES = [
+  // layout
+  "inline-flex items-center justify-center",
+  // shape + typography
+  "rounded-xl font-semibold select-none",
+  // press feedback (canonical 0.97 from the design system)
+  "active:scale-[0.97] transition-transform duration-150",
+  // disabled state
+  "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+  // focus ring — focus-visible so mouse clicks don't draw the ring
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+].join(" ");
+
+/**
+ * Variant → classes. `bg-destructive` and `text-destructive-foreground`
+ * resolve via the Sprint 0 @theme tokens; this file is the first
+ * downstream consumer of that contract. If those tokens regress, the
+ * theme-contract test (src/lib/__tests__/themeContract.test.ts)
+ * catches it before this component renders the wrong colour.
+ *
+ * `bg-primary-strong` is used for the primary variant rather than
+ * `bg-primary` because the lighter --primary brand purple is
+ * borderline for white text contrast. The strong variant is the
+ * AA-clearing CTA filled colour.
+ */
+const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  primary:
+    "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
+  secondary: "bg-muted text-foreground hover:bg-muted/80",
+  destructive:
+    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  ghost: "bg-transparent text-foreground hover:bg-muted",
+  outline:
+    "bg-transparent text-foreground border border-border hover:bg-muted",
+};
+
+/**
+ * Size → height + padding + text + icon gap. `md` is the canonical
+ * default and meets the 44px touch-target floor without padding tweaks.
+ */
+const SIZE_CLASSES: Record<ButtonSize, string> = {
+  sm: "min-h-[36px] px-3 text-xs gap-1.5",
+  md: "min-h-[44px] px-4 text-sm gap-2",
+  lg: "min-h-[52px] px-5 text-base gap-2",
+};
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = "primary",
+    size = "md",
+    loading = false,
+    fullWidth = false,
+    disabled,
+    leftIcon,
+    rightIcon,
+    children,
+    className,
+    type,
+    ...rest
+  },
+  ref,
+) {
+  const isInteractive = !disabled && !loading;
+  return (
+    <button
+      ref={ref}
+      // Default to type="button" so buttons inside forms don't
+      // accidentally submit. Callers who want submit behaviour pass
+      // type="submit" explicitly.
+      type={type ?? "button"}
+      disabled={!isInteractive}
+      aria-busy={loading || undefined}
+      className={cn(
+        BASE_CLASSES,
+        VARIANT_CLASSES[variant],
+        SIZE_CLASSES[size],
+        fullWidth && "w-full",
+        className,
+      )}
+      {...rest}
+    >
+      {loading ? (
+        <Loader2
+          aria-hidden="true"
+          className={cn(
+            "animate-spin",
+            size === "sm" ? "w-3.5 h-3.5" : size === "lg" ? "w-5 h-5" : "w-4 h-4",
+          )}
+        />
+      ) : (
+        <>
+          {leftIcon ? (
+            <span aria-hidden="true" className="inline-flex shrink-0">
+              {leftIcon}
+            </span>
+          ) : null}
+          {children}
+          {rightIcon ? (
+            <span aria-hidden="true" className="inline-flex shrink-0">
+              {rightIcon}
+            </span>
+          ) : null}
+        </>
+      )}
+    </button>
+  );
+});
+
+export { Button };
+export default Button;

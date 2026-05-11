@@ -2,6 +2,7 @@ import { forwardRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IconButton } from "@/components/ui/IconButton";
 import type { Goal, SplitType } from "@/features/program/programTypes";
 import { splitLabel } from "@/features/program/programEngine";
 
@@ -83,9 +84,13 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 <button onClick={onClose} className="text-sm font-medium text-primary">
                   Done
                 </button>
-                <button onClick={onClose} className="p-1 rounded hover:bg-muted" aria-label="Close settings">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
+                <IconButton
+                  onClick={onClose}
+                  aria-label="Close settings"
+                  size="sm"
+                  className="text-muted-foreground"
+                  icon={<X />}
+                />
               </div>
             </div>
 
