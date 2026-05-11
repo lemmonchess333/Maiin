@@ -43,11 +43,16 @@ admin.initializeApp();
 const db = admin.firestore();
 const auth = admin.auth();
 
-async function audit() {
-  // Iterate every users/{uid} root in batches of 1000.
+async function auditOrphans() {
+  // Iterate every users/{uid} root.
   const userDocs = await db.collection("users").select().get();
   const orphans = [];
+  let checked = 0;
   for (const doc of userDocs.docs) {
+    checked += 1;
+    if (checked % 100 === 0) {
+      console.error(`auditOrphans: checked ${checked}/${userDocs.size}`);
+    }
     try {
       await auth.getUser(doc.id);
       // Auth exists — not an orphan.
@@ -56,11 +61,11 @@ async function audit() {
         orphans.push(doc.id);
       } else {
         // Surface other errors.
-        console.error(`auth lookup failed for ${doc.id}:`, err);
+        console.error(`auth lookup error for ${doc.id}:`, err.code);
       }
     }
   }
-  return orphans;
+  return { totalUsers: userDocs.size, orphans };
 }
 ```
 
@@ -111,7 +116,7 @@ const formatGuess = (id) => {
 const summary = {
   totalCount: billingSnap.size,
   formatHistogram: {},
-  sampleDocIds: billingSnap.docs.slice(0, 3).map((d) => d.id),
+  sampleDocIds: billingSnap.docs.slice(0, 5).map((d) => d.id),
 };
 for (const doc of billingSnap.docs) {
   const fmt = formatGuess(doc.id);

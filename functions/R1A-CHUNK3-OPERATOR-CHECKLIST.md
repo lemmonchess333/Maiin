@@ -18,6 +18,64 @@ before any Cloud Functions deploy.
 
 ## Gate 1 — Emulator suite must pass with REQUIRE_FIRESTORE_EMULATOR=1
 
+### Prerequisites (install if missing)
+
+The emulator requires the Firebase CLI AND a Java runtime. Install
+both before running the gate command.
+
+**Firebase CLI:**
+
+```bash
+npm install -g firebase-tools
+firebase --version    # confirm install succeeded
+```
+
+If a corporate npm registry blocks the global install, fall back to:
+
+```bash
+npx firebase-tools --version
+```
+
+…and substitute `npx firebase-tools` for `firebase` in every command
+below.
+
+**Java runtime (Firestore + Auth emulators require JDK ≥ 11):**
+
+macOS (Homebrew):
+
+```bash
+brew install openjdk@17
+sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk \
+  /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+java -version    # confirm
+```
+
+Ubuntu/Debian:
+
+```bash
+sudo apt-get update && sudo apt-get install -y openjdk-17-jre-headless
+java -version
+```
+
+Windows:
+
+```powershell
+winget install --id EclipseAdoptium.Temurin.17.JRE
+java -version
+```
+
+If `java -version` reports a version below 17, upgrade — earlier
+versions may work but Firebase's emulator suite is tested against
+modern JDKs and surfaces obscure errors on old JREs.
+
+**One-time emulator binary download** (Firebase CLI downloads binaries
+on first run; pre-warming avoids surprise on the gate command):
+
+```bash
+firebase setup:emulators:firestore
+firebase setup:emulators:auth
+```
+
 ### Command
 
 Run from the repo root:
@@ -230,13 +288,45 @@ In the report-back, include:
 - Node 20 runtime locally (matches the `functions/` runtime).
 - Read access to production Firestore + Auth.
 
-**No writes.** The audit only reads. No deploy required.
+### Read-only safety contract
+
+**The audit script is read-only by construction.** It performs only
+Firestore `.get()` reads and Firebase Auth `.getUser()` lookups. It
+does NOT call `.set()`, `.update()`, `.delete()`, `.deleteUser()`,
+or any other write/destructive operation. There is no
+`--really-delete` flag on the audit script.
+
+The `--really-delete` flag belongs to a SEPARATE script —
+`functions/scripts/cleanupHistoricalDeletions.js` — which has not
+yet been written and is not invoked by this gate. The cleanup
+script is a Chunk 3-or-later deliverable; the audit is its
+read-only predecessor.
+
+**Operator safety rules for Gate 3:**
+
+- Run the audit script as written below. Do not modify it to add
+  write operations.
+- Do not pass `--really-delete` to the audit (the flag is unknown
+  to the audit script and would either error or be silently
+  ignored).
+- If you need to test destructive operations, use a separate
+  staging Firestore project — never production.
+
+This matches the read-only behaviour documented in
+`functions/R1A-HISTORICAL-AUDIT.md` §"Audit safety". The two
+documents are intentionally aligned: the historical-audit doc
+describes the discovery + categorisation methodology and the
+scope-decision matrix; this checklist's Gate 3 section reproduces
+the methodology in operator-runbook form.
 
 ### Script (NOT YET IN THE REPO — operator writes locally)
 
 Per `functions/R1A-HISTORICAL-AUDIT.md`, the audit is a small Node
 script the operator runs from their local machine with admin
-credentials. Suggested structure:
+credentials. The script structure below matches the historical-audit
+doc exactly: same discovery method (Auth lookup per `users/{uid}`
+root), same Step 3b tombstone format histogram, same read-only
+behaviour. Suggested structure:
 
 ```js
 // audit-r1a-historical.js (operator-local, not committed)
@@ -301,6 +391,9 @@ async function auditBillingTombstones() {
 Run:
 
 ```bash
+# READ-ONLY. The audit performs no Firestore writes and no Auth
+# deletions. Do not pass --really-delete; that flag belongs to a
+# different (not-yet-written) cleanup script.
 node audit-r1a-historical.js 2>&1 | tee /tmp/r1a-gate-3-output.txt
 ```
 
