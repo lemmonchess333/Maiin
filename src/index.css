@@ -150,8 +150,15 @@ html, body {
 
 body {
   margin: 0;
+  /* Ambient background lives on the body element itself rather than
+     a fixed pseudo-layer. The Codex PR set `background-attachment:
+     fixed` to keep the radial gradients anchored as the page
+     scrolled, but that pattern is a well-known scroll-jank /
+     repaint hazard on mobile Safari and PWA installs (especially
+     with large radial gradients). The visible difference under
+     normal scrolling is minimal, so we drop the fixed attachment
+     in favour of guaranteed smoothness. */
   background: var(--background-ambient, hsl(var(--background)));
-  background-attachment: fixed;
   color: hsl(var(--foreground));
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: var(--ds-text-body);
@@ -216,17 +223,25 @@ button, [role="button"] {
               opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── INPUT & FORM FIELD POLISH ──────────────────────────── */
-input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
-textarea,
-select {
+/* ─── INPUT & FORM FIELD POLISH ──────────────────────────────
+   These rules style "plain" inputs across the app — anything that
+   isn't using the `.ds-input` primitive. `.ds-input` is excluded
+   below so the primitive's larger radius, custom focus ring, and
+   shadow recipe aren't overridden by these globals when both
+   selectors match. The primitive's own definition (in
+   components.css) is tag-qualified to win on specificity even
+   under equal source-order conditions; this exclusion is the
+   belt-and-braces. */
+input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+textarea:not(.ds-input),
+select:not(.ds-input) {
   border-radius: var(--radius);
   transition: border-color var(--ds-transition-fast),
               box-shadow var(--ds-transition-fast);
 }
-input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
-textarea:focus,
-select:focus {
+input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+textarea:not(.ds-input):focus,
+select:not(.ds-input):focus {
   border-color: hsl(var(--primary));
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
   outline: none;

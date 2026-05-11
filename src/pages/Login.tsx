@@ -5,6 +5,15 @@ import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 
+// Pre-recovery this page tracked a single `loading: boolean` shared
+// across the email submit, the Apple button, and the Google button.
+// The Button primitive's loading state only fired on the email
+// submit; Apple/Google merely went disabled with no spinner. That's
+// a polish gap on a conversion-critical surface — we use a single
+// LoadingAction value here so exactly one button shows the spinner
+// and the others stay disabled.
+type LoadingAction = "email" | "google" | "apple" | null;
+
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,12 +21,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
+
+  const isLoading = loadingAction !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setLoadingAction("email");
     try {
       if (isSignUp) {
         await signUp(email, password);
@@ -39,13 +50,13 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleGoogle = async () => {
     setError("");
-    setLoading(true);
+    setLoadingAction("google");
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
@@ -55,13 +66,13 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleApple = async () => {
     setError("");
-    setLoading(true);
+    setLoadingAction("apple");
     try {
       await signInWithApple();
     } catch (err: unknown) {
@@ -71,7 +82,7 @@ export default function Login() {
         setError(message);
       }
     } finally {
-      setLoading(false);
+      setLoadingAction(null);
     }
   };
 
@@ -89,15 +100,26 @@ export default function Login() {
               {isSignUp ? "Create your account" : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Track training, nutrition, and progress in one calm place.
+              Track food, lifting, running, and progress in one place.
             </p>
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form. When there's an error, the form is aria-describedby
+            the error banner so screen-reader users hear the error
+            associated with the form rather than as a free-floating
+            alert. */}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          aria-describedby={error ? "login-error" : undefined}
+        >
           {error && (
-            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive text-sm font-medium">
+            <div
+              id="login-error"
+              role="alert"
+              className="flex items-start gap-2.5 p-3 rounded-xl bg-destructive-bg border border-destructive/15 text-destructive text-sm font-medium"
+            >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
               <span>{error}</span>
             </div>
@@ -106,7 +128,7 @@ export default function Login() {
           <div className="space-y-3">
             <div className="relative">
               <label htmlFor="login-email" className="sr-only">Email address</label>
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <input
                 id="login-email"
                 type="email"
@@ -121,7 +143,7 @@ export default function Login() {
 
             <div className="relative">
               <label htmlFor="login-password" className="sr-only">Password</label>
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
@@ -133,11 +155,17 @@ export default function Login() {
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="ds-input pl-10 pr-12 py-3"
               />
+              {/* size="md" is the iOS HIG 44pt floor — the password
+                  toggle is a standalone control inside the input, so
+                  the IconButton docs' "sm acceptable only when the
+                  parent row provides extra tap area" caveat doesn't
+                  apply here. The input already has pr-12, so 44px
+                  fits without overlapping typed text. */}
               <IconButton
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                size="md"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
                 icon={showPassword ? <EyeOff /> : <Eye />}
               />
             </div>
@@ -145,7 +173,8 @@ export default function Login() {
 
           <Button
             type="submit"
-            loading={loading}
+            loading={loadingAction === "email"}
+            disabled={isLoading && loadingAction !== "email"}
             fullWidth
             size="md"
           >
@@ -164,7 +193,8 @@ export default function Login() {
         <div className="space-y-3">
           <Button
             onClick={handleApple}
-            disabled={loading}
+            loading={loadingAction === "apple"}
+            disabled={isLoading && loadingAction !== "apple"}
             fullWidth
             // Apple brand styling: black-on-white in light mode,
             // white-on-black in dark mode. The foreground/background
@@ -181,7 +211,8 @@ export default function Login() {
 
           <Button
             onClick={handleGoogle}
-            disabled={loading}
+            loading={loadingAction === "google"}
+            disabled={isLoading && loadingAction !== "google"}
             fullWidth
             variant="outline"
           >
@@ -193,6 +224,7 @@ export default function Login() {
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
+            type="button"
             onClick={() => {
               setIsSignUp(!isSignUp);
               setError("");
