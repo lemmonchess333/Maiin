@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Drawer } from "vaul";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -8,6 +7,7 @@ import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
 import { isBodyweightExerciseId } from "@/lib/exercises";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 /**
  * Renders the per-exercise summary with numbers in JetBrains Mono and
@@ -170,18 +170,18 @@ export default function SaveRoutineSheet({
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={handleOpenChange}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none">
-          <div className="mx-auto w-10 h-1 rounded-full bg-border my-3" aria-hidden="true" />
-          <div className="px-5 pb-5 space-y-4">
-            <Drawer.Title className="text-lg font-bold text-foreground">
-              Save as routine
-            </Drawer.Title>
-            <Drawer.Description className="text-xs text-muted-foreground -mt-2">
-              Snapshot of {sourceAuthorName}&apos;s workout. You can run it later from your Programme.
-            </Drawer.Description>
+    // Sprint 3 follow-up sweep: vaul boilerplate replaced with the
+    // shared BottomSheet primitive. Title + description forwarded
+    // via the primitive's props (becomes Drawer.Title /
+    // Drawer.Description internally for the aria-labelledby /
+    // aria-describedby wiring).
+    <BottomSheet
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Save as routine"
+      description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from your Programme.`}
+    >
+      <div className="px-5 pb-5 pt-3 space-y-4">
 
             {/* Name input */}
             <div className="space-y-1.5">
@@ -258,10 +258,8 @@ export default function SaveRoutineSheet({
                   "Save"
                 )}
               </button>
-            </div>
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+        </div>
+      </div>
+    </BottomSheet>
   );
 }

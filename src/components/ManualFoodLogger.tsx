@@ -7,8 +7,8 @@ import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Drawer } from "vaul";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { validateFoodEntry } from "@/lib/foodValidation";
 
 interface FoodEntry {
@@ -131,19 +131,29 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
   return (
     <>
-    <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background border-t border-border max-h-[60vh] flex flex-col">
-          <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
-            {/* Drag handle */}
-            <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
+    {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
+        BottomSheet. Title rendered in children because the bespoke
+        two-line title ("Log a Meal" + "Manual entry" subtitle) doesn't
+        fit the primitive's single-line title strip. hideHeader keeps
+        the drag handle visible but skips the header row; sr-only
+        Drawer.Title preserves aria-labelledby. */}
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title="Log a Meal"
+      hideHeader
+      maxHeight="max-h-[60vh]"
+      className="border-t border-border"
+    >
+      <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
 
-            {/* Title */}
-            <div className="mb-5">
-              <p className="text-lg font-bold text-foreground">Log a Meal</p>
-              <p className="text-xs text-muted-foreground">Manual entry</p>
-            </div>
+        {/* Title */}
+        <div className="mb-5">
+          <p className="text-lg font-bold text-foreground">Log a Meal</p>
+          <p className="text-xs text-muted-foreground">Manual entry</p>
+        </div>
 
             {/* Meal name input */}
             <input
@@ -220,9 +230,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               </motion.button>
             </AnimatePresence>
           </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+    </BottomSheet>
     {/* Suspicious-but-possible high-value override prompt. Cancel
         leaves the form intact so the user can adjust; Save anyway
         commits the entry as typed. Negative / NaN values are

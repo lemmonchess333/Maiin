@@ -1,6 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { Camera, Loader2, Trash2, X } from "lucide-react";
-import { Drawer } from "vaul";
+import { Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { UserProfile } from "@/lib/auth";
 import { useAuth } from "@/lib/auth";
@@ -8,6 +7,8 @@ import { processProfilePhoto, ProfilePhotoProcessingError } from "@/lib/profileP
 import { uploadProfilePhoto, removeProfilePhoto } from "@/lib/profilePhotoUpload";
 import { haptic } from "@/lib/haptic";
 import Avatar from "@/components/Avatar";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Spinner } from "@/components/ui/Spinner";
 
 /**
  * Settings header avatar + entry point for the profile-photo upload
@@ -146,74 +147,60 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         onChange={handleFile}
       />
 
-      <Drawer.Root open={open} onOpenChange={(next) => !busy && setOpen(next)}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none">
-            <div className="mx-auto w-10 h-1 rounded-full bg-border my-3" aria-hidden="true" />
-            <div className="px-5 pb-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <Drawer.Title className="text-lg font-bold text-foreground">
-                  Profile photo
-                </Drawer.Title>
-                <button
-                  type="button"
-                  onClick={() => !busy && setOpen(false)}
-                  aria-label="Close"
-                  disabled={!!busy}
-                  className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-50"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <Drawer.Description className="text-[13px] text-muted-foreground -mt-2">
-                Visible to other Tropos users on your activities, comments and the
-                leaderboard. Change or remove it anytime.
-              </Drawer.Description>
+      {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with the
+          shared BottomSheet primitive. The bespoke X close button is
+          gone — vaul/BottomSheet handles dismissal via drag, backdrop,
+          and escape (the original X duplicated those affordances).
+          Spinner primitive replaces the two inline Loader2 spinners. */}
+      <BottomSheet
+        open={open}
+        onOpenChange={(next) => !busy && setOpen(next)}
+        title="Profile photo"
+        description="Visible to other Tropos users on your activities, comments and the leaderboard. Change or remove it anytime."
+        dismissible={!busy}
+      >
+        <div className="px-5 pb-6 pt-3 space-y-4">
+          <button
+            type="button"
+            onClick={handlePick}
+            disabled={!!busy}
+            className="w-full py-3 rounded-xl bg-primary-strong text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
+          >
+            {busy === "uploading" ? (
+              <>
+                <Spinner size="sm" variant="inverse" label="Uploading photo" />
+                Uploading…
+              </>
+            ) : (
+              <>
+                <Camera className="w-4 h-4" />
+                {hasPhoto ? "Choose a new photo" : "Choose a photo"}
+              </>
+            )}
+          </button>
 
-              <button
-                type="button"
-                onClick={handlePick}
-                disabled={!!busy}
-                className="w-full py-3 rounded-xl bg-primary-strong text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
-              >
-                {busy === "uploading" ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading…
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4" />
-                    {hasPhoto ? "Choose a new photo" : "Choose a photo"}
-                  </>
-                )}
-              </button>
-
-              {hasPhoto && (
-                <button
-                  type="button"
-                  onClick={handleRemove}
-                  disabled={!!busy}
-                  className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
-                >
-                  {busy === "removing" ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Removing…
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      Remove photo
-                    </>
-                  )}
-                </button>
+          {hasPhoto && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={!!busy}
+              className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
+            >
+              {busy === "removing" ? (
+                <>
+                  <Spinner size="sm" variant="muted" label="Removing photo" />
+                  Removing…
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  Remove photo
+                </>
               )}
-            </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+            </button>
+          )}
+        </div>
+      </BottomSheet>
     </>
   );
 }

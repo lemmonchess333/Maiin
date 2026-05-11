@@ -50,6 +50,13 @@ interface BottomSheetProps {
   /** Override the Content element's className for bespoke layouts
    *  (e.g. dark surfaces). Merged with the defaults via cn(). */
   className?: string;
+  /** Override the Overlay element's className. Used when a sheet
+   *  needs to layer above other sheets/drawers (e.g. a
+   *  confirmation sheet opened from inside an active workout's
+   *  exercise demo drawer). Default z-index is z-40 for Overlay
+   *  and z-50 for Content; override both via this prop + className
+   *  to lift the whole sheet above the default stack. */
+  overlayClassName?: string;
   children: ReactNode;
 }
 
@@ -62,6 +69,7 @@ export function BottomSheet({
   dismissible = true,
   hideHeader = false,
   className,
+  overlayClassName,
   children,
 }: BottomSheetProps) {
   return (
@@ -71,7 +79,9 @@ export function BottomSheet({
       dismissible={dismissible}
     >
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Drawer.Overlay
+          className={cn("fixed inset-0 bg-black/50 z-40", overlayClassName)}
+        />
         <Drawer.Content
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp, ChevronRight, Check, Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Drawer } from 'vaul';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
@@ -734,10 +734,20 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
           'manual' is deliberately excluded — that activityType is
           set programmatically by the GPS-fallback "Track without
           GPS" path, never picked by the user. */}
-      <Drawer.Root open={showChooser} onOpenChange={setShowChooser}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none max-h-[85vh] flex flex-col">
+      {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
+          BottomSheet primitive. Title rendered inside children
+          because the header uses a bespoke border-b border-border/40
+          and pb-3 spacing that the primitive's standard
+          border-border/30 header doesn't match. hideHeader keeps the
+          drag handle / sr-only Drawer.Title for aria-labelledby. */}
+      <BottomSheet
+        open={showChooser}
+        onOpenChange={setShowChooser}
+        title="Choose run type"
+        description="Pick how you want to record this run."
+        hideHeader
+        className="border-t border-border"
+      >
             {/* Header is shrink-0 with a faint bottom border so the
                 visual transition between fixed header and scrolling
                 content is explicit. The pb-3 below the title plus
@@ -747,8 +757,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                 the title on small viewports. */}
             <div className="px-5 pt-3 pb-3 shrink-0 border-b border-border/40">
               <div className="mx-auto w-10 h-1 rounded-full bg-muted-foreground/20 mb-3" aria-hidden="true" />
-              <Drawer.Title className="text-lg font-bold text-foreground">Choose run type</Drawer.Title>
-              <Drawer.Description className="sr-only">Pick how you want to record this run.</Drawer.Description>
+              <h2 className="text-lg font-bold text-foreground">Choose run type</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pt-3 pb-6 space-y-4">
               {(['outdoor', 'other'] as const).map((group) => {
@@ -793,9 +802,7 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
                 );
               })}
             </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+      </BottomSheet>
     </div>
   );
 }
