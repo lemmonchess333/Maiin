@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { Drawer } from 'vaul';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -10,6 +9,7 @@ import type { DocumentSnapshot } from 'firebase/firestore';
 import BlockAwareAvatar from './BlockAwareAvatar';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 
 interface Comment {
   id: string;
@@ -96,24 +96,20 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[70vh] flex flex-col bg-background safe-area-pb">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-10 h-1 rounded-full bg-border" />
-          </div>
-
-          {/* Header */}
-          <div className="px-4 pb-3 border-b border-border/30">
-            <Drawer.Title className="text-base font-semibold text-foreground">
-              Comments{commentCount > 0 ? ` (${commentCount})` : ''}
-            </Drawer.Title>
-          </div>
-
-          {/* Comment list */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    // Sprint 3: vaul boilerplate (Root + Portal + Overlay + Content
+    // + drag handle + Title strip) replaced with the shared
+    // <BottomSheet> primitive. Behaviour is identical — vaul still
+    // handles focus trap, escape, backdrop dismiss, body scroll
+    // lock; the primitive just removes ~10 lines of duplicate
+    // markup and pins the standard 70vh cap via maxHeight.
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Comments${commentCount > 0 ? ` (${commentCount})` : ''}`}
+      maxHeight="max-h-[70vh]"
+    >
+      {/* Comment list */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {comments.length === 0 && (
               <div className="text-center py-8 space-y-1.5">
                 <p className="text-sm font-medium text-foreground">No comments yet</p>
@@ -202,8 +198,6 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
               </button>
             </div>
           </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+    </BottomSheet>
   );
 }

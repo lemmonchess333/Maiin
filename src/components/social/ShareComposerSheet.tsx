@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Drawer } from "vaul";
 import { Users, Globe, EyeOff, Trophy } from "lucide-react";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/lib/auth";
@@ -104,17 +104,17 @@ export default function ShareComposerSheet() {
   };
 
   return (
-    <Drawer.Root open={state.open} onOpenChange={dismiss}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none">
-          <div className="mx-auto w-10 h-1 rounded-full bg-border my-3" aria-hidden="true" />
-          <div className="px-5 pb-5 space-y-4">
-            <div>
-              <Drawer.Title className="text-lg font-bold text-foreground">
-                {TITLE[state.type]}
-              </Drawer.Title>
-            </div>
+    // Sprint 3: vaul boilerplate replaced with the shared <BottomSheet>
+    // primitive. The bespoke text-lg-bold title styling pre-Sprint-3
+    // was design-system drift — the standard sheet title is
+    // text-base-semibold and that's what we render now, matching
+    // every other sheet in the app.
+    <BottomSheet
+      open={state.open}
+      onOpenChange={dismiss}
+      title={TITLE[state.type]}
+    >
+      <div className="px-5 pb-5 pt-3 space-y-4">
 
             {/* Activity preview */}
             <div className="rounded-xl bg-muted/50 px-3.5 py-3">
@@ -196,14 +196,12 @@ export default function ShareComposerSheet() {
               </span>
             </label>
 
-            {!isOnline && (
-              <p className="text-[11px] text-muted-foreground text-center">
-                You&apos;re offline — your post will be queued and shared when you&apos;re back online.
-              </p>
-            )}
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+        {!isOnline && (
+          <p className="text-[11px] text-muted-foreground text-center">
+            You&apos;re offline — your post will be queued and shared when you&apos;re back online.
+          </p>
+        )}
+      </div>
+    </BottomSheet>
   );
 }
