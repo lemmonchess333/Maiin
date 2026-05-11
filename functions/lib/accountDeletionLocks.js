@@ -32,7 +32,13 @@
  */
 "use strict";
 
-const functions = require("firebase-functions");
+// firebase-functions is loaded lazily inside wrapAsHttpsError() so this
+// module is importable from contexts that don't have the functions
+// runtime installed (e.g. vitest unit tests in src/lib/__tests__ that
+// only exercise recordPaymentEventPostDeletion / shouldSystemWriteProceed
+// against a fake Firestore). The lazy import keeps the HttpsError
+// conversion available to real callable wrappers without forcing
+// every consumer to provide firebase-functions.
 const status = require("./accountDeletionStatus");
 
 /**
@@ -42,6 +48,7 @@ const status = require("./accountDeletionStatus");
  */
 function wrapAsHttpsError(err) {
   if (!err || !err.errorCode) return err;
+  const functions = require("firebase-functions");
   return new functions.https.HttpsError(
     err.code || "failed-precondition",
     err.message,
@@ -105,12 +112,28 @@ async function shouldSystemWriteProceed(db, uid, reason) {
  * for a deleting / tombstoned uid. Strict allowlist enforced via
  * assertPaymentEventShape; assertNoForbiddenFields is the defence-in-depth.
  *
+ * Idempotency contract (Blocker 11):
+ *   - Document ID is deterministic: `{provider}_{providerEventId}`.
+ *     - Stripe: event.id (from the webhook envelope)
+ *     - Apple: notificationUUID (from ASSNv2 envelope)
+ *   - Retries of the same provider event (Cloud Functions retry,
+ *     provider retry storm) write to the same doc and overwrite
+ *     idempotently — no unbounded duplicate insertion.
+ *   - .set() with merge: false so a second arrival cleanly replaces
+ *     the first (occurredAt updates to the latest, but the
+ *     hashed-uid-prefix and action remain stable).
+ *   - Fallback when providerEventId is missing: composite key
+ *     `{provider}_{externalTxnId}_{eventType}` with a console.warn.
+ *     This still survives webhook retries but can collide on
+ *     legitimate state changes, which is why we WARN rather than
+ *     silently accept.
+ *
  * Callers should pass the raw uid; this helper hashes it into the
- * 8-char prefix for the operator-reviewable log so the raw uid is not
- * persisted on the public-ish event log.
+ * 8-char prefix for the operator-reviewable log so the raw uid is
+ * not persisted on the public-ish event log.
  *
  * @param db Admin SDK Firestore
- * @param event { provider, externalTxnId, eventType, uid }
+ * @param event { provider, externalTxnId, providerEventId, eventType, uid }
  */
 async function recordPaymentEventPostDeletion(db, event) {
   const minimisation = require("./accountDeletionMinimisation");
@@ -123,7 +146,20 @@ async function recordPaymentEventPostDeletion(db, event) {
     action: "logged",
   };
   minimisation.assertPaymentEventShape(record);
-  await db.collection("paymentEventsPostDeletion").add(record);
+  // Deterministic doc ID — survives webhook retries + Cloud Functions
+  // retries. Provider-native event IDs are the primary key; the
+  // fallback only triggers if the caller couldn't extract one.
+  let docId;
+  if (event.providerEventId && typeof event.providerEventId === "string") {
+    docId = `${event.provider}_${event.providerEventId}`;
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[R1A] paymentEventsPostDeletion: providerEventId missing for ${event.provider}/${event.eventType}, falling back to composite key`,
+    );
+    docId = `${event.provider}_${event.externalTxnId}_${event.eventType}`;
+  }
+  await db.collection("paymentEventsPostDeletion").doc(docId).set(record);
 }
 
 module.exports = {

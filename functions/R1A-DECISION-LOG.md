@@ -249,6 +249,56 @@ is small-N operator-driven cleanup, not bulk.
 
 ---
 
+## 9. Deployment sequencing — dormant scaffolding vs exposed deletion
+
+**Date:** 2026-05-11  ·  **Status:** Decided
+
+**Question.** In what order do rules, functions, and client deletion UI
+deploy, and what counts as "safe to ship"?
+
+**Decision.** Rules and functions can deploy independently AS DORMANT
+SCAFFOLDING. The deletion entrypoint is "exposed" only when the
+client deletion UI ships AND the executor is in production. Until
+then, function code is dormant — no callable can be invoked because
+the client doesn't expose it; the rules write-freeze evaluates against
+an absent `accountDeletionRequests/{uid}` doc and acts as a no-op.
+
+**Concrete order.**
+1. Deploy functions (lock helpers, system-writer guards, payment
+   webhook idempotency). Dormant — no client invokes deleteMyAccount.
+2. Deploy rules (write-freeze + operational collection deny). Dormant
+   — no `accountDeletionRequests` doc exists so freeze is a no-op.
+3. Deploy Firestore indexes for collectionGroup + documentId queries
+   (Chunk 3 prerequisite).
+4. Enable TTL policies for `accountDeletionRequests.cleanupAfter`
+   (30d), `deletedAccounts.expiresAt` (90d),
+   `deletedBillingIdentities.expiresAt` (13mo),
+   `paymentEventsPostDeletion.cleanupAfter` (90d post-acknowledgement).
+5. Run staging end-to-end smoke test with seeded user.
+6. Deploy Chunk 3 executor code AND Chunk 4 client UI in the same
+   release window — this is the moment the deletion entrypoint is
+   exposed.
+7. Production smoke test on a real test account.
+8. Open to general users.
+
+**Wording correction from Chunk 2.** The Chunk 2 report's "functions
+first, then rules" sentence is correct only in the dormant phase. It
+must NOT be read as "functions-first is safe once deletion can be
+invoked." Once the client exposes deleteMyAccount and the executor
+runs in production, functions-without-rules is unsafe: a callable
+invocation could start a deletion that doesn't get write-freeze
+protection. The hard rule:
+
+- Steps 1-2 (functions, rules) can ship in any order as dormant
+  scaffolding.
+- Steps 3-6 must complete before exposing the deletion entrypoint.
+- Once exposed, rules + functions stay deployed together.
+
+**Revisit conditions.** None. This ordering applies for the lifetime
+of the deletion subsystem.
+
+---
+
 ## 8. testCoverageStatus enforcement
 
 **Date:** 2026-05-11  ·  **Status:** Pending — Chunk 3 prerequisite

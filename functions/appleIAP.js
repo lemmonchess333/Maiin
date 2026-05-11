@@ -268,6 +268,7 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
       await accountDeletionLocks.recordPaymentEventPostDeletion(admin.firestore(), {
         provider: "apple",
         externalTxnId: originalTransactionId,
+        providerEventId: payload.notificationUUID, // Apple-native idempotency key
         eventType: notificationType,
         uid,
       });

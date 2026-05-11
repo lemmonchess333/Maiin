@@ -832,6 +832,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
           await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
             provider: "stripe",
             externalTxnId: session.id,
+            providerEventId: event.id, // Stripe-native idempotency key
             eventType: "checkout.session.completed",
             uid: firebaseUid,
           });
@@ -874,6 +875,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
           await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
             provider: "stripe",
             externalTxnId: subscription.id,
+            providerEventId: event.id,
             eventType: "customer.subscription.updated",
             uid: userDoc.id,
           });
@@ -914,6 +916,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
           await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
             provider: "stripe",
             externalTxnId: subscription.id,
+            providerEventId: event.id,
             eventType: "customer.subscription.deleted",
             uid: userDoc.id,
           });
@@ -1189,12 +1192,22 @@ exports.onWorkoutCreated = functions.firestore
   .document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
-    // R1A-Deletion: system-writer guard. A late offline-queue workout
-    // write AFTER account deletion would otherwise recreate users/{uid}
-    // with lastActiveAt + sync challenges. Tombstone check fires before
-    // every per-uid write below.
+    // R1A-Deletion: system-writer guard + compensating delete.
+    // Triggers fire AFTER the source write commits — they cannot
+    // pre-block the original write. Pattern per Blocker 6 trigger
+    // semantics: if the user is tombstoned or mid-deletion, delete
+    // the just-written source doc as defence-in-depth and skip all
+    // downstream writes (lastActiveAt, challenge syncs, performance).
+    // Chunk 3's post-cleanup verification also sweeps these paths;
+    // compensating delete shrinks the orphan-doc window from "until
+    // next sweep" to "trigger latency".
     if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onWorkoutCreated"))) {
-      return; // skip: user is tombstoned or mid-deletion
+      try {
+        await snap.ref.delete();
+      } catch (err) {
+        console.warn(`onWorkoutCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+      }
+      return;
     }
     try {
       const data = snap.data();
@@ -1247,10 +1260,16 @@ exports.onRunCreated = functions.firestore
   .document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
-    // R1A-Deletion: system-writer guard. Late offline-queue run write
-    // post-deletion would otherwise recreate users/{uid} and bump
-    // challenges/performance. Tombstone check below blocks recreation.
+    // R1A-Deletion: system-writer guard + compensating delete. Same
+    // Blocker 6 trigger pattern as onWorkoutCreated — delete the
+    // source run doc and skip downstream writes if the user is
+    // tombstoned/mid-deletion.
     if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onRunCreated"))) {
+      try {
+        await snap.ref.delete();
+      } catch (err) {
+        console.warn(`onRunCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+      }
       return;
     }
     try {
@@ -1462,6 +1481,17 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
           for (const memberDoc of membersSnap.docs) {
             const uid = memberDoc.id;
             const memberData = memberDoc.data();
+            // R1A-Deletion: per-UID tombstone guard inside the iteration.
+            // Re-embedding a deleted user in the crew leaderboard array
+            // would surface stale displayName + uid to other crew
+            // members. Skipping the member here keeps them out of the
+            // rebuilt top-N. Chunk 3's crewMemberships cleanup will
+            // remove the member doc itself; this guard handles the
+            // window between deletion-status flip and member-doc
+            // removal.
+            if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "crewWeeklyLeaderboardRollup"))) {
+              continue;
+            }
             try {
               const totals = await _computeMemberWeekTotals(uid, weekStartTs, weekStartKey);
               standings.push({
