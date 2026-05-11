@@ -44,7 +44,6 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
 import {
-  collection,
   collectionGroup,
   doc,
   query,
