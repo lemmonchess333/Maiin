@@ -250,13 +250,24 @@ select.ds-input:focus {
    reachable rather than getting clipped.
    Padding uses `calc(safe-area + 1rem)` instead of
    `max(1rem, safe-area)` so devices with a notch get extra
-   breathing room above the card, not just the bare safe-area inset. */
+   breathing room above the card, not just the bare safe-area inset.
+
+   Ambient gradient is intentionally local to the auth shell only —
+   the global body canvas is plain neutral grey now (see comment
+   above body{} in index.css). Opacities are deliberately small
+   (0.045 / 0.025 light; 0.10 / 0.055 dark) so the gradient adds a
+   hint of warmth around the auth card without staining the
+   page. If this still reads muddy in practice, drop the gradient
+   layers entirely and fall back to plain hsl(var(--background)). */
 .ds-auth-shell {
   min-height: 100vh;
   min-height: 100svh;
   min-height: 100dvh;
   overflow-y: auto;
-  background: var(--background-ambient, hsl(var(--background)));
+  background:
+    radial-gradient(circle at 18% 0%, rgba(123, 114, 233, 0.045), transparent 36%),
+    radial-gradient(circle at 92% 8%, rgba(217, 136, 78, 0.025), transparent 32%),
+    hsl(var(--background));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,6 +275,13 @@ select.ds-input:focus {
     calc(var(--safe-top) + 1rem)
     1rem
     calc(var(--safe-bottom) + 1rem);
+}
+
+.dark .ds-auth-shell {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(123, 114, 233, 0.10), transparent 38%),
+    radial-gradient(circle at 92% 8%, rgba(212, 99, 122, 0.055), transparent 34%),
+    hsl(var(--background));
 }
 
 /* On short viewports (keyboard open on iPhone SE, landscape, etc.)
@@ -288,18 +306,18 @@ select.ds-input:focus {
   -webkit-backdrop-filter: blur(18px);
 }
 
-/* Fixed iOS safe-area cover. Replaces the inline
-   `bg-background/95 backdrop-blur-sm` Tailwind combo that was
-   rendering a hard 95%-opaque flat strip across the ambient
-   gradient (the ambient bg now lives in :root + .dark via
-   --background-ambient, and a flat band cutting it looked like
-   a colour seam). This translucent + blur recipe lets the
-   ambient bg show through faintly while still occluding
-   scrolling content under the iOS status bar / Dynamic Island. */
+/* Fixed iOS safe-area cover. Sits behind the iOS status bar /
+   Dynamic Island and hides scrolling content. With the global
+   ambient gradient removed, the page canvas is a uniform neutral
+   colour — the occluder can be more opaque (and blur a little
+   less aggressively) without producing a colour seam. The slight
+   translucency + blur are still useful for the gradient/charts
+   that scroll under fixed top-aligned cards, keeping the
+   transition smooth. */
 .ds-safe-top-occluder {
-  background: hsl(var(--background) / 0.76);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: hsl(var(--background) / 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .ds-auth-logo {
