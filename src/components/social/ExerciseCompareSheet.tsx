@@ -1,9 +1,10 @@
-import { Drawer } from "vaul";
-import { TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUserPRMap } from "@/hooks/useUserPRMap";
 import { getRepBucket, repBucketLabel, type ExercisePR } from "@/lib/prTracking";
 import { THEME } from "@/lib/theme";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface Props {
   open: boolean;
@@ -71,20 +72,16 @@ export default function ExerciseCompareSheet({
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={handleOpenChange}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border outline-none">
-          <div className="mx-auto w-10 h-1 rounded-full bg-border my-3" aria-hidden="true" />
-          <div className="px-5 pb-5 space-y-4">
-            <div>
-              <Drawer.Title className="text-lg font-bold text-foreground">
-                {exerciseName}
-              </Drawer.Title>
-              <Drawer.Description className="text-xs text-muted-foreground mt-0.5">
-                Comparing best at {repBucketLabel(bucket).toLowerCase()}
-              </Drawer.Description>
-            </div>
+    // Sprint 3 follow-up sweep: vaul boilerplate replaced with shared
+    // BottomSheet primitive. Inline Loader2 also migrated to the
+    // Spinner primitive while in here.
+    <BottomSheet
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={exerciseName}
+      description={`Comparing best at ${repBucketLabel(bucket).toLowerCase()}`}
+    >
+      <div className="px-5 pb-5 pt-3 space-y-4">
 
             {/* Their set */}
             <div className="rounded-xl bg-muted/50 px-3.5 py-3">
@@ -99,7 +96,7 @@ export default function ExerciseCompareSheet({
             {/* Your best */}
             {loading && (
               <div className="rounded-xl bg-muted/50 px-3.5 py-3 flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                <Spinner size="xs" variant="muted" label="Looking up your best" />
                 <span className="text-xs text-muted-foreground">Looking up your best…</span>
               </div>
             )}
@@ -156,16 +153,14 @@ export default function ExerciseCompareSheet({
               </>
             )}
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98]"
-            >
-              Close
-            </button>
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98]"
+        >
+          Close
+        </button>
+      </div>
+    </BottomSheet>
   );
 }

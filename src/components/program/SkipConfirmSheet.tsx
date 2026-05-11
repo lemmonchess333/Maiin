@@ -1,4 +1,4 @@
-import { Drawer } from "vaul";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 interface SkipConfirmSheetProps {
   open: boolean;
@@ -7,6 +7,17 @@ interface SkipConfirmSheetProps {
   onCancel: () => void;
 }
 
+// Sprint 3 follow-up sweep: vaul boilerplate replaced with shared
+// BottomSheet primitive. The original used z-[102]/[103] because
+// this sheet can open from inside other Program-page sheets
+// (workout editor); overlayClassName + className override preserve
+// that lifted z layer.
+//
+// hideHeader because the sheet renders its own title styling
+// (text-base font-semibold rather than the primitive's standard
+// text-base font-semibold + border-divider). hideHeader still
+// emits an sr-only Drawer.Title so screen readers get the
+// accessible name.
 export default function SkipConfirmSheet({
   open,
   sessionName,
@@ -14,40 +25,44 @@ export default function SkipConfirmSheet({
   onCancel,
 }: SkipConfirmSheetProps) {
   return (
-    <Drawer.Root open={open} onOpenChange={(o) => !o && onCancel()}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[102]" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[103] rounded-t-2xl bg-background border-t border-border safe-area-pb flex flex-col">
-          <div className="px-5 pb-6 pt-3">
-            {/* Drag handle */}
-            <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+    <BottomSheet
+      open={open}
+      onOpenChange={(o) => !o && onCancel()}
+      title={`Skip ${sessionName}?`}
+      hideHeader
+      overlayClassName="z-[102]"
+      className="z-[103] border-t border-border"
+    >
+      <div className="px-5 pb-6 pt-3">
+        {/* Drag handle */}
+        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
 
-            <div className="mt-5 space-y-2">
-              <p className="text-base font-semibold text-foreground">
-                Skip {sessionName}?
-              </p>
-              <p className="text-sm text-muted-foreground">
-                It won&apos;t count toward this week. The session resets next week — past weeks stay viewable from the week navigator.
-              </p>
-            </div>
+        <div className="mt-5 space-y-2">
+          <p className="text-base font-semibold text-foreground">
+            Skip {sessionName}?
+          </p>
+          <p className="text-sm text-muted-foreground">
+            It won&apos;t count toward this week. The session resets next week — past weeks stay viewable from the week navigator.
+          </p>
+        </div>
 
-            <div className="mt-5 space-y-2">
-              <button
-                onClick={onConfirm}
-                className="w-full py-3 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
-              >
-                Skip
-              </button>
-              <button
-                onClick={onCancel}
-                className="w-full py-3 rounded-xl text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+        <div className="mt-5 space-y-2">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+          >
+            Skip
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full py-3 rounded-xl text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </BottomSheet>
   );
 }
