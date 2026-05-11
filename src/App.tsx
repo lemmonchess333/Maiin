@@ -105,6 +105,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
   render() {
     if (this.state.hasError) {
+      // Sprint 5: hide raw error message + component stack from
+      // users in production. Showing "Cannot read properties of
+      // undefined (reading 'foo')" to a TestFlight user reads as
+      // a crashed app, not a designed error state. The technical
+      // details remain visible in dev so debugging stays fast, and
+      // the full error continues to log via console.error in
+      // componentDidCatch above (line 102) for operator triage.
+      const isDev = import.meta.env.DEV;
       return (
         <div className="min-h-screen bg-background flex items-center justify-center px-6" role="alert">
           <div className="text-center space-y-4 max-w-sm w-full">
@@ -112,13 +120,15 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
             <h1 className="text-lg font-bold text-foreground">Something went wrong</h1>
 
             <p className="text-sm text-muted-foreground break-words">
-              {this.state.error?.message || "An unexpected error occurred."}
+              {isDev
+                ? this.state.error?.message || "An unexpected error occurred."
+                : "Try refreshing the app. If it keeps happening, contact support."}
             </p>
 
-            {this.state.componentStack && (
+            {isDev && this.state.componentStack && (
               <details className="text-left bg-card border border-border/50 rounded-xl p-3">
                 <summary className="text-sm font-medium text-foreground cursor-pointer">
-                  Show component trace
+                  Show component trace (dev only)
                 </summary>
                 <pre className="mt-2 text-xs leading-snug text-muted-foreground whitespace-pre-wrap break-words">
                   {this.state.componentStack}

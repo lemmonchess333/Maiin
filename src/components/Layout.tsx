@@ -72,12 +72,14 @@ export default function Layout() {
         className="fixed top-0 left-0 right-0 z-30 bg-background"
         style={{ height: "var(--safe-top)" }}
       />
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium"
-      >
-        Skip to content
-      </a>
+      {/* Sprint 5: removed the React-rendered skip link from this
+          component. The canonical skip link lives in index.html (line
+          99) — it loads before React hydration so a keyboard user
+          hitting Tab during page load gets it immediately, and it
+          targets the same #main-content anchor this Layout renders.
+          Pre-Sprint-5 both rendered, producing two consecutive focus
+          stops with slightly different text ('Skip to main content'
+          vs 'Skip to content') for the same destination. */}
 
       {/* Offline / back-online banner */}
       <div aria-live="polite">

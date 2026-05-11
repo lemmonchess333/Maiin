@@ -9,6 +9,7 @@ import ActivityCard from '../components/social/ActivityCard';
 import type { FeedItem } from '../hooks/useSocialFeed';
 import { Skeleton } from '../components/LoadingSkeleton';
 import { Button } from '../components/ui/Button';
+import { logger } from '../lib/logger';
 import { TIER_COLORS, BADGE_DEFINITIONS, type EarnedBadge } from '../features/streaks/badges';
 import { Flame, MoreHorizontal, Ban, Flag, ChevronLeft, Dumbbell } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,9 +48,14 @@ export default function UserProfile() {
     // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
     // this read succeeds only for the viewer's own profile. For cross-user
     // views the promise rejects with permission-denied. Pre-existing bug —
-    // separate prompt to fix. The .catch swallows it so the shared Promise.all
-    // below doesn't throw, and the public-doc read carries the cross-user-
-    // visible fields regardless.
+    // the full fix is moving every cross-user field to users/{uid}/public/profile
+    // and dropping this read entirely. Sprint 5 patch: at least LOG the
+    // rejection at warn level (was a silent .catch(() => {})) so operators
+    // can correlate "cross-user profile renders incomplete" reports against
+    // permission-denied frequency in production. Until the full fix lands,
+    // the public-doc read carries the cross-user-visible fields and the UI
+    // degrades gracefully — only owner-only fields are missing in the
+    // cross-user view.
     const profilePromise = getDoc(doc(db, 'users', uid)).then(snap => {
       if (snap.exists()) {
         const data = snap.data();
@@ -66,7 +72,15 @@ export default function UserProfile() {
           avatarUrl: (data.photoURL as string | null | undefined) ?? undefined,
         });
       }
-    }).catch(() => {});
+    }).catch((err: { code?: string }) => {
+      if (!isOwnProfile && err?.code === "permission-denied") {
+        // Expected for cross-user views until the full fix lands.
+        // Logged at warn so we can size the problem operationally.
+        logger.warn(`UserProfile: cross-user users/{uid} read denied (expected pre-fix). uid=${uid}`);
+      } else {
+        logger.error(`UserProfile: users/${uid} read failed:`, err);
+      }
+    });
     getFollowerCount(uid).then(setFollowers);
     getFollowingCount(uid).then(setFollowingCount);
 

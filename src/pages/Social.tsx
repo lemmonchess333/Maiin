@@ -409,7 +409,21 @@ export default function Social() {
             </div>
           )}
 
-          {/* Discover feed errors are silenced — empty state handles both no-data and error */}
+          {/* Sprint 5: Discover feed errors now surface a retry banner
+              instead of falling through to the "Be the first to share"
+              empty state. Pre-Sprint-5 a network failure read as "the
+              community has nothing to show you" — a lie that damaged
+              trust on every offline open. The banner only shows when
+              we have no items AND there's an error; if cached items
+              exist they keep rendering and the user can pull to
+              refresh. */}
+          {feedSubTab === 'explore' && exploreFeed.error && exploreFeed.items.length === 0 && !exploreFeed.loading && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20" aria-live="polite">
+              <p className="text-xs text-destructive">Couldn't load the community feed. Check your connection.</p>
+              <button onClick={exploreFeed.refresh}
+                className="text-xs font-medium text-destructive underline ml-2 shrink-0">Retry</button>
+            </div>
+          )}
 
           <div className="space-y-3">
             {activeFeed.items.map(item => (
@@ -449,8 +463,12 @@ export default function Social() {
             <div ref={sentinelRef} className="h-1" aria-hidden="true" />
           )}
 
-          {/* Empty state — show when no results (including silenced errors) */}
-          {!activeFeed.loading && activeFeed.items.length === 0 && (
+          {/* Empty state — show when no results AND no error to retry.
+              The error case renders its own retry banner above
+              (Sprint 5) so the empty state would be a duplicate
+              "nothing to see here" + "actually, there was an error"
+              double message. */}
+          {!activeFeed.loading && activeFeed.items.length === 0 && !(feedSubTab === 'explore' && exploreFeed.error) && (
             <div className="mt-6" aria-live="polite">
               {feedSubTab === 'explore' ? (
                 <EmptyState
