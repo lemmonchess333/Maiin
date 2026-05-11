@@ -1128,24 +1128,55 @@ exports.onRunCreated = functions.firestore
     try {
       const data = snap.data();
 
+      // `lastActiveAt` keeps bumping even for isInvalid / savedAnyway
+      // runs — "user interacted with the app" is a reasonable read,
+      // and tightening this would make the active-users pipeline
+      // (weeklyPerformanceRollup / dailyPerformanceRefresh) drop
+      // users who only ever save-anyway short runs. Out of scope
+      // per the P0.5 plan.
       await db.collection("users").doc(uid).set(
         { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true },
       );
 
-      // Auto-progress km-based challenges
-      const distanceKm = data.distanceKm || (data.distance ? data.distance / 1000 : 0);
-      if (distanceKm > 0) {
-        await syncChallengeProgress(uid, "total_km", Math.round(distanceKm * 100) / 100);
-      }
+      // P0.5 follow-up: gate challenge + fastest-effort updates on
+      // the same volume-eligibility predicate the app-side
+      // aggregations use. Pre-fix, the trigger only checked
+      // `distance > 0` / `duration > 0`, which let a fat-fingered
+      // "too-fast" save (e.g. 20km / 0:08, isInvalid + savedAnyway
+      // both true with positive distance) bump km challenges and
+      // fastest-effort PRs. Inline equivalent of `isVolumeEligible`
+      // from src/lib/runStatsEligibility.ts (functions/ is plain
+      // JS / excluded from the TS path alias, so direct import
+      // isn't available). Missing flags default to "not flagged"
+      // so pre-PR-#480 legacy writes still progress as before.
+      const isCountable =
+        data.isInvalid !== true &&
+        data.savedAnyway !== true &&
+        (Number(data.distance) || 0) >= 50 &&
+        (Number(data.duration) || 0) >= 30;
 
-      // PR 5: fastest_effort uses MIN-update semantics, separate sync
-      // path. Pass distance in metres + duration in seconds; the helper
-      // gates on runDistance >= challenge.targetDistance.
-      const runDistanceMeters = data.distance || (distanceKm * 1000) || 0;
-      const runDurationSeconds = data.duration || 0;
-      if (runDistanceMeters > 0 && runDurationSeconds > 0) {
-        await syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds);
+      if (isCountable) {
+        // Auto-progress km-based challenges
+        const distanceKm = data.distanceKm || (data.distance ? data.distance / 1000 : 0);
+        if (distanceKm > 0) {
+          await syncChallengeProgress(uid, "total_km", Math.round(distanceKm * 100) / 100);
+        }
+
+        // PR 5: fastest_effort uses MIN-update semantics, separate
+        // sync path. Pass distance in metres + duration in seconds;
+        // the helper gates on runDistance >= challenge.targetDistance.
+        const runDistanceMeters = data.distance || (distanceKm * 1000) || 0;
+        const runDurationSeconds = data.duration || 0;
+        if (runDistanceMeters > 0 && runDurationSeconds > 0) {
+          await syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds);
+        }
+      } else {
+        console.log(
+          `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
+          `(isInvalid=${data.isInvalid === true}, savedAnyway=${data.savedAnyway === true}, ` +
+          `distance=${data.distance}, duration=${data.duration})`,
+        );
       }
 
       if (data.completedAt) {
