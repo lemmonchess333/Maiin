@@ -1,11 +1,12 @@
 import { useMemo, useState, lazy, Suspense, useCallback } from "react";
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, Trophy } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
+import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
 
 const ExerciseProgressChart = lazy(() => import("@/components/analytics/ExerciseProgressChart"));
 const ExerciseFormContent = lazy(() => import("@/components/ExerciseFormContent"));
@@ -507,29 +508,18 @@ export default function ExerciseHistory() {
 }
 
 function EmptyState({ exerciseName }: { exerciseName: string }) {
+  // Sprint 4: thin wrapper around the shared EmptyState primitive.
+  // The local component is kept so the calling site doesn't need
+  // to know about the exerciseName → description templating; the
+  // visual + a11y contract now comes from the shared primitive
+  // (one accent colour driven by THEME.lifting, action via Button).
   return (
-    <div className="rounded-2xl bg-card p-6 text-center space-y-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-      <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto"
-        style={{ backgroundColor: `${THEME.lifting}15` }}
-      >
-        <Trophy className="w-5 h-5" style={{ color: THEME.lifting }} />
-      </div>
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">
-          No sessions logged yet
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Log {exerciseName} on a workout to start tracking your progression here.
-        </p>
-      </div>
-      <Link
-        to="/program"
-        className="inline-block px-4 py-2 rounded-full text-xs font-semibold text-white"
-        style={{ background: THEME.lifting }}
-      >
-        Go to Program
-      </Link>
-    </div>
+    <SharedEmptyState
+      icon={<Trophy className="w-5 h-5" />}
+      title="No sessions logged yet"
+      description={`Log ${exerciseName} on a workout to start tracking your progression here.`}
+      action={{ label: "Go to Program", href: "/program" }}
+      accentColor={THEME.lifting}
+    />
   );
 }

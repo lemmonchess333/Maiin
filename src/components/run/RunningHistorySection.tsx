@@ -5,6 +5,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 
 import { THEME } from '../../lib/theme';
 import { calculatePaceTrend } from '../../lib/paceTrends';
 import { isVolumeEligible, isPaceEligible } from '../../lib/runStatsEligibility';
+import { Spinner } from '@/components/ui/Spinner';
 
 function formatPace(secPerKm: number): string {
   if (!secPerKm) return '--:--';
@@ -139,7 +140,13 @@ function RunCard({ run, allRuns }: { run: RunSummaryItem; allRuns: RunSummaryIte
 export default function RunningHistorySection() {
   const { weeklyData, runs, loading } = useRunningStats(90);
 
-  if (loading) return <p className="text-xs text-muted-foreground animate-pulse">Loading running data...</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-3">
+        <Spinner size="sm" variant="muted" label="Loading running data" />
+      </div>
+    );
+  }
   if (runs.length === 0 && weeklyData.length === 0) return null;
 
   return (

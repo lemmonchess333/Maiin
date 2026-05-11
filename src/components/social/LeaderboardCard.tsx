@@ -7,6 +7,7 @@ import { THEME } from '../../lib/theme';
 import { buildLeaderboard, type LeaderboardEntry, type ChallengeType } from '../../lib/leaderboard';
 import Avatar from '../Avatar';
 import BlockAwareAvatar from './BlockAwareAvatar';
+import { Spinner } from '@/components/ui/Spinner';
 
 const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
 
@@ -77,7 +78,11 @@ export default function LeaderboardCard({ challenge = 'weekly_hybrid', onViewFul
       </div>
 
       <div className="space-y-1.5">
-        {loading && <p className="text-xs text-muted-foreground text-center py-3 animate-pulse">Loading...</p>}
+        {loading && (
+          <div className="flex items-center justify-center py-3">
+            <Spinner size="sm" variant="muted" label="Loading leaderboard" />
+          </div>
+        )}
 
         {!loading && entries.length === 0 && (
           <div className="text-center py-6 space-y-2">
