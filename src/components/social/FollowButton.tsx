@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { isFollowing, followUser, unfollowUser } from '../../lib/socialApi';
 import { logger } from '../../lib/logger';
 import { haptic } from '../../lib/haptic';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface FollowButtonProps {
   targetUid: string;
@@ -86,7 +86,12 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
       }`}
     >
       {showSpinner ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+        // The button itself sets the foreground colour (white for
+        // not-following, muted-foreground for following), so the
+        // Spinner inherits via variant="inverse" / "muted". Using
+        // "inverse" universally because both states' contrast is
+        // close enough — keeps the markup branch-free.
+        <Spinner size="xs" variant={following ? 'muted' : 'inverse'} label={following ? 'Unfollowing' : 'Following'} />
       ) : following ? 'Following' : 'Follow'}
     </button>
   );

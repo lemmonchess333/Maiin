@@ -41,6 +41,7 @@ import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, 
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
+import { Spinner } from "@/components/ui/Spinner";
 
 /**
  * IMPORTANT:
@@ -307,7 +308,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <Spinner size="md" variant="primary" label="Loading programme" />
       </div>
     );
   }

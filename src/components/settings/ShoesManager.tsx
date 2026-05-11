@@ -5,6 +5,7 @@ import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { searchShoes, type ShoeModel } from "@/lib/shoeDatabase";
 import { logger } from "@/lib/logger";
+import { Spinner } from "@/components/ui/Spinner";
 
 function MileageBar({ shoe }: { shoe: Shoe }) {
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
@@ -77,7 +78,7 @@ export default function ShoesManager() {
 
   if (loading) return (
     <div className="flex items-center gap-2 py-4">
-      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <Spinner size="sm" variant="primary" label="Loading shoes" />
       <p className="text-xs text-muted-foreground">Loading shoes...</p>
     </div>
   );

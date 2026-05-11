@@ -11,6 +11,7 @@ import SplitsBarChart from '../components/analytics/SplitsBarChart';
 import ElevationProfile from '../components/analytics/ElevationProfile';
 import { generateAndShare } from '../lib/shareCardGenerator';
 import ShareCard from '../components/social/ShareCard';
+import { Spinner } from '../components/ui/Spinner';
 
 const ACTIVITY_LABELS: Record<string, string> = {
   freerun: 'Free Run', easy: 'Easy Run', tempo: 'Tempo Run',
@@ -81,7 +82,7 @@ export default function RunDetail() {
 
   if (!run) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <Spinner size="lg" variant="primary" label="Loading run" />
     </div>
   );
 
