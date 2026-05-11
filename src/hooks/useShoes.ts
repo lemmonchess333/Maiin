@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { isCountableRun } from "@/lib/runGuards";
 
 export interface Shoe {
   id: string;
@@ -153,10 +154,19 @@ export function useShoes() {
     const kmByShoe = new Map<string, number>();
     for (const d of runsSnap.docs) {
       const data = d.data() as {
+        isInvalid?: boolean;
+        savedAnyway?: boolean;
         distance?: number;
+        duration?: number;
         shoeId?: string | null;
         runConfig?: { shoeId?: string };
       };
+      // P0.5: skip saved-anyway / isInvalid runs so shoe mileage
+      // doesn't include the misclick volume. Pre-fix this only
+      // gated on `distance > 0`, which let a fat-fingered
+      // 20km/0:08 "too-fast" save inflate the shoe by 20km and
+      // trigger the replacement-prompt at 85%/100% prematurely.
+      if (!isCountableRun(data)) continue;
       const distanceMeters = typeof data.distance === "number" ? data.distance : 0;
       if (distanceMeters <= 0) continue;
 
