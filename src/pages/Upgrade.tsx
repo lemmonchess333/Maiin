@@ -9,13 +9,14 @@ import {
   Crown,
   Sparkles,
 } from "lucide-react";
+import { PRO_PLANS } from "@/lib/proPlans";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
-const PLANS = [
-  { id: "monthly" as const, label: "Monthly", price: "\u00A33.99", period: "/month", badge: null, recommended: false },
-  { id: "yearly" as const, label: "Yearly", price: "\u00A334.99", period: "/year", badge: "Save 27%", recommended: true },
-];
+// Pro pricing is centralised in `src/lib/proPlans.ts` so this page
+// and ProModal can't drift on price / period / badge metadata. Both
+// surfaces render the user's selected plan; both pull from the same
+// source of truth.
 
 export default function Upgrade() {
   const navigate = useNavigate();
@@ -107,40 +108,48 @@ export default function Upgrade() {
             </div>
           </div>
 
-          {/* Pricing cards */}
-          <div className="space-y-2">
-            {PLANS.map((plan) => (
+          {/* Pricing cards. These are entry points into the
+              ProModal checkout sheet — selection inside the modal is
+              what actually controls which plan is purchased. The
+              marketing-page cards intentionally don't track selected
+              state to keep the UX simple: pick a plan in the modal.
+              The modal defaults to the recommended plan, so tapping
+              "Yearly" here still lands the user on the yearly plan. */}
+          <div className="space-y-2 pt-2">
+            {PRO_PLANS.map((plan) => (
               <button
                 key={plan.id}
+                type="button"
                 onClick={() => setShowProModal(true)}
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-xl border transition-all relative",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   plan.recommended
                     ? "bg-primary/10 border-primary ring-2 ring-primary/30"
                     : "bg-card border-border/50 hover:border-primary/50"
                 )}
               >
-                {plan.recommended && (
-                  <span className="absolute -top-2.5 left-4 text-xs px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
-                    Most popular
+                {plan.topBadge && (
+                  <span className="absolute -top-2.5 left-4 text-[10px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
+                    {plan.topBadge}
                   </span>
                 )}
                 <div className="flex items-center gap-3">
                   <div className="text-left">
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-foreground">
                       {plan.label}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {plan.period}
                     </p>
                   </div>
-                  {plan.badge && (
+                  {plan.savingsLabel && (
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary">
-                      {plan.badge}
+                      {plan.savingsLabel}
                     </span>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-base font-bold text-foreground tabular-nums">
                   {plan.price}
                 </p>
               </button>

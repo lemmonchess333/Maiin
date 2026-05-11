@@ -20,7 +20,7 @@ export interface PurchaseResult {
 }
 
 // Detect if running inside a native iOS Capacitor shell
-function isNativeIOS(): boolean {
+export function isNativeIOS(): boolean {
   return (
     typeof window !== 'undefined' &&
     !!(window as unknown as Record<string, unknown>).Capacitor &&
