@@ -16,7 +16,8 @@ import FollowButton from '../components/social/FollowButton';
 import FollowsYouBadge from '../components/social/FollowsYouBadge';
 import { ChallengeList } from '../features/challenges/ChallengeList';
 import FullLeaderboard from '../components/social/FullLeaderboard';
-import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, Loader2, X, Search } from 'lucide-react';
+import { Share2, Users, Globe, Dumbbell, Footprints, Zap, Target, Flame, Salad, PersonStanding, Medal, Sunrise, X, Search } from 'lucide-react';
+import { Spinner } from '@/components/ui/Spinner';
 import { toast } from 'sonner';
 import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
@@ -389,8 +390,8 @@ export default function Social() {
           )}
 
           {pullRefreshing && (
-            <div className="flex items-center justify-center py-2" aria-live="polite">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-2">
+              <Spinner size="sm" variant="primary" label="Refreshing feed" />
             </div>
           )}
 
@@ -453,8 +454,8 @@ export default function Social() {
             </div>
           )}
           {activeFeed.loading && activeFeed.items.length > 0 && (
-            <div className="flex items-center justify-center py-4" aria-live="polite">
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center py-4">
+              <Spinner size="sm" variant="muted" label="Loading more posts" />
             </div>
           )}
 
@@ -788,7 +789,9 @@ export default function Social() {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                   aria-hidden="true"
                 >
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {/* aria-hidden parent suppresses Spinner's role=status —
+                      the input itself announces searching state. */}
+                  <Spinner size="sm" variant="muted" />
                 </div>
               ) : searchQuery.length > 0 ? (
                 /* Inline clear affordance — quicker than holding
@@ -878,7 +881,7 @@ export default function Social() {
             </div>
             {suggestedLoading && suggestedPeople.length === 0 ? (
               <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                <Spinner size="sm" variant="muted" label="Loading suggested people" />
               </div>
             ) : suggestedPeople.length === 0 ? (
               /* Empty state with a real next step rather than a

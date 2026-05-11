@@ -11,6 +11,7 @@ import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingMo
 import { StreaksProvider } from "@/features/streaks/useStreaks";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
+import { Spinner } from "@/components/ui/Spinner";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy.
 // Also catches "Failed to fetch dynamically imported module" errors from
@@ -71,9 +72,8 @@ const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center py-12" role="status" aria-label="Loading page">
-      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-      <span className="sr-only">Loading...</span>
+    <div className="flex items-center justify-center py-12">
+      <Spinner size="md" label="Loading page" />
     </div>
   );
 }
@@ -229,9 +229,8 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Loading application">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-        <span className="sr-only">Loading Tropos...</span>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Spinner size="lg" label="Loading Tropos" />
       </div>
     );
   }

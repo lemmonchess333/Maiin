@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
-import { ArrowRight, Timer, Footprints } from 'lucide-react';
+import { Timer, Footprints } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
 import { isCountableRun } from '../../lib/runGuards';
 import { format } from 'date-fns';
+import { EmptyState } from '../EmptyState';
 
 /* Activity-type labels mirror History/RunningHistorySection so the
    dashboard recent-runs list reads consistently with the History
@@ -174,23 +175,16 @@ export default function RunDashboard() {
       )}
 
       {recentRuns.length === 0 && (
-        <div className="text-center py-12 space-y-3 ds-fade-up">
-          <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #f5f4fe, #eceafe)' }}>
-            <Footprints size={36} className="text-green-500" />
-          </div>
-          <p className="text-sm font-bold text-foreground">No runs yet</p>
-          <p className="text-xs text-muted-foreground max-w-[220px] mx-auto">
-            Track your runs with GPS, pace splits, and route mapping
-          </p>
-          <button
-            onClick={() => navigate('/run')}
-            className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-[var(--ds-shadow-purple-glow)] active:scale-95 mt-2"
-          >
-            Start a Run
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+        // Sprint 4: bespoke empty-state replaced with the shared
+        // EmptyState primitive. Accent stays sport-coded coral
+        // (THEME.runRed equivalent — running surface).
+        <EmptyState
+          icon={<Footprints size={28} />}
+          title="No runs yet"
+          description="Track your runs with GPS, pace splits, and route mapping."
+          action={{ label: "Start a Run", onClick: () => navigate('/run') }}
+          accentColor="#D4637A"
+        />
       )}
     </div>
   );

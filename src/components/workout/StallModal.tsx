@@ -1,15 +1,28 @@
 import { useAuth } from "@/lib/auth";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { toast } from "sonner";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
 
 interface StallModalProps {
   exercise: { name: string; weight: number };
   onClose: () => void;
 }
 
+/**
+ * Sprint 3: migrated onto the shared <Dialog> primitive. Pre-Sprint-3
+ * this modal used role="button" on a backdrop <div> (Sprint 1 audit
+ * anti-pattern — phantom Tab stop, inconsistent SR announcement) and
+ * had no escape handler. Dialog provides escape, backdrop dismiss,
+ * focus trap, and aria-labelledby out of the box. Buttons also
+ * migrated to the Button primitive for the 44px touch-target +
+ * focus-ring contract.
+ *
+ * Always-open while mounted: the parent controls visibility via
+ * mount/unmount, so we pass open={true} statically. onClose is
+ * routed to all dismissal paths (escape, backdrop, both buttons).
+ */
 export default function StallModal({ exercise, onClose }: StallModalProps) {
   const { profile, updateProfile } = useAuth();
-  const modalRef = useFocusTrap<HTMLDivElement>(true);
 
   const handleAdjust = async () => {
     if (profile) {
@@ -27,31 +40,21 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      <div className="absolute inset-0 bg-black/50" role="button" tabIndex={0} aria-label="Close modal" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }} />
-      <div ref={modalRef} role="dialog" aria-modal="true" className="relative rounded-2xl p-6 space-y-4 max-w-sm w-full bg-card/95 backdrop-blur-lg border border-border/50" style={{
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-      }}>
-        <h3 className="text-lg font-bold text-foreground">Plateau detected</h3>
-        <p className="text-sm text-muted-foreground">
-          You've been at {exercise.weight}kg on {exercise.name} for 3 sessions.
-          A small calorie increase (~150 cal/day) could help you break through.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={handleAdjust}
-            className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium"
-          >
-            Adjust target (+150 cal)
-          </button>
-          <button
-            onClick={handleDismiss}
-            className="px-4 py-2.5 text-sm text-muted-foreground"
-          >
-            Not now
-          </button>
-        </div>
+    <Dialog
+      open
+      onClose={handleDismiss}
+      title="Plateau detected"
+      description={`You've been at ${exercise.weight}kg on ${exercise.name} for 3 sessions. A small calorie increase (~150 cal/day) could help you break through.`}
+      size="sm"
+    >
+      <div className="flex gap-3 pt-1">
+        <Button onClick={handleAdjust} className="flex-1">
+          Adjust target (+150 cal)
+        </Button>
+        <Button onClick={handleDismiss} variant="ghost">
+          Not now
+        </Button>
       </div>
-    </div>
+    </Dialog>
   );
 }

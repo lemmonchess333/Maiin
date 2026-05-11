@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { getPersonalTrajectory, type PersonalTrajectory } from '@/lib/personalTrajectory';
 import { THEME } from '@/lib/theme';
 import Tooltip from '@/components/ui/Tooltip';
+import { Spinner } from '@/components/ui/Spinner';
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
@@ -74,7 +75,9 @@ export default function TrajectoryCard() {
       </div>
 
       {loading && (
-        <p className="text-xs text-muted-foreground text-center py-6 animate-pulse">Loading...</p>
+        <div className="flex items-center justify-center py-6">
+          <Spinner size="sm" variant="muted" label="Loading trajectory" />
+        </div>
       )}
 
       {!loading && thisWeek && lastWeek && (

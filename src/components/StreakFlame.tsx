@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface StreakFlameProps {
   streak: number;
@@ -124,9 +125,20 @@ export function StreakFlame({
   celebrate,
   display,
 }: StreakFlameProps) {
-  // Hide entirely at zero — a flame labelled "0" reads as a failure
-  // indicator. This early return is safe because the component uses no
-  // React hooks; only framer-motion's motion.div/motion.span.
+  // Sprint 6: opt-out for the infinite flicker loop. Bounce +
+  // celebrate are kept (they're brief one-shots — users with
+  // reduced-motion still benefit from the state-change cue),
+  // but the always-on flicker pulse is suppressed entirely so the
+  // chip becomes a static illustration rather than a perpetual
+  // distractor. MotionConfig at App root downgrades repeat:Infinity
+  // to a single iteration which still loops awkwardly, hence the
+  // explicit override.
+  //
+  // Hook order: useReducedMotion runs unconditionally before the
+  // streak guard. The previous early-return on streak<=0 was safe
+  // before because the component used no hooks; now it does, so
+  // hook order must be stable.
+  const reducedMotion = useReducedMotion();
   if (streak <= 0) return null;
 
   const palette = paletteForStreak(streak);
@@ -150,18 +162,22 @@ export function StreakFlame({
       }}
     >
       <motion.span
-        animate={{
-          // Combined flicker: scale breathes + gentle rotational wobble
-          // at a different frequency. Flame looks alive, never
-          // translucent.
-          scale: [0.93, 1.02, 0.96, 1, 0.93],
-          rotate: [-2, 2, -1, 1.5, -2],
-        }}
-        transition={{
-          duration: 1.8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+        animate={
+          reducedMotion
+            ? undefined
+            : {
+                // Combined flicker: scale breathes + gentle rotational wobble
+                // at a different frequency. Flame looks alive, never
+                // translucent.
+                scale: [0.93, 1.02, 0.96, 1, 0.93],
+                rotate: [-2, 2, -1, 1.5, -2],
+              }
+        }
+        transition={
+          reducedMotion
+            ? undefined
+            : { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
+        }
         style={{ display: "inline-flex", transformOrigin: "50% 75%" }}
       >
         <FlameSvg palette={palette} size={18} />

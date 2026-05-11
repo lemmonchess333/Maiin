@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useMotionValue, useAnimationFrame } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface WaterWaveProps {
   fillPercent: number;
@@ -8,12 +9,13 @@ interface WaterWaveProps {
 
 const PATH_WIDTH = 400;
 
-const prefersReducedMotion =
-  typeof window !== "undefined"
-    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    : false;
-
 export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
+  // Sprint 6: prior code evaluated matchMedia once at module load
+  // and never updated when the user toggled their OS reduced-motion
+  // setting at runtime. The useReducedMotion hook subscribes to the
+  // 'change' event so the component re-renders if the setting flips
+  // while the app is open.
+  const prefersReducedMotion = useReducedMotion();
   const width = PATH_WIDTH;
   const phase = useMotionValue(0);
   const ampRef = useRef(3);

@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from "react";
 import { captureError } from "@/lib/errorReporting";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 interface Props {
   children: ReactNode;
@@ -29,18 +30,20 @@ export class SectionErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Sprint 4: hand-rolled fallback replaced with the shared
+      // ErrorState primitive. Same visual idiom (centred card +
+      // retry) but consistent destructive-tinted icon and retry
+      // delegated to the Button primitive (focus ring, 44px touch
+      // target, type=button) instead of a bespoke <button> with
+      // primary/10 styling.
       return (
-        <div className="bg-card rounded-2xl p-6 text-center space-y-3" role="alert" aria-live="assertive">
-          <p className="text-sm text-muted-foreground">
-            This section couldn't load.
-          </p>
-          <button
-            onClick={() => this.setState({ hasError: false })}
-            className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState
+          title="This section couldn't load."
+          retry={{
+            label: "Retry",
+            onClick: () => this.setState({ hasError: false }),
+          }}
+        />
       );
     }
 

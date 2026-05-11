@@ -1,11 +1,19 @@
 import { Flame } from "lucide-react";
 import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface StreakCounterProps {
   streak: number;
 }
 
 export function StreakCounter({ streak }: StreakCounterProps) {
+  // Sprint 6: the infinite flame scale+rotate loop bypasses
+  // Framer Motion's MotionConfig because it's a `repeat: Infinity`
+  // transition on a custom path, which the global reducedMotion
+  // setting downgrades to "first state only" rather than disabling
+  // outright — the flame still pulses in pos 1 forever. Explicit
+  // guard skips the loop entirely when the user opts out.
+  const reducedMotion = useReducedMotion();
   if (streak <= 0) {
     return (
       <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-muted/50 border border-border/50" role="status" aria-label="No active streak">
@@ -28,15 +36,19 @@ export function StreakCounter({ streak }: StreakCounterProps) {
     >
       <motion.div
         aria-hidden="true"
-        animate={{
-          scale: [1, 1.25, 1],
-          rotate: [0, 8, -8, 0]
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 2.2,
-          ease: "easeInOut"
-        }}
+        animate={
+          reducedMotion
+            ? undefined
+            : {
+                scale: [1, 1.25, 1],
+                rotate: [0, 8, -8, 0],
+              }
+        }
+        transition={
+          reducedMotion
+            ? undefined
+            : { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
+        }
       >
         <Flame className="w-7 h-7 text-orange-500 drop-shadow-sm" />
       </motion.div>

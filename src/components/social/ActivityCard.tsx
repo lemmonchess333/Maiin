@@ -21,6 +21,7 @@ import { MessageCircle, Flame, Footprints, Dumbbell, Trophy, Mountain, Share2, T
 import { toast } from 'sonner';
 
 import { getTimeAgo } from '../../lib/timeAgo';
+import { Spinner } from '../ui/Spinner';
 
 function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   const lats = preview.map(p => p.lat);
@@ -613,7 +614,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Props from</p>
             {kudosLoading ? (
               <div className="flex items-center justify-center py-2">
-                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <Spinner size="sm" variant="primary" label="Loading props" />
               </div>
             ) : kudosUsers.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">Couldn&apos;t load props right now. Try again.</p>

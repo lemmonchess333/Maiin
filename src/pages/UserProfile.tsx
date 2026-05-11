@@ -19,6 +19,7 @@ import Avatar from '../components/Avatar';
 import ReportModal from '../components/social/ReportModal';
 import ProgressPhotos from '../components/social/ProgressPhotos';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { Spinner } from '../components/ui/Spinner';
 
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
@@ -182,7 +183,13 @@ export default function UserProfile() {
 
   const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
-  if (!profile) return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading...</div>;
+  if (!profile) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <Spinner size="md" variant="muted" label="Loading profile" />
+      </div>
+    );
+  }
 
   return (
     <motion.div className="space-y-4" initial="hidden" animate="visible"
