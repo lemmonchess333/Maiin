@@ -8,10 +8,12 @@ import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
+import { cn } from "../lib/utils";
 import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
+import { EmptyState } from "../components/EmptyState";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { THEME } from "../lib/theme";
 import { CREW_ICON_MAP } from "../lib/crewIcons";
@@ -56,7 +58,14 @@ export default function Crew() {
   /* Top members for the preview row beneath the crew header. Just
      the first ~5 by join order — gives the page some human texture
      without an N+1 read against each user's public profile. */
-  const [memberPreviews, setMemberPreviews] = useState<{ uid: string; displayName: string }[]>([]);
+  const [memberPreviews, setMemberPreviews] = useState<{ uid: string; displayName: string; photoURL: string | null }[]>([]);
+  // Sprint 5: leaderboard avatar hydration. CrewLeaderboardEntry
+  // (written by crewWeeklyLeaderboardRollup) carries only uid +
+  // displayName, not photoURL. Until the rollup CF denormalises
+  // photoURL onto leaderboard entries, the client hydrates from the
+  // cross-user-readable users/{uid}/public/profile. Keys are uids;
+  // values may be null when the user has no profile photo.
+  const [leaderboardAvatars, setLeaderboardAvatars] = useState<Record<string, string | null>>({});
 
   // Try the in-memory crews list first (covers the navigated-from-Social
   // case without a refetch); fall back to a direct read if the user
@@ -138,12 +147,30 @@ export default function Crew() {
           query(collection(db, "groups", crewId, "members"), limit(5)),
         );
         if (cancelled) return;
-        setMemberPreviews(
-          snap.docs.map((d) => ({
-            uid: d.id,
-            displayName: (d.data().displayName as string) || "Athlete",
-          })),
+        // Sprint 5: hydrate photoURL from each member's public
+        // profile so the stacked avatars render real images, not
+        // initial-letter fallbacks. Pre-Sprint-5 the member doc
+        // schema didn't carry photoURL (only displayName) and the
+        // avatars were faceless. The public/profile read is
+        // cross-user-allowed by firestore.rules. Tolerant of
+        // missing photos — Avatar handles photoURL: null.
+        const base = snap.docs.map((d) => ({
+          uid: d.id,
+          displayName: (d.data().displayName as string) || "Athlete",
+        }));
+        const hydrated = await Promise.all(
+          base.map(async (m) => {
+            try {
+              const profileSnap = await getDoc(doc(db, "users", m.uid, "public", "profile"));
+              const data = profileSnap.data() as { photoURL?: string } | undefined;
+              return { ...m, photoURL: data?.photoURL ?? null };
+            } catch {
+              return { ...m, photoURL: null };
+            }
+          }),
         );
+        if (cancelled) return;
+        setMemberPreviews(hydrated);
       } catch {
         if (!cancelled) setMemberPreviews([]);
       }
@@ -152,6 +179,40 @@ export default function Crew() {
       cancelled = true;
     };
   }, [crewId]);
+
+  // Sprint 5: hydrate leaderboard avatars from public profiles.
+  // Effect keyed on the joined uid list so it only re-runs when the
+  // top-N leaderboard membership changes, not on every crew-doc
+  // update.
+  const boardUidsKey = (crewDoc?.currentLeaderboard ?? []).map((e) => e.uid).join(",");
+  useEffect(() => {
+    if (!crewDoc) return;
+    const entries = crewDoc.currentLeaderboard ?? [];
+    if (entries.length === 0) {
+      setLeaderboardAvatars({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const pairs = await Promise.all(
+        entries.map(async (e): Promise<[string, string | null]> => {
+          try {
+            const profileSnap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
+            const data = profileSnap.data() as { photoURL?: string } | undefined;
+            return [e.uid, data?.photoURL ?? null];
+          } catch {
+            return [e.uid, null];
+          }
+        }),
+      );
+      if (cancelled) return;
+      setLeaderboardAvatars(Object.fromEntries(pairs));
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardUidsKey]);
 
   if (!crewId) {
     return null;
@@ -169,16 +230,12 @@ export default function Crew() {
 
   if (!crewDoc) {
     return (
-      <div className="p-6 text-center space-y-3">
-        <p className="text-sm font-semibold text-foreground">Crew not found</p>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="text-xs font-medium text-primary"
-        >
-          Go back
-        </button>
-      </div>
+      <EmptyState
+        icon={<Users size={24} />}
+        title="Crew not found"
+        description="This crew doesn't exist or you don't have access to it. Try refreshing or contact whoever shared the link."
+        action={{ label: "Go back", onClick: () => navigate(-1) }}
+      />
     );
   }
 
@@ -203,10 +260,24 @@ export default function Crew() {
      support it (mobile native + Capacitor), falls back to copying a
      deep link to the clipboard with a toast confirmation otherwise.
      URL is the canonical /crew/{id} route on the deployed app, so
-     the recipient lands on this same page. */
+     the recipient lands on this same page.
+     Sprint 5: removed the `#/` hash from the URL. The app uses
+     react-router-dom BrowserRouter (App.tsx:313) with basename =
+     import.meta.env.BASE_URL, so the correct shape is
+     {origin}{BASE_URL}crew/{id} with no hash. Pre-Sprint-5 the
+     hash variant produced links that failed to resolve under
+     BrowserRouter — recipients got the app's root page instead
+     of the crew page.
+     Sprint 5: clipboard fallback for environments where
+     navigator.clipboard is unavailable (older Android WebViews,
+     Capacitor file:// contexts) — fall back to navigator.share
+     text-only if available, otherwise show the URL in a copyable
+     toast so the user can still complete the share. */
   const handleInvite = async () => {
     if (!crewDoc) return;
-    const url = `${window.location.origin}${import.meta.env.BASE_URL || "/"}#/crew/${crewDoc.id}`;
+    const base = (import.meta.env.BASE_URL as string | undefined) || "/";
+    const normalisedBase = base.endsWith("/") ? base : base + "/";
+    const url = `${window.location.origin}${normalisedBase}crew/${crewDoc.id}`;
     const shareText = `Join "${crewDoc.name}" on Tropos`;
     if (typeof navigator.share === "function") {
       try {
@@ -216,12 +287,19 @@ export default function Crew() {
       }
       return;
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Crew link copied");
-    } catch {
-      toast.error("Couldn't copy link");
+    // Defensive: clipboard API isn't always available in WebView
+    // contexts. Try it; if it throws or is missing, surface the URL
+    // in the toast so the user can copy manually.
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Crew link copied");
+        return;
+      } catch {
+        /* fall through to manual-copy fallback */
+      }
     }
+    toast.message("Copy this link to invite friends", { description: url });
   };
 
   return (
@@ -281,6 +359,7 @@ export default function Crew() {
               {memberPreviews.map((m) => (
                 <Avatar
                   key={m.uid}
+                  photoURL={m.photoURL}
                   displayName={m.displayName}
                   size="sm"
                   className="ring-2 ring-card"
@@ -459,14 +538,21 @@ export default function Crew() {
                 {board.map((entry) => (
                   <div key={entry.uid} className="flex items-center gap-3 px-3.5 py-2.5">
                     <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0"
-                      style={{
-                        background: entry.rank === 1 ? `${THEME.brand}1f` : "transparent",
-                        color: entry.rank === 1 ? THEME.brand : "var(--text-muted)",
-                      }}
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
+                        entry.rank === 1
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground",
+                      )}
                     >
                       {entry.rank}
                     </span>
+                    <Avatar
+                      photoURL={leaderboardAvatars[entry.uid] ?? null}
+                      displayName={entry.displayName}
+                      size="sm"
+                      className="shrink-0"
+                    />
                     <p className="text-sm font-medium text-foreground flex-1 min-w-0 truncate">
                       {entry.displayName}
                     </p>

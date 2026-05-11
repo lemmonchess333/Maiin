@@ -17,13 +17,20 @@
   --ds-orange-500: #e87316;
   --ds-orange-600: #d6580c;
 
-  /* Semantic Colors */
-  --ds-success:    #22b558;
-  --ds-success-bg: #f0fdf4;
-  --ds-warning:    #e59a0b;
-  --ds-warning-bg: #fffbeb;
-  --ds-error:      #e04040;
-  --ds-error-bg:   #fef2f2;
+  /* Semantic Colors — Sprint 0 bridges these to the canonical HSL
+     status variables defined in src/index.css :root / .dark. The
+     single source of truth is the new --destructive / --success /
+     --warning trio (plus *-bg surfaces). This prevents the previous
+     drift where ToastProvider, bg-destructive Tailwind classes, and
+     these --ds-* references each ran a slightly different red.
+     CSS custom properties resolve at computed-value time so the
+     load order between tokens.css and index.css is safe. */
+  --ds-success:    hsl(var(--success));
+  --ds-success-bg: hsl(var(--success-bg));
+  --ds-warning:    hsl(var(--warning));
+  --ds-warning-bg: hsl(var(--warning-bg));
+  --ds-error:      hsl(var(--destructive));
+  --ds-error-bg:   hsl(var(--destructive-bg));
 
   /* Typography — 1.25 modular scale from 1rem (16px) body base */
   --ds-text-display: 3rem;       /* 48px — hero stats */

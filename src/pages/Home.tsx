@@ -352,8 +352,12 @@ export default function Home() {
                 display={<motion.span>{streakDisplay}</motion.span>}
               />
             )}
-            <Link to="/settings" aria-label="Settings" className="p-2 rounded-lg hover:bg-muted transition-colors">
-              <SettingsIcon aria-hidden="true" className="w-4.5 h-4.5 text-muted-foreground/60" />
+            <Link
+              to="/settings"
+              aria-label="Settings"
+              className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-muted-foreground/60 hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <SettingsIcon aria-hidden="true" className="w-5 h-5" />
             </Link>
           </div>
         </motion.div>

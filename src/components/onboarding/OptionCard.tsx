@@ -15,6 +15,14 @@ interface OptionCardProps {
 }
 
 export default function OptionCard({ selected, onSelect, icon, label, desc, disabled, index = 0 }: OptionCardProps) {
+  // Sprint 2: surface + border + text colours now use design-system
+  // tokens (bg-muted, bg-card, border-border, text-muted-foreground)
+  // so the card renders correctly in both light and dark mode. The
+  // teal accent on the selected state comes from THEME.teal (a
+  // genuine brand colour, kept) but the underlying surface is now
+  // semantic. Pre-Sprint-2 the hardcoded rgba(255,255,255,0.05)
+  // assumed dark background, which is why onboarding looked black in
+  // light mode.
   return (
     <motion.button
       onClick={onSelect}
@@ -23,19 +31,31 @@ export default function OptionCard({ selected, onSelect, icon, label, desc, disa
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.06, ease: [0.32, 0.72, 0, 1] }}
       className={cn(
-        "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.95]",
-        disabled && "opacity-30 pointer-events-none"
+        "w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all active:scale-[0.97]",
+        "bg-card text-foreground border",
+        selected ? "border-transparent" : "border-border",
+        disabled && "opacity-30 pointer-events-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
       style={{
-        background: selected ? `${THEME.teal}18` : "rgba(255,255,255,0.05)",
-        border: `1px solid ${selected ? THEME.teal + "50" : "rgba(255,255,255,0.08)"}`,
+        // Selected state: teal-tinted card + teal border. Token-
+        // backed `bg-card` is the unselected baseline; the inline
+        // override only applies when selected, so light mode shows
+        // white card with teal tint and dark mode shows #1A surface
+        // with the same tint.
+        ...(selected
+          ? {
+              background: `${THEME.teal}18`,
+              borderColor: `${THEME.teal}50`,
+            }
+          : {}),
       }}
     >
       <span className="text-xl flex-shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">{label}</p>
         {desc && (
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <p className="text-xs text-muted-foreground">
             {desc}
           </p>
         )}

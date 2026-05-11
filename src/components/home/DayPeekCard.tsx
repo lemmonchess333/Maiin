@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Dumbbell, ClipboardList, X } from "lucide-react";
 import { format } from "date-fns";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { IconButton } from "@/components/ui/IconButton";
 
 export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
   dateKey: string;
@@ -37,9 +38,13 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
               <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
               <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
             </div>
-            <button onClick={onClose} aria-label="Close day details" className="p-1.5 -m-0.5 rounded-lg hover:bg-muted transition-colors">
-              <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
+            <IconButton
+              onClick={onClose}
+              aria-label="Close day details"
+              size="sm"
+              className="-m-1 text-muted-foreground"
+              icon={<X />}
+            />
           </div>
           {(hasW || hasM) ? (
             <div className="space-y-1 text-xs">

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/Button";
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -14,6 +15,11 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, action, accentColor = '#7B72E9' }: EmptyStateProps) {
+  // Sprint 1: CTA migrated to the <Button> primitive. accentColor
+  // continues to drive the icon container colour (per-surface
+  // theming for run/lift/food empty states), but the CTA itself
+  // uses the canonical primary variant — design-system spec is one
+  // primary CTA colour app-wide, not per-page accents.
   return (
     <div className="text-center py-12 px-6 space-y-4" role="status">
       <div
@@ -31,21 +37,23 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
       </div>
       {action && (
         action.href ? (
+          // Sprint 1: <Link> rendered with the same canonical
+          // classes the Button primitive uses for size="sm"
+          // primary. <a> elements can't be wrapped in <button>
+          // (invalid HTML), so we replicate Button's class shape
+          // directly here. Keep this in sync with
+          // src/components/ui/Button.tsx if Button's primary
+          // styling changes.
           <Link
             to={action.href}
-            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95"
-            style={{ background: accentColor, color: '#fff' }}
+            className="inline-flex items-center justify-center min-h-[36px] px-3 text-xs gap-1.5 rounded-xl font-semibold select-none bg-primary-strong text-primary-foreground hover:bg-primary-strong/90 active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {action.label}
           </Link>
         ) : (
-          <button
-            onClick={action.onClick}
-            className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-semibold active:scale-95"
-            style={{ background: accentColor, color: '#fff' }}
-          >
+          <Button onClick={action.onClick} size="sm">
             {action.label}
-          </button>
+          </Button>
         )
       )}
     </div>

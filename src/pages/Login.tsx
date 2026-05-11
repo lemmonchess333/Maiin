@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
-import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -130,32 +131,24 @@ export default function Login() {
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="w-full pl-10 pr-12 py-3 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground transition-all"
               />
-              <button
-                type="button"
+              <IconButton
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground p-2"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                icon={showPassword ? <EyeOff /> : <Eye />}
+              />
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={loading}
-            className={cn(
-              "w-full py-3 rounded-xl font-medium transition-all",
-              "bg-primary text-primary-foreground hover:opacity-90",
-              loading && "opacity-50 cursor-not-allowed"
-            )}
+            loading={loading}
+            fullWidth
+            size="md"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isSignUp ? "Create Account" : "Sign In"}
-          </button>
+            {isSignUp ? "Create Account" : "Sign In"}
+          </Button>
         </form>
 
         {/* Divider */}
@@ -167,32 +160,31 @@ export default function Login() {
 
         {/* Social Sign In */}
         <div className="space-y-3">
-          <button
+          <Button
             onClick={handleApple}
             disabled={loading}
-            className={cn(
-              "w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2",
-              "bg-foreground text-background hover:opacity-90",
-              loading && "opacity-50 cursor-not-allowed"
-            )}
+            fullWidth
+            // Apple brand styling: black-on-white in light mode,
+            // white-on-black in dark mode. The foreground/background
+            // token swap encodes that without a media query.
+            className="bg-foreground text-background hover:bg-foreground/90"
+            leftIcon={
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
+              </svg>
+            }
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z" />
-            </svg>
             Continue with Apple
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleGoogle}
             disabled={loading}
-            className={cn(
-              "w-full py-3 rounded-xl font-medium transition-all",
-              "bg-muted text-foreground border border-border/50 hover:bg-muted/80",
-              loading && "opacity-50 cursor-not-allowed"
-            )}
+            fullWidth
+            variant="outline"
           >
             Continue with Google
-          </button>
+          </Button>
         </div>
 
         {/* Toggle */}

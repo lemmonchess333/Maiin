@@ -505,11 +505,18 @@ export default function Onboarding() {
       }
 
       // Data is saved server-side. Update local state to trigger router transition.
-      // Try Firestore write first; if rules block it, just reload the page
-      // (the CF already persisted everything — the reload will read the updated doc).
+      // Try Firestore write first; if rules block it, the CF already
+      // persisted everything — toast the user before reloading so they
+      // don't see a silent app refresh. Sprint 2: previously this
+      // called window.location.reload() with no toast which read as
+      // the app crashing.
       try {
         await updateProfile({ onboardingComplete: true } as Partial<UserProfile>, { allowProtected: true });
-      } catch {
+      } catch (localUpdateErr) {
+        logger.warn("Onboarding: local profile update failed; reloading to pick up server state", localUpdateErr);
+        toast.success("Setting up your program…");
+        // Brief delay so the toast renders before the reload swallows it.
+        await new Promise((r) => setTimeout(r, 600));
         window.location.reload();
         return;
       }
@@ -536,15 +543,26 @@ export default function Onboarding() {
         logger.warn("Onboarding: public profile seed failed (will be populated lazily):", publicErr);
       }
     } catch (err) {
+      // Sprint 2: the raw fallback toast used to leak Firebase
+      // error codes to the user (e.g. "Save failed: functions/
+      // internal — ..."). That read as a technical crash. Now every
+      // branch returns plain-English copy and the raw error is
+      // logged server-side via logger.error for operator triage.
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code;
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {
-        toast.error("Save failed — your data couldn't be saved due to a permissions issue. Please try again or contact support.");
-      } else if (code === "unavailable" || code === "deadline-exceeded" || msg.includes("INTERNAL")) {
-        toast.error("Network issue — please check your connection and try again.");
+        toast.error("We couldn't save your setup. Try again, or contact support if it keeps happening.");
+      } else if (
+        code === "unavailable" ||
+        code === "deadline-exceeded" ||
+        msg.includes("INTERNAL")
+      ) {
+        toast.error("Connection issue — check your internet and tap Continue again.");
+      } else if (code === "unauthenticated" || code === "permission-denied") {
+        toast.error("Please sign in again to finish setting up your account.");
       } else {
-        toast.error(`Save failed: ${code || "unknown"} — ${msg}`);
+        toast.error("Something went wrong. Tap Continue to try again, or contact support if it keeps happening.");
       }
     } finally {
       setSaving(false);
@@ -558,10 +576,12 @@ export default function Onboarding() {
   ──────────────────────────────── */
 
   return (
-    <div
-      className="min-h-screen flex flex-col px-5 pb-10 pt-safe"
-      style={{ background: THEME.bg, color: THEME.textPrimary }}
-    >
+    // Sprint 2: page background + foreground come from design-system
+    // tokens (bg-background, text-foreground) so the flow renders
+    // correctly in light AND dark mode. Pre-Sprint-2 this was locked
+    // to THEME.bg = #121214 which produced a black page in light mode
+    // — the single biggest first-impression bug per the audit.
+    <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe bg-background text-foreground">
       {/* ── Progress bar ── */}
       <div className="flex gap-1.5 pt-14 pb-6">
         {Array.from({ length: VISIBLE_STEPS }).map((_, i) => {
@@ -569,8 +589,7 @@ export default function Onboarding() {
           return (
             <div
               key={stepIdx}
-              className="h-1 flex-1 rounded-full overflow-hidden"
-              style={{ background: "rgba(255,255,255,0.1)" }}
+              className="h-1 flex-1 rounded-full overflow-hidden bg-muted"
             >
               <motion.div
                 className="h-full rounded-full"
@@ -593,19 +612,13 @@ export default function Onboarding() {
           transition={{ duration: 0.22 }}
           className="flex-1 overflow-y-auto"
         >
-          <p
-            className="text-xs uppercase tracking-widest mb-2"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-          >
+          <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
             Step {step - START_STEP + 1} of {VISIBLE_STEPS}
           </p>
           <h1 className="text-2xl font-bold mb-1">
             {STEP_META[step].title}
           </h1>
-          <p
-            className="text-sm mb-8"
-            style={{ color: "rgba(255,255,255,0.45)" }}
-          >
+          <p className="text-sm mb-8 text-muted-foreground">
             {STEP_META[step].subtitle}
           </p>
 
@@ -639,16 +652,11 @@ export default function Onboarding() {
                 autoCorrect="off"
                 spellCheck={false}
                 inputMode="text"
-                className="w-full px-4 py-4 rounded-2xl text-base outline-none border-none"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  color: THEME.textPrimary,
-                }}
+                className="w-full px-4 py-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
               />
               {displayNameTouched && !displayNameValidation.valid && (
                 <p
-                  className="text-xs"
-                  style={{ color: THEME.danger }}
+                  className="text-xs text-destructive"
                   role="alert"
                 >
                   Please enter a name between 2 and 30 characters.
@@ -665,7 +673,7 @@ export default function Onboarding() {
               {([
                 { id: "male" as Gender, label: "Male", icon: <User size={22} style={{ color: THEME.lifting }} /> },
                 { id: "female" as Gender, label: "Female", icon: <Heart size={22} style={{ color: THEME.running }} /> },
-                { id: "unspecified" as Gender, label: "Prefer not to say", icon: <User size={22} style={{ color: THEME.textSecondary }} /> },
+                { id: "unspecified" as Gender, label: "Prefer not to say", icon: <User size={22} className="text-muted-foreground" /> },
               ]).map((opt, i) => (
                 <OptionCard
                   key={opt.id}
@@ -734,8 +742,8 @@ export default function Onboarding() {
                         onClick={() => setHeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
                         style={{
-                          background: heightUnit === u ? THEME.teal : "rgba(255,255,255,0.08)",
-                          color: heightUnit === u ? "#000" : "rgba(255,255,255,0.5)",
+                          background: heightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                          color: heightUnit === u ? "#000" : "hsl(var(--muted-foreground))",
                         }}
                       >
                         {u}
@@ -766,8 +774,8 @@ export default function Onboarding() {
                         onClick={() => setWeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
                         style={{
-                          background: weightUnit === u ? THEME.teal : "rgba(255,255,255,0.08)",
-                          color: weightUnit === u ? "#000" : "rgba(255,255,255,0.5)",
+                          background: weightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                          color: weightUnit === u ? "#000" : "hsl(var(--muted-foreground))",
                         }}
                       >
                         {u}
@@ -854,17 +862,17 @@ export default function Onboarding() {
                   }}
                   className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all active:scale-[0.95]"
                   style={{
-                    background: daysPerWeek === d ? `${THEME.teal}20` : "rgba(255,255,255,0.05)",
-                    border: `1px solid ${daysPerWeek === d ? THEME.teal + "50" : "rgba(255,255,255,0.08)"}`,
+                    background: daysPerWeek === d ? `${THEME.teal}20` : "hsl(var(--muted) / 0.5)",
+                    border: `1px solid ${daysPerWeek === d ? THEME.teal + "50" : "hsl(var(--muted))"}`,
                   }}
                 >
                   <span
                     className="text-2xl font-bold font-mono"
-                    style={{ color: daysPerWeek === d ? THEME.teal : "rgba(255,255,255,0.5)" }}
+                    style={{ color: daysPerWeek === d ? THEME.teal : "hsl(var(--muted-foreground))" }}
                   >
                     {d}
                   </span>
-                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                     days
                   </span>
                 </button>
@@ -961,7 +969,7 @@ export default function Onboarding() {
               {/* Run mode sub-questions — only if they run */}
               {runFrequency !== "none" && (
                 <div className="space-y-3 pt-2">
-                  <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  <p className="text-xs font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
                     How should we schedule your runs?
                   </p>
                   <div className="space-y-2">
@@ -985,7 +993,7 @@ export default function Onboarding() {
                   {/* Run days slider for structured/race_prep */}
                   {runMode !== "freeform" && (
                     <div>
-                      <label className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      <label className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                         Run days per week ({weeklyRunDays})
                       </label>
                       <input
@@ -1008,7 +1016,7 @@ export default function Onboarding() {
                   {runMode === "race_prep" && (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                           Race distance
                         </p>
                         <div className="grid grid-cols-4 gap-1.5">
@@ -1018,8 +1026,8 @@ export default function Onboarding() {
                               onClick={() => setRaceDistance(d)}
                               className="py-2 rounded-lg text-xs font-medium transition-all"
                               style={{
-                                background: raceDistance === d ? THEME.running : "rgba(255,255,255,0.06)",
-                                color: raceDistance === d ? "#000" : "rgba(255,255,255,0.5)",
+                                background: raceDistance === d ? THEME.running : "hsl(var(--muted) / 0.7)",
+                                color: raceDistance === d ? "#000" : "hsl(var(--muted-foreground))",
                               }}
                             >
                               {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
@@ -1028,19 +1036,14 @@ export default function Onboarding() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                           Target date
                         </p>
                         <input
                           type="date"
                           value={raceTargetDate}
                           onChange={(e) => setRaceTargetDate(e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                          style={{
-                            background: "rgba(255,255,255,0.08)",
-                            border: "1px solid rgba(255,255,255,0.12)",
-                            color: THEME.textPrimary,
-                          }}
+                          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"
                         />
                       </div>
                     </div>
@@ -1123,7 +1126,7 @@ export default function Onboarding() {
                   className="flex items-start gap-3 py-3"
                   style={{
                     borderBottom:
-                      i < 5 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                      i < 5 ? "1px solid hsl(var(--border))" : "none",
                   }}
                 >
                   <div
@@ -1133,7 +1136,7 @@ export default function Onboarding() {
                   <div>
                     <p
                       className="text-xs uppercase tracking-wider"
-                      style={{ color: "rgba(255,255,255,0.35)" }}
+                      style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
                     >
                       {row.label}
                     </p>
@@ -1153,8 +1156,8 @@ export default function Onboarding() {
             onClick={() => setStep(s => s - 1)}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.6)",
+              background: "hsl(var(--muted))",
+              color: "hsl(var(--muted-foreground))",
             }}
           >
             Back
@@ -1170,8 +1173,8 @@ export default function Onboarding() {
             }}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              color: "rgba(255,255,255,0.6)",
+              background: "hsl(var(--muted))",
+              color: "hsl(var(--muted-foreground))",
             }}
           >
             Exit
@@ -1210,7 +1213,7 @@ export default function Onboarding() {
 
       {/* Validation hint when button is disabled */}
       {!canAdvance[step] && !saving && (
-        <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-center text-xs" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
           {step === 2 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
           {step === 3 && 'Enter your height and weight to continue'}
           {step === 8 && 'This split requires more training days'}
