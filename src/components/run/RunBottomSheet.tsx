@@ -3,6 +3,7 @@ import { THEME } from '../../lib/theme';
 import { calculatePace, rollingPace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { GPSPoint, Split } from '../../lib/gps';
+import { RunControlButton } from '@/components/ui/RunControlButton';
 
 interface RunBottomSheetProps {
   elapsed: number;
@@ -214,61 +215,76 @@ export default function RunBottomSheet({
 
             {intervalDisplay}
 
-            {/* Controls */}
+            {/* Sprint 7: controls migrated to <RunControlButton>.
+                Each button now carries a compile-time-required
+                aria-label so screen readers announce a real action
+                name ("Pause run" / "Resume run" / "Stop run" /
+                "Lock screen") instead of the empty "button" the
+                pre-Sprint-7 code produced. The visible label below
+                each button is aria-hidden (decorative) so it isn't
+                announced twice. Press scale standardised at 0.92 —
+                less playful than the regular Button's 0.97, which
+                is the correct posture for an active-run surface
+                where the user is moving and eyes are off-screen. */}
             {!isPaused ? (
               <div className="flex items-center justify-center gap-10 flex-shrink-0">
                 {/* Lock */}
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => { onLock(); haptic('light'); }}
-                    className="w-14 h-14 rounded-full flex items-center justify-center active:scale-90"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.14)' }}>
+                <RunControlButton
+                  aria-label="Lock screen"
+                  label="LOCK"
+                  size="sm"
+                  variant="neutral"
+                  onClick={() => { onLock(); haptic('light'); }}
+                  icon={
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
-                  </button>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>LOCK</p>
-                </div>
+                  }
+                />
 
                 {/* Pause — big centre */}
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => { onPause(); haptic('medium'); }}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
-                    style={{ background: 'rgba(255,255,255,0.1)', border: '2.5px solid rgba(255,255,255,0.28)',
-                      boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.4)' }}>
+                <RunControlButton
+                  aria-label="Pause run"
+                  label="PAUSE"
+                  size="lg"
+                  variant="neutral"
+                  onClick={() => { onPause(); haptic('medium'); }}
+                  icon={
                     <div className="flex gap-[7px]">
                       <div style={{ width: 11, height: 30, background: 'white', borderRadius: 6 }} />
                       <div style={{ width: 11, height: 30, background: 'white', borderRadius: 6 }} />
                     </div>
-                  </button>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>PAUSE</p>
-                </div>
+                  }
+                />
 
-                {/* Spacer */}
-                <div className="w-14 h-14" />
+                {/* Spacer — visual balance, not interactive. */}
+                <div className="w-14 h-14" aria-hidden="true" />
               </div>
             ) : (
               <div className="flex items-center justify-center gap-12 flex-shrink-0">
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => setShowStopConfirm(true)}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
-                    style={{ background: 'rgba(239,68,68,0.12)', border: '2.5px solid #EF4444' }}>
-                    <div style={{ width: 22, height: 22, background: '#EF4444', borderRadius: 5 }} />
-                  </button>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>STOP</p>
-                </div>
+                <RunControlButton
+                  aria-label="Stop run"
+                  label="STOP"
+                  size="lg"
+                  variant="danger"
+                  onClick={() => setShowStopConfirm(true)}
+                  icon={<div style={{ width: 22, height: 22, background: '#EF4444', borderRadius: 5 }} />}
+                />
 
                 {/* Resume */}
-                <div className="flex flex-col items-center gap-2">
-                  <button onClick={() => { onResume(); haptic('medium'); }}
-                    className="w-[76px] h-[76px] rounded-full flex items-center justify-center active:scale-[0.88]"
-                    style={{ background: THEME.teal,
-                      boxShadow: `0 0 32px ${THEME.teal}60, 0 8px 24px rgba(0,0,0,0.4)` }}>
+                <RunControlButton
+                  aria-label="Resume run"
+                  label="RESUME"
+                  size="lg"
+                  variant="primary"
+                  glow
+                  onClick={() => { onResume(); haptic('medium'); }}
+                  icon={
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
                       <polygon points="6,3 20,12 6,21" />
                     </svg>
-                  </button>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em' }}>RESUME</p>
-                </div>
+                  }
+                />
               </div>
             )}
           </div>
@@ -293,14 +309,24 @@ export default function RunBottomSheet({
               <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{livePace}</p>
               <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>/KM</p>
             </div>
+            {/* Collapsed-bar toggle stays bespoke at 48px (the primitive's
+                sm size is 56px and would push the bar 8px taller). The
+                primary fixes Sprint 7 brings here are: required
+                aria-label, calmer 0.92 press scale (matching the
+                run-surface design-system value), and an explicit
+                type="button". */}
             <button
+              type="button"
+              aria-label={isPaused ? "Resume run" : "Pause run"}
               onClick={() => { if (isPaused) { onResume(); } else { onPause(); } haptic('medium'); }}
-              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90"
+              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ background: isPaused ? THEME.teal : 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.18)' }}>
-              {isPaused
-                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6,3 20,12 6,21" /></svg>
-                : <div className="flex gap-1"><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /></div>
-              }
+              <span aria-hidden="true" className="inline-flex">
+                {isPaused
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6,3 20,12 6,21" /></svg>
+                  : <div className="flex gap-1"><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /></div>
+                }
+              </span>
             </button>
           </div>
         )}
