@@ -14,6 +14,21 @@
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
+  /* Semantic status colours — exposed to Tailwind so classes like
+     bg-destructive, text-destructive, bg-destructive/10,
+     text-destructive-foreground, text-success, bg-warning-bg
+     resolve through the design system rather than falling through.
+     Variable definitions live in :root + .dark below; bridged to
+     legacy --ds-success / --ds-warning / --ds-error in tokens.css. */
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-bg: hsl(var(--destructive-bg));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-bg: hsl(var(--success-bg));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-bg: hsl(var(--warning-bg));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -53,6 +68,22 @@
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
+  /* Semantic status colours — light mode.
+     Destructive is a darker red than the legacy #e04040 because that
+     value was borderline for white text on the filled surface; this
+     reaches WCAG AA. Success and warning are darker than the legacy
+     --ds-* hexes for the same reason (text on white card).
+     The *-bg tokens are tinted surfaces for inline banners/badges
+     (e.g. bg-destructive-bg). */
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --destructive-bg: 0 86% 97%;
+  --success: 142 72% 29%;
+  --success-foreground: 0 0% 98%;
+  --success-bg: 138 76% 97%;
+  --warning: 26 90% 37%;
+  --warning-foreground: 0 0% 98%;
+  --warning-bg: 48 100% 96%;
 }
 
 .dark {
@@ -72,6 +103,22 @@
   --glass-bg: rgba(18, 18, 20, 0.97);
   --glass-border: rgba(255, 255, 255, 0.06);
   --surface-solid: #161618;
+  /* Semantic status colours — dark mode.
+     Destructive/success/warning are brighter than in :root because
+     dark cards need higher-luminance text for AA contrast. Since
+     bg-destructive uses the same hue, *-foreground flips to dark so
+     text on the filled surface stays readable. The *-bg surfaces use
+     a deeply-desaturated dark hue so inline banners feel native to
+     the dark theme rather than punching out. */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 240 10% 3.9%;
+  --destructive-bg: 0 45% 16%;
+  --success: 142 69% 58%;
+  --success-foreground: 240 10% 3.9%;
+  --success-bg: 142 38% 14%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 240 10% 3.9%;
+  --warning-bg: 38 45% 15%;
 }
 
 * {

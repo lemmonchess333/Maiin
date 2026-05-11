@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
+import { cn } from "../lib/utils";
 import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
@@ -459,11 +460,12 @@ export default function Crew() {
                 {board.map((entry) => (
                   <div key={entry.uid} className="flex items-center gap-3 px-3.5 py-2.5">
                     <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0"
-                      style={{
-                        background: entry.rank === 1 ? `${THEME.brand}1f` : "transparent",
-                        color: entry.rank === 1 ? THEME.brand : "var(--text-muted)",
-                      }}
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
+                        entry.rank === 1
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground",
+                      )}
                     >
                       {entry.rank}
                     </span>
