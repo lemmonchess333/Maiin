@@ -130,29 +130,120 @@ support-assisted volume becomes operationally painful, escalate to A/a1
 
 ---
 
-## 4. Billing identity tombstone retention
+## 4. Billing identity tombstone retention + keying
 
-**Date:** 2026-05-11  ·  **Status:** Decided
+**Date:** 2026-05-11 (keying rationale added 2026-05-11 post-Chunk-2.C review)  ·  **Status:** Decided
 
-**Question.** How long does the `deletedBillingIdentities` tombstone retain
-hashed provider-identifier fingerprints?
+**Question.** (a) How long does the `deletedBillingIdentities` tombstone retain
+hashed provider-identifier fingerprints? (b) Is the keying plain SHA-256 or HMAC?
 
-**Decision.** 13 months. Covers annual Apple subscription cycle + Apple's
+**Decision (a) — retention.** 13 months. Covers annual Apple subscription cycle + Apple's
 chargeback window.
 
-**Reasoning.** Annual subscriptions can renew up to ~12 months after the
+**Reasoning (a).** Annual subscriptions can renew up to ~12 months after the
 last billing event; chargebacks for fitness subscriptions are rare but
 possible up to ~3 months post-charge. 13 months is a defensible
 intersection. Shorter windows (e.g. 90 days) leave annual subscribers
 exposed to silent recreation. Longer windows (e.g. 24 months) expand
 exposure surface without operational benefit.
 
-**Encoding.** `deletedBillingIdentities` entry retentionWindow `13 months`.
-Firestore TTL on `expiresAt` field, manual setup checklist item.
+**Decision (b) — keying.** Plain SHA-256 of `{provider}:{providerIdentifier}`. NOT HMAC.
 
-**Revisit conditions.** If annual subscriptions are not a product feature
-(no annual SKU on the price list), drop to 6 months. If legal/finance
-require longer audit retention, extend.
+### Why plain SHA-256 is acceptable here
+
+The threat model the tombstone defends against is silent recreation
+of user data when a renewal webhook arrives for an account that was
+deleted. The lookup is `deletedBillingIdentities/{SHA256("apple:...")}`.
+
+An attacker would need to do one of two things to derive value from
+probing this tombstone:
+
+1. **Confirm a known identifier is tombstoned.** If the attacker
+   already has the originalTransactionId out-of-band (receipt,
+   support-ticket leak, screenshot), they can compute its SHA-256
+   themselves. The tombstone hash provides no additional capability
+   they don't already have.
+
+2. **Enumerate identifiers to discover which are tombstoned.** This is
+   what the plain-SHA decision rests on. Enumeration is only viable if
+   the underlying provider identifiers are predictable or low-entropy.
+
+### Provider identifier format / entropy audit
+
+**Apple `originalTransactionId`.** Apple documents this as an opaque
+numeric string, typically 13-19 digits. Per Apple's StoreKit and App
+Store Server documentation, the value is assigned server-side at first
+purchase and is not derived from any client-controllable input. The
+value space (10^13 to 10^19) is large enough that brute-force
+enumeration is infeasible — at 1ms per probe, a 10^13 search would take
+~317 years. Sandbox transaction IDs follow the same opaque-numeric
+format but are scoped to a separate sandbox environment that does not
+share state with production. Verified against Apple's documentation in
+`functions/appleIAP.js:7-25` comments referencing the
+`@apple/app-store-server-library`.
+
+**Stripe `customer_*` ID.** Stripe documents customer IDs as `cus_`
+followed by a random alphanumeric suffix (typically 14-24 chars from
+a base62-ish alphabet). That's ~10^25 to ~10^43 value space, also
+infeasible to brute-force. Test-mode customer IDs are prefixed
+differently (`cus_test_...` or similar) and live in a separate
+environment.
+
+**Stripe `subscription_*` ID.** Same format as customer IDs:
+`sub_` + random alphanumeric. Same enumeration resistance.
+
+**Stripe webhook `evt_*` ID.** Used as the deterministic doc-id for
+`paymentEventsPostDeletion`, not for the billing tombstone. Same
+format. Same enumeration resistance.
+
+Verified by inspection of provider documentation; format strings match
+what the code in `functions/appleIAP.js` and
+`functions/index.js:stripeWebhook` consumes.
+
+### Conclusion
+
+Plain SHA-256 of `{provider}:{identifier}` is acceptable because:
+
+- The provider identifiers are opaque + high-entropy + assigned by the
+  provider server-side. An attacker cannot generate candidate
+  identifiers cheaply.
+- Sandbox/test-mode identifiers live in segregated provider
+  environments and don't share state with production tombstones.
+- The cost of HMAC keying — a `billing.hmac_secret` Cloud Functions
+  config value with a rotation story — is not justified for the
+  threat model.
+
+### When to switch to HMAC
+
+If any of these conditions change, switch billing tombstones to
+HMAC-SHA256 with `billing.hmac_secret` per decision-log #11 (HMAC
+purpose separation):
+
+- Provider changes their identifier format to something predictable
+  or sequential.
+- A new provider integration uses identifiers we can't audit as
+  non-enumerable.
+- Sandbox/test identifiers start leaking into production datasets.
+- Operator-supplied identifiers (e.g. CSV import) become the primary
+  source of billing tombstones.
+
+The switch is a code change (replace `crypto.createHash("sha256")`
+with `crypto.createHmac("sha256", secret)`) plus a backfill
+migration on existing tombstones.
+
+### Encoding
+
+`deletedBillingIdentities` entry retentionWindow `13 months`.
+Firestore TTL on `expiresAt` field, manual setup checklist item.
+Hash input is `${provider}:${identifier}` per `functions/appleIAP.js`.
+
+### Revisit conditions
+
+- Annual subscriptions are not a product feature (no annual SKU on
+  the price list) → drop retention to 6 months.
+- Legal/finance require longer audit retention → extend retention.
+- Provider identifier format changes → switch to HMAC.
+- Post-launch enumeration probing observed in logs → switch to HMAC.
 
 ---
 
@@ -301,7 +392,7 @@ of the deletion subsystem.
 
 ## 10. Recent-auth threat model — exposure acknowledgement
 
-**Date:** 2026-05-11 (Chunk 2.C)  ·  **Status:** Decided (with documented exposure)
+**Date:** 2026-05-11 (Chunk 2.C, framing tightened 2026-05-11 post-review)  ·  **Status:** Decided (with documented exposure)
 
 **Question.** Is `assertRecentAuth` (300s `auth_time` check) the only
 challenge before `deleteMyAccount` proceeds, or is there also a
@@ -310,34 +401,79 @@ server-issued deletion-intent token?
 **Decision.** Recent-auth-only for first release. No deletion-intent
 token in Chunk 3 / Chunk 4.
 
-**Exposure being accepted.** A 300-second window where any party with
-access to a fresh ID token can call `deleteMyAccount` without further
-deletion-specific challenge. Concretely:
-- An attacker with a browser session hijack (XSS, malicious extension,
-  stolen device cookies) within 300s of a fresh reauth can drive
-  deletion.
-- A family member or anyone with access to an unlocked device shortly
-  after the user reauths can tap Delete Account and complete the flow.
-- A malicious mobile-app extension or runtime injection with token
-  access during the recent-auth window can drive deletion via the
-  authenticated callable.
-- Shortening the threshold (e.g. 60s) narrows the window but does not
-  remove the session-token-only compromise risk. Lengthening makes
-  the UX more permissive but expands the attack surface.
+### Prevention vs recovery — the load-bearing distinction
 
-**Why this is acceptable for first release.** Tropos is a consumer
-fitness app, not a financial or healthcare data store. The deletion
-action is destructive but reversible to support-assisted recovery
-(via paymentEventsPostDeletion + accountDeletionLedger ledger entries
-during the 30-day retention window). A user who experiences malicious
-deletion can contact support and the operator can confirm legitimacy
-through other channels. The attack surface (session hijack within 300s
-of reauth) is narrow enough that the operational recovery path is the
-correct mitigation rather than a deletion-intent token.
+The recent-auth check is a **prevention** measure that limits the
+window during which deletion can be authorised. The
+`accountDeletionRequests` ledger is a **recovery** measure that
+makes deletion reversible if the user catches it in time. These
+are NOT substitutes for each other. The recent-auth-only model
+provides prevention; the ledger provides recovery. A future
+maintainer reading this should not assume "the ledger covers us"
+— it doesn't prevent any deletion, it only enables undo IF the
+user notices within the recovery window.
 
-**Production deletion-intent token model (deferred, for reference).**
-If session compromise becomes a real problem post-launch, the deferred
-model is:
+### Prevention
+
+Recent-auth-only limits deletion authorisation to fresh ID tokens
+whose `auth_time` claim is within 300 seconds. The relevant attack
+vectors this defends against:
+
+- **Stale-token replay.** A captured ID token older than 300s
+  cannot drive deletion. Mitigated.
+
+The attack vectors recent-auth-only does NOT defend against:
+
+- **Browser session hijack within the 300s window.** XSS, malicious
+  browser extension, or stolen device cookies acquired during the
+  recent-auth window can drive deletion.
+- **Malicious mobile-app injection within the 300s window.**
+  Runtime injection / jailbreak hooks with token access during the
+  recent-auth window can drive deletion via the authenticated
+  callable.
+- **Family member / device-access attacker during the 300s window.**
+  Anyone with access to an unlocked device shortly after the user
+  reauths can tap Delete Account and complete the flow.
+- **Shortening the threshold** narrows the window but does not
+  remove session-token-only compromise risk. Lengthening makes the
+  UX more permissive but expands the attack surface.
+
+### Recovery
+
+The `accountDeletionRequests/{uid}` ledger persists deletion
+status + leaseGeneration + cleanup progress for 30 days post-
+completion via Firestore TTL. The
+`paymentEventsPostDeletion` log retains payment events for 90 days
+post operator-review. The `deletedAccounts/{uid}` tombstone retains
+operational identity for 90 days. The `deletedBillingIdentities`
+tombstone retains hashed billing identity for 13 months.
+
+If a user reports wrongful deletion within the 30-day ledger
+window, the operator has the data to:
+1. Confirm the deletion happened (ledger).
+2. See which provider events arrived post-deletion (payment events).
+3. Re-link the previous billing identity to a new account if
+   appropriate (billing tombstone).
+
+**The ledger does NOT prevent the deletion.** It supports
+operator-assisted recovery if the user notices in time.
+
+### Why this is acceptable for first release
+
+Tropos is a consumer fitness app, not a financial or healthcare
+data store. The deletion action is destructive but its outcomes
+(weeks of meal logs, run history, lift history) are reproducible
+by the user themselves — the user can re-log if they want.
+Operator-assisted recovery via the 30-day ledger covers the
+"someone deleted my account maliciously" support ticket. The
+attack surface (session hijack within 300s of reauth) is narrow
+enough that the operational recovery path is the correct
+mitigation rather than a deletion-intent token.
+
+### Production deletion-intent token model (deferred, for reference)
+
+If session compromise becomes a real problem post-launch, the
+deferred model is:
 1. User taps Delete Account.
 2. Client triggers reauthentication.
 3. Server mints a short-lived (≤ 5min), single-use deletion-intent

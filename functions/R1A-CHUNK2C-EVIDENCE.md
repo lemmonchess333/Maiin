@@ -266,25 +266,61 @@ protected paths.
 Both Chunk 2 and Chunk 2.B used this methodology. The numbers
 diverged because of count-drift in PROSE, not methodology change.
 
-**Reconciliation:** the authoritative list is 27 paths, maintained
-in `src/lib/__tests__/accountDeletionWriteRulesSnapshot.test.ts`
-under `PROTECTED_PATHS`. The pinned constant `EXPECTED_PROTECTED_PATH_COUNT = 27`
-fails the test if drift occurs.
+### Both previous prose counts were hand-count drift
 
-**Delta breakdown (22 → 27 = +5):**
-1. `match /users/{uid}/public/{doc}` — was already in Chunk 2 rules
-   but Chunk 2 prose didn't count it. Count drift.
-2. `match /users/{uid}/savedRoutines/{doc}` — same. Count drift.
-3. `match /groups/{crewId}` — was added the freeze in Chunk 2 but
-   not counted in the "22" prose. Count drift.
-4. `match /groups/{crewId}/members/{userId}` — same. Count drift.
-5. `match /reports/{reportId}` — same. Count drift.
+- Chunk 2 prose: "22 protected paths" — incorrect prose count.
+- Chunk 2.B prose: "25 protected paths" — also incorrect prose count
+  (the test asserted `>=25` but the actual list was always 27).
+- Authoritative count (Chunk 2.C onward): **27**.
+
+The static `PROTECTED_PATHS` list in
+`src/lib/__tests__/accountDeletionRulesCoverage.test.ts` has been
+the source of truth across Chunks 2, 2.B, and 2.C. Both prose
+counts under-counted the same canonical list. No methodology change,
+no scope change — just two consecutive hand-count errors.
+
+### Snapshot test is the source of truth going forward
+
+The Chunk 2.C addition
+`src/lib/__tests__/accountDeletionWriteRulesSnapshot.test.ts`
+exports `EXPECTED_PROTECTED_PATH_COUNT = 27` as a pinned constant
+AND parses `firestore.rules` to assert every `match /PATH {` block
+with client-writable rules is in `PROTECTED_PATHS`,
+`EXPLICITLY_EXEMPT`, or `INFRASTRUCTURE_AND_READ_ONLY`. Any
+modification to firestore.rules that adds, removes, or changes
+the write-ability of a match block surfaces as a test failure.
+
+The cross-test invariant: `accountDeletionRulesCoverage.test.ts`
+asserts `PROTECTED_PATHS.length === 27`, and
+`accountDeletionWriteRulesSnapshot.test.ts` asserts
+`EXPECTED_PROTECTED_PATH_COUNT === 27`. Both must update together.
+
+### Delta breakdown (22 prose → 27 actual = +5)
+
+Five paths were in the rules but not in the Chunk 2 prose count.
+All five had the freeze applied correctly in code from Chunk 2 —
+the error was purely in the prose-summary count, not in coverage:
+
+1. `match /users/{uid}/public/{doc}` — was in Chunk 2 rules with
+   `isOwnerAndNotDeleting(uid)` from the start.
+2. `match /users/{uid}/savedRoutines/{doc}` — same.
+3. `match /groups/{crewId}` — freeze applied in Chunk 2 (deleting
+   users can't create new crews); not prose-counted.
+4. `match /groups/{crewId}/members/{userId}` — same.
+5. `match /reports/{reportId}` — freeze applied in Chunk 2 (deleting
+   users can't file new reports); not prose-counted.
 
 All five are count drifts in PROSE, not new paths added in Chunk 2.B.
 The static test always had the correct list; the prose-count of
-"22" was a hand-count error that the new constant fixes.
+"22" was a hand-count error that the new pinned constants fix.
 
-**Future drift protection** — see item 15 below.
+### Future drift protection
+
+See item 15 below. Any future change to the protected-path set
+requires updating BOTH `EXPECTED_PROTECTED_PATH_COUNT` AND
+`PROTECTED_PATHS` (in both the snapshot and coverage tests) — the
+prose count cannot drift again because both tests fail fast if the
+constants disagree with reality.
 
 ## 13. Final list of protected paths
 
