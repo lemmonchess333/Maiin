@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const BUBBLE_COUNT = 3;
 
@@ -26,14 +27,25 @@ function makeBubbles(seed: number): Bubble[] {
 }
 
 export default function WaterBubbles() {
+  const reducedMotion = useReducedMotion();
   const [cycle, setCycle] = useState(0);
 
   useEffect(function () {
+    // Sprint 6: skip the 4-second cycle interval entirely when the
+    // user opts out of motion. Bubble animation is decorative —
+    // omitting it is a strict improvement for vestibular safety,
+    // not a degraded experience.
+    if (reducedMotion) return;
     const interval = setInterval(function () {
       setCycle(function (c) { return c + 1; });
     }, 4000);
     return function () { clearInterval(interval); };
-  }, []);
+  }, [reducedMotion]);
+
+  // Sprint 6: render nothing when reduced motion is set. The Water
+  // hero card's bubble layer is decorative — the card still works
+  // visually without it.
+  if (reducedMotion) return null;
 
   const bubbles = makeBubbles(cycle);
 
