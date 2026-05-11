@@ -92,6 +92,62 @@ Three buckets:
    path (e.g. server-side seeding for testing). Flag for manual
    review.
 
+### Step 3b: Billing tombstone format check (Chunk 2.D-billing addition)
+
+Before the Chunk 3 executor begins writing billing tombstones with
+HMAC-SHA256 keys (decision-log #4 revised), confirm whether any
+production `deletedBillingIdentities` tombstones already exist from
+earlier code paths.
+
+**Audit query (operator runs read-only):**
+
+```js
+const billingSnap = await db.collection("deletedBillingIdentities").get();
+const formatGuess = (id) => {
+  if (/^[0-9a-f]{64}$/.test(id)) return "64-hex (plain-SHA-256 or HMAC-SHA256)";
+  if (/^[0-9a-f]{40}$/.test(id)) return "40-hex (SHA-1)";
+  return "unknown format";
+};
+const summary = {
+  totalCount: billingSnap.size,
+  formatHistogram: {},
+  sampleDocIds: billingSnap.docs.slice(0, 3).map((d) => d.id),
+};
+for (const doc of billingSnap.docs) {
+  const fmt = formatGuess(doc.id);
+  summary.formatHistogram[fmt] = (summary.formatHistogram[fmt] || 0) + 1;
+}
+console.log(JSON.stringify(summary, null, 2));
+```
+
+**Expected result:** `{ totalCount: 0, formatHistogram: {}, sampleDocIds: [] }`.
+
+`deletedBillingIdentities` is a new collection introduced by R1A in
+Chunk 1. No pre-R1A code path writes to it. The audit confirms this
+empirically before the HMAC switch ships.
+
+**If the audit finds non-zero tombstones:**
+
+1. Inspect 5 sample doc IDs. 64-hex format is ambiguous between
+   plain SHA-256 (rejected) and HMAC-SHA256 (current).
+2. If format is 64-hex but the project has never had a deployed
+   plain-SHA-256 implementation (verify via git log on
+   functions/appleIAP.js — the plain-SHA-256 attempt was only on
+   the `claude/r1a-account-deletion` development branch, never
+   deployed), the existing tombstones must have come from another
+   source. Investigate before proceeding.
+3. If legacy plain-SHA-256 tombstones DO exist:
+   - Document the dual-read window in decision-log #4.
+   - Update `billingIdentityLookupHashes` to also try the legacy
+     plain-SHA-256 form for the 13-month retention window.
+   - Add a one-off migration script that re-keys existing legacy
+     tombstones under HMAC.
+   - Remove the dual-read path after the deprecation window.
+
+**Status of this check:** PENDING — operator runs alongside the
+Step 1-3 orphan audit. Result must be recorded in decision-log #4
+before Chunk 3 executor tombstone writes begin.
+
 ### Step 4: Scope decision
 
 After the audit reports counts, founder + operator decide:

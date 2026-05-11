@@ -171,19 +171,44 @@ Deletion-management exemption list:
 - `cancelDeletionRequest` (Chunk 3) — same.
 - All other callables that write user data: actor lock applies.
 
-### Blocker 10 (billing tombstone privacy + HMAC rotation) — §13 of Chunk 2.B verification + decision-log #11 (HMAC purpose separation)
+### Blocker 10 (billing tombstone privacy + HMAC rotation) — §13 of Chunk 2.B verification + decision-log #4 (revised post-Chunk-2.D review) + decision-log #11 (HMAC purpose separation)
 
-- Current keying: plain SHA-256 with provider namespacing applied
-  in Chunk 2.C (`apple:<originalTransactionId>` → SHA256). Plain SHA
-  is acceptable because Apple originalTransactionId is opaque,
-  long, non-enumerable.
-- HMAC rotation strategy if HMAC is adopted later:
-  secretVersion-stored-on-record with active+previous secret
-  fallback during the 13-month retention window.
+- Current keying: **HMAC-SHA256** with `billing.hmac_secret` and
+  provider namespacing (`apple:<originalTransactionId>` etc).
+  REVISED from the Chunk 2.C plain-SHA-256 stance — the Chunk 2.D
+  reviewer correctly flagged that the plain-SHA reasoning relied
+  on online-probe resistance (~317 years at 1ms/probe) which is
+  irrelevant to the actual threat: offline brute-force after
+  tombstone-collection exposure (Firestore export, backup, log
+  access). Modern hardware crackes 10^13 plain-SHA-256 candidates
+  in hours, not centuries. HMAC defeats this without requiring
+  more entropy from provider IDs.
+- HMAC rotation strategy: secretVersion stored on each tombstone
+  doc + `billing.previous_hmac_secret` config entry checked
+  alongside active during the 13-month retention window. Single-
+  secret deployments (no rotation in progress) skip the previous
+  entry.
 - Two distinct HMAC secrets per purpose:
   `moderation.hmac_secret` (for reportsAboutMe) and
-  `billing.hmac_secret` (reserved; not used in Chunk 2.C since
-  billing uses plain SHA-256). Documented in decision-log #11.
+  `billing.hmac_secret` (NOW USED in Chunk 2.D for billing
+  tombstones). Documented in decision-log #11.
+- Implementation: `functions/lib/billingIdentityHash.js` exposes
+  `computeBillingHash(provider, identifier, secret)` (pure),
+  `billingIdentityHash(provider, identifier)` (production helper
+  that reads `billing.hmac_secret` from Functions config), and
+  `billingIdentityLookupHashes(provider, identifier)` (returns
+  active + previous hashes for rotation-aware lookup).
+- Fail-closed posture on missing secret: helper throws
+  `billing-hmac-secret-missing`; `restoreApplePurchases` catches
+  the throw, emits structured Cloud Logging warning
+  (`r1aEvent: billing_hmac_secret_missing`), and returns the
+  generic `restore-unavailable` error to the client.
+- Tests: `src/lib/__tests__/accountDeletionBillingHash.test.ts`
+  pins HMAC determinism, secret-change defeats reversal,
+  provider-namespacing, input validation, and the
+  "knowing-plaintext-without-secret-doesn't-reproduce-hash"
+  property that captures the offline-brute-force-resistance
+  threat-model claim.
 
 ## 9. Recent-auth-only vs recent-auth-plus-deletion-intent-token
 

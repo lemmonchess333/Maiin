@@ -132,13 +132,13 @@ support-assisted volume becomes operationally painful, escalate to A/a1
 
 ## 4. Billing identity tombstone retention + keying
 
-**Date:** 2026-05-11 (keying rationale added 2026-05-11 post-Chunk-2.C review)  ·  **Status:** Decided
+**Date:** 2026-05-11 (initial), 2026-05-11 (keying revised post-Chunk-2.D review)  ·  **Status:** Decided
 
 **Question.** (a) How long does the `deletedBillingIdentities` tombstone retain
 hashed provider-identifier fingerprints? (b) Is the keying plain SHA-256 or HMAC?
 
 **Decision (a) — retention.** 13 months. Covers annual Apple subscription cycle + Apple's
-chargeback window.
+chargeback window. Unchanged from earlier rounds.
 
 **Reasoning (a).** Annual subscriptions can renew up to ~12 months after the
 last billing event; chargebacks for fitness subscriptions are rare but
@@ -147,103 +147,148 @@ intersection. Shorter windows (e.g. 90 days) leave annual subscribers
 exposed to silent recreation. Longer windows (e.g. 24 months) expand
 exposure surface without operational benefit.
 
-**Decision (b) — keying.** Plain SHA-256 of `{provider}:{providerIdentifier}`. NOT HMAC.
+**Decision (b) — keying. REVISED to HMAC-SHA256 with `billing.hmac_secret`.**
+The Chunk 2.C plain-SHA-256 decision was reopened by the Chunk 2.D
+review. HMAC is now the chosen path. Tombstone key shape:
 
-### Why plain SHA-256 is acceptable here
+```
+HMAC-SHA256(billing.hmac_secret, "apple:<originalTransactionId>")
+HMAC-SHA256(billing.hmac_secret, "stripe:<customerId|subscriptionId|...>")
+```
 
-The threat model the tombstone defends against is silent recreation
-of user data when a renewal webhook arrives for an account that was
-deleted. The lookup is `deletedBillingIdentities/{SHA256("apple:...")}`.
+### Why the Chunk 2.C plain-SHA-256 reasoning was wrong
 
-An attacker would need to do one of two things to derive value from
-probing this tombstone:
+The Chunk 2.C entropy audit (preserved below for reviewer context)
+argued that Apple's 10^13 to 10^19 numeric value space makes
+brute-force enumeration infeasible at 1ms per online probe (~317
+years for the 10^13 lower bound). **That estimate addresses the
+wrong threat model.**
 
-1. **Confirm a known identifier is tombstoned.** If the attacker
-   already has the originalTransactionId out-of-band (receipt,
-   support-ticket leak, screenshot), they can compute its SHA-256
-   themselves. The tombstone hash provides no additional capability
-   they don't already have.
+The threat that matters is OFFLINE hash cracking after exposure of
+the `deletedBillingIdentities` collection — via Firestore export,
+backup leak, log access, or admin-readable dataset. Modern hardware
+can compute billions of SHA-256 hashes per second; a 10^13 candidate
+space falls in hours, not centuries. Plain SHA-256 over a 13-digit
+numeric identifier is not a privacy boundary against an attacker
+with read access to the tombstone hashes.
 
-2. **Enumerate identifiers to discover which are tombstoned.** This is
-   what the plain-SHA decision rests on. Enumeration is only viable if
-   the underlying provider identifiers are predictable or low-entropy.
+HMAC fixes this without requiring more entropy from the provider
+IDs: without `billing.hmac_secret` the attacker cannot pre-compute
+candidate hashes, so even with full read access to the tombstone
+collection there is no offline shortcut.
 
-### Provider identifier format / entropy audit
+### Apple identifier length distribution (what we actually know)
 
-**Apple `originalTransactionId`.** Apple documents this as an opaque
-numeric string, typically 13-19 digits. Per Apple's StoreKit and App
-Store Server documentation, the value is assigned server-side at first
-purchase and is not derived from any client-controllable input. The
-value space (10^13 to 10^19) is large enough that brute-force
-enumeration is infeasible — at 1ms per probe, a 10^13 search would take
-~317 years. Sandbox transaction IDs follow the same opaque-numeric
-format but are scoped to a separate sandbox environment that does not
-share state with production. Verified against Apple's documentation in
-`functions/appleIAP.js:7-25` comments referencing the
-`@apple/app-store-server-library`.
+The "13-19 digits" range from the earlier audit is a documented
+bound, not a uniform distribution. What we know:
 
-**Stripe `customer_*` ID.** Stripe documents customer IDs as `cus_`
-followed by a random alphanumeric suffix (typically 14-24 chars from
-a base62-ish alphabet). That's ~10^25 to ~10^43 value space, also
-infeasible to brute-force. Test-mode customer IDs are prefixed
-differently (`cus_test_...` or similar) and live in a separate
-environment.
+- Apple's documentation describes `originalTransactionId` as an
+  opaque numeric string. The format has evolved across iOS versions.
+- Legacy transactions (pre-iOS-12 / 2018-era StoreKit 1) commonly
+  have 10-13 digit identifiers from the legacy receipt format.
+- Current StoreKit 2 transactions (iOS 15+) typically issue 18-19
+  digit identifiers.
+- Sandbox identifiers follow the same format generators but live
+  in a segregated environment; they do not share state with
+  production tombstones.
+- A production restore flow CAN receive a 13-digit identifier if
+  the user originally purchased on an older device/version and is
+  restoring on a current device.
 
-**Stripe `subscription_*` ID.** Same format as customer IDs:
-`sub_` + random alphanumeric. Same enumeration resistance.
+**The weakest valid production case determines the security
+posture.** A 13-digit lower bound (10^13 candidates) is the
+floor that must be defended. HMAC defeats this regardless of
+distribution.
 
-**Stripe webhook `evt_*` ID.** Used as the deterministic doc-id for
-`paymentEventsPostDeletion`, not for the billing tombstone. Same
-format. Same enumeration resistance.
+### Stripe identifier format (unchanged from earlier audit)
 
-Verified by inspection of provider documentation; format strings match
-what the code in `functions/appleIAP.js` and
-`functions/index.js:stripeWebhook` consumes.
+- `cus_*`: `cus_` + 14-24 chars from a base62-ish alphabet (~10^25
+  to 10^43 value space).
+- `sub_*`: same format.
+- `evt_*` (used for `paymentEventsPostDeletion` doc IDs, NOT
+  billing tombstones): same format.
 
-### Conclusion
+Stripe identifiers are higher entropy than Apple legacy
+identifiers; HMAC is therefore "belt-and-braces" for Stripe but
+still preferred for consistency: both providers go through the
+same tombstone hashing path with one rotation story.
 
-Plain SHA-256 of `{provider}:{identifier}` is acceptable because:
+### Existing production tombstone check (Chunk 2.C review item)
 
-- The provider identifiers are opaque + high-entropy + assigned by the
-  provider server-side. An attacker cannot generate candidate
-  identifiers cheaply.
-- Sandbox/test-mode identifiers live in segregated provider
-  environments and don't share state with production tombstones.
-- The cost of HMAC keying — a `billing.hmac_secret` Cloud Functions
-  config value with a rotation story — is not justified for the
-  threat model.
+`deletedBillingIdentities` is a NEW collection introduced by R1A
+in Chunk 1. Pre-R1A code paths (the legacy `deleteMyAccount` in
+production) did not write any billing tombstone. So:
 
-### When to switch to HMAC
+- **Expectation:** zero production tombstones exist today.
+- **Verification:** the historical orphan audit
+  (`R1A-HISTORICAL-AUDIT.md`) was extended to explicitly count
+  `deletedBillingIdentities` docs and report their key format if
+  any are present.
+- **If verification confirms zero:** HMAC is the only key type
+  from day one. No migration, no dual-read window, no plain-SHA
+  ever in production.
+- **If verification finds non-zero tombstones:** identify whether
+  they are plain SHA-256, HMAC, or unknown format. Document
+  migration before the HMAC switch ships. New lookup logic checks
+  both legacy plain-SHA and new HMAC during a bounded deprecation
+  window; deprecation window is recorded here when it lands.
 
-If any of these conditions change, switch billing tombstones to
-HMAC-SHA256 with `billing.hmac_secret` per decision-log #11 (HMAC
-purpose separation):
-
-- Provider changes their identifier format to something predictable
-  or sequential.
-- A new provider integration uses identifiers we can't audit as
-  non-enumerable.
-- Sandbox/test identifiers start leaking into production datasets.
-- Operator-supplied identifiers (e.g. CSV import) become the primary
-  source of billing tombstones.
-
-The switch is a code change (replace `crypto.createHash("sha256")`
-with `crypto.createHmac("sha256", secret)`) plus a backfill
-migration on existing tombstones.
+The Chunk 2.D implementation assumes the expectation (zero
+tombstones) holds. If the audit reveals otherwise, this entry
+gets a transition plan before Chunk 3 executor tombstone writes
+begin.
 
 ### Encoding
 
-`deletedBillingIdentities` entry retentionWindow `13 months`.
-Firestore TTL on `expiresAt` field, manual setup checklist item.
-Hash input is `${provider}:${identifier}` per `functions/appleIAP.js`.
+- `deletedBillingIdentities` entry retentionWindow `13 months`,
+  Firestore TTL on `expiresAt`.
+- Hash input is `${provider}:${identifier}` passed through
+  `crypto.createHmac("sha256", secret)`.
+- Helper module: `functions/lib/billingIdentityHash.js`.
+- Lookup (rotation-aware) returns hashes under active + previous
+  secret; both are checked against Firestore.
+- Write (Chunk 3 executor) uses the active secret and records
+  `secretVersion` on the tombstone doc for rotation tracking.
+- `billing.hmac_secret` provisioned via:
+
+  ```bash
+  firebase functions:config:set billing.hmac_secret="<32-byte-hex>"
+  ```
+
+  Manual setup checklist item. Operator generates the secret with
+  `openssl rand -hex 32` or equivalent.
+
+### Rotation story (per decision-log #11 — HMAC purpose separation)
+
+- Distinct from `moderation.hmac_secret` (used for `reportsAboutMe`
+  fingerprinting). Rotated independently.
+- During rotation, set `billing.previous_hmac_secret` to the old
+  value before rotating `billing.hmac_secret`. Lookup helper
+  checks both for the 13-month retention window. After the window
+  passes, the `previous_hmac_secret` entry is removed.
+- Single-secret deployment (no rotation yet) skips
+  `previous_hmac_secret` entirely.
+
+### Fail-closed posture on missing secret
+
+If `billing.hmac_secret` is not provisioned when the lookup runs
+(deploy-time misconfiguration), the helper throws
+`billing-hmac-secret-missing`. The `restoreApplePurchases` call
+site catches the throw, emits a structured Cloud Logging warning
+(`r1aEvent: billing_hmac_secret_missing`), and returns the
+generic `restore-unavailable` error to the client. Users get the
+support-assisted path; operator sees the misconfiguration alert
+in logs.
 
 ### Revisit conditions
 
-- Annual subscriptions are not a product feature (no annual SKU on
-  the price list) → drop retention to 6 months.
+- Annual subscriptions are not a product feature → drop retention
+  to 6 months.
 - Legal/finance require longer audit retention → extend retention.
-- Provider identifier format changes → switch to HMAC.
-- Post-launch enumeration probing observed in logs → switch to HMAC.
+- Provider format unifies to higher-entropy UUIDs across all
+  versions → plain SHA-256 could become defensible if the offline-
+  crackability concern dissolves. Even then, HMAC remains the
+  simpler choice given the secret-rotation story already exists.
 
 ---
 

@@ -298,7 +298,7 @@ exports.restoreApplePurchases = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("invalid-argument", "originalTransactionId required.");
   }
   // R1A-Deletion founder decision #3 (A/a2 support-assisted) +
-  // Chunk 2.C Blocker D3 leak fix:
+  // Chunk 2.C Blocker D3 leak fix + Chunk 2.D-billing HMAC switch:
   //
   // The original Chunk 2 implementation returned a distinct
   // `restore-requires-support` errorCode when the originalTransactionId
@@ -328,19 +328,52 @@ exports.restoreApplePurchases = functions.https.onCall(async (data, context) => 
   // and accept signedTransactionInfo (StoreKit-issued JWS that Apple
   // verifies belongs to the device user). Tracked in decision-log #3
   // revisit conditions.
-  const crypto = require("crypto");
-  // Provider-namespaced hash so a future Stripe customer ID with the
-  // same numeric value cannot collide with an Apple originalTransactionId.
-  const identifierHash = crypto.createHash("sha256").update(`apple:${originalTransactionId}`).digest("hex");
+  //
+  // Chunk 2.D billing HMAC: tombstone key is HMAC-SHA256 with
+  // billing.hmac_secret, NOT plain SHA-256. The previous plain-SHA
+  // reasoning was online-probe-only and ignored offline hash-cracking
+  // after a Firestore export or backup leak. HMAC defeats offline
+  // brute-force without requiring more entropy from the provider IDs.
+  // See R1A-DECISION-LOG.md #4 for full rationale.
+  const billingIdentityHash = require("./lib/billingIdentityHash");
   let billingTombstoned = false;
   try {
-    const billingTombstoneSnap = await admin
-      .firestore()
-      .collection("deletedBillingIdentities")
-      .doc(identifierHash)
-      .get();
-    billingTombstoned = billingTombstoneSnap.exists;
+    const lookupHashes = billingIdentityHash.billingIdentityLookupHashes(
+      "apple",
+      originalTransactionId,
+    );
+    for (const hash of lookupHashes) {
+      // Rotation-aware: check active and previous-secret hashes.
+      // Any hit means a tombstone exists under either secret.
+      // eslint-disable-next-line no-await-in-loop
+      const billingTombstoneSnap = await admin
+        .firestore()
+        .collection("deletedBillingIdentities")
+        .doc(hash)
+        .get();
+      if (billingTombstoneSnap.exists) {
+        billingTombstoned = true;
+        break;
+      }
+    }
   } catch (err) {
+    if (err && err.errorCode === "billing-hmac-secret-missing") {
+      // Deploy-time misconfiguration. Log structured warning so
+      // operator notices in Cloud Logging, then fall through to the
+      // collapsed restore-unavailable error. We do NOT proceed with
+      // the restore — fail-closed is safer than recreating user data
+      // for a potentially-tombstoned identity.
+      console.warn(JSON.stringify({
+        r1aEvent: "billing_hmac_secret_missing",
+        uid,
+        provider: "apple",
+      }));
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Restore is currently unavailable for this subscription. Contact support if you need help.",
+        { errorCode: "restore-unavailable" },
+      );
+    }
     console.error(`restoreApplePurchases: tombstone lookup failed for uid=${uid}`, err);
     // Treat lookup failure as conservative: don't reveal anything.
     // Fall through to the collapsed error below.
