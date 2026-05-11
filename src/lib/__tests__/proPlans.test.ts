@@ -18,6 +18,7 @@ import {
   getPlan,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
+  getInlinePriceSummary,
   type PlanId,
 } from "../proPlans";
 
@@ -68,16 +69,35 @@ describe("getCheckoutCtaLabel", () => {
 });
 
 describe("getRenewalDisclosure", () => {
-  it("uses 'monthly' for the monthly plan", () => {
+  it("uses 'monthly' for the monthly plan (web default)", () => {
     expect(getRenewalDisclosure("monthly")).toContain("monthly");
   });
 
-  it("uses 'annually' for the yearly plan", () => {
+  it("uses 'annually' for the yearly plan (web default)", () => {
     expect(getRenewalDisclosure("yearly")).toContain("annually");
   });
 
-  it("includes 'Cancel anytime' (paywall trust copy)", () => {
-    expect(getRenewalDisclosure("monthly")).toContain("Cancel anytime");
-    expect(getRenewalDisclosure("yearly")).toContain("Cancel anytime");
+  it("includes 'Cancel anytime' on web (paywall trust copy)", () => {
+    expect(getRenewalDisclosure("monthly", "web")).toContain("Cancel anytime");
+    expect(getRenewalDisclosure("yearly", "web")).toContain("Cancel anytime");
+  });
+
+  it("iOS variant uses Apple ID subscriptions wording", () => {
+    const ios = getRenewalDisclosure("yearly", "ios");
+    expect(ios).toContain("Apple ID");
+    expect(ios).toContain("Auto-renews annually");
+  });
+
+  it("android falls through to the web disclosure shape", () => {
+    expect(getRenewalDisclosure("monthly", "android")).toContain("Cancel anytime");
+  });
+});
+
+describe("getInlinePriceSummary", () => {
+  it("returns 'monthly or yearly' shape pulled from PRO_PLANS", () => {
+    const summary = getInlinePriceSummary();
+    expect(summary).toContain("£3.99/month");
+    expect(summary).toContain("£34.99/year");
+    expect(summary).toContain(" or ");
   });
 });

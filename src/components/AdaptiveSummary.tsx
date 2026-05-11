@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import {
   Trophy,
   Target,
@@ -12,9 +12,12 @@ import {
   Wheat,
 } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
-import { motion } from "framer-motion";
-import { useSubscription, pricing } from "@/lib/subscription";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSubscription } from "@/lib/subscription";
+import { getInlinePriceSummary } from "@/lib/proPlans";
 import { toast } from "sonner";
+
+const ProModal = lazy(() => import("@/components/ProModal"));
 import {
   generateInsight,
   momentumDirection,
@@ -350,6 +353,10 @@ export function AdaptiveSummary({
 
   const [phase, setPhase] = useState<PhaseMode>("recomp");
   const [calorieBoost, setCalorieBoost] = useState(0);
+  // Sprint paywall-unification: the locked-Pro card had pricing copy
+  // but no action — a dead end. Tapping the new Unlock CTA opens
+  // ProModal with the matching feature key.
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const workoutsDone = safeNum(mode === "weekly" ? weeklyWorkoutsDone : monthlyWorkoutsDone);
   const workoutsTarget = safeNum(
@@ -502,19 +509,38 @@ export function AdaptiveSummary({
           <p className="text-xs text-muted-foreground">{badgeInfo.motivational}</p>
         </div>
 
-        {/* PRO GATE */}
+        {/* PRO GATE — locked card now leads somewhere. Pre-fix this
+            section showed pricing but had no action; tapping the
+            card did nothing and showing pricing without a way to
+            buy is exactly what the spec called out as the dead-end
+            pattern to remove. */}
         {!isPro && (
           <div className="p-4 rounded-xl bg-muted/30 border border-border text-center space-y-3">
-            <Lock className="mx-auto w-5 h-5 text-muted-foreground" />
+            <Lock className="mx-auto w-5 h-5 text-muted-foreground" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">Unlock Performance Engine</p>
             <p className="text-xs text-muted-foreground">
               AI macro adjustments, plateau detection, phase modes, and performance insights.
             </p>
-            <p className="text-xs font-semibold text-foreground">
-              £{pricing.monthly}/month or £{pricing.yearly}/year
-            </p>
+            <p className="text-xs font-semibold text-foreground">{getInlinePriceSummary()}</p>
+            <button
+              type="button"
+              onClick={() => setShowPaywall(true)}
+              className="w-full min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.98] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Unlock with Pro
+            </button>
           </div>
         )}
+        <AnimatePresence>
+          {showPaywall && (
+            <Suspense fallback={null}>
+              <ProModal
+                featureKey="performance_engine"
+                onClose={() => setShowPaywall(false)}
+              />
+            </Suspense>
+          )}
+        </AnimatePresence>
 
         {/* PRO: Phase Selector + AI Engine */}
         {isPro && (

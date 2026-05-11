@@ -1,42 +1,35 @@
 /**
  * ProModal — gated-feature paywall bottom sheet.
  *
- * This is a conversion-critical surface. Users land here when they
- * tap a Pro-locked feature (via ProGate) or the "Upgrade to Pro" CTA
- * on the Upgrade.tsx page. The job is to make the purchase decision
- * obvious in <5 seconds.
+ * Conversion-critical surface. Users land here when they tap a
+ * Pro-locked feature (via ProGate) or any "Upgrade to Pro" entry
+ * point that wants a quick checkout flow rather than full-page
+ * pricing.
  *
- * Recovery commit (claude/promodal-paywall-recovery)
- * ---------------------------------------------------
- * Pre-recovery this modal was the only surface in the app still
- * carrying the original dark-glass aesthetic — hardcoded `text-white`,
- * `text-white/60..80`, `bg-white/5..20`, `border-white/10..20`, and
- * `var(--surface-solid)` / `var(--glass-border)` which in light mode
- * resolve to literally `#ffffff` and near-invisible borders. Result:
- * the monthly tile rendered blank (white text on white background)
- * and the modal looked broken on every device that wasn't in dark
- * mode. This rewrite:
+ * Architecture (after the unification commit)
+ * -------------------------------------------
+ * Three things changed beyond the visual recovery:
  *
- *   1. Replaces every dark-glass token with semantic Sprint 0 tokens
- *      (text-foreground / text-muted-foreground / bg-card /
- *      border-border) so the modal renders correctly in both themes.
- *   2. Routes the bottom-sheet through the Sprint 3 BottomSheet
- *      primitive instead of rolling its own backdrop + slide-in +
- *      focus trap + scroll lock.
- *   3. Pulls pricing copy from the shared `proPlans.ts` config so
- *      this surface and `Upgrade.tsx` can't drift from each other.
- *   4. Hardens the plan selector as a proper aria radiogroup with
- *      role=radio + aria-checked, keyboard-navigable.
- *   5. Surfaces checkout errors inline above the CTA (not just via
- *      a fading toast). Loading state disables both plan tiles and
- *      the CTA so double-submits are impossible.
- *   6. Hides "Restore purchases" on web — `restorePurchases()`
- *      returns an error on non-iOS so the link did nothing useful
- *      pre-recovery (anti-pattern: links that don't work).
+ *   1. `feature?: string` → `featureKey?: ProFeatureKey`. Closed
+ *      TypeScript union, looked up against the shared
+ *      `proFeatures` registry. Pre-unification ProGate forwarded
+ *      display strings like "Adaptive TDEE" that never matched
+ *      the modal's hero-key map — feature-specific copy never
+ *      rendered for those callsites.
+ *
+ *   2. `initialPlan?: PlanId`. The Upgrade page used to open this
+ *      modal as the checkout step regardless of which plan tile
+ *      the user tapped, so a Monthly tap silently became a
+ *      Yearly checkout (the spec's headline bug). The Upgrade
+ *      page now does its own selection + direct checkout; this
+ *      prop exists for any future callsite that wants to pre-
+ *      select a plan when opening the modal.
+ *
+ *   3. Checkout state moved to the shared `useProCheckout` hook —
+ *      one implementation for ProModal and Upgrade.tsx so they
+ *      can't diverge on loading / error / auth handling.
  */
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
-import { purchase, restorePurchases, isNativeIOS } from "@/lib/purchaseProvider";
+import { useEffect, useState } from "react";
 import { THEME } from "@/lib/theme";
 import {
   PRO_PLANS,
@@ -45,6 +38,10 @@ import {
   getRenewalDisclosure,
   type PlanId,
 } from "@/lib/proPlans";
+import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
+import { isNativeIOS } from "@/lib/purchaseProvider";
+import { useProCheckout } from "@/hooks/useProCheckout";
+import { track } from "@/lib/paywallAnalytics";
 import {
   X,
   Sparkles,
@@ -54,23 +51,25 @@ import {
   Utensils,
   Brain,
 } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 
-// Feature-specific hero configs — when ProGate opens the modal with
-// a `feature` prop, the hero swaps to a feature-anchored title +
-// tagline + blurred-preview card showing the user what they're about
-// to unlock.
-const FEATURE_HEROES: Record<
-  string,
-  { icon: React.ReactNode; title: string; tagline: string; preview: React.ReactNode }
+/**
+ * Feature-specific blurred-preview cards. Keyed by `ProFeatureKey`
+ * so the lookup is type-safe — any drift between proFeatures.ts
+ * and this map gets caught by the compiler.
+ *
+ * Not every feature key has a custom preview (the registry has 6
+ * entries; this map covers the 3 we have visual previews for). The
+ * other keys fall back to the registry's title + tagline without a
+ * preview card.
+ */
+const FEATURE_PREVIEWS: Partial<
+  Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
 > = {
-  performance: {
+  performance_engine: {
     icon: <TrendingUp className="w-6 h-6" style={{ color: THEME.brand }} />,
-    title: "Performance Engine",
-    tagline: "Your 7-day load score and performance index are ready.",
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
@@ -82,14 +81,20 @@ const FEATURE_HEROES: Record<
               <div key={i} className="flex flex-col items-center gap-1">
                 <div
                   className="w-6 rounded-t-sm"
-                  style={{ height: v * 0.8, background: THEME.brand, opacity: 0.7 }}
+                  style={{
+                    height: v * 0.8,
+                    background: THEME.brand,
+                    opacity: 0.7,
+                  }}
                 />
                 <span className="text-xs text-muted-foreground">W{i + 1}</span>
               </div>
             ))}
           </div>
           <div className="flex justify-between items-center mt-1">
-            <span className="text-2xl font-bold" style={{ color: THEME.brand }}>74</span>
+            <span className="text-2xl font-bold" style={{ color: THEME.brand }}>
+              74
+            </span>
             <span className="text-xs text-success">↑ +6 this week</span>
           </div>
         </div>
@@ -104,8 +109,6 @@ const FEATURE_HEROES: Record<
   },
   ai_coaching: {
     icon: <Brain className="w-6 h-6" style={{ color: THEME.teal }} />,
-    title: "AI Coaching Insights",
-    tagline: "Personalised recommendations based on your training data.",
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
@@ -134,10 +137,8 @@ const FEATURE_HEROES: Record<
       </div>
     ),
   },
-  food_logging: {
+  ai_food_logging: {
     icon: <Utensils className="w-6 h-6" style={{ color: THEME.warning }} />,
-    title: "AI Food Logging",
-    tagline: "Log meals instantly from a photo. No manual searching.",
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
@@ -158,7 +159,9 @@ const FEATURE_HEROES: Record<
                 className="flex-1 text-center p-2 rounded-lg"
                 style={{ background: `${c}18` }}
               >
-                <p className="text-xs font-bold" style={{ color: String(c) }}>{v}</p>
+                <p className="text-xs font-bold" style={{ color: String(c) }}>
+                  {v}
+                </p>
                 <p className="text-xs text-muted-foreground">{l}</p>
               </div>
             ))}
@@ -179,16 +182,14 @@ const DEFAULT_HERO = {
   icon: <Sparkles className="w-6 h-6" style={{ color: THEME.brand }} />,
   title: "Upgrade to Pro",
   tagline: "Unlock smarter logging, deeper insights and adaptive coaching.",
-  preview: null,
 };
 
-// Trimmed and tightened vs. pre-recovery:
-//   - Removed "In-session workout tracking" — Free tier already has
-//     full workout logging, so listing it as a Pro feature was
-//     misleading (and the spec called this out).
-//   - Consolidated overlapping "Advanced analytics" + "Advanced
-//     insights" rows into a single line.
-const PRO_FEATURES: { icon: React.ReactNode; label: string; sub: string; color: string }[] = [
+const PRO_FEATURE_BULLETS: {
+  icon: React.ReactNode;
+  label: string;
+  sub: string;
+  color: string;
+}[] = [
   {
     icon: <BarChart2 className="w-4 h-4" />,
     label: "Performance Engine",
@@ -217,50 +218,91 @@ const PRO_FEATURES: { icon: React.ReactNode; label: string; sub: string; color: 
 
 interface Props {
   onClose: () => void;
-  feature?: string;
+  featureKey?: ProFeatureKey;
+  /** Pre-select a plan when the modal opens. Defaults to the
+   *  recommended plan (DEFAULT_PLAN). Used by entry points that
+   *  want a specific plan focused — e.g. a "Save 27% with yearly"
+   *  promo could pass "yearly" explicitly. */
+  initialPlan?: PlanId;
 }
 
-export default function ProModal({ onClose, feature }: Props) {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
+export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(
+    initialPlan ?? DEFAULT_PLAN,
+  );
+  const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
 
-  const handleCheckout = async () => {
-    if (!user || loading) return;
-    setError(null);
-    setLoading(true);
-    // Capture the user's choice at the moment of submit so a fast
-    // re-tap on a plan tile while in-flight can't swap the plan
-    // mid-checkout.
-    const plan = selectedPlan;
-    const result = await purchase(plan, user.uid, user.email || "");
-    if (!result.success) {
-      const message =
-        result.error || "Couldn't start checkout. Please try again.";
-      setError(message);
-      toast.error(message);
-    }
-    setLoading(false);
+  const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
+  const showRestore = isNativeIOS();
+
+  const feature = getProFeature(featureKey);
+  const featurePreview = featureKey ? FEATURE_PREVIEWS[featureKey] : undefined;
+
+  // Hero derived from the registry when a featureKey is supplied,
+  // otherwise the generic upgrade hero.
+  const hero = feature
+    ? {
+        icon: featurePreview?.icon ?? DEFAULT_HERO.icon,
+        title: feature.title,
+        tagline: feature.tagline,
+      }
+    : DEFAULT_HERO;
+
+  const handlePlanSelect = (plan: PlanId) => {
+    setSelectedPlan(plan);
+    track("paywall_plan_selected", {
+      source: featureKey ? "feature_gate" : "unknown",
+      featureKey,
+      selectedPlan: plan,
+      platform,
+    });
   };
 
+  const handleCheckout = () => {
+    track("paywall_cta_clicked", {
+      source: featureKey ? "feature_gate" : "unknown",
+      featureKey,
+      selectedPlan,
+      platform,
+    });
+    void startCheckout(selectedPlan, {
+      source: featureKey ? "feature_gate" : "unknown",
+      featureKey,
+    });
+  };
+
+  // Restore purchases is iOS-only. `restorePurchases()` on web
+  // returns an error — rendering the link there was an anti-pattern
+  // (links that don't work).
   const handleRestore = async () => {
-    setError(null);
+    track("restore_purchases_clicked", {
+      source: featureKey ? "feature_gate" : "unknown",
+      featureKey,
+      platform,
+    });
+    const { restorePurchases } = await import("@/lib/purchaseProvider");
     const result = await restorePurchases();
+    const { toast } = await import("sonner");
     if (result.success) {
       toast.success("Purchases restored successfully.");
     } else if (result.error) {
-      setError(result.error);
       toast.error(result.error);
     }
   };
 
-  const hero =
-    feature && FEATURE_HEROES[feature] ? FEATURE_HEROES[feature] : DEFAULT_HERO;
+  // CTA label flips when there's no user — never leave a checkout
+  // button disabled with no explanation.
+  const ctaLabel = requiresSignIn
+    ? "Sign in to start Pro"
+    : getCheckoutCtaLabel(selectedPlan);
 
-  // Restore is iOS-only — `restorePurchases()` returns an error on
-  // web. Hide the link rather than show a link that does nothing.
-  const showRestore = isNativeIOS();
+  // Reset selection if the parent remounts the modal with a different
+  // initialPlan (defensive — current callsites always remount on open
+  // so the useState initial covers it, but if the component ever
+  // becomes controlled while staying mounted, this keeps it in sync).
+  useEffect(() => {
+    if (initialPlan) setSelectedPlan(initialPlan);
+  }, [initialPlan]);
 
   return (
     <BottomSheet
@@ -269,14 +311,14 @@ export default function ProModal({ onClose, feature }: Props) {
         if (!next && !loading) onClose();
       }}
       title={hero.title}
+      description={hero.tagline}
       hideHeader
-      maxHeight="max-h-[92vh]"
+      maxHeight="max-h-[92dvh]"
       dismissible={!loading}
     >
       {/* Header strip — visual drag handle + close X. hideHeader on
-          the primitive lets us own this layout (the Drawer.Title
-          inside BottomSheet renders sr-only when hideHeader is set
-          so SRs still get the accessible name). */}
+          the primitive lets us own this layout; BottomSheet emits a
+          sr-only Drawer.Title + Drawer.Description for SRs. */}
       <div className="relative shrink-0 px-5 pt-3 pb-2">
         <div className="w-10 h-1 rounded-full bg-border mx-auto" aria-hidden="true" />
         <button
@@ -307,14 +349,12 @@ export default function ProModal({ onClose, feature }: Props) {
         </div>
 
         {/* Feature-specific blurred preview (only when a feature gate
-            opened the modal). */}
-        {hero.preview ? <div>{hero.preview}</div> : null}
+            opened the modal AND we have a preview for that key). */}
+        {featurePreview ? <div>{featurePreview.preview}</div> : null}
 
-        {/* Feature list — proper icon + label + sub rows. The icon
-            container is aria-hidden because the row label carries
-            the semantics. */}
+        {/* Feature bullet list. */}
         <ul className="space-y-3" aria-label="Pro features">
-          {PRO_FEATURES.map((f) => (
+          {PRO_FEATURE_BULLETS.map((f) => (
             <li key={f.label} className="flex items-start gap-3">
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
@@ -350,7 +390,7 @@ export default function ProModal({ onClose, feature }: Props) {
                 role="radio"
                 aria-checked={isSelected}
                 disabled={loading}
-                onClick={() => setSelectedPlan(plan.id)}
+                onClick={() => handlePlanSelect(plan.id)}
                 className={cn(
                   "relative w-full flex items-center justify-between p-4 rounded-2xl border transition-colors text-left",
                   "min-h-[64px]",
@@ -368,7 +408,6 @@ export default function ProModal({ onClose, feature }: Props) {
                 ) : null}
 
                 <div className="flex items-center gap-3">
-                  {/* Radio circle */}
                   <div
                     className={cn(
                       "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
@@ -408,9 +447,7 @@ export default function ProModal({ onClose, feature }: Props) {
         </div>
       </div>
 
-      {/* Sticky footer — CTA + disclosure. Pinned outside the
-          overflow-y-auto so the user can always reach the purchase
-          button even when content overflows on small viewports. */}
+      {/* Sticky footer — CTA + disclosure + optional restore. */}
       <div className="shrink-0 border-t border-border bg-background px-5 pt-3 pb-3 space-y-2">
         {error ? (
           <p
@@ -424,7 +461,7 @@ export default function ProModal({ onClose, feature }: Props) {
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={loading || !user}
+          disabled={loading}
           className={cn(
             "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
             "flex items-center justify-center gap-2",
@@ -442,12 +479,12 @@ export default function ProModal({ onClose, feature }: Props) {
               <span>Starting checkout…</span>
             </>
           ) : (
-            <span>{getCheckoutCtaLabel(selectedPlan)}</span>
+            <span>{ctaLabel}</span>
           )}
         </button>
 
         <p className="text-[11px] text-muted-foreground text-center leading-snug">
-          {getRenewalDisclosure(selectedPlan)}
+          {getRenewalDisclosure(selectedPlan, platform)}
         </p>
 
         {showRestore ? (

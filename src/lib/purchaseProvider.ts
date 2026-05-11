@@ -11,12 +11,41 @@
 
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
+import type { PlanId } from "@/lib/proPlans";
 
-export type PlanId = 'monthly' | 'yearly';
+export type { PlanId };
 
 export interface PurchaseResult {
   success: boolean;
   error?: string;
+  /** Optional URL the caller can redirect to (Stripe portal, App
+   *  Store manage-subscriptions page). When set, the caller is
+   *  responsible for navigation — purchase() and manageSubscription()
+   *  do their own redirect for the standard flow, but having the URL
+   *  on the result lets callers handle it via window.open instead. */
+  redirectUrl?: string;
+}
+
+/**
+ * Options for {@link purchase}.
+ *
+ * Pre-spec the Stripe success/cancel URLs were hardcoded to
+ * `/settings` — fine when checkout always started from there, but
+ * misleading once the Upgrade page and feature-gate paywalls became
+ * separate entry points. The user lands back on Settings after a
+ * checkout they started from `/upgrade`, with no sign of where they
+ * came from. successPath / cancelPath let each entry point send the
+ * user back to its own surface.
+ */
+export interface PurchaseOptions {
+  /** Path (relative to BASE_URL) to return to on successful checkout.
+   *  Default: "settings". Appended `?checkout=success`. */
+  successPath?: string;
+  /** Path (relative to BASE_URL) to return to on cancelled checkout.
+   *  Default: "settings". Appended `?checkout=cancelled`. */
+  cancelPath?: string;
+  /** Analytics dimension — propagated through paywallAnalytics. */
+  source?: string;
 }
 
 // Detect if running inside a native iOS Capacitor shell
@@ -123,12 +152,28 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
 }
 
 /**
+ * Build a fully-qualified return URL for the Stripe success/cancel
+ * round-trip. Honours the Vite `BASE_URL` so checkout from a GitHub
+ * Pages deployment (where the app sits at `/Maiin/`) returns to the
+ * right path. Leading slashes on the supplied path are normalised
+ * away to avoid `/Maiin//upgrade?...` style double-slashes.
+ */
+function buildReturnUrl(path: string, query: string): string {
+  const baseOrigin = window.location.origin;
+  // BASE_URL always includes a trailing slash per Vite. The path
+  // arrived from a caller and may or may not have a leading slash.
+  const cleanPath = path.replace(/^\//, "");
+  return `${baseOrigin}${import.meta.env.BASE_URL}${cleanPath}?${query}`;
+}
+
+/**
  * Purchase via Stripe (web / Android)
  */
 async function purchaseWithStripe(
   plan: PlanId,
   uid: string,
   email: string,
+  options: PurchaseOptions = {},
 ): Promise<PurchaseResult> {
   const PRICE_IDS = {
     monthly: import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || 'price_monthly',
@@ -138,6 +183,9 @@ async function purchaseWithStripe(
   const CREATE_CHECKOUT_URL =
     import.meta.env.VITE_STRIPE_CHECKOUT_URL || '/api/create-checkout-session';
 
+  const successPath = options.successPath ?? "settings";
+  const cancelPath = options.cancelPath ?? "settings";
+
   try {
     const response = await fetch(CREATE_CHECKOUT_URL, {
       method: 'POST',
@@ -146,8 +194,8 @@ async function purchaseWithStripe(
         priceId: PRICE_IDS[plan],
         uid,
         email,
-        successUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=success`,
-        cancelUrl: `${window.location.origin}${import.meta.env.BASE_URL}settings?checkout=cancelled`,
+        successUrl: buildReturnUrl(successPath, "checkout=success"),
+        cancelUrl: buildReturnUrl(cancelPath, "checkout=cancelled"),
       }),
     });
 
@@ -168,17 +216,73 @@ async function purchaseWithStripe(
 }
 
 /**
- * Main purchase function — routes to the correct provider
+ * Main purchase function — routes to the correct provider.
+ *
+ * Options are forwarded to Stripe (success/cancel return URLs).
+ * Apple IAP doesn't use return URLs — the StoreKit sheet handles
+ * its own dismissal — so the options object is accepted but
+ * ignored on iOS native.
  */
 export async function purchase(
   plan: PlanId,
   uid: string,
   email: string,
+  options: PurchaseOptions = {},
 ): Promise<PurchaseResult> {
   if (isNativeIOS()) {
     return purchaseWithAppleIAP(plan);
   }
-  return purchaseWithStripe(plan, uid, email);
+  return purchaseWithStripe(plan, uid, email, options);
+}
+
+/**
+ * Open the platform-appropriate subscription management surface.
+ *
+ *   - Web / Android (Stripe): requests a billing-portal session
+ *     from the `createStripeBillingPortal` callable Cloud Function
+ *     and redirects to it. If the function isn't deployed yet, the
+ *     call fails gracefully — the caller can surface the error.
+ *   - Native iOS: returns a redirectUrl pointing to the Apple
+ *     subscription management page. UIKit's deep-link
+ *     itms-apps:// scheme opens the App Store subscriptions sheet
+ *     directly; on the web fallback we use the http(s) URL.
+ *
+ * Per the spec, this is the Pro-user equivalent of "Restore
+ * purchases" — restore is iOS-only and stays iOS-only. Manage works
+ * on every platform but routes differently.
+ */
+export async function manageSubscription(uid: string): Promise<PurchaseResult> {
+  if (isNativeIOS()) {
+    const url = "https://apps.apple.com/account/subscriptions";
+    window.location.href = url;
+    return { success: true, redirectUrl: url };
+  }
+
+  try {
+    const createPortal = httpsCallable<
+      { uid: string; returnUrl: string },
+      { url: string }
+    >(functions, "createStripeBillingPortal");
+    const returnUrl = `${window.location.origin}${import.meta.env.BASE_URL}settings`;
+    const result = await createPortal({ uid, returnUrl });
+    const url = result.data?.url;
+    if (!url) {
+      return {
+        success: false,
+        error: "Couldn't open billing portal. Please try again.",
+      };
+    }
+    window.location.href = url;
+    return { success: true, redirectUrl: url };
+  } catch (err) {
+    return {
+      success: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Couldn't open billing portal. Please try again.",
+    };
+  }
 }
 
 /**
