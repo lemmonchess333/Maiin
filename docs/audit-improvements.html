@@ -1,0 +1,1274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tropos App Audit — Production Hardening Triage</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f5f0;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --brand: #7c6ef6;
+      --brand-dark: #5647cf;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --ok: #047857;
+      --code-bg: #f1f5f9;
+      --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background: radial-gradient(circle at top left, rgba(124, 110, 246, 0.16), transparent 32rem), var(--bg);
+      color: var(--ink);
+    }
+    main { width: min(1100px, calc(100% - 32px)); margin: 0 auto; padding: 40px 0 72px; }
+    header.hero {
+      background: linear-gradient(135deg, #1f2937, #312e81 55%, #7c2d12);
+      color: #fff; border-radius: 28px;
+      padding: clamp(28px, 6vw, 56px);
+      box-shadow: var(--shadow); margin-bottom: 28px;
+    }
+    .eyebrow {
+      margin: 0 0 12px; font-size: 0.78rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(255,255,255,0.76); font-weight: 800;
+    }
+    h1, h2, h3 { line-height: 1.18; }
+    h1 { margin: 0 0 14px; font-size: clamp(2rem, 6vw, 4rem); letter-spacing: -0.055em; }
+    .hero p { max-width: 820px; margin: 0; color: rgba(255,255,255,0.85); font-size: clamp(1rem, 2vw, 1.15rem); }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.9); font-weight: 700; font-size: 0.86rem;
+    }
+    nav.toc, section.card {
+      background: var(--paper); border: 1px solid var(--border);
+      border-radius: 24px; padding: clamp(20px, 4vw, 32px);
+      box-shadow: var(--shadow); margin: 20px 0;
+    }
+    nav.toc h2, section.card h2 { margin-top: 0; font-size: 1.55rem; letter-spacing: -0.02em; }
+    nav.toc ol { columns: 2; gap: 28px; padding-left: 22px; margin-bottom: 0; }
+    nav.toc a { color: var(--brand-dark); font-weight: 750; text-decoration: none; }
+    nav.toc a:hover { text-decoration: underline; }
+
+    /* ─── Finding cards ─── */
+    .finding {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin: 18px 0;
+      background: #fbfdff;
+    }
+    .finding h3 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      letter-spacing: -0.015em;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .p0 { background: #fee2e2; color: var(--danger); }
+    .p1 { background: #ffedd5; color: var(--warn); }
+    .p2 { background: #dcfce7; color: var(--ok); }
+    .status-verified { background: #dcfce7; color: var(--ok); }
+    .status-partial { background: #fef3c7; color: var(--warn); }
+    .status-needslog { background: #ede9fe; color: var(--brand-dark); }
+    .status-product { background: #e0f2fe; color: #075985; }
+    .status-uninvest { background: #f3f4f6; color: #475569; }
+    .conf-high { background: #1f2937; color: #fff; }
+    .conf-medium { background: #475569; color: #fff; }
+    .conf-low { background: #94a3b8; color: #0f172a; }
+    .ft { background: #312e81; color: #fff; }
+    .resolved { background: #d1fae5; color: var(--ok); }
+    .out-of-scope { background: #f3f4f6; color: var(--muted); }
+
+    .finding dl {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 6px 16px;
+      margin: 0;
+    }
+    .finding dt {
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+      padding-top: 4px;
+    }
+    .finding dd { margin: 0; }
+    .finding dd ul { padding-left: 18px; margin: 4px 0; }
+    .finding dd li { margin: 4px 0; }
+    .finding code {
+      background: var(--code-bg);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 0.86em;
+      color: #334155;
+      white-space: nowrap;
+    }
+    pre {
+      background: var(--code-bg);
+      border-radius: 10px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      font-size: 0.84rem;
+      margin: 8px 0;
+    }
+    .callout {
+      border-left: 4px solid var(--brand);
+      background: #f8f7ff;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin: 16px 0;
+    }
+    .callout.warn { border-left-color: var(--warn); background: #fff7ed; }
+    .callout.danger { border-left-color: var(--danger); background: #fef2f2; }
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .legend > div {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fbfdff;
+      font-size: 0.86rem;
+    }
+    footer { color: var(--muted); text-align: center; margin-top: 32px; font-size: 0.9rem; }
+    @media (max-width: 720px) {
+      main { width: min(100% - 20px, 1100px); padding-top: 16px; }
+      nav.toc ol { columns: 1; }
+      header.hero, nav.toc, section.card { border-radius: 18px; }
+      .finding dl { grid-template-columns: 1fr; gap: 4px; }
+      .finding dt { padding-top: 8px; }
+    }
+    @media print {
+      body { background: #fff; }
+      main { width: 100%; padding: 0; }
+      header.hero, nav.toc, section.card, .finding { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Tropos / Maiin — Production hardening triage</p>
+      <h1>App Audit — Evidence-led Triage</h1>
+      <p>
+        Replacement for the original PR&nbsp;#517 audit. Every finding is verified against the
+        codebase with file:line evidence, labelled with priority / verification status /
+        confidence / fix type, and translated into testable acceptance criteria so any
+        engineer or AI agent can pick it up without misinterpretation.
+      </p>
+      <div class="meta">
+        <span class="pill">Date: 2026-05-12</span>
+        <span class="pill">Replaces: PR #517 v1</span>
+        <span class="pill">Scope: React + Capacitor + Firebase</span>
+      </div>
+    </header>
+
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title">Contents</h2>
+      <ol>
+        <li><a href="#how-to-read">How to read this audit</a></li>
+        <li><a href="#p0">P0 — Production-blocking</a></li>
+        <li><a href="#p1">P1 — High-value next tranche</a></li>
+        <li><a href="#p2">P2 — Polish &amp; long-tail</a></li>
+        <li><a href="#corrections">Corrections to the v1 audit</a></li>
+        <li><a href="#workorder">Suggested PR work order</a></li>
+        <li><a href="#commands">Commands run during this audit</a></li>
+      </ol>
+    </nav>
+
+    <section id="how-to-read" class="card">
+      <h2>How to read this audit</h2>
+      <p>
+        Every finding below carries four labels at the top so AI agents and engineers
+        cannot confuse a verified bug with a product opinion:
+      </p>
+      <div class="legend">
+        <div><strong>Priority</strong> — <span class="badge p0">P0</span> production-blocking · <span class="badge p1">P1</span> high-value next · <span class="badge p2">P2</span> polish</div>
+        <div><strong>Verification status</strong> — verified / partially verified / needs exact log / product recommendation / not yet investigated</div>
+        <div><strong>Confidence</strong> — high (direct code evidence) / medium (code suggests risk, behaviour needs test) / low (hypothesis)</div>
+        <div><strong>Fix type</strong> — security · data integrity · cost control · UX trust · accessibility · DevOps · documentation</div>
+      </div>
+      <div class="callout">
+        <strong>Hard rule:</strong> a finding is not actionable until it has Evidence, Root cause,
+        Risk, Recommended fix, Acceptance criteria, Verification command, and Suggested PR.
+        Anything not labelled remains a hypothesis.
+      </div>
+    </section>
+
+    <section id="p0" class="card">
+      <h2>P0 — Production-blocking</h2>
+
+      <article class="finding" id="p0-ai-quota">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Cost control</span>
+        </div>
+        <h3>1. AI quota / rate-limit fails open and is non-atomic</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>functions/index.js:164-196</code> — <code>checkMonthlyQuota</code>:
+            reads <code>scanUsage/{uid}</code>, computes <code>count + 1</code>, writes the
+            new count, and the catch block ends with the literal comment
+            <code>// fail open</code> and returns
+            <code>{ allowed: true, remaining: 999, limit: 999 }</code>.
+          </dd>
+          <dt>Root cause</dt>
+          <dd>
+            Quota is treated as ordinary app state. It is actually a billing-control
+            boundary: a paid-AI cap. Read-then-write across two RTTs has a race window,
+            and any Firestore error grants unlimited paid calls.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            <ul>
+              <li>Concurrent <code>analyzeFood</code> / <code>analyzeFoodText</code> calls can exceed the monthly limit.</li>
+              <li>Transient Firestore errors (network, rules) silently grant unlimited Vertex AI calls.</li>
+              <li>Cost spike + abuse vector. The Gemini kill switch is not consulted before quota is consumed.</li>
+            </ul>
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Wrap quota update in <code>db.runTransaction</code> with a server-side
+                <code>FieldValue.increment(1)</code> guarded by a max-count read inside the
+                same transaction.</li>
+              <li>Change catch behaviour from fail-open to fail-closed for cost-sensitive paths:
+                return <code>{ allowed: false, remaining: 0 }</code> and surface a "temporary
+                limit" error to the client. The current fail-open default is acceptable for
+                free reads but not for paid AI invocations.</li>
+              <li>Consult the Gemini kill switch BEFORE incrementing quota — otherwise a
+                disabled-Gemini failure path still consumes a user's monthly count.</li>
+              <li>Audit logger calls in <code>analyzeFood</code> / <code>analyzeFoodText</code>
+                paths and ensure full Vertex response bodies are not persisted to Cloud
+                Logging in production. Use <code>logger.warn(summary)</code> not
+                <code>logger.warn(response)</code>.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>20 concurrent <code>analyzeFood</code> requests for one free user cannot exceed the monthly limit (emulator test).</li>
+              <li>Forced Firestore write failure does NOT return <code>allowed: true</code> on paid paths.</li>
+              <li>Free / pro / trial tier limits each enforce correctly.</li>
+              <li>Month rollover resets the counter exactly once.</li>
+              <li>Gemini kill switch blocks both image and text analysis before quota is consumed.</li>
+              <li>No full Vertex response bodies in Cloud Logging from production.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>cd functions &amp;&amp; npm test -- quota</pre>
+            Plus an emulator-driven concurrency harness (new) at
+            <code>functions/__tests__/quota.concurrency.test.js</code>.
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR C — AI quota transactional + fail-closed.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p0-stripe-idempotency">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Security / Data integrity</span>
+        </div>
+        <h3>2. Stripe webhook has no idempotency and no out-of-order guard</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>functions/index.js:720-840</code> — <code>stripeWebhook</code> processes
+            <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>,
+            and <code>customer.subscription.deleted</code>. No reference to a
+            <code>processedEvents</code> / <code>stripeEvents</code> collection. No comparison
+            of <code>event.created</code> against any stored timestamp. No allowlist check on
+            <code>session.metadata</code> price.
+          </dd>
+          <dt>Root cause</dt>
+          <dd>
+            Payment events are treated like regular app events. They are financial
+            entitlement events and must be idempotent, ordered defensively, and
+            server-authoritative. Stripe retries every webhook on 5xx; a duplicate delivery
+            today re-runs the same write.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            <ul>
+              <li>Duplicate webhook delivery re-grants pro on a refunded subscription.</li>
+              <li>An out-of-order <code>customer.subscription.deleted</code> (delivered late
+                after a renewal) downgrades an active user.</li>
+              <li>A future "lifetime" purchase can be silently downgraded by a stale
+                monthly-subscription-cancelled event.</li>
+              <li>Client-supplied <code>priceId</code> on the checkout-session creator can
+                attach an unintended price.</li>
+            </ul>
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Maintain a <code>stripeEvents/{event.id}</code> doc with status; reject re-deliveries.</li>
+              <li>Store the event's <code>created</code> timestamp on the user doc as
+                <code>subscriptionUpdatedAt</code>; reject updates whose
+                <code>event.created</code> is older.</li>
+              <li>Maintain a server-side price allowlist; reject unknown priceIds at
+                <code>createCheckoutSession</code> time.</li>
+              <li>Reject <code>subscription.deleted</code> if the user's stored
+                <code>stripeSubscriptionId</code> doesn't match (a different subscription was
+                cancelled).</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Replaying the same Stripe <code>event.id</code> twice updates the user
+                exactly once.</li>
+              <li>An out-of-order <code>subscription.deleted</code> arriving after a fresh
+                <code>subscription.updated → active</code> does NOT downgrade.</li>
+              <li>An unknown priceId passed by the client is rejected with a 400.</li>
+              <li>Tests cover: duplicate event, out-of-order delete, refund, unknown price,
+                lifetime-vs-monthly transition.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>cd functions &amp;&amp; npm test -- stripeWebhook</pre>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR D — Payment entitlement hardening.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p0-apple-idempotency">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Security / Data integrity</span>
+        </div>
+        <h3>3. Apple IAP webhook has solid signature verification but no idempotency / staleness check</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>functions/appleIAP.js:215-263</code> — <code>appleIAPWebhook</code> calls
+            <code>verifyNotification</code> + <code>verifySignedTransaction</code> (✓ good).
+            But there is no dedup on <code>payload.notificationUUID</code> or
+            <code>tx.transactionId</code>.
+            <code>applySubscriptionToUser</code> at <code>appleIAP.js:164-194</code> decides
+            <code>isActive</code> from <code>tx.expiresDate &gt; new Date()</code> — it does
+            NOT compare against the currently-stored
+            <code>subscriptionExpiresAt</code> on the user doc.
+          </dd>
+          <dt>Root cause</dt>
+          <dd>
+            App Store Server Notifications V2 can deliver out-of-order. Without a stored
+            high-water mark, a late <code>EXPIRED</code> notification arriving AFTER a fresh
+            <code>DID_RENEW</code> will set <code>subscriptionTier: "free"</code> because the
+            stale transaction's <code>expiresDate</code> is now in the past — even though
+            the user has already renewed for another year.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            <ul>
+              <li>Out-of-order Apple notifications can silently downgrade an active paying user.</li>
+              <li>Duplicate notification delivery (Apple retries on 5xx) runs the same write twice.</li>
+              <li>No record of which notifications have been processed makes incident response harder.</li>
+            </ul>
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Maintain <code>appleNotifications/{notificationUUID}</code> dedup doc; reject re-delivery.</li>
+              <li>Before writing <code>subscriptionTier</code>, compare the incoming transaction's
+                <code>expiresDate</code> against the user's stored
+                <code>subscriptionExpiresAt</code>. Only downgrade if the incoming is
+                authoritative AND the user has no later transaction.</li>
+              <li>For lifetime / non-subscription products, store <code>productId</code> and
+                NEVER let a subscription-event downgrade a lifetime entitlement.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Same <code>notificationUUID</code> delivered twice updates user exactly once.</li>
+              <li>Late <code>EXPIRED</code> after fresh <code>DID_RENEW</code> does NOT downgrade.</li>
+              <li>Lifetime entitlement survives a stale subscription-cancelled event.</li>
+              <li>Tests cover: duplicate notification, out-of-order expired, restore-of-other-user-transaction, refund.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>cd functions &amp;&amp; npm test -- appleIAP</pre>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR D — Payment entitlement hardening (same as #2).</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p0-workout-pr">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Data integrity / UX trust</span>
+        </div>
+        <h3>4. Workout set completion fires PR detection on unvalidated input</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/components/WorkoutSession.tsx:391-426</code> — <code>completeSet()</code>:
+            <ol>
+              <li>marks <code>setLogs[ex][set].completed = true</code></li>
+              <li>calls <code>checkSetPR(exName, set.weight, set.reps, prMap, sessionCounts, 3)</code></li>
+              <li>mutates <code>prMap[exName][bucket] = { weight, reps, date }</code></li>
+              <li>fires confetti and <code>toast.success</code></li>
+            </ol>
+            All synchronous, no validation, no jump-size guard, no confirmation step. The
+            undo path (lines 428-431) only tracks <code>lastCompleted</code> by indices; it
+            does NOT revert the <code>prMap</code> mutation.
+          </dd>
+          <dt>Root cause</dt>
+          <dd>
+            The app treats workout set input as trusted once typed. But it directly affects
+            long-term history (PR map persisted to profile, fed into Pro-tier insights,
+            rendered on History &amp; ExerciseHistory) and user trust. There is no central
+            validator between user typing and PR persistence.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            <ul>
+              <li>A fat-fingered <code>200kg × 5</code> bench becomes a permanent PR with confetti.</li>
+              <li>Negative weights / decimal reps / empty values can silently become valid "completed" sets.</li>
+              <li>Undoing the set leaves the false PR in <code>prMap</code>.</li>
+              <li>Downstream surfaces (fastest-effort challenges, Pro insights) consume the false PR.</li>
+            </ul>
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Central validator in <code>src/lib/setValidation.ts</code>:
+            <pre>type SetValidationResult =
+  | { ok: true; normalized: { reps: number; weight: number } }
+  | { ok: false; severity: "block"; message: string }
+  | { ok: false; severity: "warn"; message: string; confirmLabel: string };</pre>
+            Rules:
+            <ul>
+              <li>Reps: integer, finite, ≥ 0, ≤ sensible cap (e.g. 100).</li>
+              <li>Weight: finite, ≥ 0, ≤ sensible cap (e.g. 500kg / 1100lb).</li>
+              <li>Empty / NaN: <code>{ ok: false, severity: "block" }</code>.</li>
+              <li>Huge jump (&gt; 25% over current PR for the bucket): <code>severity: "warn"</code> with confirm step before PR detection runs.</li>
+              <li>Decimal reps: blocked.</li>
+              <li>Decimal weight: normalised to 0.5kg / 1.25kg step depending on exercise.</li>
+              <li>Bodyweight exercises (no <code>weight</code> input column): allow 0 weight, validate reps only.</li>
+            </ul>
+            Wire <code>completeSet</code> through the validator BEFORE the PR-detection block.
+            On the undo path, also revert <code>prMap</code> and pop the corresponding
+            entry from <code>firedPRs</code>.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Reps &lt; 0 / decimal / empty cannot complete a set.</li>
+              <li>Weight &lt; 0 / NaN cannot complete a set.</li>
+              <li>A weight jump &gt; 25% over current PR requires explicit confirmation before confetti + toast.</li>
+              <li>Undoing a PR-set reverts both <code>setLogs</code> AND <code>prMap</code> AND <code>firedPRs</code>.</li>
+              <li>Bodyweight exercises validate reps without requiring a weight value.</li>
+              <li>Unit tests cover: negative reps, decimal reps, empty input, huge weight, huge jump, bodyweight movement, false-PR prevention.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>npx vitest run src/lib/__tests__/setValidation.test.ts</pre>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR E — Workout set validation + PR safety.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p0-playwright">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified (root cause corrected)</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: DevOps</span>
+        </div>
+        <h3>5. Playwright E2E suite blocked — exact failure captured</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>e2e/responsive.spec.ts:71</code> — <code>test.use({ ...devices['iPhone 14'] })</code>
+            inside <code>test.describe('Responsive — Safari standalone (PWA-ish)', ...)</code>.
+            Live <code>npx playwright test --list</code> output:
+            <pre>Cannot use({ defaultBrowserType }) in a describe group,
+because it forces a new worker.
+Make it top-level in the test file or put in the configuration file.
+
+  at responsive.spec.ts:71
+
+> 71 |   test.use({ ...devices['iPhone 14'] });</pre>
+          </dd>
+          <dt>Nuance</dt>
+          <dd>
+            Playwright DOES support <code>test.use()</code> inside <code>test.describe()</code>
+            for most options. BUT <code>devices['iPhone 14']</code> spreads a config object
+            that includes <code>defaultBrowserType: "webkit"</code>, and the
+            <code>defaultBrowserType</code> property is one of the options that forces a new
+            worker — which Playwright rejects inside <code>describe</code>. The Codex
+            audit's diagnosis was directionally correct; the general "test.use inside
+            describe is supported" rebuttal applies to most options but not to device
+            configs.
+          </dd>
+          <dt>Root cause</dt>
+          <dd>
+            The responsive test duplicates the <code>mobile</code> project config that's
+            already defined in <code>playwright.config.ts:21-23</code>. The test should run
+            under that project, not declare its own device.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Delete the <code>test.use({ ...devices['iPhone 14'] })</code> line
+                entirely.</li>
+              <li>Either: assign the responsive test to the <code>mobile</code> project via
+                Playwright project filtering (<code>npx playwright test --project=mobile</code>),
+                OR move the test to a file with no <code>describe</code> wrapper so
+                <code>test.use()</code> sits at top level.</li>
+              <li>Audit ALL E2E specs for weak assertions
+                (<code>expect(count).toBeGreaterThanOrEqual(0)</code>) — Sprint 8 already
+                rewrote <code>accessibility.spec.ts</code>; the others may still carry the
+                pattern.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li><code>npx playwright test --list</code> succeeds with no parse errors.</li>
+              <li><code>npm run test:e2e</code> passes from a clean checkout.</li>
+              <li>Responsive mobile test asserts real UI outcomes (not just root element
+                existence).</li>
+              <li>Authenticated E2E surface coverage exists for Food / Run / Program /
+                Settings / Upgrade (via seeded auth fixture) — flagged as follow-up.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>npx playwright test --list  # config validation
+npm run test:e2e            # full run</pre>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR B — E2E diagnosis + assertion strengthening.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p0-appcheck">
+        <div class="badges">
+          <span class="badge p0">P0</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Security</span>
+        </div>
+        <h3>6. Native App Check unenforced — Capacitor builds run without attestation</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/lib/appCheck.ts</code> — the file's own header comment block (lines
+            1-30) documents the gap: "Native: returns false stub until <code>@capacitor-firebase/app-check</code>
+            is wired with App Attest (iOS) / Play Integrity (Android)". Web uses reCAPTCHA v3.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Native Firestore / Storage / Functions calls have no device attestation. A
+            modified or repackaged iOS / Android client can call the Cloud Functions
+            without proving it is a genuine app installation. AI scan endpoints are the
+            highest-cost surface this exposes.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Follow the 4-step plan documented in the file header:
+            <ol>
+              <li><code>npm install @capacitor-firebase/app-check</code></li>
+              <li>Pod + AppDelegate wiring via <code>npx cap sync</code></li>
+              <li>Register App Attest (iOS) + Play Integrity (Android) providers in Firebase console</li>
+              <li>Replace the <code>native</code> stub with a <code>CustomProvider</code> calling the plugin's <code>getToken()</code></li>
+            </ol>
+            Then plan a staged enforcement rollout (see acceptance).
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Native iOS build obtains an App Attest token (verified via Firebase console).</li>
+              <li>Native Android build obtains a Play Integrity token.</li>
+              <li>Web still obtains a reCAPTCHA v3 token.</li>
+              <li>Debug-token flow documented in README for local dev.</li>
+              <li>Enforcement plan in README: client ships unenforced → verify token traffic for 1 week → enable enforcement on Functions → wait 1 week → enable enforcement on Firestore / Storage. Rollback path documented.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd>
+            <pre>npx cap sync ios &amp;&amp; npx cap run ios
+# Check Firebase console &gt; App Check &gt; Recent requests</pre>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR F — Native App Check wiring + enforcement plan.</dd>
+        </dl>
+      </article>
+    </section>
+
+    <section id="p1" class="card">
+      <h2>P1 — High-value next tranche</h2>
+
+      <article class="finding" id="p1-update-profile">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: UX trust / Data integrity</span>
+        </div>
+        <h3>7. <code>updateProfile</code> swallows errors — settings UI cannot revert</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/lib/auth.tsx:520-580</code> — <code>updateProfile</code> returns
+            <code>Promise&lt;void&gt;</code>. Catch block logs + toasts but throws nothing
+            and returns nothing. Callers cannot tell whether the persistence succeeded.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Settings controls optimistically update local state, then look "saved" to the
+            user even when the Firestore write failed. Dark mode persists in
+            <code>localStorage</code> regardless of Firestore success. Custom calorie
+            targets can be silently overwritten by reactive TDEE recalculation.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Change the contract:
+            <pre>type UpdateProfileResult =
+  | { ok: true }
+  | { ok: false; error: unknown };
+
+updateProfile(data, { throwOnError?: boolean }): Promise&lt;UpdateProfileResult&gt;</pre>
+            Default to result-returning; opt-in throwing for callers that prefer
+            try/catch. Settings sections then revert optimistic UI on
+            <code>{ ok: false }</code>.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li><code>updateProfile</code> returns <code>{ ok }</code> or throws on demand.</li>
+              <li>Optimistic settings controls revert visibly on failure.</li>
+              <li>Dark mode does not persist in <code>localStorage</code> if the Firestore write fails.</li>
+              <li>Reactive TDEE recalculation preserves <code>customCalorieTarget</code>.</li>
+              <li>Tests cover failed update, successful update, dark-mode failure, custom-target preservation.</li>
+            </ul>
+          </dd>
+          <dt>Verify</dt>
+          <dd><pre>npx vitest run src/lib/__tests__/auth.test.ts</pre></dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR G — Settings save/revert contract.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-run-draft">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified gap</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: UX trust / Data integrity</span>
+        </div>
+        <h3>8. Active run has no draft recovery — app close = run loss</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            Zero <code>localStorage</code> / IndexedDB usage in <code>src/pages/Run.tsx</code>,
+            <code>src/hooks/useGPS.ts</code>, or <code>src/hooks/useRunTimer.ts</code>.
+            Active run state (runConfig, phase, start timestamp, elapsed basis, GPS
+            points, manual distance) is purely in React state.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Accidental app close, OS-kill on memory pressure, or crash mid-run loses
+            everything. Major trust hit for runners on long sessions.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Persist active-run state to <code>localStorage</code> every 5s. On app re-open,
+            detect a non-cleared draft and prompt: "Resume previous run? / Save as manual /
+            Discard". Clear on successful save or explicit discard.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Active run state persists every 5s.</li>
+              <li>Reopening the app mid-run shows a recovery prompt with three actions.</li>
+              <li>Draft clears only on successful save or user discard.</li>
+              <li>Tests cover: reload during active run, manual/treadmill recovery, expired draft (&gt; 12h).</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR H part 2 — Run draft recovery.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-bg-gps">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-product">Product recommendation</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: UX trust</span>
+        </div>
+        <h3>9. Background GPS — foreground-first by design; needs explicit product decision</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/pages/Run.tsx:498-519</code> — "GPS recovering · last fix Ns ago"
+            banner. The code intentionally stops GPS on visibility-hidden and restarts on
+            visibility-visible.
+          </dd>
+          <dt>Decision required</dt>
+          <dd>
+            <ul>
+              <li><strong>Option A (MVP honest):</strong> keep foreground-only tracking but
+                surface a clear pre-run banner ("For best route accuracy, keep Tropos open
+                during outdoor runs") and store a <code>backgroundGapMs</code> per run for
+                route-quality labels.</li>
+              <li><strong>Option B (serious-runner mode):</strong> wire
+                <code>@capacitor-community/background-geolocation</code> with iOS Background
+                Modes + Android foreground service. Permission education flow + battery
+                impact copy required.</li>
+            </ul>
+            B is the real destination if the product wants to benchmark against Strava /
+            Nike Run. A is acceptable for MVP if the disclosure is honest.
+          </dd>
+          <dt>Acceptance (whichever path is chosen)</dt>
+          <dd>
+            <ul>
+              <li>Decision documented in README or <code>docs/run-reliability-qa.md</code>.</li>
+              <li>Route quality fields on every run doc: <code>gapCount</code>,
+                <code>backgroundGapMs</code>, <code>rejectedFixCount</code>,
+                <code>medianAccuracy</code>, <code>worstAccuracy</code>,
+                <code>routeConfidence: "good" | "patchy" | "poor"</code>.</li>
+              <li>Run summary surfaces a confidence chip when patchy/poor.</li>
+              <li>If Option B: real-device verification of continuous capture while
+                backgrounded.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR H part 1 — Run trust upgrade.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-notifications">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: UX trust</span>
+        </div>
+        <h3>10. Notification scheduling is opaque and partly non-durable</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/lib/notifications.ts:96-118</code> — native uses
+            <code>LocalNotifications.schedule({ at: scheduleAt })</code> (one-shot, no
+            <code>every</code> / <code>repeats</code> option used). Web fallback uses
+            <code>setTimeout</code> which only fires while the app is open. Users have no
+            UI surface telling them whether a reminder is actually scheduled.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Native: use <code>schedule.every</code> for recurring (or aggressively
+                reschedule on app foreground via <code>App.addListener('appStateChange')</code>).</li>
+              <li>Web: clearly label setTimeout fallback as non-durable in the Notifications
+                section.</li>
+              <li>Add a "next scheduled reminder" line per reminder type, populated via
+                <code>LocalNotifications.getPending()</code>.</li>
+              <li>Add a "Send test notification" button per reminder type (schedules in
+                +3s).</li>
+              <li>Cancelling a reminder must call <code>LocalNotifications.cancel</code> for
+                the stable ID.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Each reminder shows: permission state · enabled · next scheduled time · last error.</li>
+              <li>"Send test" button fires within 5s.</li>
+              <li>Disabling a reminder cancels pending native notifications.</li>
+              <li>Tests cover: permission denied / default / granted, schedule success, cancel, next-scheduled calculation.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR I — Notification diagnostics.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-firestore-rules">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Security</span>
+        </div>
+        <h3>11. Firestore rules — challenges writable by any authed user</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>firestore.rules:257-260</code>:
+            <pre>match /challenges/{challengeId} {
+  allow read: if request.auth != null;
+  allow write: if request.auth != null;
+}</pre>
+            Comment block at 240-256 documents this as "acceptable risk".
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            A malicious authed user can create junk challenge docs. The UI currently
+            renders only known seeded entries, but future surfaces (e.g. a discover-
+            challenges screen) would expose them. Also opens the door to denial-of-storage.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Move <code>seedChallenges</code> into a one-time admin Cloud Function or
+                deploy-time seed script (uses Admin SDK, bypasses rules).</li>
+              <li>Tighten rule to <code>allow write: if false</code> (admin-only).</li>
+              <li>Add <a href="https://firebase.google.com/docs/rules/unit-tests">Firebase Local Emulator rules tests</a>
+                covering: user docs, public profile mirror, activities, feeds, comments,
+                kudos, groups, scanUsage, challenges (read allowed / write denied),
+                participant self-write only.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Challenge docs can only be created by a server-side script / function.</li>
+              <li>Authed client attempt to write <code>/challenges/{id}</code> is denied.</li>
+              <li>Participant doc self-write still allowed; cross-user denied.</li>
+              <li>Rules test suite passes on Firebase emulator.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR D companion or standalone PR — Firestore rules tests + challenge hardening.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-blocked-display">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Security / Future-proofing</span>
+        </div>
+        <h3>12. Blocked-user list reads private user doc — should read public mirror</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/components/settings/PrivacySection.tsx:258-263</code>:
+            <pre>const ids = await getBlockedUsers(user.uid);
+const users = await Promise.all(ids.map(async (uid) =&gt; {
+  const snap = await getDoc(doc(db, 'users', uid));
+  return { uid, displayName: snap.exists() ? (...) : 'Deleted user' };
+}));</pre>
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Reads <code>users/{uid}</code> (private) instead of <code>users/{uid}/public/profile</code>
+            (public mirror). The R1A account-deletion work plans a future write-freeze /
+            read-restriction on private user docs; this site would break. Also leaks more
+            fields than needed for a display name.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Replace with <code>getDoc(doc(db, 'users', uid, 'public', 'profile'))</code>. The
+            public mirror is the supported read surface for cross-user displays.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Blocked-user list renders display names from the public profile mirror.</li>
+              <li>Rules test confirms cross-user read of <code>users/{uid}/public/profile</code> is allowed and <code>users/{uid}</code> (private) is denied.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR G companion — bundled with #7 (settings hardening).</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-rest-timer">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: UX trust</span>
+        </div>
+        <h3>13. Rest timer ignores user's <code>defaultRestSeconds</code> preference</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/components/settings/WorkoutPrefsSection.tsx:10, 53-57</code> defines
+            and writes <code>defaultRestSeconds</code>. <code>src/components/WorkoutSession.tsx</code>
+            contains zero references to <code>defaultRestSeconds</code> — the setting is
+            persisted but never consumed.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Concrete user surprise: changing the setting in Settings has no effect on the
+            actual workout session.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Pull <code>profile.defaultRestSeconds</code> through <code>useAuth</code> into
+            <code>WorkoutSession</code>; default the rest-timer's initial value from it.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>Changing <code>defaultRestSeconds</code> in Settings is reflected in the next
+                rest-timer countdown.</li>
+              <li>Falls back to 90s if profile field is absent (current default).</li>
+              <li>Test pins the wiring.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR E companion — bundled with workout validation (#4).</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-error-boundary">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: DevOps / Observability</span>
+        </div>
+        <h3>14. App-level ErrorBoundary uses raw <code>console.error</code></h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>src/App.tsx:102</code>: <code>console.error("App crash:", error,
+            info.componentStack);</code> while <code>captureError</code> exists at
+            <code>src/lib/errorReporting.ts:71</code>.
+          </dd>
+          <dt>Risk</dt>
+          <dd>
+            Production crashes are unstructured — they don't flow into whatever future
+            error-reporting backend is wired and are hard to correlate.
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            Replace with <code>captureError(error, "react-error-boundary", { componentStack:
+            info.componentStack })</code>.
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            Crash test (throw in a component) produces a structured <code>captureError</code>
+            call rather than a raw console line.
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>Bundled with the next observability sweep — could ride PR G.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p1-food-trust">
+        <div class="badges">
+          <span class="badge p1">P1</span>
+          <span class="badge status-partial">Partially verified</span>
+          <span class="badge conf-medium">Confidence: Medium</span>
+          <span class="badge ft">Fix type: UX trust</span>
+        </div>
+        <h3>15. AI food text parsing loses portion metadata; low-confidence parses skip review</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            Audit's claim that NL save maps parsed items to a generic "1 serving" needs
+            verification in <code>src/lib/nlFoodParser.ts</code> output shape vs. how
+            <code>FoodAnalyzer</code> persists. Adjacent to the F-series food trust patches
+            that already shipped (suspicious-value confirmation exists per
+            <code>Food.tsx</code> + <code>foodValidation.ts</code>).
+          </dd>
+          <dt>Recommended fix</dt>
+          <dd>
+            <ul>
+              <li>Preserve <code>portionSize</code> from AI text parsing where present in the
+                response.</li>
+              <li>Add a confidence threshold; open a review sheet before save for
+                low-confidence parses.</li>
+              <li>Persisted item must include: name, portionSize, calories, protein, carbs,
+                fat, source ("ai_text" / "ai_image" / "barcode" / "manual"), confidence.</li>
+            </ul>
+          </dd>
+          <dt>Acceptance</dt>
+          <dd>
+            <ul>
+              <li>AI text result with explicit portionSize preserves it on save.</li>
+              <li>Low-confidence parse opens review sheet pre-save.</li>
+              <li>Tests cover: AI text with portionSize, low confidence, suspicious macros,
+                fallback parse, zero-macro item.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR (deferred) — Food review trust pass.</dd>
+        </dl>
+      </article>
+    </section>
+
+    <section id="p2" class="card">
+      <h2>P2 — Polish &amp; long-tail</h2>
+
+      <article class="finding" id="p2-readme">
+        <div class="badges">
+          <span class="badge p2">P2</span>
+          <span class="badge status-verified">Verified</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Documentation</span>
+        </div>
+        <h3>16. README is the Vite template default</h3>
+        <dl>
+          <dt>Evidence</dt>
+          <dd>
+            <code>README.md</code> first heading is <em>"React + TypeScript + Vite"</em>; no
+            app-specific setup, env vars, Capacitor flow, Firebase setup, payment
+            configuration, or release runbooks.
+          </dd>
+          <dt>Required sections</dt>
+          <dd>
+            <ul>
+              <li>What Tropos is (one-paragraph product overview).</li>
+              <li>Tech stack + folder map.</li>
+              <li>Local setup (npm install · env vars · Firebase emulator).</li>
+              <li>Environment variables: <code>VITE_FIREBASE_*</code>, <code>VITE_STRIPE_*</code>, <code>VITE_RECAPTCHA_V3_SITE_KEY</code>, <code>VITE_VERTEX_*</code>, Apple IAP product IDs.</li>
+              <li>Firebase setup (project, App Check provider config, rules deploy, functions deploy).</li>
+              <li>Stripe + Apple IAP setup.</li>
+              <li>Vertex AI / Gemini setup.</li>
+              <li>Capacitor iOS + Android build steps.</li>
+              <li>Test commands (unit / rules / E2E).</li>
+              <li>Release checklist.</li>
+              <li>Incident runbook: disable Gemini, debug subscription, debug App Check, debug notification permission, rollback native release.</li>
+            </ul>
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>PR J — README / runbook rewrite.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p2-diagnostics">
+        <div class="badges">
+          <span class="badge p2">P2</span>
+          <span class="badge status-product">Product recommendation</span>
+          <span class="badge conf-medium">Confidence: Medium</span>
+          <span class="badge ft">Fix type: DevOps</span>
+        </div>
+        <h3>17. Add operator diagnostics surface</h3>
+        <dl>
+          <dt>Recommendation</dt>
+          <dd>
+            Hidden route or long-press affordance that shows <code>__APP_VERSION__</code>,
+            service worker state, Firebase project, App Check token presence, notification
+            permission, push token (last 8 chars), last sync time, offline queue length.
+            High value for support / on-device debugging.
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>Standalone PR — Operator diagnostics route.</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p2-design-sweep">
+        <div class="badges">
+          <span class="badge p2">P2</span>
+          <span class="badge status-partial">Partially done</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Accessibility</span>
+        </div>
+        <h3>18. Design-system sweep — primitives shipped, long-tail callsites remain</h3>
+        <dl>
+          <dt>Status</dt>
+          <dd>
+            Sprint 1 (Button + IconButton), Sprint 3 (Dialog + BottomSheet), Sprint 4
+            (Spinner + ErrorState + EmptyState), Sprint 7 (RunControlButton), Sprint 4
+            Loader2 sweep — all shipped. Remaining work: hand-rolled buttons in
+            <code>ExercisePicker.tsx</code> (clickable div rows with disabled a11y lint),
+            dense workout grids, and any new callsites added post-sprint.
+          </dd>
+          <dt>Recommendation</dt>
+          <dd>
+            One-off sweep when a future Sprint 9 is scoped: real <code>&lt;button&gt;</code>
+            elements for clickable rows; <code>aria-label</code> on icon-only buttons; 44px
+            touch targets where practical.
+          </dd>
+          <dt>Follow-up PR</dt>
+          <dd>Deferred — Sprint 9 (when scoped).</dd>
+        </dl>
+      </article>
+
+      <article class="finding" id="p2-bundle">
+        <div class="badges">
+          <span class="badge p2">P2</span>
+          <span class="badge status-partial">Partially done</span>
+          <span class="badge conf-high">Confidence: High</span>
+          <span class="badge ft">Fix type: Performance</span>
+        </div>
+        <h3>19. Bundle size — manual chunks shipped; component-level lazy still possible</h3>
+        <dl>
+          <dt>Status</dt>
+          <dd>
+            <code>vite.config.ts</code> already splits firebase-auth, firebase-db, charts,
+            maplibre, motion, barcode, body-highlighter, stripe. Routes lazy-load via
+            <code>lazyRetry</code>. Remaining wins are component-level: MapLibre is 1MB and
+            ships with RunDetail; charts (403kB) bundle into History. Intersection-observer
+            "load when near" patterns could defer.
+          </dd>
+          <dt>Recommendation</dt>
+          <dd>Profile real first-paint on low-end Android before optimising further.</dd>
+        </dl>
+      </article>
+    </section>
+
+    <section id="corrections" class="card">
+      <h2>Corrections to the v1 audit</h2>
+
+      <article class="finding">
+        <div class="badges">
+          <span class="badge resolved">Already done — Codex missed</span>
+        </div>
+        <h3>Mini-switch a11y is already implemented</h3>
+        <p>
+          v1 said switches need <code>role="switch"</code> + <code>aria-checked</code>.
+          Verified <code>src/components/settings/NotificationsSection.tsx:91, 144, 195</code>
+          and <code>src/components/settings/WorkoutPrefsSection.tsx:42, 84</code> already
+          carry both. Remaining gap is in less-trafficked surfaces only.
+        </p>
+      </article>
+
+      <article class="finding">
+        <div class="badges">
+          <span class="badge resolved">Already done — Codex missed</span>
+        </div>
+        <h3>Offline-queue indicator already exists</h3>
+        <p>
+          v1 asked for a food-specific offline-queue indicator. The global queue banner is
+          already rendered in <code>src/components/Layout.tsx</code> via
+          <code>ds-status-banner</code> showing "You're offline — N changes saved locally".
+          Adding per-row affordances is incremental polish, not a verified gap.
+        </p>
+      </article>
+
+      <article class="finding">
+        <div class="badges">
+          <span class="badge resolved">Mostly done — Codex outdated</span>
+        </div>
+        <h3>Invalid-run discard messaging mostly shipped</h3>
+        <p>
+          Sprint 1 (<code>getInvalidRunReason</code> + <code>InvalidRunReview</code>) covers
+          the explicit invalid-run case. Remaining gap is only the silent-discard path
+          (sub-threshold run discarded immediately) — easy toast addition, not a new
+          architecture problem.
+        </p>
+      </article>
+
+      <article class="finding">
+        <div class="badges">
+          <span class="badge resolved">Out of scope — v1 underweighted these</span>
+        </div>
+        <h3>v1 underweighted</h3>
+        <p>
+          The v1 audit did NOT call out Stripe / Apple IAP idempotency or workout PR
+          corruption — both promoted to P0 here. Those are higher-impact than several v1
+          P0 items (e.g. quick-add management, Open Food Facts proxy).
+        </p>
+      </article>
+
+      <article class="finding">
+        <div class="badges">
+          <span class="badge resolved">Root cause corrected</span>
+        </div>
+        <h3>Playwright failure is verified — but the nuance matters</h3>
+        <p>
+          v1 said the failure was "<code>test.use</code> inside <code>describe</code>". A
+          rebuttal said Playwright supports that pattern. Both are partially right:
+          Playwright supports most options inside <code>describe</code>, but device-shaped
+          configs include <code>defaultBrowserType</code> which forces a new worker and IS
+          rejected. The captured error message proves this. See P0 finding #5 for the
+          exact error and the corrected fix.
+        </p>
+      </article>
+    </section>
+
+    <section id="workorder" class="card">
+      <h2>Suggested PR work order</h2>
+      <p>
+        Ten follow-up PRs, ordered for value-per-hour and risk-of-cost-loss. Each is its
+        own reviewable unit. PR A is this document. The rest are runtime changes.
+      </p>
+      <ol>
+        <li><strong>PR A</strong> — This audit document (no runtime changes).</li>
+        <li><strong>PR B</strong> — E2E diagnosis: delete the duplicate <code>test.use</code> in <code>responsive.spec.ts</code>, remove weak assertions, document the captured error.</li>
+        <li><strong>PR C</strong> — AI quota transactional + fail-closed. Closes verified P0 #1.</li>
+        <li><strong>PR D</strong> — Payment entitlement hardening: Stripe + Apple IAP idempotency, server-side price allowlist, out-of-order guards. Closes verified P0 #2 and #3.</li>
+        <li><strong>PR E</strong> — Workout set validator + PR safety + rest-timer wiring. Closes verified P0 #4 + P1 #13.</li>
+        <li><strong>PR F</strong> — Native App Check wiring + enforcement rollout plan. Closes verified P0 #6.</li>
+        <li><strong>PR G</strong> — Settings <code>updateProfile</code> save/revert contract + ErrorBoundary structured logging + blocked-user public mirror. Closes verified P1 #7, #12, #14.</li>
+        <li><strong>PR H</strong> — Run trust upgrade (decision + route quality + draft recovery). Closes verified P1 #8, #9.</li>
+        <li><strong>PR I</strong> — Notification diagnostics + test buttons + next-reminder display. Closes verified P1 #10.</li>
+        <li><strong>PR J</strong> — README / runbook rewrite. Closes verified P2 #16.</li>
+        <li><strong>(deferred)</strong> — Food AI portion preservation + review-before-save (P1 #15). Operator diagnostics route (P2 #17). Design-system sweep (P2 #18).</li>
+      </ol>
+    </section>
+
+    <section id="commands" class="card">
+      <h2>Commands run during this audit</h2>
+      <pre>npm run lint                                  # PASS
+npx tsc --noEmit                              # PASS
+npm test -- --run                             # PASS (1633 / 1639, 6 skipped)
+npm run build                                 # PASS
+npx playwright test --list                    # FAIL — error captured at e2e/responsive.spec.ts:71
+                                              #   "Cannot use({ defaultBrowserType }) in a describe group,
+                                              #    because it forces a new worker."
+grep -n "checkMonthlyQuota" functions/index.js         # 164:async function checkMonthlyQuota(uid) {
+grep -n "// fail open" functions/index.js              # 195:    return { allowed: true, remaining: 999, limit: 999 }; // fail open
+grep -n "event.id\|processed" functions/index.js       # (no idempotency dedup found in stripeWebhook)
+grep -n "notificationUUID" functions/appleIAP.js       # (no idempotency dedup found in appleIAPWebhook)
+grep -n "defaultRestSeconds" src/components/WorkoutSession.tsx  # (no matches)
+grep -rn "localStorage" src/hooks/useGPS.ts src/hooks/useRunTimer.ts  # (no matches)</pre>
+      <div class="callout warn">
+        <strong>Audit-doc-only PR.</strong> This document does not modify runtime code. Each
+        finding above maps to one of the follow-up PRs in the work order. The audit is
+        complete when every P0 has shipped its follow-up PR — until then, this is the
+        single source of truth for what needs to happen.
+      </div>
+    </section>
+
+    <footer>
+      Replacement audit for PR #517 v1 · Tropos / Maiin · 2026-05-12
+    </footer>
+  </main>
+</body>
+</html>
