@@ -70,34 +70,27 @@ suite("rateLimiter — emulator integration", () => {
     expect(blocked).toBe(true);
   });
 
-  it(
-    "concurrency: 10 parallel calls with maxCalls=5 → exactly 5 allowed",
-    async () => {
-      // Audit P0 #1: pre-PR-C this read → calculate → write across two
-      // RTTs, so two concurrent requests could both observe count=4
-      // and both succeed (granting 6 calls when the limit is 5). The
-      // runTransaction wrapper serialises them. Fires 10 in parallel
-      // and asserts the count is exactly 5/5 — anything else means
-      // the race re-opened.
-      //
-      // 30s timeout (vs vitest's 10s default) for the same reason
-      // the 20-parallel sibling below got bumped in PR #542:
-      // Firestore optimistic-concurrency retries stack up under
-      // contention against a loaded CI emulator. CI 27 flaked at
-      // 10045ms — pushing the budget up keeps the invariant pinned
-      // without weakening the parallelism the test exists to verify.
-      const results = await Promise.all(
-        Array.from({ length: 10 }, () =>
-          isRateLimited(db, "user-c", "askGemini", 5, 60_000),
-        ),
-      );
-      const allowed = results.filter((r) => r === false).length;
-      const blocked = results.filter((r) => r === true).length;
-      expect(allowed).toBe(5);
-      expect(blocked).toBe(5);
-    },
-    30_000,
-  );
+  it("concurrency: 10 parallel calls with maxCalls=5 → exactly 5 allowed", async () => {
+    // Audit P0 #1: pre-PR-C this read → calculate → write across two
+    // RTTs, so two concurrent requests could both observe count=4
+    // and both succeed (granting 6 calls when the limit is 5). The
+    // runTransaction wrapper serialises them. Fires 10 in parallel
+    // and asserts the count is exactly 5/5 — anything else means
+    // the race re-opened.
+    //
+    // Timeout comes from the global 30_000ms set in
+    // functions/vitest.config.js (the per-test bump from #547 was
+    // folded into the global once #542's sibling did the same).
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        isRateLimited(db, "user-c", "askGemini", 5, 60_000),
+      ),
+    );
+    const allowed = results.filter((r) => r === false).length;
+    const blocked = results.filter((r) => r === true).length;
+    expect(allowed).toBe(5);
+    expect(blocked).toBe(5);
+  });
 
   it("rate limit clears after the window expires", async () => {
     // Use a 50ms window so the test doesn't have to sleep for a
@@ -176,32 +169,25 @@ suite("checkMonthlyQuota — emulator integration", () => {
     expect(result.limit).toBe(10);
   });
 
-  it(
-    "concurrency: 20 parallel scans by free user → exactly 10 allowed",
-    async () => {
-      // Audit P0 #1: pre-PR-C this incremented across two RTTs (read →
-      // write), so 20 concurrent scans could all read count=9 and all
-      // succeed (granting 20 paid Vertex calls when the limit is 10).
-      // Now serialised via runTransaction — assert it.
-      //
-      // 30s timeout (vs vitest's 10s default) because Firestore's
-      // optimistic-concurrency transactions back off + retry under
-      // 20-way contention; the sibling 10-parallel test runs in
-      // ~7s, so 20-way can plausibly take 12-25s on a loaded CI
-      // emulator. CI 26 flaked at 10001ms — pushing the headroom
-      // up keeps the invariant pinned without papering over the
-      // (intentional) serialisation cost.
-      await db.collection("users").doc("user-burst").set({ subscriptionTier: "free" });
-      const results = await Promise.all(
-        Array.from({ length: 20 }, () => checkMonthlyQuota(db, "user-burst")),
-      );
-      const allowed = results.filter((r) => r.allowed).length;
-      const blocked = results.filter((r) => !r.allowed).length;
-      expect(allowed).toBe(10);
-      expect(blocked).toBe(10);
-    },
-    30_000,
-  );
+  it("concurrency: 20 parallel scans by free user → exactly 10 allowed", async () => {
+    // Audit P0 #1: pre-PR-C this incremented across two RTTs (read →
+    // write), so 20 concurrent scans could all read count=9 and all
+    // succeed (granting 20 paid Vertex calls when the limit is 10).
+    // Now serialised via runTransaction — assert it.
+    //
+    // Timeout comes from the global 30_000ms set in
+    // functions/vitest.config.js. PR #542 originally added a
+    // per-test bump here; folded into the global once PR #547's
+    // sibling needed the same headroom.
+    await db.collection("users").doc("user-burst").set({ subscriptionTier: "free" });
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () => checkMonthlyQuota(db, "user-burst")),
+    );
+    const allowed = results.filter((r) => r.allowed).length;
+    const blocked = results.filter((r) => !r.allowed).length;
+    expect(allowed).toBe(10);
+    expect(blocked).toBe(10);
+  });
 
   it("decrement on monthly rollover: stored Apr-26 ignored in May-26", async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);

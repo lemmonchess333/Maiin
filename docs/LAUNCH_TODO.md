@@ -132,15 +132,16 @@ until commit `79233a1`. New code uses `@capacitor/haptics`. Needs
 verification on a physical iPhone build — the web haptic path can't
 test it.
 
-### 8. Info.plist usage descriptions
+### 8. Info.plist usage descriptions — ✅ done
 
-Check these keys exist in `ios/App/App/Info.plist`:
+Verified on `main` (post-#547): `ios/App/App/Info.plist` already
+contains all three required keys with the exact strings below:
 
 - `NSCameraUsageDescription` — "Tropos uses your camera to scan food and barcodes for faster logging."
 - `NSLocationWhenInUseUsageDescription` — "Tropos uses your location to track runs and calculate distance."
 - `NSPhotoLibraryUsageDescription` — "Tropos lets you attach progress photos to track visual changes over time."
 
-Skip `NSMotionUsageDescription` (no pedometer in code).
+`NSMotionUsageDescription` deliberately omitted — no pedometer in code.
 
 ### 9. App Store Connect metadata + assets
 
