@@ -127,6 +127,12 @@ export function useMealRemindersInternal() {
           title,
           body: 'Quick log keeps your day accurate.',
           scheduleAt: nextAt,
+          // Daily-repeating so the reminder doesn't silently stop
+          // after the first fire. The OS re-arms it for the same
+          // wall-clock time each subsequent day. Cancel-on-toggle
+          // (and the rescheduleAll call above) still handles the
+          // disable / time-edit cases.
+          repeats: true,
         });
       }
     };

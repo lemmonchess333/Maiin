@@ -201,6 +201,13 @@ export function useStreakReminderInternal() {
         title: "Keep your streak alive",
         body: `Still time to log today and keep your ${currentStreak}-day streak going`,
         scheduleAt: fireAt,
+        // Daily-repeating so the evening check doesn't silently stop
+        // after one fire. The current-streak body text is captured at
+        // schedule time — when the streak changes the cancel-and-
+        // reschedule effect above re-runs with the fresh number.
+        // cancel-on-log via useStreaks still handles the same-day
+        // suppression.
+        repeats: true,
       });
     };
 
