@@ -177,6 +177,54 @@ function safeOriginForLog(rawUrl) {
 }
 
 /**
+ * Predicate: is this Origin header value one we permit to call the
+ * payment endpoints from a browser?
+ *
+ * Reuses the Stripe return-URL allowlist (PROD + STAGING + emulator-
+ * gated LOCAL) — same surface, same FUNCTIONS_EMULATOR gating, same
+ * STRIPE_RETURN_URL_ORIGINS override semantics. If the two ever need
+ * to diverge (different web origins for "where can we redirect after
+ * payment" vs "which web app can call the function"), split them
+ * then.
+ *
+ * Special case: undefined / missing Origin is permitted. Browsers
+ * always send Origin on cross-origin XHR/fetch; only non-browser
+ * callers (curl, server-to-server, native apps without a webview)
+ * omit it. Bearer-token auth is the real access gate for those
+ * callers, so CORS isn't the right layer to block them.
+ */
+function isAllowedAppOrigin(origin) {
+  if (!origin) return true;
+  if (typeof origin !== "string") return false;
+  return getAllowedStripeReturnUrlOrigins().includes(origin);
+}
+
+/**
+ * cors-config builder for the payment endpoints. Returns a config
+ * object suitable for `require("cors")(getAppCorsOptions())`.
+ *
+ * Returning an Error from the origin callback (rather than
+ * `cb(null, false)`) short-circuits the handler chain — the
+ * disallowed origin gets a 500 from cors's error middleware,
+ * the inner handler never runs, and the structured log captures
+ * which origin was rejected. `cb(null, false)` would still run
+ * the inner handler and rely on the browser to enforce, which
+ * wastes compute on every disallowed call and leaves no
+ * server-side signal.
+ */
+function getAppCorsOptions() {
+  return {
+    origin(origin, callback) {
+      if (isAllowedAppOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Not allowed by CORS"));
+    },
+  };
+}
+
+/**
  * Closed set of return-path tokens the client is permitted to send.
  * The server builds the full Stripe success/cancel URL itself; the
  * client only chooses *which page in the app* to land on. This is the
@@ -243,4 +291,6 @@ module.exports = {
   ALLOWED_CHECKOUT_OUTCOMES,
   getStripeReturnBaseUrl,
   buildStripeReturnUrl,
+  isAllowedAppOrigin,
+  getAppCorsOptions,
 };
