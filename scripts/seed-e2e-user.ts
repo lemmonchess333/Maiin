@@ -50,24 +50,14 @@
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 
-const AUTH_EMULATOR = process.env.FIREBASE_AUTH_EMULATOR_HOST;
-const FIRESTORE_EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
-const EXPECTED_AUTH_EMULATOR = "127.0.0.1:9099";
-const EXPECTED_FIRESTORE_EMULATOR = "127.0.0.1:8080";
-
-if (AUTH_EMULATOR !== EXPECTED_AUTH_EMULATOR || FIRESTORE_EMULATOR !== EXPECTED_FIRESTORE_EMULATOR) {
-  console.error(
-    "[seed-e2e-user] Refusing to run unless emulator env vars match firebase.json.\n" +
-      "  Expected: FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099\n" +
-      "            FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n" +
-      `  Received: FIREBASE_AUTH_EMULATOR_HOST=${AUTH_EMULATOR ?? "<unset>"}\n` +
-      `            FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR ?? "<unset>"}\n` +
-      "  Boot emulators first via:\n" +
-      "    firebase emulators:start --only auth,firestore",
-  );
-  process.exit(1);
-}
+// Single source of truth for "is this an emulator session?". The
+// helper reads firebase.json so the expected hosts stay in lockstep
+// with the emulator config and the auth.spec.ts gate. Bails the
+// process loudly on misconfiguration (silent skip on a seed script
+// would create a known-credential user against the wrong target).
+assertEmulatorEnvOrExit();
 
 const TEST_USER = {
   email: "e2e-test@tropos.test",

@@ -65,45 +65,115 @@ function getStripePriceAllowlist() {
   return allowlist;
 }
 
-const DEFAULT_STRIPE_RETURN_URL_ORIGINS = [
-  "https://lemmonchess333.github.io",
+const PROD_STRIPE_RETURN_URL_ORIGINS = [
   "https://troposfit.com",
+  "https://www.troposfit.com",
+];
+
+const STAGING_STRIPE_RETURN_URL_ORIGINS = [
+  "https://lemmonchess333.github.io",
+];
+
+const LOCAL_STRIPE_RETURN_URL_ORIGINS = [
   "http://localhost:4173",
   "http://localhost:5173",
   "http://127.0.0.1:4173",
   "http://127.0.0.1:5173",
 ];
 
+// Capacitor/iOS origins are intentionally NOT in this allowlist.
+// iOS subscriptions must use Apple IAP per App Store policy; a
+// Stripe Checkout web flow inside the iOS WebView would risk app
+// rejection. Do not add capacitor://localhost.
+//
+// FOLLOWUP(payment-security): split this allowlist by deploy
+//   environment so staging origins only ship in staging builds.
+// FOLLOWUP(payment-security): audit other endpoints accepting
+//   client-controlled URLs (password reset, share links, OAuth
+//   redirect, webhook callbacks).
+function normalizeOriginEntry(entry) {
+  try {
+    const parsed = new URL(String(entry).trim());
+    if (!["http:", "https:"].includes(parsed.protocol)) return null;
+    return parsed.origin;
+  } catch (_) {
+    return null;
+  }
+}
+
+function getDefaultStripeReturnUrlOrigins() {
+  // FUNCTIONS_EMULATOR is "true" only when running via firebase
+  // emulators:start. Localhost origins are intentionally limited
+  // to emulator runs so deployed prod functions cannot redirect
+  // Stripe Checkout back to a developer's machine.
+  if (process.env.FUNCTIONS_EMULATOR === "true") {
+    return [
+      ...PROD_STRIPE_RETURN_URL_ORIGINS,
+      ...STAGING_STRIPE_RETURN_URL_ORIGINS,
+      ...LOCAL_STRIPE_RETURN_URL_ORIGINS,
+    ];
+  }
+  return [
+    ...PROD_STRIPE_RETURN_URL_ORIGINS,
+    ...STAGING_STRIPE_RETURN_URL_ORIGINS,
+  ];
+}
+
+function getConfiguredStripeReturnUrlOrigins() {
+  const raw = process.env.STRIPE_RETURN_URL_ORIGINS;
+  if (!raw || !raw.trim()) return null;
+  const normalized = raw
+    .split(",")
+    .map(normalizeOriginEntry)
+    .filter(Boolean);
+  return normalized.length ? [...new Set(normalized)] : null;
+}
+
+function getAllowedStripeReturnUrlOrigins() {
+  return getConfiguredStripeReturnUrlOrigins() ||
+    getDefaultStripeReturnUrlOrigins();
+}
+
 /**
  * Validate Stripe Checkout return URLs before handing them to Stripe.
- * Checkout redirects are user-visible after payment/cancel, so accepting
- * arbitrary client-supplied URLs would let any authenticated user create a
- * Stripe-hosted flow that bounces to a phishing domain. Origins default to
- * the deployed GitHub Pages/custom domains plus local dev/preview; deploys
- * can override with STRIPE_RETURN_URL_ORIGINS="https://app.example,...".
+ * Checkout redirects are user-visible after payment/cancel, so
+ * accepting arbitrary client-supplied URLs would let any authenticated
+ * caller bounce a payment flow through a phishing domain.
+ *
+ * Defence-in-depth around the URL parser:
+ *  - reject anything that isn't http/https (drops data:, vbscript:,
+ *    file:, javascript:, protocol-relative `//evil.com`)
+ *  - compare against `parsed.origin` (kills userinfo confusion
+ *    `https://troposfit.com@evil.com`, suffix phishing
+ *    `troposfit.com.evil.com`, non-default-port mismatch)
+ *  - origin normalisation strips default ports and lowercases the
+ *    scheme + host, so `HTTPS://Troposfit.COM:443` matches
+ *    `https://troposfit.com`
+ *  - Unicode lookalikes (full-width dots etc.) don't decompose to
+ *    ASCII via the URL parser so they fail the allowlist lookup
  */
 function isAllowedStripeReturnUrl(rawUrl) {
-  if (typeof rawUrl !== "string" || !rawUrl) return false;
-  let url;
+  if (typeof rawUrl !== "string" || !rawUrl.trim()) return false;
+  let parsed;
   try {
-    url = new URL(rawUrl);
+    parsed = new URL(rawUrl);
   } catch (_) {
     return false;
   }
+  if (!["http:", "https:"].includes(parsed.protocol)) return false;
+  return getAllowedStripeReturnUrlOrigins().includes(parsed.origin);
+}
 
-  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
-    return false;
+/** Origin-only redaction for log fields. Returns null on parse
+ *  failure so structured-log destinations don't capture raw
+ *  untrusted strings. */
+function safeOriginForLog(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl.trim()) return null;
+  try {
+    return new URL(rawUrl).origin;
+  } catch (_) {
+    return null;
   }
-
-  const configuredOrigins = (process.env.STRIPE_RETURN_URL_ORIGINS || "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  const allowedOrigins = configuredOrigins.length > 0
-    ? configuredOrigins
-    : DEFAULT_STRIPE_RETURN_URL_ORIGINS;
-
-  return allowedOrigins.includes(url.origin);
 }
 
 module.exports = {
@@ -112,4 +182,6 @@ module.exports = {
   currentMonthCount,
   getStripePriceAllowlist,
   isAllowedStripeReturnUrl,
+  getAllowedStripeReturnUrlOrigins,
+  safeOriginForLog,
 };

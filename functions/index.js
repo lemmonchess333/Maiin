@@ -20,6 +20,24 @@ const helpers = require("./helpers");
 // firestore handle (see functions/__tests__/integration/).
 const rateLimiter = require("./rateLimiter");
 
+// Module-load self-check: in deployed (non-emulator) functions,
+// the final resolved Stripe return-URL allowlist MUST include the
+// canonical prod origin. If a deploy sets STRIPE_RETURN_URL_ORIGINS
+// (override semantics: replaces defaults, doesn't extend) and
+// forgets to include https://troposfit.com, every Checkout call
+// would 400 silently — this surfaces the misconfiguration at
+// boot in Cloud Logging instead. Log, don't throw, so a startup
+// failure doesn't take the function down completely.
+if (process.env.FUNCTIONS_EMULATOR !== "true") {
+  const allowed = helpers.getAllowedStripeReturnUrlOrigins();
+  if (!allowed.includes("https://troposfit.com")) {
+    functions.logger.error(
+      "stripe.allowlist.misconfigured: production origin missing",
+      { allowed },
+    );
+  }
+}
+
 // ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
 // ══════════════════════════════════════════════
@@ -167,13 +185,9 @@ const _computeEffectiveTier = helpers.computeEffectiveTier;
 /** Delegates to helpers.currentMonthCount — see helpers.js for docs. */
 const _currentMonthCount = helpers.currentMonthCount;
 
-function safeOriginForLog(rawUrl) {
-  try {
-    return new URL(rawUrl).origin;
-  } catch (_) {
-    return "<invalid>";
-  }
-}
+/** Delegates to helpers.safeOriginForLog — origin-only redaction so
+ *  structured logs never capture raw client-supplied URLs. */
+const safeOriginForLog = helpers.safeOriginForLog;
 
 /**
  * Checks and increments the user's monthly AI scan counter atomically.
@@ -691,6 +705,16 @@ const _getStripePriceAllowlist = helpers.getStripePriceAllowlist;
 /** Delegates to helpers.isAllowedStripeReturnUrl — see helpers.js for docs. */
 const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 
+// FOLLOWUP(payment-security): restrict CORS for payment endpoints
+//   to the same allowed app origins.
+// FOLLOWUP(payment-security): tighten per-uid rate limiting on
+//   createCheckoutSession; the existing 5/10min check uses body.uid
+//   pre-reorder semantics and should re-key on authUser.uid.
+// FOLLOWUP(payment-security): audit-log successful checkout session
+//   creation (uid, stripeSessionId, price, mode, safe origins,
+//   timestamp).
+// FOLLOWUP(payment-security): server-synthesize Stripe return URLs
+//   from a closed set of returnPath values.
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -699,26 +723,57 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         return;
       }
 
+      // Auth runs BEFORE any body validation. An unauthenticated
+      // POST with bad checkout URLs must surface as 401, not 400 —
+      // otherwise the response shape leaks which validation layer
+      // ran and how the handler is ordered. See the auth-ordering
+      // test in __tests__/createCheckoutSession.test.js.
+      let authUser;
+      try {
+        authUser = await verifyAuth(req.headers.authorization);
+      } catch (_) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      // Shape guard — req.body can be null / string / array on
+      // malformed requests; destructuring those would throw and
+      // surface as a 500.
+      if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+        res.status(400).json({ error: "Invalid request body." });
+        return;
+      }
+
       const { uid, email, priceId, successUrl, cancelUrl } = req.body;
 
-      if (!uid || !priceId || !successUrl || !cancelUrl) {
-        res.status(400).json({ error: "Missing required fields: uid, priceId, successUrl, cancelUrl" });
+      // Ownership check before field-presence so a client passing a
+      // mismatched uid gets 403 (not a generic 400). authUser.uid is
+      // the source of truth for everything downstream.
+      if (uid && authUser.uid !== uid) {
+        res.status(403).json({ error: "Forbidden" });
         return;
       }
 
-      if (!_isAllowedStripeReturnUrl(successUrl) || !_isAllowedStripeReturnUrl(cancelUrl)) {
-        console.warn(
-          `createCheckoutSession: rejected return URL for uid=${uid} ` +
-          `successOrigin=${safeOriginForLog(successUrl)} cancelOrigin=${safeOriginForLog(cancelUrl)}`,
-        );
-        res.status(400).json({ error: "Invalid checkout return URL." });
+      if (!priceId || !successUrl || !cancelUrl) {
+        res.status(400).json({ error: "Missing required fields: priceId, successUrl, cancelUrl" });
         return;
       }
 
-      // Verify the user is authenticated
-      const authUser = await verifyAuth(req.headers.authorization);
-      if (authUser.uid !== uid) {
-        res.status(403).json({ error: "UID mismatch" });
+      const successAllowed = _isAllowedStripeReturnUrl(successUrl);
+      const cancelAllowed = _isAllowedStripeReturnUrl(cancelUrl);
+
+      if (!successAllowed || !cancelAllowed) {
+        functions.logger.warn("createCheckoutSession.rejected_return_url", {
+          uid: authUser.uid,
+          successOrigin: safeOriginForLog(successUrl),
+          cancelOrigin: safeOriginForLog(cancelUrl),
+          invalidField: !successAllowed ? "successUrl" : "cancelUrl",
+        });
+        res.status(400).json({
+          error: "Invalid checkout return URL.",
+          code: "INVALID_RETURN_URL",
+          field: !successAllowed ? "successUrl" : "cancelUrl",
+        });
         return;
       }
 
@@ -727,13 +782,15 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
       const allowlist = _getStripePriceAllowlist();
       const priceConfig = allowlist[priceId];
       if (!priceConfig) {
-        console.warn(`createCheckoutSession: rejected unknown priceId=${priceId} for uid=${uid}`);
+        functions.logger.warn("createCheckoutSession.rejected_price", {
+          uid: authUser.uid,
+        });
         res.status(400).json({ error: "Unknown plan." });
         return;
       }
 
       // Rate limit: 5 checkout attempts per 10 minutes
-      const limited = await isRateLimited(uid, "checkout", 5, 600_000);
+      const limited = await isRateLimited(authUser.uid, "checkout", 5, 600_000);
       if (limited) {
         res.status(429).json({ error: "Too many checkout attempts. Please wait." });
         return;
@@ -744,7 +801,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         (functions.config().stripe && functions.config().stripe.secret_key);
 
       if (!stripeKey) {
-        console.error("createCheckoutSession: STRIPE_SECRET_KEY not configured");
+        functions.logger.error("createCheckoutSession.stripe_key_missing");
         res.status(500).json({ error: "Payment service not configured" });
         return;
       }
@@ -752,17 +809,17 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
       const stripe = require("stripe")(stripeKey);
 
       // Look up or create Stripe customer
-      const userDoc = await admin.firestore().collection("users").doc(uid).get();
+      const userDoc = await admin.firestore().collection("users").doc(authUser.uid).get();
       const userData = userDoc.exists ? userDoc.data() : {};
       let customerId = userData.stripeCustomerId;
 
       if (!customerId) {
         const customer = await stripe.customers.create({
-          email: email || authUser.email,
-          metadata: { firebaseUid: uid },
+          email: authUser.email || email,
+          metadata: { firebaseUid: authUser.uid },
         });
         customerId = customer.id;
-        await admin.firestore().collection("users").doc(uid).set(
+        await admin.firestore().collection("users").doc(authUser.uid).set(
           { stripeCustomerId: customerId },
           { merge: true },
         );
@@ -775,12 +832,12 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         mode: priceConfig.mode,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { firebaseUid: uid, planKind: priceConfig.kind },
+        metadata: { firebaseUid: authUser.uid, planKind: priceConfig.kind },
       });
 
       res.status(200).json({ url: session.url });
     } catch (error) {
-      console.error("createCheckoutSession error:", error.message);
+      functions.logger.error("createCheckoutSession.error", { message: error.message });
       res.status(500).json({ error: "Failed to create checkout session" });
     }
   });

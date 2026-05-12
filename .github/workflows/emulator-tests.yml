@@ -154,7 +154,7 @@ jobs:
       - name: Run authenticated E2E
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm run seed:e2e && E2E_AUTH_EMULATOR=1 npm run test:e2e -- auth.spec.ts --project=chromium'
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm run seed:e2e && E2E_AUTH_EMULATOR=1 npm run test:e2e -- auth.spec.ts --project=auth-emulator'
 
       # Upload Playwright artefacts on failure so investigating a CI
       # break doesn't require re-running locally.

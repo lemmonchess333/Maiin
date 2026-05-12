@@ -13,16 +13,18 @@
 
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser, signOut } from "./helpers/auth";
-
-const emulatorActive =
-  process.env.E2E_AUTH_EMULATOR === "1" &&
-  process.env.FIREBASE_AUTH_EMULATOR_HOST === "127.0.0.1:9099" &&
-  process.env.FIRESTORE_EMULATOR_HOST === "127.0.0.1:8080";
+import {
+  emulatorActive,
+  EXPECTED_AUTH_HOST,
+  EXPECTED_FIRESTORE_HOST,
+} from "./helpers/emulator";
 
 test.describe("authenticated user flows", () => {
+  // Expected hosts are read from firebase.json so the gate stays in
+  // lockstep with the emulator config — no magic literals to drift.
   test.skip(
     !emulatorActive,
-    "Requires E2E_AUTH_EMULATOR=1 with Auth/Firestore emulator hosts on 127.0.0.1:9099/8080",
+    `Requires E2E_AUTH_EMULATOR=1 with FIREBASE_AUTH_EMULATOR_HOST=${EXPECTED_AUTH_HOST} and FIRESTORE_EMULATOR_HOST=${EXPECTED_FIRESTORE_HOST}`,
   );
 
   test.beforeEach(async ({ page }) => {
