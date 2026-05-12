@@ -83,7 +83,25 @@ export async function signInAsTestUser(
   // Bottom-nav is only rendered under the authed Layout, so it's a
   // real success signal. Generous timeout because AuthProvider
   // awaits a Firestore profile read after sign-in.
-  await expect(page.locator("nav").first()).toBeVisible({ timeout: 20_000 });
+  try {
+    await expect(page.locator("nav").first()).toBeVisible({ timeout: 20_000 });
+  } catch (err) {
+    // Dump post-submit state — was the user routed to Onboarding?
+    // Stuck on Login with an error banner? Stuck on a spinner?
+    // Without this dump the failure mode is opaque.
+    const html = await page.content().catch(() => "<unavailable>");
+    const url = page.url();
+    // Pull the visible text out so the rendered surface is
+    // recognisable in the CI log without grepping HTML.
+    const bodyText = await page.locator("body").innerText().catch(() => "<unavailable>");
+    console.error("─── post-submit nav check failed; page state ───");
+    console.error("URL:", url);
+    console.error("Console history:\n" + consoleLogs.join("\n"));
+    console.error("Body text (first 1500 chars):\n" + bodyText.slice(0, 1500));
+    console.error("Body HTML (first 2000 chars):\n" + html.slice(0, 2000));
+    console.error("─── end post-submit state ───");
+    throw err;
+  }
 }
 
 /**
