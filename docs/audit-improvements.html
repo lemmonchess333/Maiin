@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tropos App Audit — Improvement Opportunities</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f5f0;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --brand: #7c6ef6;
+      --brand-dark: #5647cf;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --ok: #047857;
+      --code-bg: #f1f5f9;
+      --shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      background: radial-gradient(circle at top left, rgba(124, 110, 246, 0.16), transparent 32rem), var(--bg);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 72px;
+    }
+
+    header.hero {
+      background: linear-gradient(135deg, #1f2937, #312e81 55%, #7c2d12);
+      color: #fff;
+      border-radius: 28px;
+      padding: clamp(28px, 6vw, 56px);
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.76);
+      font-weight: 800;
+    }
+
+    h1, h2, h3 { line-height: 1.18; }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2rem, 6vw, 4.25rem);
+      letter-spacing: -0.055em;
+    }
+
+    .hero p {
+      max-width: 780px;
+      margin: 0;
+      color: rgba(255,255,255,0.84);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.9);
+      font-weight: 700;
+      font-size: 0.86rem;
+    }
+
+    nav.toc, section.card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: clamp(20px, 4vw, 32px);
+      box-shadow: var(--shadow);
+      margin: 20px 0;
+    }
+
+    nav.toc h2, section.card h2 {
+      margin-top: 0;
+      font-size: 1.55rem;
+      letter-spacing: -0.02em;
+    }
+
+    nav.toc ol {
+      columns: 2;
+      gap: 28px;
+      padding-left: 22px;
+      margin-bottom: 0;
+    }
+
+    nav.toc a { color: var(--brand-dark); font-weight: 750; text-decoration: none; }
+    nav.toc a:hover { text-decoration: underline; }
+
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .priority {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fbfdff;
+    }
+
+    .priority strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.96rem;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.73rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .critical { background: #fee2e2; color: var(--danger); }
+    .high { background: #ffedd5; color: var(--warn); }
+    .medium { background: #ede9fe; color: var(--brand-dark); }
+    .low { background: #dcfce7; color: var(--ok); }
+
+    ul { padding-left: 22px; }
+    li { margin: 8px 0; }
+
+    code {
+      background: var(--code-bg);
+      border-radius: 7px;
+      padding: 2px 6px;
+      color: #334155;
+      font-size: 0.92em;
+    }
+
+    .file-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .file-list code {
+      display: inline-flex;
+      white-space: nowrap;
+    }
+
+    .callout {
+      border-left: 4px solid var(--brand);
+      background: #f8f7ff;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin: 16px 0;
+    }
+
+    .commands {
+      display: grid;
+      gap: 10px;
+    }
+
+    .command {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fbfdff;
+    }
+
+    .status-pass { color: var(--ok); font-weight: 900; }
+    .status-fail { color: var(--danger); font-weight: 900; }
+
+    footer {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 32px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 720px) {
+      main { width: min(100% - 20px, 1100px); padding-top: 16px; }
+      nav.toc ol { columns: 1; }
+      header.hero, nav.toc, section.card { border-radius: 18px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      main { width: 100%; padding: 0; }
+      header.hero, nav.toc, section.card { box-shadow: none; break-inside: avoid; }
+      nav.toc a { color: inherit; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Tropos / Maiin audit handoff</p>
+      <h1>App Audit — Improvement Opportunities</h1>
+      <p>
+        A structured list of the highest-impact fixes and product improvements found while reviewing primary features,
+        tappable surfaces, settings, functions, Firebase hardening, and test health.
+      </p>
+      <div class="meta" aria-label="Audit metadata">
+        <span class="pill">Date: 2026-05-12</span>
+        <span class="pill">Scope: React + Capacitor + Firebase</span>
+        <span class="pill">Audience: Claude handoff</span>
+      </div>
+    </header>
+
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title">Table of contents</h2>
+      <ol>
+        <li><a href="#top-priorities">Top priorities</a></li>
+        <li><a href="#feature-home">Home / app shell</a></li>
+        <li><a href="#feature-food">Food</a></li>
+        <li><a href="#feature-run">Run</a></li>
+        <li><a href="#feature-program">Program / workouts</a></li>
+        <li><a href="#feature-settings">Settings</a></li>
+        <li><a href="#feature-notifications">Notifications</a></li>
+        <li><a href="#feature-design">Design system / accessibility</a></li>
+        <li><a href="#feature-security">Data / security / rules</a></li>
+        <li><a href="#suggested-order">Suggested work order</a></li>
+        <li><a href="#commands">Commands run</a></li>
+      </ol>
+    </nav>
+
+    <section id="top-priorities" class="card">
+      <h2>Highest-impact improvements</h2>
+      <div class="priority-grid">
+        <article class="priority">
+          <span class="tag critical">Critical</span>
+          <strong>Fix the E2E suite blocker.</strong>
+          <p>
+            <code>npx playwright test</code> fails before running tests because <code>test.use({ ...devices['iPhone 14'] })</code>
+            is inside a <code>describe</code> group. Move device config to a project, top-level test scope, or separate test file.
+          </p>
+        </article>
+        <article class="priority">
+          <span class="tag high">High</span>
+          <strong>Replace template README with production docs.</strong>
+          <p>
+            The README still opens with generic Vite template content. Add app setup, env vars, Firebase/Capacitor flows,
+            test commands, release steps, and operational runbooks.
+          </p>
+        </article>
+        <article class="priority">
+          <span class="tag high">High</span>
+          <strong>Wire native App Check.</strong>
+          <p>
+            Web App Check uses reCAPTCHA, but native Capacitor currently runs without App Attest / Play Integrity.
+            This is a security and abuse-hardening gap.
+          </p>
+        </article>
+        <article class="priority">
+          <span class="tag high">High</span>
+          <strong>Harden AI scan quota and rate limiting.</strong>
+          <p>
+            Current quota/rate checks use read-filter-write patterns and fail open. Move to transactions/atomic increments
+            and define fail-closed behavior for cost-sensitive paths.
+          </p>
+        </article>
+        <article class="priority">
+          <span class="tag medium">Medium</span>
+          <strong>Make reminders durable and transparent.</strong>
+          <p>
+            Web reminders rely on <code>setTimeout</code> while the app is open, and reminder hooks mostly schedule the next occurrence.
+            Add native repeating schedules and visible “next reminder” diagnostics.
+          </p>
+        </article>
+      </div>
+      <div class="file-list" aria-label="Related files">
+        <code>e2e/responsive.spec.ts</code>
+        <code>playwright.config.ts</code>
+        <code>README.md</code>
+        <code>src/lib/appCheck.ts</code>
+        <code>functions/index.js</code>
+        <code>src/lib/notifications.ts</code>
+      </div>
+    </section>
+
+    <section id="feature-home" class="card">
+      <h2>Home / app shell</h2>
+      <ul>
+        <li>
+          Lazy route loading and chunk retry recovery are strong, but global app crashes are logged with raw
+          <code>console.error</code>. Consider routing these through structured error reporting so production crashes are searchable.
+        </li>
+        <li>
+          Build output indicates several large chunks: Firebase DB, charts, barcode, MapLibre, and app index. Deeper lazy loading
+          for map/barcode/chart-heavy paths should improve first load and low-end mobile performance.
+        </li>
+        <li>
+          Add a small operator-facing diagnostics page or hidden route for version, build time, service worker state,
+          Firebase project, and notification permission to speed up support/debugging.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/App.tsx</code>
+        <code>src/components/Layout.tsx</code>
+        <code>src/lib/errorReporting.ts</code>
+      </div>
+    </section>
+
+    <section id="feature-food" class="card">
+      <h2>Food</h2>
+      <ul>
+        <li>
+          Preserve portion metadata from AI text parsing where available. Current NL save maps parsed items to a generic
+          <code>1 serving</code>, which weakens user review/edit clarity.
+        </li>
+        <li>
+          Consider proxying/caching Open Food Facts search server-side for reliability, timeout handling, analytics,
+          and control over third-party API behavior.
+        </li>
+        <li>
+          Add explicit quick-add management: pin favorites, hide suggestions, and “show more” beyond the current capped heuristic list.
+        </li>
+        <li>
+          Add confidence/review UI for AI estimates before saving, especially for low-confidence meals or unusually high macros.
+        </li>
+        <li>
+          Add an offline queue indicator for food saves/deletes so optimistic UI does not hide failed persistence.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/pages/Food.tsx</code>
+        <code>src/components/FoodAnalyzer.tsx</code>
+        <code>src/lib/foodValidation.ts</code>
+        <code>src/lib/nlFoodParser.ts</code>
+      </div>
+    </section>
+
+    <section id="feature-run" class="card">
+      <h2>Run</h2>
+      <ul>
+        <li>
+          Background tracking is the biggest product gap: the app stops GPS while backgrounded to save battery, then warns about gaps.
+          Serious runners will expect native background location support with explicit permission education.
+        </li>
+        <li>
+          Add route-quality scoring: GPS accuracy distribution, gap count, rejected point count, and “route may be inaccurate” labels.
+        </li>
+        <li>
+          Pace inputs should validate format and show parsed values live before Start. Free-form pace text can silently fail to set a target.
+        </li>
+        <li>
+          Add clearer invalid-run messaging on discard. If a sub-threshold run is discarded immediately, explain why no confirmation appears.
+        </li>
+        <li>
+          Add recovery for accidental app close during an active run: draft state, elapsed time, and unsaved manual/treadmill distance.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/pages/Run.tsx</code>
+        <code>src/hooks/useGPS.ts</code>
+        <code>src/components/run/RunSetupModal.tsx</code>
+        <code>src/lib/runGuards.ts</code>
+      </div>
+    </section>
+
+    <section id="feature-program" class="card">
+      <h2>Program / workout session</h2>
+      <ul>
+        <li>
+          Add validation for workout set inputs: no negative values, realistic max reps/weight, decimal step rules, and warnings on huge jumps.
+        </li>
+        <li>
+          Add PR review/edit affordance before celebration. A fat-fingered value can currently feed PR detection immediately.
+        </li>
+        <li>
+          Confirm session rest timer initializes from Settings’ default rest time. If not, wire profile preference through the workout session.
+        </li>
+        <li>
+          Add “replace with equivalent movement” filters so substitutions preserve intent: vertical pull, hinge, squat, horizontal push, etc.
+        </li>
+        <li>
+          Add a session summary preview before final save: volume, duration, completed exercises, PRs, skipped sets, and notes.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/pages/Program.tsx</code>
+        <code>src/components/WorkoutSession.tsx</code>
+        <code>src/features/program/programEngine.ts</code>
+        <code>src/components/program/ExercisePicker.tsx</code>
+      </div>
+    </section>
+
+    <section id="feature-settings" class="card">
+      <h2>Settings</h2>
+      <ul>
+        <li>
+          Make every settings write visibly resilient: await/catch profile updates, revert optimistic local state on failure, and show
+          a consistent inline or toast error.
+        </li>
+        <li>
+          Add tests around reactive TDEE persistence so changes to age/activity/phase update targets once and preserve custom calorie targets.
+        </li>
+        <li>
+          Privacy zones should support manual map/address entry, edit radius/name, and permission recovery guidance when geolocation fails.
+        </li>
+        <li>
+          Blocked-user display should prefer the public profile mirror rather than direct reads of private user documents.
+        </li>
+        <li>
+          Account deletion should explicitly clear local state/session and navigate after success, not rely only on a toast/auth observer.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/pages/Settings.tsx</code>
+        <code>src/components/settings/PrivacySection.tsx</code>
+        <code>src/components/settings/AccountSection.tsx</code>
+        <code>src/components/settings/WorkoutPrefsSection.tsx</code>
+      </div>
+    </section>
+
+    <section id="feature-notifications" class="card">
+      <h2>Notifications</h2>
+      <ul>
+        <li>
+          Add native repeating local notifications and reschedule on app foreground. Current web fallback is session-bound and not durable.
+        </li>
+        <li>
+          Add “send test notification” buttons for meal, workout, and streak reminders so users can verify device settings.
+        </li>
+        <li>
+          Show “next scheduled reminder” status for each reminder type.
+        </li>
+        <li>
+          Add consistent accessibility semantics to mini-switches, including <code>role="switch"</code>, <code>aria-checked</code>, and labels.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/components/settings/NotificationsSection.tsx</code>
+        <code>src/hooks/useMealReminders.ts</code>
+        <code>src/hooks/useWorkoutReminders.ts</code>
+        <code>src/hooks/useStreakReminder.ts</code>
+        <code>src/lib/notifications.ts</code>
+      </div>
+    </section>
+
+    <section id="feature-design" class="card">
+      <h2>Design system / accessibility</h2>
+      <ul>
+        <li>
+          Continue migrating hand-rolled buttons to shared primitives: <code>Button</code>, <code>IconButton</code>,
+          <code>RunControlButton</code>, <code>Dialog</code>, and <code>BottomSheet</code>.
+        </li>
+        <li>
+          Audit all tappables for 44px minimum touch targets, especially dense workout grids, set type controls, and mini-switches.
+        </li>
+        <li>
+          Standardize loading, disabled, aria-label, focus-visible, and destructive-confirmation behavior across feature surfaces.
+        </li>
+        <li>
+          Add automated accessibility checks for authenticated surfaces using seeded/mocked auth state, not just public/legal pages.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>src/components/ui/Button.tsx</code>
+        <code>src/components/ui/IconButton.tsx</code>
+        <code>src/components/ui/Dialog.tsx</code>
+        <code>src/components/ui/BottomSheet.tsx</code>
+      </div>
+    </section>
+
+    <section id="feature-security" class="card">
+      <h2>Data / security / rules</h2>
+      <ul>
+        <li>
+          Move challenge seeding/admin writes server-side. Current authenticated write access is documented as an acceptable early-stage tradeoff,
+          but malicious users can create junk challenge docs.
+        </li>
+        <li>
+          Add App Check enforcement once web and native token flow is verified.
+        </li>
+        <li>
+          Make AI quota updates transactional and avoid full AI response logging in production.
+        </li>
+        <li>
+          Add security tests for public profile mirrors, blocked users, challenge writes, activities count increments, and storage photo paths.
+        </li>
+      </ul>
+      <div class="file-list">
+        <code>firestore.rules</code>
+        <code>storage.rules</code>
+        <code>functions/index.js</code>
+        <code>src/lib/appCheck.ts</code>
+      </div>
+    </section>
+
+    <section id="suggested-order" class="card">
+      <h2>Suggested priority order</h2>
+      <ol>
+        <li>Fix the Playwright E2E config so regression tests can run.</li>
+        <li>Harden AI quota/rate limiting with transactions or atomic increments.</li>
+        <li>Wire native App Check and then plan enforcement.</li>
+        <li>Audit/migrate all hand-rolled tappables for touch target and accessibility consistency.</li>
+        <li>Improve run background tracking and route quality diagnostics.</li>
+        <li>Add stronger validation to workout set inputs and PR confirmation.</li>
+        <li>Rewrite README/runbook for app-specific development and operations.</li>
+        <li>Reduce large bundles by lazy-loading map, barcode, charts, and Firebase-heavy surfaces.</li>
+      </ol>
+    </section>
+
+    <section id="commands" class="card">
+      <h2>Commands run during audit</h2>
+      <div class="commands">
+        <div class="command"><span class="status-pass">PASS</span> <code>npm run lint</code></div>
+        <div class="command"><span class="status-pass">PASS</span> <code>npm run build</code></div>
+        <div class="command"><span class="status-pass">PASS</span> <code>npm test</code></div>
+        <div class="command"><span class="status-fail">FAIL</span> <code>npm test -- --runInBand</code> — Vitest does not support Jest’s <code>--runInBand</code> option.</div>
+        <div class="command"><span class="status-fail">FAIL</span> <code>npx playwright test</code> — blocked by Playwright config in <code>e2e/responsive.spec.ts</code>.</div>
+      </div>
+      <div class="callout">
+        This HTML is a handoff artifact only. It summarizes audit findings and does not itself change app behavior.
+      </div>
+    </section>
+
+    <footer>
+      Generated for Claude handoff from the Tropos / Maiin audit.
+    </footer>
+  </main>
+</body>
+</html>
