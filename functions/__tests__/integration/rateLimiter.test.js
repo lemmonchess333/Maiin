@@ -70,23 +70,34 @@ suite("rateLimiter — emulator integration", () => {
     expect(blocked).toBe(true);
   });
 
-  it("concurrency: 10 parallel calls with maxCalls=5 → exactly 5 allowed", async () => {
-    // Audit P0 #1: pre-PR-C this read → calculate → write across two
-    // RTTs, so two concurrent requests could both observe count=4
-    // and both succeed (granting 6 calls when the limit is 5). The
-    // runTransaction wrapper serialises them. Fires 10 in parallel
-    // and asserts the count is exactly 5/5 — anything else means
-    // the race re-opened.
-    const results = await Promise.all(
-      Array.from({ length: 10 }, () =>
-        isRateLimited(db, "user-c", "askGemini", 5, 60_000),
-      ),
-    );
-    const allowed = results.filter((r) => r === false).length;
-    const blocked = results.filter((r) => r === true).length;
-    expect(allowed).toBe(5);
-    expect(blocked).toBe(5);
-  });
+  it(
+    "concurrency: 10 parallel calls with maxCalls=5 → exactly 5 allowed",
+    async () => {
+      // Audit P0 #1: pre-PR-C this read → calculate → write across two
+      // RTTs, so two concurrent requests could both observe count=4
+      // and both succeed (granting 6 calls when the limit is 5). The
+      // runTransaction wrapper serialises them. Fires 10 in parallel
+      // and asserts the count is exactly 5/5 — anything else means
+      // the race re-opened.
+      //
+      // 30s timeout (vs vitest's 10s default) for the same reason
+      // the 20-parallel sibling below got bumped in PR #542:
+      // Firestore optimistic-concurrency retries stack up under
+      // contention against a loaded CI emulator. CI 27 flaked at
+      // 10045ms — pushing the budget up keeps the invariant pinned
+      // without weakening the parallelism the test exists to verify.
+      const results = await Promise.all(
+        Array.from({ length: 10 }, () =>
+          isRateLimited(db, "user-c", "askGemini", 5, 60_000),
+        ),
+      );
+      const allowed = results.filter((r) => r === false).length;
+      const blocked = results.filter((r) => r === true).length;
+      expect(allowed).toBe(5);
+      expect(blocked).toBe(5);
+    },
+    30_000,
+  );
 
   it("rate limit clears after the window expires", async () => {
     // Use a 50ms window so the test doesn't have to sleep for a
