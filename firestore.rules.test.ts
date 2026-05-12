@@ -146,3 +146,189 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 });
+
+/**
+ * PR K (audit P1 #11): rules tests for /challenges.
+ *
+ * Pre-PR-K `write: if request.auth != null` let any authed user
+ * create junk documents with arbitrary IDs and overwrite existing
+ * seeded entries. These tests pin the tightened ruleset:
+ *
+ *   - reads stay open to any authed user
+ *   - creates are limited to the three known docId prefixes
+ *     (weekly- / monthly- / seasonal-)
+ *   - updates + deletes are locked to admin SDK
+ *   - participant docs remain owner-only writes
+ *
+ * Run via: firebase emulators:exec --only firestore \
+ *          'vitest run firestore.rules.test.ts'
+ */
+suite("firestore.rules — /challenges", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID + "-challenges",
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  const validChallengeData = {
+    name: "Weekly Warrior",
+    description: "Log workouts this week",
+    type: "weekly",
+    metric: "workout_count",
+    icon: "trophy",
+    tiers: { bronze: 2, silver: 4, gold: 6 },
+    startDate: new Date(),
+    endDate: new Date(),
+    participantCount: 0,
+    createdAt: serverTimestamp(),
+  };
+
+  it("authed user reads challenges — succeeds", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(getDoc(doc(db, "challenges", "weekly-2026-01-01")));
+  });
+
+  it("unauthed user reads challenges — fails", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+    });
+    const db = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(db, "challenges", "weekly-2026-01-01")));
+  });
+
+  it("authed user creates a weekly-prefix challenge — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData),
+    );
+  });
+
+  it("authed user creates a monthly-prefix challenge — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "monthly-2026-01-01"), validChallengeData),
+    );
+  });
+
+  it("authed user creates a seasonal-prefix challenge — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "seasonal-2026-01-01"), validChallengeData),
+    );
+  });
+
+  it("authed user creates a junk-id challenge — fails (docId pattern guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "asdfasdf"), validChallengeData),
+    );
+  });
+
+  it("authed user creates a fake-prefix challenge — fails (docId pattern guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    // No leading hyphen → doesn't match `weekly-.*`
+    await assertFails(
+      setDoc(doc(db, "challenges", "weeklyfake"), validChallengeData),
+    );
+  });
+
+  it("authed user updates an existing challenge — fails (admin only)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "challenges", "weekly-2026-01-01"),
+        { name: "Hijacked" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("unauthed user creates a valid-prefix challenge — fails", async () => {
+    const db = env.unauthenticatedContext().firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData),
+    );
+  });
+
+  it("owner writes their participant doc — succeeds", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+        { progress: 3, tier: "bronze" },
+      ),
+    );
+  });
+
+  it("other user writes someone else's participant doc — fails", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+    });
+    const db = env.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+        { progress: 99, tier: "gold" },
+      ),
+    );
+  });
+
+  it("authed user reads another user's participant doc — succeeds (leaderboard reads)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData,
+      );
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+        { progress: 5, tier: "silver" },
+      );
+    });
+    const db = env.authenticatedContext(OTHER_UID).firestore();
+    await assertSucceeds(
+      getDoc(
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+      ),
+    );
+  });
+});
