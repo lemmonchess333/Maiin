@@ -24,6 +24,12 @@ const rateLimiter = require("./rateLimiter");
 // pure shape-builder, recordCheckoutAuditEntry runs against the
 // emulator in the integration suite.
 const auditLog = require("./auditLog");
+// Profile-field allow-list sanitiser for completeOnboarding. Closes
+// the stored-data surface where a malicious client could write
+// arbitrary extra fields (photoURL pixel trackers, etc.) via the
+// {merge: true} write. See functions/profileSanitizer.js for the
+// allow-list and per-field validators.
+const profileSanitizer = require("./profileSanitizer");
 
 // Payment endpoints use a tighter cors config keyed off the same
 // origin allowlist as Stripe return URLs. AI / food-analysis
@@ -312,15 +318,29 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
 
   try {
     // Validate required fields
-    const {profileData, programState} = data;
-    if (!profileData || typeof profileData !== "object") {
+    const {profileData: rawProfileData, programState} = data;
+    if (!rawProfileData || typeof rawProfileData !== "object" || Array.isArray(rawProfileData)) {
       throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
     }
     if (!programState || typeof programState !== "object") {
       throw new functions.https.HttpsError("invalid-argument", "programState is required.");
     }
 
-    // Validate required profile fields
+    // Allow-list + per-field sanitise. Unknown fields, off-allowlist
+    // photoURL schemes, out-of-range numbers etc. are dropped to
+    // undefined and never reach the Firestore write — closes the
+    // stored-data surface from PR audit. The returned object is a
+    // *new* object; we use it instead of mutating rawProfileData so
+    // any later reads of `rawProfileData` see the original shape.
+    const profileData = profileSanitizer.sanitizeProfileData(rawProfileData);
+
+    // Required-field gate runs AFTER sanitise — a value that failed
+    // its validator is now `undefined` here, which surfaces as
+    // "Missing required field" rather than a more specific error.
+    // That's deliberate: the client's required-field UI already
+    // prevented the empty case, so a request that hits this branch
+    // is either an out-of-range value (which we want to reject) or
+    // a malicious caller (who shouldn't get diagnostic detail).
     const requiredFields = ["weightKg", "heightCm", "age", "sex", "activityLevel"];
     for (const field of requiredFields) {
       if (profileData[field] === undefined || profileData[field] === null || profileData[field] === "") {
@@ -328,26 +348,9 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       }
     }
 
-    // Validate age range (C6: server-side enforcement — client blocks <16 but API calls can bypass)
-    if (typeof profileData.age !== "number" || profileData.age < 16 || profileData.age > 120) {
-      throw new functions.https.HttpsError("invalid-argument", "Age must be between 16 and 120.");
-    }
-
-    // Validate body metrics are in sane ranges
-    if (typeof profileData.weightKg !== "number" || profileData.weightKg < 30 || profileData.weightKg > 300) {
-      throw new functions.https.HttpsError("invalid-argument", "Weight must be between 30 and 300 kg.");
-    }
-    if (typeof profileData.heightCm !== "number" || profileData.heightCm < 120 || profileData.heightCm > 230) {
-      throw new functions.https.HttpsError("invalid-argument", "Height must be between 120 and 230 cm.");
-    }
-
-    // Sanitize: strip fields that clients must never set
-    const clientForbidden = ["stripeCustomerId", "stripeSubscriptionId"];
-    for (const key of clientForbidden) {
-      delete profileData[key];
-    }
-
-    // Force correct ownership + subscription tier
+    // Force correct ownership + subscription tier. These overwrite
+    // any sanitiser-passing values from the input — they're
+    // server-managed regardless of what the client sent.
     profileData.uid = uid;
     profileData.subscriptionTier = "free";
     profileData.onboardingComplete = true;
