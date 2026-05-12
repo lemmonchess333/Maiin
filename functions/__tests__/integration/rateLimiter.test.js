@@ -165,20 +165,32 @@ suite("checkMonthlyQuota — emulator integration", () => {
     expect(result.limit).toBe(10);
   });
 
-  it("concurrency: 20 parallel scans by free user → exactly 10 allowed", async () => {
-    // Audit P0 #1: pre-PR-C this incremented across two RTTs (read →
-    // write), so 20 concurrent scans could all read count=9 and all
-    // succeed (granting 20 paid Vertex calls when the limit is 10).
-    // Now serialised via runTransaction — assert it.
-    await db.collection("users").doc("user-burst").set({ subscriptionTier: "free" });
-    const results = await Promise.all(
-      Array.from({ length: 20 }, () => checkMonthlyQuota(db, "user-burst")),
-    );
-    const allowed = results.filter((r) => r.allowed).length;
-    const blocked = results.filter((r) => !r.allowed).length;
-    expect(allowed).toBe(10);
-    expect(blocked).toBe(10);
-  });
+  it(
+    "concurrency: 20 parallel scans by free user → exactly 10 allowed",
+    async () => {
+      // Audit P0 #1: pre-PR-C this incremented across two RTTs (read →
+      // write), so 20 concurrent scans could all read count=9 and all
+      // succeed (granting 20 paid Vertex calls when the limit is 10).
+      // Now serialised via runTransaction — assert it.
+      //
+      // 30s timeout (vs vitest's 10s default) because Firestore's
+      // optimistic-concurrency transactions back off + retry under
+      // 20-way contention; the sibling 10-parallel test runs in
+      // ~7s, so 20-way can plausibly take 12-25s on a loaded CI
+      // emulator. CI 26 flaked at 10001ms — pushing the headroom
+      // up keeps the invariant pinned without papering over the
+      // (intentional) serialisation cost.
+      await db.collection("users").doc("user-burst").set({ subscriptionTier: "free" });
+      const results = await Promise.all(
+        Array.from({ length: 20 }, () => checkMonthlyQuota(db, "user-burst")),
+      );
+      const allowed = results.filter((r) => r.allowed).length;
+      const blocked = results.filter((r) => !r.allowed).length;
+      expect(allowed).toBe(10);
+      expect(blocked).toBe(10);
+    },
+    30_000,
+  );
 
   it("decrement on monthly rollover: stored Apr-26 ignored in May-26", async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
