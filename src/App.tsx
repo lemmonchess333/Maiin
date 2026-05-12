@@ -75,6 +75,11 @@ const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
 // direct URL (/diagnostics) so the support flow is "open this URL
 // and screenshot it" without exposing it to the average user.
 const Diagnostics = lazyRetry(() => import("@/pages/Diagnostics"));
+// Admin moderation queue — hidden behind the client-side admin
+// allowlist (VITE_ADMIN_UIDS). Non-admin signed-in users see a
+// 403 placeholder; the underlying callable also re-checks admin
+// server-side so the route gate is UX only, not a trust boundary.
+const AdminModeration = lazyRetry(() => import("@/pages/AdminModeration"));
 
 function PageLoader() {
   return (
@@ -318,6 +323,11 @@ function AppRoutes() {
         {/* Hidden operator diagnostics — not in Layout so it doesn't
             render the nav, full-screen surface for screenshotting. */}
         <Route path="/diagnostics" element={<RouteErrorBoundary><Diagnostics /></RouteErrorBoundary>} />
+        {/* Admin moderation queue. Client gate via VITE_ADMIN_UIDS,
+            server gate via listPendingReports callable's ADMIN_UIDS
+            check — non-admin signed-in users see a 403 placeholder
+            from the page itself. */}
+        <Route path="/admin/moderation" element={<RouteErrorBoundary><AdminModeration /></RouteErrorBoundary>} />
         <Route path="/log" element={<Navigate to="/food" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

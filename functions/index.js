@@ -35,6 +35,13 @@ const profileSanitizer = require("./profileSanitizer");
 // inverse, leaving orphans) is unit-testable with stub handles —
 // see functions/__tests__/accountDeletion.test.js.
 const accountDeletion = require("./accountDeletion");
+// UGC profanity gate. Used by the onActivityCreated /
+// onCommentCreated triggers below to auto-flag or auto-delete
+// objectionable content (App Store Guideline 1.2 requirement).
+const profanityFilter = require("./profanityFilter");
+// Admin-uid allowlist for moderation callables. Trust boundary for
+// the listPendingReports / resolveReport / hideActivity surfaces.
+const adminAuth = require("./adminAuth");
 
 // Payment endpoints use a tighter cors config keyed off the same
 // origin allowlist as Stripe return URLs. AI / food-analysis
@@ -1790,3 +1797,292 @@ exports.backfillMyActivityCategories = functions.https.onCall(async (data, conte
 
   return { ok: true, scanned, updated, skipped };
 });
+
+// ══════════════════════════════════════════════
+// MODERATION — UGC profanity triggers + admin callables
+// ══════════════════════════════════════════════
+//
+// App Store Guideline 1.2 requires a moderation surface for any
+// user-generated content. Tropos has three UGC surfaces (activity
+// captions, comment text, user-submitted run / workout names) plus
+// a /reports/ collection the client writes when a user reports
+// content. This block adds:
+//
+//   1. onActivityCreated — auto-flag profane activities. Activity
+//      stays in Firestore (the author still sees their record) but
+//      `visibility: 'private'` hides it from public + follower feeds
+//      and `flagged: true` flows it into the admin moderation queue.
+//
+//   2. onCommentCreated — auto-delete profane comments. Comments
+//      are tiny and high-frequency; review-after-the-fact would let
+//      objectionable content stay visible until a human moderator
+//      catches it. Hard-delete is the simpler invariant.
+//
+//   3. listPendingReports — admin-only callable. Returns reports
+//      with `status: 'pending'` plus their target content for
+//      review.
+//
+//   4. resolveReport — admin-only callable. Marks a report as
+//      resolved + optionally hides the target activity in one
+//      atomic write.
+//
+// The admin gate is env-var driven via adminAuth.isAdminUid — a
+// proper custom-claims rollout is a separate piece of work, this
+// gets us a working queue without sinking that sprint first.
+
+/**
+ * Auto-flag profane activities. Fires on every activity create.
+ * Hooks into the existing public-feed visibility model: setting
+ * `visibility: 'private'` removes the post from the cross-user
+ * feed fan-out, but leaves the doc intact so the author can
+ * appeal and a moderator can review.
+ */
+exports.onActivityCreated = functions.firestore
+  .document("activities/{activityId}")
+  .onCreate(async (snap, context) => {
+    try {
+      const data = snap.data();
+      // Allow-list the text fields we scan — the activity schema
+      // is dynamic (it carries enriched fields like prExercise,
+      // badgeEarned) and we don't want to false-positive on a
+      // user-supplied displayName or a system-generated label
+      // that happens to share letters with a blocked word.
+      const SCAN_FIELDS = ["caption", "workoutName", "runName"];
+      const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
+      if (!flaggedField) return;
+
+      functions.logger.warn("onActivityCreated.auto_flag", {
+        activityId: context.params.activityId,
+        authorId: data.authorId,
+        flaggedField,
+      });
+
+      await snap.ref.update({
+        flagged: true,
+        autoFlagged: true,
+        flaggedField,
+        flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+        // Drop visibility to private so the post is hidden from
+        // public + follower feeds. Author retains read access via
+        // owner rules.
+        visibility: "private",
+      });
+    } catch (err) {
+      functions.logger.error("onActivityCreated.error", {
+        activityId: context.params.activityId,
+        message: err.message,
+      });
+    }
+  });
+
+/**
+ * Auto-delete profane comments. Comments are short and
+ * high-frequency; auto-delete is simpler than the activity
+ * auto-flag because there's no per-comment moderation review
+ * surface in v1 and the author's "feedback" comes from the
+ * comment vanishing.
+ *
+ * Stores a redacted record under /commentModeration/{auto-id}
+ * so the report queue can audit deletion volume.
+ */
+exports.onCommentCreated = functions.firestore
+  .document("comments/{activityId}/items/{commentId}")
+  .onCreate(async (snap, context) => {
+    try {
+      const data = snap.data();
+      if (!profanityFilter.containsProfanity(data.text)) return;
+
+      functions.logger.warn("onCommentCreated.auto_delete", {
+        activityId: context.params.activityId,
+        commentId: context.params.commentId,
+        authorId: data.authorId,
+      });
+
+      // Write the audit record FIRST so a partial failure on
+      // delete still leaves a trace.
+      await admin.firestore().collection("commentModeration").add({
+        action: "auto_delete",
+        reason: "profanity",
+        activityId: context.params.activityId,
+        commentId: context.params.commentId,
+        authorId: data.authorId || null,
+        // Redact the offending text — the audit record holds the
+        // cleaned form, not the original. Moderators don't need
+        // to re-read the slur.
+        textRedacted: profanityFilter.cleanProfanity(data.text || ""),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await snap.ref.delete();
+      // Best-effort: decrement the parent activity's commentCount
+      // so the counter stays accurate. Wrapped in try so a stale
+      // activity doc doesn't fail the cleanup.
+      try {
+        await admin
+          .firestore()
+          .doc(`activities/${context.params.activityId}`)
+          .update({
+            commentCount: admin.firestore.FieldValue.increment(-1),
+          });
+      } catch (_) {
+        // Activity doc may have been deleted — silent.
+      }
+    } catch (err) {
+      functions.logger.error("onCommentCreated.error", {
+        activityId: context.params.activityId,
+        commentId: context.params.commentId,
+        message: err.message,
+      });
+    }
+  });
+
+/**
+ * Admin-only: fetch pending reports for the moderation queue.
+ * Joins each report with its target content so the reviewer
+ * doesn't have to chase doc references. Returns a sanitised
+ * subset of the target (no full HTML / nothing executable).
+ *
+ * Page size is fixed at 50 — the queue should be small in v1, and
+ * a runaway list of pending reports means we need to add
+ * pagination + filtering, not return 10k docs to the client.
+ */
+exports.listPendingReports = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
+  }
+  adminAuth.assertAdminCallable(context.auth.uid);
+
+  const reportsSnap = await admin
+    .firestore()
+    .collection("reports")
+    .where("status", "==", "pending")
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
+
+  const reports = [];
+  for (const reportDoc of reportsSnap.docs) {
+    const r = reportDoc.data();
+    let target = null;
+    try {
+      if (r.targetType === "activity" && r.targetId) {
+        const tSnap = await admin.firestore().doc(`activities/${r.targetId}`).get();
+        if (tSnap.exists) {
+          const t = tSnap.data();
+          target = {
+            authorId: t.authorId,
+            authorName: t.authorName || null,
+            type: t.type,
+            caption: t.caption || null,
+            workoutName: t.workoutName || null,
+            runName: t.runName || null,
+            visibility: t.visibility || null,
+            flagged: t.flagged === true,
+          };
+        }
+      } else if (r.targetType === "comment" && r.targetId) {
+        // Comment IDs are scoped under activities; clients send
+        // them as `activityId:commentId`. If a different shape
+        // arrives the lookup silently fails and target stays
+        // null — the moderator sees the report with no target
+        // preview rather than a 500.
+        const [aId, cId] = String(r.targetId).split(":");
+        if (aId && cId) {
+          const tSnap = await admin
+            .firestore()
+            .doc(`comments/${aId}/items/${cId}`)
+            .get();
+          if (tSnap.exists) {
+            const t = tSnap.data();
+            target = {
+              authorId: t.authorId,
+              authorName: t.authorName || null,
+              text: t.text || null,
+              activityId: aId,
+            };
+          }
+        }
+      } else if (r.targetType === "user" && r.targetId) {
+        const tSnap = await admin
+          .firestore()
+          .doc(`users/${r.targetId}/public/profile`)
+          .get();
+        if (tSnap.exists) {
+          const t = tSnap.data();
+          target = {
+            uid: r.targetId,
+            displayName: t.displayName || null,
+          };
+        }
+      }
+    } catch (_) {
+      // Target lookup failed (rules race, deleted doc); leave
+      // target null. The report itself is still surfaced so the
+      // moderator can dismiss / annotate.
+    }
+    reports.push({
+      reportId: reportDoc.id,
+      reporterId: r.reporterId,
+      targetType: r.targetType,
+      targetId: r.targetId,
+      reason: r.reason,
+      details: r.details || null,
+      createdAt:
+        (r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis()) || null,
+      target,
+    });
+  }
+
+  return { reports };
+});
+
+/**
+ * Admin-only: mark a report as resolved. Optional `hideActivity`
+ * flag flips the target activity to `flagged: true,
+ * visibility: 'private'` in the same call so a moderator can
+ * dismiss + hide in one click.
+ */
+exports.resolveReport = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
+  }
+  adminAuth.assertAdminCallable(context.auth.uid);
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new functions.https.HttpsError("invalid-argument", "Request body required.");
+  }
+  const { reportId, hideActivity } = data;
+  if (typeof reportId !== "string" || !reportId) {
+    throw new functions.https.HttpsError("invalid-argument", "reportId required.");
+  }
+
+  const reportRef = admin.firestore().doc(`reports/${reportId}`);
+  const reportSnap = await reportRef.get();
+  if (!reportSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "Report not found.");
+  }
+  const report = reportSnap.data();
+
+  const batch = admin.firestore().batch();
+  batch.update(reportRef, {
+    status: "resolved",
+    resolvedBy: context.auth.uid,
+    resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+    hideAppliedByAdmin: hideActivity === true,
+  });
+
+  if (hideActivity === true && report.targetType === "activity" && report.targetId) {
+    const targetRef = admin.firestore().doc(`activities/${report.targetId}`);
+    batch.update(targetRef, {
+      flagged: true,
+      flaggedBy: "admin",
+      flaggedByAdminUid: context.auth.uid,
+      flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+      visibility: "private",
+    });
+  }
+
+  await batch.commit();
+  return { ok: true };
+});
+
