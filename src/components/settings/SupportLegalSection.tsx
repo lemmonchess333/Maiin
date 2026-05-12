@@ -4,6 +4,7 @@ import {
   Mail,
   Shield,
   ChevronRight,
+  Flag,
 } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 
@@ -40,6 +41,24 @@ function buildSupportMailto(): string {
   return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+// Moderation contact — App Store Guideline 1.2 requires a
+// published email for reports of objectionable user-generated
+// content. Same `support@troposfit.com` Cloudflare forwarder; the
+// subject prefix lets the inbox sort moderation tickets from
+// general support tickets without a separate alias.
+function buildModerationMailto(): string {
+  const version = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
+  const body = [
+    "Describe the content you're reporting and where you saw it:",
+    "",
+    "",
+    "---",
+    `App version: ${version}`,
+  ].join("\n");
+  const subject = `Tropos moderation report — v${version}`;
+  return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 export default function SupportLegalSection() {
   return (
     <AccordionSection icon={<Scale className="w-5 h-5 text-primary" />} title="Support & Legal" subtitle="Help, privacy policy, terms">
@@ -51,6 +70,20 @@ export default function SupportLegalSection() {
           <Mail className="w-5 h-5" />
           <div>
             <p className="text-sm text-foreground">Help & Support</p>
+            <p className="text-xs text-muted-foreground">support@troposfit.com</p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+      </a>
+
+      <a
+        href={buildModerationMailto()}
+        className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <Flag className="w-5 h-5" />
+          <div>
+            <p className="text-sm text-foreground">Report objectionable content</p>
             <p className="text-xs text-muted-foreground">support@troposfit.com</p>
           </div>
         </div>

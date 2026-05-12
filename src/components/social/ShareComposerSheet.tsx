@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { containsProfanity } from "@/lib/profanityFilter";
 import {
   subscribeShareComposer,
   resolveCompose,
@@ -85,7 +86,17 @@ export default function ShareComposerSheet() {
   // payload would be a dead button.
   const hasCrew = !!profile?.crewId;
 
+  // App Store Guideline 1.2 — block objectionable captions before
+  // the post is created. The server-side onActivityCreated trigger
+  // auto-flags the same content; surfacing the rejection here saves
+  // the user a confusing "my post became invisible" surprise.
+  const captionIsProfane = containsProfanity(caption);
+
   const choose = (visibility: ShareVisibility) => {
+    if (captionIsProfane) {
+      haptic("error");
+      return;
+    }
     haptic("light");
     resolveCompose({ visibility, caption: caption.trim() }, remember);
   };
@@ -136,6 +147,7 @@ export default function ShareComposerSheet() {
                 placeholder="Add a note about this session…"
                 rows={2}
                 aria-label="Add a note (optional)"
+                aria-invalid={captionIsProfane}
                 className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
               {caption.length > 0 && (
@@ -144,13 +156,22 @@ export default function ShareComposerSheet() {
                 </span>
               )}
             </div>
+            {captionIsProfane && (
+              <p
+                role="alert"
+                className="text-xs text-destructive font-medium px-1"
+              >
+                Please remove objectionable language before sharing.
+              </p>
+            )}
 
             {/* Visibility actions */}
             <div className="space-y-2">
               <button
                 type="button"
                 onClick={() => choose("followers")}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
+                disabled={captionIsProfane}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
               >
                 <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="text-sm font-semibold">Share to followers</span>
@@ -159,7 +180,8 @@ export default function ShareComposerSheet() {
                 <button
                   type="button"
                   onClick={() => choose("crews")}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform"
+                  disabled={captionIsProfane}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
                 >
                   <Trophy className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span className="text-sm font-semibold">Share to my crew</span>
@@ -168,7 +190,8 @@ export default function ShareComposerSheet() {
               <button
                 type="button"
                 onClick={() => choose("public")}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform"
+                disabled={captionIsProfane}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
               >
                 <Globe className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="text-sm font-semibold">Make public</span>

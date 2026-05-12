@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
 import { getComments, addComment, deleteComment } from '../../lib/socialApi';
+import { containsProfanity } from '../../lib/profanityFilter';
 import { getTimeAgo } from '../../lib/timeAgo';
 import { haptic } from '../../lib/haptic';
 import type { DocumentSnapshot } from 'firebase/firestore';
@@ -65,6 +66,15 @@ export default function CommentSheet({ activityId, activityAuthorId, open, onOpe
 
   const handleSend = async () => {
     if (!user || !text.trim()) return;
+    // Client-side profanity check — UX-only; the server is the
+    // trust boundary (onCommentCreated trigger auto-deletes
+    // profane comments). Surfacing the rejection here saves the
+    // user a round-trip + an opaque "comment vanished" surprise.
+    if (containsProfanity(text)) {
+      toast.error("Please remove objectionable language before posting.");
+      haptic('error');
+      return;
+    }
     setSending(true);
     haptic('light');
     try {

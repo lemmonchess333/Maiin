@@ -132,15 +132,16 @@ until commit `79233a1`. New code uses `@capacitor/haptics`. Needs
 verification on a physical iPhone build — the web haptic path can't
 test it.
 
-### 8. Info.plist usage descriptions
+### 8. Info.plist usage descriptions — ✅ done
 
-Check these keys exist in `ios/App/App/Info.plist`:
+Verified on `main` (post-#547): `ios/App/App/Info.plist` already
+contains all three required keys with the exact strings below:
 
 - `NSCameraUsageDescription` — "Tropos uses your camera to scan food and barcodes for faster logging."
 - `NSLocationWhenInUseUsageDescription` — "Tropos uses your location to track runs and calculate distance."
 - `NSPhotoLibraryUsageDescription` — "Tropos lets you attach progress photos to track visual changes over time."
 
-Skip `NSMotionUsageDescription` (no pedometer in code).
+`NSMotionUsageDescription` deliberately omitted — no pedometer in code.
 
 ### 9. App Store Connect metadata + assets
 
@@ -245,13 +246,27 @@ split is the real prerequisite work.
 User-generated content surfaces (feed, comments, crews) have:
 - ✅ Report button (writes to `/reports/`)
 - ✅ Block user
-- ❌ No moderation UI for reviewing the reports
-- ❌ No profanity / toxicity auto-filter
-- ❌ Published contact email for moderation issues
+- ✅ Moderation UI for reviewing the reports — `/admin/moderation`
+  page gated on `VITE_ADMIN_UIDS` / `ADMIN_UIDS` (client + server).
+  Surfaces pending reports with target preview + dismiss / hide
+  actions; backed by `listPendingReports` + `resolveReport`
+  callables that re-check admin via `adminAuth.assertAdminCallable`.
+- ✅ Profanity / toxicity auto-filter — `onActivityCreated` /
+  `onCommentCreated` triggers run `leo-profanity` against
+  caption / workoutName / runName / comment.text. Profane
+  activities auto-flag to `visibility: 'private'`; profane
+  comments auto-delete with an audit row under
+  `/commentModeration/`. Client-side composer warns the user
+  inline at submit time as a UX nicety.
+- ✅ Published contact email — `support@troposfit.com` link in
+  Settings → Support & Legal → "Report objectionable content"
+  with a moderation-prefixed subject so the inbox can route.
 
-Not strictly blocking but flagged by the GPT review as Apple
-Guideline 1.2 territory. Add a simple admin-SDK script + a
-`moderation@troposfit.com` email before the first community spike.
+Apple Guideline 1.2 territory — landed pre-launch. Operator
+follow-up: set `ADMIN_UIDS` on the Cloud Function config and
+`VITE_ADMIN_UIDS` on the GitHub Pages deploy env (matching set)
+so the moderation page + callables actually have a registered
+moderator.
 
 ### 20. README replacement
 
