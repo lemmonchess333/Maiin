@@ -23,6 +23,11 @@ export interface ParsedFood {
   carbs: number;
   fat: number;
   unrecognized?: boolean;
+  /** Human-readable portion the user typed ("200g", "150ml", "1.5kg").
+   *  Persisted as the diary row's portionSize so the saved entry reads
+   *  back what the user wrote instead of a generic "1 serving". Only
+   *  set when a mass/volume unit was detected in the input. */
+  portionLabel?: string;
   /** Internal — canonical FOOD_DB key. Used for output dedup. Strip before persisting. */
   _canonicalKey?: string;
 }
@@ -305,8 +310,53 @@ function canonicalKey(key: string): string {
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
  * Also handles "a" and "an" as qty=1.
  * Handles missing spaces: "2chocolate" → { qty: 2, rest: "chocolate" }
+ *
+ * Mass/volume units (`g`, `kg`, `ml`, `l`) are detected separately and
+ * returned as `grams` / `ml` instead of `qty`. The caller scales macros
+ * against the FOOD_DB serving's gram/ml count. Without this branch, an
+ * input like "200g chicken" was hitting the bare-number regex below
+ * (`200 → qty=200, rest="g chicken"`) and producing ~33000 calories
+ * via the word-boundary match on "chicken". The unit branch fires
+ * first so the bare-number path never sees those segments.
+ *
+ * `portionLabel` mirrors the user's typed unit ("200g", "1.5kg",
+ * "150ml") so the diary row reads back what they wrote. Whitespace
+ * between number and unit is normalised out ("200 g" → "200g") for
+ * a tidy display.
  */
-function extractQty(segment: string): { qty: number; rest: string } {
+function extractQty(segment: string): {
+  qty: number;
+  grams?: number;
+  ml?: number;
+  portionLabel?: string;
+  rest: string;
+} {
+  // Mass: "200g chicken" / "1.5kg rice" / "200 g chicken"
+  const massMatch = segment.match(/^(\d+(?:\.\d+)?)\s*(kg|g)\b\s+(.+)/i);
+  if (massMatch) {
+    const num = parseFloat(massMatch[1]);
+    const unit = massMatch[2].toLowerCase();
+    const grams = unit === "kg" ? num * 1000 : num;
+    return {
+      qty: 1,
+      grams,
+      portionLabel: `${num}${unit}`,
+      rest: massMatch[3].trim(),
+    };
+  }
+  // Volume: "150ml milk" / "1l water" / "150 ml milk"
+  const volMatch = segment.match(/^(\d+(?:\.\d+)?)\s*(ml|l)\b\s+(.+)/i);
+  if (volMatch) {
+    const num = parseFloat(volMatch[1]);
+    const unit = volMatch[2].toLowerCase();
+    const ml = unit === "l" ? num * 1000 : num;
+    return {
+      qty: 1,
+      ml,
+      portionLabel: `${num}${unit}`,
+      rest: volMatch[3].trim(),
+    };
+  }
   // "2 eggs" or "2.5 servings"
   const match = segment.match(/^(\d+(?:\.\d+)?)\s+(.+)/);
   if (match) {
@@ -323,6 +373,24 @@ function extractQty(segment: string): { qty: number; rest: string } {
     return { qty: 1, rest: aMatch[1].trim() };
   }
   return { qty: 1, rest: segment };
+}
+
+/**
+ * Pull the grams count out of a FOOD_DB serving string. The DB
+ * convention is "<descriptive> (Ng)" — e.g. "3 oz cooked (85g)",
+ * "1 large (50g)", "1 cup cooked (158g)". Returns null when the
+ * serving is ml-based (beverages) so callers fall back to the
+ * volume helper.
+ */
+function parseServingGrams(serving: string): number | null {
+  const m = serving.match(/\((\d+(?:\.\d+)?)g\)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+/** Volume counterpart for beverages — "1 cup (240ml)", "1 can (355ml)". */
+function parseServingMl(serving: string): number | null {
+  const m = serving.match(/\((\d+(?:\.\d+)?)ml\)/);
+  return m ? parseFloat(m[1]) : null;
 }
 
 /**
@@ -505,10 +573,16 @@ export function parseFoodText(input: string): ParsedFood[] {
   const results: ParsedFood[] = [];
 
   for (const segment of segments) {
-    const { qty, rest } = extractQty(segment);
+    const { qty, grams, ml, portionLabel, rest } = extractQty(segment);
+
+    // Mass/volume-prefixed inputs skip the compound `with` path —
+    // the user's portion applies to one food, not a sum. "100g
+    // chicken with rice" is ambiguous (rice portion is unclear);
+    // we treat the whole rest as a single food and match best-effort.
+    const hasUnitPrefix = grams !== undefined || ml !== undefined;
 
     // Handle "X with Y" pattern (e.g. "toast with butter")
-    const withParts = rest.split(/\s+with\s+/i);
+    const withParts = hasUnitPrefix ? [rest] : rest.split(/\s+with\s+/i);
 
     if (withParts.length > 1) {
       let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
@@ -546,20 +620,53 @@ export function parseFoodText(input: string): ParsedFood[] {
     const key = findBestMatch(rest);
     if (key) {
       const item = FOOD_DB[key];
-      const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
+      // Compute macro multiplier. Mass/volume prefixes scale against
+      // the FOOD_DB serving's gram/ml count; fall back to count-based
+      // qty otherwise. If the user wrote "200g" on a beverage (or
+      // "150ml" on a solid food), the serving unit won't match — we
+      // conservatively use qty=1 (one-serving macros), but
+      // `portionLabel` still carries the user's wording so the saved
+      // entry stays honest. Better than silently producing the
+      // count-prefix bug (200x macros).
+      let multiplier = qty;
+      if (grams !== undefined) {
+        const servingGrams = parseServingGrams(item.serving);
+        if (servingGrams) multiplier = grams / servingGrams;
+      } else if (ml !== undefined) {
+        const servingMl = parseServingMl(item.serving);
+        if (servingMl) multiplier = ml / servingMl;
+      }
+      // Name preserves the user's wording: typed portion ("200g chicken")
+      // rounds out the prefix already, so we just title-case the rest
+      // and the portionLabel carries the unit.
+      const displayName = hasUnitPrefix
+        ? `${portionLabel} ${rest}`
+        : qty > 1
+          ? `${rest} (x${qty})`
+          : rest;
       results.push({
         name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-        calories: Math.round(item.calories * qty),
-        protein: Math.round(item.protein * qty),
-        carbs: Math.round(item.carbs * qty),
-        fat: Math.round(item.fat * qty),
-        _canonicalKey: canonicalKey(key),
+        calories: Math.round(item.calories * multiplier),
+        protein: Math.round(item.protein * multiplier),
+        carbs: Math.round(item.carbs * multiplier),
+        fat: Math.round(item.fat * multiplier),
+        // Surface the typed portion so the save path persists it as
+        // the diary row's portionSize. Unit-mismatched rows still
+        // carry the label (it's what the user wrote); the caller
+        // sees qty=1 macros and can decide whether to flag.
+        ...(portionLabel ? { portionLabel } : {}),
+        // Skip canonical-key dedup when an explicit portion was
+        // typed — merging "200g chicken" with "100g chicken" loses
+        // the per-row portion semantics. Each portioned row stays
+        // independent in the diary.
+        ...(hasUnitPrefix ? {} : { _canonicalKey: canonicalKey(key) }),
       });
       continue;
     }
 
     // Fallback: compound word matching ("ham sandwich" → ham + sandwich)
-    const compound = findCompoundMatch(rest);
+    // Skipped for unit-prefixed inputs — see hasUnitPrefix note above.
+    const compound = hasUnitPrefix ? null : findCompoundMatch(rest);
     if (compound && compound.macros.calories > 0) {
       const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
       results.push({
@@ -573,9 +680,15 @@ export function parseFoodText(input: string): ParsedFood[] {
       continue;
     }
 
-    // Unrecognized — return with zero macros and flag
+    // Unrecognized — return with zero macros and flag. Unit-prefixed
+    // inputs still carry their portionLabel so the user sees "200g
+    // <unknown food>" instead of losing the wording entirely.
     logger.warn('[nlFoodParser] Unrecognized food:', rest);
-    const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
+    const displayName = hasUnitPrefix
+      ? `${portionLabel} ${rest}`
+      : qty > 1
+        ? `${rest} (x${qty})`
+        : rest;
     results.push({
       name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
       calories: 0,
@@ -583,6 +696,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       carbs: 0,
       fat: 0,
       unrecognized: true,
+      ...(portionLabel ? { portionLabel } : {}),
     });
   }
 

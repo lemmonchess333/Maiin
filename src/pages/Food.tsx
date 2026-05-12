@@ -595,6 +595,10 @@ export default function Food() {
             protein: i.protein,
             carbs: i.carbs,
             fat: i.fat,
+            // Carry the AI's portion estimate ("1 cup", "200g", etc.)
+            // through to the save path so the diary row records what
+            // the AI thought it identified instead of a placeholder.
+            ...(i.portionSize ? { portionLabel: i.portionSize } : {}),
           }));
           confidence = "ai-parse";
         } else {
@@ -659,7 +663,12 @@ export default function Food() {
           foodName: items.map((i) => i.name).join(", "),
           items: items.map((i) => ({
             name: i.name,
-            portionSize: "1 serving",
+            // Preserve the user's typed portion when one was detected
+            // (e.g. "200g", "150ml"); otherwise fall back to the
+            // generic placeholder. Without this fallback the diary
+            // row reads "1 serving" even when the user wrote "200g
+            // chicken", which broke trust between input and record.
+            portionSize: i.portionLabel ?? "1 serving",
             calories: i.calories,
             protein: i.protein,
             carbs: i.carbs,

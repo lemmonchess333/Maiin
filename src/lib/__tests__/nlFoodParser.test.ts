@@ -126,6 +126,96 @@ describe("parseFoodText", () => {
   });
 });
 
+describe("parseFoodText — mass/volume portion handling (PR O)", () => {
+  it("scales macros against serving grams for '200g chicken'", () => {
+    // chicken serving = "3 oz cooked (85g)", 165 cal
+    // 200g / 85g ≈ 2.353x → ~388 cal
+    const result = parseFoodText("200g chicken");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(350);
+    expect(result[0].calories).toBeLessThan(420);
+    expect(result[0].portionLabel).toBe("200g");
+  });
+
+  it("rejects the pre-fix 33000-calorie bug for '200g chicken'", () => {
+    const result = parseFoodText("200g chicken");
+    expect(result[0].calories).toBeLessThan(1000);
+  });
+
+  it("handles 'kg' suffix: '1.5kg rice'", () => {
+    // rice serving = "1 cup cooked (158g)", 200 cal
+    // 1500g / 158g ≈ 9.49x → ~1899 cal
+    const result = parseFoodText("1.5kg rice");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(1800);
+    expect(result[0].calories).toBeLessThan(2000);
+    expect(result[0].portionLabel).toBe("1.5kg");
+  });
+
+  it("scales macros against serving ml for '150ml milk'", () => {
+    // milk serving = "1 cup (240ml)", 150 cal
+    // 150ml / 240ml = 0.625x → ~94 cal
+    const result = parseFoodText("150ml milk");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(80);
+    expect(result[0].calories).toBeLessThan(110);
+    expect(result[0].portionLabel).toBe("150ml");
+  });
+
+  it("handles 'l' suffix: '1l water' (zero-cal beverages still scale cleanly)", () => {
+    const result = parseFoodText("1l orange juice");
+    // orange juice serving = "1 cup (240ml)", 110 cal
+    // 1000ml / 240ml ≈ 4.17x → ~459 cal
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(400);
+    expect(result[0].calories).toBeLessThan(500);
+    expect(result[0].portionLabel).toBe("1l");
+  });
+
+  it("tolerates whitespace between number and unit: '200 g chicken'", () => {
+    const result = parseFoodText("200 g chicken");
+    expect(result).toHaveLength(1);
+    expect(result[0].calories).toBeGreaterThan(350);
+    expect(result[0].portionLabel).toBe("200g");
+  });
+
+  it("preserves portionLabel on unrecognised foods so the row is honest", () => {
+    const result = parseFoodText("200g xylophone");
+    expect(result).toHaveLength(1);
+    expect(result[0].unrecognized).toBe(true);
+    expect(result[0].portionLabel).toBe("200g");
+    expect(result[0].calories).toBe(0);
+  });
+
+  it("does not merge two unit-prefixed rows of the same food", () => {
+    // "200g chicken, 100g chicken" should stay as TWO rows; merging
+    // loses the per-row portion semantics.
+    const result = parseFoodText("200g chicken, 100g chicken");
+    expect(result).toHaveLength(2);
+    expect(result[0].portionLabel).toBe("200g");
+    expect(result[1].portionLabel).toBe("100g");
+  });
+
+  it("does not regress count-based qty parsing: '2 eggs' unchanged", () => {
+    const result = parseFoodText("2 eggs");
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Eggs (x2)");
+    expect(result[0].calories).toBe(156);
+    expect(result[0].portionLabel).toBeUndefined();
+  });
+
+  it("does not regress 'a slice of toast' qty=1 fallback", () => {
+    const result = parseFoodText("a slice of toast");
+    expect(result).toHaveLength(1);
+    expect(result[0].portionLabel).toBeUndefined();
+  });
+
+  it("name renders user-friendly: '200g chicken' → '200g chicken'", () => {
+    const result = parseFoodText("200g chicken");
+    expect(result[0].name).toBe("200g chicken");
+  });
+});
+
 describe("getFoodSuggestions", () => {
   it("returns [] for short input", () => {
     expect(getFoodSuggestions("")).toEqual([]);
