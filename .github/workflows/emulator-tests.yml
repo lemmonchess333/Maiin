@@ -28,12 +28,14 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # Firebase emulators run on the JVM. Java is the only non-npm
-      # dependency that needs explicit setup on the GitHub runner.
+      # Firebase emulators run on the JVM. Java 21+ is required by
+      # firebase-tools (the CLI errors out hard on JDK <21 since
+      # the 14.x release line). The hosted runner doesn't ship a
+      # default JDK at the right version, so pin Temurin 21 here.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - run: npm ci
       - run: npm ci --prefix functions
