@@ -16,7 +16,8 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket } from "@/lib/prTracking";
+import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket, getRepBucket } from "@/lib/prTracking";
+import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
@@ -103,7 +104,7 @@ interface Props {
 }
 
 export default function WorkoutSession({ day, dayIndex, onLogExercise, onCompleteDay, onClose }: Props) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { load: loadDraft, save: saveDraft, clear: clearDraft } = useWorkoutDraft(dayIndex);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
@@ -269,9 +270,17 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
-  // Rest timer
+  // Rest timer. PR E (audit P1 #13): pre-PR-E the target was
+  // hardcoded to 90s and never read profile.defaultRestSeconds —
+  // the Settings → Workout Preferences slider had no effect on
+  // the actual session. Now the default is sourced from the
+  // profile with a 90s fallback for users who haven't set one.
   const [restSeconds, setRestSeconds] = useState(0);
-  const [restTarget, setRestTarget] = useState(90);
+  const [restTarget, setRestTarget] = useState(
+    typeof profile?.defaultRestSeconds === "number" && profile.defaultRestSeconds > 0
+      ? profile.defaultRestSeconds
+      : 90,
+  );
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
@@ -284,8 +293,22 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Stall detection
   const [stallExercise, setStallExercise] = useState<{name: string, weight: number} | null>(null);
 
-  // Undo last set
-  const [lastCompleted, setLastCompleted] = useState<{ exIdx: number; setIdx: number } | null>(null);
+  // Undo last set. PR E: extended with optional PR-context so undo
+  // can revert the prMap mutation AND firedPRs entry, not just the
+  // setLogs[].completed flag (pre-PR-E undo would leave a fat-
+  // fingered PR persisted to profile even after the user undid the
+  // set).
+  const [lastCompleted, setLastCompleted] = useState<{
+    exIdx: number;
+    setIdx: number;
+    pr?: {
+      exName: string;
+      bucket: RepBucket;
+      // Previous PR value for this exercise+bucket, captured at
+      // completeSet time. `null` means there was no prior PR.
+      previousPR: { weight: number; reps: number; date: string } | null;
+    };
+  } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentExercise = day.exercises[currentExIndex];
@@ -392,6 +415,39 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     const set = currentSets[currentSetIndex];
     if (!set) return;
 
+    // PR E (audit P0 #4): central validator gates PR detection and
+    // confetti. Pre-PR-E `checkSetPR` ran directly on unvalidated
+    // input — negative weight, decimal reps, or a fat-fingered
+    // 200kg over a 100kg PR all became permanent state.
+    //
+    // The validator decides:
+    //   - block  → toast the message and bail; the set stays
+    //              incomplete so the user can fix the value.
+    //   - warn   → still complete the set, but skip PR celebration
+    //              and prompt for explicit confirmation. The
+    //              implementation here takes the lighter path: we
+    //              still mark the set complete (the user did the
+    //              work), we just don't auto-persist it as a PR.
+    //   - ok     → proceed.
+    const exName = currentExercise.name;
+    const repBucket = getRepBucket(set.reps || 0);
+    const currentBucketPR = prMap[exName]?.[repBucket];
+    const validation = validateSet({
+      reps: set.reps,
+      weight: set.weight,
+      // Body-highlighter exercises map heuristically — for now we
+      // treat any zero-weight set on an exercise the user is logging
+      // as bodyweight. If a richer bodyweight-flag arrives via the
+      // exercise registry it can plug in here.
+      isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
+      currentBestForBucket: currentBucketPR?.weight,
+    });
+
+    if (!validation.ok) {
+      toast.error(validation.message);
+      return;
+    }
+
     // Mark set complete
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
@@ -401,33 +457,54 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
     haptic(100);
 
-    // Multi-rep-range PR detection
-    const exName = currentExercise.name;
-    const prBucket = checkSetPR(exName, set.weight, set.reps, prMap, sessionCounts, 3);
-    const alreadyFired = firedPRs.get(exName) || [];
-    if (prBucket && !alreadyFired.includes(prBucket)) {
-      setFiredPRs((prev) => {
-        const updated = new Map(prev);
-        updated.set(exName, [...(prev.get(exName) || []), prBucket]);
-        return updated;
-      });
-      setPrMap((prev) => {
-        const updated = { ...prev };
-        if (!updated[exName]) updated[exName] = { '1rm': null, '3rm': null, '5rm': null, '8rm': null, '10rm': null };
-        updated[exName] = { ...updated[exName], [prBucket]: { weight: set.weight, reps: set.reps, date: new Date().toISOString().split('T')[0] } };
-        return updated;
-      });
-      lazyConfetti().then(confetti => {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        setTimeout(() => confetti({ particleCount: 30, spread: 90, origin: { y: 0.65 }, startVelocity: 15 }), 200);
-      });
-      haptic(50);
-      toast.success(`New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`);
+    // PR detection — only fires when (a) the validator didn't warn
+    // AND (b) checkSetPR identifies this as a PR. A `warn` from the
+    // validator (huge jump) means the user types a suspect value;
+    // we don't auto-celebrate it. They can confirm/re-enter from
+    // the History view if it really IS a PR.
+    let prContext: NonNullable<typeof lastCompleted>["pr"] | undefined;
+    if (!validation.warn) {
+      const prBucket = checkSetPR(exName, set.weight, set.reps, prMap, sessionCounts, 3);
+      const alreadyFired = firedPRs.get(exName) || [];
+      if (prBucket && !alreadyFired.includes(prBucket)) {
+        // Capture the previous PR for this bucket BEFORE we mutate it
+        // so undo can restore. `null` means there was no prior PR.
+        const previousPR = prMap[exName]?.[prBucket] ?? null;
+        prContext = { exName, bucket: prBucket, previousPR };
+
+        setFiredPRs((prev) => {
+          const updated = new Map(prev);
+          updated.set(exName, [...(prev.get(exName) || []), prBucket]);
+          return updated;
+        });
+        setPrMap((prev) => {
+          const updated = { ...prev };
+          if (!updated[exName]) updated[exName] = { '1rm': null, '3rm': null, '5rm': null, '8rm': null, '10rm': null };
+          updated[exName] = { ...updated[exName], [prBucket]: { weight: set.weight, reps: set.reps, date: new Date().toISOString().split('T')[0] } };
+          return updated;
+        });
+        lazyConfetti().then(confetti => {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          setTimeout(() => confetti({ particleCount: 30, spread: 90, origin: { y: 0.65 }, startVelocity: 15 }), 200);
+        });
+        haptic(50);
+        toast.success(`New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`);
+      }
+    } else {
+      // Surface the warn message so the user knows why no PR
+      // celebration fired. They can re-confirm via History edit.
+      toast.message(validation.warn.message);
     }
 
-    // Track for undo
+    // Track for undo. PR E: includes the prContext when this set
+    // produced a PR, so handleUndo can revert prMap + firedPRs in
+    // addition to setLogs.
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
-    setLastCompleted({ exIdx: currentExIndex, setIdx: currentSetIndex });
+    setLastCompleted({
+      exIdx: currentExIndex,
+      setIdx: currentSetIndex,
+      pr: prContext,
+    });
     undoTimeoutRef.current = setTimeout(() => setLastCompleted(null), 4000);
 
     const isLastSet = currentSetIndex >= currentSets.length - 1;
@@ -455,7 +532,34 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
   const handleUndo = () => {
     if (!lastCompleted) return;
-    const { exIdx, setIdx } = lastCompleted;
+    const { exIdx, setIdx, pr } = lastCompleted;
+
+    // PR E (audit P0 #4): if completeSet recorded a PR, undo MUST
+    // revert that PR mutation. Pre-PR-E undo only flipped
+    // setLogs[].completed, leaving the false PR persisted in
+    // prMap + firedPRs AND in Firestore on the next auto-save.
+    if (pr) {
+      setPrMap((prev) => {
+        const updated = { ...prev };
+        if (updated[pr.exName]) {
+          updated[pr.exName] = {
+            ...updated[pr.exName],
+            [pr.bucket]: pr.previousPR,
+          };
+        }
+        return updated;
+      });
+      setFiredPRs((prev) => {
+        const updated = new Map(prev);
+        const existing = updated.get(pr.exName) || [];
+        updated.set(
+          pr.exName,
+          existing.filter((b) => b !== pr.bucket),
+        );
+        return updated;
+      });
+    }
+
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx].completed = false;
