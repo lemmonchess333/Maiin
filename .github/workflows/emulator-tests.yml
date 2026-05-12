@@ -66,12 +66,31 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix functions
 
-      # Playwright config has two projects: chromium + mobile (iPhone
-      # 14 → WebKit). Install both browsers; `--with-deps` pulls in
-      # the apt packages each needs. Without webkit the mobile
-      # project errors at launch with "Executable doesn't exist
-      # at /home/runner/.cache/ms-playwright/webkit-XXXX/pw_run.sh".
-      - run: npx playwright install --with-deps chromium webkit
+      # Cache Playwright browsers. The WebKit apt-deps install pulls
+      # in ~360MB of GStreamer + Wayland packages and was eating
+      # ~12 of the 15 minute job budget. The cache key includes the
+      # Playwright dep version so a bump invalidates the cache cleanly.
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
+          echo "version=$PW_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      # Auth E2E only runs chromium — the mobile (WebKit) project
+      # doubles runtime for no extra coverage at this stage, and
+      # WebKit's apt-deps install is what was timing the workflow
+      # out. Local runs can still run both via `npm run test:e2e`.
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium deps only (cache hit path)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       # Firebase CLI provides the emulator binaries. Install globally
       # so subsequent `firebase emulators:exec` invocations resolve it.
@@ -104,14 +123,17 @@ jobs:
           firebase emulators:exec --only auth,firestore --project demo-tropos \
             'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm test --prefix functions'
 
-      # ── Suite 3: Authenticated E2E
+      # ── Suite 3: Authenticated E2E (chromium only in CI)
       # Seeds the test user against the emulator, then runs
-      # auth.spec.ts (gated on E2E_AUTH_EMULATOR). Playwright boots its
-      # own preview server via webServer in playwright.config.ts.
+      # auth.spec.ts (gated on E2E_AUTH_EMULATOR). Scoped via
+      # --project=chromium to skip the mobile/WebKit project that
+      # was inflating runtime. Local developers can still run both
+      # via plain `npm run test:e2e`. Playwright boots its own
+      # preview server via webServer in playwright.config.ts.
       - name: Run authenticated E2E
         run: |
           firebase emulators:exec --only auth,firestore --project demo-tropos \
-            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm run seed:e2e && E2E_AUTH_EMULATOR=1 npm run test:e2e -- auth.spec.ts'
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm run seed:e2e && E2E_AUTH_EMULATOR=1 npm run test:e2e -- auth.spec.ts --project=chromium'
 
       # Upload Playwright artefacts on failure so investigating a CI
       # break doesn't require re-running locally.

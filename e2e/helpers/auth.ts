@@ -43,18 +43,32 @@ export async function signInAsTestUser(
   page: Page,
   creds: { email: string; password: string } = TEST_USER,
 ): Promise<void> {
-  await page.goto("/login");
+  // Navigate to the root rather than '/login'. Playwright's URL
+  // resolution against baseURL replaces the entire path when the
+  // argument starts with '/' — so `page.goto('/login')` resolves to
+  // `http://localhost:4173/login` and DROPS the `/Maiin/` base path
+  // the SPA is mounted under. Going to '/' uses baseURL as-is
+  // (`http://localhost:4173/Maiin/`) and the unauthed route
+  // catch-all (`path="*"`) renders the same Login form.
+  await page.goto("/");
+  // Wait for the SPA to finish booting + AuthProvider to resolve.
+  // Without this, the form locator races against the React render
+  // pass that happens after Firebase emits its initial auth state.
+  await page.waitForLoadState("networkidle");
+  await page.locator("#login-email").waitFor({ state: "visible", timeout: 20_000 });
   await page.fill("#login-email", creds.email);
   await page.fill("#login-password", creds.password);
   // Submit by clicking the email submit button (type="submit"). Form
   // onSubmit handler calls signIn() → AuthProvider sets user state →
   // Router redirects authenticated routes off Login.
   await page.locator('button[type="submit"]').first().click();
-  // Wait for the post-login URL — the Login route renders under '*'
-  // for unauthenticated users, so once auth resolves we redirect to
-  // the appropriate landing page (Home if onboarded, Onboarding
-  // otherwise). Either way we're off '/login'.
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+  // Wait for the SPA root to change off the Login surface. The
+  // post-auth URL stays at `/` (we navigated there, not `/login`),
+  // so we look for a visible element only present on authenticated
+  // routes — the bottom nav rendered by Layout. Bigger timeout
+  // because the AuthProvider has to await a Firestore profile read
+  // after sign-in, which is slower in the emulator.
+  await expect(page.locator("nav").first()).toBeVisible({ timeout: 20_000 });
 }
 
 /**
