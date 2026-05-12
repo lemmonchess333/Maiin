@@ -198,7 +198,11 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     expect(alert.textContent).toContain("Card declined.");
   });
 
-  it("checkout passes successPath / cancelPath = /upgrade", async () => {
+  it("checkout passes entryPoint = upgrade", async () => {
+    // After the server-synthesised-URL pivot, the client no longer
+    // sends successPath / cancelPath strings; it sends a single
+    // closed-set entryPoint token that the server resolves to a
+    // full URL on its side.
     purchaseMock.mockResolvedValueOnce({ success: true });
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
@@ -206,8 +210,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
       expect(purchaseMock).toHaveBeenCalledTimes(1);
     });
     const options = purchaseMock.mock.calls[0][3];
-    expect(options?.successPath).toBe("upgrade");
-    expect(options?.cancelPath).toBe("upgrade");
+    expect(options?.entryPoint).toBe("upgrade");
   });
 });
 

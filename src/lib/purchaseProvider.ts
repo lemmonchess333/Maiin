@@ -27,23 +27,33 @@ export interface PurchaseResult {
 }
 
 /**
+ * Closed set of entry points the Stripe Checkout flow is permitted
+ * to return to. The server holds the canonical copy in
+ * `functions/helpers.js ALLOWED_RETURN_PATHS`; any divergence is a
+ * deploy bug. The client only chooses *which app page* to land on
+ * — the server builds the full return URL itself from a
+ * deploy-resolved base origin so a compromised / fat-fingered
+ * client can't redirect Checkout through a phishing domain.
+ */
+export type CheckoutEntryPoint = "settings" | "upgrade" | "home";
+
+/**
  * Options for {@link purchase}.
  *
  * Pre-spec the Stripe success/cancel URLs were hardcoded to
  * `/settings` — fine when checkout always started from there, but
  * misleading once the Upgrade page and feature-gate paywalls became
- * separate entry points. The user lands back on Settings after a
- * checkout they started from `/upgrade`, with no sign of where they
- * came from. successPath / cancelPath let each entry point send the
- * user back to its own surface.
+ * separate entry points. successPath / cancelPath were the first
+ * pass (free-form strings). The server now treats the inputs as
+ * closed-set tokens and synthesises the URL itself, so the client
+ * exposes a single `entryPoint` enum rather than two paths.
  */
 export interface PurchaseOptions {
-  /** Path (relative to BASE_URL) to return to on successful checkout.
-   *  Default: "settings". Appended `?checkout=success`. */
-  successPath?: string;
-  /** Path (relative to BASE_URL) to return to on cancelled checkout.
-   *  Default: "settings". Appended `?checkout=cancelled`. */
-  cancelPath?: string;
+  /** Closed-set token telling the server which app page to return
+   *  the user to after Stripe Checkout. Default: "settings".
+   *  Used for both the success and cancel redirect (the server
+   *  appends `?checkout=success` vs `?checkout=cancelled`). */
+  entryPoint?: CheckoutEntryPoint;
   /** Analytics dimension — propagated through paywallAnalytics. */
   source?: string;
 }
@@ -152,22 +162,14 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
 }
 
 /**
- * Build a fully-qualified return URL for the Stripe success/cancel
- * round-trip. Honours the Vite `BASE_URL` so checkout from a GitHub
- * Pages deployment (where the app sits at `/Maiin/`) returns to the
- * right path. Leading slashes on the supplied path are normalised
- * away to avoid `/Maiin//upgrade?...` style double-slashes.
- */
-function buildReturnUrl(path: string, query: string): string {
-  const baseOrigin = window.location.origin;
-  // BASE_URL always includes a trailing slash per Vite. The path
-  // arrived from a caller and may or may not have a leading slash.
-  const cleanPath = path.replace(/^\//, "");
-  return `${baseOrigin}${import.meta.env.BASE_URL}${cleanPath}?${query}`;
-}
-
-/**
  * Purchase via Stripe (web / Android)
+ *
+ * Post-#537 follow-up: the request body sends `successPath` /
+ * `cancelPath` tokens drawn from {@link CheckoutEntryPoint}, not
+ * full URLs. The Cloud Function validates the token against its
+ * own closed set and builds the final URL itself from a
+ * deploy-resolved base origin. Closes the previous
+ * client-controlled URL surface entirely.
  */
 async function purchaseWithStripe(
   plan: PlanId,
@@ -183,8 +185,7 @@ async function purchaseWithStripe(
   const CREATE_CHECKOUT_URL =
     import.meta.env.VITE_STRIPE_CHECKOUT_URL || '/api/create-checkout-session';
 
-  const successPath = options.successPath ?? "settings";
-  const cancelPath = options.cancelPath ?? "settings";
+  const entryPoint: CheckoutEntryPoint = options.entryPoint ?? "settings";
 
   try {
     const response = await fetch(CREATE_CHECKOUT_URL, {
@@ -194,8 +195,13 @@ async function purchaseWithStripe(
         priceId: PRICE_IDS[plan],
         uid,
         email,
-        successUrl: buildReturnUrl(successPath, "checkout=success"),
-        cancelUrl: buildReturnUrl(cancelPath, "checkout=cancelled"),
+        // Both fields carry the same token today — the server
+        // distinguishes success/cancel via `?checkout=...`. Sending
+        // them separately preserves the option to land users on
+        // different pages for the two outcomes in a later flow
+        // without a wire-format change.
+        successPath: entryPoint,
+        cancelPath: entryPoint,
       }),
     });
 

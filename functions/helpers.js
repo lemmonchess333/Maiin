@@ -176,6 +176,61 @@ function safeOriginForLog(rawUrl) {
   }
 }
 
+/**
+ * Closed set of return-path tokens the client is permitted to send.
+ * The server builds the full Stripe success/cancel URL itself; the
+ * client only chooses *which page in the app* to land on. This is the
+ * post-#537 follow-up to "server-synthesize Stripe return URLs from a
+ * closed set of returnPath values" — eliminating the client-supplied
+ * URL surface altogether rather than locking it down harder.
+ *
+ * Adding a new entry point: add the token here AND make sure the
+ * route exists in src/App.tsx. The set is intentionally tiny because
+ * each entry represents a deploy-blessed landing page; do not grow
+ * it casually.
+ */
+const ALLOWED_RETURN_PATHS = Object.freeze([
+  "settings",
+  "upgrade",
+  "home",
+]);
+
+const ALLOWED_CHECKOUT_OUTCOMES = Object.freeze(["success", "cancelled"]);
+
+function getStripeReturnBaseUrl() {
+  // Configurable per deploy. Trailing slash is normalised in so the
+  // path concatenation below is invariant to how the env var was set.
+  if (process.env.PUBLIC_APP_BASE_URL && process.env.PUBLIC_APP_BASE_URL.trim()) {
+    const raw = process.env.PUBLIC_APP_BASE_URL.trim();
+    return raw.endsWith("/") ? raw : `${raw}/`;
+  }
+  // FUNCTIONS_EMULATOR is "true" only when running via firebase
+  // emulators:start. Mirrors the localhost gating on the return-URL
+  // allowlist so a deployed prod function can never resolve the
+  // checkout target to a developer's machine.
+  if (process.env.FUNCTIONS_EMULATOR === "true") {
+    return "http://localhost:4173/Maiin/";
+  }
+  // Production default — staging surface today (GitHub Pages).
+  // Switch to https://troposfit.com/ once that origin is live.
+  return "https://lemmonchess333.github.io/Maiin/";
+}
+
+/**
+ * Build a Stripe Checkout return URL from a closed-set path token +
+ * outcome. Returns null when either input is off-set — callers should
+ * 400 in that case. The built URL still flows through
+ * `isAllowedStripeReturnUrl` at the handler level as defence-in-depth:
+ * if PUBLIC_APP_BASE_URL is misconfigured to a non-allowlisted origin,
+ * the request is rejected at the validation gate rather than landing
+ * the user on a Stripe redirect to nowhere.
+ */
+function buildStripeReturnUrl(path, outcome) {
+  if (!ALLOWED_RETURN_PATHS.includes(path)) return null;
+  if (!ALLOWED_CHECKOUT_OUTCOMES.includes(outcome)) return null;
+  return `${getStripeReturnBaseUrl()}${path}?checkout=${outcome}`;
+}
+
 module.exports = {
   pruneOldTimestamps,
   computeEffectiveTier,
@@ -184,4 +239,8 @@ module.exports = {
   isAllowedStripeReturnUrl,
   getAllowedStripeReturnUrlOrigins,
   safeOriginForLog,
+  ALLOWED_RETURN_PATHS,
+  ALLOWED_CHECKOUT_OUTCOMES,
+  getStripeReturnBaseUrl,
+  buildStripeReturnUrl,
 };

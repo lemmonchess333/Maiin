@@ -18,6 +18,10 @@ const {
   currentMonthCount,
   getStripePriceAllowlist,
   isAllowedStripeReturnUrl,
+  ALLOWED_RETURN_PATHS,
+  ALLOWED_CHECKOUT_OUTCOMES,
+  getStripeReturnBaseUrl,
+  buildStripeReturnUrl,
 } = require("../helpers");
 
 describe("pruneOldTimestamps", () => {
@@ -372,5 +376,134 @@ describe("isAllowedStripeReturnUrl", () => {
     process.env.STRIPE_RETURN_URL_ORIGINS = "not-a-url, https://app.example.com";
     expect(isAllowedStripeReturnUrl("https://app.example.com/settings")).toBe(true);
     expect(isAllowedStripeReturnUrl("https://troposfit.com/settings")).toBe(false);
+  });
+});
+
+describe("ALLOWED_RETURN_PATHS", () => {
+  it("is a frozen array of the deploy-blessed entry points", () => {
+    // Frozen so a runtime caller can't mutate the closed set and
+    // re-open the attack surface. If a new entry point is needed
+    // it must come through a code change.
+    expect(Array.isArray(ALLOWED_RETURN_PATHS)).toBe(true);
+    expect(Object.isFrozen(ALLOWED_RETURN_PATHS)).toBe(true);
+    expect(ALLOWED_RETURN_PATHS).toEqual(["settings", "upgrade", "home"]);
+  });
+});
+
+describe("getStripeReturnBaseUrl", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.PUBLIC_APP_BASE_URL;
+    delete process.env.FUNCTIONS_EMULATOR;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("uses PUBLIC_APP_BASE_URL when set", () => {
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
+    expect(getStripeReturnBaseUrl()).toBe("https://troposfit.com/");
+  });
+
+  it("normalises a missing trailing slash on PUBLIC_APP_BASE_URL", () => {
+    // The handler concatenates `${base}${path}` so a missing
+    // trailing slash would collapse `/settings` into `comsettings`.
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com";
+    expect(getStripeReturnBaseUrl()).toBe("https://troposfit.com/");
+  });
+
+  it("falls back to localhost preview only in emulator mode", () => {
+    // The localhost gate mirrors the return-URL-allowlist gate so a
+    // prod function can never resolve checkout to a developer box.
+    process.env.FUNCTIONS_EMULATOR = "true";
+    expect(getStripeReturnBaseUrl()).toBe("http://localhost:4173/Maiin/");
+  });
+
+  it("falls back to GitHub Pages staging in deployed-prod mode", () => {
+    // Deployed prod with no env override → staging origin (today's
+    // only HTTPS surface). Switch the default to troposfit.com once
+    // that origin is live.
+    expect(getStripeReturnBaseUrl()).toBe("https://lemmonchess333.github.io/Maiin/");
+  });
+
+  it("ignores a blank/whitespace PUBLIC_APP_BASE_URL", () => {
+    // A whitespace-only env var should not be treated as configured.
+    process.env.PUBLIC_APP_BASE_URL = "   ";
+    expect(getStripeReturnBaseUrl()).toBe("https://lemmonchess333.github.io/Maiin/");
+  });
+});
+
+describe("buildStripeReturnUrl", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.PUBLIC_APP_BASE_URL;
+    delete process.env.FUNCTIONS_EMULATOR;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("builds a success URL for a listed path", () => {
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
+    expect(buildStripeReturnUrl("settings", "success")).toBe(
+      "https://troposfit.com/settings?checkout=success",
+    );
+  });
+
+  it("builds a cancelled URL for a listed path", () => {
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
+    expect(buildStripeReturnUrl("upgrade", "cancelled")).toBe(
+      "https://troposfit.com/upgrade?checkout=cancelled",
+    );
+  });
+
+  it("rejects an unlisted path", () => {
+    // The point of the closed set — any token that isn't blessed
+    // returns null so the handler can 400 it.
+    expect(buildStripeReturnUrl("evil", "success")).toBeNull();
+    expect(buildStripeReturnUrl("", "success")).toBeNull();
+    expect(buildStripeReturnUrl(null, "success")).toBeNull();
+    expect(buildStripeReturnUrl(undefined, "success")).toBeNull();
+  });
+
+  it("rejects an unlisted outcome", () => {
+    expect(buildStripeReturnUrl("settings", "completed")).toBeNull();
+    expect(buildStripeReturnUrl("settings", "")).toBeNull();
+    expect(buildStripeReturnUrl("settings", null)).toBeNull();
+  });
+
+  it("rejects path-traversal attempts via the path token", () => {
+    // The closed-set check is a strict includes() match — anything
+    // with slashes, query strings, or relative-path tokens fails
+    // before string concatenation runs.
+    expect(buildStripeReturnUrl("../admin", "success")).toBeNull();
+    expect(buildStripeReturnUrl("settings/../admin", "success")).toBeNull();
+    expect(buildStripeReturnUrl("settings?x=evil", "success")).toBeNull();
+    expect(buildStripeReturnUrl("//evil.com", "success")).toBeNull();
+  });
+
+  it("covers every entry of ALLOWED_RETURN_PATHS", () => {
+    // Guards against the set growing in helpers.js without a test
+    // refresh — if a new path is added the test surfaces it.
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
+    for (const path of ALLOWED_RETURN_PATHS) {
+      expect(buildStripeReturnUrl(path, "success")).toBe(
+        `https://troposfit.com/${path}?checkout=success`,
+      );
+    }
+  });
+
+  it("covers every entry of ALLOWED_CHECKOUT_OUTCOMES", () => {
+    // Same shape for outcomes — pins the closed set.
+    process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
+    for (const outcome of ALLOWED_CHECKOUT_OUTCOMES) {
+      expect(buildStripeReturnUrl("settings", outcome)).toBe(
+        `https://troposfit.com/settings?checkout=${outcome}`,
+      );
+    }
   });
 });
