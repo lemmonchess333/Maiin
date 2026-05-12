@@ -55,12 +55,14 @@ export default function NutritionSection({
   const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleMealsChange = useCallback((val: number) => {
+    const prev = profile.weeklyMealsTarget ?? 10;
     setMealsTarget(val);
     clearTimeout(mealsTimerRef.current);
-    mealsTimerRef.current = setTimeout(() => {
-      updateProfile({ weeklyMealsTarget: val });
+    mealsTimerRef.current = setTimeout(async () => {
+      const result = await updateProfile({ weeklyMealsTarget: val });
+      if (!result.ok) setMealsTarget(prev);
     }, 500);
-  }, [setMealsTarget, updateProfile]);
+  }, [setMealsTarget, updateProfile, profile.weeklyMealsTarget]);
 
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -98,7 +100,12 @@ export default function NutritionSection({
                 type="number"
                 value={age}
                 onChange={(e) => setAge(Number(e.target.value) || 25)}
-                onBlur={() => updateProfile({ age })}
+                onBlur={async () => {
+                  const prev = profile.age ?? 25;
+                  if (age === prev) return;
+                  const result = await updateProfile({ age });
+                  if (!result.ok) setAge(prev);
+                }}
                 className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
               />
             </div>
@@ -110,8 +117,10 @@ export default function NutritionSection({
                   <button
                     key={key}
                     onClick={async () => {
+                      const prev = activityLevel;
                       setActivityLevel(key);
-                      await updateProfile({ activityLevel: key });
+                      const result = await updateProfile({ activityLevel: key });
+                      if (!result.ok) setActivityLevel(prev);
                     }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",

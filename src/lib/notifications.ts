@@ -9,6 +9,23 @@ export interface NotificationPayload {
   body: string;
   /** If set, schedule for this time. If omitted, fire immediately. */
   scheduleAt?: Date;
+  /**
+   * When true on native, the notification re-arms at the cadence
+   * given by `repeatEvery` (defaults to 'day') after the initial
+   * `scheduleAt` fire. Without this the meal / streak / workout
+   * reminders silently stopped working after their first delivery —
+   * the OS doesn't auto-repeat a `schedule.at` payload. Web fallback
+   * ignores this flag (the setTimeout path only fires while the tab
+   * is open anyway, so recurrence there is moot).
+   */
+  repeats?: boolean;
+  /**
+   * Recurrence cadence. Defaults to 'day'. Pass 'week' when the
+   * caller wants fires on a specific weekday (the `scheduleAt`
+   * should land on the target weekday) — used by the workout
+   * reminder hook to schedule one notification per non-rest weekday.
+   */
+  repeatEvery?: "day" | "week";
 }
 
 const isNative = Capacitor.isNativePlatform();
@@ -93,13 +110,30 @@ export async function scheduleNotification(payload: NotificationPayload): Promis
 
   try {
     if (isNative) {
+      // Native schedule shape:
+      //   `at` for the first fire time;
+      //   `every: 'day'` plus `repeats: true` so the OS keeps re-arming
+      //   the notification daily — without it the entry is one-shot and
+      //   silently stops working after day 1. We always also send `at`
+      //   alongside `every` because Capacitor uses `at` as the anchor
+      //   for the first occurrence; omitting it makes the first fire
+      //   ambiguous on some platform builds.
+      const schedule = payload.scheduleAt
+        ? payload.repeats
+          ? {
+              at: payload.scheduleAt,
+              every: (payload.repeatEvery ?? "day") as "day" | "week",
+              repeats: true,
+            }
+          : { at: payload.scheduleAt }
+        : undefined;
       await LocalNotifications.schedule({
         notifications: [
           {
             id: payload.id,
             title: payload.title,
             body: payload.body,
-            schedule: payload.scheduleAt ? { at: payload.scheduleAt } : undefined,
+            schedule,
           },
         ],
       });

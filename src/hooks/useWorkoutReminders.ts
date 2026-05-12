@@ -20,14 +20,28 @@ const DEFAULT_REMINDERS: WorkoutReminders = {
   time: '07:00',
 };
 
-const WORKOUT_NOTIFICATION_ID = 2001;
+/**
+ * One stable ID per weekday so the workout reminder can fire weekly
+ * on each non-rest day independently. Sunday = 2001, Saturday = 2007.
+ * Pre-PR-M this was a single ID scheduled once for the next workout
+ * day, which fired exactly once and then silently stopped (no
+ * repeat semantics on a `schedule.at` payload). The per-weekday
+ * fanout lets each day re-arm weekly via `repeatEvery: 'week'` so
+ * the user keeps getting reminders on the days they care about.
+ */
+const WORKOUT_NOTIFICATION_IDS = [2001, 2002, 2003, 2004, 2005, 2006, 2007] as const;
 
 /**
- * Given a "HH:MM" time string, return a Date for the next occurrence —
- * today if the time is still in the future, otherwise tomorrow.
- * Returns null if the input is malformed.
+ * Next future Date landing on `weekday` (0=Sunday … 6=Saturday) at the
+ * given HH:MM. Used to anchor a weekly-repeating notification so the
+ * OS re-arms it on the same weekday going forward. If the weekday is
+ * today and the time is still ahead, returns today; otherwise the
+ * next matching weekday.
  */
-function computeNextOccurrence(timeHHMM: string): Date | null {
+function computeNextWeekdayOccurrence(
+  timeHHMM: string,
+  weekday: number,
+): Date | null {
   const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
   if (!match) return null;
   const hours = parseInt(match[1], 10);
@@ -36,9 +50,13 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
   const now = new Date();
   const target = new Date();
   target.setHours(hours, minutes, 0, 0);
-  if (target.getTime() <= now.getTime()) {
-    target.setDate(target.getDate() + 1);
+  // Advance to the next instance of `weekday`.
+  const todayWeekday = target.getDay();
+  let daysAhead = (weekday - todayWeekday + 7) % 7;
+  if (daysAhead === 0 && target.getTime() <= now.getTime()) {
+    daysAhead = 7;
   }
+  target.setDate(target.getDate() + daysAhead);
   return target;
 }
 
@@ -100,40 +118,46 @@ export function useWorkoutRemindersInternal() {
     }
   }, [user, reminders]);
 
-  // Schedule / reschedule the next workout reminder, skipping rest days
+  // Schedule / reschedule reminders. One weekly-repeating notification
+  // per non-rest weekday so the user gets honest reminders that respect
+  // their training schedule and keep firing without the app needing
+  // to be open.
   useEffect(() => {
     let cancelled = false;
 
     const rescheduleWorkout = async () => {
-      await cancelNotification(WORKOUT_NOTIFICATION_ID);
+      // Cancel ALL 7 weekday IDs every pass — handles schedule edits
+      // (a day flipping from lift to rest) and the disable toggle.
+      for (const id of WORKOUT_NOTIFICATION_IDS) {
+        await cancelNotification(id);
+      }
 
       if (cancelled || !reminders.enabled) return;
-
-      const nextAt = computeNextOccurrence(reminders.time);
-      if (!nextAt) return;
 
       const schedule = profile?.weekSchedule as
         | ReadonlyArray<{ day: number; type: string }>
         | undefined;
 
-      if (!isWorkoutDay(nextAt.getDay(), schedule)) {
-        let found = false;
-        for (let i = 1; i <= 7; i++) {
-          nextAt.setDate(nextAt.getDate() + 1);
-          if (isWorkoutDay(nextAt.getDay(), schedule)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) return;
+      // Schedule one weekly-repeating notification per workout day.
+      // Day index follows the existing `weekSchedule` convention
+      // (0=Sunday … 6=Saturday). Each gets a stable ID 2001+day so
+      // toggling a day off cleanly cancels just that day.
+      for (let day = 0; day < 7; day++) {
+        if (!isWorkoutDay(day, schedule)) continue;
+        const at = computeNextWeekdayOccurrence(reminders.time, day);
+        if (!at) continue;
+        await scheduleNotification({
+          id: WORKOUT_NOTIFICATION_IDS[day],
+          title: 'Time to train',
+          body: 'Your session is ready when you are.',
+          scheduleAt: at,
+          // Weekly repeat anchored on this weekday — the OS re-arms
+          // it for the same weekday + time every week, so the user
+          // doesn't have to open the app to keep them queued.
+          repeats: true,
+          repeatEvery: 'week',
+        });
       }
-
-      await scheduleNotification({
-        id: WORKOUT_NOTIFICATION_ID,
-        title: 'Time to train',
-        body: 'Your session is ready when you are.',
-        scheduleAt: nextAt,
-      });
     };
 
     rescheduleWorkout();

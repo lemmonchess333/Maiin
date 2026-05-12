@@ -127,9 +127,11 @@ export default function PrivacySection({
         <select
           value={defaultVisibility}
           onChange={async (e) => {
+            const prev = defaultVisibility;
             const val = e.target.value as "public" | "followers" | "private";
             setDefaultVisibility(val);
-            await updateProfile({ defaultVisibility: val });
+            const result = await updateProfile({ defaultVisibility: val });
+            if (!result.ok) setDefaultVisibility(prev);
           }}
           className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
         >
@@ -147,9 +149,11 @@ export default function PrivacySection({
         <button
           onClick={async () => {
             haptic("light");
+            const prev = autoPostRuns;
             const next = !autoPostRuns;
             setAutoPostRuns(next);
-            await updateProfile({ autoPostRuns: next });
+            const result = await updateProfile({ autoPostRuns: next });
+            if (!result.ok) setAutoPostRuns(prev);
           }}
           className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostRuns ? "bg-primary" : "bg-muted border border-border")}
         >
@@ -165,9 +169,11 @@ export default function PrivacySection({
         <button
           onClick={async () => {
             haptic("light");
+            const prev = autoPostWorkouts;
             const next = !autoPostWorkouts;
             setAutoPostWorkouts(next);
-            await updateProfile({ autoPostWorkouts: next });
+            const result = await updateProfile({ autoPostWorkouts: next });
+            if (!result.ok) setAutoPostWorkouts(prev);
           }}
           className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostWorkouts ? "bg-primary" : "bg-muted border border-border")}
         >
