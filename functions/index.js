@@ -704,6 +704,8 @@ exports.askGeminiText = functions.https.onCall(async (data, context) => {
 const _getStripePriceAllowlist = helpers.getStripePriceAllowlist;
 /** Delegates to helpers.isAllowedStripeReturnUrl — see helpers.js for docs. */
 const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
+/** Delegates to helpers.buildStripeReturnUrl — see helpers.js for docs. */
+const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 
 // FOLLOWUP(payment-security): restrict CORS for payment endpoints
 //   to the same allowed app origins.
@@ -713,8 +715,6 @@ const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 // FOLLOWUP(payment-security): audit-log successful checkout session
 //   creation (uid, stripeSessionId, price, mode, safe origins,
 //   timestamp).
-// FOLLOWUP(payment-security): server-synthesize Stripe return URLs
-//   from a closed set of returnPath values.
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -724,7 +724,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
       }
 
       // Auth runs BEFORE any body validation. An unauthenticated
-      // POST with bad checkout URLs must surface as 401, not 400 —
+      // POST with bad checkout fields must surface as 401, not 400 —
       // otherwise the response shape leaks which validation layer
       // ran and how the handler is ordered. See the auth-ordering
       // test in __tests__/createCheckoutSession.test.js.
@@ -744,7 +744,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         return;
       }
 
-      const { uid, email, priceId, successUrl, cancelUrl } = req.body;
+      const { uid, email, priceId, successPath, cancelPath } = req.body;
 
       // Ownership check before field-presence so a client passing a
       // mismatched uid gets 403 (not a generic 400). authUser.uid is
@@ -754,25 +754,53 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         return;
       }
 
-      if (!priceId || !successUrl || !cancelUrl) {
-        res.status(400).json({ error: "Missing required fields: priceId, successUrl, cancelUrl" });
+      if (!priceId || !successPath || !cancelPath) {
+        res.status(400).json({ error: "Missing required fields: priceId, successPath, cancelPath" });
         return;
       }
 
+      // Server-synthesized return URLs from a closed set of path
+      // tokens. The client only chooses *which app page* to land
+      // on; the function builds the full URL itself from a
+      // deploy-resolved base origin. Closes the client-controlled
+      // URL surface entirely.
+      const successUrl = _buildStripeReturnUrl(successPath, "success");
+      const cancelUrl = _buildStripeReturnUrl(cancelPath, "cancelled");
+
+      if (!successUrl || !cancelUrl) {
+        functions.logger.warn("createCheckoutSession.rejected_return_path", {
+          uid: authUser.uid,
+          invalidField: !successUrl ? "successPath" : "cancelPath",
+        });
+        res.status(400).json({
+          error: "Invalid checkout return path.",
+          code: "INVALID_RETURN_PATH",
+          field: !successUrl ? "successPath" : "cancelPath",
+        });
+        return;
+      }
+
+      // Defence-in-depth: even though the URL was built server-side,
+      // run it through the existing allowlist. A misconfigured
+      // PUBLIC_APP_BASE_URL env var (e.g. accidentally pointing at a
+      // non-allowlisted origin) would produce a URL that fails this
+      // check — better to refuse to create the session than to send
+      // the user to an unlisted destination. The module-load
+      // self-check above this handler logs that misconfig at boot
+      // time too, so an operator sees it in Cloud Logging.
       const successAllowed = _isAllowedStripeReturnUrl(successUrl);
       const cancelAllowed = _isAllowedStripeReturnUrl(cancelUrl);
 
       if (!successAllowed || !cancelAllowed) {
-        functions.logger.warn("createCheckoutSession.rejected_return_url", {
+        functions.logger.error("createCheckoutSession.built_url_off_allowlist", {
           uid: authUser.uid,
           successOrigin: safeOriginForLog(successUrl),
           cancelOrigin: safeOriginForLog(cancelUrl),
           invalidField: !successAllowed ? "successUrl" : "cancelUrl",
         });
-        res.status(400).json({
-          error: "Invalid checkout return URL.",
-          code: "INVALID_RETURN_URL",
-          field: !successAllowed ? "successUrl" : "cancelUrl",
+        res.status(500).json({
+          error: "Payment service misconfigured.",
+          code: "RETURN_URL_MISCONFIGURED",
         });
         return;
       }

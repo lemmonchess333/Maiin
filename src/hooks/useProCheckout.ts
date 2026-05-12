@@ -23,7 +23,7 @@ import { useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { purchase } from "@/lib/purchaseProvider";
+import { purchase, type CheckoutEntryPoint } from "@/lib/purchaseProvider";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import type { PlanId } from "@/lib/proPlans";
@@ -32,13 +32,30 @@ import type { ProFeatureKey } from "@/lib/proFeatures";
 export interface StartCheckoutOptions {
   /** Analytics dimension (`upgrade_page`, `feature_gate`, etc.). */
   source?: PaywallSource;
-  /** Path to return to after a successful Stripe checkout. */
-  successPath?: string;
-  /** Path to return to after a cancelled Stripe checkout. */
-  cancelPath?: string;
+  /** Closed-set entry-point token forwarded to the Stripe checkout
+   *  flow; the server uses it to synthesise the return URL. When
+   *  unset, the hook derives it from the current pathname so a
+   *  paywall modal opened on the Upgrade page still returns the
+   *  user to /upgrade rather than the default. */
+  entryPoint?: CheckoutEntryPoint;
   /** Feature gate that triggered the modal, when relevant — only
    *  forwarded to analytics. */
   featureKey?: ProFeatureKey;
+}
+
+/**
+ * Map the current router pathname to a closed-set entry-point token.
+ * Any path that doesn't pattern-match a blessed entry falls back to
+ * `"settings"`, mirroring the previous default. The function exists
+ * so callers that pass no explicit `entryPoint` still get a sensible
+ * return surface (paywall modal opened on /upgrade returns to
+ * /upgrade rather than always landing on /settings).
+ */
+function entryPointFromPath(pathname: string): CheckoutEntryPoint {
+  if (pathname.includes("/upgrade")) return "upgrade";
+  if (pathname.includes("/settings")) return "settings";
+  if (pathname === "/" || pathname.endsWith("/home")) return "home";
+  return "settings";
 }
 
 const SIGN_IN_MESSAGE = "Sign in to start Pro.";
@@ -98,8 +115,7 @@ export function useProCheckout(): UseProCheckoutResult {
           user.uid,
           user.email || "",
           {
-            successPath: options.successPath ?? location.pathname,
-            cancelPath: options.cancelPath ?? location.pathname,
+            entryPoint: options.entryPoint ?? entryPointFromPath(location.pathname),
             source: options.source,
           },
         );

@@ -1,17 +1,18 @@
 /**
  * Pins the auth-ordering invariant on createCheckoutSession.
  *
- * An unauthenticated POST with bad checkout URLs MUST return 401,
+ * An unauthenticated POST with bad checkout fields MUST return 401,
  * not 400. The handler validates auth before body shape and before
- * URL allowlist — otherwise the response shape leaks which layer
- * ran, and a brute-force attacker can probe the URL validator
- * before authenticating.
+ * the return-path closed-set check — otherwise the response shape
+ * leaks which layer ran, and a brute-force attacker can probe the
+ * path validator before authenticating.
  *
  * If this test breaks, do NOT "fix" it by changing the assertion.
  * The handler ordering has regressed. See
  * functions/index.js exports.createCheckoutSession for the layered
- * order: 405 → verifyAuth → body shape → ownership → URL allowlist
- * → price allowlist → Stripe.
+ * order: 405 → verifyAuth → body shape → ownership → return-path
+ * closed-set → built-URL allowlist (defence-in-depth) → price
+ * allowlist → Stripe.
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -63,7 +64,7 @@ function makeMockRes() {
 }
 
 describe("createCheckoutSession auth ordering", () => {
-  it("returns 401 (not 400) when Authorization is missing and the URL is invalid", async () => {
+  it("returns 401 (not 400) when Authorization is missing and the return paths are invalid", async () => {
     // Requiring ../index boots admin.initializeApp() as a side
     // effect. We never hit any RPC because verifyAuth rejects on
     // the missing Bearer prefix before touching admin.auth().
@@ -73,8 +74,10 @@ describe("createCheckoutSession auth ordering", () => {
       method: "POST",
       headers: {},
       body: {
-        successUrl: "https://evil.example/x",
-        cancelUrl: "https://evil.example/y",
+        // Path validator would 400 these; the test asserts auth
+        // runs first so they never get inspected.
+        successPath: "evil-path",
+        cancelPath: "evil-path",
         priceId: "price_test",
       },
     };
@@ -87,20 +90,20 @@ describe("createCheckoutSession auth ordering", () => {
     await done;
 
     expect(res.statusCode).toBe(401);
-    expect(res.body && res.body.code).not.toBe("INVALID_RETURN_URL");
+    expect(res.body && res.body.code).not.toBe("INVALID_RETURN_PATH");
   });
 
   it("returns 401 (not 400) when Authorization is a malformed bearer header", async () => {
     // Belt-and-braces: even a present-but-malformed token must
-    // surface as 401, never bleed into the body/URL paths.
+    // surface as 401, never bleed into the body/path paths.
     const { createCheckoutSession } = require("../index");
 
     const req = {
       method: "POST",
       headers: { authorization: "NotABearer xyz" },
       body: {
-        successUrl: "https://evil.example/x",
-        cancelUrl: "https://evil.example/y",
+        successPath: "evil-path",
+        cancelPath: "evil-path",
       },
     };
     const { res, done } = makeMockRes();
@@ -109,7 +112,7 @@ describe("createCheckoutSession auth ordering", () => {
     await done;
 
     expect(res.statusCode).toBe(401);
-    expect(res.body && res.body.code).not.toBe("INVALID_RETURN_URL");
+    expect(res.body && res.body.code).not.toBe("INVALID_RETURN_PATH");
   });
 
   it("returns 405 for non-POST methods before auth runs", async () => {

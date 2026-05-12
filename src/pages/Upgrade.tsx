@@ -109,8 +109,7 @@ export default function Upgrade() {
     });
     void startCheckout(selectedPlan, {
       source: "upgrade_page",
-      successPath: "upgrade",
-      cancelPath: "upgrade",
+      entryPoint: "upgrade",
     });
   };
 
