@@ -5,8 +5,13 @@ import { haptic } from "@/lib/haptic";
 import AccordionSection from "@/components/AccordionSection";
 import {
   getNotificationPermissionState,
+  getPendingNotifications,
+  sendTestNotification,
   type NotificationPermissionState,
+  type PendingNotification,
+  type TestNotificationKind,
 } from "@/lib/notifications";
+import { toast } from "sonner";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
@@ -44,6 +49,86 @@ export default function NotificationsSection({
   const refreshPermission = () => {
     getNotificationPermissionState().then(setPermission);
   };
+
+  // PR I (audit P1 #10): pending-notifications snapshot. Re-polled on
+  // every reminder toggle / time change so the "Next reminder"
+  // display stays in sync with what the OS will actually fire. Empty
+  // array on web (setTimeout fallback isn't queryable).
+  const [pending, setPending] = useState<PendingNotification[]>([]);
+  const refreshPending = () => {
+    getPendingNotifications().then(setPending);
+  };
+  useEffect(() => {
+    let alive = true;
+    getPendingNotifications().then((list) => {
+      if (alive) setPending(list);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleTestNotification = async (kind: TestNotificationKind) => {
+    haptic("light");
+    const ok = await sendTestNotification(kind);
+    if (ok) {
+      toast.success("Test notification sent — should arrive in a few seconds.");
+      // Refresh pending so the test notification appears in the list
+      // (and disappears once it fires).
+      setTimeout(refreshPending, 500);
+    } else {
+      toast.error("Couldn't send test. Check notification permission.");
+    }
+  };
+
+  // Display helper: turn a pending notification's scheduleAt ISO into
+  // a friendly relative-time label ("Tomorrow at 8:00 AM", "In 12
+  // minutes", etc.). Kept simple — we don't need date-fns for this.
+  const formatNextFire = (iso: string | null): string | null => {
+    if (!iso) return null;
+    const at = new Date(iso);
+    if (isNaN(at.getTime())) return null;
+    const now = new Date();
+    const diffMs = at.getTime() - now.getTime();
+    if (diffMs < 0) return null;
+    const mins = Math.round(diffMs / 60_000);
+    if (mins < 60) return `in ${mins} min${mins === 1 ? "" : "s"}`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `in ${hours} hr${hours === 1 ? "" : "s"}`;
+    const days = Math.round(hours / 24);
+    return `in ${days} day${days === 1 ? "" : "s"}`;
+  };
+
+  /**
+   * Find the soonest pending notification whose ID matches the
+   * supplied prefix. Each reminder hook (useMealReminders,
+   * useWorkoutReminders, useStreakReminder) generates IDs from
+   * predictable bands (meal = 100s, workout = 200s, streak = 300s
+   * by convention). The actual prefix mapping is best-effort because
+   * the schedule code currently uses small integers — we approximate
+   * by scanning the title.
+   */
+  const nextForCategory = (kind: TestNotificationKind): PendingNotification | null => {
+    if (kind === "generic") return null;
+    const titleNeedles: Record<Exclude<TestNotificationKind, "generic">, string[]> = {
+      meal: ["meal", "breakfast", "lunch", "dinner", "eat"],
+      workout: ["workout", "training", "lift", "session"],
+      streak: ["streak", "log"],
+    };
+    const needles = titleNeedles[kind];
+    const candidates = pending.filter((p) => {
+      const text = (p.title || "").toLowerCase();
+      return needles.some((n) => text.includes(n));
+    });
+    if (candidates.length === 0) return null;
+    const sorted = [...candidates].sort((a, b) => {
+      const at = a.scheduleAt ? new Date(a.scheduleAt).getTime() : Infinity;
+      const bt = b.scheduleAt ? new Date(b.scheduleAt).getTime() : Infinity;
+      return at - bt;
+    });
+    return sorted[0];
+  };
+
   const anyReminderOn =
     mealReminders.enabled || workoutReminders.enabled || streakReminder.enabled;
 
@@ -98,6 +183,14 @@ export default function NotificationsSection({
 
         {mealReminders.enabled && (
           <>
+            {/* PR I: per-category diagnostics strip. Lets the user
+                verify their device-level setup without waiting for
+                the actual reminder fire. */}
+            <ReminderDiagnostics
+              next={nextForCategory("meal")}
+              formatNextFire={formatNextFire}
+              onTest={() => handleTestNotification("meal")}
+            />
             {(["breakfast", "lunch", "dinner"] as const).map((meal) => (
               <div key={meal} className="flex items-center justify-between p-4 rounded-lg bg-muted">
                 <div className="flex items-center gap-3">
@@ -148,6 +241,14 @@ export default function NotificationsSection({
             <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", workoutReminders.enabled ? "translate-x-5" : "translate-x-1")} />
           </button>
         </div>
+
+        {workoutReminders.enabled && (
+          <ReminderDiagnostics
+            next={nextForCategory("workout")}
+            formatNextFire={formatNextFire}
+            onTest={() => handleTestNotification("workout")}
+          />
+        )}
 
         {workoutReminders.enabled && (
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
@@ -201,6 +302,14 @@ export default function NotificationsSection({
         </div>
 
         {streakReminder.enabled && (
+          <ReminderDiagnostics
+            next={nextForCategory("streak")}
+            formatNextFire={formatNextFire}
+            onTest={() => handleTestNotification("streak")}
+          />
+        )}
+
+        {streakReminder.enabled && (
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
             <span className="text-sm text-foreground">Reminder time</span>
             <input
@@ -218,5 +327,55 @@ export default function NotificationsSection({
         Notifications work best when installed as an app
       </p>
     </AccordionSection>
+  );
+}
+
+/**
+ * PR I (audit P1 #10): per-reminder diagnostics strip. Surfaces:
+ *   - "Next: <relative time>" when an OS-scheduled notification
+ *     matches the category (or "Web reminders fire only while the
+ *     app is open" when on web).
+ *   - "Send test" button — fires a notification in +3s with stable
+ *     ID per category so repeated taps replace rather than queue.
+ *
+ * Lives at the top of each enabled-reminder block so users can
+ * verify their device-level setup without waiting for the real
+ * reminder fire-time. Cheap to add visibly because the pre-PR-I
+ * surface had no diagnostics at all.
+ */
+function ReminderDiagnostics({
+  next,
+  formatNextFire,
+  onTest,
+}: {
+  next: PendingNotification | null;
+  formatNextFire: (iso: string | null) => string | null;
+  onTest: () => void;
+}) {
+  const relative = next ? formatNextFire(next.scheduleAt) : null;
+  return (
+    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/60 border border-border/40">
+      <div className="text-xs text-muted-foreground">
+        {relative ? (
+          <>
+            Next: <span className="font-medium text-foreground">{relative}</span>
+          </>
+        ) : (
+          // Empty pending list on web is the default state — explain
+          // why so users don't think the reminder is broken.
+          <span>
+            Web reminders fire while the app is open. Install Tropos for
+            durable native delivery.
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onTest}
+        className="shrink-0 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+      >
+        Send test
+      </button>
+    </div>
   );
 }

@@ -162,3 +162,87 @@ export async function cancelAllNotifications(): Promise<void> {
     logger.error("cancelAllNotifications failed", err);
   }
 }
+
+/**
+ * PR I (audit P1 #10): pending-notifications diagnostics.
+ *
+ * Returns the list of notifications the OS has currently scheduled
+ * to fire — meal reminders, workout reminders, streak reminders. The
+ * Settings → Notifications surface uses this to show users a "Next
+ * reminder: <human-time>" line so they can verify their setup works
+ * without having to wait for the actual fire-time.
+ *
+ * Native (Capacitor LocalNotifications.getPending) is the only place
+ * this returns real data. On web there's no equivalent — the setTimeout
+ * fallback is session-bound and isn't queryable across reloads — so
+ * we return an empty array and let the caller surface "Web reminders
+ * fire only while the app is open" copy.
+ */
+export interface PendingNotification {
+  id: number;
+  title: string | null;
+  body: string | null;
+  /** ISO string when the OS will fire it, or null if Capacitor didn't
+   *  return a schedule (one-shot at: dates always do; legacy entries
+   *  might not). */
+  scheduleAt: string | null;
+}
+
+export async function getPendingNotifications(): Promise<PendingNotification[]> {
+  if (!isNative) return [];
+  try {
+    const result = await LocalNotifications.getPending();
+    return result.notifications.map((n) => ({
+      id: n.id,
+      title: n.title ?? null,
+      body: n.body ?? null,
+      // Capacitor's schedule.at is a Date when the at form is used;
+      // it can also be undefined / cron-style on more complex
+      // schedules. Defensive read.
+      scheduleAt:
+        n.schedule && typeof n.schedule === "object" && "at" in n.schedule && n.schedule.at instanceof Date
+          ? n.schedule.at.toISOString()
+          : null,
+    }));
+  } catch (err) {
+    logger.error("getPendingNotifications failed", err);
+    return [];
+  }
+}
+
+/**
+ * PR I (audit P1 #10): fire a test notification ~3s from now so the
+ * user can verify their device-level setup. Useful when permission was
+ * granted weeks ago and the user can't remember whether iOS Do-Not-
+ * Disturb / Focus is currently filtering Tropos notifications.
+ *
+ * Uses a stable ID per category so successive test taps replace rather
+ * than queue (no spam if the user impatiently double-taps).
+ */
+export type TestNotificationKind = "meal" | "workout" | "streak" | "generic";
+
+const TEST_NOTIFICATION_IDS: Record<TestNotificationKind, number> = {
+  // High IDs to avoid collision with the real reminders (which use
+  // dayIndex-style low integers).
+  generic: 9990,
+  meal: 9991,
+  workout: 9992,
+  streak: 9993,
+};
+
+const TEST_NOTIFICATION_COPY: Record<TestNotificationKind, { title: string; body: string }> = {
+  generic: { title: "Tropos test notification", body: "If you can read this, notifications are working." },
+  meal: { title: "Meal reminder test", body: "This is what your meal reminders look like." },
+  workout: { title: "Workout reminder test", body: "This is what your workout reminders look like." },
+  streak: { title: "Streak reminder test", body: "This is what your streak reminders look like." },
+};
+
+export async function sendTestNotification(kind: TestNotificationKind = "generic"): Promise<boolean> {
+  const copy = TEST_NOTIFICATION_COPY[kind];
+  return scheduleNotification({
+    id: TEST_NOTIFICATION_IDS[kind],
+    title: copy.title,
+    body: copy.body,
+    scheduleAt: new Date(Date.now() + 3000),
+  });
+}
