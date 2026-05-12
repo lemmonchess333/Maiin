@@ -15,15 +15,16 @@
  *      seed script lives at scripts/seed-e2e-user.ts (operator
  *      action: create this script if it doesn't yet exist; see
  *      the PR P notes in the readme for the schema).
- *   3. Export FIREBASE_AUTH_EMULATOR_HOST and FIRESTORE_EMULATOR_HOST
- *      so the app's Firebase SDK targets the emulator instead of
- *      the production project.
+ *   3. Export E2E_AUTH_EMULATOR=1, FIREBASE_AUTH_EMULATOR_HOST,
+ *      and FIRESTORE_EMULATOR_HOST. auth.spec.ts requires the exact
+ *      localhost hosts used by firebase.json so a stray truthy env var
+ *      doesn't accidentally run against the wrong target.
  *   4. Run `npm run test:e2e` — auth.spec.ts will run; other suites
  *      stay green regardless.
  *
- * Without the emulator running, auth.spec.ts skips via the
- * `test.skip(!process.env.E2E_AUTH_EMULATOR)` gate so CI doesn't
- * fall over on the unauthenticated default path.
+ * Without the exact local emulator env, auth.spec.ts skips via its
+ * strict gate so CI doesn't fall over on the unauthenticated default
+ * path or accidentally point at a non-local Firebase target.
  */
 
 import { Page, expect } from "@playwright/test";

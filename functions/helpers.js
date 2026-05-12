@@ -65,9 +65,51 @@ function getStripePriceAllowlist() {
   return allowlist;
 }
 
+const DEFAULT_STRIPE_RETURN_URL_ORIGINS = [
+  "https://lemmonchess333.github.io",
+  "https://troposfit.com",
+  "http://localhost:4173",
+  "http://localhost:5173",
+  "http://127.0.0.1:4173",
+  "http://127.0.0.1:5173",
+];
+
+/**
+ * Validate Stripe Checkout return URLs before handing them to Stripe.
+ * Checkout redirects are user-visible after payment/cancel, so accepting
+ * arbitrary client-supplied URLs would let any authenticated user create a
+ * Stripe-hosted flow that bounces to a phishing domain. Origins default to
+ * the deployed GitHub Pages/custom domains plus local dev/preview; deploys
+ * can override with STRIPE_RETURN_URL_ORIGINS="https://app.example,...".
+ */
+function isAllowedStripeReturnUrl(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl) return false;
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch (_) {
+    return false;
+  }
+
+  if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+    return false;
+  }
+
+  const configuredOrigins = (process.env.STRIPE_RETURN_URL_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const allowedOrigins = configuredOrigins.length > 0
+    ? configuredOrigins
+    : DEFAULT_STRIPE_RETURN_URL_ORIGINS;
+
+  return allowedOrigins.includes(url.origin);
+}
+
 module.exports = {
   pruneOldTimestamps,
   computeEffectiveTier,
   currentMonthCount,
   getStripePriceAllowlist,
+  isAllowedStripeReturnUrl,
 };

@@ -17,6 +17,7 @@ const {
   computeEffectiveTier,
   currentMonthCount,
   getStripePriceAllowlist,
+  isAllowedStripeReturnUrl,
 } = require("../helpers");
 
 describe("pruneOldTimestamps", () => {
@@ -172,5 +173,44 @@ describe("getStripePriceAllowlist", () => {
     expect(getStripePriceAllowlist()).toEqual({
       new_after_import: { kind: "monthly", mode: "subscription" },
     });
+  });
+});
+
+describe("isAllowedStripeReturnUrl", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.STRIPE_RETURN_URL_ORIGINS;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("allows the deployed GitHub Pages origin by default", () => {
+    expect(
+      isAllowedStripeReturnUrl("https://lemmonchess333.github.io/Maiin/settings?checkout=success"),
+    ).toBe(true);
+  });
+
+  it("allows local preview origins by default", () => {
+    expect(isAllowedStripeReturnUrl("http://localhost:4173/Maiin/settings?checkout=cancelled")).toBe(true);
+    expect(isAllowedStripeReturnUrl("http://127.0.0.1:4173/Maiin/settings?checkout=cancelled")).toBe(true);
+  });
+
+  it("rejects arbitrary external origins", () => {
+    expect(isAllowedStripeReturnUrl("https://evil.example/checkout-done")).toBe(false);
+  });
+
+  it("rejects non-http URLs and malformed values", () => {
+    expect(isAllowedStripeReturnUrl("javascript:alert(1)")).toBe(false);
+    expect(isAllowedStripeReturnUrl("not a url")).toBe(false);
+    expect(isAllowedStripeReturnUrl(null)).toBe(false);
+  });
+
+  it("honours STRIPE_RETURN_URL_ORIGINS when configured", () => {
+    process.env.STRIPE_RETURN_URL_ORIGINS = "https://app.example.com, https://staging.example.com";
+    expect(isAllowedStripeReturnUrl("https://app.example.com/settings?checkout=success")).toBe(true);
+    expect(isAllowedStripeReturnUrl("https://lemmonchess333.github.io/Maiin/settings?checkout=success")).toBe(false);
   });
 });

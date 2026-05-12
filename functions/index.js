@@ -167,6 +167,14 @@ const _computeEffectiveTier = helpers.computeEffectiveTier;
 /** Delegates to helpers.currentMonthCount — see helpers.js for docs. */
 const _currentMonthCount = helpers.currentMonthCount;
 
+function safeOriginForLog(rawUrl) {
+  try {
+    return new URL(rawUrl).origin;
+  } catch (_) {
+    return "<invalid>";
+  }
+}
+
 /**
  * Checks and increments the user's monthly AI scan counter atomically.
  *
@@ -680,6 +688,8 @@ exports.askGeminiText = functions.https.onCall(async (data, context) => {
 // missing we fail closed (price not in allowlist).
 /** Delegates to helpers.getStripePriceAllowlist — see helpers.js for docs. */
 const _getStripePriceAllowlist = helpers.getStripePriceAllowlist;
+/** Delegates to helpers.isAllowedStripeReturnUrl — see helpers.js for docs. */
+const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
@@ -693,6 +703,15 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 
       if (!uid || !priceId || !successUrl || !cancelUrl) {
         res.status(400).json({ error: "Missing required fields: uid, priceId, successUrl, cancelUrl" });
+        return;
+      }
+
+      if (!_isAllowedStripeReturnUrl(successUrl) || !_isAllowedStripeReturnUrl(cancelUrl)) {
+        console.warn(
+          `createCheckoutSession: rejected return URL for uid=${uid} ` +
+          `successOrigin=${safeOriginForLog(successUrl)} cancelOrigin=${safeOriginForLog(cancelUrl)}`,
+        );
+        res.status(400).json({ error: "Invalid checkout return URL." });
         return;
       }
 
@@ -768,6 +787,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 });
 
 exports._getStripePriceAllowlist = _getStripePriceAllowlist;
+exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 
 // ══════════════════════════════════════════════
 // STRIPE WEBHOOK — subscription lifecycle events

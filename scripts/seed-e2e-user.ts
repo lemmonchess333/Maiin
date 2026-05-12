@@ -53,12 +53,16 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const AUTH_EMULATOR = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const FIRESTORE_EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
+const EXPECTED_AUTH_EMULATOR = "127.0.0.1:9099";
+const EXPECTED_FIRESTORE_EMULATOR = "127.0.0.1:8080";
 
-if (!AUTH_EMULATOR || !FIRESTORE_EMULATOR) {
+if (AUTH_EMULATOR !== EXPECTED_AUTH_EMULATOR || FIRESTORE_EMULATOR !== EXPECTED_FIRESTORE_EMULATOR) {
   console.error(
-    "[seed-e2e-user] Refusing to run without emulator env vars.\n" +
+    "[seed-e2e-user] Refusing to run unless emulator env vars match firebase.json.\n" +
       "  Expected: FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099\n" +
       "            FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n" +
+      `  Received: FIREBASE_AUTH_EMULATOR_HOST=${AUTH_EMULATOR ?? "<unset>"}\n` +
+      `            FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR ?? "<unset>"}\n` +
       "  Boot emulators first via:\n" +
       "    firebase emulators:start --only auth,firestore",
   );
@@ -160,7 +164,7 @@ async function ensureProfile(uid: string): Promise<void> {
 async function main() {
   const uid = await ensureUser();
   await ensureProfile(uid);
-  console.log(`[seed-e2e-user] Done. Login as ${TEST_USER.email} / ${TEST_USER.password}`);
+  console.log(`[seed-e2e-user] Done. Login as ${TEST_USER.email} with the shared E2E password.`);
 }
 
 main().catch((err) => {
