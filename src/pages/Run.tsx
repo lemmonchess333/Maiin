@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
+import { useActiveRunDraft } from '../hooks/useActiveRunDraft';
 import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
 import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig } from '../components/run/RunSetupModal';
@@ -80,6 +81,17 @@ export default function Run() {
   // visibility-hidden window; written to the run doc via RunSummary
   // so routeQuality can compute "patchy" / "poor" labels.
   const backgroundGapMsRef = useRef(0);
+
+  // PR H2 (audit P1 #8): active-run draft recovery. Captured once on
+  // mount so the recovery prompt below renders deterministically
+  // even if the user taps Resume / Discard quickly. `clear` is also
+  // pulled here so the load/save/clear surface is stable across
+  // renders.
+  const { load: loadRunDraft, save: saveRunDraft, clear: clearRunDraft } = useActiveRunDraft();
+  const initialRunDraft = useMemo(() => loadRunDraft(), [loadRunDraft]);
+  const [showRunRecoveryPrompt, setShowRunRecoveryPrompt] = useState(
+    initialRunDraft !== null,
+  );
 
   // Coordinate all subsystems on background/foreground transitions
   const handleHidden = useCallback(() => {
@@ -236,11 +248,42 @@ export default function Run() {
     }
   }, [intervals.state, audioCues, runConfig?.activityType]);
 
+  // PR H2 (audit P1 #8): periodic draft save while active or paused.
+  // 5s cadence matches the audit's acceptance criterion. We save in
+  // 'paused' too so the user can resume after pausing → backgrounding
+  // → being killed. Skipped in waiting/acquiring/countdown/finished
+  // because those phases don't carry user data worth recovering.
+  useEffect(() => {
+    if (phase !== 'active' && phase !== 'paused') return;
+    if (!runConfig) return;
+    const snapshot = () => {
+      saveRunDraft({
+        runConfig,
+        elapsedSeconds: timer.elapsed,
+        points: gps.getPoints(),
+        treadmillDistance,
+        backgroundGapMs: backgroundGapMsRef.current,
+      });
+    };
+    // Save once immediately so a crash within 5s of starting still
+    // leaves a recoverable draft.
+    snapshot();
+    const id = setInterval(snapshot, 5000);
+    return () => clearInterval(id);
+  }, [phase, runConfig, timer.elapsed, gps, treadmillDistance, saveRunDraft]);
+
   const finishRun = (distanceOverride?: number) => {
     timer.pause();
     gps.stop();
     wakeLock.release();
     setPhase('finished');
+    // PR H2: clear the active-run draft on a successful finish.
+    // RunSummary still owns the save-or-discard decision; the
+    // draft is for app-close recovery, not for the post-summary
+    // flow. Clearing here makes a refresh of /run-summary
+    // re-render from navigate state alone, not from a stale
+    // draft.
+    clearRunDraft();
     const finalDistance = distanceOverride ?? gps.distance;
     const points = gps.getPoints();
 
@@ -605,10 +648,61 @@ export default function Run() {
           timer.pause();
           gps.stop();
           wakeLock.release();
+          // PR H2: discarding clears the draft so a future Run.tsx
+          // mount doesn't prompt the user to recover a run they
+          // already chose to throw away.
+          clearRunDraft();
           navigate('/');
         }}
         onCancel={() => setShowDiscardConfirm(false)}
       />
+
+      {/* PR H2 (audit P1 #8): active-run recovery prompt. Surfaces
+          on mount when localStorage has a non-stale draft. Three
+          actions match the audit acceptance:
+            - Resume run:   restore state, jump straight to 'paused'
+                            (so the user reviews position before
+                            re-starting GPS) and clear the prompt.
+            - Save as manual: hand to RunSummary with whatever we
+                            have. Useful when the user wants the
+                            distance/duration on record but doesn't
+                            need to continue.
+            - Discard:      clear the draft and dismiss. */}
+      {showRunRecoveryPrompt && initialRunDraft && (
+        <ConfirmDialog
+          open
+          title="Resume your previous run?"
+          description={
+            `We saved your last run before it was interrupted (~${Math.round(
+              initialRunDraft.elapsedSeconds / 60,
+            )} min ago).`
+          }
+          confirmLabel="Resume"
+          cancelLabel="Discard"
+          onConfirm={() => {
+            // Restore the in-memory state from the draft and resume
+            // in 'paused' so the user re-starts deliberately rather
+            // than getting an immediate GPS-active surprise.
+            const config = initialRunDraft.runConfig as RunConfig;
+            setRunConfig(config);
+            timer.recalcNow();
+            setTreadmillDistance(initialRunDraft.treadmillDistance);
+            backgroundGapMsRef.current = initialRunDraft.backgroundGapMs;
+            setPhase('paused');
+            setShowRunRecoveryPrompt(false);
+          }}
+          onCancel={() => {
+            // Mirrors the "Discard" branch of the audit's acceptance.
+            // No save-as-manual fallback in this iteration — the
+            // common interrupted-run case is a foreground kill, not
+            // a session the user genuinely wants to keep
+            // partial-state of. If on-device QA shows users want a
+            // save-anyway path here, layer it on as a third button.
+            clearRunDraft();
+            setShowRunRecoveryPrompt(false);
+          }}
+        />
+      )}
     </div>
   );
 }
