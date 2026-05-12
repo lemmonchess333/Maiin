@@ -43,31 +43,46 @@ export async function signInAsTestUser(
   page: Page,
   creds: { email: string; password: string } = TEST_USER,
 ): Promise<void> {
+  // Collect console + page errors so a sign-in failure can surface
+  // what the SPA actually did, not just "locator timeout".
+  const consoleLogs: string[] = [];
+  page.on("console", (msg) => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
+  page.on("pageerror", (err) => consoleLogs.push(`[pageerror] ${err.message}`));
+
   // Navigate to the root rather than '/login'. Playwright's URL
   // resolution against baseURL replaces the entire path when the
   // argument starts with '/' — so `page.goto('/login')` resolves to
   // `http://localhost:4173/login` and DROPS the `/Maiin/` base path
-  // the SPA is mounted under. Going to '/' uses baseURL as-is
-  // (`http://localhost:4173/Maiin/`) and the unauthed route
-  // catch-all (`path="*"`) renders the same Login form.
+  // the SPA is mounted under. Going to '/' uses baseURL as-is and
+  // the unauthed route catch-all (`path="*"`) renders the same
+  // Login form.
   await page.goto("/");
-  // Wait for the SPA to finish booting + AuthProvider to resolve.
-  // Without this, the form locator races against the React render
-  // pass that happens after Firebase emits its initial auth state.
   await page.waitForLoadState("networkidle");
-  await page.locator("#login-email").waitFor({ state: "visible", timeout: 20_000 });
+  try {
+    await page.locator("#login-email").waitFor({ state: "visible", timeout: 20_000 });
+  } catch (err) {
+    // Dump page content + console history so the next CI failure
+    // shows what's actually rendered. Without this we just see
+    // "locator timeout" with no signal about whether the SPA
+    // booted, errored, or is stuck on a loading screen.
+    const html = await page.content().catch(() => "<unavailable>");
+    const url = page.url();
+    console.error("─── signInAsTestUser failed; page state ───");
+    console.error("URL:", url);
+    console.error("Console history:\n" + consoleLogs.join("\n"));
+    console.error("Body HTML (first 2000 chars):\n" + html.slice(0, 2000));
+    console.error("─── end page state ───");
+    throw err;
+  }
   await page.fill("#login-email", creds.email);
   await page.fill("#login-password", creds.password);
   // Submit by clicking the email submit button (type="submit"). Form
   // onSubmit handler calls signIn() → AuthProvider sets user state →
   // Router redirects authenticated routes off Login.
   await page.locator('button[type="submit"]').first().click();
-  // Wait for the SPA root to change off the Login surface. The
-  // post-auth URL stays at `/` (we navigated there, not `/login`),
-  // so we look for a visible element only present on authenticated
-  // routes — the bottom nav rendered by Layout. Bigger timeout
-  // because the AuthProvider has to await a Firestore profile read
-  // after sign-in, which is slower in the emulator.
+  // Bottom-nav is only rendered under the authed Layout, so it's a
+  // real success signal. Generous timeout because AuthProvider
+  // awaits a Firestore profile read after sign-in.
   await expect(page.locator("nav").first()).toBeVisible({ timeout: 20_000 });
 }
 

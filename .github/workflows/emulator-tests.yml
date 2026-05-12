@@ -99,13 +99,29 @@ jobs:
       # Build the app pointed at the local emulator. VITE_USE_EMULATORS
       # toggles connectAuthEmulator / connectFirestoreEmulator in
       # src/lib/firebase.ts so the served SPA talks to the emulators
-      # rather than the (absent) production Firebase project. Without
-      # this, the AuthProvider boot hangs waiting on real Firebase
-      # and the Login form never renders for Playwright to drive.
+      # rather than the (absent) production Firebase project.
+      #
+      # The VITE_FIREBASE_* values are intentional placeholders —
+      # `connectAuthEmulator` reroutes the network calls to
+      # 127.0.0.1:9099 regardless, but Firebase's auth client refuses
+      # to initialise (and `onAuthStateChanged` never fires its
+      # initial callback) when apiKey / authDomain / projectId are
+      # empty strings. That leaves the SPA stuck on the "Loading
+      # Tropos" spinner forever and the Login form never renders for
+      # Playwright to drive — which was exactly the 11:46/11:47
+      # timeout symptom. Project-ID matches the `--project=demo-tropos`
+      # passed to firebase emulators:exec so the emulator routing
+      # is internally consistent.
       - name: Build app with emulator wiring
         run: npm run build
         env:
           VITE_USE_EMULATORS: 'true'
+          VITE_FIREBASE_API_KEY: emulator-dummy-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-tropos.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-tropos
+          VITE_FIREBASE_STORAGE_BUCKET: demo-tropos.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
+          VITE_FIREBASE_APP_ID: '1:000000000000:web:0000000000000000000000'
 
       # ── Suite 1: Firestore rules tests
       # Uses the firebase emulators:exec wrapper which boots the
