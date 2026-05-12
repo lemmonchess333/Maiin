@@ -50,7 +50,12 @@ export default function ProfileInfoSection({
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        onBlur={() => updateProfile({ displayName: name })}
+        onBlur={async () => {
+          const prev = profile.displayName ?? "";
+          if (name === prev) return;
+          const result = await updateProfile({ displayName: name });
+          if (!result.ok) setName(prev);
+        }}
         placeholder="Display name"
         className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
       />
@@ -62,7 +67,12 @@ export default function ProfileInfoSection({
             type="number"
             value={weightKg}
             onChange={(e) => setWeightKg(Number(e.target.value))}
-            onBlur={() => updateProfile({ weightKg })}
+            onBlur={async () => {
+              const prev = profile.weightKg ?? 70;
+              if (weightKg === prev) return;
+              const result = await updateProfile({ weightKg });
+              if (!result.ok) setWeightKg(prev);
+            }}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
           <p className="text-xs text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
@@ -74,7 +84,12 @@ export default function ProfileInfoSection({
             type="number"
             value={heightCm}
             onChange={(e) => setHeightCm(Number(e.target.value))}
-            onBlur={() => updateProfile({ heightCm })}
+            onBlur={async () => {
+              const prev = profile.heightCm ?? 170;
+              if (heightCm === prev) return;
+              const result = await updateProfile({ heightCm });
+              if (!result.ok) setHeightCm(prev);
+            }}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
         </div>

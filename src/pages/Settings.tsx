@@ -194,13 +194,18 @@ export default function Settings() {
   }, [tdee]);
 
   const handlePhaseChange = async (phase: "cut" | "lean bulk" | "recomp") => {
-    await updateProfile({
+    const prevPhase = trainingPhase;
+    const result = await updateProfile({
       program: {
         goal: phase,
         startWeight: profile?.program?.startWeight ?? weightKg,
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
     });
+    // NutritionSection set trainingPhase optimistically before
+    // calling onPhaseChange — revert if the write failed so the
+    // pills don't claim a phase that didn't persist.
+    if (!result.ok) setTrainingPhase(prevPhase);
   };
 
   const toggleUnit = async (
@@ -218,11 +223,20 @@ export default function Settings() {
     }
   };
 
-  const toggleDark = () => {
-    const next = !profile?.darkMode;
+  const toggleDark = async () => {
+    const prev = !!profile?.darkMode;
+    const next = !prev;
+    // Optimistic DOM + localStorage swap so the visual change is
+    // instant; revert both if the Firestore write fails so the user
+    // doesn't see a flicker (theme stays applied) while their setting
+    // was never saved.
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem('tropos-dark-mode', String(next));
-    updateProfile({ darkMode: next });
+    const result = await updateProfile({ darkMode: next });
+    if (!result.ok) {
+      document.documentElement.classList.toggle("dark", prev);
+      localStorage.setItem('tropos-dark-mode', String(prev));
+    }
   };
 
   if (!profile) return null;

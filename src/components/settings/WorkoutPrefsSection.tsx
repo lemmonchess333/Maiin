@@ -34,9 +34,11 @@ export default function WorkoutPrefsSection({
           <button
             onClick={async () => {
               haptic("light");
+              const prev = autoRestTimer;
               const next = !autoRestTimer;
               setAutoRestTimer(next);
-              await updateProfile({ autoRestTimer: next });
+              const result = await updateProfile({ autoRestTimer: next });
+              if (!result.ok) setAutoRestTimer(prev);
             }}
             aria-label="Toggle auto-start rest timer"
             role="switch"
@@ -52,9 +54,11 @@ export default function WorkoutPrefsSection({
           <select
             value={defaultRestSeconds}
             onChange={async (e) => {
+              const prev = defaultRestSeconds;
               const val = Number(e.target.value);
               setDefaultRestSeconds(val);
-              await updateProfile({ defaultRestSeconds: val });
+              const result = await updateProfile({ defaultRestSeconds: val });
+              if (!result.ok) setDefaultRestSeconds(prev);
             }}
             className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
           >
@@ -76,9 +80,11 @@ export default function WorkoutPrefsSection({
           <button
             onClick={async () => {
               haptic("light");
+              const prev = audioCues;
               const next = !audioCues;
               setAudioCues(next);
-              await updateProfile({ audioCues: next });
+              const result = await updateProfile({ audioCues: next });
+              if (!result.ok) setAudioCues(prev);
             }}
             aria-label="Toggle audio cues"
             role="switch"

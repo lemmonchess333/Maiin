@@ -27,7 +27,13 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
   const handleAdjust = async () => {
     if (profile) {
       const current = profile.customCalorieTarget || profile.targetCalories || 2200;
-      await updateProfile({ customCalorieTarget: current + 150 });
+      const result = await updateProfile({ customCalorieTarget: current + 150 });
+      // Success toast only fires when the write landed — without this
+      // gate the modal cheerfully reported "increased by 150" even
+      // when the Firestore write failed, and stamped the localStorage
+      // suppression key so the user couldn't retry from this surface.
+      // updateProfile already toasts on failure with its own copy.
+      if (!result.ok) return;
       toast.success('Calorie target increased by 150');
     }
     localStorage.setItem(`tropos_stall_${exercise.name}`, String(Date.now()));
