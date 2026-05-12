@@ -41,7 +41,15 @@
  *   so a fat-finger doesn't seed prod.
  */
 
-import * as admin from "firebase-admin";
+/* firebase-admin v13 uses CJS `export = admin` for the namespace
+   entrypoint. Under tsx's ESM mode, `import * as admin from
+   "firebase-admin"` returns a wrapper namespace where `admin.apps`
+   is undefined; the modular `firebase-admin/app` / `firebase-admin/auth`
+   / `firebase-admin/firestore` entry points are pure ESM and resolve
+   cleanly. Use those. */
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 const AUTH_EMULATOR = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 const FIRESTORE_EMULATOR = process.env.FIRESTORE_EMULATOR_HOST;
@@ -65,15 +73,15 @@ const TEST_USER = {
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT || "adaptive-fitness-af8bb";
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   // No credentials needed against the emulator — projectId alone is
   // sufficient. firebase-admin honours the *_EMULATOR_HOST env vars
   // automatically when initialised this way.
-  admin.initializeApp({ projectId: PROJECT_ID });
+  initializeApp({ projectId: PROJECT_ID });
 }
 
-const auth = admin.auth();
-const db = admin.firestore();
+const auth = getAuth();
+const db = getFirestore();
 
 async function ensureUser(): Promise<string> {
   try {
@@ -142,7 +150,7 @@ async function ensureProfile(uid: string): Promise<void> {
         athleteType: "Lifter",
         currentStreak: 0,
         longestStreak: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
