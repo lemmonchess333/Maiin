@@ -249,9 +249,16 @@ service cloud.firestore {
     // stop a malicious caller). The replacement:
     //
     //   - Reads stay open to any authed user (global metadata).
-    //   - Creates require the docId to match one of the three
-    //     known seed prefixes (weekly- / monthly- / seasonal-),
-    //     blocking random-ID junk.
+    //   - Creates require the docId to match one of the five
+    //     known seed prefixes used by seedChallenges():
+    //       weekly-     · weekly workout challenge
+    //       monthly-    · monthly mileage / equivalent
+    //       seasonal-   · seasonal challenge (rotates)
+    //       fastest-5k- · pace-based monthly challenge
+    //       group-goal- · collective monthly target
+    //     Random-ID junk is now denied. New prefixes added to
+    //     seedChallenges() must be allowlisted here too — fail-
+    //     closed by design.
     //   - Updates + deletes are locked to admin SDK. The client
     //     seedChallenges path only writes when !exists, so it
     //     never needs update permissions — closing this off
@@ -268,6 +275,8 @@ service cloud.firestore {
           challengeId.matches('weekly-.*')
           || challengeId.matches('monthly-.*')
           || challengeId.matches('seasonal-.*')
+          || challengeId.matches('fastest-5k-.*')
+          || challengeId.matches('group-goal-.*')
         );
       allow update, delete: if false;
 

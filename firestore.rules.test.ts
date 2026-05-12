@@ -242,6 +242,20 @@ suite("firestore.rules — /challenges", () => {
     );
   });
 
+  it("authed user creates a fastest-5k-prefix challenge — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), validChallengeData),
+    );
+  });
+
+  it("authed user creates a group-goal-prefix challenge — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "group-goal-2026-01-01"), validChallengeData),
+    );
+  });
+
   it("authed user creates a junk-id challenge — fails (docId pattern guard)", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
