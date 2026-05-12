@@ -12,9 +12,19 @@ name: Firebase Emulator Tests
 
 on:
   push:
-    branches: ['main']
+    # Fires on main AND on any feature branch starting with
+    # `claude/` so workflow changes can be validated before they
+    # merge. Without the feature-branch trigger, every workflow
+    # fix has to ride a separate merge cycle to even run, which
+    # turns debugging into a guessing game.
+    branches:
+      - main
+      - 'claude/**'
   pull_request:
     branches: ['main']
+  # Manual trigger so the workflow can be re-run on demand
+  # without pushing an empty commit.
+  workflow_dispatch:
 
 jobs:
   emulator-tests:
@@ -28,12 +38,30 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # Firebase emulators run on the JVM. Java is the only non-npm
-      # dependency that needs explicit setup on the GitHub runner.
-      - uses: actions/setup-java@v4
+      # Firebase emulators run on the JVM. Java 21+ is required by
+      # firebase-tools (the CLI errors out hard on JDK <21 since the
+      # 14.x release line). The hosted runner ships Java 17 by
+      # default (JAVA_HOME_17_X64 stays preset on the image even
+      # after we install Java 21); setup-java@v4 with java-version
+      # '21' repoints JAVA_HOME + PATH at the 21 install.
+      #
+      # Quoted as a string because YAML parses bare `21` as int and
+      # some action versions are finicky about the type — the docs
+      # canonically show quoted strings.
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '21'
+          architecture: x64
+
+      # Debug — surfaces in the run log so a future "why is Java
+      # 17 again" can be diagnosed in one click rather than
+      # bisecting workflow files.
+      - name: Verify Java version
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
 
       - run: npm ci
       - run: npm ci --prefix functions

@@ -2,13 +2,11 @@ import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -22,11 +20,7 @@ import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import {
   Utensils,
-  Plus,
-  SendHorizontal,
-  PenLine,
   RotateCcw,
-  X,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
@@ -39,16 +33,14 @@ import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
-import FoodRow, { type FoodRowGroup } from "@/components/food/FoodRow";
+import FoodMealSection from "@/components/food/FoodMealSection";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
-import MealMacroBar from "@/components/food/MealMacroBar";
 import { useScanUsage } from "@/hooks/useScanUsage";
-import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
-import ScanMealButton from "@/components/food/ScanMealButton";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
-import FoodSuggestionsDropdown from "@/components/food/FoodSuggestionsDropdown";
+import FoodComposerCard from "@/components/food/FoodComposerCard";
+import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -73,17 +65,10 @@ const NL_EXAMPLE_PROMPTS = [
   "Greek yoghurt & berries",
 ];
 
-// Meal slot ordering and display labels — true constants, defined at module
-// scope so the references are stable across renders. (Previously declared
-// inside the Food component body which made every render produce a new
-// array / object identity, defeating any useMemo that closed over them.)
-const MEAL_ORDER = ["breakfast", "lunch", "snacks", "dinner"] as const;
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: "Breakfast",
-  lunch: "Lunch",
-  dinner: "Dinner",
-  snacks: "Snacks",
-};
+// Meal slot ordering + labels live in components/food/mealConstants
+// so the extracted child components (FoodComposerCard,
+// FoodSuggestionsDropdown) share the same identity without prop-
+// drilling.
 
 interface OFFResult {
   name: string;
@@ -109,7 +94,7 @@ export default function Food() {
   // kind of string the NL parser understands without needing a help doc.
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
-  const [targetMeal, setTargetMeal] = useState<"breakfast" | "lunch" | "snacks" | "dinner" | null>(null);
+  const [targetMeal, setTargetMeal] = useState<MealKey | null>(null);
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused + not adding to a specific meal). Stops the moment the
@@ -860,7 +845,7 @@ export default function Food() {
     });
   };
 
-  const handleTargetMeal = (mealKey: "breakfast" | "lunch" | "snacks" | "dinner") => {
+  const handleTargetMeal = (mealKey: MealKey) => {
     haptic();
     // Toggle off if same meal tapped again
     if (targetMeal === mealKey) {
@@ -1116,170 +1101,38 @@ export default function Food() {
         />
       </motion.div>
 
-      {/* Input area — text field stacked above full-width Scan CTA.
-          Leading PenLine icon signals "write / input" without the
-          Sparkles+purple AI-chatbot connotation (the previous iteration
-          looked like a Gemini-style input, which clashed with the rest
-          of the Food page's warm nutrition palette). Focus state uses
-          the nutrition orange so the accent ties into the macros, the
-          scan button, and the hero ring — one consistent Food colour
-          instead of introducing a brand-purple in a nutrition context. */}
-      <motion.div variants={itemVariant} className="pb-2">
-        <div className="relative">
-          <PenLine
-            aria-hidden="true"
-            className={cn(
-              "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors",
-              inputFocused ? "" : "text-muted-foreground",
-            )}
-            style={inputFocused ? { color: THEME.semantic.nutrition } : undefined}
-          />
-          <textarea
-            ref={inputRef}
-            value={nlInput}
-            onChange={(e) => setNlInput(e.target.value)}
-            onFocus={() => { setSuggestionsActive(true); setInputFocused(true); }}
-            onBlur={() => { setInputFocused(false); setTimeout(() => setSuggestionsActive(false), 200); }}
-            onKeyDown={(e) => {
-              // Return / Enter submits. Two-tap confirm when the
-              // suggestion dropdown is active so the parser doesn't
-              // fire while the user is still mid-selection — first
-              // tap dismisses, second tap sends.
-              //
-              // No Shift+Enter newline or Escape branch: this app is
-              // mobile-first and those keys don't exist on iOS/Android
-              // software keyboards. Commas in a single line cover the
-              // multi-item use case ("chicken, rice, 2 eggs").
-              if (e.key !== "Enter") return;
-              e.preventDefault();
-              if (showSuggestions) {
-                setSuggestionsActive(false);
-                return;
-              }
-              if (!nlInput.trim() || nlParsing) return;
-              haptic();
-              handleNLParse();
-            }}
-            placeholder={
-              targetMeal
-                ? `Adding to ${MEAL_LABELS[targetMeal]}…`
-                : NL_EXAMPLE_PROMPTS[placeholderIdx]
-            }
-            aria-label="What did you eat"
-            rows={1}
-            maxLength={500}
-            className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
-            style={{
-              // Pure white (bg-card) instead of the grey --input-fill so
-              // the composer reads as a peer of the calorie hero card and
-              // macro cards (all white) instead of melting into the grey
-              // grouped-background. Shadow + border tokens are defined
-              // in src/styles/tokens.css so the dark-mode variants
-              // flip automatically and the values are reusable
-              // wherever an input wants the nutrition focus accent.
-              borderColor: inputFocused
-                ? "var(--ds-color-input-border-focus-nutrition)"
-                : "var(--ds-color-input-border-rest)",
-              outline: "none",
-              boxShadow: inputFocused
-                ? "var(--ds-shadow-input-focus-nutrition)"
-                : "var(--ds-shadow-input-rest)",
-            }}
-          />
-          {nlInput.trim() && (
-            <button type="button" onClick={() => { haptic(); handleNLParse(); }} disabled={nlParsing}
-              aria-label="Log meal"
-              className={cn("absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90", nlParsing ? "opacity-50" : "")}
-              style={{ color: THEME.semantic.nutrition }}>
-              <SendHorizontal className="w-5 h-5" />
-            </button>
-          )}
-          {!nlInput.trim() && targetMeal && (
-            <button type="button" onClick={() => { haptic("light"); setTargetMeal(null); }}
-              aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg active:scale-90 text-muted-foreground">
-              <X className="w-4 h-4" />
-            </button>
-          )}
-          {showSuggestions && (
-            <FoodSuggestionsDropdown
-              ref={suggestionsRef}
-              suggestions={suggestions}
-              offResults={offResults}
-              offEmpty={offEmpty}
-              offSearchQuery={offSearchQuery}
-              onSelectSuggestion={handleSuggestionSelect}
-              onSelectOff={handleOFFSelect}
-              onLogManually={() => { haptic(); setManualOpen(true); }}
-            />
-          )}
-        </div>
-        <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">Add to</span>
-            {MEAL_ORDER.map((mealKey) => {
-              const selected = targetMeal === mealKey;
-              return (
-                <button
-                  key={mealKey}
-                  type="button"
-                  onClick={() => handleTargetMeal(mealKey)}
-                  className={cn(
-                    /* Visual stays diary-compact (h-8 = 32px) but
-                     the tap target hits 44px via a transparent
-                     before:pseudo-element extending the click
-                     region vertically. Inset-x stays 0 to avoid
-                     overlapping adjacent meal pills' tap areas
-                     in the horizontal row. */
-                  "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
-                    selected
-                      ? "border-transparent text-white"
-                      : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
-                  )}
-                  style={selected ? { backgroundColor: THEME.semantic.nutrition } : undefined}
-                  aria-pressed={selected}
-                >
-                  {MEAL_LABELS[mealKey]}
-                </button>
-              );
-            })}
-        </div>
-        <div className="mt-3">
-          <ScanMealButton
-            onClick={() => { haptic(); scanOverrides.onClick(); }}
-            ariaLabel={scanUsage.isUnlimited || scanUsage.remaining > 0 ? "Scan your meal" : "Upgrade to scan your meal"}
-            styleOverride={scanOverrides.style}
-            statusIcon={scanOverrides.icon}
-          />
-          {/* Scan quota footnote — directly under the Scan CTA so
-              it reads as informational helper text rather than a
-              competing feature. Free users only; paid/unlimited
-              skip rendering entirely. Pre-F5 this sat below
-              "Log manually" as a prominent amber pill that
-              competed with Scan even when the user had plenty of
-              scans left. */}
-          {!scanUsage.isUnlimited && !scanUsage.loading && (
-            <div className="mt-2">
-              <ScanQuotaIndicator
-                remaining={scanUsage.remaining}
-                resetDate={scanUsage.resetDate}
-                onUpgrade={handleUpgrade}
-              />
-            </div>
-          )}
-          {/* Manual logging fallback. Visible secondary action — the
-              drawer is the only escape hatch when AI / barcode / OFF
-              search fail to find a match, so it needs a discoverable
-              entry point. Centered text-only treatment so it doesn't
-              compete with Scan or the NL composer. */}
-          <button
-            type="button"
-            onClick={() => { haptic(); setManualOpen(true); }}
-            className="w-full mt-2 py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
-            aria-label="Log a meal manually"
-          >
-            Log manually
-          </button>
-        </div>
+      {/* Composer: NL textarea + Add to pills + Scan CTA + manual
+          log fallback. Extracted to components/food/FoodComposerCard.
+          The dropdown surfacing under the input is owned by the
+          composer; its ref + outside-click dismissal still resolve
+          here via the forwarded `suggestionsRef`. */}
+      <motion.div variants={itemVariant}>
+        <FoodComposerCard
+          ref={suggestionsRef}
+          nlInput={nlInput}
+          setNlInput={setNlInput}
+          nlParsing={nlParsing}
+          inputFocused={inputFocused}
+          setInputFocused={setInputFocused}
+          setSuggestionsActive={setSuggestionsActive}
+          placeholderPrompt={NL_EXAMPLE_PROMPTS[placeholderIdx]}
+          onParse={handleNLParse}
+          inputRef={inputRef}
+          targetMeal={targetMeal}
+          setTargetMeal={setTargetMeal}
+          onTargetMeal={handleTargetMeal}
+          showSuggestions={showSuggestions}
+          suggestions={suggestions}
+          offResults={offResults}
+          offEmpty={offEmpty}
+          offSearchQuery={offSearchQuery}
+          onSelectSuggestion={handleSuggestionSelect}
+          onSelectOff={handleOFFSelect}
+          scanUsage={scanUsage}
+          scanOverrides={scanOverrides}
+          onUpgrade={handleUpgrade}
+          onManualOpen={() => setManualOpen(true)}
+        />
       </motion.div>
 
       {scanOpen && (
@@ -1341,138 +1194,19 @@ export default function Food() {
           come and go. */}
       {todaysMeals.length > 0 && (
         <motion.div variants={itemVariant} className="space-y-3">
-          {populatedMealKeys.map((mealKey) => {
-            const meals = mealSegmentedMeals[mealKey];
-            const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
-
-            // Aggregate macros for the micro-bar (change #8)
-            const totalPro = meals.reduce((s, m) => s + safeNum(m.totalProtein), 0);
-            const totalCarb = meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0);
-            const totalFat = meals.reduce((s, m) => s + safeNum(m.totalFat), 0);
-
-
-            // Group populated items by food name
-            const grouped = new Map<
-              string,
-              {
-                id: string;
-                foodName: string;
-                meals: typeof meals;
-                totalCal: number;
-                totalPro: number;
-                totalCarb: number;
-                totalFat: number;
-              }
-            >();
-            for (const m of meals) {
-              const key = (m.foodName || "Meal").toLowerCase().trim();
-              const existing = grouped.get(key);
-              if (existing) {
-                existing.meals.push(m);
-                existing.totalCal += safeNum(m.totalCalories);
-                existing.totalPro += safeNum(m.totalProtein);
-                existing.totalCarb += safeNum(m.totalCarbs);
-                existing.totalFat += safeNum(m.totalFat);
-              } else {
-                grouped.set(key, {
-                  id: `${mealKey}-${key}`,
-                  foodName: m.foodName || "Meal",
-                  meals: [m],
-                  totalCal: safeNum(m.totalCalories),
-                  totalPro: safeNum(m.totalProtein),
-                  totalCarb: safeNum(m.totalCarbs),
-                  totalFat: safeNum(m.totalFat),
-                });
-              }
-            }
-            const groupedEntries = Array.from(grouped.values());
-
-            // ── Populated full card ─────────────────────────────────────
-            return (
-              <motion.div
-                key={mealKey}
-                layout
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="bg-card rounded-xl overflow-hidden"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}
-              >
-                {/* Header caption — small uppercase grey matching the hero
-                    card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
-                <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
-                  {/* Header caption — meal name · item count · total kcal.
-                      Previously the middle slot was wall-clock time of the
-                      latest log; for users logging meals in clusters that
-                      reads as redundant ("BREAKFAST · 12:09 AM"). Item
-                      count is more glanceable and answers "did I log all
-                      five things?" at a glance. */}
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
-                    <span className="font-semibold">{MEAL_LABELS[mealKey].toUpperCase()}</span>
-                    {groupedEntries.length > 0 && (
-                      <> · {groupedEntries.length} {groupedEntries.length === 1 ? "item" : "items"}</>
-                    )}
-                    {" · "}
-                    {formatCalories(mealCals)} {CALORIE_UNIT.toUpperCase()}
-                  </p>
-                  <button
-                    onClick={() => handleTargetMeal(mealKey)}
-                    aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
-                      targetMeal === mealKey
-                        ? "bg-primary text-white"
-                        : "border border-black/[0.12] text-muted-foreground"
-                    )}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Macro micro-bar (change #8) — 3 segments P/C/F. Sits
-                    directly below the caption with 4px breathing room. */}
-                <div className="px-3.5 pb-1.5">
-                  <MealMacroBar
-                    totalProtein={totalPro}
-                    totalCarbs={totalCarb}
-                    totalFat={totalFat}
-                  />
-                </div>
-
-                {/* Food rows with swipe-to-delete (change #2). Each row
-                    receives the lifted `isOpen` + `onOpenChange` props. */}
-                <div className="divide-y divide-border/12">
-                  {groupedEntries.map((group) => {
-                    const rowGroup: FoodRowGroup = {
-                      id: group.id,
-                      foodName: group.foodName,
-                      items: group.meals.flatMap((m) => m.items ?? []),
-                      count: group.meals.length,
-                      totalCal: group.totalCal,
-                      totalPro: group.totalPro,
-                      totalCarb: group.totalCarb,
-                      totalFat: group.totalFat,
-                    };
-                    return (
-                      <FoodRow
-                        key={group.id}
-                        group={rowGroup}
-                        isOpen={openRowId === group.id}
-                        onOpenChange={(open) =>
-                          setOpenRowId(open ? group.id : null)
-                        }
-                        onDelete={() =>
-                          handleDeleteMeal(
-                            group.meals.map((m) => m.id),
-                            group.foodName
-                          )
-                        }
-                        onEdit={() => { setOpenRowId(null); setEditingGroup(group); }}
-                      />
-                    );
-                  })}
-                </div>
-              </motion.div>
-            );
-          })}
+          {populatedMealKeys.map((mealKey) => (
+            <FoodMealSection
+              key={mealKey}
+              mealKey={mealKey}
+              meals={mealSegmentedMeals[mealKey]}
+              targetMeal={targetMeal}
+              openRowId={openRowId}
+              setOpenRowId={setOpenRowId}
+              onTargetMeal={handleTargetMeal}
+              onDelete={handleDeleteMeal}
+              onEdit={setEditingGroup}
+            />
+          ))}
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
               has slots today is missing. Label is intentionally short:
