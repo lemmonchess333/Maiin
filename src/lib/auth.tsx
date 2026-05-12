@@ -341,6 +341,15 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
    AUTH CONTEXT
 ================================ */
 
+/**
+ * PR G (audit P1 #7): result shape for updateProfile. Settings
+ * controls can now revert optimistic UI on failure rather than
+ * silently lying after a swallowed error.
+ */
+export type UpdateProfileResult =
+  | { ok: true }
+  | { ok: false; error: unknown };
+
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
@@ -350,7 +359,19 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => Promise<void>;
+  /**
+   * Write a partial profile patch. Returns an `UpdateProfileResult`
+   * so callers can revert optimistic UI on failure. Pre-PR-G this
+   * returned `Promise<void>` and swallowed errors with a toast,
+   * leaving Settings controls visually claiming a write succeeded
+   * when Firestore rejected it. Existing fire-and-forget callers
+   * still work — Promise<UpdateProfileResult> is still awaitable as
+   * a Promise.
+   */
+  updateProfile: (
+    data: Partial<UserProfile>,
+    options?: { allowProtected?: boolean; throwOnError?: boolean },
+  ) => Promise<UpdateProfileResult>;
   /**
    * Re-fetch the user's Firestore profile and update local state.
    * For mutations that go directly to Firestore (e.g. profile-photo
@@ -517,8 +538,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // cross-user-readable public/profile doc when they change.
   const PUBLIC_MIRRORED_FIELDS = ["displayName", "photoURL", "athleteType"] as const;
 
-  const updateProfile = async (data: Partial<UserProfile>, options?: { allowProtected?: boolean }) => {
-    if (!user) return;
+  const updateProfile = async (
+    data: Partial<UserProfile>,
+    options?: { allowProtected?: boolean; throwOnError?: boolean },
+  ): Promise<UpdateProfileResult> => {
+    if (!user) return { ok: false, error: new Error("not-authenticated") };
     let writeData = data;
     if (!options?.allowProtected) {
       writeData = Object.fromEntries(
@@ -546,12 +570,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       publicPatch["displayNameLower"] = typeof dn === "string" ? dn.toLowerCase() : null;
     }
 
-    // Wrap the write in try/catch so silent call sites (toggleDark, TDEE
-     // auto-sync, dozens of Settings fire-and-forgets) surface a toast and
-     // leave local state untouched on failure instead of silently diverging
-     // from Firestore. We don't re-throw: no existing caller handles the
-     // exception, and swallowing it keeps unhandled promise rejections out
-     // of the console for this expected failure path.
+    // PR G (audit P1 #7): returns `{ ok }` so callers can revert
+    // optimistic UI on failure. The toast is still surfaced by
+    // default (most callers want it) — opt-in `throwOnError` for
+    // call sites that want to handle the error themselves.
     try {
       if (Object.keys(publicPatch).length > 0) {
         const batch = writeBatch(db);
@@ -569,13 +591,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return updated;
       });
+
+      return { ok: true };
     } catch (err) {
       logger.error("[auth] updateProfile failed", err);
+      if (options?.throwOnError) {
+        throw err;
+      }
       // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
       // a single visible message.
       toast.error("Couldn't save your settings. Please try again.", {
         id: "update-profile-error",
       });
+      return { ok: false, error: err };
     }
   };
 

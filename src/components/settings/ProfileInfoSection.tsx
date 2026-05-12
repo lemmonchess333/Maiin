@@ -2,7 +2,7 @@ import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import type { UserProfile } from "@/lib/auth";
+import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -31,7 +31,7 @@ interface ProfileInfoSectionProps {
   setWeightKg: (v: number) => void;
   heightCm: number;
   setHeightCm: (v: number) => void;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
 }
 
 export default function ProfileInfoSection({

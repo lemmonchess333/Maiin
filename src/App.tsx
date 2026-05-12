@@ -12,6 +12,7 @@ import { StreaksProvider } from "@/features/streaks/useStreaks";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import { captureError } from "@/lib/errorReporting";
 // Retry wrapper for lazy imports — handles stale cache serving old HTML
 // that references chunk hashes that no longer exist after a deploy.
 // Also catches "Failed to fetch dynamically imported module" errors from
@@ -99,7 +100,15 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    console.error("App crash:", error, info.componentStack);
+    // PR G (audit P1 #14): route the crash through the structured
+    // error-reporting helper instead of a raw console.error. Future
+    // observability backends pick this up; production crashes stay
+    // searchable / correlatable rather than scrolling past as
+    // unstructured console noise.
+    captureError(error, "component", {
+      source: "react-error-boundary",
+      componentStack: info.componentStack,
+    });
     this.setState({ componentStack: info.componentStack || null });
   }
 

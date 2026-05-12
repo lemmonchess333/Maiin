@@ -17,7 +17,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import AccordionSection from "@/components/AccordionSection";
-import type { UserProfile } from "@/lib/auth";
+import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
 interface TrainingSectionProps {
@@ -27,7 +27,7 @@ interface TrainingSectionProps {
   hasUnsavedScheduleChanges: boolean;
   handleDayToggle: (day: number) => void;
   handleApplyScheduleChanges: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   navigate: (path: string, opts?: { state?: Record<string, unknown> }) => void;
   programState: ProgramState | null;
   overrideRunDay: (dayIndex: number, templateId: string) => void;
