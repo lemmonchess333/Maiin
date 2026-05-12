@@ -3,8 +3,9 @@ const admin = require("firebase-admin");
 const jwt = require("jsonwebtoken");
 const { X509Certificate } = require("crypto");
 const { SignedDataVerifier, Environment } = require("@apple/app-store-server-library");
+const applePurchase = require("./applePurchase");
 
-const BUNDLE_ID = "com.tropos.app";
+const BUNDLE_ID = applePurchase.BUNDLE_ID;
 
 /**
  * Apple's public root CA certificates for IAP signing, used to
@@ -161,92 +162,21 @@ async function fetchSubscriptionStatus(originalTransactionId, useSandbox = false
   return response.json();
 }
 
+/**
+ * Thin wrapper that injects the production handles into
+ * applePurchase.applySubscriptionToUser. The pure logic + Firestore
+ * txn body live in ./applePurchase.js — see that module for the
+ * threat model + unit tests pinning the forged-JWS rejection,
+ * lifetime-protection, and stale-event invariants.
+ */
 async function applySubscriptionToUser(uid, signedTransactionInfo) {
-  // VERIFY before we trust any field. verifySignedTransaction throws
-  // if the JWS doesn't chain back to Apple's roots OR if the bundle
-  // ID doesn't match OR if the payload fails schema validation. We
-  // never grant entitlement on an unverified payload.
-  const tx = await verifySignedTransaction(signedTransactionInfo);
-  if (tx.bundleId !== BUNDLE_ID) {
-    // SignedDataVerifier already enforces bundleId, but defence in
-    // depth — a misconfigured verifier would otherwise silently let
-    // another app's transactions through.
-    throw new Error(`Bundle mismatch: ${tx.bundleId}`);
-  }
-  const productId = tx.productId;
-  const originalTransactionId = tx.originalTransactionId;
-  const expiresMs = Number(tx.expiresDate);
-  const expiresAt = new Date(expiresMs);
-  const isActive = expiresAt > new Date();
-
-  // PR D (audit P0 #3): out-of-order + lifetime guard. Pre-PR-D this
-  // function unconditionally wrote subscriptionTier from the inbound
-  // transaction's expiresDate. A late EXPIRED notification (Apple
-  // delivers out-of-order under load) arriving AFTER a fresh
-  // DID_RENEW would silently downgrade an active paying user
-  // because the old transaction's expiresDate is now in the past.
-  //
-  // Fix:
-  //   1. Read the current stored state inside a transaction.
-  //   2. If the user already holds a lifetime entitlement, NEVER
-  //      downgrade based on a subscription event.
-  //   3. If the incoming transaction's expiresDate is older than
-  //      the stored subscriptionExpiresAt, ignore it (stale event).
-  //   4. Only when incoming is the latest known transaction do we
-  //      update.
-  //
-  // Reads are scoped to the user doc; the write is a merge so other
-  // fields aren't clobbered.
-  const db = admin.firestore();
-  const userRef = db.collection("users").doc(uid);
-
-  const result = await db.runTransaction(async (txn) => {
-    const userSnap = await txn.get(userRef);
-    const userData = userSnap.exists ? userSnap.data() : {};
-
-    // Lifetime protection — subscription events can't downgrade
-    // a one-time purchase entitlement.
-    if (userData.planKind === "lifetime") {
-      console.log(`applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`);
-      return {
-        tier: userData.subscriptionTier || "pro",
-        expiresAt: userData.subscriptionExpiresAt || null,
-        skipped: "lifetime",
-      };
-    }
-
-    // Staleness guard. If the stored expiresAt is later than the
-    // incoming transaction's expiresAt, this is a late delivery
-    // for a transaction Apple has already superseded.
-    const storedExpiresAtRaw = userData.subscriptionExpiresAt;
-    const storedExpiresMs = storedExpiresAtRaw
-      ? new Date(storedExpiresAtRaw).getTime()
-      : 0;
-    if (storedExpiresMs > expiresMs) {
-      console.log(`applySubscriptionToUser: skipping stale tx for uid=${uid} (stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`);
-      return {
-        tier: userData.subscriptionTier || "free",
-        expiresAt: storedExpiresAtRaw || null,
-        skipped: "stale",
-      };
-    }
-
-    txn.set(
-      userRef,
-      {
-        subscriptionTier: isActive ? "pro" : "free",
-        appleOriginalTransactionId: originalTransactionId,
-        appleProductId: productId,
-        subscriptionExpiresAt: expiresAt.toISOString(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    return { tier: isActive ? "pro" : "free", expiresAt: expiresAt.toISOString() };
+  return applePurchase.applySubscriptionToUser({
+    firestore: admin.firestore(),
+    verifyTransaction: verifySignedTransaction,
+    signedTransactionInfo,
+    uid,
+    serverTimestamp: () => admin.firestore.FieldValue.serverTimestamp(),
   });
-
-  return result;
 }
 
 // Called by the iOS client immediately after a StoreKit purchase completes.
