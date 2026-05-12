@@ -9,6 +9,13 @@ exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
+// PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
+// ./helpers.js so the test runner can import them without booting
+// firebase-admin. The underscore-prefixed names below are kept as
+// the historical test surface (exports._foo) — they now delegate to
+// helpers.js so there's a single source of truth.
+const helpers = require("./helpers");
+
 // ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
 // ══════════════════════════════════════════════
@@ -116,19 +123,8 @@ exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
 // RATE LIMITER — per-user, Firestore-backed
 // ══════════════════════════════════════════════
 
-/**
- * Pure helper: prune timestamps to those still inside the rolling
- * window. Extracted from the transaction body so the filtering rule
- * is unit-testable without booting Firestore. Stamp comparison is
- * `now - t < windowMs` rather than `>=` to match the original
- * semantics: a 60s-old call inside a 60_000ms window is JUST
- * outside (pruned). Conservative on the boundary in the caller's
- * favour — rate limit clears one tick faster.
- */
-function _pruneOldTimestamps(timestamps, now, windowMs) {
-  if (!Array.isArray(timestamps)) return [];
-  return timestamps.filter((t) => typeof t === "number" && now - t < windowMs);
-}
+/** Delegates to helpers.pruneOldTimestamps — see helpers.js for docs. */
+const _pruneOldTimestamps = helpers.pruneOldTimestamps;
 
 /**
  * Checks if a user has exceeded the allowed number of calls within a window.
@@ -190,30 +186,11 @@ async function isRateLimited(uid, action, maxCalls, windowMs) {
 
 const SCAN_LIMITS = { free: 10, pro: 300 };
 
-/**
- * Pure helper: compute the effective subscription tier from a user
- * profile doc's data. Pro paid > Pro trial > Free. Extracted for
- * unit-testability (no admin SDK dependency).
- */
-function _computeEffectiveTier(userData, now = new Date()) {
-  if (!userData) return "free";
-  if (userData.subscriptionTier === "pro") return "pro";
-  if (userData.trialExpiresAt) {
-    const expiresAt = new Date(userData.trialExpiresAt);
-    if (!isNaN(expiresAt.getTime()) && expiresAt > now) return "pro";
-  }
-  return "free";
-}
+/** Delegates to helpers.computeEffectiveTier — see helpers.js for docs. */
+const _computeEffectiveTier = helpers.computeEffectiveTier;
 
-/**
- * Pure helper: current usage count after accounting for month
- * rollover. Returns 0 if the stored month differs from the
- * supplied currentMonth.
- */
-function _currentMonthCount(usageData, currentMonth) {
-  if (!usageData || usageData.month !== currentMonth) return 0;
-  return Number(usageData.count) || 0;
-}
+/** Delegates to helpers.currentMonthCount — see helpers.js for docs. */
+const _currentMonthCount = helpers.currentMonthCount;
 
 /**
  * Checks and increments the user's monthly AI scan counter atomically.
@@ -775,16 +752,8 @@ exports.askGeminiText = functions.https.onCall(async (data, context) => {
 // The actual price IDs live in env vars so deploys can point at
 // staging vs production prices without code edits. If the env var is
 // missing we fail closed (price not in allowlist).
-function _getStripePriceAllowlist() {
-  const monthly = process.env.STRIPE_PRICE_ID_MONTHLY;
-  const yearly = process.env.STRIPE_PRICE_ID_YEARLY;
-  const lifetime = process.env.STRIPE_PRICE_ID_LIFETIME;
-  const allowlist = {};
-  if (monthly) allowlist[monthly] = { kind: "monthly", mode: "subscription" };
-  if (yearly) allowlist[yearly] = { kind: "yearly", mode: "subscription" };
-  if (lifetime) allowlist[lifetime] = { kind: "lifetime", mode: "payment" };
-  return allowlist;
-}
+/** Delegates to helpers.getStripePriceAllowlist — see helpers.js for docs. */
+const _getStripePriceAllowlist = helpers.getStripePriceAllowlist;
 
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {

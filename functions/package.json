@@ -4,6 +4,10 @@
   "engines": {
     "node": "20"
   },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "@apple/app-store-server-library": "^3.0.0",
     "cors": "^2.8.5",
@@ -11,5 +15,8 @@
     "firebase-functions": "^5.0.0",
     "jsonwebtoken": "^9.0.2",
     "stripe": "^17.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   }
 }
