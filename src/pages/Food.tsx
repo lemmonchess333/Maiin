@@ -2,13 +2,11 @@ import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -22,7 +20,6 @@ import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import {
   Utensils,
-  Plus,
   RotateCcw,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
@@ -36,10 +33,9 @@ import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
-import FoodRow, { type FoodRowGroup } from "@/components/food/FoodRow";
+import FoodMealSection from "@/components/food/FoodMealSection";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
-import MealMacroBar from "@/components/food/MealMacroBar";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
@@ -1198,138 +1194,19 @@ export default function Food() {
           come and go. */}
       {todaysMeals.length > 0 && (
         <motion.div variants={itemVariant} className="space-y-3">
-          {populatedMealKeys.map((mealKey) => {
-            const meals = mealSegmentedMeals[mealKey];
-            const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
-
-            // Aggregate macros for the micro-bar (change #8)
-            const totalPro = meals.reduce((s, m) => s + safeNum(m.totalProtein), 0);
-            const totalCarb = meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0);
-            const totalFat = meals.reduce((s, m) => s + safeNum(m.totalFat), 0);
-
-
-            // Group populated items by food name
-            const grouped = new Map<
-              string,
-              {
-                id: string;
-                foodName: string;
-                meals: typeof meals;
-                totalCal: number;
-                totalPro: number;
-                totalCarb: number;
-                totalFat: number;
-              }
-            >();
-            for (const m of meals) {
-              const key = (m.foodName || "Meal").toLowerCase().trim();
-              const existing = grouped.get(key);
-              if (existing) {
-                existing.meals.push(m);
-                existing.totalCal += safeNum(m.totalCalories);
-                existing.totalPro += safeNum(m.totalProtein);
-                existing.totalCarb += safeNum(m.totalCarbs);
-                existing.totalFat += safeNum(m.totalFat);
-              } else {
-                grouped.set(key, {
-                  id: `${mealKey}-${key}`,
-                  foodName: m.foodName || "Meal",
-                  meals: [m],
-                  totalCal: safeNum(m.totalCalories),
-                  totalPro: safeNum(m.totalProtein),
-                  totalCarb: safeNum(m.totalCarbs),
-                  totalFat: safeNum(m.totalFat),
-                });
-              }
-            }
-            const groupedEntries = Array.from(grouped.values());
-
-            // ── Populated full card ─────────────────────────────────────
-            return (
-              <motion.div
-                key={mealKey}
-                layout
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="bg-card rounded-xl overflow-hidden"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}
-              >
-                {/* Header caption — small uppercase grey matching the hero
-                    card's "LIFT + RUN · +250 FUEL" grammar (change #3 + #7) */}
-                <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
-                  {/* Header caption — meal name · item count · total kcal.
-                      Previously the middle slot was wall-clock time of the
-                      latest log; for users logging meals in clusters that
-                      reads as redundant ("BREAKFAST · 12:09 AM"). Item
-                      count is more glanceable and answers "did I log all
-                      five things?" at a glance. */}
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
-                    <span className="font-semibold">{MEAL_LABELS[mealKey].toUpperCase()}</span>
-                    {groupedEntries.length > 0 && (
-                      <> · {groupedEntries.length} {groupedEntries.length === 1 ? "item" : "items"}</>
-                    )}
-                    {" · "}
-                    {formatCalories(mealCals)} {CALORIE_UNIT.toUpperCase()}
-                  </p>
-                  <button
-                    onClick={() => handleTargetMeal(mealKey)}
-                    aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-                    className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
-                      targetMeal === mealKey
-                        ? "bg-primary text-white"
-                        : "border border-black/[0.12] text-muted-foreground"
-                    )}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Macro micro-bar (change #8) — 3 segments P/C/F. Sits
-                    directly below the caption with 4px breathing room. */}
-                <div className="px-3.5 pb-1.5">
-                  <MealMacroBar
-                    totalProtein={totalPro}
-                    totalCarbs={totalCarb}
-                    totalFat={totalFat}
-                  />
-                </div>
-
-                {/* Food rows with swipe-to-delete (change #2). Each row
-                    receives the lifted `isOpen` + `onOpenChange` props. */}
-                <div className="divide-y divide-border/12">
-                  {groupedEntries.map((group) => {
-                    const rowGroup: FoodRowGroup = {
-                      id: group.id,
-                      foodName: group.foodName,
-                      items: group.meals.flatMap((m) => m.items ?? []),
-                      count: group.meals.length,
-                      totalCal: group.totalCal,
-                      totalPro: group.totalPro,
-                      totalCarb: group.totalCarb,
-                      totalFat: group.totalFat,
-                    };
-                    return (
-                      <FoodRow
-                        key={group.id}
-                        group={rowGroup}
-                        isOpen={openRowId === group.id}
-                        onOpenChange={(open) =>
-                          setOpenRowId(open ? group.id : null)
-                        }
-                        onDelete={() =>
-                          handleDeleteMeal(
-                            group.meals.map((m) => m.id),
-                            group.foodName
-                          )
-                        }
-                        onEdit={() => { setOpenRowId(null); setEditingGroup(group); }}
-                      />
-                    );
-                  })}
-                </div>
-              </motion.div>
-            );
-          })}
+          {populatedMealKeys.map((mealKey) => (
+            <FoodMealSection
+              key={mealKey}
+              mealKey={mealKey}
+              meals={mealSegmentedMeals[mealKey]}
+              targetMeal={targetMeal}
+              openRowId={openRowId}
+              setOpenRowId={setOpenRowId}
+              onTargetMeal={handleTargetMeal}
+              onDelete={handleDeleteMeal}
+              onEdit={setEditingGroup}
+            />
+          ))}
 
           {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
               has slots today is missing. Label is intentionally short:
