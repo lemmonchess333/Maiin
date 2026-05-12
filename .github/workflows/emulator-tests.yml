@@ -29,13 +29,29 @@ jobs:
           cache: 'npm'
 
       # Firebase emulators run on the JVM. Java 21+ is required by
-      # firebase-tools (the CLI errors out hard on JDK <21 since
-      # the 14.x release line). The hosted runner doesn't ship a
-      # default JDK at the right version, so pin Temurin 21 here.
-      - uses: actions/setup-java@v4
+      # firebase-tools (the CLI errors out hard on JDK <21 since the
+      # 14.x release line). The hosted runner ships Java 17 by
+      # default (JAVA_HOME_17_X64 stays preset on the image even
+      # after we install Java 21); setup-java@v4 with java-version
+      # '21' repoints JAVA_HOME + PATH at the 21 install.
+      #
+      # Quoted as a string because YAML parses bare `21` as int and
+      # some action versions are finicky about the type — the docs
+      # canonically show quoted strings.
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: '21'
+          architecture: x64
+
+      # Debug — surfaces in the run log so a future "why is Java
+      # 17 again" can be diagnosed in one click rather than
+      # bisecting workflow files.
+      - name: Verify Java version
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
 
       - run: npm ci
       - run: npm ci --prefix functions
