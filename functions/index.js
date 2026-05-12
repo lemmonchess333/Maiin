@@ -15,6 +15,10 @@ exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 // the historical test surface (exports._foo) — they now delegate to
 // helpers.js so there's a single source of truth.
 const helpers = require("./helpers");
+// Rate limiter + quota live in their own module so integration
+// tests can drive them against the emulator with a test-controlled
+// firestore handle (see functions/__tests__/integration/).
+const rateLimiter = require("./rateLimiter");
 
 // ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
@@ -146,38 +150,9 @@ const _pruneOldTimestamps = helpers.pruneOldTimestamps;
  * @param {number} windowMs - Time window in milliseconds
  * @returns {Promise<boolean>} true if rate limited (should block)
  */
+/** Delegates to rateLimiter.isRateLimited — see rateLimiter.js for docs. */
 async function isRateLimited(uid, action, maxCalls, windowMs) {
-  const rl = admin.firestore().collection("rateLimits").doc(`${uid}_${action}`);
-  const now = Date.now();
-
-  try {
-    return await admin.firestore().runTransaction(async (tx) => {
-      const doc = await tx.get(rl);
-      const data = doc.exists ? doc.data() : { timestamps: [] };
-      const recent = _pruneOldTimestamps(data.timestamps, now, windowMs);
-
-      if (recent.length >= maxCalls) {
-        return true; // rate limited
-      }
-
-      // Record this call inside the same transaction so concurrent
-      // attempts serialise. Cap the stored array at maxCalls to keep
-      // the doc bounded even under sustained traffic.
-      recent.push(now);
-      const trimmed = recent.slice(-maxCalls);
-      tx.set(rl, {
-        timestamps: trimmed,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      return false;
-    });
-  } catch (err) {
-    console.error(`Rate limiter error for ${uid}/${action}:`, err.message);
-    // PR C: fail-closed for cost-sensitive paths. Surfaces as 429 to
-    // the client, which retries with backoff — preferable to silently
-    // letting expensive AI calls through during a Firestore incident.
-    return true;
-  }
+  return rateLimiter.isRateLimited(admin.firestore(), uid, action, maxCalls, windowMs);
 }
 
 // ══════════════════════════════════════════════
@@ -217,58 +192,9 @@ const _currentMonthCount = helpers.currentMonthCount;
  * @param {string} uid - User ID
  * @returns {Promise<{allowed: boolean, remaining: number, limit: number, error?: string}>}
  */
+/** Delegates to rateLimiter.checkMonthlyQuota — see rateLimiter.js for docs. */
 async function checkMonthlyQuota(uid) {
-  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-  const db = admin.firestore();
-  const userRef = db.collection("users").doc(uid);
-  const usageRef = db.collection("scanUsage").doc(uid);
-
-  try {
-    return await db.runTransaction(async (tx) => {
-      // Read both docs inside the transaction so the tier check and
-      // the increment cannot drift relative to a concurrent
-      // subscription change.
-      const userSnap = await tx.get(userRef);
-      const effectiveTier = _computeEffectiveTier(
-        userSnap.exists ? userSnap.data() : null,
-      );
-      const limit = SCAN_LIMITS[effectiveTier];
-
-      const usageSnap = await tx.get(usageRef);
-      const count = _currentMonthCount(
-        usageSnap.exists ? usageSnap.data() : null,
-        currentMonth,
-      );
-
-      if (count >= limit) {
-        return { allowed: false, remaining: 0, limit };
-      }
-
-      // Atomic increment inside the transaction. The set() with a
-      // computed `count + 1` is safe because we're inside the lock;
-      // we don't need FieldValue.increment here (and using it would
-      // require a second round-trip via tx.update). The serverTimestamp
-      // is preserved for ops visibility.
-      tx.set(usageRef, {
-        count: count + 1,
-        month: currentMonth,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return { allowed: true, remaining: limit - count - 1, limit };
-    });
-  } catch (err) {
-    console.error(`Quota check error for ${uid}:`, err.message);
-    // PR C: fail-closed. Cost-control boundary — never silently
-    // grant access on a Firestore failure. Caller translates this
-    // into a 429 with a retry-recommendation message.
-    return {
-      allowed: false,
-      remaining: 0,
-      limit: SCAN_LIMITS.free,
-      error: "quota-check-failed",
-    };
-  }
+  return rateLimiter.checkMonthlyQuota(admin.firestore(), uid);
 }
 
 // Pure helpers exported for unit-testability. Not part of the public

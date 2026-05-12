@@ -1,0 +1,83 @@
+name: Firebase Emulator Tests
+
+# Runs the suites that need the Firebase Auth + Firestore emulators:
+#   - firestore.rules.test.ts (PR K)            via `npm run test:rules`
+#   - functions/__tests__/integration*.test.js  via `npm test --prefix functions`
+#   - e2e/auth.spec.ts (PR P)                   via `npm run test:e2e`
+#
+# These suites all skip gracefully when emulator env vars are unset
+# (matching the firestore.rules.test.ts pattern). This workflow boots
+# the emulators once and runs all three against the same instance so
+# CI cost stays bounded.
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  emulator-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Firebase emulators run on the JVM. Java is the only non-npm
+      # dependency that needs explicit setup on the GitHub runner.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npm ci --prefix functions
+      - run: npx playwright install --with-deps chromium
+
+      # Firebase CLI provides the emulator binaries. Install globally
+      # so subsequent `firebase emulators:exec` invocations resolve it.
+      - run: npm install -g firebase-tools
+
+      # Build the app once so `npm run preview` can serve the bundle to
+      # Playwright. Skip the prod env-var injection — the E2E suite
+      # targets the emulator, not production Firebase.
+      - run: npm run build
+
+      # ── Suite 1: Firestore rules tests
+      # Uses the firebase emulators:exec wrapper which boots the
+      # emulator, runs the command, then tears it down. Project ID
+      # matches the suite's `PROJECT_ID` constants.
+      - name: Run firestore.rules tests
+        run: npm run test:rules
+
+      # ── Suite 2: Functions integration tests
+      # Boots Auth + Firestore emulators, exports the host env vars,
+      # then runs the functions vitest suite. The integration tests
+      # check FIRESTORE_EMULATOR_HOST themselves and skip when unset.
+      - name: Run functions integration tests
+        run: |
+          firebase emulators:exec --only auth,firestore --project demo-tropos \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm test --prefix functions'
+
+      # ── Suite 3: Authenticated E2E
+      # Seeds the test user against the emulator, then runs
+      # auth.spec.ts (gated on E2E_AUTH_EMULATOR). Playwright boots its
+      # own preview server via webServer in playwright.config.ts.
+      - name: Run authenticated E2E
+        run: |
+          firebase emulators:exec --only auth,firestore --project demo-tropos \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-tropos npm run seed:e2e && E2E_AUTH_EMULATOR=1 npm run test:e2e -- auth.spec.ts'
+
+      # Upload Playwright artefacts on failure so investigating a CI
+      # break doesn't require re-running locally.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

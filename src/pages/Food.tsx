@@ -14,8 +14,6 @@ const itemVariant = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
-const TAP_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
-
 const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
@@ -28,7 +26,6 @@ import {
   SendHorizontal,
   PenLine,
   RotateCcw,
-  Star,
   X,
 } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
@@ -50,6 +47,8 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import ScanQuotaIndicator from "@/components/food/ScanQuotaIndicator";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import ScanMealButton from "@/components/food/ScanMealButton";
+import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
+import FoodSuggestionsDropdown from "@/components/food/FoodSuggestionsDropdown";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -1203,48 +1202,16 @@ export default function Food() {
             </button>
           )}
           {showSuggestions && (
-            <div ref={suggestionsRef} className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto">
-              {suggestions.length > 0 && (<div>{suggestions.map((s, i) => (
-                <button key={`ai-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSuggestionSelect(s)} className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0">
-                  <span className="text-sm font-medium text-foreground">{s.name} — <span className="text-muted-foreground font-normal">{s.serving}</span></span>
-                  <span className="text-xs text-muted-foreground tabular-nums shrink-0">{s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g</span>
-                </button>
-              ))}</div>)}
-              {offResults.length > 0 && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                {offResults.map((food, i) => (
-                  <button key={`off-${i}`} onMouseDown={(e) => e.preventDefault()} onClick={() => handleOFFSelect(food)} className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{food.name}</p>
-                        {food.brand && <p className="text-xs text-muted-foreground truncate">{food.brand}</p>}
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span className="text-orange-500 font-medium">{food.calories} cal</span>
-                          <span>&middot;</span><span>P {food.protein}g</span><span>C {food.carbs}g</span><span>F {food.fat}g</span>
-                          <span className="text-xs">per {food.servingSize}</span>
-                        </div>
-                      </div>
-                      <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
-                    </div>
-                  </button>
-                ))}
-              </motion.div>)}
-              {/* "No matches" fallback row — surfaces only when the
-                  OFF API completed with zero matches AND no local
-                  suggestions exist. Gives the user an explicit
-                  next action (manual entry) rather than an
-                  empty/disappearing dropdown. */}
-              {suggestions.length === 0 && offResults.length === 0 && offEmpty && (
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { haptic(); setManualOpen(true); }}
-                  className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                >
-                  <span className="text-sm text-muted-foreground">No matches found</span>
-                  <span className="text-xs font-medium" style={{ color: THEME.semantic.nutrition }}>Log manually</span>
-                </button>
-              )}
-            </div>
+            <FoodSuggestionsDropdown
+              ref={suggestionsRef}
+              suggestions={suggestions}
+              offResults={offResults}
+              offEmpty={offEmpty}
+              offSearchQuery={offSearchQuery}
+              onSelectSuggestion={handleSuggestionSelect}
+              onSelectOff={handleOFFSelect}
+              onLogManually={() => { haptic(); setManualOpen(true); }}
+            />
           )}
         </div>
         <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
@@ -1354,60 +1321,15 @@ export default function Food() {
         </Suspense>
       )}
 
-      {/* Quick Add — merged section (quick meals + favourites + frequently logged) */}
-      {/* Quick Add — single merged surface (favourites + history). Previously
-          this was two stacked rows ("Quick add" recents + a separate
-          "Quick Add" favourites strip via QuickRelog) which duplicated any
-          food that was both recent and favourited. */}
+      {/* Quick Add — merged favourites + recents row, extracted to
+          components/food/FoodQuickAddRow.tsx. */}
       <motion.div variants={itemVariant} className="mt-3.5">
-        <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Star className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
-          Quick Add
-        </p>
-        <div className="relative">
-          <div
-            ref={quickAddScrollRef}
-            className="flex gap-2 pb-1 -mx-1 px-1 snap-x snap-mandatory"
-            style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
-          >
-            {quickMeals.map((meal, i) => (
-              /* Pill structure: outer pill caps width via `max-w-[240px]`,
-                 inside an inline-flex with the food name (truncate +
-                 min-w-0 so the ellipsis works inside flex) and the
-                 calorie suffix (shrink-0 so it stays visible even when
-                 the name truncates). Replaces the previous JS char-
-                 count truncation, which was brittle across viewport
-                 widths and put the trailing "…" wherever the count
-                 landed regardless of actual rendered width. CSS
-                 truncation handles all those cases automatically. */
-              <motion.button
-                key={`${meal.name}-${i}`}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.16, ease: TAP_EASE }}
-                onClick={() => { haptic(); handleQuickMealAdd(meal); }}
-                disabled={quickAdding !== null}
-                className={cn(
-                  "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
-                  quickAdding !== null && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                <span className="inline-flex items-center gap-1 max-w-full min-w-0">
-                  <span className="truncate min-w-0 text-foreground">{meal.name}</span>
-                  <span className="shrink-0 text-muted-foreground">· {meal.cal} kcal</span>
-                </span>
-              </motion.button>
-            ))}
-            <div className="shrink-0 w-4" aria-hidden="true" />
-          </div>
-          {/* Right-edge fade gradient was here. Removed because in
-              practice it sat on top of the rightmost chip's text and
-              read as a layout bug ("text covered by a grey overlay")
-              rather than a "more content scroll right" cue. The
-              horizontal-scroll affordance is enough on its own — chip
-              cards spilling past viewport is a familiar mobile pattern
-              and the JS truncation above keeps individual chips from
-              extending unreasonably far. */}
-        </div>
+        <FoodQuickAddRow
+          ref={quickAddScrollRef}
+          meals={quickMeals}
+          adding={quickAdding}
+          onAdd={handleQuickMealAdd}
+        />
       </motion.div>
 
 

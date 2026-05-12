@@ -14,5 +14,10 @@ export default defineConfig({
     environment: "node",
     include: ["__tests__/**/*.test.js"],
     globals: false,
+    // Integration tests (under __tests__/integration/) drive the
+    // Firestore emulator and need a generous timeout for the
+    // 20-parallel-quota concurrency check. Unit tests are well
+    // under this ceiling.
+    testTimeout: 10_000,
   },
 });
