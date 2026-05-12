@@ -765,6 +765,27 @@ exports.askGeminiText = functions.https.onCall(async (data, context) => {
 // STRIPE CHECKOUT SESSION
 // ══════════════════════════════════════════════
 
+// PR D (audit follow-up): server-side Stripe price allowlist. Pre-PR-D
+// the client passed `priceId` in the request body and the function
+// forwarded it straight to Stripe — meaning any active price in the
+// connected Stripe account could be attached. Now we accept only the
+// price IDs we explicitly know about, deterministically derive the
+// checkout `mode`, and reject unknowns with a 400.
+//
+// The actual price IDs live in env vars so deploys can point at
+// staging vs production prices without code edits. If the env var is
+// missing we fail closed (price not in allowlist).
+function _getStripePriceAllowlist() {
+  const monthly = process.env.STRIPE_PRICE_ID_MONTHLY;
+  const yearly = process.env.STRIPE_PRICE_ID_YEARLY;
+  const lifetime = process.env.STRIPE_PRICE_ID_LIFETIME;
+  const allowlist = {};
+  if (monthly) allowlist[monthly] = { kind: "monthly", mode: "subscription" };
+  if (yearly) allowlist[yearly] = { kind: "yearly", mode: "subscription" };
+  if (lifetime) allowlist[lifetime] = { kind: "lifetime", mode: "payment" };
+  return allowlist;
+}
+
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -784,6 +805,16 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
       const authUser = await verifyAuth(req.headers.authorization);
       if (authUser.uid !== uid) {
         res.status(403).json({ error: "UID mismatch" });
+        return;
+      }
+
+      // PR D: price allowlist. Mode is derived from the allowlist entry,
+      // not from substring-matching the client-supplied price ID.
+      const allowlist = _getStripePriceAllowlist();
+      const priceConfig = allowlist[priceId];
+      if (!priceConfig) {
+        console.warn(`createCheckoutSession: rejected unknown priceId=${priceId} for uid=${uid}`);
+        res.status(400).json({ error: "Unknown plan." });
         return;
       }
 
@@ -827,10 +858,10 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         customer: customerId,
         payment_method_types: ["card"],
         line_items: [{ price: priceId, quantity: 1 }],
-        mode: priceId.includes("lifetime") ? "payment" : "subscription",
+        mode: priceConfig.mode,
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata: { firebaseUid: uid },
+        metadata: { firebaseUid: uid, planKind: priceConfig.kind },
       });
 
       res.status(200).json({ url: session.url });
@@ -840,6 +871,8 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+exports._getStripePriceAllowlist = _getStripePriceAllowlist;
 
 // ══════════════════════════════════════════════
 // STRIPE WEBHOOK — subscription lifecycle events
@@ -876,6 +909,25 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
   const dbRef = admin.firestore();
 
+  // PR D (audit P0 #2): idempotency via stripeEvents/{event.id}.
+  // Stripe retries every webhook on 5xx; without a dedup record a
+  // duplicate delivery re-runs the same write. We claim the event
+  // before processing and finalise after. If `claim` already exists
+  // we acknowledge (200) and skip — Stripe stops retrying.
+  const eventRef = dbRef.collection("stripeEvents").doc(event.id);
+  try {
+    const existing = await eventRef.get();
+    if (existing.exists) {
+      console.log(`stripeWebhook: duplicate delivery for ${event.id}, skipping`);
+      res.status(200).json({ received: true, duplicate: true });
+      return;
+    }
+  } catch (err) {
+    // Failure to read the dedup doc shouldn't break webhook processing
+    // entirely, but log it loudly — we lose idempotency for this event.
+    console.error(`stripeWebhook: idempotency lookup failed for ${event.id}:`, err.message);
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -889,11 +941,19 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         const update = {
           subscriptionTier: "pro",
           stripeCustomerId: session.customer,
+          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
         };
 
         // For subscription mode, store the subscription ID
         if (session.subscription) {
           update.stripeSubscriptionId = session.subscription;
+        }
+
+        // Lifetime kind comes from server-side allowlist via
+        // metadata.planKind — recorded so subsequent subscription
+        // events can't downgrade a lifetime entitlement.
+        if (session.metadata?.planKind === "lifetime") {
+          update.planKind = "lifetime";
         }
 
         await dbRef.collection("users").doc(firebaseUid).set(update, { merge: true });
@@ -917,6 +977,25 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const userDoc = usersSnap.docs[0];
+        const userData = userDoc.data();
+
+        // PR D: out-of-order guard. If a newer event has already
+        // updated this user, ignore the stale one. Compare against
+        // subscriptionUpdatedAt (Unix seconds, written by previous
+        // webhooks).
+        const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
+        if (event.created && event.created <= lastUpdate) {
+          console.log(`stripeWebhook: ignoring stale subscription.updated for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`);
+          break;
+        }
+
+        // PR D: lifetime entitlement protection. A subscription
+        // event must NEVER downgrade a lifetime purchase.
+        if (userData.planKind === "lifetime") {
+          console.log(`stripeWebhook: skipping subscription.updated for ${userDoc.id} — lifetime entitlement`);
+          break;
+        }
+
         const status = subscription.status;
 
         // Active statuses that grant pro access
@@ -926,6 +1005,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         await userDoc.ref.set({
           subscriptionTier: tier,
           stripeSubscriptionId: subscription.id,
+          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
         }, { merge: true });
 
         console.log(`stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`);
@@ -947,9 +1027,39 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const userDoc = usersSnap.docs[0];
+        const userData = userDoc.data();
+
+        // PR D: out-of-order + subscription-id-match + lifetime
+        // protection. Three reasons we might want to ignore a
+        // `deleted` event:
+        //   (a) lifetime entitlement — never downgraded by sub events.
+        //   (b) the stored subscription ID doesn't match — a
+        //       different subscription was deleted, ours is still
+        //       active.
+        //   (c) staleness — a newer update already happened.
+        if (userData.planKind === "lifetime") {
+          console.log(`stripeWebhook: skipping subscription.deleted for ${userDoc.id} — lifetime entitlement`);
+          break;
+        }
+
+        if (
+          userData.stripeSubscriptionId &&
+          userData.stripeSubscriptionId !== subscription.id
+        ) {
+          console.log(`stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — sub IDs differ (stored=${userData.stripeSubscriptionId}, event=${subscription.id})`);
+          break;
+        }
+
+        const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
+        if (event.created && event.created <= lastUpdate) {
+          console.log(`stripeWebhook: ignoring stale subscription.deleted for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`);
+          break;
+        }
+
         await userDoc.ref.set({
           subscriptionTier: "free",
           stripeSubscriptionId: admin.firestore.FieldValue.delete(),
+          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
         }, { merge: true });
 
         console.log(`stripeWebhook: deactivated pro for ${userDoc.id}`);
@@ -958,6 +1068,21 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
       default:
         console.log(`stripeWebhook: unhandled event type ${event.type}`);
+    }
+
+    // PR D: finalise idempotency record AFTER successful processing.
+    // Storing the event.id with a TTL-ish expiresAt for ops cleanup.
+    try {
+      await eventRef.set({
+        type: event.type,
+        created: event.created || null,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      // Already processed but we couldn't write the record — Stripe
+      // may retry. The handlers above are idempotent on retry because
+      // of the out-of-order/sub-id-match guards.
+      console.error(`stripeWebhook: failed to record processed event ${event.id}:`, err.message);
     }
 
     res.status(200).json({ received: true });

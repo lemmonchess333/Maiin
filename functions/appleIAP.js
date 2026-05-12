@@ -179,18 +179,74 @@ async function applySubscriptionToUser(uid, signedTransactionInfo) {
   const expiresAt = new Date(expiresMs);
   const isActive = expiresAt > new Date();
 
-  await admin.firestore().collection("users").doc(uid).set(
-    {
-      subscriptionTier: isActive ? "pro" : "free",
-      appleOriginalTransactionId: originalTransactionId,
-      appleProductId: productId,
-      subscriptionExpiresAt: expiresAt.toISOString(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    { merge: true },
-  );
+  // PR D (audit P0 #3): out-of-order + lifetime guard. Pre-PR-D this
+  // function unconditionally wrote subscriptionTier from the inbound
+  // transaction's expiresDate. A late EXPIRED notification (Apple
+  // delivers out-of-order under load) arriving AFTER a fresh
+  // DID_RENEW would silently downgrade an active paying user
+  // because the old transaction's expiresDate is now in the past.
+  //
+  // Fix:
+  //   1. Read the current stored state inside a transaction.
+  //   2. If the user already holds a lifetime entitlement, NEVER
+  //      downgrade based on a subscription event.
+  //   3. If the incoming transaction's expiresDate is older than
+  //      the stored subscriptionExpiresAt, ignore it (stale event).
+  //   4. Only when incoming is the latest known transaction do we
+  //      update.
+  //
+  // Reads are scoped to the user doc; the write is a merge so other
+  // fields aren't clobbered.
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(uid);
 
-  return { tier: isActive ? "pro" : "free", expiresAt: expiresAt.toISOString() };
+  const result = await db.runTransaction(async (txn) => {
+    const userSnap = await txn.get(userRef);
+    const userData = userSnap.exists ? userSnap.data() : {};
+
+    // Lifetime protection — subscription events can't downgrade
+    // a one-time purchase entitlement.
+    if (userData.planKind === "lifetime") {
+      console.log(`applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`);
+      return {
+        tier: userData.subscriptionTier || "pro",
+        expiresAt: userData.subscriptionExpiresAt || null,
+        skipped: "lifetime",
+      };
+    }
+
+    // Staleness guard. If the stored expiresAt is later than the
+    // incoming transaction's expiresAt, this is a late delivery
+    // for a transaction Apple has already superseded.
+    const storedExpiresAtRaw = userData.subscriptionExpiresAt;
+    const storedExpiresMs = storedExpiresAtRaw
+      ? new Date(storedExpiresAtRaw).getTime()
+      : 0;
+    if (storedExpiresMs > expiresMs) {
+      console.log(`applySubscriptionToUser: skipping stale tx for uid=${uid} (stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`);
+      return {
+        tier: userData.subscriptionTier || "free",
+        expiresAt: storedExpiresAtRaw || null,
+        skipped: "stale",
+      };
+    }
+
+    txn.set(
+      userRef,
+      {
+        subscriptionTier: isActive ? "pro" : "free",
+        appleOriginalTransactionId: originalTransactionId,
+        appleProductId: productId,
+        subscriptionExpiresAt: expiresAt.toISOString(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return { tier: isActive ? "pro" : "free", expiresAt: expiresAt.toISOString() };
+  });
+
+  return result;
 }
 
 // Called by the iOS client immediately after a StoreKit purchase completes.
@@ -227,11 +283,36 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
     // bundle ID and notification structure before we read anything.
     const payload = await verifyNotification(signedPayload);
     const notificationType = payload.notificationType;
+    const notificationUUID = payload.notificationUUID;
     const signedTransactionInfo = payload.data && payload.data.signedTransactionInfo;
     if (!signedTransactionInfo) {
       res.status(400).json({ error: "No signedTransactionInfo in payload" });
       return;
     }
+
+    // PR D (audit P0 #3): idempotency via appleNotifications/{uuid}.
+    // Apple retries notifications on 5xx; without dedup a re-delivery
+    // re-runs applySubscriptionToUser. The verified outer payload's
+    // notificationUUID is a stable per-delivery identifier.
+    if (notificationUUID) {
+      const notifRef = admin
+        .firestore()
+        .collection("appleNotifications")
+        .doc(notificationUUID);
+      try {
+        const existing = await notifRef.get();
+        if (existing.exists) {
+          console.log(`appleIAPWebhook: duplicate delivery for ${notificationUUID}, skipping`);
+          res.status(200).json({ ok: true, duplicate: true });
+          return;
+        }
+      } catch (err) {
+        // Failure to read dedup doc shouldn't block processing, but
+        // we lose idempotency for this delivery — log loudly.
+        console.error(`appleIAPWebhook: idempotency lookup failed for ${notificationUUID}:`, err.message);
+      }
+    }
+
     // Verify the inner transaction JWS separately so the lookup by
     // originalTransactionId uses a trusted value.
     const tx = await verifySignedTransaction(signedTransactionInfo);
@@ -248,13 +329,48 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
       console.warn(
         `appleIAPWebhook: no user for originalTransactionId=${originalTransactionId} type=${notificationType}`,
       );
+      // Still record the notification as processed so retries don't
+      // hammer the no-match case.
+      if (notificationUUID) {
+        await admin
+          .firestore()
+          .collection("appleNotifications")
+          .doc(notificationUUID)
+          .set({
+            type: notificationType,
+            originalTransactionId,
+            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+            result: "no-user-match",
+          })
+          .catch((err) => console.error(`appleIAPWebhook: dedup record write failed:`, err.message));
+      }
       res.status(200).json({ ok: true });
       return;
     }
 
     const uid = usersSnap.docs[0].id;
-    await applySubscriptionToUser(uid, signedTransactionInfo);
-    console.log(`appleIAPWebhook: ${notificationType} applied for uid=${uid}`);
+    const applied = await applySubscriptionToUser(uid, signedTransactionInfo);
+
+    // PR D: finalise dedup record after successful processing.
+    if (notificationUUID) {
+      try {
+        await admin
+          .firestore()
+          .collection("appleNotifications")
+          .doc(notificationUUID)
+          .set({
+            type: notificationType,
+            originalTransactionId,
+            uid,
+            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+            result: applied.skipped || "applied",
+          });
+      } catch (err) {
+        console.error(`appleIAPWebhook: failed to record processed notification ${notificationUUID}:`, err.message);
+      }
+    }
+
+    console.log(`appleIAPWebhook: ${notificationType} applied for uid=${uid} (${applied.skipped || "applied"})`);
     res.status(200).json({ ok: true });
   } catch (err) {
     console.error("appleIAPWebhook: error", err);
