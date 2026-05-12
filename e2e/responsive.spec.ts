@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /* PR F regression guard. Sweeps the unauthenticated entry surface
  * across iPhone SE (1st gen 320px → smallest viewport we still
@@ -11,7 +11,18 @@ import { test, expect, devices } from '@playwright/test';
  * without Firebase mocking, but the legal pages share the same
  * stylesheet, root layout, and token pipeline — if --primary-strong
  * fails to build into the CSS or a hardcoded width breaks small-screen
- * layout, these surfaces will surface the failure first. */
+ * layout, these surfaces will surface the failure first.
+ *
+ * PR B (audit follow-up): the Safari-standalone test was previously
+ * in this file inside a `test.describe` with
+ * `test.use({ ...devices['iPhone 14'] })`. Playwright rejects that
+ * pattern at config-load time because the `devices` config spread
+ * includes `defaultBrowserType`, which forces a new worker — and
+ * Playwright disallows that inside `describe`. Moved to
+ * `e2e/responsive-safari-standalone.spec.ts` (file-level scope) so
+ * the rest of this file can run, and so other responsive tests
+ * here aren't silently switched to webkit by an over-broad
+ * `test.use`. */
 
 const VIEWPORTS = [
   { name: 'iPhone SE (320×568)', width: 320, height: 568 },
@@ -63,17 +74,5 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
   });
 });
 
-test.describe('Responsive — Safari standalone (PWA-ish)', () => {
-  /* Approximates iOS Safari "Add to Home Screen" mode. The app's
-     manifest declares display: standalone, so this is the closest E2E
-     can get without a real device. Validates the privacy route
-     renders against an iPhone-shaped UA + small viewport. */
-  test.use({ ...devices['iPhone 14'] });
-
-  test('privacy page renders on iPhone-shaped UA', async ({ page }) => {
-    await page.goto('/privacy');
-    await expect(page.locator('#root')).toBeAttached();
-    const text = await page.locator('#root').textContent();
-    expect((text ?? '').length).toBeGreaterThan(100);
-  });
-});
+// Safari-standalone test moved to e2e/responsive-safari-standalone.spec.ts.
+// See the file header for the rationale.

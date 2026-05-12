@@ -59,10 +59,20 @@ test.describe('Navigation & UI', () => {
     await page.goto('/');
     // Wait for SW registration
     await page.waitForTimeout(2000);
-    const swRegistrations = await page.evaluate(() =>
-      navigator.serviceWorker?.getRegistrations().then(regs => regs.length)
+    // PR B (audit): pre-fix this asserted `>= 0` against a value
+    // that's either undefined (no SW support) or a number — meaning
+    // the assertion was satisfied even when the optional chain
+    // short-circuited and the SW wasn't queried at all. Split into
+    // two real checks: (a) the browser supports SW, and (b) at
+    // least one registration exists (Workbox registers one for the
+    // PWA shell). If either silently breaks, the PWA install +
+    // offline-first experience is broken and we want to know.
+    const hasServiceWorkerApi = await page.evaluate(() => 'serviceWorker' in navigator);
+    expect(hasServiceWorkerApi, 'browser must expose navigator.serviceWorker').toBe(true);
+
+    const regCount = await page.evaluate(() =>
+      navigator.serviceWorker.getRegistrations().then(regs => regs.length)
     );
-    // SW should be registered (or at least not throw)
-    expect(swRegistrations).toBeGreaterThanOrEqual(0);
+    expect(regCount, 'at least one service worker should be registered (Workbox PWA shell)').toBeGreaterThan(0);
   });
 });
