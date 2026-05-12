@@ -25,6 +25,14 @@ const rateLimiter = require("./rateLimiter");
 // emulator in the integration suite.
 const auditLog = require("./auditLog");
 
+// Payment endpoints use a tighter cors config keyed off the same
+// origin allowlist as Stripe return URLs. AI / food-analysis
+// endpoints stay on the permissive `cors` above — they're already
+// gated by Bearer auth and don't carry the same blast radius.
+// See helpers.getAppCorsOptions for the rejection-via-Error
+// short-circuit semantics.
+const corsForPayments = require("cors")(helpers.getAppCorsOptions());
+
 // Module-load self-check: in deployed (non-emulator) functions,
 // the final resolved Stripe return-URL allowlist MUST include the
 // canonical prod origin. If a deploy sets STRIPE_RETURN_URL_ORIGINS
@@ -712,13 +720,11 @@ const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 /** Delegates to helpers.buildStripeReturnUrl — see helpers.js for docs. */
 const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 
-// FOLLOWUP(payment-security): restrict CORS for payment endpoints
-//   to the same allowed app origins.
 // FOLLOWUP(payment-security): tighten per-uid rate limiting on
 //   createCheckoutSession; the existing 5/10min check uses body.uid
 //   pre-reorder semantics and should re-key on authUser.uid.
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
+  corsForPayments(req, res, async () => {
     try {
       if (req.method !== "POST") {
         res.status(405).json({ error: "Method not allowed" });

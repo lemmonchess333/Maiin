@@ -22,6 +22,8 @@ const {
   ALLOWED_CHECKOUT_OUTCOMES,
   getStripeReturnBaseUrl,
   buildStripeReturnUrl,
+  isAllowedAppOrigin,
+  getAppCorsOptions,
 } = require("../helpers");
 
 describe("pruneOldTimestamps", () => {
@@ -505,5 +507,152 @@ describe("buildStripeReturnUrl", () => {
         `https://troposfit.com/settings?checkout=${outcome}`,
       );
     }
+  });
+});
+
+describe("isAllowedAppOrigin", () => {
+  // Same env-snapshot pattern as the rest of the suite — each test
+  // starts from a clean "deployed-prod function" baseline; tests
+  // that need emulator semantics opt in explicitly.
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.STRIPE_RETURN_URL_ORIGINS;
+    delete process.env.FUNCTIONS_EMULATOR;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("permits the canonical prod origin", () => {
+    expect(isAllowedAppOrigin("https://troposfit.com")).toBe(true);
+  });
+
+  it("permits the www variant", () => {
+    expect(isAllowedAppOrigin("https://www.troposfit.com")).toBe(true);
+  });
+
+  it("permits the GitHub Pages staging origin", () => {
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(true);
+  });
+
+  it("rejects an arbitrary external origin", () => {
+    // The negative bedrock — the whole point of switching cors off
+    // `origin: true` is that evil.example can't call the function.
+    expect(isAllowedAppOrigin("https://evil.example")).toBe(false);
+  });
+
+  it("rejects localhost in deployed-prod mode", () => {
+    // Without FUNCTIONS_EMULATOR=true, a deployed prod function
+    // must not honour a localhost Origin header. (A browser would
+    // never send one; this defends against a fetch with a forged
+    // Origin from a non-browser context.)
+    expect(isAllowedAppOrigin("http://localhost:4173")).toBe(false);
+    expect(isAllowedAppOrigin("http://127.0.0.1:5173")).toBe(false);
+  });
+
+  it("permits localhost only when FUNCTIONS_EMULATOR=true", () => {
+    // Mirrors the Stripe return-URL allowlist gating.
+    process.env.FUNCTIONS_EMULATOR = "true";
+    expect(isAllowedAppOrigin("http://localhost:4173")).toBe(true);
+    expect(isAllowedAppOrigin("http://localhost:5173")).toBe(true);
+    expect(isAllowedAppOrigin("http://127.0.0.1:4173")).toBe(true);
+    expect(isAllowedAppOrigin("http://127.0.0.1:5173")).toBe(true);
+  });
+
+  it("permits a missing / undefined Origin (non-browser callers)", () => {
+    // Browsers always send Origin on cross-origin XHR/fetch; only
+    // non-browser callers (curl, server-to-server, native apps
+    // without a webview) omit it. Bearer-token auth is the real
+    // gate for those callers — CORS is the wrong layer to block
+    // them, and rejecting an absent Origin would break legitimate
+    // emergency curl access for ops debugging.
+    expect(isAllowedAppOrigin(undefined)).toBe(true);
+    expect(isAllowedAppOrigin(null)).toBe(true);
+    expect(isAllowedAppOrigin("")).toBe(true);
+  });
+
+  it("rejects non-string Origin values", () => {
+    // If a malformed Origin header ever sneaks through as a
+    // non-string, fail closed rather than try to coerce it.
+    expect(isAllowedAppOrigin(123)).toBe(false);
+    expect(isAllowedAppOrigin({})).toBe(false);
+    expect(isAllowedAppOrigin([])).toBe(false);
+  });
+
+  it("honours STRIPE_RETURN_URL_ORIGINS override (replace-not-extend)", () => {
+    // Same override semantics as isAllowedStripeReturnUrl —
+    // setting the env var replaces the defaults, doesn't extend.
+    process.env.STRIPE_RETURN_URL_ORIGINS = "https://app.example.com";
+    expect(isAllowedAppOrigin("https://app.example.com")).toBe(true);
+    expect(isAllowedAppOrigin("https://troposfit.com")).toBe(false);
+  });
+});
+
+describe("getAppCorsOptions", () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.STRIPE_RETURN_URL_ORIGINS;
+    delete process.env.FUNCTIONS_EMULATOR;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  function invokeOrigin(opts, origin) {
+    return new Promise((resolve) => {
+      opts.origin(origin, (err, allowed) => {
+        resolve({ err, allowed });
+      });
+    });
+  }
+
+  it("calls back with (null, true) for an allowed origin", async () => {
+    // Happy path — the cors module accepts and sets
+    // Access-Control-Allow-Origin to the allowed value.
+    const { err, allowed } = await invokeOrigin(
+      getAppCorsOptions(),
+      "https://troposfit.com",
+    );
+    expect(err).toBeNull();
+    expect(allowed).toBe(true);
+  });
+
+  it("calls back with (null, true) for a missing Origin (non-browser callers)", async () => {
+    const { err, allowed } = await invokeOrigin(getAppCorsOptions(), undefined);
+    expect(err).toBeNull();
+    expect(allowed).toBe(true);
+  });
+
+  it("calls back with an Error for a disallowed origin", async () => {
+    // The Error path short-circuits cors and returns a 500 to the
+    // caller — the inner handler never runs, so a forbidden origin
+    // can't even attempt a Stripe call.
+    const { err } = await invokeOrigin(getAppCorsOptions(), "https://evil.example");
+    expect(err).toBeInstanceOf(Error);
+    expect(err.message).toMatch(/CORS/i);
+  });
+
+  it("calls back with an Error for localhost when not in emulator mode", async () => {
+    // Same rejection path as above, pinning that the prod gate is
+    // wired correctly into the cors config (not just the predicate).
+    const { err } = await invokeOrigin(
+      getAppCorsOptions(),
+      "http://localhost:4173",
+    );
+    expect(err).toBeInstanceOf(Error);
+  });
+
+  it("accepts localhost when FUNCTIONS_EMULATOR=true", async () => {
+    process.env.FUNCTIONS_EMULATOR = "true";
+    const { err, allowed } = await invokeOrigin(
+      getAppCorsOptions(),
+      "http://localhost:4173",
+    );
+    expect(err).toBeNull();
+    expect(allowed).toBe(true);
   });
 });
