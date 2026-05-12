@@ -15,14 +15,14 @@ import { db } from "@/lib/firebase";
 import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import type { UserProfile } from "@/lib/auth";
+import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { PrivacyZone } from "@/lib/privacyZones";
 import type { User } from "firebase/auth";
 import type { Crew } from "@/hooks/useCrews";
 
 interface PrivacySectionProps {
   user: User | null;
-  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   defaultVisibility: "public" | "followers" | "private";
   setDefaultVisibility: (v: "public" | "followers" | "private") => void;
   autoPostRuns: boolean;
@@ -256,9 +256,18 @@ export default function PrivacySection({
                 setBlockedUsersLoading(true);
                 try {
                   const ids = await getBlockedUsers(user.uid);
+                  // PR G (audit P1 #12): read the public profile mirror
+                  // rather than the private user doc. R1A account-
+                  // deletion work plans a future write-freeze on
+                  // private user docs; this site would silently break.
+                  // The public mirror is the supported read surface
+                  // for cross-user displays anyway.
                   const users = await Promise.all(ids.map(async (uid) => {
-                    const snap = await getDoc(doc(db, 'users', uid));
-                    return { uid, displayName: snap.exists() ? (snap.data().displayName || 'User') : 'Deleted user' };
+                    const snap = await getDoc(doc(db, 'users', uid, 'public', 'profile'));
+                    return {
+                      uid,
+                      displayName: snap.exists() ? (snap.data().displayName || 'User') : 'Deleted user',
+                    };
                   }));
                   setBlockedUsersList(users);
                   setBlockedUsersLoaded(true);

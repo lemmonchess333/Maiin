@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import AccordionSection from "@/components/AccordionSection";
-import type { UserProfile } from "@/lib/auth";
+import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface NutritionSectionProps {
   profile: UserProfile;
@@ -33,7 +33,7 @@ interface NutritionSectionProps {
     fat: number;
     deficit: number;
   };
-  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   onPhaseChange: (phase: "cut" | "lean bulk" | "recomp") => void;
 }
 

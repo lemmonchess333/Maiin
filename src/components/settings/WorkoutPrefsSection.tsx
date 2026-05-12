@@ -2,7 +2,7 @@ import { Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import AccordionSection from "@/components/AccordionSection";
-import type { UserProfile } from "@/lib/auth";
+import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface WorkoutPrefsSectionProps {
   autoRestTimer: boolean;
@@ -11,7 +11,7 @@ interface WorkoutPrefsSectionProps {
   setDefaultRestSeconds: (v: number) => void;
   audioCues: boolean;
   setAudioCues: (v: boolean) => void;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
 }
 
 export default function WorkoutPrefsSection({
