@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { Info } from 'lucide-react';
+import { Info, AlertTriangle } from 'lucide-react';
+import { describeRouteConfidence, type RouteQuality } from '../lib/routeQuality';
 import { db } from '../lib/firebase';
 import { useAuth } from '../lib/auth';
 import { THEME } from '../lib/theme';
@@ -167,6 +168,35 @@ export default function RunDetail() {
             P0.5 stat hygiene already excludes these from totals,
             so the banner is honest: the run is here, but it doesn't
             count toward stats. */}
+        {/* PR H (audit P1 #9): route-quality chip. Surfaces only when
+            the saved quality is patchy / poor — "good" runs stay
+            quiet so the chip doesn't become noise on the 95% of
+            healthy outdoor runs. Honest tone: tells the user the
+            trace isn't authoritative without implying they didn't
+            actually run. */}
+        {run.routeQuality &&
+          (run.routeQuality as RouteQuality).confidence !== 'good' && (
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-warning-bg border border-warning/15">
+              <AlertTriangle
+                size={16}
+                className="mt-0.5 shrink-0 text-warning"
+                aria-hidden="true"
+              />
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-foreground">
+                  {describeRouteConfidence(
+                    (run.routeQuality as RouteQuality).confidence,
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {(run.routeQuality as RouteQuality).backgroundGapMs > 60_000
+                    ? `App was backgrounded for ${Math.round((run.routeQuality as RouteQuality).backgroundGapMs / 1000)}s during this run. Keep Tropos open during outdoor runs for the most accurate route.`
+                    : 'GPS signal was noisy or intermittent. Distance and pace estimates are approximate.'}
+                </p>
+              </div>
+            </div>
+          )}
+
         {run.isInvalid && (
           <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/60 border border-border">
             <Info size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />

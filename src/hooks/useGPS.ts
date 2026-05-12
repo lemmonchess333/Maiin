@@ -49,6 +49,10 @@ export function useGPS(elapsedSeconds = 0) {
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
   const elapsedRef = useRef(elapsedSeconds);
+  // PR H (audit P1 #9): track rejected-fix count for route-quality
+  // scoring. Pre-PR-H `isValidReading` silently dropped poor fixes
+  // and we had no aggregate signal to surface on the run summary.
+  const rejectedFixCountRef = useRef(0);
   useEffect(() => { elapsedRef.current = elapsedSeconds; }, [elapsedSeconds]);
 
   // Check geolocation permission on mount
@@ -90,6 +94,10 @@ export function useGPS(elapsedSeconds = 0) {
       kalmanRef.current.reset();
       pointsRef.current = [];
       distanceRef.current = 0;
+      // PR H: reset rejected-fix count on a fresh tracking session
+      // for the same reason lastFixAt resets — avoid bleed from a
+      // previous run.
+      rejectedFixCountRef.current = 0;
       /* Reset lastFixAt on a fresh tracking session so a 'GPS lost'
          flag from a previous run doesn't bleed into this one. The
          first valid fix in this session will populate it. */
@@ -114,7 +122,10 @@ export function useGPS(elapsedSeconds = 0) {
         const quality = getSignalQuality(accuracy);
         setState((s) => ({ ...s, gpsAccuracy: accuracy, signalQuality: quality }));
 
-        if (!isValidReading(pos.coords, lastPoint, elapsedMs / 1000)) return;
+        if (!isValidReading(pos.coords, lastPoint, elapsedMs / 1000)) {
+          rejectedFixCountRef.current += 1;
+          return;
+        }
 
         const smoothed = kalmanRef.current.process(latitude, longitude, accuracy);
         const point: GPSPoint = {
@@ -171,6 +182,10 @@ export function useGPS(elapsedSeconds = 0) {
   }, []);
 
   const getPoints = useCallback(() => pointsRef.current, []);
+  /** PR H (audit P1 #9): snapshot of rejected-fix count for the
+   *  current tracking session. Read at save time alongside getPoints
+   *  to populate the run doc's routeQuality metrics. */
+  const getRejectedFixCount = useCallback(() => rejectedFixCountRef.current, []);
 
-  return { ...state, preWarm, start, stop, getPoints };
+  return { ...state, preWarm, start, stop, getPoints, getRejectedFixCount };
 }

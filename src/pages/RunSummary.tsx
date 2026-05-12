@@ -295,6 +295,9 @@ interface RunData {
   elevationGain: number;
   runConfig?: RunConfig | null;
   intervalData?: RunConfig['intervals'];
+  // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
+  // at finish time. Null for non-GPS sources (treadmill / manual).
+  routeQuality?: import('../lib/routeQuality').RouteQuality | null;
 }
 
 export default function RunSummary() {
@@ -460,6 +463,11 @@ export default function RunSummary() {
       isInvalid,
       invalidReason: invalidReason ?? null,
       savedAnyway: isInvalid,
+      // PR H (audit P1 #9): persist route quality so RunDetail can
+      // surface a confidence chip and History can downrank patchy /
+      // poor routes from pace PRs. `null` survives stripUndefined
+      // and signals "no quality data" (treadmill / manual / legacy).
+      routeQuality: state.routeQuality ?? null,
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB

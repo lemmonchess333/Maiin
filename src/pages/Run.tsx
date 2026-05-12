@@ -19,6 +19,7 @@ import { useGuidedRun } from '../hooks/useGuidedRun';
 import { THEME } from '../lib/theme';
 import { RUN_TEMPLATES } from '../lib/workoutTemplates';
 import { isOutdoorGpsRun, requiresManualDistance, getInvalidRunReason } from '../lib/runGuards';
+import { computeRouteQuality } from '../lib/routeQuality';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
@@ -74,6 +75,11 @@ export default function Run() {
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  // PR H (audit P1 #9): accumulator for total time spent backgrounded
+  // during the run. Summed in handleVisible from every
+  // visibility-hidden window; written to the run doc via RunSummary
+  // so routeQuality can compute "patchy" / "poor" labels.
+  const backgroundGapMsRef = useRef(0);
 
   // Coordinate all subsystems on background/foreground transitions
   const handleHidden = useCallback(() => {
@@ -93,6 +99,13 @@ export default function Run() {
     if (isOutdoorGpsRun(runConfig?.activityType) && phase === 'active') {
       gps.start();
     }
+
+    // PR H: accumulate ALL hidden time into the backgroundGapMs
+    // counter (event.hiddenDuration is in seconds). The 5s threshold
+    // below is only for the user-facing banner; we record every
+    // millisecond so short, frequent gaps still surface in the route-
+    // quality score.
+    backgroundGapMsRef.current += Math.max(0, event.hiddenDuration) * 1000;
 
     // Show a brief banner if the gap was significant (> 5 seconds)
     if (event.hiddenDuration > 5) {
@@ -229,15 +242,34 @@ export default function Run() {
     wakeLock.release();
     setPhase('finished');
     const finalDistance = distanceOverride ?? gps.distance;
+    const points = gps.getPoints();
+
+    // PR H (audit P1 #9): compute route-quality metrics at finish.
+    // Only meaningful for outdoor GPS runs — treadmill / manual
+    // have no points and would always score "poor" by the
+    // <-5-fixes rule. We skip the computation entirely for those
+    // and let RunSummary persist null on the run doc.
+    const routeQuality = isOutdoorGpsRun(runConfig?.activityType)
+      ? computeRouteQuality({
+          acceptedAccuracies: points
+            .map((p) => p.accuracy)
+            .filter((a): a is number => typeof a === 'number'),
+          rejectedFixCount: gps.getRejectedFixCount(),
+          backgroundGapMs: backgroundGapMsRef.current,
+          fixTimestamps: points.map((p) => p.timestamp),
+        })
+      : null;
+
     navigate('/run-summary', {
       state: {
-        points: gps.getPoints(),
+        points,
         distance: finalDistance,
         elapsed: timer.elapsed,
-        splits: calculateSplits(gps.getPoints()),
-        elevationGain: totalElevationGain(gps.getPoints()),
+        splits: calculateSplits(points),
+        elevationGain: totalElevationGain(points),
         runConfig,
         intervalData: runConfig?.activityType === 'intervals' ? runConfig.intervals : undefined,
+        routeQuality,
       },
     });
   };
