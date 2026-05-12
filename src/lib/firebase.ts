@@ -55,8 +55,18 @@ if (!firebaseConfig.storageBucket) {
 }
 export const functions = getFunctions(app);
 
-// Connect to emulators in development
-if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true") {
-  connectAuthEmulator(auth, "http://localhost:9099");
-  connectFirestoreEmulator(db, "localhost", 8080);
+// Connect to emulators when the build sets VITE_USE_EMULATORS=true.
+// Previously this also required `import.meta.env.DEV`, which scoped
+// it to `npm run dev` only — CI's `npm run build` runs in
+// production mode, so the gate never fired even when CI explicitly
+// wanted emulator wiring. Dropping the DEV check lets the
+// preview-built E2E suite point Firebase at the emulators by
+// passing VITE_USE_EMULATORS=true at build time.
+//
+// Production builds without the flag set are unaffected — the
+// emulator-connect calls only fire when the env var is the
+// literal string "true".
+if (import.meta.env.VITE_USE_EMULATORS === "true") {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
 }

@@ -65,16 +65,28 @@ jobs:
 
       - run: npm ci
       - run: npm ci --prefix functions
-      - run: npx playwright install --with-deps chromium
+
+      # Playwright config has two projects: chromium + mobile (iPhone
+      # 14 → WebKit). Install both browsers; `--with-deps` pulls in
+      # the apt packages each needs. Without webkit the mobile
+      # project errors at launch with "Executable doesn't exist
+      # at /home/runner/.cache/ms-playwright/webkit-XXXX/pw_run.sh".
+      - run: npx playwright install --with-deps chromium webkit
 
       # Firebase CLI provides the emulator binaries. Install globally
       # so subsequent `firebase emulators:exec` invocations resolve it.
       - run: npm install -g firebase-tools
 
-      # Build the app once so `npm run preview` can serve the bundle to
-      # Playwright. Skip the prod env-var injection — the E2E suite
-      # targets the emulator, not production Firebase.
-      - run: npm run build
+      # Build the app pointed at the local emulator. VITE_USE_EMULATORS
+      # toggles connectAuthEmulator / connectFirestoreEmulator in
+      # src/lib/firebase.ts so the served SPA talks to the emulators
+      # rather than the (absent) production Firebase project. Without
+      # this, the AuthProvider boot hangs waiting on real Firebase
+      # and the Login form never renders for Playwright to drive.
+      - name: Build app with emulator wiring
+        run: npm run build
+        env:
+          VITE_USE_EMULATORS: 'true'
 
       # ── Suite 1: Firestore rules tests
       # Uses the firebase emulators:exec wrapper which boots the
