@@ -13,11 +13,19 @@
 
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser, signOut } from "./helpers/auth";
-
-const emulatorActive = !!process.env.E2E_AUTH_EMULATOR;
+import {
+  emulatorActive,
+  EXPECTED_AUTH_HOST,
+  EXPECTED_FIRESTORE_HOST,
+} from "./helpers/emulator";
 
 test.describe("authenticated user flows", () => {
-  test.skip(!emulatorActive, "Requires Firebase emulator (E2E_AUTH_EMULATOR=1)");
+  // Expected hosts are read from firebase.json so the gate stays in
+  // lockstep with the emulator config — no magic literals to drift.
+  test.skip(
+    !emulatorActive,
+    `Requires E2E_AUTH_EMULATOR=1 with FIREBASE_AUTH_EMULATOR_HOST=${EXPECTED_AUTH_HOST} and FIRESTORE_EMULATOR_HOST=${EXPECTED_FIRESTORE_HOST}`,
+  );
 
   test.beforeEach(async ({ page }) => {
     await signInAsTestUser(page);
@@ -37,13 +45,13 @@ test.describe("authenticated user flows", () => {
   });
 
   test("can navigate to Food page from nav", async ({ page }) => {
-    await page.goto("/food");
+    await page.goto("food");
     // Food page renders an h1 "Food" header.
     await expect(page.locator("h1", { hasText: "Food" })).toBeVisible();
   });
 
   test("can navigate to Settings page from nav", async ({ page }) => {
-    await page.goto("/settings");
+    await page.goto("settings");
     await expect(page.locator("h1", { hasText: "Settings" })).toBeVisible();
   });
 
@@ -51,7 +59,7 @@ test.describe("authenticated user flows", () => {
     // PR N hidden operator route — accessible only when signed in.
     // The page shows the current UID, which only resolves to a
     // non-anonymous value when auth has succeeded.
-    await page.goto("/diagnostics");
+    await page.goto("diagnostics");
     await expect(page.locator("h1", { hasText: "Diagnostics" })).toBeVisible();
     // The UID row should NOT show the not-signed-in placeholder.
     await expect(

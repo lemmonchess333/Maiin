@@ -1,5 +1,18 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * bypassCSP is scoped to the `auth-emulator` project only — the
+ * sole suite that talks to http://127.0.0.1:9099 from a built app
+ * whose production CSP allows only HTTPS Firebase origins. The
+ * default and mobile projects run against the unmodified built
+ * artifact so the production CSP is exercised end-to-end (any CSP
+ * regression in the SPA fails those suites loudly).
+ *
+ * Hostname / env strictness is enforced inside auth.spec.ts and
+ * scripts/seed-e2e-user.ts via e2e/helpers/emulator so a stray
+ * truthy env var can't accidentally point Playwright at a
+ * non-local Firebase target.
+ */
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -14,11 +27,21 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: /auth\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'mobile',
+      testIgnore: /auth\.spec\.ts/,
       use: { ...devices['iPhone 14'] },
+    },
+    {
+      name: 'auth-emulator',
+      testMatch: /auth\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        bypassCSP: true,
+      },
     },
   ],
   webServer: {
