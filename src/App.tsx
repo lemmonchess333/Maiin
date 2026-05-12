@@ -70,6 +70,11 @@ const Crew = lazyRetry(() => import("@/pages/Crew"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
 const ExerciseHistory = lazyRetry(() => import("@/pages/ExerciseHistory"));
+// PR N (audit P2 #17): hidden operator-diagnostics route. Lazy-loaded
+// like every other page; not wired into any nav. Reachable only by
+// direct URL (/diagnostics) so the support flow is "open this URL
+// and screenshot it" without exposing it to the average user.
+const Diagnostics = lazyRetry(() => import("@/pages/Diagnostics"));
 
 function PageLoader() {
   return (
@@ -310,6 +315,9 @@ function AppRoutes() {
         </Route>
         <Route path="/run" element={<RouteErrorBoundary><Run /></RouteErrorBoundary>} />
         <Route path="/run-summary" element={<RouteErrorBoundary><RunSummary /></RouteErrorBoundary>} />
+        {/* Hidden operator diagnostics — not in Layout so it doesn't
+            render the nav, full-screen surface for screenshotting. */}
+        <Route path="/diagnostics" element={<RouteErrorBoundary><Diagnostics /></RouteErrorBoundary>} />
         <Route path="/log" element={<Navigate to="/food" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
