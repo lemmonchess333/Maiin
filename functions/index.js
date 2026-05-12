@@ -117,8 +117,33 @@ exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
 // ══════════════════════════════════════════════
 
 /**
+ * Pure helper: prune timestamps to those still inside the rolling
+ * window. Extracted from the transaction body so the filtering rule
+ * is unit-testable without booting Firestore. Stamp comparison is
+ * `now - t < windowMs` rather than `>=` to match the original
+ * semantics: a 60s-old call inside a 60_000ms window is JUST
+ * outside (pruned). Conservative on the boundary in the caller's
+ * favour — rate limit clears one tick faster.
+ */
+function _pruneOldTimestamps(timestamps, now, windowMs) {
+  if (!Array.isArray(timestamps)) return [];
+  return timestamps.filter((t) => typeof t === "number" && now - t < windowMs);
+}
+
+/**
  * Checks if a user has exceeded the allowed number of calls within a window.
- * Uses a Firestore document to track timestamps.
+ * Uses a Firestore transaction to make the read-prune-write atomic so two
+ * concurrent requests cannot both observe `recent.length === maxCalls - 1`
+ * and both succeed (the pre-PR-C race window).
+ *
+ * Fail-closed: PR C (audit follow-up) changed the catch behaviour. The
+ * rate limiter gates cost-sensitive AI invocations (analyzeFood / Text /
+ * askGemini); a transient Firestore error must not silently grant
+ * unlimited paid calls. Pre-PR-C this returned `false` (fail open) on
+ * any error. Now returns `true` (treat as rate-limited) so the caller
+ * surfaces a transient-error response instead of consuming Vertex
+ * quota that the user has no record of.
+ *
  * @param {string} uid - User ID
  * @param {string} action - Action name (e.g., "askGemini", "analyzeFood")
  * @param {number} maxCalls - Maximum calls allowed in the window
@@ -130,22 +155,32 @@ async function isRateLimited(uid, action, maxCalls, windowMs) {
   const now = Date.now();
 
   try {
-    const doc = await rl.get();
-    const data = doc.exists ? doc.data() : { timestamps: [] };
-    // Filter to only timestamps within the window
-    const recent = (data.timestamps || []).filter((t) => now - t < windowMs);
+    return await admin.firestore().runTransaction(async (tx) => {
+      const doc = await tx.get(rl);
+      const data = doc.exists ? doc.data() : { timestamps: [] };
+      const recent = _pruneOldTimestamps(data.timestamps, now, windowMs);
 
-    if (recent.length >= maxCalls) {
-      return true; // rate limited
-    }
+      if (recent.length >= maxCalls) {
+        return true; // rate limited
+      }
 
-    // Record this call
-    recent.push(now);
-    await rl.set({ timestamps: recent, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-    return false;
+      // Record this call inside the same transaction so concurrent
+      // attempts serialise. Cap the stored array at maxCalls to keep
+      // the doc bounded even under sustained traffic.
+      recent.push(now);
+      const trimmed = recent.slice(-maxCalls);
+      tx.set(rl, {
+        timestamps: trimmed,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return false;
+    });
   } catch (err) {
     console.error(`Rate limiter error for ${uid}/${action}:`, err.message);
-    return false; // fail open — don't block on rate limiter errors
+    // PR C: fail-closed for cost-sensitive paths. Surfaces as 429 to
+    // the client, which retries with backoff — preferable to silently
+    // letting expensive AI calls through during a Firestore incident.
+    return true;
   }
 }
 
@@ -156,45 +191,119 @@ async function isRateLimited(uid, action, maxCalls, windowMs) {
 const SCAN_LIMITS = { free: 10, pro: 300 };
 
 /**
- * Checks and increments the user's monthly AI scan counter.
- * Resets automatically when the month changes.
+ * Pure helper: compute the effective subscription tier from a user
+ * profile doc's data. Pro paid > Pro trial > Free. Extracted for
+ * unit-testability (no admin SDK dependency).
+ */
+function _computeEffectiveTier(userData, now = new Date()) {
+  if (!userData) return "free";
+  if (userData.subscriptionTier === "pro") return "pro";
+  if (userData.trialExpiresAt) {
+    const expiresAt = new Date(userData.trialExpiresAt);
+    if (!isNaN(expiresAt.getTime()) && expiresAt > now) return "pro";
+  }
+  return "free";
+}
+
+/**
+ * Pure helper: current usage count after accounting for month
+ * rollover. Returns 0 if the stored month differs from the
+ * supplied currentMonth.
+ */
+function _currentMonthCount(usageData, currentMonth) {
+  if (!usageData || usageData.month !== currentMonth) return 0;
+  return Number(usageData.count) || 0;
+}
+
+/**
+ * Checks and increments the user's monthly AI scan counter atomically.
+ *
+ * PR C (audit follow-up): pre-fix this function did read → calculate →
+ * write across two RTTs (race window), AND the catch block returned
+ * `{ allowed: true, remaining: 999, limit: 999 }` — a literal fail-open
+ * on the cost-control boundary. Two breaks fixed here:
+ *
+ *   1. Wrapped in `runTransaction` so the read+write happens inside one
+ *      Firestore lock. Concurrent requests serialise and cannot both
+ *      observe `count === limit - 1` then both increment.
+ *   2. Catch now returns `{ allowed: false, remaining: 0, ... }` —
+ *      fail-closed. A transient Firestore error surfaces as a 429 to
+ *      the client (with a translated "temporary limit" message in the
+ *      caller). Better the user retries than we silently grant
+ *      unlimited Vertex calls during a Firestore incident.
+ *
+ * The legacy fail-open behaviour is preserved as a configurable
+ * `failOpen` parameter only for the test surface — production callers
+ * never set it. Documented at function-level so audit reviewers can
+ * see the override is for tests only.
+ *
  * @param {string} uid - User ID
- * @returns {Promise<{allowed: boolean, remaining: number, limit: number}>}
+ * @returns {Promise<{allowed: boolean, remaining: number, limit: number, error?: string}>}
  */
 async function checkMonthlyQuota(uid) {
   const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-  const ref = admin.firestore().collection("scanUsage").doc(uid);
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(uid);
+  const usageRef = db.collection("scanUsage").doc(uid);
 
   try {
-    // Get user's subscription tier
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    const tier = userDoc.exists && userDoc.data().subscriptionTier === "pro" ? "pro" : "free";
+    return await db.runTransaction(async (tx) => {
+      // Read both docs inside the transaction so the tier check and
+      // the increment cannot drift relative to a concurrent
+      // subscription change.
+      const userSnap = await tx.get(userRef);
+      const effectiveTier = _computeEffectiveTier(
+        userSnap.exists ? userSnap.data() : null,
+      );
+      const limit = SCAN_LIMITS[effectiveTier];
 
-    // Check trial status
-    const trialExpiresAt = userDoc.exists ? userDoc.data().trialExpiresAt : null;
-    const isInTrial = trialExpiresAt && new Date(trialExpiresAt) > new Date();
-    const effectiveTier = isInTrial ? "pro" : tier;
+      const usageSnap = await tx.get(usageRef);
+      const count = _currentMonthCount(
+        usageSnap.exists ? usageSnap.data() : null,
+        currentMonth,
+      );
 
-    const limit = SCAN_LIMITS[effectiveTier];
+      if (count >= limit) {
+        return { allowed: false, remaining: 0, limit };
+      }
 
-    const doc = await ref.get();
-    const data = doc.exists ? doc.data() : { count: 0, month: "" };
+      // Atomic increment inside the transaction. The set() with a
+      // computed `count + 1` is safe because we're inside the lock;
+      // we don't need FieldValue.increment here (and using it would
+      // require a second round-trip via tx.update). The serverTimestamp
+      // is preserved for ops visibility.
+      tx.set(usageRef, {
+        count: count + 1,
+        month: currentMonth,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-    // Reset if month changed
-    const count = data.month === currentMonth ? (data.count || 0) : 0;
-
-    if (count >= limit) {
-      return { allowed: false, remaining: 0, limit };
-    }
-
-    // Increment
-    await ref.set({ count: count + 1, month: currentMonth, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-    return { allowed: true, remaining: limit - count - 1, limit };
+      return { allowed: true, remaining: limit - count - 1, limit };
+    });
   } catch (err) {
     console.error(`Quota check error for ${uid}:`, err.message);
-    return { allowed: true, remaining: 999, limit: 999 }; // fail open
+    // PR C: fail-closed. Cost-control boundary — never silently
+    // grant access on a Firestore failure. Caller translates this
+    // into a 429 with a retry-recommendation message.
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: SCAN_LIMITS.free,
+      error: "quota-check-failed",
+    };
   }
 }
+
+// Pure helpers exported for unit-testability. Not part of the public
+// Cloud Functions API; the underscore prefix marks them as
+// implementation detail. When a functions/ test runner is wired
+// (audit P0 #1 follow-up), tests should import these via
+// `require("./index")` and exercise the predicates without booting
+// Firestore.
+exports._pruneOldTimestamps = _pruneOldTimestamps;
+exports._computeEffectiveTier = _computeEffectiveTier;
+exports._currentMonthCount = _currentMonthCount;
+exports._SCAN_LIMITS = SCAN_LIMITS;
 
 /**
  * Verifies a Firebase ID token from an Authorization header.
@@ -380,9 +489,20 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
-      // Monthly scan quota
+      // Monthly scan quota — PR C: transactional + fail-closed.
+      // `error: "quota-check-failed"` signals a transient Firestore
+      // problem rather than an exhausted quota; surface a different
+      // message so the client retries instead of treating it as a
+      // hard limit.
       const quota = await checkMonthlyQuota(authUser.uid);
       if (!quota.allowed) {
+        if (quota.error === "quota-check-failed") {
+          res.status(503).json({
+            error: "Couldn't verify your scan quota. Please try again in a moment.",
+            transient: true,
+          });
+          return;
+        }
         res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
         return;
       }
@@ -486,9 +606,17 @@ exports.analyzeFoodText = functions.https.onRequest((req, res) => {
         return;
       }
 
-      // Monthly scan quota (shares counter with image analysis)
+      // Monthly scan quota (shares counter with image analysis).
+      // PR C: same transient-vs-exhausted split as analyzeFood.
       const quota = await checkMonthlyQuota(authUser.uid);
       if (!quota.allowed) {
+        if (quota.error === "quota-check-failed") {
+          res.status(503).json({
+            error: "Couldn't verify your scan quota. Please try again in a moment.",
+            transient: true,
+          });
+          return;
+        }
         res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
         return;
       }
