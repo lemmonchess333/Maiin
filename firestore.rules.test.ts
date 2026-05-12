@@ -346,3 +346,80 @@ suite("firestore.rules — /challenges", () => {
     );
   });
 });
+
+/**
+ * /audit_checkout_sessions — server-only collection.
+ *
+ * Written by the createCheckoutSession Cloud Function on successful
+ * Stripe session creation. Clients must never read or write. The
+ * default-deny rule at the top of firestore.rules covers this, plus
+ * the explicit `allow read, write: if false` block we added
+ * doubles as documentation. These tests pin the negative-space so a
+ * future "let me expose this to an admin dashboard" instinct gets
+ * caught in CI rather than at runtime.
+ */
+suite("firestore.rules — /audit_checkout_sessions", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID + "-audit",
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  it("unauthenticated client cannot read", async () => {
+    const db = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(db, "audit_checkout_sessions", "any-doc")));
+  });
+
+  it("authenticated client cannot read", async () => {
+    // Even a signed-in user must not see audit records — they
+    // include other users' uids and checkout metadata.
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(getDoc(doc(db, "audit_checkout_sessions", "any-doc")));
+  });
+
+  it("authenticated client cannot create", async () => {
+    // Only Admin SDK (the Cloud Function) writes. A client trying
+    // to forge an audit entry must be denied.
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "audit_checkout_sessions", "forged"), {
+        uid: OWNER_UID,
+        stripeSessionId: "cs_forged",
+      }),
+    );
+  });
+
+  it("authenticated client cannot overwrite an existing doc", async () => {
+    // Seed via admin context (bypasses rules), then attempt a
+    // client write — must fail.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "audit_checkout_sessions", "seeded"), {
+        uid: OWNER_UID,
+        stripeSessionId: "cs_seeded",
+      });
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "audit_checkout_sessions", "seeded"), {
+        uid: OWNER_UID,
+        stripeSessionId: "cs_overwritten",
+      }),
+    );
+  });
+});
