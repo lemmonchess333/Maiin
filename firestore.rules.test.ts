@@ -145,6 +145,236 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       ),
     );
   });
+
+  // ── photoURL value gate ───────────────────────────────────────────
+  // The rule allows photoURL to be: absent, null, "", or a URL matching
+  // one of three CDN prefixes (Firebase Storage, Google OAuth, Apple
+  // OAuth). Everything else fails closed. These tests pin every branch
+  // so a regression in the rule (e.g. relaxing one of the regexes,
+  // dropping the null check) surfaces here.
+
+  it("photoURL = null passes (no-photo state for OAuth-less signups)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: null },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL = empty string passes (removeProfilePhoto clear state)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL on Firebase Storage CDN passes (custom upload)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        {
+          photoURL:
+            "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
+        },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL on Google OAuth CDN passes (Google sign-in)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL on Apple OAuth CDN passes (Apple sign-in)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL on an arbitrary external origin — fails", async () => {
+    // The bedrock negative: a malicious owner pointing photoURL at
+    // their own tracking endpoint would harvest IPs from every
+    // viewer of their leaderboard / kudos / social row. The CDN
+    // allow-list closes this.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "https://pixel-tracker.example/pixel?uid=victim" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL with a near-miss prefix (suffix phishing) — fails", async () => {
+    // `https://lh3.googleusercontent.com.evil.com/...` matches a
+    // naive `startsWith` but the rule anchors with `^` so this
+    // fails. Pin the anchor.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        {
+          photoURL:
+            "https://lh3.googleusercontent.com.evil.com/a/ACg8ocIabcdefg=s96-c",
+        },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL with javascript: scheme — fails", async () => {
+    // `<img src>` ignores `javascript:` but defence-in-depth: keep it
+    // out of Firestore in the first place.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "javascript:alert(1)" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL with data: scheme — fails", async () => {
+    // data: could embed arbitrary bytes / scripts (SVG executes JS).
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        {
+          photoURL:
+            "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
+        },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoURL with plain http (not https) on Firebase Storage — fails", async () => {
+    // The regex anchors `^https://` — a downgrade attack would
+    // strip the s. Pin that http:// is not accepted even for the
+    // allowed hosts.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoURL: "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("partial update without photoURL passes (field-absent branch)", async () => {
+    // The rule short-circuits when photoURL isn't in the write — a
+    // streak-only bump shouldn't fail just because no photoURL was
+    // sent. Pin the absent-field branch separately from null/empty.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { currentStreak: 5, longestStreak: 9 },
+        { merge: true },
+      ),
+    );
+  });
+
+  // ── photoStoragePath value gate ───────────────────────────────────
+  // The rule constrains photoStoragePath to `^profile-photos/${uid}/.*`
+  // so a malicious caller can't write a value that would trick a
+  // future cleanup path into deleting someone else's blob.
+
+  it("photoStoragePath under the owner's folder — passes", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoStoragePath: `profile-photos/${OWNER_UID}/avatar.jpg` },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoStoragePath null — passes (OAuth-only / cleared state)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoStoragePath: null },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoStoragePath empty string — passes (cleared state)", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoStoragePath: "" },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoStoragePath pointing at another user's folder — fails", async () => {
+    // The attack the gate exists to prevent: writing a path that a
+    // future cleanup hook would treat as the owner's blob, deleting
+    // someone else's photo when the owner clears theirs.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoStoragePath: `profile-photos/${OTHER_UID}/avatar.jpg` },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("photoStoragePath outside profile-photos prefix — fails", async () => {
+    // Anchor check: a path that doesn't start with the expected
+    // prefix at all gets rejected.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { photoStoragePath: `../etc/passwd` },
+        { merge: true },
+      ),
+    );
+  });
+
+  it("partial update without photoStoragePath passes (field-absent branch)", async () => {
+    // Same absent-field short-circuit semantics as photoURL.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { displayName: "Owner" },
+        { merge: true },
+      ),
+    );
+  });
 });
 
 /**
