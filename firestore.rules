@@ -487,5 +487,22 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false;
     }
+
+    // ========================================
+    // Audit: successful Stripe Checkout session creations
+    //
+    // Written exclusively by the createCheckoutSession Cloud Function
+    // (Admin SDK) — never by clients. The default-deny rule at the
+    // top of this file already covers it; this explicit block is here
+    // to document the intent so a future "let me make this readable
+    // for the dashboard" instinct hits a clear no first. Admin SDK
+    // bypasses these rules so the function's writes work regardless.
+    //
+    // Schema lives in functions/auditLog.js — see
+    // CHECKOUT_AUDIT_COLLECTION / buildCheckoutAuditEntry.
+    // ========================================
+    match /audit_checkout_sessions/{doc} {
+      allow read, write: if false;
+    }
   }
 }

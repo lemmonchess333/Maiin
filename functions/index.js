@@ -19,6 +19,11 @@ const helpers = require("./helpers");
 // tests can drive them against the emulator with a test-controlled
 // firestore handle (see functions/__tests__/integration/).
 const rateLimiter = require("./rateLimiter");
+// Audit-log writes for successful Stripe Checkout creations. Pulled
+// out for test isolation — buildCheckoutAuditEntry is unit-testable
+// pure shape-builder, recordCheckoutAuditEntry runs against the
+// emulator in the integration suite.
+const auditLog = require("./auditLog");
 
 // Module-load self-check: in deployed (non-emulator) functions,
 // the final resolved Stripe return-URL allowlist MUST include the
@@ -712,9 +717,6 @@ const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 // FOLLOWUP(payment-security): tighten per-uid rate limiting on
 //   createCheckoutSession; the existing 5/10min check uses body.uid
 //   pre-reorder semantics and should re-key on authUser.uid.
-// FOLLOWUP(payment-security): audit-log successful checkout session
-//   creation (uid, stripeSessionId, price, mode, safe origins,
-//   timestamp).
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -862,6 +864,31 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         cancel_url: cancelUrl,
         metadata: { firebaseUid: authUser.uid, planKind: priceConfig.kind },
       });
+
+      // Audit-log the successful session creation. Fire-and-forget
+      // semantics: an audit-write failure must NOT block the user's
+      // checkout — the Stripe session already exists, and the user
+      // has been served the redirect URL by the time this log lands.
+      // A logger.error here is enough signal for an operator to spot
+      // a persistent audit-pipeline outage in Cloud Logging without
+      // taking the payment flow down.
+      try {
+        await auditLog.recordCheckoutAuditEntry(admin.firestore(), {
+          uid: authUser.uid,
+          stripeSessionId: session.id,
+          priceId,
+          planKind: priceConfig.kind,
+          mode: priceConfig.mode,
+          successOrigin: safeOriginForLog(successUrl),
+          cancelOrigin: safeOriginForLog(cancelUrl),
+        });
+      } catch (auditErr) {
+        functions.logger.error("createCheckoutSession.audit_failed", {
+          uid: authUser.uid,
+          stripeSessionId: session.id,
+          message: auditErr.message,
+        });
+      }
 
       res.status(200).json({ url: session.url });
     } catch (error) {
