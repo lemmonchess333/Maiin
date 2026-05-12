@@ -3,7 +3,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../lib/auth';
-import { Camera, Lock, Loader2, RotateCcw, X } from 'lucide-react';
+import { Camera, Lock, RotateCcw, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/Spinner';
 import { toast } from 'sonner';
 import { THEME } from '../../lib/theme';
 import { logger } from '../../lib/logger';
@@ -292,7 +293,7 @@ export default function ProgressPhotos() {
 
       {loading && (
         <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+          <Spinner size="sm" variant="primary" label="Encrypting and uploading photo" />
           <p className="text-xs text-foreground font-medium">Encrypting & uploading your photo...</p>
         </div>
       )}
@@ -349,7 +350,7 @@ export default function ProgressPhotos() {
             }`}>
             {decrypting.has(photo.id) ? (
               <div className="w-full h-full bg-muted flex flex-col items-center justify-center">
-                <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                <Spinner size="sm" variant="muted" label="Decrypting photo" />
                 <span className="text-xs text-muted-foreground mt-1">{photo.date}</span>
               </div>
             ) : decryptedUrls[photo.id] ? (

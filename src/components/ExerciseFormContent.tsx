@@ -3,6 +3,7 @@ import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import { getExerciseDemo, mapMuscles, needsPosterior, needsAnterior, type ExerciseDemo } from "@/lib/exerciseDemo";
 import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
+import { Spinner } from "@/components/ui/Spinner";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
 // muscle pills, step-by-step instructions. Extracted from
@@ -72,7 +73,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <Spinner size="md" variant="primary" label="Loading exercise demo" />
       </div>
     );
   }

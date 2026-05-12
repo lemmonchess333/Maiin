@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
-import { Loader2, RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
+import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -14,6 +14,7 @@ import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Spinner } from "@/components/ui/Spinner";
 import { validateFoodEntry, checkAggregateAgainstTarget } from "@/lib/foodValidation";
 import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
@@ -610,7 +611,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
 
       {showLoading && (
         <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Spinner size="sm" variant="muted" label={barcodeLoading ? "Fetching nutrition" : "Analyzing food"} />
           {barcodeLoading ? "Fetching nutrition..." : "Analyzing..."}
         </div>
       )}

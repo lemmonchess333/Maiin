@@ -3,6 +3,7 @@ import type { BrowserMultiFormatReader } from "@zxing/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface NutrientData {
   name: string;
@@ -191,7 +192,9 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             animate={{ opacity: 1 }}
             className="py-12 text-center"
           >
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="flex justify-center mb-3">
+              <Spinner size="lg" variant="primary" label="Looking up product" />
+            </div>
             <p className="text-sm text-muted-foreground">Looking up product...</p>
           </motion.div>
         )}

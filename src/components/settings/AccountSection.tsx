@@ -13,6 +13,7 @@ import { deleteAccount } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface AccountSectionProps {
   user: User | null;
@@ -137,7 +138,7 @@ export default function AccountSection({
               >
                 {deleting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Spinner size="sm" variant="inverse" label="Deleting account" />
                     Deleting...
                   </>
                 ) : (

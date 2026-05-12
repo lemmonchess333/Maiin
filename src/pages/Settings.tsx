@@ -35,6 +35,7 @@ import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
 import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
+import { Spinner } from "@/components/ui/Spinner";
 
 declare const __APP_VERSION__: string;
 
@@ -419,7 +420,7 @@ export default function Settings() {
               >
                 {restructuring ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <Spinner size="sm" variant="inverse" label="Rebuilding programme" />
                     Rebuilding...
                   </>
                 ) : (
