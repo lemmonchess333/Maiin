@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import {
-  Target,
   ChevronRight,
   RefreshCw,
   Footprints,
@@ -16,7 +15,9 @@ import { DAY_LABELS } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
-import AccordionSection from "@/components/AccordionSection";
+import { splitLabel } from "@/features/program/programEngine";
+import BottomSheet from "@/components/ui/BottomSheet";
+import SettingsSummaryRow from "@/components/settings/SettingsSummaryRow";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
@@ -50,6 +51,7 @@ export default function TrainingSection({
   const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
   const [raceTargetDate, setRaceTargetDate] = useState("");
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const handleSaveRaceGoal = async () => {
     // All validation toasts share one id so rapid-retry on the Save
@@ -84,8 +86,30 @@ export default function TrainingSection({
     }
   };
 
+  const liftCount = schedule.filter((s) => s.type === "lift" || s.type === "both").length;
+  const runCount = schedule.filter((s) => s.type === "run" || s.type === "both").length;
+  const planLabel = profile.runMode === "race_prep" && programState?.runPlan?.raceGoal
+    ? `${programState.runPlan.raceGoal.distance.toUpperCase()} Race Prep`
+    : programState?.splitType
+      ? splitLabel(programState.splitType)
+      : "Hybrid programme";
+  const trainingSecondary = `${liftCount} lift / ${runCount} run weekly${hasUnsavedScheduleChanges ? " · unsaved changes" : ""}`;
+
   return (
-    <AccordionSection icon={<Target className="w-5 h-5 text-primary" />} title="Training" subtitle="Weekly schedule, run mode">
+    <>
+      <SettingsSummaryRow
+        label="Training defaults"
+        primary={planLabel}
+        secondary={trainingSecondary}
+        onPress={() => setSheetOpen(true)}
+      />
+      <BottomSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title="Training defaults"
+        description="Weekly schedule, run mode"
+      >
+        <div className="space-y-4 overflow-y-auto px-4 pb-5 pt-4">
       {/* Edit Programme */}
       <motion.button
         whileTap={{ scale: 0.98 }}
@@ -328,6 +352,8 @@ export default function TrainingSection({
           </div>
         )}
       </div>
-    </AccordionSection>
+        </div>
+      </BottomSheet>
+    </>
   );
 }
