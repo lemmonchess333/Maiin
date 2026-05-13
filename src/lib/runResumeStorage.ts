@@ -76,7 +76,7 @@ export function writeStoredRun(snapshot: StoredRun): boolean {
   try {
     localStorage.setItem(RUN_RESUME_KEY, JSON.stringify(snapshot));
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -99,7 +99,7 @@ export function readStoredRun(now: number = Date.now()): StoredRun | null {
   let raw: string | null;
   try {
     raw = localStorage.getItem(RUN_RESUME_KEY);
-  } catch (_) {
+  } catch {
     return null;
   }
   if (!raw) return null;
@@ -107,7 +107,7 @@ export function readStoredRun(now: number = Date.now()): StoredRun | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch (_) {
+  } catch {
     // Corrupt entry — drop it so we don't re-read it next mount.
     clearStoredRun();
     return null;
@@ -139,7 +139,7 @@ export function clearStoredRun(): void {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.removeItem(RUN_RESUME_KEY);
-  } catch (_) {
+  } catch {
     // Best-effort.
   }
 }

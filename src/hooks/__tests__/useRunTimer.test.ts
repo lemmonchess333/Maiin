@@ -84,6 +84,68 @@ describe('useRunTimer', () => {
     expect(result.current.elapsed).toBe(pausedElapsed);
   });
 
+  /* ── Phase B3 ─────────────────────────────────────────────────
+     rehydrate + getAccumulatedSeconds are the two persistence
+     primitives. The tests below pin their contract — the run-
+     resume flow depends on:
+       - rehydrate restoring accumulatedSeconds + isRunning, with
+         elapsed updating before the next interval tick
+       - getAccumulatedSeconds returning live (running) or frozen
+         (paused) seconds without flooring
+  */
+  it('rehydrate restores elapsed and isRunning=true', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.rehydrate({ accumulatedSeconds: 120, isRunning: true }));
+    expect(result.current.elapsed).toBe(120);
+    expect(result.current.isRunning).toBe(true);
+  });
+
+  it('rehydrate restores elapsed and isRunning=false', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.rehydrate({ accumulatedSeconds: 75, isRunning: false }));
+    expect(result.current.elapsed).toBe(75);
+    expect(result.current.isRunning).toBe(false);
+  });
+
+  it('rehydrate then advance — elapsed climbs from the restored base while running', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.rehydrate({ accumulatedSeconds: 100, isRunning: true }));
+    act(() => { vi.advanceTimersByTime(3000); });
+    // The setInterval inside the hook should have ticked; elapsed
+    // climbs above the restored base.
+    expect(result.current.elapsed).toBeGreaterThanOrEqual(102);
+  });
+
+  it('rehydrate then advance — elapsed stays at the restored base while paused', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.rehydrate({ accumulatedSeconds: 50, isRunning: false }));
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(result.current.elapsed).toBe(50);
+  });
+
+  it('getAccumulatedSeconds returns the frozen value when paused', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.start());
+    vi.advanceTimersByTime(3000);
+    act(() => result.current.pause());
+    const acc = result.current.getAccumulatedSeconds();
+    // Should equal the frozen accumulated seconds — within rounding.
+    expect(acc).toBeGreaterThanOrEqual(2.9);
+    expect(acc).toBeLessThanOrEqual(3.1);
+  });
+
+  it('getAccumulatedSeconds returns the live value while running', () => {
+    const { result } = renderHook(() => useRunTimer());
+    act(() => result.current.start());
+    vi.advanceTimersByTime(4500);
+    const acc = result.current.getAccumulatedSeconds();
+    // Running: returns accumulatedRef + (Date.now() - startTimeRef).
+    // Real-time tracking — flooring isn't applied here so we expect
+    // a value close to 4.5s.
+    expect(acc).toBeGreaterThanOrEqual(4.3);
+    expect(acc).toBeLessThanOrEqual(4.7);
+  });
+
   it('accumulates time correctly across pause/resume cycles', () => {
     const { result } = renderHook(() => useRunTimer());
 

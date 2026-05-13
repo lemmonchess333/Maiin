@@ -72,8 +72,8 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
     const snap = makeSnapshot({
       lastWriteAt: now,
       points: [
-        { lat: 51.5, lon: -0.12, timestamp: now - 60_000, elevation: 10 },
-        { lat: 51.501, lon: -0.121, timestamp: now - 30_000, elevation: 11 },
+        { lat: 51.5, lon: -0.12, timestamp: now - 60_000, altitude: 10, accuracy: 5, speed: null, rawLat: 51.5, rawLon: -0.12 },
+        { lat: 51.501, lon: -0.121, timestamp: now - 30_000, altitude: 11, accuracy: 5, speed: null, rawLat: 51.501, rawLon: -0.121 },
       ],
     });
     writeStoredRun(snap);

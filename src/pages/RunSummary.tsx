@@ -24,6 +24,7 @@ import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
 import { useProgram } from '../features/program/useProgram';
 import { freeformPlanMetadata, shouldCompleteRunDay } from '../lib/runPlanMetadata';
+import { clearStoredRun } from '../lib/runResumeStorage';
 import { toast } from 'sonner';
 import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -420,8 +421,15 @@ export default function RunSummary() {
      Plain const, not useCallback — sits below the `if (!state)` early
      return, so a hook call would violate rules-of-hooks. */
   const handleDiscard = () => {
-    if (isInvalid) navigate('/');
-    else setShowDiscardConfirm(true);
+    if (isInvalid) {
+      // Phase B3: invalid-run shortcut also clears any persisted
+      // snapshot so the discarded run can't be resurrected by the
+      // chooser on next /run open.
+      clearStoredRun();
+      navigate('/');
+    } else {
+      setShowDiscardConfirm(true);
+    }
   };
 
   const handleSave = async () => {
@@ -598,6 +606,11 @@ export default function RunSummary() {
 
       setSaveStatus('saved');
       setSaveError(null);
+
+      // Phase B3: the saved run is now durable in Firestore, so the
+      // in-flight localStorage snapshot is no longer needed. Clear so
+      // the next /run mount sees no resume prompt.
+      clearStoredRun();
 
       // ── Phase B1: programme reconciliation ───────────────────────
       // Mark the scheduled run day complete IFF the saved run is a
@@ -949,7 +962,7 @@ export default function RunSummary() {
         description="This cannot be undone."
         confirmLabel="Discard"
         destructive
-        onConfirm={() => { setShowDiscardConfirm(false); navigate('/'); }}
+        onConfirm={() => { setShowDiscardConfirm(false); clearStoredRun(); navigate('/'); }}
         onCancel={() => setShowDiscardConfirm(false)}
       />
     </div>
