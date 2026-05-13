@@ -139,10 +139,10 @@ describe('screenshot acceptance case — treadmill-only account', () => {
 });
 
 describe('isCountableRun back-compat alias', () => {
-  /* Existing call sites (useLifetimeRunStats, RunDashboard,
-     useStreaks, personalTrajectory, leaderboard) all import
-     `isCountableRun` and expect volume semantics — this pins the
-     alias so a future refactor doesn't drift. */
+  /* Existing call sites (useLifetimeRunStats, useStreaks,
+     personalTrajectory, leaderboard) all import `isCountableRun`
+     and expect volume semantics — this pins the alias so a future
+     refactor doesn't drift. */
   it('agrees with isVolumeEligible across the matrix', () => {
     const cases: RunRecord[] = [
       validOutdoor,

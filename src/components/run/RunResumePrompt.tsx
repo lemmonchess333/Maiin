@@ -60,7 +60,12 @@ export default function RunResumePrompt({
   const km = (distanceMeters / 1000).toFixed(2);
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
+      /* z-[60]: explicitly above Run.tsx's active-run wrapper (z-50)
+         and the RunBottomSheet (z-40 sheet, z-30 backdrop). The
+         chooser is the entry-point for a recovery flow and must
+         dominate any leftover overlays from a partially-torn-down
+         previous run. */
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
       style={{ background: 'rgba(0,0,0,0.55)' }}
       role="dialog"
       aria-modal="true"
