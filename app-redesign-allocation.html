@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tropos App Redesign Allocation Plan</title>
+  <style>
+    :root {
+      --bg: #f6f5f8;
+      --surface: #ffffff;
+      --surface-soft: #f2f1f6;
+      --ink: #17171c;
+      --muted: #6f6d78;
+      --line: rgba(23, 23, 28, 0.09);
+      --purple: #7b72e9;
+      --purple-dark: #5e56d7;
+      --run: #d4637a;
+      --food: #d9884e;
+      --lift: #7b72e9;
+      --green: #21a65b;
+      --warning: #d97706;
+      --shadow: 0 18px 55px rgba(31, 28, 52, 0.11), 0 3px 12px rgba(31, 28, 52, 0.06);
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(123, 114, 233, 0.14), transparent 34rem),
+        radial-gradient(circle at 85% 8%, rgba(212, 99, 122, 0.10), transparent 26rem),
+        var(--bg);
+      line-height: 1.45;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 80px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 28px;
+      align-items: stretch;
+      margin-bottom: 34px;
+    }
+
+    .hero-card, .panel, .phone, .principle, .route-card, .matrix, .flow-card {
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
+    }
+
+    .hero-card { padding: 38px; }
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(123, 114, 233, 0.10);
+      color: var(--purple-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: clamp(38px, 7vw, 76px);
+      line-height: 0.91;
+      letter-spacing: -0.07em;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1;
+      letter-spacing: -0.045em;
+      margin: 0 0 12px;
+    }
+    h3 {
+      font-size: 20px;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 780px;
+      margin-bottom: 24px;
+    }
+
+    .anchor-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .anchor-nav a, .pill {
+      text-decoration: none;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.70);
+      padding: 10px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .verdict {
+      display: grid;
+      gap: 14px;
+      padding: 24px;
+    }
+    .verdict-row {
+      padding: 18px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(123,114,233,0.12), rgba(255,255,255,0.66));
+      border: 1px solid rgba(123,114,233,0.12);
+    }
+    .verdict-row strong { display: block; margin-bottom: 4px; }
+    .verdict-row span { color: var(--muted); font-size: 14px; }
+
+    section { margin-top: 34px; }
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .section-head p { color: var(--muted); max-width: 680px; margin-bottom: 0; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+    .panel { padding: 24px; }
+    .panel p, .route-card p, .flow-card p { color: var(--muted); }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+    .tag.run { background: rgba(212, 99, 122, 0.12); color: var(--run); }
+    .tag.food { background: rgba(217, 136, 78, 0.14); color: #af652c; }
+    .tag.lift { background: rgba(123, 114, 233, 0.12); color: var(--purple-dark); }
+    .tag.good { background: rgba(33, 166, 91, 0.12); color: var(--green); }
+    .tag.warn { background: rgba(217, 119, 6, 0.13); color: var(--warning); }
+
+    .ownership {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .route-card {
+      min-height: 188px;
+      padding: 18px;
+      border-radius: 22px;
+      box-shadow: 0 10px 28px rgba(31, 28, 52, 0.07);
+    }
+    .route-card .icon {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      background: var(--surface-soft);
+    }
+    .route-card h3 { font-size: 16px; margin-bottom: 6px; }
+    .route-card p { font-size: 13px; margin-bottom: 0; }
+
+    .matrix { overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: rgba(123,114,233,0.08); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    td:nth-child(3) { font-weight: 800; }
+
+    .mockups {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .phone {
+      border-radius: 34px;
+      padding: 12px;
+      background: linear-gradient(180deg, #ffffff, #f7f6fa);
+      min-height: 560px;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-screen {
+      border-radius: 26px;
+      border: 1px solid var(--line);
+      background: #fbfafc;
+      padding: 18px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .mini-title { font-size: 22px; font-weight: 900; letter-spacing: -0.04em; margin-bottom: 14px; }
+    .mini-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid rgba(23, 23, 28, 0.06);
+      box-shadow: 0 8px 20px rgba(31, 28, 52, 0.05);
+      margin-bottom: 12px;
+    }
+    .mini-card.hero-run {
+      background: linear-gradient(135deg, rgba(212,99,122,0.14), rgba(255,255,255,0.94));
+      border-color: rgba(212,99,122,0.13);
+    }
+    .mini-card.hero-food {
+      background: linear-gradient(135deg, rgba(217,136,78,0.16), rgba(255,255,255,0.94));
+      border-color: rgba(217,136,78,0.13);
+    }
+    .mini-label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .mini-big { font-size: 24px; font-weight: 950; letter-spacing: -0.05em; margin-bottom: 3px; }
+    .mini-copy { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 11px;
+      font-size: 12px;
+      font-weight: 850;
+      color: white;
+      background: var(--purple);
+    }
+    .btn.secondary { color: var(--ink); background: var(--surface-soft); }
+    .progress { height: 7px; border-radius: 99px; background: var(--surface-soft); overflow: hidden; margin: 10px 0 4px; }
+    .progress span { display: block; height: 100%; border-radius: 99px; background: var(--purple); }
+    .run-list { display: grid; gap: 8px; margin-top: 12px; }
+    .run-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 11px;
+      border-radius: 14px;
+      background: #f5f4f7;
+      font-size: 12px;
+    }
+    .run-item strong { font-size: 13px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .chip { padding: 8px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; background: var(--surface-soft); }
+    .chip.active { background: rgba(123,114,233,0.15); color: var(--purple-dark); }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+    .principle { padding: 20px; border-radius: 22px; }
+    .principle .num { font-weight: 950; color: var(--purple); margin-bottom: 10px; }
+    .principle p { color: var(--muted); font-size: 13px; margin-bottom: 0; }
+
+    .timeline { display: grid; gap: 13px; }
+    .flow-card {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 18px;
+    }
+    .phase {
+      display: inline-grid;
+      place-items: center;
+      width: 78px;
+      height: 78px;
+      border-radius: 22px;
+      background: rgba(123,114,233,0.10);
+      color: var(--purple-dark);
+      font-weight: 950;
+    }
+    .flow-card h3 { margin-bottom: 4px; }
+    .flow-card p { margin-bottom: 0; }
+    .deliverable { color: var(--green); font-weight: 850; white-space: nowrap; }
+
+    .before-after {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .list li {
+      padding: 12px 13px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .list strong { color: var(--ink); }
+
+    .footer-note {
+      margin-top: 42px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1060px) {
+      .hero, .grid-2, .before-after { grid-template-columns: 1fr; }
+      .ownership { grid-template-columns: repeat(2, 1fr); }
+      .mockups { grid-template-columns: repeat(2, 1fr); }
+      .rules { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 22px, 1180px); padding-top: 22px; }
+      .hero-card { padding: 26px; }
+      .ownership, .mockups, .grid-3, .rules { grid-template-columns: 1fr; }
+      .flow-card { grid-template-columns: 1fr; }
+      .deliverable { white-space: normal; }
+      th, td { padding: 12px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-card">
+        <div class="eyebrow">Tropos redesign plan</div>
+        <h1 id="page-title">Make every feature live where the user expects it.</h1>
+        <p class="lead">This file turns the second-pass app critique into a concrete product and UI plan: what moves, where it goes, and how it should look without making the app feel cluttered.</p>
+        <div class="anchor-nav" aria-label="Page sections">
+          <a href="#ownership">Surface ownership</a>
+          <a href="#moves">Relocation matrix</a>
+          <a href="#mockups">Visual mockups</a>
+          <a href="#principles">Design rules</a>
+          <a href="#roadmap">Roadmap</a>
+        </div>
+      </div>
+      <aside class="hero-card verdict" aria-label="Executive verdict">
+        <div class="verdict-row">
+          <strong>Root issue</strong>
+          <span>Settings is carrying operational workflows that should live in Programme, Run, and Food.</span>
+        </div>
+        <div class="verdict-row">
+          <strong>Product principle</strong>
+          <span>Home tells me today. Programme owns the plan. Run/Food execute. History proves progress. Settings controls defaults.</span>
+        </div>
+        <div class="verdict-row">
+          <strong>Visual principle</strong>
+          <span>One hero per screen. Use sheets for decisions and compact rows for settings.</span>
+        </div>
+      </aside>
+    </section>
+
+    <section id="ownership">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">1 · App architecture</div>
+          <h2>Recommended surface ownership</h2>
+        </div>
+        <p>Each tab should have a single mental model. If a feature breaks that model, either move it or expose it only as a small summary with a link.</p>
+      </div>
+      <div class="ownership">
+        <article class="route-card">
+          <div class="icon">🏠</div>
+          <h3>Home</h3>
+          <p>Daily command centre: today’s priority, next action, energy status, and lightweight nudges.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">🏋️</div>
+          <h3>Programme</h3>
+          <p>Plan ownership: weekly schedule, strength, running, race prep, swaps, rebuilds.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">👟</div>
+          <h3>Run</h3>
+          <p>Pre-run cockpit and live execution: prescribed run first, free choices second.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">🍽️</div>
+          <h3>Food</h3>
+          <p>Nutrition execution: targets, meal logging, phase, day-specific fuel explanation.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">👥</div>
+          <h3>Social</h3>
+          <p>Community: feed, crews, challenges, comments, shareable milestones.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">📊</div>
+          <h3>History</h3>
+          <p>Evidence: analytics, PRs, trends, badges, completed run and workout details.</p>
+        </article>
+        <article class="route-card">
+          <div class="icon">⚙️</div>
+          <h3>Settings</h3>
+          <p>Defaults, account, privacy, notifications, support, and compact links to manage workflows elsewhere.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="moves">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">2 · Reallocation</div>
+          <h2>Move workflows out of Settings without scattering them</h2>
+        </div>
+        <p>The goal is not fewer features in Settings for its own sake. The goal is to put high-intent actions into the surfaces where the user is already thinking about them.</p>
+      </div>
+      <div class="matrix">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Today</th>
+              <th>Better home</th>
+              <th>Settings role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Race goal setup</td>
+              <td>Training settings</td>
+              <td>Programme → Running</td>
+              <td>Summary + Manage link</td>
+            </tr>
+            <tr>
+              <td>This week’s runs</td>
+              <td>Settings dropdowns</td>
+              <td>Programme + Run</td>
+              <td>None, except summary</td>
+            </tr>
+            <tr>
+              <td>Run swaps / overrides</td>
+              <td>Raw select menu</td>
+              <td>Programme swap sheet</td>
+              <td>Advanced link only</td>
+            </tr>
+            <tr>
+              <td>Weekly schedule editor</td>
+              <td>Settings</td>
+              <td>Programme planner</td>
+              <td>Default availability</td>
+            </tr>
+            <tr>
+              <td>Nutrition targets</td>
+              <td>Settings nutrition section</td>
+              <td>Food target sheet</td>
+              <td>Defaults + fallback</td>
+            </tr>
+            <tr>
+              <td>TDEE calculator</td>
+              <td>Settings</td>
+              <td>Food targets / onboarding</td>
+              <td>Advanced calculator link</td>
+            </tr>
+            <tr>
+              <td>Audio cues</td>
+              <td>Workout preferences</td>
+              <td>Run setup for per-run choice</td>
+              <td>Global default</td>
+            </tr>
+            <tr>
+              <td>Rest timer</td>
+              <td>Workout preferences</td>
+              <td>Workout session controls</td>
+              <td>Global default</td>
+            </tr>
+            <tr>
+              <td>Shoe mileage</td>
+              <td>History / settings split</td>
+              <td>Run warning + History detail</td>
+              <td>Manage inventory</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="mockups">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">3 · Visual direction</div>
+          <h2>Pristine, calm mockups for the knock-on changes</h2>
+        </div>
+        <p>The redesign should add intelligence without adding noise. Each screen gets one dominant card and the rest becomes compact supporting UI.</p>
+      </div>
+      <div class="mockups">
+        <article class="phone" aria-label="Home mockup">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>Home</span></div>
+            <div class="mini-title">Today</div>
+            <div class="mini-card hero-run">
+              <div class="mini-label">Next best action</div>
+              <div class="mini-big">Easy 30</div>
+              <p class="mini-copy">10K Race Prep · Week 1 Base. Keep it conversational today.</p>
+              <div class="button-row"><button class="btn">Start run</button><button class="btn secondary">View day</button></div>
+            </div>
+            <div class="mini-card hero-food">
+              <div class="mini-label">Energy</div>
+              <div class="mini-big">1,420 / 2,300</div>
+              <p class="mini-copy">Protein 82g / 150g · Run day +250 kcal</p>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Small actions</div>
+              <div class="chip-row"><span class="chip">Water +1</span><span class="chip">Log weight</span><span class="chip">Insight</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Programme mockup">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>Programme</span></div>
+            <div class="mini-title">Programme</div>
+            <div class="chip-row"><span class="chip active">This Week</span><span class="chip">Strength</span><span class="chip">Running</span></div>
+            <div class="mini-card hero-run" style="margin-top: 14px;">
+              <div class="mini-label">10K Race Prep</div>
+              <div class="mini-big">Week 1 / 23</div>
+              <p class="mini-copy">Base phase · Race day 16 Oct 2026</p>
+              <div class="progress"><span style="width: 8%"></span></div>
+              <div class="button-row"><button class="btn">View plan</button><button class="btn secondary">Adjust</button></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">This week’s runs</div>
+              <div class="run-list">
+                <div class="run-item"><strong>Mon · Easy 30</strong><span>Start</span></div>
+                <div class="run-item"><strong>Sat · Long 10K</strong><span>Swap</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Run mockup">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>Run</span></div>
+            <div class="mini-title">Run</div>
+            <div class="mini-card hero-run">
+              <div class="mini-label">Today’s prescribed run</div>
+              <div class="mini-big">Easy 30</div>
+              <p class="mini-copy">Outdoor GPS · Voice cues on · Purpose: aerobic consistency.</p>
+              <div class="button-row"><button class="btn">Start run</button><button class="btn secondary">Details</button></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Choose another run</div>
+              <div class="chip-row">
+                <span class="chip">Free</span><span class="chip active">Easy</span><span class="chip">Tempo</span><span class="chip">Intervals</span><span class="chip">Long</span><span class="chip">Race</span><span class="chip">Treadmill</span><span class="chip">Guided</span>
+              </div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Gear</div>
+              <p class="mini-copy">Pegasus 41 · 412km. Shoe warning only if mileage is risky.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="phone" aria-label="Settings mockup">
+          <div class="phone-screen">
+            <div class="status"><span>9:41</span><span>Settings</span></div>
+            <div class="mini-title">Settings</div>
+            <div class="mini-card">
+              <div class="mini-label">Profile</div>
+              <div class="mini-big" style="font-size: 19px;">Alex · 78kg</div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Training defaults</div>
+              <p class="mini-copy">10K Race Prep · Week 1/23 · 3 lift + 2 run</p>
+              <button class="btn secondary">Manage in Programme</button>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Food defaults</div>
+              <p class="mini-copy">2,300 kcal · Performance phase</p>
+              <button class="btn secondary">Manage in Food</button>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Account controls</div>
+              <p class="mini-copy">Privacy · Notifications · Subscription · Support</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="principles">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">4 · Design rules</div>
+          <h2>Rules to prevent clutter</h2>
+        </div>
+        <p>These constraints let the app gain depth without turning every screen into a dashboard.</p>
+      </div>
+      <div class="rules">
+        <article class="principle">
+          <div class="num">01</div>
+          <h3>One hero per screen</h3>
+          <p>Home has today. Programme has plan. Run has the prescribed run. Food has energy. Settings has account summary.</p>
+        </article>
+        <article class="principle">
+          <div class="num">02</div>
+          <h3>Cards show state</h3>
+          <p>Cards should explain status and offer one obvious action, not expose every possible control inline.</p>
+        </article>
+        <article class="principle">
+          <div class="num">03</div>
+          <h3>Sheets handle decisions</h3>
+          <p>Use bottom sheets for run swaps, target edits, cue settings, active shoe choice, and plan adjustments.</p>
+        </article>
+        <article class="principle">
+          <div class="num">04</div>
+          <h3>Full screens handle flows</h3>
+          <p>Race plan creation and programme rebuilds need focused flows with previews, not inline settings clutter.</p>
+        </article>
+        <article class="principle">
+          <div class="num">05</div>
+          <h3>Accent, don’t flood</h3>
+          <p>Use semantic colour as a cue. Keep surfaces neutral and let primary actions carry the strongest colour.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">5 · Before / after</div>
+          <h2>What the user feels</h2>
+        </div>
+      </div>
+      <div class="before-after">
+        <div class="panel">
+          <span class="tag warn">Before</span>
+          <h3>Powerful but misplaced</h3>
+          <ul class="list">
+            <li><strong>Settings</strong> feels like a planner, not just preferences.</li>
+            <li><strong>Run</strong> asks users to choose manually even when a plan exists.</li>
+            <li><strong>Programme</strong> under-represents running plan intelligence.</li>
+            <li><strong>Food</strong> sends target changes away to Settings.</li>
+            <li><strong>Home</strong> risks becoming a stack of equal-weight cards.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <span class="tag good">After</span>
+          <h3>Intentional and calm</h3>
+          <ul class="list">
+            <li><strong>Settings</strong> becomes tidy defaults and account controls.</li>
+            <li><strong>Run</strong> leads with the prescribed run and keeps options secondary.</li>
+            <li><strong>Programme</strong> owns weekly structure, race prep, and plan edits.</li>
+            <li><strong>Food</strong> owns targets in a native bottom sheet.</li>
+            <li><strong>Home</strong> shows only today’s next best action.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">6 · Build sequence</div>
+          <h2>Ship it in the right order</h2>
+        </div>
+        <p>Do not rip workflows out of Settings before their new homes exist. Fix trust issues first, then redesign.</p>
+      </div>
+      <div class="timeline">
+        <article class="flow-card">
+          <div class="phase">P0</div>
+          <div>
+            <h3>Correctness and trust fixes</h3>
+            <p>Race template by distance, distance-specific minimum dates, no half-configured race prep, edit/delete/rebuild actions, consistent date copy.</p>
+          </div>
+          <div class="deliverable">Foundation</div>
+        </article>
+        <article class="flow-card">
+          <div class="phase">P1</div>
+          <div>
+            <h3>Programme → Running</h3>
+            <p>Create the real home for race prep: summary card, this week’s runs, swap sheet, full plan, and adjust flow.</p>
+          </div>
+          <div class="deliverable">Plan hub</div>
+        </article>
+        <article class="flow-card">
+          <div class="phase">P2</div>
+          <div>
+            <h3>Plan-aware Run setup</h3>
+            <p>Make the prescribed run the hero, keep free run types as secondary, and expose voice cues as per-run controls.</p>
+          </div>
+          <div class="deliverable">Execution</div>
+        </article>
+        <article class="flow-card">
+          <div class="phase">P3</div>
+          <div>
+            <h3>Food-native target management</h3>
+            <p>Replace the Settings gear jump with a nutrition targets sheet and TDEE/phase controls inside Food.</p>
+          </div>
+          <div class="deliverable">Nutrition flow</div>
+        </article>
+        <article class="flow-card">
+          <div class="phase">P4</div>
+          <div>
+            <h3>Settings cleanup</h3>
+            <p>Convert heavy sections into compact summary rows that deep-link to Programme, Food, Run, and Workout where appropriate.</p>
+          </div>
+          <div class="deliverable">Polish</div>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer-note">Designed as a standalone planning artefact for the Tropos app redesign discussion.</p>
+  </main>
+</body>
+</html>
