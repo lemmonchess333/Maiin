@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { useGPS } from '../hooks/useGPS';
+import { useGPS, type GPSSignalQuality } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
@@ -49,9 +49,22 @@ function haptic(pattern: 'light' | 'medium' | 'heavy' | 'success') {
   if (pattern === 'success') navigator.vibrate([30, 50, 30]);
 }
 
-function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number | null; isTracking: boolean; pointCount: number }) {
+/* Live HUD chip for GPS state during an active run.
+ *
+ * Phase B2: consumes `signalQuality` from useGPS directly rather
+ * than re-deriving thresholds locally. Pre-B2 this component
+ * duplicated the bucket logic (<10/<20/<30 vs the hook's 8/15/30)
+ * which meant the chip could disagree with the rest of the system
+ * about whether the signal was 'good' vs 'fair'. Single source of
+ * truth lives in useGPS.getSignalQuality. */
+function GPSIndicator({ accuracy, isTracking, pointCount, signalQuality }: {
+  accuracy: number | null;
+  isTracking: boolean;
+  pointCount: number;
+  signalQuality: GPSSignalQuality;
+}) {
   if (!isTracking) return null;
-  if (pointCount === 0) {
+  if (pointCount === 0 || signalQuality === 'searching') {
     return (
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -59,16 +72,21 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
       </div>
     );
   }
-  const quality = accuracy && accuracy < 10 ? 'strong' : accuracy && accuracy < 20 ? 'good' : accuracy && accuracy < 30 ? 'fair' : 'weak';
-  const color = quality === 'strong' || quality === 'good' ? 'bg-green-400' : quality === 'fair' ? 'bg-yellow-400' : 'bg-red-400';
-  const text = quality === 'weak' ? 'text-red-400/80' : quality === 'fair' ? 'text-yellow-400/80' : 'text-green-400/80';
+  const color =
+    signalQuality === 'strong' || signalQuality === 'good' ? 'bg-green-400'
+    : signalQuality === 'fair' ? 'bg-yellow-400'
+    : 'bg-red-400';
+  const text =
+    signalQuality === 'weak' ? 'text-red-400/80'
+    : signalQuality === 'fair' ? 'text-yellow-400/80'
+    : 'text-green-400/80';
   return (
     <div className="flex items-center gap-2">
       <div className="flex items-end gap-0.5 h-3">
         <div className={`w-1 h-1 rounded-sm ${color}`} />
-        <div className={`w-1 h-1.5 rounded-sm ${quality !== 'weak' ? color : 'bg-white/20'}`} />
-        <div className={`w-1 h-2 rounded-sm ${quality === 'strong' || quality === 'good' ? color : 'bg-white/20'}`} />
-        <div className={`w-1 h-3 rounded-sm ${quality === 'strong' ? color : 'bg-white/20'}`} />
+        <div className={`w-1 h-1.5 rounded-sm ${signalQuality !== 'weak' ? color : 'bg-white/20'}`} />
+        <div className={`w-1 h-2 rounded-sm ${signalQuality === 'strong' || signalQuality === 'good' ? color : 'bg-white/20'}`} />
+        <div className={`w-1 h-3 rounded-sm ${signalQuality === 'strong' ? color : 'bg-white/20'}`} />
       </div>
       <span className={`text-xs ${text}`}>{accuracy ? `\u00B1${Math.round(accuracy)}m` : ''}</span>
     </div>
@@ -832,7 +850,12 @@ export default function Run() {
       {(phase === 'active' || phase === 'paused') && isOutdoorGpsRun(runConfig?.activityType) && (
         <div className="fixed inset-0 z-50 text-white" style={{ backgroundColor: THEME.bg }}>
           <div className="absolute top-3 left-4 z-50">
-            <GPSIndicator accuracy={gps.gpsAccuracy} isTracking={gps.isTracking} pointCount={gps.points.length} />
+            <GPSIndicator
+              accuracy={gps.gpsAccuracy}
+              isTracking={gps.isTracking}
+              pointCount={gps.points.length}
+              signalQuality={gps.signalQuality}
+            />
           </div>
 
           {(runConfig?.activityType === 'tempo' || runConfig?.activityType === 'intervals') && (

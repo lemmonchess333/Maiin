@@ -1,5 +1,6 @@
 import { useShoes } from "@/hooks/useShoes";
-import { Footprints } from "lucide-react";
+import { Footprints, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   selectedShoeId: string | null;
@@ -8,8 +9,34 @@ interface Props {
 
 export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
   const { activeShoes, defaultShoe, loading } = useShoes();
+  const navigate = useNavigate();
 
-  if (loading || activeShoes.length === 0) return null;
+  if (loading) return null;
+
+  /* Phase B2: no-shoes affordance. Pre-B2 this returned null on an
+   * empty shoe list, so users with no shoes couldn't discover that
+   * shoe-mileage tracking exists. Now we render a single-line CTA
+   * that takes them to Settings (where ShoesManager lives). Light-
+   * touch — same card shape as the populated state so the layout
+   * doesn't shift after adding the first pair. */
+  if (activeShoes.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate("/settings")}
+        className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
+      >
+        <Footprints className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="flex-1 text-sm text-muted-foreground">
+          Track your shoe mileage
+        </span>
+        <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          Add shoes
+        </span>
+      </button>
+    );
+  }
 
   const selected = selectedShoeId
     ? activeShoes.find((s) => s.id === selectedShoeId) ?? defaultShoe
