@@ -443,6 +443,499 @@ Pro trial · 5 days left
 Manage subscription
 ```
 
+
+## Programme and Run build-out plan
+
+This section answers the concrete product question raised by the current Programme screenshots: the Programme screen already has a strong week/day stepper for lifting. If running becomes more developed, do not remove that calendar/stepper and force users to inspect the week from a separate page. The week view is the orientation layer. Running should be added into that layer, not split into a disconnected planner that makes the user mentally join two schedules.
+
+### Core decision
+
+Keep Programme as one integrated weekly plan with discipline-aware detail.
+
+Do not build two separate mental calendars:
+
+```text
+Bad:
+Programme → lifting week
+Run area → separate running week
+Home calendar → third view of the week
+```
+
+Build one week model with different detail panels:
+
+```text
+Good:
+Programme → week rail / day rail
+Selected day → Lift card, Run card, or Both stacked in priority order
+Running tab/filter → same week, run-focused detail
+Lifting tab/filter → same week, lift-focused detail
+```
+
+The user should never wonder whether Programme, Home, and Run disagree about the week. They can choose a different lens, but the underlying week is one plan.
+
+### Programme top-level structure
+
+The current Programme header and day stepper should remain recognizable. Add running depth through a lightweight view switch, not a redesigned page.
+
+Recommended structure:
+
+```text
+Programme
+Built for Hypertrophy · Push / Pull / Legs · 6 days/week
+
+[Run icon] [reorder] [...]
+
+Week 1        LEAN BULK
+
+[All] [Lift] [Run]       <- compact segmented control, not a new nav tab
+
+Day rail / week rail
+1 Push A   2 Pull A   3 Legs A   4 Easy 30   5 Push B   6 Long 10K
+```
+
+Rules:
+
+1. `All` is the default view.
+2. `Lift` filters the selected day/detail area to lifting sessions.
+3. `Run` filters the selected day/detail area to run sessions and race-prep context.
+4. The same week/day rail remains visible across all filters.
+5. Do not create a second full calendar below the first one.
+6. Do not hide lifting details behind a separate route when the user is on Programme.
+7. Do not make running visually equal by copying every lifting UI pattern; make it equivalent in usefulness, not identical in density.
+
+### Day rail design
+
+The current numbered circles work well for lift days because there are six lifting sessions. Running adds a second dimension. The rail should show day/session identity without becoming a Christmas tree.
+
+Recommended day chip anatomy:
+
+```text
+Circle: day/session number or weekday abbreviation
+Primary label: Push A / Easy / Long / Rest
+Tiny markers: purple dot for lift, coral dot for run
+State: filled = selected, ring = completed, muted = upcoming/rest
+```
+
+Example integrated week:
+
+```text
+Mon      Tue      Wed      Thu      Fri      Sat      Sun
+Push A   Easy     Pull A   Rest     Legs A   Long     Rest
+● lift   ● run    ● lift            ● lift   ● run
+```
+
+For the current six-day PPL layout, if the rail is session-number-based rather than weekday-based, preserve it for lift-only users. For hybrid users, prefer weekday labeling because run scheduling is calendar-dependent. This avoids a confusing “Day 4” that could mean either Push B or Thursday Easy Run.
+
+Decision:
+
+- Lift-only programme: keep existing numbered session rail.
+- Hybrid programme: use weekday rail with lift/run markers.
+- Race Prep: use weekday rail because race plans are date-dependent.
+
+### Selected day layout
+
+The selected day should show only what is relevant for that day. Use stacked cards when the day contains both lift and run.
+
+Rest day:
+
+```text
+Friday · Rest
+No training scheduled
+Keep steps easy, hydrate, and sleep well.
+[Log walk] optional later, not pre-launch
+```
+
+Lift day:
+
+```text
+Day 1 · Push A       Today
+6 exercises · ~48 min · Chest · Shoulders · Triceps
+[existing exercise cards]
+[Begin Workout]
+```
+
+Run day:
+
+```text
+Thursday · Easy 30       10K Base Week
+Aerobic run · 30 min · conversational pace
+Purpose: build consistency without adding fatigue before Legs A.
+[Start Run]
+[Swap] [Details]
+```
+
+Both day:
+
+```text
+Saturday · Lift + Run
+
+1. Long 10K
+Endurance focus · keep effort controlled
+[Start Run]
+
+2. Legs B
+5 exercises · ~43 min · Legs
+[Begin Workout]
+```
+
+Ordering rule for both days:
+
+1. If one session is scheduled for today and incomplete, show the more time-sensitive or plan-critical session first.
+2. For Race Prep, long run or quality run usually appears above lifting.
+3. For heavy lower-body days, warn if a quality run is adjacent, but do not block.
+4. Do not stack two giant hero cards. Use one primary card and one compact secondary card.
+
+### Should running be as detailed as lifting?
+
+Running should be as actionable as lifting, but not as granular.
+
+Lifting naturally needs exercise-level detail because the session is a list of movements, sets, reps, loads, previous performance, substitutions, and order. A run session usually does not need six cards unless it is an interval workout.
+
+The right equivalence is:
+
+```text
+Lifting detail = exercise prescription detail
+Running detail = session intent + target + structure + execution setup
+```
+
+Do not force running into fake exercise-card density. A good run card can be one compact card for easy/long runs and a structured block for intervals.
+
+Run detail levels:
+
+1. Easy run: one card.
+2. Long run: one card plus optional fueling/shoe note.
+3. Tempo run: warmup / tempo / cooldown structure.
+4. Interval run: repeat table.
+5. Race: race-day checklist and start action.
+
+### Running session card specification
+
+Base card fields:
+
+```text
+Run title: Easy 30 / Long 10K / Tempo 20 / 5 × 1K
+Plan context: 10K Race Prep · Week 4 Build
+Type chip: Easy / Long / Tempo / Intervals / Race
+Primary target: duration, distance, or interval set
+Intensity: easy / steady / hard, preferably in plain language
+Purpose: one sentence explaining why it exists
+Primary CTA: Start Run
+Secondary: Swap, Details
+```
+
+Example easy card:
+
+```text
+Easy 30
+10K Race Prep · Week 1 Base
+30 min · conversational pace
+Purpose: build aerobic volume while staying fresh for lifting.
+[Start Run]
+[Swap] [Details]
+```
+
+Example long card:
+
+```text
+Long 10K
+10K Race Prep · Week 3 Base
+10 km · controlled effort
+Purpose: extend endurance without racing the workout.
+Fuel: water if hot; no need for gels unless >75 min.
+Shoe: Pegasus 41 · 412 km
+[Start Run]
+[Swap] [Details]
+```
+
+Example interval card:
+
+```text
+5 × 1K
+10K Race Prep · Week 7 Build
+Warm up 10 min
+5 repeats: 1 km hard / 2 min easy
+Cool down 10 min
+Purpose: improve 10K pace tolerance.
+[Start Guided Run]
+[Swap] [Details]
+```
+
+This is enough detail to be useful without becoming a fake lifting list.
+
+### 10K Race Prep in Programme
+
+A 10K plan should have a compact race header only in the `Run` filter or when the selected day is a run day. It should not dominate every Programme view.
+
+Run filter structure:
+
+```text
+Programme → Run
+
+10K Race Prep
+Race day: 16 Oct · Week 4/10 · Base
+Progress bar: week progress, not a huge chart
+This week: 3 runs · 18 km planned
+
+Week rail
+Mon Easy 30
+Wed Tempo 20
+Sat Long 10K
+
+Selected run detail card
+[Start Run]
+```
+
+Plan phases should be understandable:
+
+- Base: easy consistency and long-run habit.
+- Build: tempo/interval quality appears.
+- Taper: volume drops, sharpness stays.
+- Race: race-specific prep and recovery.
+
+Do not show the full 10-week plan by default. Add a small `View full plan` action if needed later. Pre-launch, week-level planning is enough.
+
+### Full plan view, if needed post-launch
+
+If the app later needs a full race-plan view, it should be a sheet or subpage from Programme → Run, not a default page.
+
+Full plan view anatomy:
+
+```text
+10K Race Prep
+16 Oct · 10 weeks
+
+Week 1 Base    Easy 30 · Long 8K
+Week 2 Base    Easy 30 · Easy 40 · Long 9K
+Week 3 Base    Easy 30 · Tempo intro · Long 10K
+Week 4 Build   Easy 30 · Tempo 20 · Long 10K
+...
+```
+
+Rules:
+
+1. Read-only by default.
+2. Tap a week to preview.
+3. Editing happens through `Adjust plan`, not inline table surgery.
+4. Completed weeks are locked or clearly marked.
+5. Changing race date or weekly availability explains the rebuild impact.
+
+### Removing the calendar from Programme is not recommended
+
+Do not remove the Programme week/day rail and force users into a separate weekly page.
+
+Why:
+
+1. The current Programme screen already teaches users to move day-to-day.
+2. The Home CTA depends on scheduled day context.
+3. Running and lifting must be seen together to avoid fatigue clashes.
+4. A separate run-week page creates duplicate truth.
+5. It increases navigation cost for a user who just wants today’s session.
+
+Instead, keep the rail and add discipline filters.
+
+Better than removal:
+
+```text
+Programme header
+Week / phase row
+All · Lift · Run segmented control
+Same week rail
+Selected day/session detail
+```
+
+This keeps the existing model and expands it without breaking muscle memory.
+
+### Home CTA interaction
+
+Home should remain simple.
+
+Home behavior:
+
+1. If today has a scheduled lift only: CTA begins workout or opens selected Programme day.
+2. If today has a scheduled run only: CTA starts the prescribed run or opens Run setup with the template preselected.
+3. If today has both: CTA stack shows both, but only one primary action should visually lead.
+4. If today has no scheduled run: do not force the user into the plan. Offer ad hoc run from Programme header/run icon or Run route.
+
+Ad hoc run behavior:
+
+- Programme header run icon remains a quick ad hoc run entry.
+- Run route remains available for Free Run, Easy, Tempo, Intervals, Long, Race, Treadmill, Guided.
+- Ad hoc runs should not mutate the race plan unless the user explicitly marks them as replacing a planned run.
+
+### Built-out Run route
+
+Run should become a pre-run cockpit plus live execution surface. It should not become the race-plan editor.
+
+Run route before a run starts:
+
+```text
+Run
+
+If prescribed run exists today:
+[Today’s Run card]
+Easy 30
+10K Race Prep · Week 1 Base
+30 min · conversational pace
+[Start Run]
+[Swap] [Details]
+
+Other options
+Free · Easy · Tempo · Intervals · Long · Race · Treadmill · Guided
+
+Setup defaults
+Outdoor GPS · Voice cues on · Active shoe
+```
+
+If no prescribed run exists:
+
+```text
+Run
+
+Start a run
+Free Run is primary
+Other types are available below
+
+Optional: Next planned run
+Sat · Long 10K
+[View in Programme]
+```
+
+Run route after selecting a run:
+
+```text
+Confirm run
+Type: Easy 30
+Target: 30 min
+GPS: ready / weak / unavailable
+Voice cues: on/off
+Shoe: Pegasus 41
+[Start]
+```
+
+Live run remains focused on execution:
+
+- time
+- distance
+- live pace
+- target/interval cue if relevant
+- pause/lock/stop
+- route/GPS quality
+
+Do not show race-plan editing during the live run.
+
+### Run Details sheet
+
+`Details` on a Programme run card or Run cockpit card opens a sheet.
+
+Sheet contents:
+
+```text
+Easy 30
+Why today: low-stress aerobic work before heavy legs.
+Target: 30 min
+Effort: conversational, should finish fresh
+Counts toward: 10K Race Prep Week 1
+If you miss it: skip or move within this week
+```
+
+For intervals:
+
+```text
+5 × 1K
+Warm-up: 10 min easy
+Repeat: 1 km hard / 2 min easy × 5
+Cool-down: 10 min easy
+Tip: hard means controlled, not sprinting
+```
+
+### Swap Run sheet
+
+Do not use a raw dropdown for user-facing swaps.
+
+Swap sheet structure:
+
+```text
+Swap Easy 30
+Recommended
+- Easy 20: shorter recovery
+- Rest: if fatigue is high
+- Easy 40: slightly more volume
+
+More options
+Tempo · Intervals · Long · Free
+```
+
+Rules:
+
+1. Recommended options first.
+2. Keep destructive/plan-changing language explicit.
+3. If swapping a quality run to a hard run near legs day, warn but allow.
+4. Completed runs cannot be swapped without an explicit history/edit path.
+
+### Handling missed or extra runs
+
+Missed planned run:
+
+```text
+Missed Easy 30
+[Move to another day]
+[Skip]
+[Mark completed manually]
+```
+
+Extra ad hoc run:
+
+```text
+Nice extra run.
+Count this toward your plan?
+[Replace Easy 30]
+[Keep as extra]
+```
+
+Pre-launch, keep this simple. If replacement logic is not ready, do not ask the user to reconcile; keep ad hoc as extra and do not mutate the plan.
+
+### Visual balance with lifting
+
+The lifting side will always look more developed because it has more objects. That is not a problem. Running should feel equally cared-for through clarity, not through volume.
+
+Visual balance rules:
+
+1. Lift uses lists of exercise cards.
+2. Run uses one strong prescription card plus structured rows only when needed.
+3. Race Prep uses small chips and progress, not a giant dashboard.
+4. Coral/running accent should be restrained like the current purple lifting accent.
+5. Do not add big pastel running cards that fight the existing premium direction.
+6. Do not put a full race-plan calendar above the lift exercises.
+
+### Minimum viable running build-out
+
+The smallest useful build-out is:
+
+1. Programme gets `All / Lift / Run` filter.
+2. Hybrid/race users get weekday rail with lift/run markers.
+3. Run days render a proper run prescription card.
+4. Run card can start Run with the selected template.
+5. Run card has Details sheet.
+6. Run card has Swap sheet only if safe to implement.
+7. Settings keeps only compact summaries for training defaults.
+
+Do not start with full race calendar, adaptive plan rebuilds, or Home redesign.
+
+### Post-launch running build-out
+
+After launch, consider:
+
+1. Full race-plan view.
+2. Missed-run rescheduling.
+3. Ad hoc run reconciliation.
+4. Fatigue-aware run/lift conflict warnings.
+5. Race-specific workout library.
+6. Plan adherence analytics in History.
+7. Shoe-specific run suggestions and retirement warnings.
+8. Food fueling nudges for long runs.
+
+These are valuable, but they are not required to make Programme feel coherent.
+
 ## Practical prompt guardrail for future AI tasks
 
 Use this at the top of any future Claude/Codex task touching Settings, Programme allocation, Home/Food/Run roles, or design structure:
