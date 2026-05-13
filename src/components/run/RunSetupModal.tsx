@@ -13,6 +13,7 @@ import type { ActivityType } from '@/types/run';
 import { requiresManualDistance } from '@/lib/runGuards';
 import { isVolumeEligible } from '@/lib/runStatsEligibility';
 import { getTargetValidationError } from '@/lib/runTargetValidation';
+import { freeformPlanMetadata, type RunPlanMetadata } from '@/lib/runPlanMetadata';
 
 /* `ActivityType` now lives in `@/types/run` so non-component modules
    (e.g. `runGuards.ts`) can import it without pulling this component
@@ -46,6 +47,19 @@ export interface RunConfig {
   };
   guidedWorkout?: GuidedRunWorkout;
   shoeId?: string;
+  /**
+   * Plan-adherence metadata block, Phase B1.
+   * Snapshot of the programme context active at Start; persisted to
+   * the run doc so History / adherence surfaces can reason about
+   * which runs were on-plan vs off-plan without re-deriving from
+   * programState. See `src/lib/runPlanMetadata.ts` for the field
+   * semantics and computation rules.
+   *
+   * Always present (even on freeform runs — they get the freeform
+   * default shape) so downstream code never has to branch on
+   * "is this field there".
+   */
+  planMetadata: RunPlanMetadata;
 }
 
 const DEFAULT_CONFIG: RunConfig = {
@@ -57,6 +71,9 @@ const DEFAULT_CONFIG: RunConfig = {
   voiceRate: 0.9,
   displayStats: ['pace', 'distance', 'time', 'calories'],
   target: { type: 'none' },
+  // Freeform default — Run.tsx overrides this via savedPreferences
+  // when programme prefill applies. See computePlanMetadata.
+  planMetadata: freeformPlanMetadata('freeform'),
 };
 
 /* Run-type registry. `name` is the long-form label used by the
@@ -103,13 +120,89 @@ const ACTIVITY_TYPES: ActivityTypeOption[] = [
 ];
 
 
+/**
+ * Read-only programme context strip data, computed in Run.tsx from
+ * useProgram + URL params. Drives the strip rendered above the
+ * selected-run card. Null = no strip (freeform user, or programme
+ * has no opinion on today).
+ *
+ * Six visible states:
+ *   - race_prep today_plan         → "Race prep · Week N of M · {distance}"
+ *   - structured today_plan        → "This week's plan · {todayLabel}"
+ *   - race_prep / structured rest_day      → "Rest day in your plan."
+ *   - race_prep / structured completed_day → completed-day copy
+ *   - race_prep elapsed            → "Race prep ended" + Settings link
+ *   - freeform / no plan           → strip not rendered (null)
+ */
+export interface ProgramContextStrip {
+  kind:
+    | 'race_prep_today'
+    | 'structured_today'
+    | 'rest_day'
+    | 'completed_day'
+    | 'race_prep_elapsed';
+  /** For race_prep today: "Week 3 of 8" */
+  weekLabel?: string;
+  /** For race_prep today: "10K" / "Half Marathon" etc. */
+  distanceLabel?: string;
+  /** For race_prep today: ISO target date, rendered as a secondary line. */
+  targetDate?: string;
+  /** For structured today: "Tempo Run" / "Easy 30" — the day's template name. */
+  todayLabel?: string;
+}
+
 interface RunSetupModalProps {
   onStart: (config: RunConfig) => void;
   onCancel: () => void;
   savedPreferences?: Partial<RunConfig>;
+  /** Read-only context-strip data. Null when no strip should render. */
+  programContext?: ProgramContextStrip | null;
 }
 
-export default function RunSetupModal({ onStart, onCancel, savedPreferences }: RunSetupModalProps) {
+/**
+ * Read-only programme context strip. Same purple tint as the
+ * selected-run card icon (rgba(123,114,233,0.10)) so the strip feels
+ * like it lives in the same family. No interactive controls — the
+ * user reads, the chooser below is where they act.
+ */
+function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
+  let line1: string;
+  let line2: string | null = null;
+  switch (ctx.kind) {
+    case 'race_prep_today':
+      line1 = `Race prep · ${ctx.weekLabel} · ${ctx.distanceLabel}`;
+      line2 = ctx.targetDate
+        ? `Target ${new Date(ctx.targetDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : null;
+      break;
+    case 'structured_today':
+      line1 = `This week's plan${ctx.todayLabel ? ` · ${ctx.todayLabel}` : ''}`;
+      break;
+    case 'rest_day':
+      line1 = 'Rest day in your plan.';
+      break;
+    case 'completed_day':
+      line1 = 'Today’s planned run completed. Starting another run will be recorded as extra.';
+      break;
+    case 'race_prep_elapsed':
+      line1 = 'Race prep ended';
+      line2 = 'Update your plan in Settings.';
+      break;
+  }
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-xl px-3.5 py-2.5"
+      style={{ background: 'rgba(123,114,233,0.10)' }}
+    >
+      <p className="text-sm font-semibold text-foreground">{line1}</p>
+      {line2 && <p className="text-xs text-muted-foreground mt-0.5">{line2}</p>}
+    </div>
+  );
+}
+
+export default function RunSetupModal({ onStart, onCancel, savedPreferences, programContext }: RunSetupModalProps) {
   const { user } = useAuth();
   const [config, setConfig] = useState<RunConfig>({ ...DEFAULT_CONFIG, ...savedPreferences });
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -203,6 +296,13 @@ export default function RunSetupModal({ onStart, onCancel, savedPreferences }: R
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight">Ready to run?</h2>
         </div>
+
+        {/* Programme context strip — Phase B1. Renders only when the
+            user is on a structured/race_prep plan AND today resolves
+            to one of the four documented states (today's plan, rest
+            day, completed day, elapsed race-prep). Freeform users get
+            no strip — the surface stays clean. */}
+        {programContext && <ProgramContextStripView ctx={programContext} />}
 
         {/* Selected-run card. Replaces the underlined "Change type"
             link with a tappable native-feeling control showing the

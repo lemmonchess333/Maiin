@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGPS } from '../hooks/useGPS';
@@ -7,7 +7,8 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
 import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
 import RunMap from '../components/run/RunMapLazy';
-import RunSetupModal, { type RunConfig } from '../components/run/RunSetupModal';
+import RunSetupModal, { type RunConfig, type ProgramContextStrip } from '../components/run/RunSetupModal';
+import RunSetupSkeleton from '../components/run/RunSetupSkeleton';
 import { useAudioCues } from '../hooks/useAudioCues';
 import { useIntervalWorkout } from '../hooks/useIntervalWorkout';
 import IntervalDisplay from '../components/run/IntervalDisplay';
@@ -21,6 +22,15 @@ import { RUN_TEMPLATES } from '../lib/workoutTemplates';
 import { isOutdoorGpsRun, requiresManualDistance, getInvalidRunReason } from '../lib/runGuards';
 import { computeRouteQuality } from '../lib/routeQuality';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { useProgram } from '../features/program/useProgram';
+import {
+  computePlanMetadata,
+  finalisePlanMetadata,
+  freeformPlanMetadata,
+  type PlanMode,
+  type RunPlanMetadata,
+} from '../lib/runPlanMetadata';
+import { logger } from '../lib/logger';
 
 type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
 
@@ -58,6 +68,89 @@ function GPSIndicator({ accuracy, isTracking, pointCount }: { accuracy: number |
   );
 }
 
+/**
+ * Map the metadata returned by computePlanMetadata into the
+ * ProgramContextStrip shape consumed by RunSetupModal. Kept local
+ * to Run.tsx because the strip-data fields are presentation-level
+ * (week label, distance label, today template name) — the metadata
+ * module stays purely about adherence accounting.
+ *
+ * Returns null when no strip should render (freeform users with
+ * no plan context, missing-template fallback, or an elapsed plan
+ * that the metadata module already folded into freeform metadata).
+ */
+function deriveStrip(
+  metadata: RunPlanMetadata,
+  runPlan: { mode: 'structured' | 'race_prep'; raceGoal?: { distance: string; targetDate: string }; totalWeeks?: number; currentWeek?: number } | undefined,
+): ProgramContextStrip | null {
+  // Freeform / fallback cases get no strip.
+  if (metadata.planMode === 'freeform') return null;
+  // Race-prep elapsed: metadata module already returned the freeform
+  // shape, but planMode === 'race_prep' is preserved. The trigger
+  // for the elapsed-state strip: we still have an elapsed runPlan
+  // even though planSource is 'manual'.
+  if (
+    metadata.planMode === 'race_prep' &&
+    metadata.planSource === 'manual' &&
+    runPlan?.mode === 'race_prep'
+  ) {
+    const elapsed =
+      (typeof runPlan.currentWeek === 'number' &&
+        typeof runPlan.totalWeeks === 'number' &&
+        runPlan.currentWeek >= runPlan.totalWeeks) ||
+      (runPlan.raceGoal?.targetDate &&
+        new Date(runPlan.raceGoal.targetDate).getTime() < Date.now());
+    if (elapsed) {
+      return { kind: 'race_prep_elapsed' };
+    }
+  }
+  if (metadata.planSource === 'rest_day') return { kind: 'rest_day' };
+  if (metadata.planSource === 'completed_day') return { kind: 'completed_day' };
+  if (metadata.planSource === 'today_plan' || metadata.planSource === 'url_template') {
+    // For URL-template overrides on a freeform user, no strip
+    // (no plan context to surface). For URL-template on a
+    // structured/race_prep user with a planned day, fall through
+    // to the planned-day strip — the user is overriding their plan
+    // and we still surface the plan context.
+    if (metadata.planMode === 'race_prep') {
+      // Need a planned day or runPlan to render this state.
+      if (metadata.plannedRunDayIndex === null && metadata.planSource === 'url_template') {
+        return null; // no plan today and URL is the only context
+      }
+      return {
+        kind: 'race_prep_today',
+        weekLabel:
+          typeof metadata.planWeekIndex === 'number' &&
+          typeof metadata.planTotalWeeks === 'number'
+            ? `Week ${metadata.planWeekIndex + 1} of ${metadata.planTotalWeeks}`
+            : '',
+        distanceLabel: formatRaceDistance(runPlan?.raceGoal?.distance),
+        targetDate: runPlan?.raceGoal?.targetDate,
+      };
+    }
+    if (metadata.planMode === 'structured') {
+      if (metadata.plannedRunDayIndex === null && metadata.planSource === 'url_template') {
+        return null;
+      }
+      const todayTemplate = RUN_TEMPLATES.find((t) => t.id === metadata.plannedTemplateId);
+      return {
+        kind: 'structured_today',
+        todayLabel: todayTemplate?.name,
+      };
+    }
+  }
+  return null;
+}
+
+function formatRaceDistance(distance: string | undefined): string {
+  if (!distance) return '';
+  if (distance === '5k') return '5K';
+  if (distance === '10k') return '10K';
+  if (distance === 'half') return 'Half Marathon';
+  if (distance === 'marathon') return 'Marathon';
+  return distance.toUpperCase();
+}
+
 export default function Run() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -65,6 +158,18 @@ export default function Run() {
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
   const { profile } = useAuth();
+  // Phase B1: programme state drives the Run-setup prefill + context
+  // strip + post-save plan reconciliation. The hook is cheap (single
+  // getDoc, Firestore caches the warm reads) and runs unconditionally
+  // — freeform users still load it to keep the hook order stable.
+  // The loading flag is only honoured for non-freeform users; freeform
+  // skips the skeleton path entirely.
+  // `completeRunDay` is invoked from RunSummary post-save, not here —
+  // RunSummary re-calls useProgram to access it. We only read
+  // programState + loading here to drive the prefill memo.
+  const { programState, loading: programLoading } = useProgram();
+  const profileRunMode = (profile?.runMode ?? 'freeform') as PlanMode;
+  const isFreeformUser = profileRunMode === 'freeform';
   const [phase, setPhase] = useState<RunPhase>('waiting');
   const [locked, setLocked] = useState(false);
   const [countdown, setCountdown] = useState(3);
@@ -135,11 +240,101 @@ export default function Run() {
   const intervals = useIntervalWorkout(runConfig?.activityType === 'intervals' ? runConfig.intervals : undefined);
   const intervalPhaseRef = useRef('idle');
 
+  // ─── Phase B1: programme prefill + context strip ─────────────────
+  //
+  // Compute the prefill decision once per (programState, URL) tuple.
+  // The memo returns metadata + a prefill payload + the strip data —
+  // any change to either input recomputes (rare). The result feeds
+  // savedPreferences (so RunSetupModal's init-from-props captures
+  // the right starting state) AND programContext (the strip).
+  //
+  // Note: we explicitly DON'T watch `searchParams` for changes
+  // post-mount — the URL is read once when Run.tsx mounts, matching
+  // pre-B1 behaviour (useSearchParams is stable across renders for
+  // the lifetime of the route).
+  const urlTemplateId = searchParams.get('template');
+  const urlType = searchParams.get('type');
+  const planDecision = useMemo(() => {
+    // Freeform users skip the programme branches entirely — the
+    // memo still runs (hook order) but returns trivially. This keeps
+    // freeform users decoupled from useProgram's loading state.
+    if (isFreeformUser && !urlTemplateId && !urlType) {
+      return {
+        metadata: freeformPlanMetadata('freeform'),
+        prefill: {} as Partial<RunConfig>,
+        strip: null as ProgramContextStrip | null,
+      };
+    }
+    const result = computePlanMetadata({
+      profileRunMode,
+      todayDayIndex: new Date().getDay(),
+      runPlan: programState?.runPlan,
+      runDays: programState?.runDays,
+      urlTemplateId,
+      urlType,
+    });
+    // Missing URL template — surface the developer signal here,
+    // not in the pure helper. The helper falls back to freeform
+    // metadata silently; we log so a deploy with a bad URL becomes
+    // visible in the console without spamming users with toasts.
+    if (urlTemplateId && !RUN_TEMPLATES.some((t) => t.id === urlTemplateId)) {
+      logger.warn(
+        `[Run] URL ?template=${urlTemplateId} not in RUN_TEMPLATES; no prefill applied`,
+      );
+    }
+    // Missing programme templateId (today's plan has an unknown ID).
+    // Same signal — fall back happened in the helper; we log.
+    const todayDay = programState?.runDays?.find(
+      (d) => d.dayIndex === new Date().getDay() && !d.completed,
+    );
+    if (
+      todayDay &&
+      !RUN_TEMPLATES.some((t) => t.id === (todayDay.userOverride ?? todayDay.templateId))
+    ) {
+      logger.warn(
+        `[Run] Programme runDay templateId "${todayDay.userOverride ?? todayDay.templateId}" not in RUN_TEMPLATES; no prefill applied`,
+      );
+    }
+    return {
+      metadata: result.metadata,
+      prefill: result.prefill as Partial<RunConfig>,
+      strip: deriveStrip(result.metadata, programState?.runPlan),
+    };
+  }, [
+    isFreeformUser,
+    profileRunMode,
+    programState?.runPlan,
+    programState?.runDays,
+    urlTemplateId,
+    urlType,
+  ]);
+
+  // 100ms threshold for the skeleton — programme reads usually return
+  // from cache faster than this, so the skeleton only shows on cold
+  // loads. Freeform users skip the threshold entirely.
+  const [skeletonThresholdElapsed, setSkeletonThresholdElapsed] = useState(false);
+  useEffect(() => {
+    if (isFreeformUser || !programLoading) return;
+    const t = setTimeout(() => setSkeletonThresholdElapsed(true), 100);
+    return () => clearTimeout(t);
+  }, [isFreeformUser, programLoading]);
+  const showSkeleton =
+    !isFreeformUser && programLoading && skeletonThresholdElapsed;
+
   const handleStart = async (config: RunConfig) => {
     audioCues.prime();
     await wakeLock.request();
-    setRunConfig(config);
-    if (requiresManualDistance(config.activityType)) {
+    // Phase B1: finalise plan metadata against the user's actual
+    // activityType (chooser may have diverged from the prefill).
+    // RunSetupModal carries the prefill snapshot on config.planMetadata;
+    // here we recompute the four user-dependent fields and persist.
+    const finalisedMetadata = finalisePlanMetadata(
+      config.planMetadata,
+      config.activityType,
+    );
+    const finalConfig: RunConfig = { ...config, planMetadata: finalisedMetadata };
+    setRunConfig(finalConfig);
+    if (requiresManualDistance(finalConfig.activityType)) {
       setPhase('active');
       timer.start();
       haptic('heavy');
@@ -358,46 +553,38 @@ export default function Run() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {phase === 'waiting' && (
-        <div className="flex-1 flex flex-col bg-background text-foreground">
-          <RunSetupModal
-            onStart={handleStart}
-            onCancel={() => navigate(-1)}
-            savedPreferences={(() => {
-              const prefs: Partial<RunConfig> = {
-                autoPause: true,
-                audioCues: profile?.audioCues !== false,
-              };
-              // Support ?type=tempo for direct type selection
-              if (searchParams.get('type')) {
-                prefs.activityType = searchParams.get('type') as RunConfig['activityType'];
-              }
-              // Support ?template=5x1k to pre-fill from a RUN_TEMPLATES entry
-              const templateId = searchParams.get('template');
-              if (templateId) {
-                const tmpl = RUN_TEMPLATES.find(t => t.id === templateId);
-                if (tmpl) {
-                  prefs.activityType = tmpl.type as RunConfig['activityType'];
-                  if (tmpl.config.targetDistance) {
-                    prefs.target = { type: 'distance', value: tmpl.config.targetDistance };
-                  } else if (tmpl.config.targetPace) {
-                    prefs.target = { type: 'pace', value: tmpl.config.targetPace };
-                  }
-                  if (tmpl.config.intervals) {
-                    prefs.intervals = {
-                      reps: tmpl.config.intervals.reps,
-                      workDistance: tmpl.config.intervals.workDistance,
-                      workDuration: tmpl.config.intervals.workDuration,
-                      restDuration: tmpl.config.intervals.restDuration,
-                      warmupDuration: tmpl.config.intervals.warmupDuration,
-                      cooldownDuration: tmpl.config.intervals.cooldownDuration,
-                    };
-                  }
-                }
-              }
-              return prefs;
-            })()}
-          />
-        </div>
+        <>
+          {/* Phase B1: delayed-mount gate for structured/race_prep
+              users so RunSetupModal's init-from-props captures the
+              real programme prefill on its first render. Freeform
+              users skip the wait. Skeleton appears only after a
+              100ms threshold (cached useProgram reads return faster
+              than this, so the skeleton flash is rare). */}
+          {!isFreeformUser && programLoading ? (
+            showSkeleton ? <RunSetupSkeleton /> : null
+          ) : (
+            <div className="flex-1 flex flex-col bg-background text-foreground">
+              <RunSetupModal
+                onStart={handleStart}
+                onCancel={() => navigate(-1)}
+                programContext={planDecision.strip}
+                savedPreferences={{
+                  autoPause: true,
+                  audioCues: profile?.audioCues !== false,
+                  // Plan-derived prefill: activityType, target, intervals.
+                  // Empty object on freeform / rest_day / completed_day /
+                  // elapsed-plan / missing-template paths.
+                  ...planDecision.prefill,
+                  // Plan-adherence snapshot — Run.tsx owns the truth, the
+                  // modal just carries it through to handleStart where
+                  // finalisePlanMetadata recomputes against the user's
+                  // final activityType.
+                  planMetadata: planDecision.metadata,
+                }}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {phase === 'acquiring' && (() => {
