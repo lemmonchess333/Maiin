@@ -653,3 +653,127 @@ suite("firestore.rules — /audit_checkout_sessions", () => {
     );
   });
 });
+
+/**
+ * Phase B1: plan-adherence metadata on /users/{uid}/runs/{doc}.
+ *
+ * The runs rule is owner-only read/write with NO field allowlist,
+ * so additive top-level fields should permit through unchanged.
+ * This suite pins that the new 10 fields don't accidentally trip
+ * any future rule tightening that adds field constraints, and
+ * that the non-owner deny still holds with the richer doc shape.
+ *
+ * Treated as a regression-net for the rule contract more than a
+ * security claim per se — Phase B1 doesn't add a new rule, just
+ * relies on the existing one.
+ */
+suite("firestore.rules — users/{uid}/runs/{doc} (plan metadata)", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID + "-runs-planmeta",
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  function fullPlanMetadataRunDoc() {
+    return {
+      // Subset of the real run doc — enough fields to pass the
+      // create + the new metadata block.
+      distance: 5000,
+      duration: 1500,
+      completedAt: serverTimestamp(),
+      activityType: "tempo",
+      // Phase B1 metadata — 10 top-level fields
+      planMode: "race_prep",
+      planSource: "today_plan",
+      plannedRunDayIndex: 2,
+      plannedTemplateId: "tempo_20",
+      plannedTemplateType: "tempo",
+      actualTemplateId: "tempo_20",
+      matchedPlanExact: true,
+      matchedPlanType: true,
+      offPlan: false,
+      planWeekIndex: 2,
+      planTotalWeeks: 8,
+    };
+  }
+
+  it("owner can write a run doc carrying the full plan-metadata block", async () => {
+    // Bedrock: the runs rule has no allowlist, so the 10 new
+    // fields land without issue. If a future rule edit adds a
+    // field constraint, this test surfaces it.
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users", OWNER_UID, "runs", "r1"), fullPlanMetadataRunDoc()),
+    );
+  });
+
+  it("owner can write a run doc with freeform-default null metadata", async () => {
+    // Freeform users still write the metadata block — all
+    // plan-related fields land as null. Pin that null values
+    // don't trip any rule.
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "users", OWNER_UID, "runs", "r2"), {
+        distance: 5000,
+        duration: 1500,
+        completedAt: serverTimestamp(),
+        activityType: "freerun",
+        planMode: "freeform",
+        planSource: "manual",
+        plannedRunDayIndex: null,
+        plannedTemplateId: null,
+        plannedTemplateType: null,
+        actualTemplateId: null,
+        matchedPlanExact: null,
+        matchedPlanType: null,
+        offPlan: false,
+        planWeekIndex: null,
+        planTotalWeeks: null,
+      }),
+    );
+  });
+
+  it("non-owner cannot write to another user's run doc, even with valid metadata", async () => {
+    // Owner-only write rule still holds — the new metadata fields
+    // don't relax the auth boundary.
+    const otherDb = env.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(otherDb, "users", OWNER_UID, "runs", "r3"),
+        fullPlanMetadataRunDoc(),
+      ),
+    );
+  });
+
+  it("unauthed cannot read another user's run doc", async () => {
+    // Pin that adding metadata didn't accidentally open cross-user
+    // reads (the audit doc has separate read rules; runs are owner
+    // -only read).
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "users", OWNER_UID, "runs", "r4"),
+        fullPlanMetadataRunDoc(),
+      );
+    });
+    const anonDb = env.unauthenticatedContext().firestore();
+    await assertFails(
+      getDoc(doc(anonDb, "users", OWNER_UID, "runs", "r4")),
+    );
+  });
+});

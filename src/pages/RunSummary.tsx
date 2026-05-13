@@ -22,6 +22,8 @@ import { calculatePaceTrend, type PaceTrendResult } from '../lib/paceTrends';
 import { usePrivacyZones } from '../hooks/usePrivacyZones';
 import { applyPrivacyZones } from '../lib/privacyZones';
 import { useShoes } from '../hooks/useShoes';
+import { useProgram } from '../features/program/useProgram';
+import { freeformPlanMetadata, shouldCompleteRunDay } from '../lib/runPlanMetadata';
 import { toast } from 'sonner';
 import { WifiOff, CheckCircle, Trophy, ChevronLeft, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -307,6 +309,12 @@ export default function RunSummary() {
   const { zones: privacyZones } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
+  // Phase B1: programme reconciliation post-save. The hook re-loads
+  // programState in this page (separate component tree from Run.tsx)
+  // but Firestore caches the warm read so cost is minimal.
+  // `completeRunDay` is called fire-and-forget after a successful
+  // valid save when the gating conditions match.
+  const { completeRunDay } = useProgram();
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   /* Save flow state. Replaces a single `saved: boolean` so the UI can
@@ -435,6 +443,19 @@ export default function RunSummary() {
     // regardless of how the run was started.
     const effectiveShoeId = runConfig?.shoeId ?? defaultShoe?.id ?? null;
 
+    // Phase B1: plan-adherence metadata block, persisted at the top
+    // level of the run doc so adherence queries (History "on-plan vs
+    // off-plan", future weekly adherence rollup, future
+    // completion-failure recovery) can filter without nesting into
+    // `runConfig.planMetadata`. The same data lives on `runConfig`
+    // for completeness; top-level is the canonical query surface.
+    //
+    // Defensive fallback: legacy navigation paths or test fixtures
+    // that bypass Run.tsx might land here without planMetadata on
+    // runConfig. Default to freeform shape so the run doc still has
+    // a well-formed metadata block — null-tolerance downstream.
+    const planMetadata = runConfig?.planMetadata ?? freeformPlanMetadata('freeform');
+
     const runData = {
       distance,
       duration: elapsed,
@@ -468,6 +489,18 @@ export default function RunSummary() {
       // poor routes from pace PRs. `null` survives stripUndefined
       // and signals "no quality data" (treadmill / manual / legacy).
       routeQuality: state.routeQuality ?? null,
+      // ── Phase B1: plan-adherence metadata (top-level) ────────────
+      planMode: planMetadata.planMode,
+      planSource: planMetadata.planSource,
+      plannedRunDayIndex: planMetadata.plannedRunDayIndex,
+      plannedTemplateId: planMetadata.plannedTemplateId,
+      plannedTemplateType: planMetadata.plannedTemplateType,
+      actualTemplateId: planMetadata.actualTemplateId,
+      matchedPlanExact: planMetadata.matchedPlanExact,
+      matchedPlanType: planMetadata.matchedPlanType,
+      offPlan: planMetadata.offPlan,
+      planWeekIndex: planMetadata.planWeekIndex,
+      planTotalWeeks: planMetadata.planTotalWeeks,
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB
@@ -565,6 +598,27 @@ export default function RunSummary() {
 
       setSaveStatus('saved');
       setSaveError(null);
+
+      // ── Phase B1: programme reconciliation ───────────────────────
+      // Mark the scheduled run day complete IFF the saved run is a
+      // valid, exact-template match of today's planned run. Off-plan
+      // runs (different template, rest day, completed day) do NOT
+      // complete the day — the user can do the planned run later.
+      //
+      // Fire-and-forget: the saved-run flow is already complete by
+      // the time this runs. A programme sync failure logs softly and
+      // does not unwind the save. completeRunDay itself may emit its
+      // own success toast ("Ready for next week") on the all-done
+      // path; that's intended existing behaviour.
+      if (
+        planMetadata.plannedRunDayIndex !== null &&
+        shouldCompleteRunDay({ metadata: planMetadata, isValid: !isInvalid })
+      ) {
+        completeRunDay(planMetadata.plannedRunDayIndex).catch((err: unknown) => {
+          logger.warn('[RunSummary] completeRunDay failed after save:', err);
+        });
+      }
+
       /* Auto-navigation timeouts (800ms online / 1800ms offline) were
          removed: they teleported the user back to home without their
          consent, often before they could read the confirmation, and
