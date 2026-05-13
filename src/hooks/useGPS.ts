@@ -187,5 +187,42 @@ export function useGPS(elapsedSeconds = 0) {
    *  to populate the run doc's routeQuality metrics. */
   const getRejectedFixCount = useCallback(() => rejectedFixCountRef.current, []);
 
-  return { ...state, preWarm, start, stop, getPoints, getRejectedFixCount };
+  /**
+   * Phase B3: rehydrate the GPS point buffer from a persisted
+   * snapshot. Appends rather than replaces so a partial resume
+   * (e.g. user resumes a run, GPS arrives, the live points are
+   * collected on top of the restored trail) works cleanly.
+   *
+   * Also seeds the cumulative distance from the restored trail so
+   * the live distance display starts from where it left off.
+   */
+  const appendPoints = useCallback((restored: GPSPoint[]) => {
+    if (!Array.isArray(restored) || restored.length === 0) return;
+    // Rebuild cumulative distance from the restored trail.
+    let dist = 0;
+    for (let i = 1; i < restored.length; i++) {
+      dist += haversine(
+        restored[i - 1].lat,
+        restored[i - 1].lon,
+        restored[i].lat,
+        restored[i].lon,
+      );
+    }
+    pointsRef.current = [...pointsRef.current, ...restored];
+    distanceRef.current = distanceRef.current + dist;
+    const lastRestored = restored[restored.length - 1];
+    setState((s) => ({
+      ...s,
+      points: [...pointsRef.current],
+      currentPoint: lastRestored ?? s.currentPoint,
+      distance: distanceRef.current,
+      // lastFixAt stays at the restored point's timestamp so the
+      // GPS-gap detector sees the staleness; the consumer is
+      // expected to call suppressGapBannerUntil() to mute the
+      // banner during the cold-start window.
+      lastFixAt: lastRestored?.timestamp ?? s.lastFixAt,
+    }));
+  }, []);
+
+  return { ...state, preWarm, start, stop, getPoints, getRejectedFixCount, appendPoints };
 }

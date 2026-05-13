@@ -5,10 +5,17 @@ import { useGPS } from '../hooks/useGPS';
 import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
-import { calculatePace, calculateSplits, paceAsNumber, totalElevationGain } from '../lib/gps';
+import { calculatePace, calculateSplits, haversine, paceAsNumber, totalElevationGain } from '../lib/gps';
 import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig, type ProgramContextStrip } from '../components/run/RunSetupModal';
 import RunSetupSkeleton from '../components/run/RunSetupSkeleton';
+import RunResumePrompt from '../components/run/RunResumePrompt';
+import {
+  readStoredRun,
+  writeStoredRun,
+  clearStoredRun,
+  type StoredRun,
+} from '../lib/runResumeStorage';
 import { useAudioCues } from '../hooks/useAudioCues';
 import { useIntervalWorkout } from '../hooks/useIntervalWorkout';
 import IntervalDisplay from '../components/run/IntervalDisplay';
@@ -186,6 +193,25 @@ export default function Run() {
   // so routeQuality can compute "patchy" / "poor" labels.
   const backgroundGapMsRef = useRef(0);
 
+  // Phase B3: interrupted-run resume.
+  //
+  // `resumePrompt` holds the snapshot read from localStorage on mount
+  // when one exists and passes the 6h cutoff + schema guards. While
+  // non-null the chooser overlays the setup modal; the three branches
+  // (Resume / Start new / Discard) flip it back to null and either
+  // rehydrate the run or proceed to the normal setup flow.
+  const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
+  // `startedAtRef` mirrors the timer's original-start epoch for the
+  // active run so the periodic write effect can persist it without
+  // racing with React state. Set on handleStart and on Resume.
+  const startedAtRef = useRef<number | null>(null);
+  // Suppresses the GPS-loss banner for a short window after a Resume
+  // (the cold-start GPS chip won't have a fresh fix yet, and the
+  // banner would flash false-positive at "10s ago" or so). Set to
+  // `Date.now() + 5000` on Resume; the gap banner gate below skips
+  // rendering while now < this value.
+  const gapBannerSuppressUntilRef = useRef<number>(0);
+
   // Coordinate all subsystems on background/foreground transitions
   const handleHidden = useCallback(() => {
     if (isOutdoorGpsRun(runConfig?.activityType)) {
@@ -309,6 +335,24 @@ export default function Run() {
     urlType,
   ]);
 
+  // Phase B3: restore-on-mount. Reads the persisted snapshot exactly
+  // once on first render and (if anything survives the cutoff +
+  // schema guards) renders the chooser. Pure read — no rehydration
+  // happens until the user picks "Resume" in the chooser.
+  //
+  // Guarded by `phase === 'waiting'` so a re-mount mid-run (which
+  // shouldn't happen with the fixed inset-0 layout but stays
+  // defensive) doesn't blow away in-flight state.
+  useEffect(() => {
+    if (phase !== 'waiting') return;
+    const stored = readStoredRun();
+    if (stored) setResumePrompt(stored);
+    // Intentionally only runs once on mount. The 6h cutoff is enforced
+    // inside readStoredRun, and we want a snapshot of "what was there
+    // when /run opened", not a reactive view of localStorage.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 100ms threshold for the skeleton — programme reads usually return
   // from cache faster than this, so the skeleton only shows on cold
   // loads. Freeform users skip the threshold entirely.
@@ -334,6 +378,10 @@ export default function Run() {
     );
     const finalConfig: RunConfig = { ...config, planMetadata: finalisedMetadata };
     setRunConfig(finalConfig);
+    // Phase B3: capture the original-start epoch so the periodic
+    // write effect persists it in every snapshot. Resume re-uses
+    // the stored value (see handleResumeFromPrompt below).
+    startedAtRef.current = Date.now();
     if (requiresManualDistance(finalConfig.activityType)) {
       setPhase('active');
       timer.start();
@@ -344,6 +392,107 @@ export default function Run() {
     gps.preWarm();
     gps.start();
   };
+
+  // ─── Phase B3: persistence write + restore handlers ─────────────
+  //
+  // `writeSnapshot` is called from two places:
+  //   1. The periodic-write interval (every 5s while active/paused).
+  //   2. The visibilitychange→hidden handler (immediate write before
+  //      the OS suspends the page).
+  //
+  // It's a no-op when there's no run in flight (runConfig null, or
+  // phase is waiting/acquiring/countdown/finished). The write itself
+  // is best-effort — writeStoredRun returns false on quota / private
+  // mode but never throws.
+  const writeSnapshot = useCallback(() => {
+    if (!runConfig) return;
+    if (phase !== 'active' && phase !== 'paused') return;
+    if (startedAtRef.current === null) return;
+    const snapshot: StoredRun = {
+      v: 1,
+      config: runConfig,
+      startedAt: startedAtRef.current,
+      accumulatedSeconds: timer.getAccumulatedSeconds(),
+      isRunning: timer.isRunning,
+      points: gps.getPoints(),
+      lastWriteAt: Date.now(),
+      phase: phase === 'paused' ? 'paused' : 'active',
+    };
+    writeStoredRun(snapshot);
+  }, [runConfig, phase, timer, gps]);
+
+  // Periodic write: every 5s while a run is in flight. The interval
+  // re-arms whenever the deps change (e.g. pause flips phase) so the
+  // closure captures fresh state.
+  useEffect(() => {
+    if (phase !== 'active' && phase !== 'paused') return;
+    const id = setInterval(writeSnapshot, 5000);
+    // Fire one immediate write so the snapshot exists even if the
+    // user immediately backgrounds the tab before the first tick.
+    writeSnapshot();
+    return () => clearInterval(id);
+  }, [phase, writeSnapshot]);
+
+  // visibilitychange→hidden: write immediately so a backgrounded tab
+  // that the OS may suspend at any moment has the freshest possible
+  // snapshot persisted. Distinct from useRunVisibility's onHidden
+  // (which manages GPS/wake-lock); this one is purely persistence.
+  useEffect(() => {
+    if (phase !== 'active' && phase !== 'paused') return;
+    const handler = () => {
+      if (document.visibilityState === 'hidden') writeSnapshot();
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [phase, writeSnapshot]);
+
+  // Chooser branches:
+  //   - Resume: rehydrate timer + GPS, set start/suppress refs, jump
+  //     to the stored phase, restart wake-lock + GPS if appropriate.
+  //   - Start new: clear storage, dismiss the prompt → setup modal.
+  //   - Discard: clear storage, dismiss → navigate home.
+  const handleResumeFromPrompt = useCallback(async () => {
+    if (!resumePrompt) return;
+    audioCues.prime();
+    await wakeLock.request();
+    setRunConfig(resumePrompt.config);
+    startedAtRef.current = resumePrompt.startedAt;
+    timer.rehydrate({
+      accumulatedSeconds: resumePrompt.accumulatedSeconds,
+      isRunning: resumePrompt.isRunning,
+    });
+    if (resumePrompt.points.length > 0) {
+      gps.appendPoints(resumePrompt.points);
+    }
+    // 5s suppression window: the cold-start GPS chip won't fire its
+    // first fix for a few seconds, and the existing gap-banner gate
+    // would otherwise display "GPS recovering · last fix Xs ago"
+    // using the stale lastFixAt from the restored trail.
+    gapBannerSuppressUntilRef.current = Date.now() + 5000;
+    setPhase(resumePrompt.phase);
+    setResumePrompt(null);
+    // Restart GPS for outdoor runs that were active. Paused runs
+    // get GPS back on user-driven Resume (handleResume below); we
+    // only re-arm here when the snapshot itself was active.
+    if (
+      isOutdoorGpsRun(resumePrompt.config.activityType) &&
+      resumePrompt.phase === 'active'
+    ) {
+      gps.start();
+    }
+    haptic('medium');
+  }, [resumePrompt, timer, gps, audioCues, wakeLock]);
+
+  const handleStartNewFromPrompt = useCallback(() => {
+    clearStoredRun();
+    setResumePrompt(null);
+  }, []);
+
+  const handleDiscardFromPrompt = useCallback(() => {
+    clearStoredRun();
+    setResumePrompt(null);
+    navigate('/');
+  }, [navigate]);
 
   // Auto-start without GPS if permission denied or geolocation unavailable
   useEffect(() => {
@@ -675,7 +824,7 @@ export default function Run() {
             elapsed={timer.elapsed}
             formatTime={timer.formatTime}
             onSave={(distance) => { setTreadmillDistance(distance); haptic('success'); finishRun(distance); }}
-            onDiscard={() => navigate('/')}
+            onDiscard={() => { clearStoredRun(); navigate('/'); }}
           />
         </div>
       )}
@@ -727,8 +876,12 @@ export default function Run() {
                the per-second timer.elapsed re-render, so staleness is
                at most ~1s — the banner will appear / refresh on the
                next tick. The dependency on Date.now() is intentional. */
-            // eslint-disable-next-line react-hooks/purity
-            const gapSeconds = (Date.now() - gps.lastFixAt) / 1000;
+            const now = Date.now();
+            // Phase B3: suppress for 5s after a Resume so the cold-
+            // start GPS window doesn't render a false-positive banner
+            // against the stale lastFixAt of the restored trail.
+            if (now < gapBannerSuppressUntilRef.current) return null;
+            const gapSeconds = (now - gps.lastFixAt) / 1000;
             if (gapSeconds < 8) return null;
             return (
               <div className="absolute top-32 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-4 rounded-full bg-red-500/20 animate-pulse"
@@ -770,6 +923,10 @@ export default function Run() {
                 timer.pause();
                 gps.stop();
                 wakeLock.release();
+                // Phase B3: clear the persisted snapshot so a
+                // discarded sub-threshold run doesn't reappear in
+                // the chooser on next /run open.
+                clearStoredRun();
                 navigate('/');
               } else {
                 setShowDiscardConfirm(true);
@@ -781,6 +938,32 @@ export default function Run() {
           />
         </div>
       )}
+      {/* Phase B3: chooser overlays everything while we have a
+          recoverable snapshot. Mounted last so it z-orders above the
+          setup modal and any other waiting-state UI.
+          Distance is rebuilt from the persisted point buffer here
+          rather than persisted on the snapshot — keeps the storage
+          shape minimal and reuses the same haversine the GPS hook
+          uses for cumulative-distance tracking. */}
+      {resumePrompt && (
+        <RunResumePrompt
+          accumulatedSeconds={resumePrompt.accumulatedSeconds}
+          distanceMeters={(() => {
+            const pts = resumePrompt.points;
+            if (pts.length < 2) return 0;
+            let d = 0;
+            for (let i = 1; i < pts.length; i++) {
+              d += haversine(pts[i - 1].lat, pts[i - 1].lon, pts[i].lat, pts[i].lon);
+            }
+            return d;
+          })()}
+          startedAt={resumePrompt.startedAt}
+          onResume={handleResumeFromPrompt}
+          onStartNew={handleStartNewFromPrompt}
+          onDiscard={handleDiscardFromPrompt}
+        />
+      )}
+
       <ConfirmDialog
         open={showDiscardConfirm}
         title="Discard this run?"
@@ -792,6 +975,9 @@ export default function Run() {
           timer.pause();
           gps.stop();
           wakeLock.release();
+          // Phase B3: clear so the discarded run doesn't get
+          // resurrected by the chooser on next mount.
+          clearStoredRun();
           navigate('/');
         }}
         onCancel={() => setShowDiscardConfirm(false)}

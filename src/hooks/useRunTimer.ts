@@ -18,6 +18,34 @@ export function useRunTimer() {
     setElapsed(0); setIsRunning(false);
   }, []);
 
+  /**
+   * Phase B3: rehydrate the timer from a persisted snapshot.
+   * Sets the internal refs in a single synchronous block so the
+   * next render reads consistent state. Caller chooses whether to
+   * leave the timer running (active) or paused — pass `isRunning`
+   * accordingly.
+   *
+   * `accumulatedSeconds` is what `accumulatedRef` held at write
+   * time. `startedAt` is the original run-start epoch — kept around
+   * so the timer's elapsed math (`accumulatedRef + (Date.now() -
+   * startTimeRef) / 1000`) stays continuous from where it left off.
+   *
+   * When `isRunning` is true, we set `startTimeRef.current` to
+   * `Date.now()` (not the original startedAt) so the running
+   * portion of the elapsed only counts post-rehydrate seconds —
+   * the gap between last-write and now is correctly absorbed
+   * into accumulatedRef by the write-cadence semantics.
+   */
+  const rehydrate = useCallback(
+    (args: { accumulatedSeconds: number; isRunning: boolean }) => {
+      accumulatedRef.current = args.accumulatedSeconds;
+      startTimeRef.current = Date.now();
+      setElapsed(Math.floor(args.accumulatedSeconds));
+      setIsRunning(args.isRunning);
+    },
+    [],
+  );
+
   /** Force an immediate elapsed recalculation (call after tab becomes visible) */
   const recalcNow = useCallback(() => {
     if (!isRunning) return;
@@ -41,5 +69,18 @@ export function useRunTimer() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }, []);
 
-  return { elapsed, isRunning, start, pause, resume, reset, recalcNow, formatTime };
+  /**
+   * Phase B3 helper for the persistence write path. Exposes the
+   * timer's internal accumulated seconds so Run.tsx can snapshot
+   * the timer state without re-deriving from `elapsed` (which
+   * floors every second and would drift on rehydrate).
+   */
+  const getAccumulatedSeconds = useCallback(() => {
+    if (isRunning) {
+      return accumulatedRef.current + (Date.now() - startTimeRef.current) / 1000;
+    }
+    return accumulatedRef.current;
+  }, [isRunning]);
+
+  return { elapsed, isRunning, start, pause, resume, reset, rehydrate, recalcNow, formatTime, getAccumulatedSeconds };
 }
