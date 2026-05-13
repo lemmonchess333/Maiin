@@ -11,8 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
-import BottomSheet from "@/components/ui/BottomSheet";
-import SettingsSummaryRow from "@/components/settings/SettingsSummaryRow";
+import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface NutritionSectionProps {
@@ -53,7 +52,6 @@ export default function NutritionSection({
   onPhaseChange,
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleMealsChange = useCallback((val: number) => {
@@ -68,25 +66,9 @@ export default function NutritionSection({
 
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const phaseLabel = trainingPhase === "lean bulk" ? "Lean Bulk" : trainingPhase === "cut" ? "Cut" : "Recomp";
-  const nutritionPrimary = `${profile.customCalorieTarget ?? tdee.targetCalories} kcal`;
-  const nutritionSecondary = `${tdee.protein}p / ${tdee.carbs}c / ${tdee.fat}f · ${phaseLabel}`;
-
   return (
-    <>
-      <SettingsSummaryRow
-        label="Nutrition defaults"
-        primary={nutritionPrimary}
-        secondary={nutritionSecondary}
-        onPress={() => setSheetOpen(true)}
-      />
-      <BottomSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        title="Nutrition defaults"
-        description="TDEE, phase, macros, meal target"
-      >
-        <div className="space-y-4 overflow-y-auto px-4 pb-5 pt-4">
+    <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Nutrition" subtitle="TDEE, phase, macros, meal target">
+
       {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">
         <button
@@ -354,8 +336,6 @@ export default function NutritionSection({
           </div>
         </button>
       </div>
-        </div>
-      </BottomSheet>
-    </>
+    </AccordionSection>
   );
 }
