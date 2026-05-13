@@ -262,11 +262,56 @@ User-generated content surfaces (feed, comments, crews) have:
   Settings → Support & Legal → "Report objectionable content"
   with a moderation-prefixed subject so the inbox can route.
 
-Apple Guideline 1.2 territory — landed pre-launch. Operator
-follow-up: set `ADMIN_UIDS` on the Cloud Function config and
-`VITE_ADMIN_UIDS` on the GitHub Pages deploy env (matching set)
-so the moderation page + callables actually have a registered
-moderator.
+Apple Guideline 1.2 territory — landed pre-launch.
+
+#### Operator follow-up — register a moderator (deferred)
+
+The auto-filter runs unconditionally once functions deploy, but
+the `/admin/moderation` queue stays locked (fail-closed: empty
+allowlist → no admins → every callable rejects) until both
+`ADMIN_UIDS` (server) and `VITE_ADMIN_UIDS` (client) are set to
+the same uid. Step-by-step:
+
+1. **Get the moderator's Firebase Auth UID** — Firebase Console →
+   Authentication → Users, copy the UID column for the operator
+   account (28-character string, mixed-case alphanumeric).
+
+2. **Set the server-side allowlist:**
+
+   ```bash
+   firebase functions:config:set admin.uids="THE_UID_HERE" \
+     --project adaptive-fitness-af8bb
+   firebase deploy --only functions \
+     --project adaptive-fitness-af8bb
+   ```
+
+   Requires `npm install -g firebase-tools` + `firebase login`
+   (use `--no-localhost` if running over SSH / Codespaces).
+
+   Multiple moderators later: comma-separate, e.g.
+   `admin.uids="uid1,uid2,uid3"`.
+
+3. **Set the client-side allowlist** — edit
+   `.github/workflows/deploy.yml`, add to the `npm run build`
+   step's `env:` block (must match step 2 exactly):
+
+   ```yaml
+   VITE_ADMIN_UIDS: 'THE_UID_HERE'
+   ```
+
+   Commit + push to main; GitHub Pages auto-redeploys in ~3
+   minutes.
+
+4. **Verify** — open `https://lemmonchess333.github.io/Maiin/admin/moderation`
+   while signed in as the operator account. Either "All clear. No
+   pending reports." or a list of report cards = working. "Not
+   authorised" = the UID didn't match somewhere (re-check step 1
+   against both env vars).
+
+Until both are set, `/admin/moderation` 403s for everyone and the
+`listPendingReports` callable rejects all calls. The auto-flag
+triggers run regardless — they're independent of the allowlist
+and start filtering UGC the moment functions deploy.
 
 ### 20. README replacement
 
