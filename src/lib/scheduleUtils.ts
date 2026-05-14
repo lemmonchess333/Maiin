@@ -17,12 +17,43 @@ export { DAY_LABELS, DAY_LABELS_SHORT };
 
 /**
  * Generate a sensible weekly schedule given lift + run day counts.
- * Alternates lift/run where possible, clusters rest at weekend.
+ *
+ * Two regimes:
+ *
+ * 1. **Fits in 7 days** (`liftDays + runDays ≤ 7`):
+ *    Alternate lift/run in priority slots (Mon, Wed, Fri preferred).
+ *    No "both" days — every active day gets a single modality.
+ *
+ * 2. **Overflows 7 days** (`liftDays + runDays > 7`) — P0-B / spec v7:
+ *    Collapse the overflow onto "both" days. Each "both" day consumes
+ *    1 lift AND 1 run. Counting:
+ *      bothCount      = min(total - 7, liftDays, runDays)
+ *      liftOnlyCount  = max(0, liftDays - bothCount)
+ *      runOnlyCount   = max(0, runDays - bothCount)
+ *      restCount      = 7 - bothCount - liftOnlyCount - runOnlyCount
+ *
+ *    Each "both" day produces ONE lift exposure AND ONE run exposure,
+ *    so totals add correctly:
+ *      lift exposure = liftOnlyCount + bothCount = liftDays  ✓
+ *      run exposure  = runOnlyCount + bothCount  = runDays   ✓
+ *      total days    = 7                                      ✓
+ *
+ *    Stress-aware Both-day placement (which lift pairs with which
+ *    run) is NOT done here — `generateSchedule` only knows counts,
+ *    not session content. Pairing logic lives in `runScheduler`
+ *    (P0-3) where lift workouts and run templates are both known.
  *
  * Examples:
- *   3 lift, 2 run => Mon:lift, Tue:run, Wed:lift, Thu:run, Fri:lift, Sat:rest, Sun:rest
- *   4 lift, 0 run => Mon:lift, Tue:rest, Wed:lift, Thu:rest, Fri:lift, Sat:lift, Sun:rest
- *   3 lift, 3 run => Mon:lift, Tue:run, Wed:lift, Thu:run, Fri:lift, Sat:run, Sun:rest
+ *   generateSchedule(3, 2)  → 3 lift + 2 run + 0 both + 2 rest
+ *   generateSchedule(4, 0)  → 4 lift + 0 both + 3 rest
+ *   generateSchedule(3, 3)  → 3 lift + 3 run + 0 both + 1 rest
+ *   generateSchedule(6, 2)  → 5 lift + 1 run + 1 both + 0 rest    [P0-B]
+ *   generateSchedule(7, 7)  → 0 lift + 0 run + 7 both + 0 rest    [P0-B]
+ *
+ * Degenerate inputs (single modality > 7, e.g. `generateSchedule(0, 8)`)
+ * are clamped at 7 of that modality with no doubles. The UI should
+ * cap individual targets at 7 so this case shouldn't arise in
+ * production, but the function stays safe under bad input.
  */
 export function generateSchedule(liftDays: number, runDays: number): ScheduleDay[] {
   const totalActive = liftDays + runDays;
@@ -33,31 +64,80 @@ export function generateSchedule(liftDays: number, runDays: number): ScheduleDay
 
   if (totalActive === 0) return schedule;
 
-  // Fill Monday (1) through Saturday (6), then Sunday (0) last
-  // Priority order: Mon, Wed, Fri, Tue, Thu, Sat, Sun
+  // Slot order — Mon/Wed/Fri/Tue/Thu/Sat/Sun.
+  // Both days take the highest-priority slots (most-used training
+  // days) so the user's hardest sessions land early in the week.
   const slotOrder = [1, 3, 5, 2, 4, 6, 0];
 
-  // Interleave lift and run slots
-  const pattern: DayType[] = [];
-  let l = liftDays;
-  let r = runDays;
+  if (totalActive <= 7) {
+    // Original behaviour — no doubles needed. Interleave lift/run
+    // and place into priority slots.
+    const pattern: DayType[] = [];
+    let l = liftDays;
+    let r = runDays;
 
-  while (l > 0 || r > 0) {
-    if (l > 0) {
-      pattern.push("lift");
-      l--;
+    while (l > 0 || r > 0) {
+      if (l > 0) { pattern.push("lift"); l--; }
+      if (r > 0) { pattern.push("run"); r--; }
     }
-    if (r > 0) {
-      pattern.push("run");
-      r--;
+
+    for (let i = 0; i < pattern.length && i < slotOrder.length; i++) {
+      schedule[slotOrder[i]].type = pattern[i];
     }
+
+    return schedule;
   }
 
-  // Assign pattern to slots in priority order
-  for (let i = 0; i < pattern.length && i < slotOrder.length; i++) {
-    schedule[slotOrder[i]].type = pattern[i];
+  // Overflow regime — total > 7. Use "both" days to fit.
+  // Math.min(total-7, lift, run) ensures we never request more "both"
+  // days than the smaller modality can supply (each both consumes
+  // one of each).
+  const bothCount = Math.min(totalActive - 7, liftDays, runDays);
+  const liftOnlyCount = Math.max(0, liftDays - bothCount);
+  const runOnlyCount = Math.max(0, runDays - bothCount);
+
+  // Defensive cap for degenerate inputs (e.g. 0 lift + 9 runs):
+  // when bothCount = 0 because one modality is empty, the dominant
+  // modality still has to fit in 7 slots. Clamp here rather than
+  // emit a -1 restCount or panic. UI validation should prevent this
+  // state, but the function stays safe if it slips through.
+  const totalDaysNeeded = bothCount + liftOnlyCount + runOnlyCount;
+  if (totalDaysNeeded > 7) {
+    const overflow = totalDaysNeeded - 7;
+    if (liftOnlyCount >= runOnlyCount) {
+      const cappedLift = Math.max(0, liftOnlyCount - overflow);
+      return assembleSlots({ bothCount, liftOnlyCount: cappedLift, runOnlyCount }, slotOrder);
+    }
+    const cappedRun = Math.max(0, runOnlyCount - overflow);
+    return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount: cappedRun }, slotOrder);
   }
 
+  return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount }, slotOrder);
+}
+
+/** Place computed counts into the 7 weekday slots in priority order.
+ *  Both > Lift > Run > Rest (rest is implicit — slots not assigned
+ *  remain "rest" from the initial fill).
+ *
+ *  Why this order: "both" days are the highest-density training days
+ *  and benefit from the user's most consistent slots (typically
+ *  Mon/Wed/Fri). Lift days follow, then run days. */
+function assembleSlots(
+  counts: { bothCount: number; liftOnlyCount: number; runOnlyCount: number },
+  slotOrder: number[],
+): ScheduleDay[] {
+  const schedule: ScheduleDay[] = Array.from({ length: 7 }, (_, i) => ({
+    day: i,
+    type: "rest" as DayType,
+  }));
+  const types: DayType[] = [
+    ...Array(counts.bothCount).fill("both"),
+    ...Array(counts.liftOnlyCount).fill("lift"),
+    ...Array(counts.runOnlyCount).fill("run"),
+  ];
+  for (let i = 0; i < types.length && i < slotOrder.length; i++) {
+    schedule[slotOrder[i]].type = types[i];
+  }
   return schedule;
 }
 
