@@ -1,26 +1,26 @@
-# Tropos · Programme + Run Integration — Full Implementation Spec (v5 · implementation-ready)
+# Tropos · Programme + Run Integration — Full Implementation Spec (v6 · final precision pass)
 
-**Status:** Implementation-ready. P0-2 (`planBuilder()`) is the first commit.
+**Status:** Implementation-ready. Final pre-build version.
 **Branch:** `claude/improve-food-page-design-V6Voe`
 **Mockup files (in repo):** `docs/program-run-mockups-v3.html` → `v7.html`
-**Revision:** v5 — fourth batch of ChatGPT corrections. Production-safety pass: source of truth, atomic writes, draft state, minor-vs-major edit split, status transitions, schema versioning, required tests.
+**Revision:** v6 — fifth batch of ChatGPT corrections. Final precision pass — resolves build-order contradiction, moves stress-aware pairing to the correct layer, cleans up status enum, derives `missed` instead of persisting it, clarifies recurring-vs-actual semantics on Home, restricts migration to shape-repair only.
 
 ---
 
-## What changed from v4
+## What changed from v5
 
 | # | Correction | Status |
 |---|---|---|
-| 1 | **NEW: "Source of Truth and Invariants" section** — explicit rules about which fields are canonical (profile) vs derived (programState) | ✅ Added |
-| 2 | **`planBuilder()` must be pure** — no Firestore writes, no hooks, no `Date.now()` without injected seed | ✅ Specified |
-| 3 | **NEW: Atomic save behaviour** — onboarding + Configure Plan commit profile + programState in one operation (CF or batched write) | ✅ Added |
-| 4 | **Configure Plan uses draft state** — no writes until final Confirm; Cancel = no changes | ✅ Added |
-| 5 | **NEW: Minor edits vs major rebuilds split** — moving one run doesn't trigger full `planBuilder` | ✅ Added |
-| 6 | **NEW: `ScheduledRunStatus` transition rules** — legal/disallowed transitions documented | ✅ Added |
-| 7 | **NEW: Schema versioning** — `weekScheduleVersion`, `programSchemaVersion` for safe migrations | ✅ Added |
-| 8 | **NEW: Required tests before merge** — 11 specific invariant tests | ✅ Added |
+| 1 | **Build-order contradiction resolved.** v5 said "P0-2 is the first commit" but the critical path was P0-0 → P0-1 → P0-2. v6 reorganizes into P0-A (types + helpers) → P0-B (`planBuilder` skeleton) → P0-C (wire). | ✅ Fixed |
+| 2 | **Stress-aware Both-day pairing moved out of `generateSchedule()`** — `generateSchedule` only knows lift/run counts, can't reliably pair "Heavy Legs + Long Run" because it doesn't know which lift is which. Belongs in `runScheduler`/`planBuilder` where session content is known. | ✅ Moved |
+| 3 | **"Run → Both" reclassified as major** unless weekly counts are unchanged (e.g. another day flips Lift→Rest to compensate). | ✅ Fixed |
+| 4 | **Configure Plan uses Cloud Function** (`configurePlan`), not client batched write. Same pattern as `completeOnboarding`. | ✅ Changed |
+| 5 | **`"moved"` removed from `ScheduledRunStatus`** — a moved run stays `"planned"` with `movedFromDate`/`movedToDate` metadata. Status reflects actionable state, not history. | ✅ Removed |
+| 6 | **`"missed"` is derived, not persisted** — `date < localToday && status === "planned" && !linkedRunId`. No scheduled jobs needed. Lazy persistence on view if useful. | ✅ Changed |
+| 7 | **Home rendering precedence:** `programState.runDays` (actual instances) renders first; `profile.weekSchedule` is the recurring template/fallback. | ✅ Added |
+| 8 | **Migration repairs shape, not plans.** Missing `weekSchedule` → derive structure only. Missing `runDays.id/date/weekKey` → in-place migration. Full `planBuilder` rebuild ONLY via Configure Plan. | ✅ Constrained |
 
-**Build estimate:** ~17.75 days (was 15.25 in v4). Net +2.5 days for the new production-safety work (atomic writes, minor-vs-major logic, status transitions, versioning, tests).
+**Build estimate:** ~17.5 days (slight decrease from v5's 17.75 — `missed` derivation saves ~0.25d, migration shape-repair saves ~0.25d, Configure Plan CF adds ~0.25d, net -0.25d).
 
 ---
 
@@ -34,56 +34,69 @@ Five surfaces, one shared data shape, one shared `planBuilder()` primitive.
 
 ## Source of Truth and Invariants
 
-The most important rules. Without these, future bugs come from editing the wrong source.
+### Recurring template vs actual instances
 
-### Canonical fields (user-selected, manually edited)
+This distinction matters for Home and Week tab rendering.
+
+| Concept | Field | Used for |
+|---|---|---|
+| **Recurring template** (user's preferred weekly structure) | `profile.weekSchedule` | Default day-types; fallback rendering when no actual instance exists |
+| **Actual instances** (the concrete planned items for this week) | `programState.runDays` (scheduled runs) + `programState.workouts` (scheduled lifts) | Primary rendering source — what's actually planned right now |
+
+**Rendering rule:**
+
+```
+Home/Week display priority for a given date:
+1. Actual instance from runDays/workouts → render with full details
+2. Fallback to weekSchedule[dayIndex].type → render placeholder
+3. No data → render rest day
+```
+
+**Why this matters:** when a user moves Tuesday's run to Thursday (this week only), `profile.weekSchedule` stays the same (Tuesday=Run is still the recurring preference) but `runDays` shows the actual moved instance. Home displays the run on Thursday, not Tuesday.
+
+### Canonical user-selected fields
 
 | Field | Owner | Set by |
 |---|---|---|
-| `profile.weekSchedule` | profile | onboarding + Configure Plan + Week tab |
-| `profile.runMode` | profile | onboarding + Configure Plan + Run tab |
-| `profile.raceGoal` | profile | onboarding + Configure Plan + Run tab |
-| `profile.weeklyRunDaysTarget` | profile | onboarding + Configure Plan + Run tab |
-| `profile.primaryGoal` | profile | onboarding + Configure Plan |
-| `profile.daysPerWeek` | profile | onboarding + Configure Plan |
-| `profile.preferredSplit` | profile | onboarding + Configure Plan |
-| `profile.experience` | profile | onboarding + Configure Plan |
-| `profile.equipment` | profile | onboarding + Configure Plan |
-| `profile.injuries` | profile | onboarding + Configure Plan |
+| `profile.weekSchedule` | profile | onboarding + Configure Plan + Week tab structure edits |
+| `profile.runMode` | profile | onboarding + Configure Plan |
+| `profile.raceGoal` | profile | onboarding + Configure Plan |
+| `profile.weeklyRunDaysTarget` | profile | onboarding + Configure Plan |
+| `profile.primaryGoal` / `daysPerWeek` / `preferredSplit` / `experience` / `equipment` / `injuries` | profile | onboarding + Configure Plan |
 
 ### Derived fields (generated, do not mutate manually)
 
-| Field | Owner | Generated by |
-|---|---|---|
-| `programState.workouts` | programState | `planBuilder()` |
-| `programState.runDays` | programState | `planBuilder()` |
-| `programState.runPlan` | programState | `planBuilder()` |
-| `ScheduledRunDay.id` | programState | `planBuilder()` |
-| `ScheduledRunDay.date` | programState | `planBuilder()` |
-| `ScheduledRunDay.weekKey` | programState | `planBuilder()` |
-| `ScheduledRunDay.templateId` | programState | `planBuilder()` |
-| `ScheduledRunDay.plannedType` | programState | `planBuilder()` |
-| `ScheduledRunDay.status` | programState | runtime completion logic (see status-transition section) |
-| `ScheduledRunDay.userOverride` | programState | runtime (user picks different template for one scheduled run) |
-| `ScheduledRunDay.linkedRunId` | programState | runtime on save (links to saved run document) |
-| `ScheduledRunDay.movedFromDate` / `movedToDate` | programState | runtime on user-initiated move |
+| Field | Generated by |
+|---|---|
+| `programState.workouts` | `planBuilder()` |
+| `programState.runDays` (the array shape) | `planBuilder()` |
+| `programState.runPlan` | `planBuilder()` |
+| `ScheduledRunDay.id` / `date` / `weekKey` / `templateId` / `plannedType` | `planBuilder()` |
+
+### Runtime-mutable fields (within state machine)
+
+| Field | Mutated by |
+|---|---|
+| `ScheduledRunDay.status` | runtime completion logic (see Status Transitions) |
+| `ScheduledRunDay.userOverride` (`string`) | user picks different template for one scheduled run |
+| `ScheduledRunDay.linkedRunId` | runtime on save (links to saved run document) |
+| `ScheduledRunDay.movedFromDate` / `movedToDate` | runtime on user-initiated move |
+| `ScheduledRunDay.date` / `dayIndex` | runtime on user-initiated move (`id` preserved) |
 
 ### Mutation invariants
 
-1. **`programState.runDays` is generated from `weekSchedule` + `runMode` + `raceGoal`.** Don't write `runDays` directly except via `planBuilder()` or runtime completion/move actions.
-2. **Major plan edits update profile + programState atomically.** See "Atomic Save Behaviour" below.
-3. **`planBuilder()` is pure** — given the same inputs, returns the same outputs. No Firestore writes, no hook calls, no implicit `Date.now()`.
-4. **Status transitions follow the state machine** (see "Status Transitions" below). Don't write arbitrary status values.
-5. **Schema versions** track shape evolution. On read, check version and migrate if needed.
+1. `programState.runDays` shape is generated from `weekSchedule` + `runMode` + `raceGoal` via `planBuilder()`. Don't write `runDays` array directly outside `planBuilder` or in-place runtime updates (move/swap/complete).
+2. Major plan edits update profile + programState **atomically via Cloud Function** (`completeOnboarding` or `configurePlan`).
+3. `planBuilder()` is pure — same input, same output. No Firestore, no hooks, no implicit clock.
+4. Status transitions follow the state machine.
+5. Schema versions track shape evolution.
 
 ---
 
 ## planBuilder() — Architectural Centre
 
-**The function every plan-creation surface calls.** Pure. Testable. No side effects.
-
 ```typescript
-// src/features/program/planBuilder.ts (NEW — P0-2, built before all consumers)
+// src/features/program/planBuilder.ts (NEW)
 
 export interface PlanBuilderInput {
   primaryGoal: PrimaryGoal;
@@ -97,18 +110,18 @@ export interface PlanBuilderInput {
   equipment: Equipment[];
   injuries: Injury[];
 
-  // Required for determinism in tests
-  currentDate: string;            // LOCAL "YYYY-MM-DD" — INJECTED, not `new Date()`
-  weekStartIso?: string;          // Sunday-start week key for the plan's week 0
+  // Required for deterministic tests — never reads wall clock
+  currentDate: string;
+  weekStartIso?: string;
 
   // Optional — Configure Plan only
-  existingState?: ProgramState;   // for preserveHistory mode
+  existingState?: ProgramState;
   preserveHistory?: boolean;
 }
 
 export interface PlanBuilderOutput {
-  programState: ProgramState;     // workouts + runDays + runPlan
-  weekSchedule: ScheduleDay[];    // concrete 7-day layout
+  programState: ProgramState;
+  weekSchedule: ScheduleDay[];
   profileUpdates: Partial<UserProfile>;
 }
 
@@ -116,167 +129,97 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput;
 ```
 
 **Pure function contract:**
+- No Firestore writes (callers handle persistence)
+- No React hook calls
+- No implicit `new Date()` (injected `currentDate`)
+- No `toISOString().split('T')[0]` (UTC bug)
+- Same input → same output
 
-| Rule | Why |
-|---|---|
-| No Firestore writes | Callers control persistence (atomicity) |
-| No React hook calls | Must be callable from Cloud Functions, tests, scripts |
-| No implicit `new Date()` or `Date.now()` | Pass `currentDate` explicitly for deterministic tests |
-| No `toISOString().split('T')[0]` | UTC bugs — see "Local-Date Semantics" |
-| Same input → same output | Property tested |
-| Mutates nothing | Don't mutate `existingState` — clone it |
-
-**Consumer wiring (callers handle persistence):**
-
-```typescript
-// Onboarding (server-side via Cloud Function)
-const planOutput = buildPlan(input);
-await completeOnboarding({
-  profileData: { ...profileData, ...planOutput.profileUpdates, weekSchedule: planOutput.weekSchedule },
-  programState: planOutput.programState,
-});  // CF writes atomically
-
-// Configure Plan (client-side batched write)
-const planOutput = buildPlan(input);
-await writeBatch(db)
-  .update(userRef, { ...planOutput.profileUpdates, weekSchedule: planOutput.weekSchedule })
-  .set(programStateRef, planOutput.programState)
-  .commit();  // atomic
-```
+**`planBuilder()` calls `runScheduler` internally for stress-aware Both-day pairing** (see P0-3 below). `generateSchedule` only produces the day-type structure.
 
 ---
 
-## Atomic Save Behaviour
+## Atomic Save Behaviour · Cloud Functions
 
-**Plan saves are all-or-nothing.** Without atomicity, a flaky network during onboarding could leave a user with `weekSchedule` set but `runDays` missing — a half-migrated state.
+Both major-write paths use Cloud Functions for guaranteed atomicity AND Firestore-rules-bypass (writes to protected fields).
 
-### Onboarding
+### `completeOnboarding` (existing, updated)
 
-Already calls the `completeOnboarding` Cloud Function. **Ensure CF writes profile + programState as a single server-side operation** (Admin SDK is atomic within a single request).
+Accepts new payload shape (`weekSchedule`, new `runDays` with `id/date/weekKey/status`, `runPlan`, schema versions). Writes profile + programState in one batched server-side operation.
+
+### `configurePlan` (NEW)
+
+Same pattern. For existing-user plan rebuilds.
 
 ```javascript
-// functions/index.js — completeOnboarding
-exports.completeOnboarding = onCall(async (request) => {
-  const { profileData, programState } = request.data;
-  const userRef = db.collection("users").doc(uid);
-  const programRef = userRef.collection("programState").doc("current");
-
-  // Atomic batch write
+// functions/index.js — NEW
+exports.configurePlan = onCall(async (request) => {
+  const { profileUpdates, programState, weekSchedule } = request.data;
+  // Validate auth, validate schema versions, validate planBuilder output shape
   const batch = db.batch();
-  batch.set(userRef, profileData, { merge: true });
-  batch.set(programRef, programState);
-  await batch.commit();  // succeeds-or-fails together
+  batch.update(userRef, { ...profileUpdates, weekSchedule, weekScheduleVersion: CURRENT_VERSION });
+  batch.set(programStateRef, programState);
+  await batch.commit();
 });
 ```
 
-### Configure Plan
+**Why CF for Configure Plan, not client batch:**
+- Firestore rules may restrict client writes to `weekSchedule` or `programState` (same restrictions as onboarding)
+- Server-side validation can verify the `planBuilder` output is well-formed before persistence
+- Matches the existing `completeOnboarding` precedent
 
-Client-side batched write:
-
-```typescript
-async function saveConfigurePlan(planOutput: PlanBuilderOutput) {
-  const batch = writeBatch(db);
-  batch.update(userRef, {
-    ...planOutput.profileUpdates,
-    weekSchedule: planOutput.weekSchedule,
-    weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
-  });
-  batch.set(programStateRef, planOutput.programState);
-  await batch.commit();
-}
-```
-
-### Acceptance
-
-If one write fails, no partial plan update is visible. Either the user has the new full plan, or they keep the old full plan. Never partial.
+**Estimate impact:** P0-9 (Configure Plan) gets +0.25d for the CF; matched by savings elsewhere.
 
 ---
 
 ## Configure Plan · Draft State
 
-**No writes until final Confirm.** The wizard maintains all changes in local state. User can Cancel at any step with zero effect on Firestore.
+No writes until final Confirm. Wizard maintains local state. Cancel = zero changes to Firestore.
 
-```typescript
-// src/components/program/ConfigurePlanModal.tsx
-const [draft, setDraft] = useState<PlanBuilderInput>(() => seedFromExistingPlan(profile, programState));
+**Six steps:** Training focus → Nutrition phase → Lifting → Running → Weekly preview → Confirm.
 
-// Each step updates draft state
-const handleNext = () => setDraft({ ...draft, ...stepUpdates });
-
-// Only fires on final Confirm
-const handleConfirm = async () => {
-  const planOutput = buildPlan(draft);
-  await saveConfigurePlan(planOutput);
-  onClose();
-};
-
-// Cancel and Back do nothing to Firestore
-const handleCancel = () => onClose();
-const handleBack = () => setStep(step - 1);  // draft preserved
-```
-
-**Rules:**
-- Cancel button exits with zero changes
-- Back button preserves draft state within the wizard
-- Final Confirm is the only write
-- If user closes the modal mid-wizard, draft is lost (could persist in localStorage as v1.1)
+**On Confirm:**
+1. Call `planBuilder(draft)` locally
+2. Send output to `configurePlan` Cloud Function
+3. CF atomically writes profile + programState
 
 ---
 
 ## Minor Edits vs Major Rebuilds
 
-Not every plan change should trigger a full `planBuilder()` rebuild. Configure Plan handles major changes. **In-place tab editing handles minor changes.**
+### Minor edits (no `planBuilder` call — in-place writes)
 
-### Minor edits (no `planBuilder` call)
+**Rule:** A minor edit doesn't change weekly lift count, weekly run count, split, run mode, race goal, or training focus.
 
-| Edit | Surface | Effect |
+| Edit | Surface | What writes |
 |---|---|---|
-| Move one planned run within current week | Week tab (long-press / ⋯ overflow) | Update `ScheduledRunDay.date` + `dayIndex` + set `movedFromDate`; preserve `id` |
-| Swap one template for one scheduled run | Run tab or session card edit | Update `ScheduledRunDay.userOverride` (string) |
-| Mark a planned run as skipped manually | Week tab ⋯ overflow | Update `ScheduledRunDay.status = "skipped"` |
-| Change one day from Run to Both (add a lift) | Week tab inline | Update `weekSchedule[i].type`; **regenerate that day only** |
+| Move one planned run within current week | Week tab `⋯` overflow | `ScheduledRunDay.date` + `dayIndex` + `movedFromDate` (preserve `id`) |
+| Swap one template for one scheduled run | Run tab session card | `ScheduledRunDay.userOverride` (string) |
+| Mark a planned run as skipped manually | Week tab `⋯` overflow | `ScheduledRunDay.status = "skipped"` |
+| Change one day's type **AND another day's type so counts stay constant** (e.g. Tue Lift → Tue Rest + Thu Lift → Thu Both) | Week tab inline | `profile.weekSchedule` patch + regenerate affected day in `runDays` |
 | Update shoe / audio / rest preferences | Settings | Profile-only write |
-
-These edits write **only the affected fields**. They don't call `planBuilder()`.
 
 ### Major rebuilds (call `planBuilder()` via Configure Plan)
 
-| Edit | Surface | Effect |
-|---|---|---|
-| Change primary goal | Configure Plan | Full rebuild |
-| Change lift days | Configure Plan | Full rebuild |
-| Change preferred split | Configure Plan | Full rebuild |
-| Change run mode (freeform ↔ structured ↔ race_prep) | Configure Plan or Run tab "Set a race goal" | Full rebuild |
-| Change race distance | Configure Plan or Run tab | Full rebuild |
-| Change race date by **more than 7 days** | Configure Plan or Run tab | Full rebuild |
-| Change weekly run days target | Configure Plan | Full rebuild |
-| Change race date by **≤7 days** | Run tab edit | **Adjust currentWeek/totalWeeks**, don't rebuild |
+**Rule:** Any change that alters weekly counts, split, mode, race goal, or training focus.
 
-**Why the race-date threshold:** small adjustments (race postponed by 4 days) shouldn't nuke 8 weeks of training history. A multi-week change is a fundamentally different plan.
+| Edit | Surface |
+|---|---|
+| Change primary goal | Configure Plan |
+| Change lift days count | Configure Plan |
+| Change preferred split | Configure Plan |
+| Change run mode (freeform ↔ structured ↔ race_prep) | Configure Plan or Run tab "Set a race goal" |
+| Change race distance | Configure Plan or Run tab |
+| Change race date by **>7 days** | Configure Plan or Run tab |
+| Change race date by **≤7 days** | Run tab (adjust `currentWeek`/`totalWeeks` only) |
+| Change weekly run days target | Configure Plan |
+| **Change one day's type WITHOUT compensating elsewhere** (e.g. Tue Run → Tue Both, leaving lift count +1) | Configure Plan |
 
-### Implementation
-
-In Configure Plan's Confirm step, show which edits trigger rebuild vs adjust:
-
-```
-Update your plan
-You've changed:
-  ✓ Lifting days: 4 → 5 (rebuild required)
-  ✓ Race date: 14 Aug → 21 Aug (adjust only)
-
-This will:
-  ✓ Regenerate next week's lift programme
-  ✓ Extend race plan by 1 week
-  ✓ Keep all logged workouts/runs in History
-
-[Confirm] [Cancel]
-```
+**Critical change from v5:** "Run → Both" is **major by default** because it adds a lift session. Only minor if another day decreases to keep total lift count constant.
 
 ---
 
-## Status Transitions
-
-`ScheduledRunStatus` follows a state machine. Disallow silent reverts and weird states.
+## Status Transitions · State Machine
 
 ```typescript
 type ScheduledRunStatus =
@@ -285,371 +228,305 @@ type ScheduledRunStatus =
   | "completed_modified"
   | "completed_late"
   | "skipped"
-  | "missed"
-  | "moved"
   | "race_no_show"
   | "race_completed_unlinked";
+// NOTE: No "missed" (derived). No "moved" (uses movedFromDate metadata).
 ```
 
 ### Legal transitions
 
 ```
-planned → completed_exact          (user runs the exact planned template)
-planned → completed_modified       (user runs a different template; user reconciles mismatch)
-planned → completed_late           (user runs the planned template after the scheduled date)
-planned → skipped                  (user explicitly skips via Week tab)
-planned → missed                   (auto: scheduled date passes with no run + no skip)
-planned → moved                    (user moves to a different date; new status = "planned" on new date)
-
-moved → completed_exact            (moved run completed exactly)
-moved → completed_modified         (moved run completed with reconciliation)
-moved → skipped                    (user skipped after moving)
-moved → missed                     (move date passed without run)
+planned → completed_exact          (exact template match for the scheduled instance)
+planned → completed_modified       (different template; user reconciles)
+planned → completed_late           (planned template completed after scheduled date)
+planned → skipped                  (user explicitly skips)
 
 Race-specific:
 planned → race_no_show             (race day passes, no run logged)
 planned → race_completed_unlinked  (race day run logged but not linked to scheduled instance)
-race_completed_unlinked → completed_exact  (user manually links it)
+race_completed_unlinked → completed_exact  (user manually links)
 ```
 
-### Disallowed transitions (validation throws)
+### Disallowed (validation throws)
 
 ```
 completed_* → planned              (no silent reverts)
 completed_* → skipped              (no retroactive skip)
-completed_* → missed               (no demotion)
 skipped → completed_*              (without explicit user reconciliation)
-missed → completed_exact           (without explicit user reconciliation)
 ```
 
-### Implementation
+### "Missed" is derived, not stored
 
-Add a `transitionStatus(from, to): boolean` helper in `programTypes.ts` or `runPlanMetadata.ts`. Use it everywhere a status change happens. Throw or no-op on invalid transitions.
+A planned run with a past date and no linked run is **missed** at view-time. Don't persist it. No scheduled jobs needed.
+
+```typescript
+function isMissed(rd: ScheduledRunDay, localToday: string): boolean {
+  return rd.status === "planned"
+      && rd.date < localToday
+      && !rd.linkedRunId;
+}
+```
+
+If a UI surface needs to "lock" a missed state (e.g. user dismissed it as "skip the week's tempo"), at that moment write `status = "skipped"` explicitly.
+
+### "Moved" is metadata, not status
+
+A moved run stays `status: "planned"`. The fact it was moved is captured via:
+
+```typescript
+{
+  id: "runday_2026-05-12_tempo",  // preserved
+  date: "2026-05-14",              // new
+  dayIndex: 4,                     // new
+  movedFromDate: "2026-05-12",     // metadata
+  status: "planned",               // unchanged
+}
+```
+
+This avoids the ambiguity of "is moved actionable, or historical?"
 
 ---
 
 ## Schema Versioning
 
-Add explicit version fields. Backfills become deterministic instead of guesswork.
-
 ```typescript
 // profile
-profile.weekScheduleVersion: 1  // bump when ScheduleDay shape changes
+profile.weekScheduleVersion: 1
 
 // programState
-programState.programSchemaVersion: 2  // bump when ProgramState shape changes
-                                       // (current code is implicitly v1; v2 = with scheduledRunId etc.)
+programState.programSchemaVersion: 2  // current code = implicit v1; v2 = with scheduledRunId etc.
 ```
 
-### Read-side checks
+### Migration is shape-repair only
+
+**Never call `planBuilder()` during lazy migration.** Migration repairs missing fields; doesn't regenerate plans.
 
 ```typescript
-// On Programme open / Run.tsx parse / etc.
-if (!profile.weekSchedule || profile.weekScheduleVersion !== CURRENT_WEEKSCHEDULE_VERSION) {
-  // Backfill from weeklyWorkoutsTarget + weeklyRunDaysTarget via planBuilder
-  const planOutput = buildPlan(/* derive input from existing profile */);
-  await batchedWrite(planOutput);
-}
-
-if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION) {
-  // Migrate runDays to new shape (add id/date/weekKey/status)
-  programState = migrateProgramState(programState);
-  await setDoc(programStateRef, programState);
-}
-```
-
-### Migration helpers
-
-Add `src/features/program/migrations.ts`:
-
-```typescript
-export const CURRENT_WEEKSCHEDULE_VERSION = 1;
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 2;
-
-export function migrateProgramState(state: ProgramState): ProgramState {
+// src/features/program/migrations.ts
+export function migrateProgramState(state: ProgramState, profile: UserProfile, localDate: string): ProgramState {
   if (!state.programSchemaVersion || state.programSchemaVersion < 2) {
-    // Add id/date/weekKey/status to existing runDays
+    // Repair runDays in place — add id/date/weekKey/status to existing entries
     state.runDays = state.runDays?.map(rd => ({
       ...rd,
-      id: rd.id ?? generateScheduledRunId(rd),
-      date: rd.date ?? deriveLocalDate(rd.dayIndex, state.weekStart),
-      weekKey: rd.weekKey ?? deriveWeekKey(rd.dayIndex, state.weekStart),
+      id: rd.id ?? generateScheduledRunId(rd, localDate),
+      date: rd.date ?? deriveLocalDate(rd.dayIndex, profile.weekStart ?? localDate),
+      weekKey: rd.weekKey ?? deriveWeekKey(rd.dayIndex, profile.weekStart ?? localDate),
       status: rd.status ?? (rd.completed ? "completed_exact" : "planned"),
     })) ?? [];
     state.programSchemaVersion = 2;
   }
   return state;
 }
+
+export function backfillWeekScheduleIfMissing(profile: UserProfile): Partial<UserProfile> | null {
+  if (profile.weekSchedule && profile.weekScheduleVersion === 1) return null;
+  // Derive ONLY the weekSchedule structure — don't touch programState
+  const weekSchedule = generateSchedule(
+    profile.weeklyWorkoutsTarget ?? 3,
+    profile.weeklyRunDaysTarget ?? 0,
+  );
+  return { weekSchedule, weekScheduleVersion: 1 };
+}
 ```
+
+**Why shape-repair only:** Full `planBuilder` rebuild during migration is destructive. It would regenerate `workouts` and `runDays` from scratch, potentially nuking any user customizations made before the migration. Shape-repair preserves all user data; only adds missing fields with sensible defaults.
+
+**Full plan regeneration is reserved for Configure Plan** — user-initiated, with explicit confirmation.
 
 ---
 
 ## Local-Date Semantics
 
-(Same as v4 — explicit rule.)
+(Same as v5.) All schedule dates use local calendar dates. `src/lib/dateHelpers.ts` exports `localDateString`, `localWeekKey`, `localDayIndex`. Never `toISOString().split('T')[0]`.
 
-**All schedule dates use local calendar dates, not UTC.** Use `src/lib/dateHelpers.ts`:
-
-```typescript
-export function localDateString(d: Date = new Date()): string;     // "YYYY-MM-DD"
-export function localWeekKey(d: Date = new Date()): string;        // Sunday-start
-export function localDayIndex(d: Date = new Date()): number;       // 0=Sun..6=Sat
-```
-
-**Never use `toISOString().split('T')[0]`** — silently rolls back a day for late-night PST users.
-
-`planBuilder()` takes `currentDate` as an injected parameter — never reads the wall clock internally.
+`planBuilder()` takes `currentDate` as an injected param.
 
 ---
 
-## Required Tests Before Merge
+## Home Integration (with recurring-vs-actual rendering)
 
-11 tests covering the invariants. These MUST pass before the feature ships.
+Home reads BOTH `profile.weekSchedule` AND `programState.runDays`/`workouts` to render the next 7 days correctly.
 
-### Scheduler tests (`src/lib/__tests__/scheduleUtils.test.ts`)
-
-```typescript
-test("generateSchedule(6, 2) produces 6 lift, 2 run, ≥1 both, no truncation", () => {
-  const result = generateSchedule(6, 2);
-  const counts = countByType(result);
-  expect(counts.lift + counts.both).toBe(6);
-  expect(counts.run + counts.both).toBe(2);
-  expect(counts.both).toBeGreaterThanOrEqual(1);
-  expect(result.length).toBe(7);
-});
-
-test("generateSchedule(4, 2) produces no forced doubles", () => {
-  const result = generateSchedule(4, 2);
-  const counts = countByType(result);
-  expect(counts.both).toBe(0);
-  expect(counts.lift).toBe(4);
-  expect(counts.run).toBe(2);
-  expect(counts.rest).toBe(1);
-});
-```
-
-### planBuilder tests (`src/features/program/__tests__/planBuilder.test.ts`)
+### Rendering algorithm
 
 ```typescript
-test("planBuilder race_prep creates weekSchedule + runPlan + runDays with id/date/weekKey", () => {
-  const output = buildPlan({
-    primaryGoal: "running",
-    nutritionPhase: "recomp",
-    experience: "intermediate",
-    liftDays: 3,
-    preferredSplit: "upper_lower",
-    runMode: "race_prep",
-    weeklyRunDays: 3,
-    raceGoal: { distance: "10k", targetDate: "2026-08-14" },
-    equipment: ["barbell"],
-    injuries: [],
-    currentDate: "2026-05-14",
-  });
-  expect(output.weekSchedule.length).toBe(7);
-  expect(output.programState.runDays.every(rd => rd.id && rd.date && rd.weekKey)).toBe(true);
-  expect(output.programState.runPlan?.mode).toBe("race_prep");
-  expect(output.programState.runPlan?.totalWeeks).toBeGreaterThan(0);
-});
+function renderHomeDay(date: string, profile: UserProfile, programState: ProgramState) {
+  // 1. Check for actual instances first (these take priority)
+  const runInstance = programState.runDays?.find(rd => rd.date === date);
+  const liftInstance = programState.workouts?.find(w => /* w.date === date */); // when lifts get dates
 
-test("planBuilder structured creates runDays without raceGoal", () => {
-  const output = buildPlan({ /* runMode: "structured", no raceGoal */ });
-  expect(output.programState.runDays.length).toBeGreaterThan(0);
-  expect(output.programState.runPlan?.mode).toBe("structured");
-  expect(output.programState.runPlan?.raceGoal).toBeUndefined();
-});
+  if (runInstance || liftInstance) {
+    return renderActualInstance({ runInstance, liftInstance });
+  }
 
-test("planBuilder freeform creates no runDays", () => {
-  const output = buildPlan({ /* runMode: "freeform" */ });
-  expect(output.programState.runDays).toEqual([]);
-  expect(output.programState.runPlan).toBeUndefined();
-});
+  // 2. Fall back to recurring template
+  const dayIndex = localDayIndex(new Date(date));
+  const templateType = profile.weekSchedule?.[dayIndex]?.type;
 
-test("planBuilder is pure — same input produces same output", () => {
-  const input = { /* fixed */ };
-  const a = buildPlan(input);
-  const b = buildPlan(input);
-  expect(a).toEqual(b);
-});
+  if (templateType === "rest" || !templateType) {
+    return renderRestDay();
+  }
+
+  // 3. Template exists but no instance — show as "planned (no details yet)"
+  return renderTemplatePlaceholder(templateType);
+}
 ```
 
-### Onboarding tests (`src/pages/__tests__/Onboarding.test.tsx`)
+### Why precedence matters
 
-```typescript
-test("retake onboarding preloads runMode, weeklyRunDays, raceGoal", () => {
-  const profile = {
-    runMode: "race_prep",
-    weeklyRunDaysTarget: 3,
-    raceGoal: { distance: "10k", targetDate: "2026-08-14" },
-    // ...
-  };
-  render(<Onboarding initialProfile={profile} retake={true} />);
-  // Assert that the running setup step shows the prefilled values
-  expect(screen.getByText(/race prep/i)).toBeInTheDocument();
-  expect(screen.getByText(/10k/i)).toBeInTheDocument();
-});
-```
+Consider this scenario:
+- User's recurring `weekSchedule`: Tuesday = Run
+- This week, user moved Tuesday's tempo to Thursday
+- `programState.runDays` now has the tempo on Thursday (id preserved, date updated)
+- `profile.weekSchedule` STILL says Tuesday = Run (the recurring preference is unchanged)
 
-### Run completion tests (`src/pages/__tests__/RunSummary.test.tsx`)
+Without the precedence rule, Home would show:
+- Tuesday: "Run day" (from weekSchedule) — but there's no actual tempo there
+- Thursday: nothing (because weekSchedule says Thursday is Rest)
 
-```typescript
-test("run launched with scheduledRunId completes only that scheduled run", async () => {
-  // Setup: two tempo runs in same week (Tue and Sat)
-  // Run is launched with ?scheduledRunId=runday_2026-05-13_tempo (Tuesday)
-  // After save, only Tuesday's runDay.status === "completed_exact"
-  // Saturday's runDay.status === "planned"
-});
+With the precedence rule:
+- Tuesday: rest (no instance, weekSchedule says Run but no concrete plan)
+- Thursday: "Tempo Run · 8 km" (actual instance from runDays)
 
-test("run launched with ?template= fallback does not complete wrong scheduled run", async () => {
-  // Two tempo runs in same week. URL has ?template=tempo (legacy)
-  // Should NOT auto-complete either; should require user reconciliation
-});
-```
+Correct rendering, no phantom "Run day" displays.
 
-### Date helper tests (`src/lib/__tests__/dateHelpers.test.ts`)
+### Acceptance criteria
 
-```typescript
-test("localDateString uses local calendar date, not UTC", () => {
-  // Mock Date to 2026-05-14T23:00:00 PST (UTC = 2026-05-15T07:00:00)
-  vi.setSystemTime(new Date("2026-05-15T07:00:00Z"));
-  // ... if test machine is in PST, this should still be "2026-05-14" local
-  // (this test is environment-dependent; use freezeNow + explicit TZ)
-});
-```
-
-### Home integration tests (`src/pages/__tests__/Home.test.tsx`)
-
-```typescript
-test("future planned day shows planned item, not 'No activity logged'", () => {
-  const profile = { weekSchedule: [...] };
-  const programState = { runDays: [{ /* future tempo run */ }] };
-  render(<Home profile={profile} programState={programState} />);
-  // Navigate to future planned day
-  // Assert "Planned: Tempo Run · 8 km" appears, NOT "No activity logged"
-});
-```
-
-### Cloud Function tests (`functions/__tests__/completeOnboarding.test.js`)
-
-```javascript
-test("completeOnboarding persists weekSchedule, runDays shape, runPlan", async () => {
-  const payload = { profileData: { weekSchedule: [...] }, programState: { runDays: [{ id, date, weekKey, ... }] } };
-  await completeOnboarding(payload);
-  const userDoc = await admin.firestore().doc(`users/${uid}`).get();
-  expect(userDoc.data().weekSchedule).toEqual(payload.profileData.weekSchedule);
-  const programDoc = await admin.firestore().doc(`users/${uid}/programState/current`).get();
-  expect(programDoc.data().runDays[0].id).toBeTruthy();
-  expect(programDoc.data().runDays[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-});
-```
+1. `Home.tsx` reads BOTH `profile.weekSchedule` AND `programState.runDays`/`workouts`
+2. Day rendering prioritizes actual instances over recurring template
+3. `WeekStrip.tsx` colours each day based on the rendered type (post-precedence)
+4. `DayPeekCard.tsx` for a future day shows planned-instance details OR template-placeholder OR rest
+5. Today CTAs route via `scheduledRunId` from the actual instance
+6. Future-day tap → `/program?tab=week&date=YYYY-MM-DD`
+7. Past missed day (derived) shows: actions to log or skip
 
 ---
 
-## Context (unchanged)
+## P0 Prerequisites · Reorganized Build Order
 
-Tropos: hybrid fitness app. v5 unifies five surfaces (Home / Programme / Run / Onboarding / Settings) around a single `planBuilder()` primitive + concrete `weekSchedule` source of truth.
+**Clarified:** P0-A through P0-C are foundational. P0-2 through P0-9 build on top.
 
----
+### P0-A · Foundational types + helpers
 
-## The Decision · 4-Tab Programme
+**Files:**
+- `src/features/program/programTypes.ts` — finalize `ScheduledRunDay` shape (keep `userOverride: string`); finalize `ScheduledRunStatus` enum (no `moved`, no `missed`, no `freeform_extra`); add `weekScheduleVersion`/`programSchemaVersion`; add `transitionStatus()` validator
+- `src/lib/dateHelpers.ts` (NEW) — `localDateString`, `localWeekKey`, `localDayIndex`
+- `src/features/program/migrations.ts` (NEW) — `migrateProgramState` + `backfillWeekScheduleIfMissing` (shape-repair only)
 
-(Same as v4.)
-
-```
-[Today] [Week] [Lift] [Run]
-```
-
-Overflow `⋯` adds **"Configure Plan"** entry → full-screen modal (P0-9).
-
----
-
-## Onboarding + Programme Reconfiguration Alignment
-
-(Same architecture as v4.)
-
-- **NEW USER:** Onboarding (12 steps) → `planBuilder()` → atomic save via `completeOnboarding` CF
-- **EXISTING USER · small edit:** Tab in-place editing (no `planBuilder` call)
-- **EXISTING USER · major change:** Programme ⋯ → Configure Plan (full-screen modal, draft state) → `planBuilder()` → atomic batched write
-- **EXISTING USER · profile reset (rare):** Settings → Reset profile → Full Onboarding Retake
-
-Onboarding flow stays at 12 steps. Identity (0-3) + plan (4-11).
-
----
-
-## Footprint Icon Behaviour
-
-Footprint top-right of Programme → `/run`. `/run` decides: planned run today → prefill via `scheduledRunId`; no plan → freeform setup.
-
----
-
-## P0 Prerequisites · Must Ship Before UI Work
-
-Order matters. `planBuilder()` is P0-2 — built before all consumers.
-
-### P0-0 · `generateSchedule` emits Both days
-
-(Unchanged from v4.) Fix `src/lib/scheduleUtils.ts` to emit `"both"` when `liftDays + runDays > 7`. Corrected counting: `bothCount = Math.min(total - 7, liftDays, runDays)`. Stress-aware placement: pair Easy/Recovery + Upper-body before Heavy Legs + Long Run.
+**Tests:** date helpers (timezone-aware), status transition validator (legal/disallowed), migration helpers (idempotent, preserve user data).
 
 **Estimate:** 0.5 days.
 
-### P0-1 · Finalize `ScheduledRunDay` + `ScheduledRunStatus`
+### P0-B · `generateSchedule` emits Both days (counts only — no stress-aware)
 
-Keep `userOverride: string`. Remove `freeform_extra` from status (lives on saved-run `planMetadata.planSource`). Add `weekScheduleVersion` and `programSchemaVersion` for migrations.
+**File:** `src/lib/scheduleUtils.ts`
 
-Define legal/disallowed status transitions in `transitionStatus()` helper.
+```typescript
+export function generateSchedule(liftDays: number, runDays: number): ScheduleDay[] {
+  const total = liftDays + runDays;
+  if (total === 0) return allRest();
+  if (total <= 7) return existingNoBothsLogic(liftDays, runDays);
 
-**Estimate:** 0.25 days.
+  // total > 7: must use Both days. Each "both" consumes 1 lift AND 1 run.
+  const bothCount = Math.min(total - 7, liftDays, runDays);
+  const liftOnlyCount = Math.max(0, liftDays - bothCount);
+  const runOnlyCount = Math.max(0, runDays - bothCount);
+  const restCount = 7 - bothCount - liftOnlyCount - runOnlyCount;
 
-### P0-2 · Create `planBuilder()` (pure, deterministic)
+  return assembleSchedule({ bothCount, liftOnlyCount, runOnlyCount, restCount });
+}
+```
 
-Build the architectural centre. No Firestore. No hooks. Inject `currentDate`. Same input → same output.
+**Outputs a valid Lift/Run/Both/Rest structure with correct day-type counts.** No session-content awareness. Pure counts.
 
-Tests: race_prep / structured / freeform / purity assertion.
+**Tests:** `generateSchedule(6, 2)` → 6/2/1+/correct counts. `generateSchedule(4, 2)` → no forced Both.
+
+**Estimate:** 0.5 days.
+
+### P0-C · `planBuilder()` skeleton (pure)
+
+**File:** `src/features/program/planBuilder.ts` (NEW)
+
+Pure function. No Firestore, no hooks, no implicit clock. Takes injected `currentDate`. Returns `{ programState, weekSchedule, profileUpdates }`.
+
+Initially returns a skeleton: calls `generateSchedule` for structure, builds `workouts` via existing lift programme engine, calls `runScheduler` for `runDays` (in P0-3 wiring).
+
+**Tests:** race_prep / structured / freeform outputs. Purity assertion (same input → same output).
 
 **Estimate:** 0.75 days.
 
-### P0-3 · `runScheduler` uses `weekSchedule` + compressed-plan rules
+### P0-3 · `runScheduler` uses `weekSchedule` + stress-aware Both-day pairing
 
-Drive scheduling from `weekSchedule.filter(d => d.type === "run" || d.type === "both")`. Implement compressed-plan rules: cap hard runs at 1/week, long-run progression 10% (vs 15%), skip intervals if heavily compressed.
+**File:** `src/features/program/runScheduler.ts`
 
-**Estimate:** 1.0 day.
+Drive scheduling from `weekSchedule.filter(d => d.type === "run" || d.type === "both")`. Implement compressed-plan rules.
 
-### P0-4 · `completeOnboarding` Cloud Function contract + atomic write
+**Stress-aware Both-day pairing lives HERE, not in `generateSchedule`.** Because here we have:
+- The list of lift sessions (Push/Pull/Legs/etc.) from `programState.workouts`
+- The list of run templates (Easy/Tempo/Intervals/Long) being scheduled
 
-Accept new payload shape. Use `batch.commit()` for atomic profile + programState write. Validate schema versions.
+Pairing rules:
 
-**Estimate:** 0.5 days.
+```
+When placing a run on a Both day (i.e. weekSchedule[d].type === "both"):
+1. If Both day's lift is Upper-body (Push/Pull/Upper): prefer Easy or Tempo run
+2. If Both day's lift is Lower-body (Legs/Lower/Squat-focus): prefer Easy run only; avoid Long Run / Intervals
+3. If Both day's lift is Full-body: prefer Easy run
+4. Long Run prefers a non-Both day. If forced onto a Both day, pair with Upper-body if possible.
 
-### P0-5 · Onboarding refactor (uses `planBuilder`)
+If a hard pairing is unavoidable (e.g. only Both day available is Legs day, and Long Run must be scheduled):
+- Allow it
+- Set a metadata flag: `runDay.suggestSeparate: true`
+- UI can surface: "Hard run + legs on one day — consider separating if possible"
+```
 
-Drop doubles blocker. Add weekly-layout-preview step. Retake prefills run-plan state. Save path calls `planBuilder()` → atomic CF.
+**Estimate:** 1.25 days (was 1.0 in v5; adds stress-aware logic).
 
-Includes existing-user `weekSchedule` backfill on first Programme open.
+### P0-4 · `completeOnboarding` + `configurePlan` Cloud Functions
+
+**Files:** `functions/index.js`
+
+- `completeOnboarding`: extend to accept new payload (`weekSchedule`, new `runDays` shape, `runPlan`, schema versions). Atomic batch write.
+- `configurePlan` (NEW): takes `{ profileUpdates, programState, weekSchedule }` and atomic-writes them. Validates schema versions and `planBuilder` output shape.
+
+**Estimate:** 0.75 days.
+
+### P0-5 · Onboarding refactor (uses `planBuilder` + atomic CF save)
+
+(Same as v5.) Drop doubles blocker. Add weekly-preview step. Retake prefills run-plan state. Save calls `planBuilder()` then `completeOnboarding` CF.
 
 **Estimate:** 1.0 day.
 
 ### P0-6 · Run.tsx / RunSummary / RunCTACard / runPlanMetadata for `scheduledRunId`
 
-Parse `?scheduledRunId`, resolve from `programState.runDays`, preserve in `planMetadata`, complete exact instance.
+(Same as v5.) Parse `?scheduledRunId`, resolve, preserve in `planMetadata`, complete by ID.
+
+Validates status transition on save (`planned → completed_exact` etc.).
 
 **Estimate:** 1.0 day.
 
 ### P0-7 · Extract `useProgrammeScheduleEditor()` hook
 
-Shared between legacy Settings and new Week tab during transition.
+(Same as v5.)
 
 **Estimate:** 0.5 days.
 
 ### P0-8 · Migrate `TrainingSection` → Programme + Settings deep-link
 
-5 controls migrated. Deep-link banner replaces "Edit programme" button.
+(Same as v5.)
 
 **Estimate:** 1.0 day.
 
-### P0-9 · Configure Plan wizard (full-screen modal, draft state, atomic write)
+### P0-9 · Configure Plan wizard (full-screen modal, draft state, `configurePlan` CF)
 
-6-step wizard. Draft state only — no writes until Confirm. Distinguish minor vs major edits (only major triggers `planBuilder()` rebuild). Atomic batched write on save.
+(Updated from v5: now uses CF instead of client batched write.)
 
-**Estimate:** 1.25 days (was 1.0 in v4 — adds minor-vs-major logic).
+6-step wizard with draft state. On Confirm:
+1. Call `planBuilder(draft)` locally (pure)
+2. Send output to `configurePlan` Cloud Function
+3. CF atomically writes profile + programState
+
+**Estimate:** 1.25 days.
 
 ### Related cleanup · Rename "Goal" → nutrition phase
 
@@ -657,51 +534,143 @@ Shared between legacy Settings and new Week tab during transition.
 
 ---
 
-## P1 / P2 / P3 (UI work — builds on P0)
+## P1 / P2 / P3 (UI work)
 
 | Phase | Work | Days |
 |---|---|---|
 | P1-1 | Segmented control on Program.tsx | 0.5 |
-| P1-2 | TodayTab with single / doubles / rest / completion | 1.25 |
+| P1-2 | TodayTab with single/doubles/rest/completion | 1.25 |
 | P1-3 | ScheduleTab (Week) with visible ⋯ menus + history nav + in-place minor edits | 1.5 |
-| P1-4 | Home integration (DayPeekCard planned items, WeekStrip, CTA routing) | 0.5 |
+| P1-4 | Home integration with recurring-vs-actual precedence | 0.5 |
 | P2-1 | RunTab with race strip + compressed-plan support | 1.25 |
 | P2-2 | Rename Goal → nutrition phase | 0.25 |
 | P3-1 | Mismatch reconciliation UX (save-time) | 0.5 |
-| P3-2 | Race elapsed (archived 14d) + completion + race-no-show | 0.75 |
-
-**Plus the new test coverage:**
-
-| Phase | Work | Days |
-|---|---|---|
-| TEST | Write 11 required tests (across the categories above) | 1.5 |
+| P3-2 | Race elapsed + completion + race-no-show | 0.75 |
+| TEST | Write 11 required tests | 1.5 |
+| BUFFER | Integration, regression, polish | 2.5 |
 
 ---
 
-## Build Phasing · ~17.75 Days Total
+## Build Phasing · ~17.5 Days Total
 
 | Phase | Days |
 |---|---|
-| P0 (foundation: 9 sub-tasks + Goal rename) | 7.25 |
-| P1 (Programme + Home UI) | 3.75 |
-| P2 (Run tab + cleanup) | 1.5 |
-| P3 (edge states) | 1.25 |
-| TEST (required tests) | 1.5 |
-| Buffer (integration, regression, polish) | 2.5 |
+| **P0-A** Types + date helpers + migrations | 0.5 |
+| **P0-B** `generateSchedule` emits Both | 0.5 |
+| **P0-C** `planBuilder` skeleton (pure) | 0.75 |
+| **P0-3** `runScheduler` uses `weekSchedule` + stress-aware pairing | 1.25 |
+| **P0-4** `completeOnboarding` + `configurePlan` Cloud Functions | 0.75 |
+| **P0-5** Onboarding refactor | 1.0 |
+| **P0-6** Run.tsx scheduledRunId routing + status validation | 1.0 |
+| **P0-7** `useProgrammeScheduleEditor` hook | 0.5 |
+| **P0-8** TrainingSection migration | 1.0 |
+| **P0-9** Configure Plan modal (uses `configurePlan` CF) | 1.25 |
+| P0 Goal rename | 0.25 |
+| P1/P2/P3 UI work | 6.5 |
+| Required tests | 1.5 |
+| Buffer | 2.5 |
 
-**Total: ~17.75 days.**
+**Total: ~17.5 days.**
 
 ### Critical path
 
 ```
-P0-0 → P0-1 → P0-2 (planBuilder) → everything else parallelizes
-                                    ├── P0-3 (runScheduler) ─┐
-                                    ├── P0-4 (CF contract)   │
-                                    ├── P0-5 (onboarding)    ├── consumes planBuilder
-                                    └── P0-9 (Configure Plan)┘
+P0-A (types + helpers) → P0-B (generateSchedule) → P0-C (planBuilder skeleton)
+                                                        │
+                            ┌──────────────────────────┼──────────────────────────┐
+                            ▼                          ▼                          ▼
+                  P0-3 (runScheduler)        P0-4 (CF contracts)        P0-5/6/7/8/9
+                  consumes planBuilder       consumes shape              consume planBuilder
 ```
 
-P0-2 is the **first commit**. Nothing else can start until `planBuilder()` exists in its pure, testable form.
+**P0-A is the first commit** (unambiguous — types + helpers come before planBuilder, which comes before everything else). v5 contradictively said "P0-2 is first"; v6 fixes this.
+
+---
+
+## Required Tests Before Merge
+
+11 tests (same as v5):
+
+1. `generateSchedule(6, 2)` → 6 lift exposures, 2 run exposures, ≥1 both, no truncation
+2. `generateSchedule(4, 2)` → no forced both
+3. `planBuilder` race_prep → weekSchedule + runPlan + runDays with id/date/weekKey
+4. `planBuilder` structured → runDays without raceGoal
+5. `planBuilder` freeform → no runDays
+6. `planBuilder` purity → same input, same output
+7. Retake onboarding preloads runMode, weeklyRunDays, raceGoal
+8. Run launched with `scheduledRunId` completes only that scheduled run
+9. Run launched with `?template=` fallback does NOT complete wrong scheduled run
+10. `localDateString` does not use UTC (timezone-mocked test)
+11. Home future planned day shows planned item, not "No activity logged"
+
+Plus required state-machine tests:
+- `transitionStatus("planned", "completed_exact")` → legal
+- `transitionStatus("completed_exact", "planned")` → throws
+- `transitionStatus("skipped", "completed_exact")` → throws
+
+Plus migration tests:
+- `migrateProgramState` is idempotent
+- `migrateProgramState` preserves all existing fields
+- `backfillWeekScheduleIfMissing` produces valid 7-day structure
+
+---
+
+## Mockup Coverage
+
+(Same as v5 — `docs/program-run-mockups-v7.html` covers 12 sections across the 4 tabs.)
+
+Note: mockups still say "Schedule" in places — text-only update to "Week" needed during build.
+
+---
+
+## Race-Prep Compressed Plans
+
+(Same as v5.)
+
+| Rule | Why |
+|---|---|
+| Cap hard runs at 1/week | Reduce stress accumulation |
+| Long run progression capped at 10% week-over-week | Avoid injury |
+| Skip intervals block if heavily compressed | No room for speed dev |
+| Replace base weeks with easy aerobic | Conservative volume |
+| Final week always race week | Preserve taper |
+
+Hard floor: 2 weeks. Below that, decline.
+
+---
+
+## Race Strip Indicator (adapts to plan length)
+
+| Length | Indicator |
+|---|---|
+| 1-7 weeks | Continuous progress bar |
+| 8-16 weeks | Discrete dots |
+| 17+ weeks | Three-segment phase bar |
+
+---
+
+## Race Complete → Archived Card
+
+(Same as v5.) 0-14 days = celebration; 14+ days = small archived "Last race" card.
+
+---
+
+## "Just Go for a Run" Placement
+
+(Same as v5.) Contextual across 5 surfaces, all routing to `/run`.
+
+---
+
+## Scheduler Adherence Rules
+
+| Saved run | Effect |
+|---|---|
+| Exact template + matching `scheduledRunId` | `completed_exact` |
+| Same type, different template | NO auto-complete. Save-time reconciliation prompt. |
+| Run on rest day | `planSource: "rest_day"`, `offPlan: true`. No completion. |
+| Run on completed day | `planSource: "completed_day"`, `offPlan: true`. No duplicate. |
+| Invalid run | Cannot complete. |
+| User reconciles mismatch | `completed_modified` |
 
 ---
 
@@ -715,10 +684,11 @@ P0-2 is the **first commit**. Nothing else can start until `planBuilder()` exist
 6. Race-prep + lift deload sync — v2
 7. AM/PM ordering UI for doubles — v1.1
 8. Apple Watch / HealthKit / Live Activities — separate native track
-9. Full recovery-aware Both-day placement AI — v1.1
-10. Eager backfill Cloud Function for existing users — v1.0 uses lazy backfill
-11. localStorage persistence of Configure Plan draft (so user can resume after closing) — v1.1
+9. Full recovery-aware Both-day placement AI — v1.1 (v1.0 has heuristic defaults)
+10. Eager backfill Cloud Function for existing users — v1.0 uses lazy shape-repair
+11. localStorage persistence of Configure Plan draft — v1.1
 12. Property-based testing of `planBuilder()` purity — v1.1 (single-input test in v1.0)
+13. Audit log of moves/skips for "Recent edits" view — v1.1
 
 ---
 
@@ -726,41 +696,44 @@ P0-2 is the **first commit**. Nothing else can start until `planBuilder()` exist
 
 | File | Purpose | Changes |
 |---|---|---|
-| `src/features/program/planBuilder.ts` | **NEW (P0-2)** | Pure plan-creation function — architectural centre |
-| `src/features/program/migrations.ts` | **NEW** | Schema versioning + migration helpers |
-| `src/lib/dateHelpers.ts` | **NEW** | Local-date helpers |
-| `src/lib/scheduleUtils.ts` | Schedule generator | P0-0: emit Both + stress-aware pairing |
-| `src/features/program/programTypes.ts` | Types | P0-1: keep `userOverride: string`; drop `freeform_extra`; add version fields; status transition helper |
-| `src/features/program/runScheduler.ts` | Run plan generator | P0-3: drive from `weekSchedule` + compressed-plan rules |
-| `src/features/program/useProgram.ts` | Programme state hook | Read scheduled data; migrate on read if version mismatch |
+| `src/features/program/programTypes.ts` | Types | **P0-A:** finalize ScheduledRunDay shape (`userOverride: string`); ScheduledRunStatus enum (no `moved`, `missed`, `freeform_extra`); version fields; `transitionStatus()` validator |
+| `src/lib/dateHelpers.ts` | **NEW (P0-A)** | Local-date helpers |
+| `src/features/program/migrations.ts` | **NEW (P0-A)** | Shape-repair only |
+| `src/lib/scheduleUtils.ts` | **P0-B** | Emit Both days (counts only) |
+| `src/features/program/planBuilder.ts` | **NEW (P0-C)** | Pure plan-creation function |
+| `src/features/program/runScheduler.ts` | **P0-3** | Use `weekSchedule` + stress-aware Both-day pairing + compressed plans |
+| `functions/index.js` | **P0-4** | `completeOnboarding` updated + `configurePlan` NEW |
+| `src/pages/Onboarding.tsx` | **P0-5** | planBuilder integration + doubles UX + retake prefill + weekly preview step |
+| `src/components/home/RunCTACard.tsx` | **P0-6** | Route by `scheduledRunId` |
+| `src/pages/Run.tsx` | **P0-6** | Parse `scheduledRunId`, preserve in `planMetadata` |
+| `src/pages/RunSummary.tsx` | **P0-6** | Complete by `scheduledRunId`, validate status transition |
+| `src/lib/runPlanMetadata.ts` | **P0-6** | Extend with `scheduledRunId` |
 | `src/features/program/useProgrammeScheduleEditor.ts` | **NEW (P0-7)** | Shared schedule-editor hook |
+| `src/components/settings/TrainingSection.tsx` | **P0-8** | Strip active plan controls; deep-link banner |
 | `src/components/program/ConfigurePlanModal.tsx` | **NEW (P0-9)** | Full-screen wizard with draft state |
-| `src/pages/Onboarding.tsx` | Onboarding | P0-5: planBuilder integration + doubles UX + retake prefill + weekly preview step |
-| `src/pages/Program.tsx` | Programme page | P1-1: segmented control + tabs |
-| `src/pages/Home.tsx` | Home | P1-4: read `weekSchedule`, planned items in DayPeekCard |
-| `src/pages/Run.tsx` | Run execution | P0-6: parse `scheduledRunId` |
-| `src/pages/RunSummary.tsx` | Run summary | P0-6: complete by `scheduledRunId`, validate status transition |
-| `src/lib/runPlanMetadata.ts` | Phase B1 metadata | P0-6: extend with `scheduledRunId` |
-| `src/components/home/DayPeekCard.tsx` | Home day peek | P1-4: planned items + status states |
-| `src/components/home/RunCTACard.tsx` | Home run CTA | P0-6: route by `scheduledRunId` |
-| `src/components/settings/TrainingSection.tsx` | Settings training | P0-8: strip active controls; deep-link banner |
-| `src/components/program/ProgramSettingsPanel.tsx` | Programme settings | Rename Goal → nutrition phase |
-| `functions/index.js` | `completeOnboarding` CF | P0-4: accept new shape; atomic batch write |
-| `src/lib/__tests__/scheduleUtils.test.ts` | Tests | NEW required tests |
-| `src/features/program/__tests__/planBuilder.test.ts` | Tests | NEW required tests |
-| `src/pages/__tests__/Home.test.tsx` | Tests | NEW required tests |
-| `functions/__tests__/completeOnboarding.test.js` | Tests | NEW required tests |
+| `src/pages/Program.tsx` | **P1-1** | Segmented control + tabs + Configure Plan overflow entry |
+| `src/pages/Home.tsx` | **P1-4** | Recurring-vs-actual rendering |
+| `src/components/home/DayPeekCard.tsx` | **P1-4** | Planned items + status states |
+| `src/components/home/WeekStrip.tsx` | **P1-4** | Rendering by post-precedence type |
+| `src/components/program/ProgramSettingsPanel.tsx` | **P2-2** | Move cut/recomp/lean bulk to Food |
+| `src/features/program/useProgram.ts` | All P0 | Read scheduled data; migrate on read if version mismatch |
 
 ---
 
-## Open Questions for Final Sign-off
+## Open Questions
 
-1. **Configure Plan minor-vs-major split — race-date threshold (≤7 days = adjust, >7 = rebuild).** Right number? My pick: 7 days.
-2. **Atomic save on offline** — what if user is offline during Configure Plan save? My pick: queue the entire `planBuilder` output via `offlineQueue.ts`; replay atomically on reconnect.
-3. **Schema version bump** — `programSchemaVersion: 2` is the v5 target. Are there any other schema changes pending that should bundle? My pick: just `programSchemaVersion: 2` for this release.
-4. **Migration UX** — first time an existing user opens Programme post-deploy and triggers backfill, show a toast? My pick: silent — backfill is invisible to the user; no need to surface.
-5. **Cloud Function deployment order** — deploy CF first (backwards-compatible) OR feature-flag the new fields? My pick: deploy CF first, then frontend rolls out. Old clients keep working because new fields are additive.
-6. **Test coverage threshold** — should we require all 11 tests to pass + ≥80% coverage before merge? My pick: yes, all 11 are gates; coverage is informational.
+1. **`weekSchedule` backfill timing** — lazy on first Programme open. ✓
+2. **Hard floor for race-prep duration** — 2 weeks. ✓
+3. **Configure Plan in-week changes** — apply to this week. ✓
+4. **Mismatch reconciliation timing** — save-time. ✓
+5. **Weekly layout preview editing in onboarding** — confirmatory only. ✓
+6. **Configure Plan destruction warnings** — explicit confirm. ✓
+7. **Equipment changes in Configure Plan** — trigger lift regen. ✓
+8. **One-shot Coachmark on new tabs post-migration** — yes, for users with `runMode !== 'freeform'`. ✓
+9. **Cloud Function deployment order** — CF first (backwards-compatible), then frontend. ✓
+10. **Test coverage threshold** — all 11 tests gate merge. ✓
+
+All decided. Spec is build-ready.
 
 ---
 
@@ -770,32 +743,39 @@ P0-2 is the **first commit**. Nothing else can start until `planBuilder()` exist
 - Footprint icon → `/run` (smart shortcut)
 - `/run` setup preserved as-is
 - "Just go for a run" placement is contextual
-- Scheduler fix uses `weekSchedule` as source of truth
+- Scheduler drives from `weekSchedule`
 - `scheduledRunId` is the routing primitive
-- `userOverride` stays as `string` (verified at programTypes.ts:140)
-- `freeform_extra` is run-document state (not on `ScheduledRunStatus`)
-- Local-date semantics for all schedule fields
+- `userOverride: string` (template override ID)
+- `freeform_extra` is run-document state (not `ScheduledRunStatus`)
+- `"moved"` is NOT a status (metadata only)
+- `"missed"` is derived, not stored
+- Local-date semantics everywhere
 - Race-prep durations 2-26 weeks; compressed plans have conservative rules
 - Race complete archives after 14 days
 - Visible `⋯` overflow menus on row actions
 - `useProgrammeScheduleEditor()` extracted before consumers
-- **`planBuilder()` is the architectural centre — pure, deterministic, P0-2 (first commit after type definitions)**
-- **Onboarding creates the plan; Programme edits the plan; Home glances; Run executes; Settings stores defaults**
-- Configure Plan = full-screen modal with **draft state** (no writes until Confirm)
-- Minor edits (move one run, swap one template) don't trigger `planBuilder` rebuild
-- Major edits (mode change, lift days, race details >7d) trigger `planBuilder` rebuild
-- Atomic save behaviour: profile + programState commit together (CF or batched write)
-- Status transitions follow a defined state machine
-- Schema versions track shape evolution (`weekScheduleVersion`, `programSchemaVersion`)
+- **`planBuilder()` is pure, deterministic, the architectural centre — built P0-C**
+- **First commit is P0-A (types + helpers), not `planBuilder` directly**
+- **Stress-aware Both-day pairing lives in `runScheduler`, not `generateSchedule`**
+- **Onboarding creates plan; Programme edits plan; Home glances; Run executes; Settings stores defaults**
+- Configure Plan = full-screen modal with draft state
+- Configure Plan saves via `configurePlan` Cloud Function (not client batch)
+- Minor edits don't trigger `planBuilder` (move, swap, count-preserving day-type changes)
+- Major edits trigger `planBuilder` rebuild via Configure Plan
+- Status transitions follow defined state machine
+- Schema versions track shape evolution
+- **Migration is shape-repair only — never regenerates plans during lazy backfill**
+- **Home renders actual instances (`runDays`/`workouts`) first; `weekSchedule` is recurring template fallback**
 - 11 required tests gate merge
 - Onboarding stays at 12 steps
-- Cloud Function contract verified before frontend ships
-- Stress-aware Both-day pairing (heuristics, not AI)
+- Stress-aware Both-day pairing is heuristic (v1.0); not AI
 
 ---
 
-**End of spec v5 — implementation-ready.**
+**End of spec v6 — final pre-build version.**
 
-**First commit:** `src/features/program/planBuilder.ts` (P0-2). Pure, deterministic, tested. Every other P0 builds on it.
+First commit: **P0-A** (types + date helpers + migration helpers) in `src/features/program/programTypes.ts`, `src/lib/dateHelpers.ts`, `src/features/program/migrations.ts`.
 
-Send to ChatGPT for final sign-off, or hand to Claude for build-out.
+P0-C (`planBuilder()` skeleton) is the **first architectural commit** — but it depends on P0-A and P0-B landing first.
+
+Send to ChatGPT for one final sign-off, or hand to Claude to start P0-A.
