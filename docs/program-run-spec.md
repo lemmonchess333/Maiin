@@ -1,9 +1,22 @@
-# Tropos · Programme + Run Integration — Full Implementation Spec (v6 · final precision pass)
+# Tropos · Programme + Run Integration — Full Implementation Spec (v7 · truly final)
 
-**Status:** Implementation-ready. Final pre-build version.
+**Status:** ✅ BUILD-READY. ChatGPT round-6 gates landed. First commit: P0-A.
 **Branch:** `claude/improve-food-page-design-V6Voe`
-**Mockup files (in repo):** `docs/program-run-mockups-v3.html` → `v7.html`
-**Revision:** v6 — fifth batch of ChatGPT corrections. Final precision pass — resolves build-order contradiction, moves stress-aware pairing to the correct layer, cleans up status enum, derives `missed` instead of persisting it, clarifies recurring-vs-actual semantics on Home, restricts migration to shape-repair only.
+**Mockup files (in repo):** `docs/program-run-mockups-v3.html` → `v7.html` (mockup v7, not to be confused with spec v7)
+**Revision:** v7 — sixth (final) batch of ChatGPT corrections. Adds: `planBuilder` orchestration architecture (avoid god function); explicit Cloud Function validation rules; temporary Home lift mapping rule (until lifts are date-indexed); required tests reframed as hard merge gates.
+
+ChatGPT rating: **9.6/10** at v6 → **~9.8/10** at v7. No further architecture iteration. Coding starts.
+
+---
+
+## What changed from v6
+
+| # | Correction | Status |
+|---|---|---|
+| 1 | **`planBuilder` as orchestrator, not god function** — split into `buildWeekSchedule()`, `buildLiftProgram()`, `buildRunPlan()`, `buildProfileUpdates()`, `validatePlanOutput()`. `planBuilder` coordinates; doesn't contain all logic inline. | ✅ New section |
+| 2 | **Cloud Function validation rules** — explicit checklist of what `completeOnboarding` + `configurePlan` MUST validate before writing. Prevents malformed client output from being persisted. | ✅ New section |
+| 3 | **Home lift rendering · temporary v1 rule** — until lifts are date-indexed (v2), Home maps the next incomplete lift workout onto `lift`/`both` days from `weekSchedule`. Runs use actual `runDays` instances. | ✅ Added |
+| 4 | **Required tests reframed as hard merge gates**, not optional. Plus: full build must pass, existing run-logging flow must still work, existing lift Programme flow must still work, onboarding must complete for all 3 modes. | ✅ Reframed |
 
 ---
 
@@ -137,6 +150,45 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput;
 
 **`planBuilder()` calls `runScheduler` internally for stress-aware Both-day pairing** (see P0-3 below). `generateSchedule` only produces the day-type structure.
 
+### Orchestration architecture (avoid god function)
+
+`planBuilder()` is the orchestrator, not the implementation. Split into 5 small functions:
+
+```typescript
+// src/features/program/planBuilder.ts
+
+import { buildWeekSchedule } from "./planBuilder/buildWeekSchedule";
+import { buildLiftProgram } from "./planBuilder/buildLiftProgram";
+import { buildRunPlan } from "./planBuilder/buildRunPlan";
+import { buildProfileUpdates } from "./planBuilder/buildProfileUpdates";
+import { validatePlanOutput } from "./planBuilder/validatePlanOutput";
+
+export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
+  const weekSchedule = buildWeekSchedule(input);              // P0-B (generateSchedule)
+  const workouts = buildLiftProgram(input);                    // existing programEngine
+  const { runDays, runPlan } = buildRunPlan(input, weekSchedule); // P0-3 (runScheduler with stress-aware)
+  const profileUpdates = buildProfileUpdates(input);
+
+  const output: PlanBuilderOutput = {
+    weekSchedule,
+    programState: { workouts, runDays, runPlan, programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION },
+    profileUpdates: { ...profileUpdates, weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION },
+  };
+
+  validatePlanOutput(output);  // throws on invalid shape — same checks Cloud Function runs server-side
+  return output;
+}
+```
+
+**Why split:**
+- Each sub-function is independently testable
+- `buildRunPlan` can be replaced wholesale when v2 cross-modal periodisation lands
+- `validatePlanOutput` doubles as a client-side preflight check (same rules as CF — see "Cloud Function Validation Rules" below)
+- Avoids the 800-line god-function trap
+- Easier to review in chunks
+
+Each sub-function lives in `src/features/program/planBuilder/` as its own file. `planBuilder.ts` becomes a thin coordinator (~30 lines).
+
 ---
 
 ## Atomic Save Behaviour · Cloud Functions
@@ -169,6 +221,71 @@ exports.configurePlan = onCall(async (request) => {
 - Matches the existing `completeOnboarding` precedent
 
 **Estimate impact:** P0-9 (Configure Plan) gets +0.25d for the CF; matched by savings elsewhere.
+
+### Cloud Function Validation Rules
+
+**Both `completeOnboarding` and `configurePlan` MUST run these validations before writing.** Reject the request with a 400-equivalent if any check fails. Prevents malformed client output from corrupting the user's plan.
+
+```javascript
+// functions/lib/validatePlanPayload.js — shared by completeOnboarding + configurePlan
+
+function validatePlanPayload({ profileData, programState, weekSchedule }) {
+  const errors = [];
+
+  // weekSchedule structure
+  if (!Array.isArray(weekSchedule)) errors.push("weekSchedule must be an array");
+  if (weekSchedule.length !== 7) errors.push("weekSchedule must have exactly 7 entries");
+  const validTypes = new Set(["rest", "lift", "run", "both"]);
+  weekSchedule.forEach((d, i) => {
+    if (!validTypes.has(d.type)) errors.push(`weekSchedule[${i}].type = "${d.type}" is invalid`);
+    if (d.day !== i) errors.push(`weekSchedule[${i}].day mismatch (expected ${i}, got ${d.day})`);
+  });
+
+  // runDays shape
+  const validStatuses = new Set([
+    "planned", "completed_exact", "completed_modified", "completed_late",
+    "skipped", "race_no_show", "race_completed_unlinked"
+    // NOTE: "moved", "missed", "freeform_extra" are NOT valid statuses
+  ]);
+  (programState.runDays ?? []).forEach((rd, i) => {
+    if (!rd.id) errors.push(`runDays[${i}].id missing`);
+    if (!rd.date || !/^\d{4}-\d{2}-\d{2}$/.test(rd.date)) errors.push(`runDays[${i}].date invalid format`);
+    if (!rd.weekKey) errors.push(`runDays[${i}].weekKey missing`);
+    if (!rd.templateId) errors.push(`runDays[${i}].templateId missing`);
+    if (!validStatuses.has(rd.status)) errors.push(`runDays[${i}].status = "${rd.status}" is invalid`);
+    if (rd.userOverride !== undefined && typeof rd.userOverride !== "string") {
+      errors.push(`runDays[${i}].userOverride must be string (template ID), not ${typeof rd.userOverride}`);
+    }
+  });
+
+  // runPlan consistency with runMode
+  if (profileData.runMode === "race_prep" && !profileData.raceGoal) {
+    errors.push("race_prep mode requires raceGoal");
+  }
+  if (profileData.runMode === "race_prep" && !programState.runPlan?.raceGoal) {
+    errors.push("race_prep mode requires programState.runPlan.raceGoal");
+  }
+
+  // Schema versions present
+  if (!profileData.weekScheduleVersion) errors.push("profileData.weekScheduleVersion required");
+  if (!programState.programSchemaVersion) errors.push("programState.programSchemaVersion required");
+
+  // No UTC-via-toISOString date strings (sanity check — caught by regex above, but explicit)
+  // weekKey and date should be local YYYY-MM-DD; if they contain "T" they're UTC ISO format
+  (programState.runDays ?? []).forEach((rd, i) => {
+    if (rd.date?.includes("T")) errors.push(`runDays[${i}].date appears to be UTC ISO format (contains 'T')`);
+    if (rd.weekKey?.includes("T")) errors.push(`runDays[${i}].weekKey appears to be UTC ISO format`);
+  });
+
+  if (errors.length > 0) {
+    throw new HttpsError("invalid-argument", `Invalid plan payload: ${errors.join("; ")}`);
+  }
+}
+```
+
+**Both CFs call this before `batch.commit()`.** Client-side `validatePlanOutput()` (in `planBuilder/`) runs the same checks pre-emptively — gives a fast UX-level error before the network round-trip. CF validation is the authoritative gate.
+
+---
 
 ---
 
@@ -349,28 +466,48 @@ Home reads BOTH `profile.weekSchedule` AND `programState.runDays`/`workouts` to 
 
 ### Rendering algorithm
 
+**Runs are date-indexed (post-P0-2). Lifts are still position-indexed in v1.** Different lookup paths:
+
 ```typescript
 function renderHomeDay(date: string, profile: UserProfile, programState: ProgramState) {
-  // 1. Check for actual instances first (these take priority)
+  const dayIndex = localDayIndex(new Date(date));
+  const templateType = profile.weekSchedule?.[dayIndex]?.type;
+
+  // 1. Run side — actual date-indexed instances take priority
   const runInstance = programState.runDays?.find(rd => rd.date === date);
-  const liftInstance = programState.workouts?.find(w => /* w.date === date */); // when lifts get dates
+
+  // 2. Lift side — TEMPORARY v1 RULE
+  // Lifts aren't date-indexed yet (deferred to v2). Map the next incomplete
+  // lift workout onto lift/both days from weekSchedule.
+  let liftInstance = null;
+  if (templateType === "lift" || templateType === "both") {
+    // Find the user's next incomplete lift (sequence-indexed)
+    liftInstance = programState.workouts?.find(w => !w.completed && !w.skipped) ?? null;
+  }
 
   if (runInstance || liftInstance) {
     return renderActualInstance({ runInstance, liftInstance });
   }
 
-  // 2. Fall back to recurring template
-  const dayIndex = localDayIndex(new Date(date));
-  const templateType = profile.weekSchedule?.[dayIndex]?.type;
-
+  // 3. No actual instance — fall back to recurring template type
   if (templateType === "rest" || !templateType) {
     return renderRestDay();
   }
 
-  // 3. Template exists but no instance — show as "planned (no details yet)"
   return renderTemplatePlaceholder(templateType);
 }
 ```
+
+### Temporary v1 lift mapping caveats
+
+Until v2 date-anchors lift workouts:
+
+- Home shows the **same "next incomplete lift"** on every upcoming `lift`/`both` day in the week. This is approximate — it doesn't mean the user will literally do Push on Mon AND Wed AND Fri; it means "your next lift is Push, and there are 3 lift days this week."
+- When the user completes Push, the next incomplete lift becomes Pull, and Home updates.
+- The Lift tab inside Programme remains the authoritative "which lift, in what order" surface (uses the existing DayStepper).
+- Runs have full date-anchored fidelity from day one — different lookup, different precision.
+
+This intentional asymmetry will resolve in v2 when lifts move to date-indexed scheduling. For v1, runs lead the unification; lifts follow.
 
 ### Why precedence matters
 
@@ -587,31 +724,58 @@ P0-A (types + helpers) → P0-B (generateSchedule) → P0-C (planBuilder skeleto
 
 ---
 
-## Required Tests Before Merge
+## Required Tests as Hard Merge Gates
 
-11 tests (same as v5):
+**Not suggestions. Not documentation. Hard merge gates.** PR cannot merge until ALL these pass:
+
+### Unit tests (the 11)
 
 1. `generateSchedule(6, 2)` → 6 lift exposures, 2 run exposures, ≥1 both, no truncation
 2. `generateSchedule(4, 2)` → no forced both
 3. `planBuilder` race_prep → weekSchedule + runPlan + runDays with id/date/weekKey
 4. `planBuilder` structured → runDays without raceGoal
 5. `planBuilder` freeform → no runDays
-6. `planBuilder` purity → same input, same output
+6. `planBuilder` purity → same input, same output (no clock reads, no Firestore)
 7. Retake onboarding preloads runMode, weeklyRunDays, raceGoal
 8. Run launched with `scheduledRunId` completes only that scheduled run
 9. Run launched with `?template=` fallback does NOT complete wrong scheduled run
 10. `localDateString` does not use UTC (timezone-mocked test)
 11. Home future planned day shows planned item, not "No activity logged"
 
-Plus required state-machine tests:
+### State-machine tests
+
 - `transitionStatus("planned", "completed_exact")` → legal
 - `transitionStatus("completed_exact", "planned")` → throws
 - `transitionStatus("skipped", "completed_exact")` → throws
 
-Plus migration tests:
+### Migration tests
+
 - `migrateProgramState` is idempotent
 - `migrateProgramState` preserves all existing fields
 - `backfillWeekScheduleIfMissing` produces valid 7-day structure
+
+### Cloud Function tests
+
+- `completeOnboarding` rejects malformed payload (e.g. invalid status)
+- `completeOnboarding` writes profile + programState atomically (mock CF env)
+- `configurePlan` rejects unauthenticated request
+- `configurePlan` rejects payload missing schema versions
+
+### Regression gates (NEW)
+
+These prevent the architecture refactor from breaking core flows:
+
+| Gate | How to verify |
+|---|---|
+| **Full build passes** | `npm run build` exits 0; tsc + Vite production build succeed |
+| **Existing run-logging flow still works** | Run an outdoor GPS run end-to-end → save → appears in History |
+| **Existing lift Programme flow still works** | Open Programme → Lift tab → exercise list renders → Begin Workout → exercises log → complete day → next day advances |
+| **Onboarding completes for freeform users** | Fresh user → onboard with `runMode: "freeform"` → land on Home → no errors |
+| **Onboarding completes for structured users** | Fresh user → onboard with structured 3 runs/week → Programme Run tab shows 3 planned runs |
+| **Onboarding completes for race_prep users** | Fresh user → onboard with 10K in 12 weeks → Programme Run tab shows race strip + Week 1 |
+| **All 11 unit tests + state-machine + migration + CF tests pass** | `npm run test` exits 0 with all assertions green |
+
+**If any gate fails, the PR is blocked.** No "ship it and fix later" for these — they are the contract that lets the architecture refactor land without breaking existing users.
 
 ---
 
@@ -772,10 +936,25 @@ All decided. Spec is build-ready.
 
 ---
 
-**End of spec v6 — final pre-build version.**
+**End of spec v7 — truly final.**
 
-First commit: **P0-A** (types + date helpers + migration helpers) in `src/features/program/programTypes.ts`, `src/lib/dateHelpers.ts`, `src/features/program/migrations.ts`.
+ChatGPT round 6 verdict: **"Build it. The spec has crossed from 'needs more thinking' into 'ready to implement carefully.'"** 9.6 → ~9.8.
 
-P0-C (`planBuilder()` skeleton) is the **first architectural commit** — but it depends on P0-A and P0-B landing first.
+**No further architecture iteration.** All remaining work is implementation + tests.
 
-Send to ChatGPT for one final sign-off, or hand to Claude to start P0-A.
+### First commit
+
+**P0-A** — types + date helpers + migration helpers:
+- `src/features/program/programTypes.ts` (finalize `ScheduledRunDay`, `ScheduledRunStatus`, status transition validator, version constants)
+- `src/lib/dateHelpers.ts` (NEW — local-date helpers, no UTC)
+- `src/features/program/migrations.ts` (NEW — shape-repair migrations)
+
+After P0-A merges, P0-B (`generateSchedule` Both support) and P0-C (`planBuilder` orchestrator skeleton with 5 sub-builders) follow in sequence. Everything else parallelizes on top.
+
+### Reference
+
+- Spec: `docs/program-run-spec.md` (this file)
+- Mockups: `docs/program-run-mockups-v3.html` → `v7.html` (the design progression — mockup v7 has the 4-tab UI; the spec text in those mockups still says "Schedule" in places, needs text-only update to "Week" during build)
+- LLM council transcript: `.claude/skills/llm-council/council-transcript-*.md`
+
+### Build kicks off with P0-A.
