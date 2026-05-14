@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tropos · Spec v7 visual companion (v9 · style-aligned)</title>
+<style>
+  :root {
+    --bg: hsl(240 5% 96%);
+    --card: #FFFFFF;
+    --muted-bg: #F0F0F4;
+    --text: #1c1c1e;
+    --text-muted: #8E8E93;
+    --border: #E5E5EA;
+    --border-soft: rgba(0,0,0,0.05);
+    --ds-shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+    --brand: #7B72E9;
+    --brand-strong: #6560C8;
+    --brand-soft: rgba(123, 114, 233, 0.10);
+    --brand-soft-6: rgba(123, 114, 233, 0.06);
+    --running: #D4637A;
+    --running-soft: rgba(212, 99, 122, 0.10);
+    --running-soft-6: rgba(212, 99, 122, 0.06);
+    --success: #4DB872;
+    --success-soft: rgba(77, 184, 114, 0.12);
+    --skipped: #8E8E93;
+    --teal: #52A3BD;
+    --nutrition: #D9884E;
+    --warning: #E6A23C;
+    --warning-soft: rgba(230, 162, 60, 0.12);
+    --canvas: #1a1a1f;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: #e8e8ec;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    padding: 32px 20px 80px;
+    line-height: 1.45;
+  }
+  .container { max-width: 1600px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 8px; color: #fff; }
+  h2 { font-size: 22px; font-weight: 700; margin: 0 0 6px; color: #fff; }
+  h3 { font-size: 16px; font-weight: 700; margin: 0 0 8px; color: #fff; }
+  .lede { color: #b6b6c0; font-size: 14px; max-width: 900px; margin: 0 0 24px; }
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #a0a0a6; font-weight: 600; margin-bottom: 8px; }
+
+  /* Style alignment callout */
+  .alignment-callout {
+    background: linear-gradient(135deg, rgba(77,184,114,0.10), rgba(123,114,233,0.08));
+    border-radius: 14px;
+    padding: 20px 26px;
+    margin: 24px 0 36px;
+  }
+  .alignment-callout h3 { color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+  .alignment-callout p { color: #d0d0d8; font-size: 13px; margin: 4px 0; line-height: 1.55; }
+  .alignment-callout strong { color: #fff; }
+  .alignment-list { margin: 8px 0 0; padding: 0; list-style: none; }
+  .alignment-list li {
+    padding: 4px 0 4px 24px; position: relative; font-size: 12px; color: #c0c0c8;
+  }
+  .alignment-list li.fixed::before { content: '✓'; position: absolute; left: 0; color: var(--success); font-weight: 800; }
+  .alignment-list li.kept::before { content: '↻'; position: absolute; left: 0; color: var(--brand); font-weight: 800; }
+
+  /* TOC */
+  .toc { background: #25252b; border-radius: 12px; padding: 16px 22px; margin: 0 0 40px; }
+  .toc h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #a0a0a6; margin: 0 0 10px; font-weight: 600; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 18px; }
+  .toc-grid a { color: #d0d0d8; text-decoration: none; font-size: 13px; padding: 3px 0; }
+  .toc-grid a:hover { color: var(--running); }
+  .toc-letter { font-weight: 700; color: var(--running); margin-right: 6px; }
+
+  .section { margin-bottom: 72px; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; border-bottom: 1px solid #3a3a40; padding-bottom: 12px; }
+  .section-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--running-soft);
+    color: var(--running);
+    font-weight: 800; font-size: 14px;
+  }
+  .section-num.brand { background: var(--brand-soft); color: var(--brand); }
+
+  /* Phone grid */
+  .phone-row {
+    display: flex; flex-wrap: wrap; gap: 22px;
+    align-items: flex-start; margin-top: 20px;
+  }
+  .phone-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .phone-label {
+    font-size: 11px; color: #b0b0b8; text-align: center;
+    max-width: 340px; line-height: 1.4;
+  }
+  .phone-label strong { color: #fff; font-weight: 600; }
+  .phone-label .step-tag {
+    display: inline-block; background: rgba(255,255,255,0.06); color: #d0d0d8;
+    padding: 2px 7px; border-radius: 4px; font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-right: 5px;
+  }
+  .phone-label .step-tag.new { background: rgba(212,99,122,0.18); color: var(--running); }
+
+  .phone {
+    width: 340px; height: 700px;
+    background: var(--bg);
+    border-radius: 38px; border: 8px solid #050507;
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+    color: var(--text);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .statusbar {
+    height: 32px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 18px 4px;
+    font-size: 13px; font-weight: 600;
+    background: var(--bg);
+    font-feature-settings: 'tnum';
+  }
+  .statusbar .right { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+  .page-content {
+    flex: 1; overflow-y: auto;
+    padding: 0 14px 80px;
+    background: var(--bg);
+  }
+  .page-content::-webkit-scrollbar { width: 0; }
+
+  /* Page header */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 8px 0 6px;
+  }
+  .page-header h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.015em; margin: 0;
+    color: var(--text);
+  }
+  .page-header .subtitle {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+  .util-cluster { display: flex; gap: 4px; align-items: center; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .icon-btn.running { color: var(--running); }
+  .icon-btn svg { width: 18px; height: 18px; stroke-width: 1.8; }
+
+  /* Segmented control (matches WorkoutSession scrolling pills) */
+  .segmented {
+    display: flex; gap: 6px;
+    padding: 4px 0 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .segmented::-webkit-scrollbar { display: none; }
+  .seg-pill {
+    flex: 1;
+    text-align: center;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--muted-bg);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .seg-pill.active {
+    background: var(--brand);
+    color: #fff;
+  }
+  .seg-pill.active.run {
+    background: var(--running);
+  }
+
+  /* Card primitive: bg-card + rounded-2xl + soft shadow */
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--ds-shadow-card);
+  }
+
+  /* OptionCard pattern (matches src/components/onboarding/OptionCard.tsx) */
+  .option-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .option-card.selected {
+    background: rgba(82, 163, 189, 0.094);  /* THEME.teal}18 — 0x18 = 24/255 = 9.4% */
+    border-color: rgba(82, 163, 189, 0.314); /* THEME.teal}50 — 0x50 = 80/255 = 31.4% */
+  }
+  .option-card.selected.brand {
+    background: rgba(123, 114, 233, 0.094);
+    border-color: rgba(123, 114, 233, 0.314);
+  }
+  .option-card.selected.run {
+    background: rgba(212, 99, 122, 0.094);
+    border-color: rgba(212, 99, 122, 0.314);
+  }
+  .option-card .oc-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .option-card .oc-icon svg { width: 18px; height: 18px; }
+  .option-card.selected .oc-icon { background: rgba(82, 163, 189, 0.16); color: var(--teal); }
+  .option-card.selected.brand .oc-icon { background: var(--brand-soft); color: var(--brand); }
+  .option-card.selected.run .oc-icon { background: var(--running-soft); color: var(--running); }
+  .option-card .oc-text { flex: 1; min-width: 0; }
+  .option-card .oc-name {
+    font-size: 14px; font-weight: 700; color: var(--text); margin: 0;
+  }
+  .option-card .oc-desc {
+    font-size: 11px; color: var(--text-muted); margin-top: 1px;
+  }
+  .option-card .oc-check {
+    color: var(--teal); flex-shrink: 0;
+    opacity: 0; transform: scale(0);
+  }
+  .option-card.selected .oc-check {
+    opacity: 1; transform: scale(1);
+  }
+  .option-card.selected.brand .oc-check { color: var(--brand); }
+  .option-card.selected.run .oc-check { color: var(--running); }
+
+  /* Number pill grid (for day count selections) */
+  .num-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0;
+  }
+  .num-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 18px; font-weight: 800;
+    font-family: 'JetBrains Mono', SFMono-Regular, monospace;
+    font-feature-settings: 'tnum';
+    color: var(--text);
+  }
+  .num-pill.selected {
+    background: rgba(82, 163, 189, 0.094);
+    border-color: rgba(82, 163, 189, 0.314);
+    color: var(--teal);
+  }
+  .num-pill.run-selected {
+    background: rgba(212, 99, 122, 0.094);
+    border-color: rgba(212, 99, 122, 0.314);
+    color: var(--running);
+  }
+
+  /* DayStepper circles (matches DayStepper.tsx) */
+  .day-stepper {
+    display: flex; padding: 6px 0 14px; gap: 4px;
+  }
+  .day-circle-col {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+  }
+  .day-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 700; font-size: 14px;
+  }
+  .day-circle.today {
+    width: 48px; height: 48px;
+    border-color: var(--brand); color: var(--brand);
+    box-shadow: 0 0 0 4px rgba(123,114,233,0.10);
+    font-size: 16px;
+  }
+  .day-circle.today-selected {
+    width: 48px; height: 48px;
+    background: var(--brand); border-color: var(--brand); color: #fff; border-width: 0;
+    box-shadow: 0 0 0 4px rgba(123,114,233,0.10), 0 4px 14px rgba(123,114,233,0.25);
+    font-size: 16px;
+  }
+  .day-circle.completed {
+    background: var(--success); border-color: var(--success);
+    color: #fff; border-width: 0;
+  }
+  .day-circle.run {
+    border-color: rgba(212,99,122,0.40); color: var(--running);
+  }
+  .day-circle.run.today-selected {
+    background: var(--running); border-color: var(--running); color: #fff;
+    box-shadow: 0 0 0 4px rgba(212,99,122,0.10), 0 4px 14px rgba(212,99,122,0.25);
+  }
+  .day-circle .check {
+    width: 16px; height: 16px; stroke: #fff; stroke-width: 3; fill: none;
+  }
+  .day-circle .ban-icon {
+    width: 14px; height: 14px; color: var(--skipped);
+  }
+  .day-label {
+    font-size: 10px; font-weight: 600; margin-top: 6px;
+    color: var(--text-muted); text-align: center;
+    white-space: nowrap; max-width: 56px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .day-label.today.run { color: var(--running); }
+  .day-label.today { color: var(--brand); }
+  .day-label.completed { color: var(--success); }
+
+  /* Session card with sport-tinted bg */
+  .session-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .session-card.tinted-lift {
+    background: linear-gradient(180deg, var(--brand-soft-6) 0%, var(--card) 30%);
+  }
+  .session-card.tinted-run {
+    background: linear-gradient(180deg, var(--running-soft-6) 0%, var(--card) 30%);
+  }
+  .sc-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .sc-pill.today { background: var(--brand-soft); color: var(--brand); }
+  .sc-pill.today.run { background: var(--running-soft); color: var(--running); }
+  .sc-pill.done { background: var(--success-soft); color: var(--success); }
+  .sc-pill.am { background: var(--brand-soft); color: var(--brand); }
+  .sc-pill.pm { background: var(--running-soft); color: var(--running); }
+  .sc-pill.muted { background: var(--muted-bg); color: var(--text-muted); }
+
+  .sc-icon-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 8px 0 4px;
+  }
+  .sc-leading-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sc-leading-icon.lift {
+    background: rgba(123, 114, 233, 0.10);
+    color: var(--brand);
+  }
+  .sc-leading-icon.run {
+    background: rgba(212, 99, 122, 0.10);
+    color: var(--running);
+  }
+  .sc-leading-icon.success { background: var(--success-soft); color: var(--success); }
+  .sc-leading-icon.warning { background: var(--warning-soft); color: var(--warning); }
+  .sc-leading-icon.gold { background: rgba(224, 162, 39, 0.12); color: #C97F00; }
+  .sc-leading-icon svg { width: 22px; height: 22px; stroke-width: 2; }
+  .sc-text-block { flex: 1; min-width: 0; }
+  .sc-title {
+    font-size: 17px; font-weight: 800; letter-spacing: -0.005em; margin: 0; color: var(--text);
+  }
+  .sc-meta {
+    font-size: 12px; color: var(--text-muted);
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 1px;
+  }
+  .sc-meta .num { font-family: 'JetBrains Mono', SFMono-Regular, monospace; font-feature-settings: 'tnum'; font-weight: 600; color: var(--text); }
+  .sc-meta .sep { color: var(--border); }
+
+  /* CTAs (matches Button.tsx variants) */
+  .cta-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .cta-row { display: flex; gap: 8px; margin-top: 12px; }
+  .cta {
+    border: 0; cursor: pointer;
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .cta svg { width: 16px; height: 16px; }
+  .cta.primary { background: var(--brand); color: #fff; }
+  .cta.run-primary { background: var(--running); color: #fff; }
+  .cta.secondary { background: var(--muted-bg); color: var(--text); }
+  .cta.ghost {
+    background: transparent; color: var(--text-muted);
+  }
+  .cta.run-outline {
+    background: transparent; color: var(--running);
+    border: 1.5px solid rgba(212, 99, 122, 0.30);
+  }
+  .cta.success { background: var(--success); color: #fff; }
+
+  /* Schedule row (Week tab list row) */
+  .schedule-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .schedule-row.today {
+    box-shadow: 0 0 0 2px var(--brand), var(--ds-shadow-card);
+  }
+  .sr-date {
+    width: 36px; text-align: center; flex-shrink: 0;
+  }
+  .sr-dow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; }
+  .sr-day {
+    font-size: 16px; font-weight: 800;
+    font-family: 'JetBrains Mono', SFMono-Regular, monospace; font-feature-settings: 'tnum';
+    color: var(--text);
+  }
+  .sr-date.today .sr-dow, .sr-date.today .sr-day { color: var(--brand); }
+  .sr-type-pill {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 8px; border-radius: 6px; flex-shrink: 0;
+    min-width: 48px; text-align: center;
+  }
+  .sr-type-pill.lift { background: var(--brand-soft); color: var(--brand); }
+  .sr-type-pill.run { background: var(--running-soft); color: var(--running); }
+  .sr-type-pill.both {
+    background: linear-gradient(90deg, var(--brand-soft), var(--running-soft));
+    color: var(--text);
+  }
+  .sr-type-pill.rest { background: var(--muted-bg); color: var(--text-muted); }
+  .sr-content { flex: 1; min-width: 0; }
+  .sr-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sr-detail { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .sr-status {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 6px; border-radius: 5px; flex-shrink: 0;
+  }
+  .sr-status.done { background: var(--success-soft); color: var(--success); }
+  .sr-status.missed { background: var(--warning-soft); color: var(--warning); }
+  .sr-overflow {
+    color: var(--text-muted);
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    flex-shrink: 0;
+  }
+  .sr-overflow svg { width: 16px; height: 16px; stroke-width: 1.8; }
+
+  /* Race strip — soft tinted card, NO hard border */
+  .race-strip {
+    background: var(--running-soft-6);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .race-strip::before {
+    content: ''; position: absolute; top: -20px; right: -20px;
+    width: 90px; height: 90px;
+    background: radial-gradient(circle, rgba(212,99,122,0.15) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .race-strip .rs-head { display: flex; align-items: flex-start; gap: 10px; position: relative; z-index: 1; }
+  .race-strip .rs-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--running-soft);
+    color: var(--running);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .race-strip .rs-icon svg { width: 18px; height: 18px; stroke-width: 2; }
+  .race-strip .rs-info { flex: 1; min-width: 0; }
+  .race-strip .rs-title {
+    font-size: 15px; font-weight: 800; color: var(--text); margin: 0;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .race-strip .rs-phase {
+    display: inline-block; padding: 2px 8px; border-radius: 5px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    background: var(--running-soft); color: var(--running);
+  }
+  .race-strip .rs-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .race-strip .rs-progress {
+    margin-top: 10px; height: 4px;
+    background: rgba(212,99,122,0.15);
+    border-radius: 2px; position: relative; z-index: 1;
+  }
+  .race-strip .rs-progress-fill { height: 100%; background: var(--running); border-radius: 2px; }
+  .race-strip .rs-footer {
+    margin-top: 6px; font-size: 11px; color: var(--text-muted);
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-footer strong { color: var(--text); font-weight: 700; }
+
+  /* WinBanner — card-style with Lucide icon (NOT gradient) */
+  .win-banner {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .wb-icon {
+    width: 38px; height: 38px;
+    background: rgba(224, 162, 39, 0.12);  /* gold soft */
+    color: #C97F00;
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .wb-icon svg { width: 20px; height: 20px; stroke-width: 2; }
+  .wb-text { flex: 1; }
+  .wb-title { font-size: 13px; font-weight: 800; color: var(--text); }
+  .wb-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  /* Notice card (for doubles banner, race-elapsed banner, etc) — bg-card + Lucide icon, NO left-border */
+  .notice-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    display: flex; align-items: flex-start; gap: 10px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .notice-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .notice-icon.info { background: var(--brand-soft); color: var(--brand); }
+  .notice-icon.warning { background: var(--warning-soft); color: var(--warning); }
+  .notice-icon.success { background: var(--success-soft); color: var(--success); }
+  .notice-icon svg { width: 16px; height: 16px; stroke-width: 2; }
+  .notice-text { flex: 1; font-size: 12px; color: var(--text); line-height: 1.5; }
+  .notice-text strong { font-weight: 700; }
+
+  /* Day peek card — extension of standard card with state variants */
+  .day-peek {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .dp-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+  }
+  .dp-date { font-size: 12px; font-weight: 700; color: var(--text); }
+  .dp-day-type {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); font-weight: 700;
+  }
+  .dp-action-row { display: flex; gap: 6px; margin-top: 10px; }
+  .dp-action {
+    flex: 1; padding: 9px 10px;
+    background: var(--muted-bg); color: var(--text);
+    border-radius: 9px; font-size: 11px; font-weight: 700; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .dp-action svg { width: 12px; height: 12px; }
+  .dp-action.run-primary { background: var(--running); color: #fff; }
+  .dp-action.lift-primary { background: var(--brand); color: #fff; }
+  .dp-action.warning-outline {
+    background: transparent; color: var(--warning);
+    border: 1px solid rgba(230, 162, 60, 0.30);
+  }
+
+  /* WeekStrip (matches existing component pattern) */
+  .week-strip {
+    display: flex; gap: 4px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .ws-day {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 2px;
+    border-radius: 9px;
+  }
+  .ws-day.today {
+    background: var(--brand-soft);
+  }
+  .ws-dow {
+    font-size: 8px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .ws-date-num {
+    font-size: 14px; font-weight: 800;
+    font-family: 'JetBrains Mono', SFMono-Regular, monospace; font-feature-settings: 'tnum';
+    color: var(--text);
+  }
+  .ws-day.today .ws-date-num { color: var(--brand); }
+  .ws-dot-row { display: flex; gap: 2px; min-height: 5px; }
+  .ws-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .ws-dot.lift { background: var(--brand); }
+  .ws-dot.run { background: var(--running); }
+
+  /* Toggle switch (matches w-10 h-6 from ProgramSettingsPanel.tsx) */
+  .toggle {
+    width: 40px; height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--success); }
+  .toggle::after {
+    content: ''; width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute; top: 4px; left: 4px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.10);
+  }
+  .toggle.on::after { left: 20px; }
+
+  /* Settings row */
+  .settings-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .settings-row .sr-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .settings-row .sr-label .sr-icon-wrap {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .settings-row .sr-label .sr-icon-wrap svg { width: 14px; height: 14px; stroke-width: 2; }
+  .settings-row .sr-value {
+    font-size: 12px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .settings-row .sr-value svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  /* Bottom sheet (matches BottomSheet.tsx vaul pattern) */
+  .bottom-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    padding: 12px 0 0;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+  }
+  .bs-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .bs-header {
+    padding: 0 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .bs-title { font-size: 16px; font-weight: 800; color: var(--text); margin: 0; }
+  .bs-close {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+  }
+  .bs-close svg { width: 18px; height: 18px; }
+  .bs-body { padding: 16px; }
+  .bs-footer { padding: 12px 16px 22px; display: flex; gap: 8px; }
+
+  /* Sheet backdrop (for layered effect) */
+  .sheet-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.50);
+  }
+
+  /* Onboarding step number indicator */
+  .step-indicator {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .step-title {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.015em; color: var(--text); margin: 4px 0 6px;
+  }
+  .step-subtitle {
+    font-size: 13px; color: var(--text-muted); margin: 0 0 16px;
+  }
+
+  /* Form input */
+  .form-input {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    box-shadow: var(--ds-shadow-card);
+  }
+
+  /* Weekly preview list — matches OptionCard styling */
+  .weekly-preview-list {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 4px 12px;
+    box-shadow: var(--ds-shadow-card);
+  }
+  .wp-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .wp-row:last-child { border-bottom: 0; }
+  .wp-day-label {
+    font-size: 12px; font-weight: 600; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .wp-day-icon { color: var(--text-muted); }
+  .wp-day-icon svg { width: 14px; height: 14px; stroke-width: 2; }
+  .wp-type-pill {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 10px; border-radius: 6px;
+  }
+  .wp-type-pill.lift { background: var(--brand-soft); color: var(--brand); }
+  .wp-type-pill.run { background: var(--running-soft); color: var(--running); }
+  .wp-type-pill.both { background: linear-gradient(90deg, var(--brand-soft), var(--running-soft)); color: var(--text); }
+  .wp-type-pill.rest { background: var(--muted-bg); color: var(--text-muted); }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 6px 4px 22px;
+    display: flex; justify-content: space-around;
+  }
+  .bn-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    color: var(--text-muted); padding: 4px 6px;
+  }
+  .bn-item.active { color: var(--brand); }
+  .bn-item svg { width: 20px; height: 20px; stroke-width: 1.8; }
+  .bn-label { font-size: 9px; font-weight: 600; }
+
+  /* Coachmark */
+  .coachmark {
+    position: absolute;
+    background: var(--text);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.30);
+    max-width: 220px;
+    z-index: 50;
+  }
+  .coachmark.top-arrow::before {
+    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent; border-bottom-color: var(--text); border-top: 0;
+  }
+
+  /* Annotation */
+  .annotation {
+    background: #fff; color: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 11px; line-height: 1.5;
+    max-width: 280px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+    margin-bottom: 10px;
+  }
+  .annotation .a-tag {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 2px 5px; border-radius: 3px; margin-right: 5px;
+    background: rgba(123,114,233,0.15); color: var(--brand);
+  }
+  .annotation .a-tag.fixed { background: rgba(77,184,114,0.15); color: var(--success); }
+  .annotation .a-tag.real { background: rgba(82,163,189,0.15); color: var(--teal); }
+  .annotations-col {
+    display: flex; flex-direction: column;
+    max-width: 280px; padding-top: 6px;
+  }
+
+  /* Cross-reference */
+  .cross-ref {
+    background: #25252b; border-radius: 10px;
+    padding: 12px 16px; margin: 12px 0;
+    color: #c0c0c8; font-size: 13px;
+  }
+  .cross-ref code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="eyebrow">Tropos · Spec v7 visual companion · v9 (style-aligned)</div>
+  <h1>Every affected page, rendered with real Tropos primitives</h1>
+  <p class="lede">Rebuild of v8 after the style audit. Every visual now matches the actual app: Lucide icons throughout (zero emojis), soft <code>var(--ds-shadow-card)</code> shadows (no hard borders), <code>OptionCard</code> pattern for all selections, vaul <code>BottomSheet</code> for modals, <code>THEME.*</code> tokens for all colours, real toggle dimensions. Mockups now match what the build will actually look like.</p>
+
+  <div class="alignment-callout">
+    <h3>What changed from v8 → v9</h3>
+    <ul class="alignment-list">
+      <li class="fixed"><strong>Zero emojis.</strong> All icons inline as Lucide SVG. Dumbbell · Footprints · Trophy · Target · Zap · Mountain · PersonStanding · Flame · RefreshCw · AlertTriangle · Info · Check · ChevronRight · X · MoreHorizontal · Plus · LayoutGrid · Sparkles.</li>
+      <li class="fixed"><strong>No hard borders on cards.</strong> Everything uses <code>var(--ds-shadow-card)</code> (soft layered shadow). Single 1px border on OptionCard only (matches existing pattern).</li>
+      <li class="fixed"><strong>Real OptionCard pattern.</strong> Selections use the actual onboarding component: <code>bg-card border</code> unselected, <code>THEME.teal}18 + THEME.teal}50</code> selected, icon-left + label/description + animated Check right.</li>
+      <li class="fixed"><strong>Configure Plan = BottomSheet, not full-screen modal.</strong> Sheet with handle, padded body, footer with Cancel/Confirm. <code>max-h-[95vh]</code> for the multi-step wizard.</li>
+      <li class="fixed"><strong>Win banner = card with Lucide Trophy.</strong> No gradient. <code>bg-card</code> + soft shadow + gold-tinted icon container.</li>
+      <li class="fixed"><strong>Notice cards = card, not left-border accent.</strong> The doubles banner, race-elapsed banner, and reconciliation prompt all use the same notice-card pattern: <code>bg-card</code> + icon-left + text.</li>
+      <li class="fixed"><strong>Segmented control = WorkoutSession scrolling pills.</strong> Filled pill for active state on the brand colour (or running for Run tab).</li>
+      <li class="fixed"><strong>Toggle dimensions match.</strong> <code>w-10 h-6</code> with <code>w-4 h-4</code> slider — matches the existing hand-rolled switch in ProgramSettingsPanel.</li>
+      <li class="kept"><strong>Circular DayStepper preserved.</strong> Matches DayStepper.tsx exactly: 40px default, 48px today with glow.</li>
+      <li class="kept"><strong>Race strip preserved.</strong> Soft tinted card with radial accent, no hard border. Same as v6/v7/v8.</li>
+    </ul>
+  </div>
+
+  <div class="toc">
+    <h3>Sections</h3>
+    <div class="toc-grid">
+      <a href="#sb"><span class="toc-letter">B</span> Onboarding · key steps</a>
+      <a href="#sc"><span class="toc-letter">C</span> Home · DayPeekCard variants</a>
+      <a href="#sd"><span class="toc-letter">D</span> Programme · 4 tabs</a>
+      <a href="#se"><span class="toc-letter">E</span> Configure Plan · BottomSheet</a>
+      <a href="#sf"><span class="toc-letter">F</span> Settings · post-migration</a>
+      <a href="#sh"><span class="toc-letter">H</span> Status states</a>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- B: ONBOARDING -->
+  <!-- ============================================ -->
+  <div class="section" id="sb">
+    <div class="section-head">
+      <span class="section-num">B</span>
+      <h2>Onboarding · style-aligned</h2>
+    </div>
+    <p class="lede">Every option pill is an <code>OptionCard</code>. Every number selection is a num-grid using JetBrains Mono. Every icon is Lucide SVG. The Step Indicator is text only (no progress bar — matches existing Onboarding.tsx). Doubles banner uses the notice-card pattern with Lucide <code>Info</code> icon.</p>
+
+    <div class="phone-row">
+      <!-- Step 4: Training focus with proper OptionCard -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 14px 0 8px;">
+              <div class="icon-btn" style="margin-left: -8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </div>
+              <div class="step-indicator">Step 5 of 12</div>
+              <h2 class="step-title">What are you training for?</h2>
+              <p class="step-subtitle">Drives your programme focus.</p>
+            </div>
+
+            <!-- OptionCards with real Lucide icons -->
+            <div class="option-card brand">
+              <div class="oc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Build muscle</div>
+                <div class="oc-desc">Hypertrophy focus · higher volume</div>
+              </div>
+              <div class="oc-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+
+            <div class="option-card selected brand">
+              <div class="oc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5"/><path d="M21 21l-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Get stronger</div>
+                <div class="oc-desc">Lower volume · heavier loads</div>
+              </div>
+              <div class="oc-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+
+            <div class="option-card">
+              <div class="oc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Lose fat</div>
+                <div class="oc-desc">Calorie deficit · preserve muscle</div>
+              </div>
+              <div class="oc-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+
+            <div class="option-card">
+              <div class="oc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Running support</div>
+                <div class="oc-desc">Strength for endurance</div>
+              </div>
+              <div class="oc-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+            </div>
+          </div>
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 14px 22px; background: var(--card); border-top: 1px solid var(--border);">
+            <button class="cta primary">Continue</button>
+          </div>
+        </div>
+        <div class="phone-label"><span class="step-tag">Step 5</span><strong>Training focus</strong> · real OptionCard pattern</div>
+      </div>
+
+      <!-- Step 8: Running setup with doubles banner -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 14px 0 8px;">
+              <div class="icon-btn" style="margin-left: -8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </div>
+              <div class="step-indicator">Step 9 of 12</div>
+              <h2 class="step-title">Running setup</h2>
+              <p class="step-subtitle">Race prep? Or just regular runs?</p>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 0 0 8px;">Mode</div>
+            <div class="option-card run">
+              <div class="oc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Race prep</div>
+                <div class="oc-desc">Periodised · 4-26 weeks to race</div>
+              </div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px;">Runs per week</div>
+            <div class="num-grid">
+              <div class="num-pill">2</div>
+              <div class="num-pill">3</div>
+              <div class="num-pill run-selected">4</div>
+            </div>
+
+            <!-- Notice card (NOT left-border banner) -->
+            <div class="notice-card">
+              <div class="notice-icon info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <div class="notice-text">
+                You've selected <strong>6 lifting days</strong> and <strong>4 runs</strong>. <strong>3 days</strong> will include both lifting and running.
+              </div>
+            </div>
+          </div>
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 14px 22px; background: var(--card); border-top: 1px solid var(--border);">
+            <button class="cta run-primary">Continue</button>
+          </div>
+        </div>
+        <div class="phone-label"><span class="step-tag new">Step 9 · CHANGED</span><strong>Running + doubles</strong> · notice card uses Info icon, no left border</div>
+      </div>
+
+      <!-- Step 10: Weekly preview -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 14px 0 8px;">
+              <div class="icon-btn" style="margin-left: -8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </div>
+              <div class="step-indicator">Step 10 of 12</div>
+              <h2 class="step-title">Your training week</h2>
+              <p class="step-subtitle">Tap a day in Programme later to adjust.</p>
+            </div>
+
+            <div class="weekly-preview-list">
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></span>Mon</div>
+                <span class="wp-type-pill both">Both</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/></svg></span>Tue</div>
+                <span class="wp-type-pill run">Run</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Wed</div>
+                <span class="wp-type-pill lift">Lift</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Thu</div>
+                <span class="wp-type-pill both">Both</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Fri</div>
+                <span class="wp-type-pill lift">Lift</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Sat</div>
+                <span class="wp-type-pill both">Both</span>
+              </div>
+              <div class="wp-row">
+                <div class="wp-day-label"><span class="wp-day-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg></span>Sun</div>
+                <span class="wp-type-pill rest">Rest</span>
+              </div>
+            </div>
+          </div>
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 14px 22px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 8px;">
+            <button class="cta secondary" style="flex: 1;">Try different counts</button>
+            <button class="cta primary" style="flex: 1.4;">Looks good</button>
+          </div>
+        </div>
+        <div class="phone-label"><span class="step-tag new">Step 10 · NEW</span><strong>Weekly preview</strong> · row pattern matches OptionCard family</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap;">
+      <div class="annotation"><span class="a-tag real">OptionCard</span>Matches <code>src/components/onboarding/OptionCard.tsx</code> exactly. Icon left, label/description, animated Check right. Teal tint when selected.</div>
+      <div class="annotation"><span class="a-tag real">Number grid</span>Custom but follows pattern: card-shape pills with JetBrains Mono numerals.</div>
+      <div class="annotation"><span class="a-tag fixed">Notice card · no left border</span>Was a left-accented banner in v8. Now: <code>bg-card</code> + soft shadow + Lucide Info icon. Matches app conventions.</div>
+      <div class="annotation"><span class="a-tag real">Step indicator text only</span>Existing Onboarding.tsx doesn't use a progress bar — just "Step N of 12" text. v9 matches.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- C: HOME -->
+  <!-- ============================================ -->
+  <div class="section" id="sc">
+    <div class="section-head">
+      <span class="section-num">C</span>
+      <h2>Home · DayPeekCard variants (Lucide icons, real card pattern)</h2>
+    </div>
+    <p class="lede">Every leading icon is Lucide SVG. WeekStrip extends the existing component. WinBanner is a soft-shadowed card with the Trophy lucide icon (no gradient).</p>
+
+    <div class="phone-row">
+      <!-- Today single run -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 12px 0 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Tue 13 May</div>
+              <h1 style="font-size: 22px; font-weight: 800; margin: 2px 0 0; color: var(--text);">Hey Alex</h1>
+            </div>
+
+            <div class="week-strip">
+              <div class="ws-day"><div class="ws-dow">Mon</div><div class="ws-date-num">12</div><div class="ws-dot-row"><div class="ws-dot lift"></div></div></div>
+              <div class="ws-day today"><div class="ws-dow">Tue</div><div class="ws-date-num">13</div><div class="ws-dot-row"><div class="ws-dot run"></div></div></div>
+              <div class="ws-day"><div class="ws-dow">Wed</div><div class="ws-date-num">14</div><div class="ws-dot-row"><div class="ws-dot lift"></div></div></div>
+              <div class="ws-day"><div class="ws-dow">Thu</div><div class="ws-date-num">15</div><div class="ws-dot-row"></div></div>
+              <div class="ws-day"><div class="ws-dow">Fri</div><div class="ws-date-num">16</div><div class="ws-dot-row"><div class="ws-dot lift"></div></div></div>
+              <div class="ws-day"><div class="ws-dow">Sat</div><div class="ws-date-num">17</div><div class="ws-dot-row"><div class="ws-dot run"></div></div></div>
+              <div class="ws-day"><div class="ws-dow">Sun</div><div class="ws-date-num">18</div><div class="ws-dot-row"></div></div>
+            </div>
+
+            <div class="day-peek">
+              <div class="dp-header">
+                <div class="dp-date">Today</div>
+                <div class="dp-day-type">Run day</div>
+              </div>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon run">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta"><span class="num">8 km</span><span class="sep">·</span><span>target</span><span class="num">5:00 /km</span></div>
+                </div>
+              </div>
+              <div class="dp-action-row">
+                <button class="dp-action run-primary">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  Start planned run
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18l-1.5 12H4.5z"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today · single run</strong> · WeekStrip + DayPeekCard · Lucide Zap for Tempo</div>
+      </div>
+
+      <!-- Today doubles -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 12px 0 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Mon 12 May</div>
+              <h1 style="font-size: 22px; font-weight: 800; margin: 2px 0 0; color: var(--text);">Hey Alex</h1>
+            </div>
+
+            <div class="day-peek">
+              <div class="dp-header">
+                <div class="dp-date">Today</div>
+                <span class="sc-pill" style="background: linear-gradient(90deg, var(--brand-soft), var(--running-soft)); color: var(--text);">Both day</span>
+              </div>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon lift">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Upper Body</div>
+                  <div class="sc-meta"><span>6 exercises</span><span class="sep">·</span><span class="num">~48 min</span></div>
+                </div>
+              </div>
+              <div class="sc-icon-row" style="margin-top: 8px;">
+                <div class="sc-leading-icon run">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Easy Run</div>
+                  <div class="sc-meta"><span class="num">5 km</span><span class="sep">·</span><span class="num">~30 min</span></div>
+                </div>
+              </div>
+              <div class="dp-action-row">
+                <button class="dp-action lift-primary">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  Lift
+                </button>
+                <button class="dp-action run-primary">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  Run
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today · doubles</strong> · Lucide Dumbbell + PersonStanding · Both pill gradient</div>
+      </div>
+
+      <!-- Completed today with win banner -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 12px 0 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Today · 7:15 PM</div>
+              <h1 style="font-size: 22px; font-weight: 800; margin: 2px 0 0; color: var(--text);">Nice run, Alex</h1>
+            </div>
+
+            <!-- WinBanner — CARD STYLE not gradient -->
+            <div class="win-banner">
+              <div class="wb-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+              </div>
+              <div class="wb-text">
+                <div class="wb-title">Tempo nailed</div>
+                <div class="wb-sub">4:58 /km · 2s under target</div>
+              </div>
+            </div>
+
+            <div class="day-peek">
+              <div class="dp-header">
+                <div class="dp-date">Today</div>
+                <span class="sc-pill done">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Done
+                </span>
+              </div>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta"><span class="num">8.04 km</span><span class="sep">·</span><span class="num">39:55</span></div>
+                </div>
+              </div>
+              <div class="dp-action-row">
+                <button class="dp-action">View summary</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Completed</strong> · WinBanner is a card · Lucide Trophy in gold-tint container · NO gradient</div>
+      </div>
+
+      <!-- Past missed (derived) -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div style="padding: 12px 0 8px;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Was this</div>
+              <h1 style="font-size: 22px; font-weight: 800; margin: 2px 0 0; color: var(--text);">Catch up</h1>
+            </div>
+
+            <div class="day-peek">
+              <div class="dp-header">
+                <div class="dp-date">Fri 9 May</div>
+                <span class="sc-pill" style="background: var(--warning-soft); color: var(--warning);">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                  Missed
+                </span>
+              </div>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon warning">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta"><span>Planned · 8 km</span></div>
+                </div>
+              </div>
+              <div class="dp-action-row">
+                <button class="dp-action warning-outline">Log manually</button>
+                <button class="dp-action">Mark skipped</button>
+              </div>
+            </div>
+
+            <div class="notice-card" style="margin-top: 16px;">
+              <div class="notice-icon info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </div>
+              <div class="notice-text">
+                "Missed" is computed at view-time. Not persisted to Firestore. No scheduled jobs.
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Missed (derived)</strong> · AlertTriangle Lucide icon · warning-tinted icon container</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap;">
+      <div class="annotation"><span class="a-tag fixed">No emojis</span>Every leading icon is inline Lucide SVG. Trophy for celebration, Zap for tempo, PersonStanding for easy run, Dumbbell for lift, AlertTriangle for missed.</div>
+      <div class="annotation"><span class="a-tag fixed">WinBanner = card</span>Was a green-gold gradient banner in v8. Now: <code>bg-card</code> + soft shadow + Lucide Trophy in a gold-tinted icon container. Matches app card aesthetic.</div>
+      <div class="annotation"><span class="a-tag real">WeekStrip</span>Extends the existing <code>src/components/home/WeekStrip.tsx</code>. Modality dots are 5px circles with brand/running colours.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- D: PROGRAMME TABS -->
+  <!-- ============================================ -->
+  <div class="section" id="sd">
+    <div class="section-head">
+      <span class="section-num">D</span>
+      <h2>Programme · 4 tabs · style-aligned</h2>
+    </div>
+    <p class="lede">Segmented control uses the WorkoutSession scrolling-pill pattern (filled pill for active). Lift tab preserves current Programme exactly. Schedule row is a new primitive with the same card shape as the rest of the app.</p>
+
+    <div class="phone-row">
+      <!-- Today tab -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div class="page-header">
+              <div>
+                <h1>Programme</h1>
+                <div class="subtitle">Week 3 · Hypertrophy + Base</div>
+              </div>
+              <div class="util-cluster">
+                <div class="icon-btn running">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg-pill active">Today</div>
+              <div class="seg-pill">Week</div>
+              <div class="seg-pill">Lift</div>
+              <div class="seg-pill">Run</div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 4px 0 8px;">Mon 12 · Both day</div>
+
+            <div class="session-card tinted-lift">
+              <span class="sc-pill am">AM · Lift</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon lift">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Push A</div>
+                  <div class="sc-meta"><span>6 exercises</span><span class="sep">·</span><span class="num">~48 min</span></div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta primary">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  Begin workout
+                </button>
+              </div>
+            </div>
+
+            <div class="session-card tinted-run">
+              <span class="sc-pill pm">PM · Run</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon run">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Easy Run</div>
+                  <div class="sc-meta"><span class="num">5 km</span><span class="sep">·</span><span class="num">~30 min</span></div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-primary">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                  Start planned run
+                </button>
+                <button class="cta run-outline">Just go for a run</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today tab · doubles</strong> · segmented = WorkoutSession scrolling pills · sport-tinted session cards</div>
+      </div>
+
+      <!-- Week tab with schedule rows + visible ⋯ -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div class="page-header">
+              <div>
+                <h1>Programme</h1>
+                <div class="subtitle">Week 3 · operational view</div>
+              </div>
+              <div class="util-cluster">
+                <div class="icon-btn running">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="segmented">
+              <div class="seg-pill">Today</div>
+              <div class="seg-pill active">Week</div>
+              <div class="seg-pill">Lift</div>
+              <div class="seg-pill">Run</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Mon</div><div class="sr-day">12</div></div>
+              <div class="sr-type-pill both">Both</div>
+              <div class="sr-content">
+                <div class="sr-name">Push + Easy 5km</div>
+                <div class="sr-detail">AM lift · PM run</div>
+              </div>
+              <span class="sr-status done">Done</span>
+            </div>
+
+            <div class="schedule-row today">
+              <div class="sr-date today"><div class="sr-dow">Tue</div><div class="sr-day">13</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Tempo · 8 km</div>
+                <div class="sr-detail">Today · target 5:00 /km</div>
+              </div>
+              <div class="sr-overflow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Wed</div><div class="sr-day">14</div></div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">6 exercises · ~45 min</div>
+              </div>
+              <div class="sr-overflow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Thu</div><div class="sr-day">15</div></div>
+              <div class="sr-type-pill both">Both</div>
+              <div class="sr-content">
+                <div class="sr-name">Upper + Easy</div>
+              </div>
+              <div class="sr-overflow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">17</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long · 10 km</div>
+              </div>
+              <div class="sr-overflow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sun</div><div class="sr-day">18</div></div>
+              <div class="sr-type-pill rest">Rest</div>
+              <div class="sr-content">
+                <div class="sr-name">Recovery</div>
+              </div>
+              <div class="sr-overflow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Week tab</strong> · visible Lucide MoreHorizontal on every row · today gets brand-outlined card</div>
+      </div>
+
+      <!-- Run tab with race strip + plan controls -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div class="page-header">
+              <div>
+                <h1>Programme</h1>
+                <div class="subtitle">10K · 14 Aug 2026</div>
+              </div>
+              <div class="util-cluster">
+                <div class="icon-btn running">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="segmented">
+              <div class="seg-pill">Today</div>
+              <div class="seg-pill">Week</div>
+              <div class="seg-pill">Lift</div>
+              <div class="seg-pill active run">Run</div>
+            </div>
+
+            <div class="race-strip">
+              <div class="rs-head">
+                <div class="rs-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                </div>
+                <div class="rs-info">
+                  <div class="rs-title">10K · 14 Aug<span class="rs-phase">Base</span></div>
+                  <div class="rs-sub">Week 3 of 12 · 84 days to race</div>
+                </div>
+              </div>
+              <div class="rs-progress"><div class="rs-progress-fill" style="width: 25%;"></div></div>
+              <div class="rs-footer">This week <strong>22 km</strong> · Long run <strong>8 km Sat</strong></div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 6px 0 8px;">This week's runs</div>
+
+            <div class="schedule-row" style="margin-bottom: 6px;">
+              <div class="sr-date today"><div class="sr-dow">Tue</div><div class="sr-day">13</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content"><div class="sr-name">Tempo · 8 km</div></div>
+              <div class="sr-overflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="schedule-row" style="margin-bottom: 6px;">
+              <div class="sr-date"><div class="sr-dow">Thu</div><div class="sr-day">15</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content"><div class="sr-name">Easy · 6 km</div></div>
+              <div class="sr-overflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="schedule-row" style="margin-bottom: 6px;">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">17</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content"><div class="sr-name">Long · 8 km</div></div>
+              <div class="sr-overflow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px;">Plan controls</div>
+
+            <div class="settings-row">
+              <div class="sr-label">
+                <div class="sr-icon-wrap" style="background: var(--running-soft); color: var(--running);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/></svg>
+                </div>
+                Race goal
+              </div>
+              <div class="sr-value">10K · 14 Aug<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">
+                <div class="sr-icon-wrap" style="background: var(--brand-soft); color: var(--brand);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/></svg>
+                </div>
+                Run days
+              </div>
+              <div class="sr-value">3 / week<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run tab · race-prep</strong> · race strip (no hard border) · plan controls use settings-row pattern</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap;">
+      <div class="annotation"><span class="a-tag fixed">Segmented control</span>Scrolling pill pattern from WorkoutSession. Active = filled pill (brand for Today/Week/Lift, running for Run tab).</div>
+      <div class="annotation"><span class="a-tag fixed">Schedule row</span>New primitive. Card shape + soft shadow. Today row gets 2px brand outline. Visible MoreHorizontal Lucide icon on every row.</div>
+      <div class="annotation"><span class="a-tag real">Race strip</span>Soft tinted card with radial accent. No hard border. Target icon for the race goal.</div>
+      <div class="annotation"><span class="a-tag real">Lift tab</span>Not shown — uses existing Program.tsx DayStepper + session card EXACTLY as today. Zero regression.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- E: CONFIGURE PLAN AS BOTTOMSHEET -->
+  <!-- ============================================ -->
+  <div class="section" id="se">
+    <div class="section-head">
+      <span class="section-num">E</span>
+      <h2>Configure Plan · BottomSheet (not full-screen modal)</h2>
+    </div>
+    <p class="lede">Wraps the existing <code>BottomSheet.tsx</code> primitive. Drag handle, sticky header with title + close button, scrollable body, footer with Cancel/Confirm. <code>max-h-[95vh]</code> for near-full-height when needed. Same component pattern as ProModal, CommentSheet, etc.</p>
+
+    <div class="phone-row">
+      <!-- Step 1 of 6 -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+
+          <div class="sheet-backdrop"></div>
+
+          <div class="bottom-sheet" style="height: 92%;">
+            <div class="bs-handle"></div>
+            <div class="bs-header">
+              <div>
+                <h3 class="bs-title">Update your plan</h3>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Step 1 of 6 · Training focus</div>
+              </div>
+              <div class="bs-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </div>
+            </div>
+            <div class="bs-body">
+              <h3 style="font-size: 17px; font-weight: 800; color: var(--text); margin: 0 0 4px;">What are you training for?</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 14px;">Drives your programme focus.</p>
+
+              <div class="option-card">
+                <div class="oc-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/></svg>
+                </div>
+                <div class="oc-text">
+                  <div class="oc-name">Build muscle</div>
+                  <div class="oc-desc">Hypertrophy focus</div>
+                </div>
+                <div class="oc-check">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+              <div class="option-card selected brand">
+                <div class="oc-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/></svg>
+                </div>
+                <div class="oc-text">
+                  <div class="oc-name">Get stronger</div>
+                  <div class="oc-desc">Lower volume · heavier loads</div>
+                </div>
+                <div class="oc-check">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+              <div class="option-card">
+                <div class="oc-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="m5 19 5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="oc-text">
+                  <div class="oc-name">Running support</div>
+                  <div class="oc-desc">Strength for endurance</div>
+                </div>
+                <div class="oc-check">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="bs-footer">
+              <button class="cta secondary" style="flex: 1;">Cancel</button>
+              <button class="cta primary" style="flex: 1.4;">Next</button>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Step 1/6</strong> · vaul BottomSheet · OptionCard for selections · draft state</div>
+      </div>
+
+      <!-- Step 6: Confirm with notice cards -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="sheet-backdrop"></div>
+
+          <div class="bottom-sheet" style="height: 92%;">
+            <div class="bs-handle"></div>
+            <div class="bs-header">
+              <div>
+                <h3 class="bs-title">Update your plan</h3>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Step 6 of 6 · Confirm</div>
+              </div>
+              <div class="bs-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </div>
+            </div>
+            <div class="bs-body">
+              <h3 style="font-size: 17px; font-weight: 800; color: var(--text); margin: 0 0 14px;">Ready to update</h3>
+
+              <!-- Success notice (what will happen) -->
+              <div class="notice-card">
+                <div class="notice-icon success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="notice-text">
+                  <strong>This will:</strong><br>
+                  • Update your weekly schedule<br>
+                  • Regenerate upcoming planned runs<br>
+                  • Keep all logged workouts in History
+                </div>
+              </div>
+
+              <!-- Warning notice (destruction) -->
+              <div class="notice-card">
+                <div class="notice-icon warning">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                </div>
+                <div class="notice-text">
+                  <strong>Warning:</strong> your in-flight 10K race-prep block (Week 3 of 12) will be cancelled because race goal changed.
+                </div>
+              </div>
+            </div>
+            <div class="bs-footer">
+              <button class="cta secondary" style="flex: 1;">Cancel</button>
+              <button class="cta primary" style="flex: 1.4;">Confirm</button>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Step 6/6</strong> · notice cards (no left-border) · Lucide CheckCircle + AlertTriangle</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; gap: 14px; flex-wrap: wrap;">
+      <div class="annotation"><span class="a-tag fixed">BottomSheet not full-screen</span>Was "modal-fullscreen" in v8. Now wraps existing <code>src/components/ui/BottomSheet.tsx</code> with <code>max-h-[95vh]</code>. Has drag handle, sticky header, scrollable body, footer. Same as ProModal, CommentSheet.</div>
+      <div class="annotation"><span class="a-tag fixed">Notice cards</span>Confirmation warnings are notice-card pattern: <code>bg-card</code> + Lucide icon-left + text. No left-border accent.</div>
+      <div class="annotation"><span class="a-tag real">OptionCard reused</span>Every selection in the wizard uses the same OptionCard primitive from onboarding. Single component, two surfaces.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- F: SETTINGS -->
+  <!-- ============================================ -->
+  <div class="section" id="sf">
+    <div class="section-head">
+      <span class="section-num">F</span>
+      <h2>Settings · post-migration · real toggle dimensions</h2>
+    </div>
+    <p class="lede">Deep-link banner uses notice-card pattern with Lucide LayoutGrid icon. Toggle switches use the real <code>w-10 h-6</code> dimensions from ProgramSettingsPanel.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="page-content">
+            <div class="page-header">
+              <div>
+                <h1>Settings</h1>
+                <div class="subtitle">Defaults · preferences · account</div>
+              </div>
+            </div>
+
+            <!-- Deep-link banner: notice card pattern -->
+            <div class="notice-card">
+              <div class="notice-icon info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div class="notice-text">
+                <strong>Plan settings have moved</strong><br>
+                Race · schedule · run days now live in Programme.
+              </div>
+              <svg viewBox="0 0 24 24" width="14" height="14" style="color: var(--brand); flex-shrink: 0; margin-top: 8px;" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px;">Training defaults</div>
+
+            <div class="settings-row">
+              <div class="sr-label">Default rest time</div>
+              <div class="sr-value">90s<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Auto-start rest timer</div>
+              <div class="toggle on"></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Audio cues</div>
+              <div class="toggle on"></div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px;">Equipment</div>
+            <div class="settings-row">
+              <div class="sr-label">Shoes</div>
+              <div class="sr-value">3 active<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px;">Privacy & data</div>
+            <div class="settings-row">
+              <div class="sr-label">Privacy zones</div>
+              <div class="sr-value">2 set<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Units</div>
+              <div class="sr-value">km · kg<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Notifications</div>
+              <div class="sr-value"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Settings · post-migration</strong> · LayoutGrid Lucide icon · 40×24 toggles · plain settings-rows</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag fixed">Deep-link banner</span>Notice-card pattern with Lucide LayoutGrid icon. No gradients, no left-border accent.</div>
+        <div class="annotation"><span class="a-tag fixed">Real toggle dimensions</span><code>w-10 h-6</code> (40×24px) with <code>w-4 h-4</code> (16×16) slider. Matches ProgramSettingsPanel.tsx exactly.</div>
+        <div class="annotation"><span class="a-tag real">Settings rows</span>Card shape + soft shadow. Optional leading icon container (28×28). ChevronRight Lucide for navigation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- H: STATUS STATES -->
+  <!-- ============================================ -->
+  <div class="section" id="sh">
+    <div class="section-head">
+      <span class="section-num">H</span>
+      <h2>Status states · mismatch reconciliation</h2>
+    </div>
+    <p class="lede">Reconciliation sheet uses BottomSheet with clear option cards. Lucide icons throughout. Status pills inline.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="right">●●●</div></div>
+          <div class="sheet-backdrop"></div>
+
+          <div class="bottom-sheet">
+            <div class="bs-handle"></div>
+            <div class="bs-header">
+              <h3 class="bs-title">Different run type</h3>
+              <div class="bs-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </div>
+            </div>
+            <div class="bs-body">
+              <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 18px;">
+                You ran <strong style="color: var(--text);">Easy 5km</strong> · today's plan was <strong style="color: var(--text);">Tempo 8km</strong>.
+              </p>
+
+              <div class="option-card selected run">
+                <div class="oc-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="oc-text">
+                  <div class="oc-name">Save as completed</div>
+                  <div class="oc-desc">Marks tempo as completed_modified</div>
+                </div>
+              </div>
+
+              <div class="option-card">
+                <div class="oc-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                </div>
+                <div class="oc-text">
+                  <div class="oc-name">Save as extra run</div>
+                  <div class="oc-desc">Tempo stays planned · easy is freeform extra</div>
+                </div>
+              </div>
+            </div>
+            <div class="bs-footer">
+              <button class="cta secondary" style="flex: 1;">Cancel</button>
+              <button class="cta run-primary" style="flex: 1.4;">Save</button>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Mismatch reconciliation</strong> · BottomSheet + OptionCard · Lucide Check + Plus icons</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag fixed">BottomSheet</span>Uses existing primitive. Drag handle, sticky header, body, footer with action buttons.</div>
+        <div class="annotation"><span class="a-tag real">OptionCard reused</span>Same selection pattern as onboarding + Configure Plan. One component everywhere.</div>
+        <div class="annotation"><span class="a-tag real">Lucide icons</span>Check for completion path, Plus for extra-run path. Both in standard 18px size.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 style="color: #fff;">Recap · component primitive map</h2>
+    <div style="background: #25252b; border-radius: 14px; padding: 22px 28px; color: #d0d0d8; font-size: 13px; line-height: 1.7;">
+      <p style="margin: 0 0 12px;"><strong style="color: #fff;">Net new components for v7 spec:</strong></p>
+      <ul style="margin: 0 0 18px; padding-left: 20px;">
+        <li><code>SegmentedControl.tsx</code> — Programme tabs (WorkoutSession pill pattern)</li>
+        <li><code>ScheduleRow.tsx</code> — Week tab list rows</li>
+        <li><code>WinBanner.tsx</code> — completion celebration (card with Lucide Trophy)</li>
+        <li><code>NoticeCard.tsx</code> — info/warning/success notices (replaces all left-border banners)</li>
+        <li><code>RaceStrip.tsx</code> — race-prep flagship surface</li>
+        <li><code>ConfigurePlanSheet.tsx</code> — wraps BottomSheet for the 6-step wizard</li>
+        <li><code>MismatchReconciliationSheet.tsx</code> — wraps BottomSheet for save-time reconciliation</li>
+      </ul>
+      <p style="margin: 0 0 12px;"><strong style="color: #fff;">Reused components (zero new code):</strong></p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li><code>OptionCard.tsx</code> — every selection in onboarding, Configure Plan, reconciliation</li>
+        <li><code>BottomSheet.tsx</code> — every modal/sheet</li>
+        <li><code>Button.tsx</code> — every CTA (5 existing variants)</li>
+        <li><code>Coachmark.tsx</code> — first-use tab tooltip</li>
+        <li><code>DayStepper.tsx</code> — Lift tab (unchanged) + optional coral dot for doubles</li>
+        <li><code>WeekStrip.tsx</code> — extended to read weekSchedule</li>
+        <li><code>DayPeekCard.tsx</code> — extended with planned/missed/completed variants</li>
+        <li>All Lucide icons — Dumbbell, Footprints, Trophy, Target, Zap, Mountain, AlertTriangle, etc.</li>
+      </ul>
+      <p style="margin-top: 16px; color: #b6b6c0; font-size: 12px;">7 new components. 8+ reused. Everything else (colours, shadows, typography, spacing) inherits from <code>src/lib/theme.ts</code> + <code>src/styles/tokens.css</code>.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

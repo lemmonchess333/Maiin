@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tropos — Programme + Run · v7 four-tab architecture</title>
+<style>
+  :root {
+    --bg: hsl(240 5% 96%);
+    --card: #FFFFFF;
+    --muted-bg: #F0F0F4;
+    --text: #1c1c1e;
+    --text-muted: #8E8E93;
+    --border-soft: rgba(0,0,0,0.05);
+    --brand: #7C6BF0;
+    --brand-soft: rgba(124, 107, 240, 0.10);
+    --brand-soft-6: rgba(124, 107, 240, 0.06);
+    --running: #D4637A;
+    --running-soft: rgba(212, 99, 122, 0.10);
+    --running-soft-6: rgba(212, 99, 122, 0.06);
+    --success: #4CAF50;
+    --success-soft: rgba(76, 175, 80, 0.12);
+    --skipped: #8E8E93;
+    --teal: #52A3BD;
+    --nutrition: #D9884E;
+    --warning: #E6A23C;
+    --gold: #E0A227;
+    --gold-soft: rgba(224, 162, 39, 0.12);
+    --canvas: #1a1a1f;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: #e8e8ec;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    padding: 32px 20px 80px;
+    line-height: 1.45;
+  }
+  .container { max-width: 1500px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 8px; color: #fff; }
+  h2 { font-size: 20px; font-weight: 700; margin: 0 0 6px; color: #fff; }
+  .lede { color: #b6b6c0; font-size: 14px; max-width: 880px; margin: 0 0 24px; }
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #a0a0a6; font-weight: 600; margin-bottom: 8px; }
+
+  /* Decision banner */
+  .pivot {
+    background: linear-gradient(135deg, rgba(124,107,240,0.14), rgba(212,99,122,0.10));
+    border-radius: 16px;
+    padding: 22px 28px;
+    margin: 28px 0 40px;
+    border-left: 3px solid var(--brand);
+  }
+  .pivot h3 { color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px; }
+  .pivot p { color: #d0d0d8; font-size: 14px; line-height: 1.6; margin: 6px 0; }
+  .pivot strong { color: #fff; }
+
+  /* Architecture diagram */
+  .arch-card {
+    background: #25252b;
+    border-radius: 16px;
+    padding: 26px 30px;
+    margin: 28px 0 40px;
+  }
+  .arch-card h3 { color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 20px; }
+  .tab-row {
+    display: flex; gap: 12px;
+    background: rgba(255,255,255,0.04);
+    padding: 14px 16px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  .tab-row .tab-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #a0a0a6; font-weight: 700;
+    flex-shrink: 0; width: 80px;
+  }
+  .tab-row .tab-chip {
+    background: rgba(255,255,255,0.06);
+    color: #d0d0d8;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px; font-weight: 600;
+  }
+  .tab-row .tab-chip.active { background: var(--brand); color: #fff; }
+  .tab-row .tab-chip.run { background: rgba(212,99,122,0.30); color: #fff; }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .arch-cell {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-top: 3px solid var(--brand);
+  }
+  .arch-cell.run-tab { border-top-color: var(--running); }
+  .arch-cell.schedule-tab { border-top-color: var(--teal); }
+  .arch-cell.today-tab { border-top-color: var(--gold); }
+  .arch-cell h4 { color: #fff; font-size: 13px; font-weight: 800; margin: 0 0 6px; }
+  .arch-cell .ac-purpose { color: #b6b6c0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .arch-cell .ac-content { color: #d0d0d8; font-size: 12px; line-height: 1.5; }
+
+  /* Prereq cards */
+  .prereq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .prereq-card {
+    background: rgba(217,136,78,0.08);
+    border-left: 3px solid var(--warning);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .prereq-card .pc-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--warning); color: #fff;
+    border-radius: 50%;
+    font-weight: 800; font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .prereq-card h4 { color: #fff; font-size: 13px; font-weight: 800; margin: 0 0 6px; }
+  .prereq-card .pc-issue { color: #b6b6c0; font-size: 11px; margin-bottom: 8px; }
+  .prereq-card .pc-fix { color: #d0d0d8; font-size: 11px; line-height: 1.5; }
+  .prereq-card code {
+    background: rgba(0,0,0,0.30); padding: 1px 5px; border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  }
+
+  /* TOC */
+  .toc { background: #25252b; border-radius: 12px; padding: 16px 22px; margin: 0 0 40px; }
+  .toc h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #a0a0a6; margin: 0 0 10px; font-weight: 600; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 18px; }
+  .toc-grid a { color: #d0d0d8; text-decoration: none; font-size: 13px; padding: 3px 0; }
+  .toc-grid a:hover { color: var(--running); }
+
+  .section { margin-bottom: 72px; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .section-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--brand-soft);
+    color: var(--brand);
+    font-weight: 800; font-size: 14px;
+  }
+  .section-num.run { background: var(--running-soft); color: var(--running); }
+  .section-num.schedule { background: rgba(82,163,189,0.20); color: var(--teal); }
+  .section-num.gold { background: var(--gold-soft); color: var(--gold); }
+
+  /* Phone */
+  .phone-row {
+    display: flex; flex-wrap: wrap; gap: 28px;
+    align-items: flex-start; margin-top: 24px;
+  }
+  .phone-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .phone-label {
+    font-size: 12px; color: #b0b0b8; text-align: center;
+    max-width: 390px; line-height: 1.4;
+  }
+  .phone-label strong { color: #fff; font-weight: 600; }
+  .phone {
+    width: 390px; height: 820px;
+    background: var(--bg);
+    border-radius: 44px; border: 9px solid #050507;
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+    color: var(--text);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .statusbar {
+    height: 44px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 24px 4px;
+    font-size: 15px; font-weight: 600;
+    background: var(--bg);
+  }
+  .statusbar .time { font-feature-settings: 'tnum'; }
+  .statusbar .ind { display: flex; align-items: center; gap: 5px; }
+  .page-content {
+    flex: 1; overflow-y: auto;
+    padding: 0 16px 90px;
+    background: var(--bg);
+  }
+  .page-content::-webkit-scrollbar { width: 0; }
+
+  /* Programme header */
+  .prog-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 6px 0;
+  }
+  .prog-header .titles { flex: 1; min-width: 0; }
+  .prog-header h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.015em; margin: 0;
+    color: var(--text);
+  }
+  .prog-header .sub {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+  .prog-header .utility { display: flex; gap: 2px; align-items: center; }
+  .util-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+  }
+  .util-btn.running-nav { color: var(--running); background: var(--running-soft-6); }
+  .util-btn svg { width: 18px; height: 18px; }
+
+  /* Segmented control (the new tabs) */
+  .segmented {
+    display: flex;
+    background: var(--muted-bg);
+    border-radius: 12px;
+    padding: 3px;
+    margin: 6px 0 14px;
+  }
+  .segmented .seg {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .segmented .seg.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* Week phase row */
+  .week-phase-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 4px;
+  }
+  .week-phase-row .nav-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .week-phase-row .nav-btn.disabled { opacity: 0.25; }
+  .week-phase-row .nav-btn.active { color: var(--brand); background: var(--brand-soft-6); }
+  .wpr-center {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .wpr-week {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600;
+  }
+  .wpr-phase {
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+
+  /* Day stepper */
+  .day-stepper {
+    display: flex; padding: 6px 0 14px; gap: 4px;
+  }
+  .day-circle-col {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    min-width: 0;
+  }
+  .day-circle-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .day-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #D8D8DE;
+    color: var(--text-muted);
+    font-weight: 700; font-size: 14px;
+  }
+  .day-circle.today {
+    width: 48px; height: 48px;
+    border-color: var(--brand); color: var(--brand);
+    box-shadow: 0 0 0 4px var(--brand-soft);
+    font-size: 16px;
+  }
+  .day-circle.today-selected {
+    width: 48px; height: 48px;
+    background: var(--brand); border-color: var(--brand); color: #fff;
+    box-shadow: 0 0 0 4px var(--brand-soft), 0 4px 14px rgba(124,107,240,0.25);
+    font-size: 16px;
+  }
+  .day-circle.selected {
+    background: var(--brand); border-color: var(--brand); color: #fff;
+  }
+  .day-circle.completed {
+    background: var(--success); border-color: var(--success);
+    color: #fff; border-width: 0;
+  }
+  .day-circle.completed.today {
+    width: 48px; height: 48px;
+    box-shadow: 0 0 0 4px rgba(76,175,80,0.10), 0 4px 14px rgba(76,175,80,0.20);
+  }
+  .day-circle.run {
+    border-color: rgba(212,99,122,0.40);
+    color: var(--running);
+  }
+  .day-circle.run.today-selected, .day-circle.run.selected {
+    background: var(--running); border-color: var(--running); color: #fff;
+    box-shadow: 0 0 0 4px var(--running-soft), 0 4px 14px rgba(212,99,122,0.25);
+  }
+  .day-circle .check { width: 18px; height: 18px; stroke: #fff; stroke-width: 3; fill: none; }
+
+  /* Doubles dot */
+  .doubles-dot {
+    position: absolute;
+    top: -2px; right: -2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+  .doubles-dot.run { background: var(--running); }
+  .doubles-dot.lift { background: var(--brand); }
+  .doubles-dot.today-size { width: 14px; height: 14px; top: -3px; right: -3px; }
+
+  .day-label {
+    font-size: 10px; font-weight: 600; margin-top: 6px;
+    color: var(--text-muted); text-align: center;
+    white-space: nowrap; max-width: 64px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .day-label.today.run { color: var(--running); }
+  .day-label.today { color: var(--brand); }
+  .day-label.completed { color: var(--success); }
+
+  /* Session card */
+  .session-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .session-card.run-bg { background: linear-gradient(180deg, var(--running-soft-6) 0%, var(--card) 40%); }
+  .session-card.lift-bg { background: linear-gradient(180deg, var(--brand-soft-6) 0%, var(--card) 40%); }
+  .sc-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .sc-pill.today { background: var(--brand-soft); color: var(--brand); }
+  .sc-pill.today.run { background: var(--running-soft); color: var(--running); }
+  .sc-pill.done { background: var(--success-soft); color: var(--success); }
+  .sc-pill.muted { background: var(--muted-bg); color: var(--text-muted); }
+
+  .sc-icon-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 10px 0 4px;
+  }
+  .sc-leading-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sc-leading-icon.lift { background: var(--brand-soft); color: var(--brand); }
+  .sc-leading-icon.run { background: var(--running-soft); color: var(--running); }
+  .sc-leading-icon.success { background: var(--success-soft); color: var(--success); }
+  .sc-leading-icon svg { width: 22px; height: 22px; }
+  .sc-text-block { flex: 1; min-width: 0; }
+  .sc-title {
+    font-size: 18px; font-weight: 800; letter-spacing: -0.01em; margin: 0;
+  }
+  .sc-meta {
+    font-size: 12px; color: var(--text-muted);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    margin-top: 2px;
+  }
+  .sc-meta .num { font-feature-settings: 'tnum'; font-weight: 600; color: var(--text); }
+  .sc-meta .sep { color: #D8D8DE; }
+
+  .cta-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .cta {
+    border: 0; cursor: pointer;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .cta.primary { background: var(--brand); color: #fff; }
+  .cta.run-primary { background: var(--running); color: #fff; }
+  .cta.secondary { background: var(--muted-bg); color: var(--text); }
+  .cta.run-ghost {
+    background: transparent; color: var(--running);
+    border: 1.5px solid rgba(212,99,122,0.30);
+  }
+  .cta.lift-ghost {
+    background: transparent; color: var(--brand);
+    border: 1.5px solid rgba(124,107,240,0.30);
+  }
+
+  /* Race strip */
+  .race-strip {
+    background: var(--running-soft-6);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .race-strip::before {
+    content: '';
+    position: absolute; top: -20px; right: -20px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(212,99,122,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .race-strip .rs-head {
+    display: flex; align-items: flex-start; gap: 12px;
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--running-soft);
+    color: var(--running);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .race-strip .rs-info { flex: 1; min-width: 0; }
+  .race-strip .rs-title { font-size: 15px; font-weight: 800; color: var(--text); margin: 0; }
+  .race-strip .rs-phase {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--running-soft);
+    color: var(--running);
+    margin-left: 8px;
+  }
+  .race-strip .rs-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .race-strip .rs-progress {
+    margin-top: 10px;
+    height: 4px;
+    background: rgba(212,99,122,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-progress-fill { height: 100%; background: var(--running); border-radius: 2px; }
+  .race-strip .rs-footer {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-footer strong { color: var(--text); font-weight: 700; }
+
+  /* Schedule list row */
+  .schedule-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .schedule-row.today { box-shadow: 0 0 0 2px var(--brand), 0 1px 3px rgba(0,0,0,0.04); }
+  .sr-date {
+    width: 42px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .sr-date .sr-dow {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); font-weight: 700;
+  }
+  .sr-date .sr-day {
+    font-size: 17px; font-weight: 800;
+    font-feature-settings: 'tnum';
+    color: var(--text); margin-top: 1px;
+  }
+  .sr-date.today .sr-dow, .sr-date.today .sr-day { color: var(--brand); }
+  .sr-type-pill {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 8px; border-radius: 6px; flex-shrink: 0;
+    min-width: 56px; text-align: center;
+  }
+  .sr-type-pill.lift { background: var(--brand-soft); color: var(--brand); }
+  .sr-type-pill.run { background: var(--running-soft); color: var(--running); }
+  .sr-type-pill.both {
+    background: linear-gradient(90deg, var(--brand-soft), var(--running-soft));
+    color: var(--text);
+  }
+  .sr-type-pill.rest { background: rgba(142,142,147,0.10); color: var(--skipped); }
+  .sr-content { flex: 1; min-width: 0; }
+  .sr-content .sr-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sr-content .sr-detail { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .sr-status {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .sr-status.done { background: var(--success-soft); color: var(--success); }
+  .sr-status.missed { background: rgba(217,136,78,0.14); color: var(--warning); }
+  .sr-actions {
+    color: var(--text-muted);
+    font-size: 18px;
+    padding: 0 2px;
+  }
+
+  /* Settings row */
+  .settings-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .settings-row .sr-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .settings-row .sr-value { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .settings-row .sr-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 10px;
+  }
+
+  /* Deep-link banner */
+  .deep-link-banner {
+    background: var(--brand-soft-6);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .deep-link-banner .dl-icon {
+    width: 36px; height: 36px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .deep-link-banner .dl-text { flex: 1; }
+  .deep-link-banner .dl-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .deep-link-banner .dl-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .deep-link-banner .dl-arrow { color: var(--brand); font-weight: 800; }
+
+  /* Win banner */
+  .win-banner {
+    background: linear-gradient(135deg, var(--success-soft), var(--gold-soft));
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .win-banner .wb-icon {
+    width: 40px; height: 40px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(224,162,39,0.20);
+  }
+  .win-banner .wb-text { flex: 1; }
+  .win-banner .wb-title { font-size: 14px; font-weight: 800; color: var(--text); }
+  .win-banner .wb-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-soft);
+    padding: 8px 6px 24px;
+    display: flex;
+    justify-content: space-around;
+  }
+  .bn-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-muted); padding: 4px 8px; }
+  .bn-item.active { color: var(--brand); }
+  .bn-item svg { width: 22px; height: 22px; stroke-width: 1.6; }
+  .bn-item .bn-label { font-size: 10px; font-weight: 600; }
+
+  /* Annotations */
+  .annotation {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 280px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-bottom: 12px;
+  }
+  .annotation .a-tag {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-right: 6px;
+    background: var(--running-soft); color: var(--running);
+  }
+  .annotation .a-tag.ok { background: var(--success-soft); color: var(--success); }
+  .annotation .a-tag.warn { background: rgba(217,136,78,0.15); color: var(--warning); }
+  .annotation .a-tag.brand { background: var(--brand-soft); color: var(--brand); }
+  .annotations-col { display: flex; flex-direction: column; max-width: 320px; padding-top: 8px; }
+
+  /* Build phasing table */
+  .phasing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    color: #d0d0d8;
+  }
+  .phasing-table th, .phasing-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid #3a3a40;
+    font-size: 12px;
+  }
+  .phasing-table th {
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #a0a0a6; font-weight: 700;
+    background: rgba(255,255,255,0.03);
+  }
+  .phasing-table .num { font-feature-settings: 'tnum'; font-weight: 700; color: #fff; }
+  .phasing-table .phase-pill {
+    display: inline-block;
+    font-size: 10px; font-weight: 800; padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--warning); color: #fff;
+  }
+  .phasing-table .phase-pill.p0 { background: var(--warning); }
+  .phasing-table .phase-pill.p1 { background: var(--running); }
+  .phasing-table .phase-pill.p2 { background: var(--brand); }
+  .phasing-table .phase-pill.p3 { background: var(--teal); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="eyebrow">Tropos · Programme + Run · v7 final</div>
+  <h1>4-tab Programme · Today | Schedule | Lift | Run</h1>
+  <p class="lede">Restructured around ChatGPT's 4-tab proposal after verified code findings. Programme becomes a tabbed interface where each tab has a distinct purpose: Today = what to do right now, Schedule = operational week management, Lift = current lift programme preserved, Run = race-prep / structured run plan hub. Three P0 prerequisites must ship before the tabs work correctly.</p>
+
+  <div class="pivot">
+    <h3>Why we pivoted from the footprint switcher</h3>
+    <p><strong>v3-v6 footprint switcher</strong> handled mode switching but couldn't cleanly surface doubles days (lift + run same day). A coral dot on a lift circle says "there's also a run" — but there was no clean view that shows both modalities together at once.</p>
+    <p><strong>v7 4-tab architecture</strong> introduces a <strong>Today tab</strong> that natively stacks both today's lift and today's run when a day is a "Both" day. Schedule tab handles the operational week (moving, swapping, skipping). Lift + Run tabs preserve the per-modality detail views.</p>
+    <p style="margin-top: 12px; color: #fff; font-weight: 700;">The footprint icon top-right of Programme is now a quick-shortcut to <code style="background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px;">/run</code> (ad-hoc setup). Tabs handle planning. Footprint handles execution.</p>
+  </div>
+
+  <!-- Architecture diagram -->
+  <div class="arch-card">
+    <h3>4 tabs · 4 purposes</h3>
+
+    <div class="tab-row">
+      <div class="tab-label">Tabs:</div>
+      <div class="tab-chip active">Today</div>
+      <div class="tab-chip">Schedule</div>
+      <div class="tab-chip">Lift</div>
+      <div class="tab-chip run">Run</div>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-cell today-tab">
+        <h4>Today</h4>
+        <div class="ac-purpose">Default landing</div>
+        <div class="ac-content">What's planned for today? Stacks lift + run cards on doubles days. Single primary CTA. Win banner after completion. The "I just opened the app — what do I do" surface.</div>
+      </div>
+      <div class="arch-cell schedule-tab">
+        <h4>Schedule</h4>
+        <div class="ac-purpose">Operational week</div>
+        <div class="ac-content">7-day operational list. Each row: date · type pill (Lift/Run/Both/Rest) · planned items · status. Move / swap / skip actions. WeekPhaseRow chevrons for history.</div>
+      </div>
+      <div class="arch-cell">
+        <h4>Lift</h4>
+        <div class="ac-purpose">Current Programme preserved</div>
+        <div class="ac-content">Circular DayStepper, WeekPhaseRow, session card with exercise list. <strong>Identical to today's Programme</strong> — no visual regression. Optional doubles dot on circles where also a run.</div>
+      </div>
+      <div class="arch-cell run-tab">
+        <h4>Run</h4>
+        <div class="ac-purpose">Run plan hub</div>
+        <div class="ac-content">Race-prep + structured run plan owner. Race strip, this week's runs, plan controls (Edit race goal, Change run days, Pause plan). Empty state with setup options for freeform users.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P0 Prerequisites -->
+  <div class="arch-card">
+    <h3>P0 prerequisites · must ship before the tabs are usable</h3>
+    <p style="color: #b6b6c0; font-size: 13px; margin: 0 0 8px;">All three are verified bugs in the current code, surfaced by ChatGPT's review. None of the tab UI works correctly without them.</p>
+
+    <div class="prereq-grid">
+      <div class="prereq-card">
+        <div class="pc-num">1</div>
+        <h4>Scheduler must support Both days</h4>
+        <div class="pc-issue"><strong>Current bug:</strong> <code>runScheduler.ts:54, 148</code> caps run days at <code>7 - liftDayCount</code> and excludes lift days. Cannot produce true doubles.</div>
+        <div class="pc-fix"><strong>Fix:</strong> Drive scheduling from <code>weekSchedule</code> directly. <code>runEligibleDays = weekSchedule.filter(d =&gt; d.type === 'run' \|\| d.type === 'both')</code>. Without this, the Today tab's stacked-cards layout is fiction.</div>
+      </div>
+
+      <div class="prereq-card">
+        <div class="pc-num">2</div>
+        <h4>Route runs by scheduled identity</h4>
+        <div class="pc-issue"><strong>Current bug:</strong> <code>RunCTACard.tsx:21-32</code> uses <code>/run?template=tempo-id</code>. Two tempo runs in the same week are indistinguishable.</div>
+        <div class="pc-fix"><strong>Fix:</strong> Add <code>scheduledRunId</code> field to <code>ScheduledRunDay</code>. All run CTAs route with <code>?scheduledRunId=...&source=...</code>. RunSummary completes the exact scheduled instance, not just "any tempo this week."</div>
+      </div>
+
+      <div class="prereq-card">
+        <div class="pc-num">3</div>
+        <h4>Move active-plan state out of Settings</h4>
+        <div class="pc-issue"><strong>Current bug:</strong> <code>TrainingSection.tsx:87-333</code> owns 5 active-plan controls (weekly schedule, run mode, race goal, race progress, weekly overrides). Wrong place.</div>
+        <div class="pc-fix"><strong>Fix:</strong> Migrate to Programme Schedule tab (weekly schedule) + Run tab (run mode, race goal, race progress, overrides). Settings keeps defaults only (units, audio, shoes, notifications).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <h3>Mockups</h3>
+    <div class="toc-grid">
+      <a href="#s1">1 · Today tab · single modality</a>
+      <a href="#s2">2 · Today tab · doubles day</a>
+      <a href="#s3">3 · Today tab · rest day</a>
+      <a href="#s4">4 · Today tab · completion</a>
+      <a href="#s5">5 · Schedule tab · this week</a>
+      <a href="#s6">6 · Schedule tab · past week</a>
+      <a href="#s7">7 · Lift tab · preserved</a>
+      <a href="#s8">8 · Run tab · race prep 10K</a>
+      <a href="#s9">9 · Run tab · structured</a>
+      <a href="#s10">10 · Run tab · no plan setup</a>
+      <a href="#s11">11 · Run tab · race complete</a>
+      <a href="#s12">12 · Settings · after migration</a>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 1: Today tab — single modality -->
+  <!-- ============================================ -->
+  <div class="section" id="s1">
+    <div class="section-head">
+      <span class="section-num gold">1</span>
+      <h2>Today tab · single modality (lift-only day)</h2>
+    </div>
+    <p class="lede">Default landing for Programme. User has a lift today, no run scheduled. One hero card. Single primary CTA. Clean surface.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Week 3 · Hypertrophy</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav" title="Quick start a run">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg>
+                </div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg active">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 4px 4px 8px;">Tuesday · today</div>
+
+            <div class="session-card lift-bg">
+              <span class="sc-pill today">Today</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon lift">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Push A</div>
+                  <div class="sc-meta">
+                    <span>6 exercises</span><span class="sep">·</span>
+                    <span class="num">~48 min</span><span class="sep">·</span>
+                    <span class="num">8,200 kg</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top: 10px;">
+                <div style="font-size: 12px; color: var(--text); font-weight: 600;">Bench · Incline DB Press · OHP · Lateral Raise · Triceps Pushdown · Skullcrusher</div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta primary">Begin workout</button>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Coming up</div>
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Wed</div>
+                <div class="sr-day">14</div>
+              </div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Easy Run</div>
+                <div class="sr-detail">5 km · Z2 · ~30 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Thu</div>
+                <div class="sr-day">15</div>
+              </div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">6 exercises · ~45 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today tab · lift-only day</strong> · hero card + "Coming up" preview of next 2 days</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag brand">Segmented control</span>Tabs at the top of Programme. iOS-native pill style. <code>Today</code> is the default landing — what most users want on app open.</div>
+        <div class="annotation"><span class="a-tag ok">Hero card</span>Today's session gets the biggest visual weight. Lift-coloured background tint. Exercise list as a single line (full detail on Lift tab).</div>
+        <div class="annotation"><span class="a-tag">Coming up</span>Schedule-row format for the next 2 days. Tap any row → jumps to Schedule tab with that date selected.</div>
+        <div class="annotation"><span class="a-tag">Footprint icon</span>Top-right of Programme. Now goes to <code>/run</code> ad-hoc setup directly (no longer a view switcher — tabs handle that). Quick start for any unplanned run.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 2: Today tab — doubles day -->
+  <!-- ============================================ -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="section-num gold">2</span>
+      <h2>Today tab · doubles day (the killer scenario)</h2>
+    </div>
+    <p class="lede">This is the case the footprint switcher couldn't solve cleanly. With a Today tab, doubles days stack lift card + run card vertically in one view. Both modalities visible at a glance, both independently startable.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Week 3 · Hypertrophy + Base</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg active">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 4px 4px 8px; display: flex; align-items: center; gap: 8px;">
+              <span>Monday · today</span>
+              <span style="background: linear-gradient(90deg, var(--brand-soft), var(--running-soft)); color: var(--text); padding: 2px 8px; border-radius: 6px; font-size: 9px; letter-spacing: 0.05em;">Both</span>
+            </div>
+
+            <!-- Lift card -->
+            <div class="session-card lift-bg">
+              <span class="sc-pill today">AM · Lift</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon lift">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Push A</div>
+                  <div class="sc-meta">
+                    <span>6 exercises</span><span class="sep">·</span>
+                    <span class="num">~48 min</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta primary">Begin workout</button>
+              </div>
+            </div>
+
+            <!-- Run card -->
+            <div class="session-card run-bg">
+              <span class="sc-pill today run">PM · Run</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon run">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="M5 19l5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Easy Run</div>
+                  <div class="sc-meta">
+                    <span>Recovery Z2</span><span class="sep">·</span>
+                    <span class="num">5 km</span><span class="sep">·</span>
+                    <span class="num">~30 min</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-primary">Start planned run</button>
+                <button class="cta run-ghost">Just go for a run</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today tab · doubles day</strong> · "Both" pill · AM/PM order · lift + run independently startable</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag brand">Both pill</span>Gradient purple-to-coral pill in the day header. Universal signal: today has both modalities.</div>
+        <div class="annotation"><span class="a-tag ok">Stacked cards</span>Lift card first (AM by default), run card below (PM). Order configurable per day. Each card is independently completable — finishing the lift turns the lift card to a completed state without touching the run card.</div>
+        <div class="annotation"><span class="a-tag">AM / PM pills</span>Replace "Today" pill with time-of-day context. Reinforces the stacking order and helps users plan their day around it.</div>
+        <div class="annotation"><span class="a-tag">"Just go for a run"</span>Still on the run card. Ghost button. For when user wants to skip the planned easy run and just freeform.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 3: Today tab — rest day -->
+  <!-- ============================================ -->
+  <div class="section" id="s3">
+    <div class="section-head">
+      <span class="section-num gold">3</span>
+      <h2>Today tab · rest day</h2>
+    </div>
+    <p class="lede">Nothing planned. Honest empty state. Always-available "Just go for a run" if the user feels like moving anyway.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Week 3 · Hypertrophy</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg active">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 4px 4px 8px;">Thursday · today</div>
+
+            <div class="session-card">
+              <div style="text-align: center; padding: 28px 12px 10px;">
+                <div style="width: 64px; height: 64px; background: rgba(142,142,147,0.10); color: var(--skipped); border-radius: 20px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </div>
+                <div style="font-size: 20px; font-weight: 800; color: var(--text);">Rest day</div>
+                <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px; max-width: 240px; margin-left: auto; margin-right: auto;">Sleep is the workout. Your recovery feeds tomorrow's Pull A.</div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-ghost">Just go for a run anyway</button>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Coming up</div>
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Fri</div>
+                <div class="sr-day">16</div>
+              </div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">6 exercises · ~45 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Sat</div>
+                <div class="sr-day">17</div>
+              </div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long Run</div>
+                <div class="sr-detail">8 km · Z2 · ~50 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today tab · rest day</strong> · "Sleep is the workout" · run-anyway affordance</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Rest hero</span>Honest empty state. No fake recovery gamification. Just "rest day · here's why" plus the escape hatch.</div>
+        <div class="annotation"><span class="a-tag">"Just go for a run anyway"</span>Ghost button. Tapping fires off /run setup with freeform preset. Doesn't mark anything as complete on the plan — it's an extra activity.</div>
+        <div class="annotation"><span class="a-tag">Coming up</span>Shows tomorrow + day after so user can mentally plan around rest. Reduces "rest day anxiety" — the next session is visible.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 4: Today tab — completion -->
+  <!-- ============================================ -->
+  <div class="section" id="s4">
+    <div class="section-head">
+      <span class="section-num gold">4</span>
+      <h2>Today tab · completion celebration</h2>
+    </div>
+    <p class="lede">User just finished today's planned tempo run. Win banner above. Card flips to completed state with vs-target deltas. "Up next" points to tomorrow.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Week 3 · Hypertrophy + Base</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg active">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div class="win-banner">
+              <div class="wb-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M5 4h14l-1 7a6 6 0 0 1-12 0L5 4z"/></svg>
+              </div>
+              <div class="wb-text">
+                <div class="wb-title">Tempo nailed</div>
+                <div class="wb-sub">4:58 /km · 2s under target · +1 streak day</div>
+              </div>
+              <div style="font-size: 22px;">🎯</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 4px 4px 8px;">Tuesday · today</div>
+
+            <div class="session-card">
+              <span class="sc-pill done">✓ Completed</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon success">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta">
+                    <span class="num">8.04 km</span><span class="sep">·</span>
+                    <span class="num">39:55</span><span class="sep">·</span>
+                    <span class="num">4:58 /km</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px;">
+                <div style="background: var(--success-soft); border-radius: 10px; padding: 8px; text-align: center;">
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--success); font-weight: 700;">vs Target</div>
+                  <div style="font-size: 16px; font-weight: 800; color: var(--success); font-feature-settings: 'tnum';">−2s</div>
+                </div>
+                <div style="background: var(--muted-bg); border-radius: 10px; padding: 8px; text-align: center;">
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Distance</div>
+                  <div style="font-size: 16px; font-weight: 800; color: var(--text); font-feature-settings: 'tnum';">+40m</div>
+                </div>
+                <div style="background: var(--muted-bg); border-radius: 10px; padding: 8px; text-align: center;">
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Cal</div>
+                  <div style="font-size: 16px; font-weight: 800; color: var(--text); font-feature-settings: 'tnum';">578</div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta secondary">View run summary</button>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Up next</div>
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Wed</div>
+                <div class="sr-day">14</div>
+              </div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">6 exercises · ~45 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Today · completed</strong> · win banner · vs-target deltas · "Up next" preview</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Win banner</span>Auto-dismisses 48h. Anchors the completion moment without being modal/intrusive.</div>
+        <div class="annotation"><span class="a-tag">Delta tiles</span>Green tile for "beat target" (faster than 5:00 by 2s). Neutral grey for on-target distance. Calories just informational.</div>
+        <div class="annotation"><span class="a-tag warn">Future polish</span>Bigger PR moment (gold "PB" pill) appears when the run is a personal best — covered in v6 section 7.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 5: Schedule tab — this week -->
+  <!-- ============================================ -->
+  <div class="section" id="s5">
+    <div class="section-head">
+      <span class="section-num schedule">5</span>
+      <h2>Schedule tab · this week (the operational view)</h2>
+    </div>
+    <p class="lede">7-day list. Each row: date · type pill · planned items · status. Tap a row to drill in. Long-press for actions (move / swap / skip). This is where users manage their week — not Settings.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Week 3 · Hypertrophy + Base</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg active">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn active">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 3</div>
+                <div class="wpr-phase">This week</div>
+              </div>
+              <div class="nav-btn active">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Mon</div>
+                <div class="sr-day">12</div>
+              </div>
+              <div class="sr-type-pill both">Both</div>
+              <div class="sr-content">
+                <div class="sr-name">Push A + Easy 5km</div>
+                <div class="sr-detail">AM lift · PM run</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+
+            <div class="schedule-row today">
+              <div class="sr-date today">
+                <div class="sr-dow">Tue</div>
+                <div class="sr-day">13</div>
+              </div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Tempo Run · 8 km</div>
+                <div class="sr-detail">Today · target 5:00 /km</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Wed</div>
+                <div class="sr-day">14</div>
+              </div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">6 exercises · ~45 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Thu</div>
+                <div class="sr-day">15</div>
+              </div>
+              <div class="sr-type-pill rest">Rest</div>
+              <div class="sr-content">
+                <div class="sr-name">Rest day</div>
+                <div class="sr-detail">Recovery</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Fri</div>
+                <div class="sr-day">16</div>
+              </div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Legs A</div>
+                <div class="sr-detail">5 exercises · ~55 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Sat</div>
+                <div class="sr-day">17</div>
+              </div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long Run · 8 km</div>
+                <div class="sr-detail">Z2 aerobic · ~50 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date">
+                <div class="sr-dow">Sun</div>
+                <div class="sr-day">18</div>
+              </div>
+              <div class="sr-type-pill rest">Rest</div>
+              <div class="sr-content">
+                <div class="sr-name">Rest day</div>
+                <div class="sr-detail">Recovery</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div style="margin-top: 14px; display: flex; gap: 8px;">
+              <button class="cta secondary" style="flex: 1;">Edit week structure</button>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Schedule tab · this week</strong> · 7-day operational list · Both day on Monday · today is Tuesday</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag schedule">Date-anchored</span>Each row is a calendar day. Type pill (Lift / Run / Both / Rest) immediately classifies. This is the source of truth for "what week looks like."</div>
+        <div class="annotation"><span class="a-tag ok">Both pill</span>Gradient purple-to-coral pill. The user can see at-a-glance which days are doubles. Solves the visibility problem cleanly.</div>
+        <div class="annotation"><span class="a-tag">Today border</span>The today row gets a 2px brand-purple outline. Clear "you are here" without needing a pill.</div>
+        <div class="annotation"><span class="a-tag">Tap row</span>→ drills into that day's detail (lift exercises + run target). Long-press → menu with Move / Swap / Skip / Mark done manually.</div>
+        <div class="annotation"><span class="a-tag warn">"Edit week structure"</span>Bottom CTA opens the weekly schedule editor (moved from Settings). Tap-to-cycle Lift / Run / Both / Rest per day. Saves and regenerates the week.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 6: Schedule tab — past week -->
+  <!-- ============================================ -->
+  <div class="section" id="s6">
+    <div class="section-head">
+      <span class="section-num schedule">6</span>
+      <h2>Schedule tab · past week (history nav)</h2>
+    </div>
+    <p class="lede">Use the WeekPhaseRow chevrons to navigate weeks. Past-week rows show actual completion status. Adherence summary at the bottom.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Viewing past week</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg active">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div style="background: var(--brand-soft-6); border-radius: 12px; padding: 10px 14px; margin: 4px 0 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--brand); font-weight: 600;">
+              <span>←</span><span>Viewing <strong>last week</strong></span>
+              <span style="margin-left: auto; font-weight: 800;">Back to this week ›</span>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn active">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 2</div>
+                <div class="wpr-phase">Last week</div>
+              </div>
+              <div class="nav-btn active">›</div>
+            </div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Mon</div><div class="sr-day">5</div></div>
+              <div class="sr-type-pill both">Both</div>
+              <div class="sr-content">
+                <div class="sr-name">Push A + Easy 5km</div>
+                <div class="sr-detail">Both done</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Tue</div><div class="sr-day">6</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Tempo · 7.8 km</div>
+                <div class="sr-detail">4:58 /km · −2s vs target</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Wed</div><div class="sr-day">7</div></div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Pull A</div>
+                <div class="sr-detail">Completed Wed evening</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Fri</div><div class="sr-day">9</div></div>
+              <div class="sr-type-pill lift">Lift</div>
+              <div class="sr-content">
+                <div class="sr-name">Legs A</div>
+                <div class="sr-detail">Skipped — busy day</div>
+              </div>
+              <div class="sr-status missed">Missed</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">10</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long · 7.2 km</div>
+                <div class="sr-detail">5:48 /km · steady aerobic</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+
+            <div style="background: var(--card); border-radius: 14px; padding: 14px 16px; margin-top: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin-bottom: 10px;">Week 2 summary</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Completed</div>
+                  <div style="font-size: 18px; font-weight: 800;">4 / 5</div>
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Total km</div>
+                  <div style="font-size: 18px; font-weight: 800; font-feature-settings: 'tnum';">20.0</div>
+                </div>
+                <div>
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Adherence</div>
+                  <div style="font-size: 18px; font-weight: 800; color: var(--success); font-feature-settings: 'tnum';">80%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Schedule tab · last week</strong> · row statuses · 80% adherence · 4 of 5 done</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag">History banner</span>"Viewing last week · Back to this week" persistent at top of the tab. Coral if the past-week view was reached via Run tab; brand purple here (Schedule tab).</div>
+        <div class="annotation"><span class="a-tag">Row detail</span>Past rows show actual outcomes ("4:58 /km · −2s vs target"), not target. Status pill on the right (Done / Missed). Tap → opens the saved workout / run summary.</div>
+        <div class="annotation"><span class="a-tag schedule">Week summary</span>Three numbers: completed / total km / adherence %. Green when ≥80%, amber 50-79%, coral &lt;50%.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 7: Lift tab — preserved -->
+  <!-- ============================================ -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="section-num">7</span>
+      <h2>Lift tab · current Programme behavior preserved</h2>
+    </div>
+    <p class="lede">Identical to today's Programme. Circular DayStepper, WeekPhaseRow, session card with full exercise list. Zero visual regression. Optional coral doubles dot on circles where the same day also has a run.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Built for muscle · UL · 4 days/week</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg active">Lift</div>
+              <div class="seg">Run</div>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn disabled">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 3</div>
+                <div class="wpr-phase">Hypertrophy</div>
+              </div>
+              <div class="nav-btn disabled">›</div>
+            </div>
+
+            <div class="day-stepper">
+              <div class="day-circle-col">
+                <div class="day-circle-wrap">
+                  <div class="day-circle completed"><svg class="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div class="doubles-dot run"></div>
+                </div>
+                <div class="day-label completed">Push A</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle-wrap">
+                  <div class="day-circle today-selected">2</div>
+                </div>
+                <div class="day-label today">Pull A</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle-wrap">
+                  <div class="day-circle">3</div>
+                </div>
+                <div class="day-label">Legs A</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle-wrap">
+                  <div class="day-circle">4</div>
+                  <div class="doubles-dot run"></div>
+                </div>
+                <div class="day-label">Push B</div>
+              </div>
+            </div>
+
+            <div class="session-card">
+              <span class="sc-pill today">Today</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon lift">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Pull A</div>
+                  <div class="sc-meta"><span>6 exercises</span><span class="sep">·</span><span class="num">~45 min</span></div>
+                </div>
+              </div>
+              <div style="margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft);">
+                  <span style="font-size: 13px; font-weight: 600;">Barbell Row</span>
+                  <span style="font-size: 12px; color: var(--text-muted); font-feature-settings: 'tnum';">4 × 8 · 60kg</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft);">
+                  <span style="font-size: 13px; font-weight: 600;">Lat Pulldown</span>
+                  <span style="font-size: 12px; color: var(--text-muted); font-feature-settings: 'tnum';">3 × 10 · 55kg</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                  <span style="font-size: 13px; font-weight: 600;">Cable Row</span>
+                  <span style="font-size: 12px; color: var(--text-muted); font-feature-settings: 'tnum';">3 × 12 · 45kg</span>
+                </div>
+                <div style="font-size: 11px; color: var(--brand); font-weight: 700; margin-top: 6px;">+ 3 more</div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta primary">Start workout</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Lift tab</strong> · DayStepper preserved · coral doubles dot on Mon (done) and Push B (upcoming)</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Identical chassis</span>Existing Programme code path renders this tab unchanged. <code>DayStepper.tsx</code>, <code>WeekPhaseRow</code>, session card, exercise list — all preserved.</div>
+        <div class="annotation"><span class="a-tag">Doubles dot</span>12px coral dot on lift circles when the same day also has a planned run. Pure visual signal — tapping the circle still selects that lift workout.</div>
+        <div class="annotation"><span class="a-tag warn">Requires P0</span>Doubles dots only render correctly AFTER the scheduler fix (P0 prereq 1). Currently the scheduler can't produce doubles, so this dot would never appear.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 8: Run tab — race prep 10K -->
+  <!-- ============================================ -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="section-num run">8</span>
+      <h2>Run tab · race prep 10K · 12 weeks</h2>
+    </div>
+    <p class="lede">Race prep is the flagship surface. Race strip at top, this week's runs as cards, plan controls at the bottom. Owner of all run-plan state — race goal, race progress, weekly template overrides, mode toggle.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">10K · 14 Aug 2026</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg active" style="color: var(--running);">Run</div>
+            </div>
+
+            <div class="race-strip">
+              <div class="rs-head">
+                <div class="rs-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <div class="rs-info">
+                  <div class="rs-title">10K · 14 Aug<span class="rs-phase">Base</span></div>
+                  <div class="rs-sub">Week 3 of 12 · 84 days to race</div>
+                </div>
+              </div>
+              <div class="rs-progress"><div class="rs-progress-fill" style="width: 25%;"></div></div>
+              <div class="rs-footer">This week <strong>22 km</strong> · Long run <strong>8 km Sat</strong></div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 6px 4px 8px;">This week's runs</div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Tue</div><div class="sr-day">13</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Tempo · 8 km</div>
+                <div class="sr-detail">Today · target 5:00 /km</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Thu</div><div class="sr-day">15</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Easy · 6 km</div>
+                <div class="sr-detail">Z2 recovery</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">17</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long · 8 km</div>
+                <div class="sr-detail">Z2 aerobic · ~50 min</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Plan controls</div>
+
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: var(--running-soft); color: var(--running);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <div class="sr-label">Race goal</div>
+              </div>
+              <div class="sr-value">10K · 14 Aug ›</div>
+            </div>
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: var(--brand-soft); color: var(--brand);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 11h18"/></svg>
+                </div>
+                <div class="sr-label">Run days</div>
+              </div>
+              <div class="sr-value">3 / week ›</div>
+            </div>
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: rgba(217,136,78,0.14); color: var(--nutrition);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6m0-6l-6 6"/></svg>
+                </div>
+                <div class="sr-label">View full 12-week plan</div>
+              </div>
+              <div class="sr-value">›</div>
+            </div>
+
+            <button class="cta secondary" style="margin-top: 14px;">Pause plan</button>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run tab · race prep 10K</strong> · race strip + 3 runs + plan controls</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag run">Owner of run-plan state</span>This tab owns race goal, mode toggle, weekly run overrides, run days target — the controls that were in Settings before. Active plan management lives here.</div>
+        <div class="annotation"><span class="a-tag">Plan controls</span>Settings-row format. Tap each → opens its own editor sheet. "Pause plan" reverts to freeform mode without losing the race goal.</div>
+        <div class="annotation"><span class="a-tag run">Race date adapts</span>For variable-duration plans (4-week 5K, 20-week marathon), the race strip's visual indicator switches between progress bar (&lt;8w), dots (8-16w), and phase-segment bar (17+w). All in one component.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 9: Run tab — structured -->
+  <!-- ============================================ -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="section-num run">9</span>
+      <h2>Run tab · structured (no race date)</h2>
+    </div>
+    <p class="lede">User runs 3x/week but isn't training for a race. No race strip. Mode toggle visible. Still owns run-day count and template overrides.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Run plan · structured</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg active" style="color: var(--running);">Run</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 8px 4px 8px;">This week's runs</div>
+
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Mon</div><div class="sr-day">12</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Easy · 5 km</div>
+                <div class="sr-detail">Z2 recovery</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+            <div class="schedule-row today">
+              <div class="sr-date today"><div class="sr-dow">Tue</div><div class="sr-day">13</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Tempo · 8 km</div>
+                <div class="sr-detail">Today · target 5:00 /km</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">17</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Long · 9 km</div>
+                <div class="sr-detail">Z2 aerobic</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Plan</div>
+
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: var(--running-soft); color: var(--running);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+                </div>
+                <div class="sr-label">Mode</div>
+              </div>
+              <div class="sr-value">Structured ›</div>
+            </div>
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: var(--brand-soft); color: var(--brand);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 11h18"/></svg>
+                </div>
+                <div class="sr-label">Run days</div>
+              </div>
+              <div class="sr-value">3 / week ›</div>
+            </div>
+            <div class="settings-row">
+              <div style="display: flex; align-items: center;">
+                <div class="sr-icon" style="background: rgba(217,136,78,0.14); color: var(--nutrition);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <div class="sr-label">Set a race goal</div>
+              </div>
+              <div class="sr-value">›</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run tab · structured</strong> · no race strip · 3 runs this week · upgrade path to race prep at bottom</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">No race strip</span>Race strip only when mode is race_prep. Structured users get a cleaner surface.</div>
+        <div class="annotation"><span class="a-tag run">"Set a race goal"</span>Upgrade path to race prep. Tap → opens race-goal editor sheet (distance + date). Saving switches the mode to race_prep and regenerates the schedule.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 10: Run tab — no plan -->
+  <!-- ============================================ -->
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="section-num run">10</span>
+      <h2>Run tab · no plan (freeform user)</h2>
+    </div>
+    <p class="lede">Freeform user with no scheduled runs. Empty state with two setup options + always-available "Just go for a run" escape. This is also the state a race-elapsed user reverts to.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Run plan · freeform</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg active" style="color: var(--running);">Run</div>
+            </div>
+
+            <div style="text-align: center; padding: 28px 12px 18px;">
+              <div style="width: 72px; height: 72px; background: var(--running-soft); color: var(--running); border-radius: 22px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg>
+              </div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 8px;">No run plan yet</h2>
+              <p style="font-size: 13px; color: var(--text-muted); margin: 0 auto 4px; max-width: 280px;">Pick a structure or just hit Start when you feel like running.</p>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 8px 4px 8px;">Set up a plan</div>
+
+            <div class="session-card" style="padding: 14px 16px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="sc-leading-icon lift" style="width: 40px; height: 40px;">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 14px; font-weight: 800;">Structured</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">2-5 runs / week · no race date</div>
+                </div>
+                <div style="color: var(--text-muted); font-weight: 800;">›</div>
+              </div>
+            </div>
+            <div class="session-card" style="padding: 14px 16px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="sc-leading-icon run" style="width: 40px; height: 40px;">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 14px; font-weight: 800;">Race prep</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">5K / 10K / Half / Marathon · 4-26 weeks</div>
+                </div>
+                <div style="color: var(--running); font-weight: 800;">›</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Or skip a plan</div>
+              <button class="cta run-ghost">Just go for a run</button>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run tab · no plan</strong> · setup options + freeform escape</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag run">Empty hero</span>"No run plan yet" — honest, not gamified. Two setup paths, plus the escape. No pressure.</div>
+        <div class="annotation"><span class="a-tag ok">Race-elapsed fallback</span>When a race date passes, the Run tab reverts to this state with a small "Your last plan: 10K · 14 Aug · Completed" line above the setup options.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 11: Race complete -->
+  <!-- ============================================ -->
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="section-num gold">11</span>
+      <h2>Run tab · race complete (celebration)</h2>
+    </div>
+    <p class="lede">User just finished their race. Race strip flips to celebration gradient. Race recap stats. "Set a new goal" CTA. Stays for ~14 days then auto-decays to no-plan state.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">10K · Complete · 4 days ago</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn running-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="segmented">
+              <div class="seg">Today</div>
+              <div class="seg">Schedule</div>
+              <div class="seg">Lift</div>
+              <div class="seg active" style="color: var(--running);">Run</div>
+            </div>
+
+            <div class="race-strip" style="background: linear-gradient(135deg, var(--success-soft), var(--gold-soft));">
+              <div class="rs-head">
+                <div class="rs-icon" style="background: var(--gold-soft); color: var(--gold);">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M5 4h14l-1 7a6 6 0 0 1-12 0L5 4z"/></svg>
+                </div>
+                <div class="rs-info">
+                  <div class="rs-title">10K · 14 Aug<span class="rs-phase" style="background: var(--gold-soft); color: var(--gold);">Complete</span></div>
+                  <div class="rs-sub">50:38 · 5:04 /km avg</div>
+                </div>
+              </div>
+              <div class="rs-progress" style="background: rgba(76,175,80,0.15);"><div class="rs-progress-fill" style="width: 100%; background: var(--success);"></div></div>
+              <div class="rs-footer">12 weeks · <strong>32 runs · 268 km total</strong></div>
+              <div style="margin-top: 12px;">
+                <button class="cta run-primary">Set a new goal</button>
+              </div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 18px 4px 8px;">Race week recap</div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Sat</div><div class="sr-day">14</div></div>
+              <div class="sr-type-pill" style="background: var(--gold-soft); color: var(--gold);">Race</div>
+              <div class="sr-content">
+                <div class="sr-name">10.05 km · 50:38</div>
+                <div class="sr-detail">PB · 5:04 /km</div>
+              </div>
+              <div class="sr-actions">›</div>
+            </div>
+            <div class="schedule-row">
+              <div class="sr-date"><div class="sr-dow">Thu</div><div class="sr-day">12</div></div>
+              <div class="sr-type-pill run">Run</div>
+              <div class="sr-content">
+                <div class="sr-name">Shakeout · 3 km</div>
+                <div class="sr-detail">Easy taper</div>
+              </div>
+              <div class="sr-status done">Done</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run tab · race complete</strong> · green-gold gradient · 50:38 result · race week recap</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag gold">Celebration</span>Race strip background flips. Trophy icon. "Complete" phase pill in gold. Auto-decays back to no-plan empty state after 14 days.</div>
+        <div class="annotation"><span class="a-tag ok">Recap</span>"32 runs · 268 km" — totals the whole block, not just race day. Anchors the achievement.</div>
+        <div class="annotation"><span class="a-tag">Race row</span>Race-week recap below the strip. Gold race pill on Saturday row. Tap → opens RunDetail for the race itself.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 12: Settings after migration -->
+  <!-- ============================================ -->
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="section-num">12</span>
+      <h2>Settings · after the migration (defaults only)</h2>
+    </div>
+    <p class="lede">Active plan controls have moved to Programme. Settings keeps defaults: units, audio cues defaults, shoes, privacy zones, notifications. Plus a deep-link banner at the top pointing to Programme for plan settings.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar"><span class="time">9:41</span><div class="ind"><span>•••</span></div></div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Settings</h1>
+                <div class="sub">Defaults · preferences · account</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="deep-link-banner">
+              <div class="dl-icon">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div class="dl-text">
+                <div class="dl-title">Plan settings have moved</div>
+                <div class="dl-sub">Race goal · run days · weekly schedule</div>
+              </div>
+              <div class="dl-arrow">→ Programme</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 4px 8px;">Training defaults</div>
+
+            <div class="settings-row">
+              <div class="sr-label">Default rest time</div>
+              <div class="sr-value">90s ›</div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Auto-start rest timer</div>
+              <div style="width: 40px; height: 24px; background: var(--success); border-radius: 12px; position: relative;"><div style="position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; top: 2px; right: 2px;"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Audio cues</div>
+              <div style="width: 40px; height: 24px; background: var(--success); border-radius: 12px; position: relative;"><div style="position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; top: 2px; right: 2px;"></div></div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 4px 8px;">Equipment</div>
+
+            <div class="settings-row">
+              <div class="sr-label">Shoes</div>
+              <div class="sr-value">3 active ›</div>
+            </div>
+
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 14px 4px 8px;">Privacy & data</div>
+
+            <div class="settings-row">
+              <div class="sr-label">Privacy zones</div>
+              <div class="sr-value">2 set ›</div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Units</div>
+              <div class="sr-value">km · kg ›</div>
+            </div>
+            <div class="settings-row">
+              <div class="sr-label">Notifications</div>
+              <div class="sr-value">›</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Settings · after migration</strong> · defaults only · deep-link banner up top</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Lean Settings</span>What stays: rest timer defaults, audio cues defaults, shoes, privacy zones, units, notifications. What left: weekly schedule, run mode, race goal, race progress, weekly overrides.</div>
+        <div class="annotation"><span class="a-tag brand">Deep-link banner</span>Persists for one release. Educates existing users that plan controls moved. Same pattern as the existing <code>/log → /food</code> migration.</div>
+        <div class="annotation"><span class="a-tag">"Cut / Lean Bulk / Recomp"</span>Moves to Food / Nutrition where it belongs (it was always a nutrition phase, not a training goal). Verified by code review.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Build phasing -->
+  <div class="section">
+    <h2 style="color: #fff;">Build phasing · 7 days total</h2>
+    <p class="lede">P0 prerequisites first. Then the 4-tab Programme. Then edge states. Each phase shippable independently.</p>
+
+    <table class="phasing-table">
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Work</th>
+          <th>Days</th>
+          <th>Acceptance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="phase-pill p0">P0</span></td>
+          <td>Fix scheduler — drive from <code>weekSchedule</code> with Both day support</td>
+          <td><span class="num">0.75</span></td>
+          <td>A "Both" day in <code>weekSchedule</code> produces a scheduled run on that lift day</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p0">P0</span></td>
+          <td>Add <code>scheduledRunId</code> field + route all run CTAs by it</td>
+          <td><span class="num">0.5</span></td>
+          <td>RunSummary completes the exact scheduled instance, not just "any tempo this week"</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p0">P0</span></td>
+          <td>Move TrainingSection controls to Programme Run tab + deep-link Settings</td>
+          <td><span class="num">0.75</span></td>
+          <td>Settings no longer contains race goal form or weekly run overrides</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p1">P1</span></td>
+          <td>Add segmented control to <code>Program.tsx</code>: Today | Schedule | Lift | Run</td>
+          <td><span class="num">0.5</span></td>
+          <td>Tabs switch the content area; URL state persists tab choice</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p1">P1</span></td>
+          <td>Build <code>TodayTab.tsx</code> with single / doubles / rest / completion states</td>
+          <td><span class="num">1.0</span></td>
+          <td>Doubles day shows lift card + run card stacked</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p1">P1</span></td>
+          <td>Build <code>ScheduleTab.tsx</code> with the 7-day operational list</td>
+          <td><span class="num">1.0</span></td>
+          <td>Move / swap / skip work end-to-end; past-week navigation works</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p2">P2</span></td>
+          <td>Build <code>RunTab.tsx</code> with race strip + this week's runs + plan controls</td>
+          <td><span class="num">1.0</span></td>
+          <td>Race goal editor, run-days editor, full-plan modal all work</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p2">P2</span></td>
+          <td>Rename Goal to nutrition phase; move to Food</td>
+          <td><span class="num">0.25</span></td>
+          <td>"Cut / Recomp / Lean Bulk" appears in Food, not Programme</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p3">P3</span></td>
+          <td>Run mismatch reconciliation UX</td>
+          <td><span class="num">0.5</span></td>
+          <td>Off-plan runs save without auto-completing planned sessions</td>
+        </tr>
+        <tr>
+          <td><span class="phase-pill p3">P3</span></td>
+          <td>Race elapsed states + completion celebration</td>
+          <td><span class="num">0.75</span></td>
+          <td>Race date passes → cleanly resolves to complete or no-show</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 24px; background: rgba(76,175,80,0.10); border-radius: 12px; padding: 16px 20px; border-left: 3px solid var(--success);">
+      <div style="color: #fff; font-weight: 700; font-size: 13px; margin-bottom: 6px;">Order matters</div>
+      <div style="color: #c0c0c8; font-size: 12px; line-height: 1.6;">Ship P0 first (scheduler + routing + settings migration). These are bug fixes, not new features — without them, the 4-tab UI is built on broken foundations. Doubles dots, scheduled-run identity, and active-plan ownership all depend on the P0 work landing first.</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

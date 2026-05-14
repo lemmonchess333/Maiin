@@ -146,6 +146,14 @@ export interface UserProfileRunning {
     targetDate: string;
   };
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
+  /**
+   * Schema version for `weekSchedule` shape. v7 spec uses this for
+   * read-side backfill: when missing, `backfillWeekScheduleIfMissing`
+   * derives the structure from `weeklyWorkoutsTarget` +
+   * `weeklyRunDaysTarget` via `generateSchedule()`. Bump when the
+   * ScheduleDay shape changes incompatibly.
+   */
+  weekScheduleVersion?: number;
 }
 
 /** Onboarding quiz answers */
