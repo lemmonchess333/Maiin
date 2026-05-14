@@ -94,12 +94,16 @@ describe("generateSchedule", () => {
     expect(schedule[0].type).toBe("lift");
   });
 
-  it("does not exceed 7 slots even if lift+run > 7", () => {
+  it("does not exceed 7 slots even if lift+run > 7 (now uses Both days, P0-B)", () => {
     const schedule = generateSchedule(5, 5);
     expect(schedule).toHaveLength(7);
-    // Only 7 slots available so only first 7 pattern entries are assigned
-    const restCount = schedule.filter((d) => d.type === "rest").length;
-    expect(restCount).toBe(0);
+    // P0-B: previously truncated silently. Now uses "both" days to
+    // preserve every requested session.
+    const counts = countByType(schedule);
+    expect(counts.lift + counts.both).toBe(5); // total lift exposure
+    expect(counts.run + counts.both).toBe(5);  // total run exposure
+    expect(counts.both).toBeGreaterThanOrEqual(1);
+    expect(counts.rest).toBe(0);
   });
 
   it("handles 1 lift, 0 run — single lift day on Monday", () => {
@@ -150,6 +154,117 @@ describe("getTodaySchedule", () => {
   it("returns null for empty schedule", () => {
     vi.setSystemTime(new Date("2026-03-11T12:00:00"));
     expect(getTodaySchedule([])).toBeNull();
+  });
+});
+
+describe("generateSchedule · P0-B Both-day support", () => {
+  // The headline acceptance test from the spec. Pre-P0-B, this case
+  // silently truncated one session. Now it produces a "both" day.
+  it("generateSchedule(6, 2) → 6 lift exposures + 2 run exposures + ≥1 both, no truncation", () => {
+    const schedule = generateSchedule(6, 2);
+    const counts = countByType(schedule);
+    expect(counts.lift + counts.both).toBe(6);
+    expect(counts.run + counts.both).toBe(2);
+    expect(counts.both).toBeGreaterThanOrEqual(1);
+    expect(counts.rest).toBe(7 - 6 - 1); // 0
+    expect(schedule).toHaveLength(7);
+  });
+
+  it("generateSchedule(4, 2) → no forced doubles (total fits in 7)", () => {
+    const schedule = generateSchedule(4, 2);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(0);
+    expect(counts.lift).toBe(4);
+    expect(counts.run).toBe(2);
+    expect(counts.rest).toBe(1);
+  });
+
+  it("generateSchedule(7, 7) → 7 both days, full hybrid week", () => {
+    const schedule = generateSchedule(7, 7);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(7);
+    expect(counts.lift).toBe(0); // all consumed by 'both'
+    expect(counts.run).toBe(0);
+    expect(counts.rest).toBe(0);
+  });
+
+  it("generateSchedule(5, 4) → 2 both + 3 lift + 2 run + 0 rest", () => {
+    const schedule = generateSchedule(5, 4);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(2);            // total - 7 = 9 - 7
+    expect(counts.lift).toBe(3);            // 5 - 2
+    expect(counts.run).toBe(2);             // 4 - 2
+    expect(counts.rest).toBe(0);
+    // exposure check
+    expect(counts.lift + counts.both).toBe(5);
+    expect(counts.run + counts.both).toBe(4);
+  });
+
+  it("generateSchedule(6, 4) → 3 both + 3 lift + 1 run + 0 rest", () => {
+    const schedule = generateSchedule(6, 4);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(3);
+    expect(counts.lift).toBe(3);
+    expect(counts.run).toBe(1);
+    expect(counts.rest).toBe(0);
+    expect(counts.lift + counts.both).toBe(6);
+    expect(counts.run + counts.both).toBe(4);
+  });
+
+  it("places Both days in highest-priority slots (Mon/Wed/Fri preferred)", () => {
+    const schedule = generateSchedule(6, 2);
+    // 1 both day. Highest-priority slot is Mon (day=1).
+    expect(schedule[1].type).toBe("both");
+  });
+
+  it("never produces a 'both' day when total ≤ 7", () => {
+    for (let lift = 0; lift <= 7; lift++) {
+      for (let run = 0; run <= 7 - lift; run++) {
+        const schedule = generateSchedule(lift, run);
+        const counts = countByType(schedule);
+        expect(counts.both).toBe(0);
+      }
+    }
+  });
+
+  it("is idempotent — generating the same input twice produces identical schedules", () => {
+    const a = generateSchedule(6, 2);
+    const b = generateSchedule(6, 2);
+    expect(a).toEqual(b);
+  });
+
+  it("handles degenerate single-modality overflow (0 lift, 8 runs) without crashing", () => {
+    // No lift to pair with, so no Both days possible. Function should
+    // cap at 7 days of runs rather than emitting negative restCount.
+    const schedule = generateSchedule(0, 8);
+    expect(schedule).toHaveLength(7);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(0);
+    expect(counts.lift).toBe(0);
+    // Either 7 runs (capped) or some mix — the key invariant is no crash and 7 days
+    expect(counts.run + counts.rest).toBe(7);
+  });
+
+  it("handles degenerate single-modality overflow (8 lift, 0 runs) without crashing", () => {
+    const schedule = generateSchedule(8, 0);
+    expect(schedule).toHaveLength(7);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(0);
+    expect(counts.run).toBe(0);
+    expect(counts.lift + counts.rest).toBe(7);
+  });
+
+  it("returns valid 7-day schedule even at maximum hybrid (5 lift, 5 run)", () => {
+    const schedule = generateSchedule(5, 5);
+    expect(schedule).toHaveLength(7);
+    const counts = countByType(schedule);
+    expect(counts.both).toBe(3);            // 10 - 7
+    expect(counts.lift).toBe(2);            // 5 - 3
+    expect(counts.run).toBe(2);             // 5 - 3
+    expect(counts.rest).toBe(0);
+    // Lift + run exposure preserved
+    expect(counts.lift + counts.both).toBe(5);
+    expect(counts.run + counts.both).toBe(5);
   });
 });
 
