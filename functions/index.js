@@ -250,6 +250,8 @@ async function isFlagEnabled(key) {
 // ONBOARDING — bypasses security rules via Admin SDK
 // ══════════════════════════════════════════════
 
+const { validatePlanPayload } = require("./lib/validatePlanPayload");
+
 exports.completeOnboarding = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
@@ -264,7 +266,7 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
 
   try {
     // Validate required fields
-    const {profileData: rawProfileData, programState} = data;
+    const {profileData: rawProfileData, programState, weekSchedule: rawWeekSchedule} = data;
     if (!rawProfileData || typeof rawProfileData !== "object" || Array.isArray(rawProfileData)) {
       throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
     }
@@ -294,6 +296,39 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       }
     }
 
+    // P0-4: v7 plan-payload gate. Activates whenever the request
+    // looks like a v7 onboarding submission (weekSchedule present,
+    // either as a top-level field or threaded onto profileData). The
+    // sanitiser already validates structural shape of weekSchedule;
+    // this layer pins the cross-document invariants the sanitiser
+    // can't see (schema versions present, runMode/raceGoal
+    // consistency, runDay status enum, no UTC ISO leaks).
+    //
+    // Legacy clients (no weekSchedule + no v7 fields) keep working —
+    // the early-return is the migration bridge until every shipped
+    // client is on v7.
+    const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
+      ? rawWeekSchedule
+      : profileData.weekSchedule;
+    const isV7Payload =
+      Array.isArray(effectiveWeekSchedule) ||
+      profileData.weekScheduleVersion !== undefined ||
+      programState.programSchemaVersion !== undefined ||
+      Array.isArray(programState.runDays);
+    if (isV7Payload) {
+      const errors = validatePlanPayload({
+        profileData,
+        programState,
+        weekSchedule: effectiveWeekSchedule,
+      });
+      if (errors.length > 0) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          `Invalid plan payload: ${errors.join("; ")}`,
+        );
+      }
+    }
+
     // Force correct ownership + subscription tier. These overwrite
     // any sanitiser-passing values from the input — they're
     // server-managed regardless of what the client sent.
@@ -311,7 +346,6 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       // Don't overwrite protected fields on update
       delete profileData.trialExpiresAt;
       delete profileData.createdAt;
-      await userRef.set(profileData, {merge: true});
     } else {
       // New profile: set defaults
       if (!profileData.trialExpiresAt) {
@@ -322,12 +356,23 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       if (!profileData.createdAt) {
         profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
       }
-      await userRef.set(profileData);
     }
 
-    // Write program state
+    // P0-4: atomic batch write so profile + programState land
+    // together. Pre-P0-4 wrote them sequentially; if the second
+    // write failed, the user was left with a hydrated profile but no
+    // programState — onboarding completed flag set, but Programme
+    // tab crashed on its first render. A batch commits both or
+    // neither, matching the contract the spec expects.
     const programRef = userRef.collection("programState").doc("current");
-    await programRef.set(programState);
+    const batch = db.batch();
+    if (existing.exists) {
+      batch.set(userRef, profileData, {merge: true});
+    } else {
+      batch.set(userRef, profileData);
+    }
+    batch.set(programRef, programState);
+    await batch.commit();
 
     return {success: true};
   } catch (err) {
@@ -337,6 +382,116 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
     }
     console.error("completeOnboarding error:", { uid, message: err.message, stack: err.stack });
     throw new functions.https.HttpsError("internal", "Failed to complete onboarding.");
+  }
+});
+
+// ══════════════════════════════════════════════
+// CONFIGURE PLAN — atomic plan rebuild for existing users (P0-4)
+// ══════════════════════════════════════════════
+//
+// Backend half of the Configure Plan wizard (P0-9). The client runs
+// `planBuilder(draft)` locally on Confirm, then sends the result
+// here; this CF validates it via the same `validatePlanPayload`
+// gate used by completeOnboarding and atomically writes both
+// documents.
+//
+// Why a Cloud Function instead of a client batch write:
+//   - Same Firestore-rules-bypass rationale as completeOnboarding —
+//     `weekSchedule`, `programSchemaVersion`, and `runDays` may all
+//     end up rule-restricted to server writes.
+//   - The validator MUST run on the trusted side. Client preflight
+//     gives fast UX errors; the CF is the authoritative gate.
+//   - Atomic batch commit matches onboarding's contract — a partial
+//     write would leave the user with mismatched profile + program
+//     state, which is exactly the corruption the v7 spec exists to
+//     prevent.
+//
+// Payload shape: `{ profileUpdates, programState, weekSchedule }`.
+// `profileUpdates` is a PARTIAL profile patch (the output of
+// `planBuilder().profileUpdates`), not a full profile — Configure
+// Plan is an edit operation, not a create. Existing fields on
+// `users/{uid}` outside the patch are preserved via `merge: true`.
+exports.configurePlan = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+
+  // Same rate-limit envelope as onboarding. The Configure Plan
+  // wizard is a deliberate user action with a confirm step, not a
+  // hot path, so 5/10min is plenty even on retake flows.
+  const limited = await isRateLimited(uid, "configurePlan", 5, 600_000);
+  if (limited) {
+    throw new functions.https.HttpsError("resource-exhausted", "Too many attempts. Please wait.");
+  }
+
+  try {
+    const {
+      profileUpdates: rawProfileUpdates,
+      programState,
+      weekSchedule: rawWeekSchedule,
+    } = data;
+
+    if (!rawProfileUpdates || typeof rawProfileUpdates !== "object" || Array.isArray(rawProfileUpdates)) {
+      throw new functions.https.HttpsError("invalid-argument", "profileUpdates is required.");
+    }
+    if (!programState || typeof programState !== "object") {
+      throw new functions.https.HttpsError("invalid-argument", "programState is required.");
+    }
+
+    // Reuse the onboarding sanitiser — the field set is a subset of
+    // what onboarding accepts, so anything that's safe to write on
+    // first-time onboarding is safe to write on a plan rebuild.
+    // Unknown fields drop to undefined; the resulting object is the
+    // patch that lands on Firestore via merge: true.
+    const profileUpdates = profileSanitizer.sanitizeProfileData(rawProfileUpdates);
+
+    // Configure Plan is always a v7 path — no legacy bypass. The
+    // client must send a valid plan; nothing else makes sense for
+    // this endpoint. weekSchedule may arrive top-level or inside
+    // profileUpdates, same as onboarding.
+    const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
+      ? rawWeekSchedule
+      : profileUpdates.weekSchedule;
+    const errors = validatePlanPayload({
+      profileData: profileUpdates,
+      programState,
+      weekSchedule: effectiveWeekSchedule,
+    });
+    if (errors.length > 0) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Invalid plan payload: ${errors.join("; ")}`,
+      );
+    }
+
+    // Server-managed fields — Configure Plan must never let the
+    // client rewrite ownership, subscription, or onboarding state.
+    delete profileUpdates.uid;
+    delete profileUpdates.subscriptionTier;
+    delete profileUpdates.onboardingComplete;
+    delete profileUpdates.trialExpiresAt;
+    delete profileUpdates.createdAt;
+
+    const db = admin.firestore();
+    const userRef = db.collection("users").doc(uid);
+    const programRef = userRef.collection("programState").doc("current");
+
+    // Atomic — same rationale as completeOnboarding above. The
+    // profile patch and programState rebuild commit together or
+    // not at all.
+    const batch = db.batch();
+    batch.set(userRef, profileUpdates, {merge: true});
+    batch.set(programRef, programState);
+    await batch.commit();
+
+    return {success: true};
+  } catch (err) {
+    if (err instanceof functions.https.HttpsError) {
+      throw err;
+    }
+    console.error("configurePlan error:", { uid, message: err.message, stack: err.stack });
+    throw new functions.https.HttpsError("internal", "Failed to configure plan.");
   }
 });
 
