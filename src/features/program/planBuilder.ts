@@ -40,15 +40,9 @@
 import type { Goal, PrimaryGoal, ProgramState, ScheduledRunDay, RunPlan } from "./programTypes";
 import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "./programTypes";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import {
-  generateScheduledRunId,
-  localDateString,
-  localWeekKey,
-  addLocalDays,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram } from "./programEngine";
-import { generateRacePlan, scheduleStructuredWeek } from "./runScheduler";
+import { generateRacePlanV2, scheduleStructuredWeekV2 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -134,38 +128,18 @@ function buildLiftProgram(input: PlanBuilderInput) {
   );
 }
 
-/** Resolves which calendar day indices are lift days per the
- *  computed weekSchedule. Used as the seed for runScheduler so
- *  runs avoid lift-only days (lift+both stay together). */
-function getLiftDayIndices(weekSchedule: ScheduleDay[]): number[] {
-  return weekSchedule.filter((d) => d.type === "lift" || d.type === "both").map((d) => d.day);
-}
-
-/** Adds v2 shape (id, date, weekKey, status) to a v1
- *  ScheduledRunDay produced by the existing runScheduler. P0-3
- *  will move this into runScheduler itself; for the P0-C skeleton
- *  we post-process so consumers see the full v2 shape. */
-function enrichRunDayWithIdentity(rd: ScheduledRunDay, weekStartDate: Date): ScheduledRunDay {
-  const weekKey = localWeekKey(weekStartDate);
-  const date = localDateString(addLocalDays(weekStartDate, rd.dayIndex));
-  const id = generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
-  return {
-    ...rd,
-    id,
-    weekKey,
-    date,
-    status: rd.completed ? "completed_exact" : "planned",
-  };
-}
-
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
- *  injected currentDate, not wall clock). */
+ *  injected currentDate, not wall clock). Uses the V2 scheduler API
+ *  (P0-3) — both `scheduleStructuredWeekV2` and `generateRacePlanV2`
+ *  drive from `weekSchedule` directly and emit native v2-shaped
+ *  runDays. No post-processing bridge needed here anymore. */
 function buildRunPlan(
   input: PlanBuilderInput,
   weekSchedule: ScheduleDay[],
 ): { runDays: ScheduledRunDay[]; runPlan: RunPlan | undefined } {
-  const weekStart = parseLocalDate(localWeekKey(parseLocalDate(input.currentDate)));
-  const liftDayIndices = getLiftDayIndices(weekSchedule);
+  // The week containing `currentDate` is the plan's week 0. Use
+  // localWeekKey to find the Sunday-start anchor.
+  const weekStart = localWeekKey(parseLocalDate(input.currentDate));
 
   if (input.runMode === "freeform") {
     return { runDays: [], runPlan: undefined };
@@ -177,17 +151,15 @@ function buildRunPlan(
       // validator catches this. Return empty + undefined defensively.
       return { runDays: [], runPlan: undefined };
     }
-    const racePlan = generateRacePlan(
-      input.raceGoal.distance,
-      input.raceGoal.targetDate,
-      input.liftDays,
-      input.weeklyRunDays,
-      liftDayIndices,
-      input.currentDate,        // ← purity: pass currentDate, don't read wall clock
-    );
-    const week0 = (racePlan.weeks[0] ?? []).map((rd) => enrichRunDayWithIdentity(rd, weekStart));
+    const racePlan = generateRacePlanV2({
+      weekSchedule,
+      raceGoal: input.raceGoal,
+      weeklyRunDays: input.weeklyRunDays,
+      currentDate: input.currentDate,
+      weekStart,
+    });
     return {
-      runDays: week0,
+      runDays: racePlan.weeks[0] ?? [],
       runPlan: {
         mode: "race_prep",
         raceGoal: input.raceGoal,
@@ -198,14 +170,12 @@ function buildRunPlan(
   }
 
   // structured
-  const v1RunDays = scheduleStructuredWeek(
-    input.liftDays,
-    input.weeklyRunDays,
-    input.existingState?.weekNumber ?? 1,
-    liftDayIndices,
-  );
   return {
-    runDays: v1RunDays.map((rd) => enrichRunDayWithIdentity(rd, weekStart)),
+    runDays: scheduleStructuredWeekV2({
+      weekSchedule,
+      weekNumber: input.existingState?.weekNumber ?? 1,
+      weekStart,
+    }),
     runPlan: { mode: "structured" },
   };
 }

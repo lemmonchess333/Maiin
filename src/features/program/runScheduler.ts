@@ -5,7 +5,15 @@
    ───────────────────────────────────────────── */
 
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ScheduledRunDay, RunPlan } from "./programTypes";
+import {
+  generateScheduledRunId,
+  localDateString,
+  localWeekKey,
+  addLocalDays,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 // Re-export so existing imports of these types from runScheduler keep
 // working. The single source of truth lives in programTypes (P0-A spec v7).
@@ -255,4 +263,336 @@ export function getCurrentRaceWeek(totalWeeks: number, targetDate: string): numb
 export function getRacePhaseLabel(weekIndex: number, totalWeeks: number): string {
   const phase = getPhaseForWeek(weekIndex, totalWeeks);
   return phase.charAt(0).toUpperCase() + phase.slice(1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   P0-3 · v2 SCHEDULER API · spec v7
+   ═══════════════════════════════════════════════════════════════
+
+   The V2 functions below take `weekSchedule` directly (instead of
+   deriving lift days from a count + cap) and emit ScheduledRunDay
+   in v2 shape (id / date / weekKey / status native — no
+   post-processing bridge in planBuilder).
+
+   Key changes from V1:
+   - Accept the weekSchedule the caller already has (single source
+     of truth — same array Home/Programme render against).
+   - Run-eligible slots = days with type "run" or "both". No more
+     `7 - liftDayCount` cap that previously prevented hybrid users
+     from having scheduled runs on lift days.
+   - Stress-aware long-run placement: prefer non-Both slots so the
+     hardest run isn't accidentally paired with a lift day. If only
+     Both slots are available, accept the pairing (UI can flag it).
+   - Native v2 ScheduledRunDay output: id / date / weekKey / status
+     populated at construction time, not bolted on after.
+   - Compressed-plan rules in race-prep mode: cap hard runs / softer
+     long-run progression / skip intervals when below race-distance
+     minimum weeks. Honest "compressed" labelling.
+
+   V1 functions stay for back-compat with useProgram.ts callers.
+   Migration to V2 happens in P0-5 (onboarding) + Configure Plan. */
+
+/** Helper: enrich a v1-shaped runDay with v2 identity fields.
+ *  Exported so external callers can post-process v1 outputs if
+ *  needed during migration. Internal v2 functions construct
+ *  runDays in this shape directly. */
+export function enrichRunDayV2(
+  rd: ScheduledRunDay,
+  weekStart: Date,
+): ScheduledRunDay {
+  // Already enriched? Don't double-process.
+  if (rd.id && rd.date && rd.weekKey && rd.status) return rd;
+  const weekKey = rd.weekKey ?? localWeekKey(weekStart);
+  const date = rd.date ?? localDateString(addLocalDays(weekStart, rd.dayIndex));
+  const id = rd.id ?? generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
+  return {
+    ...rd,
+    id,
+    weekKey,
+    date,
+    status: rd.status ?? (rd.completed ? "completed_exact" : "planned"),
+  };
+}
+
+/** Pick a long-run slot from available run-eligible day indices.
+ *  Stress-aware: prefer single-modality "run" slots over "both"
+ *  slots so the hardest session isn't paired with a lift day by
+ *  default. Falls back to any available slot (with the same
+ *  weekend bias as V1) when no run-only slots exist. */
+function pickLongRunSlot(
+  runEligibleSlots: number[],
+  weekSchedule: ScheduleDay[],
+): number {
+  // Categorise: run-only (no lift on that day) vs both (lift+run)
+  const runOnlySlots = runEligibleSlots.filter((d) => weekSchedule[d]?.type === "run");
+  const bothSlots = runEligibleSlots.filter((d) => weekSchedule[d]?.type === "both");
+
+  // Preference: weekend run-only > any run-only > weekend both > any both
+  const weekendRunOnly = runOnlySlots.find((d) => d === 0 || d === 6);
+  if (weekendRunOnly !== undefined) return weekendRunOnly;
+  if (runOnlySlots.length > 0) return runOnlySlots[0];
+  const weekendBoth = bothSlots.find((d) => d === 0 || d === 6);
+  if (weekendBoth !== undefined) return weekendBoth;
+  return bothSlots[0] ?? runEligibleSlots[0];
+}
+
+/** Build a runDay in v2 shape directly. */
+function buildRunDayV2(args: {
+  dayIndex: number;
+  templateId: string;
+  type: string;
+  weekStart: Date;
+}): ScheduledRunDay {
+  const weekKey = localWeekKey(args.weekStart);
+  const date = localDateString(addLocalDays(args.weekStart, args.dayIndex));
+  return {
+    id: generateScheduledRunId({ dayIndex: args.dayIndex, templateId: args.templateId }, weekKey),
+    weekKey,
+    date,
+    dayIndex: args.dayIndex,
+    templateId: args.templateId,
+    type: args.type,
+    completed: false,
+    status: "planned",
+  };
+}
+
+/** Resolve a long-run template ID by phase + race-distance peak.
+ *  Centralised here so both structured + race-prep schedules pick
+ *  the same way. */
+function pickLongTemplateId(peakLongKm: number, phase: "base" | "build" | "taper" | "race"): string {
+  if (phase === "taper" || phase === "race") return "easy_30";
+  return peakLongKm >= 15 ? "long_15k" : "long_10k";
+}
+
+export interface StructuredWeekV2Input {
+  /** The user's weekly type structure. Must be 7 entries. */
+  weekSchedule: ScheduleDay[];
+  /** 1-indexed week number (drives even/odd quality alternation). */
+  weekNumber: number;
+  /** Local-date "YYYY-MM-DD" representing the Sunday of the target
+   *  week. Used to populate `date` + `weekKey` on every runDay. */
+  weekStart: string;
+}
+
+/** V2 structured-week scheduler. Drives from `weekSchedule`, emits
+ *  v2-shaped runDays. */
+export function scheduleStructuredWeekV2(input: StructuredWeekV2Input): ScheduledRunDay[] {
+  const runEligibleSlots = input.weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  if (runEligibleSlots.length === 0) return [];
+
+  const weekStart = parseLocalDate(input.weekStart);
+  const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
+  const remaining = runEligibleSlots.filter((d) => d !== longSlot);
+  const result: ScheduledRunDay[] = [];
+
+  // Long run (single — even at 4+ runs/week structured users get one
+  // long, one quality, rest easy).
+  result.push(buildRunDayV2({
+    dayIndex: longSlot,
+    templateId: "long_10k",
+    type: "long",
+    weekStart,
+  }));
+
+  if (remaining.length > 0) {
+    // Quality session — tempo on even weeks, intervals on odd.
+    const isTempoWeek = input.weekNumber % 2 === 0;
+    const qualityType = isTempoWeek ? "tempo" : "intervals";
+    const qualityTemplateId = isTempoWeek
+      ? "tempo_20"
+      : input.weekNumber % 4 < 2
+        ? "5x1k"
+        : "8x400";
+    result.push(buildRunDayV2({
+      dayIndex: remaining[0],
+      templateId: qualityTemplateId,
+      type: qualityType,
+      weekStart,
+    }));
+
+    // Remaining → easy
+    for (let i = 1; i < remaining.length; i++) {
+      result.push(buildRunDayV2({
+        dayIndex: remaining[i],
+        templateId: "easy_30",
+        type: "easy",
+        weekStart,
+      }));
+    }
+  }
+
+  return result.sort((a, b) => a.dayIndex - b.dayIndex);
+}
+
+export interface RacePlanV2Input {
+  weekSchedule: ScheduleDay[];
+  raceGoal: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string };
+  /** Total runs target per week. Used in v1 as the slot cap; in v2
+   *  the weekSchedule is authoritative — this only seeds the structure
+   *  for the race-prep generator's internal planning. */
+  weeklyRunDays: number;
+  /** Local "YYYY-MM-DD". REQUIRED — race-prep totalWeeks calc must
+   *  be deterministic. */
+  currentDate: string;
+  /** Local "YYYY-MM-DD" Sunday of week 0. */
+  weekStart: string;
+}
+
+export interface RacePlanV2Output {
+  totalWeeks: number;
+  /** True when totalWeeks < race-config minWeeks. UI flags this as
+   *  "compressed" so user knows the plan was shortened from the
+   *  ideal. */
+  compressed: boolean;
+  /** Week-by-week scheduled runs. weeks[0] is the current week. */
+  weeks: ScheduledRunDay[][];
+}
+
+/** V2 race-prep generator. Drives from weekSchedule, applies
+ *  compressed-plan safety rules, emits v2-shaped runDays. */
+export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
+  const config = RACE_CONFIGS[input.raceGoal.distance];
+  const now = parseLocalDate(input.currentDate);
+  const target = parseLocalDate(input.raceGoal.targetDate);
+  const diffMs = target.getTime() - now.getTime();
+  const naturalWeeks = Math.max(1, Math.ceil(diffMs / (7 * 86400000)));
+  const totalWeeks = Math.max(naturalWeeks, 2); // hard floor: 2 weeks
+  const compressed = totalWeeks < config.minWeeks;
+
+  const runEligibleSlots = input.weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  if (runEligibleSlots.length === 0) {
+    // Shouldn't happen — race_prep requires at least 2 runs per week
+    // and the UI enforces it. Defensive fallback: empty plan.
+    return { totalWeeks, compressed, weeks: [] };
+  }
+
+  const weekStartDate = parseLocalDate(input.weekStart);
+  const weeks: ScheduledRunDay[][] = [];
+
+  for (let w = 0; w < totalWeeks; w++) {
+    const phase = getPhaseForWeek(w, totalWeeks);
+    // Each week's start advances by 7 days from week 0
+    const weekStart = addLocalDays(weekStartDate, w * 7);
+    const week: ScheduledRunDay[] = [];
+
+    const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
+    const remaining = runEligibleSlots.filter((d) => d !== longSlot);
+
+    // Long run / race day
+    if (phase === "race") {
+      week.push(buildRunDayV2({
+        dayIndex: longSlot,
+        templateId: pickRaceTemplateId(input.raceGoal.distance),
+        type: "race",
+        weekStart,
+      }));
+    } else {
+      week.push(buildRunDayV2({
+        dayIndex: longSlot,
+        templateId: pickLongTemplateId(config.peakLongKm, phase),
+        type: phase === "taper" ? "easy" : "long",
+        weekStart,
+      }));
+    }
+
+    if (remaining.length > 0) {
+      // Compressed-plan rule: cap hard sessions at 1/week (vs 1
+      // long + 1 quality in standard plans during build). Also
+      // skip intervals if heavily compressed (totalWeeks < minWeeks/2).
+      const skipIntervals = compressed && totalWeeks < config.minWeeks / 2;
+      const hardCapApplies = compressed;
+
+      if (phase === "base") {
+        // Base: all easy (compressed plans extend base proportionally
+        // since there's no time for a real build phase)
+        remaining.forEach((d) => week.push(buildRunDayV2({
+          dayIndex: d,
+          templateId: "easy_30",
+          type: "easy",
+          weekStart,
+        })));
+      } else if (phase === "build") {
+        const allowQuality = !hardCapApplies || w % 2 === 0;
+        if (allowQuality && !skipIntervals) {
+          // 1 quality + rest easy (or all easy if compressed and
+          // the long run already consumed the week's quality budget)
+          const qualityType = w % 2 === 0 ? "tempo" : "intervals";
+          const qualityId = qualityType === "tempo" ? "tempo_20" : "5x1k";
+          week.push(buildRunDayV2({
+            dayIndex: remaining[0],
+            templateId: qualityId,
+            type: qualityType,
+            weekStart,
+          }));
+          remaining.slice(1).forEach((d) => week.push(buildRunDayV2({
+            dayIndex: d,
+            templateId: "easy_30",
+            type: "easy",
+            weekStart,
+          })));
+        } else {
+          // Skip quality this week — all easy
+          remaining.forEach((d) => week.push(buildRunDayV2({
+            dayIndex: d,
+            templateId: "easy_30",
+            type: "easy",
+            weekStart,
+          })));
+        }
+      } else if (phase === "taper") {
+        // Taper: 1 short quality + easy. Compressed plans skip the
+        // taper quality entirely (already low volume).
+        if (!compressed) {
+          week.push(buildRunDayV2({
+            dayIndex: remaining[0],
+            templateId: "8x400",
+            type: "intervals",
+            weekStart,
+          }));
+          remaining.slice(1).forEach((d) => week.push(buildRunDayV2({
+            dayIndex: d,
+            templateId: "easy_30",
+            type: "easy",
+            weekStart,
+          })));
+        } else {
+          remaining.forEach((d) => week.push(buildRunDayV2({
+            dayIndex: d,
+            templateId: "easy_30",
+            type: "easy",
+            weekStart,
+          })));
+        }
+      } else {
+        // Race week: 1 shakeout (the long slot already has the race),
+        // rest easy
+        remaining.forEach((d) => week.push(buildRunDayV2({
+          dayIndex: d,
+          templateId: "easy_30",
+          type: "easy",
+          weekStart,
+        })));
+      }
+    }
+
+    weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+  }
+
+  return { totalWeeks, compressed, weeks };
+}
+
+/** Race template IDs by distance. Centralised to avoid scattering
+ *  string literals through the scheduler. Today only `5k_race`
+ *  exists — longer-distance race templates ship in v1.1 alongside
+ *  the dedicated race-day setup. v1 falls back to `5k_race` for
+ *  consistency with the V1 generator's behaviour. */
+function pickRaceTemplateId(_distance: "5k" | "10k" | "half" | "marathon"): string {
+  // TODO(P0-3+): add dedicated 10K / Half / Marathon race templates
+  // to workoutTemplates.ts. For now mirror V1 behaviour.
+  return "5k_race";
 }
