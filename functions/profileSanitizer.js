@@ -208,6 +208,7 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
 
   injuries: cleanInjuries,
   weekSchedule: cleanWeekSchedule,
+  weekScheduleVersion: (v) => cleanNumber(v, { min: 1, max: 1000, integer: true }),
 
   // TDEE / nutrition targets — numeric ranges sized for human plausibility
   tdeeBase: (v) => cleanNumber(v, { min: 0, max: 10000 }),
