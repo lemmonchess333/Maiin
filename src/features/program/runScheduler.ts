@@ -5,21 +5,11 @@
    ───────────────────────────────────────────── */
 
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import type { ScheduledRunDay, RunPlan } from "./programTypes";
 
-export interface ScheduledRunDay {
-  dayIndex: number; // 0=Sun … 6=Sat
-  templateId: string;
-  type: string; // easy, tempo, intervals, long, race
-  completed: boolean;
-  userOverride?: string;
-}
-
-export interface RunPlan {
-  mode: "structured" | "race_prep";
-  raceGoal?: { distance: string; targetDate: string };
-  totalWeeks?: number;
-  currentWeek?: number;
-}
+// Re-export so existing imports of these types from runScheduler keep
+// working. The single source of truth lives in programTypes (P0-A spec v7).
+export type { ScheduledRunDay, RunPlan };
 
 // Default lift day indices for common splits
 function defaultLiftDays(count: number): number[] {
