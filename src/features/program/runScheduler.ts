@@ -131,12 +131,20 @@ export function generateRacePlan(
   targetDate: string,
   liftDayCount: number,
   runDaysPerWeek: number = 3,
-  liftDayIndices?: number[]
+  liftDayIndices?: number[],
+  /**
+   * Reference date for `totalWeeks` calculation. Defaults to wall-clock
+   * `new Date()` for back-compat — but `planBuilder` (P0-C) always
+   * passes this explicitly so plan generation stays deterministic /
+   * testable. Once P0-3 lands the full runScheduler refactor this
+   * back-compat default goes away.
+   */
+  currentDate?: string,
 ): { totalWeeks: number; weeks: ScheduledRunDay[][] } {
   const config = RACE_CONFIGS[distance];
   const clampedLift = Math.max(0, Math.min(6, liftDayCount));
   const clampedRun = Math.max(1, Math.min(7 - clampedLift, runDaysPerWeek));
-  const now = new Date();
+  const now = currentDate ? new Date(currentDate) : new Date();
   const target = new Date(targetDate);
   const diffMs = target.getTime() - now.getTime();
   const totalWeeks = Math.max(config.minWeeks, Math.ceil(diffMs / (7 * 86400000)));
