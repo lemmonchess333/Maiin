@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tropos — Programme + Run · v4 mockups</title>
+<style>
+  :root {
+    --bg: hsl(240 5% 96%);
+    --card: #FFFFFF;
+    --muted-bg: #F0F0F4;
+    --text: #1c1c1e;
+    --text-muted: #8E8E93;
+    --border-soft: rgba(0,0,0,0.05);
+    --brand: #7C6BF0;
+    --brand-soft: rgba(124, 107, 240, 0.10);
+    --brand-soft-6: rgba(124, 107, 240, 0.06);
+    --running: #D4637A;
+    --running-soft: rgba(212, 99, 122, 0.10);
+    --running-soft-6: rgba(212, 99, 122, 0.06);
+    --success: #4CAF50;
+    --skipped: #8E8E93;
+    --teal: #52A3BD;
+    --nutrition: #D9884E;
+    --warning: #E6A23C;
+    --canvas: #1a1a1f;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: #e8e8ec;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    padding: 32px 20px 80px;
+    line-height: 1.45;
+  }
+  .container { max-width: 1500px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 8px; color: #fff; }
+  h2 { font-size: 20px; font-weight: 700; margin: 0 0 6px; color: #fff; }
+  .lede { color: #b6b6c0; font-size: 14px; max-width: 880px; margin: 0 0 24px; }
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: #a0a0a6; font-weight: 600; margin-bottom: 8px; }
+
+  /* Changelog from v3 */
+  .changelog {
+    background: linear-gradient(135deg, rgba(124,107,240,0.10), rgba(212,99,122,0.08));
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 36px;
+  }
+  .changelog h3 { color: #fff; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; }
+  .changelog ul { margin: 0; padding-left: 0; list-style: none; font-size: 13px; }
+  .changelog li { padding: 4px 0 4px 22px; position: relative; color: #d0d0d8; }
+  .changelog li::before { content: '◆'; position: absolute; left: 0; color: var(--running); font-weight: 700; }
+
+  /* TOC */
+  .toc { background: #25252b; border-radius: 12px; padding: 16px 22px; margin: 0 0 48px; }
+  .toc h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #a0a0a6; margin: 0 0 10px; font-weight: 600; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 18px; }
+  .toc-grid a { color: #d0d0d8; text-decoration: none; font-size: 13px; padding: 3px 0; }
+  .toc-grid a:hover { color: var(--running); }
+
+  /* Section */
+  .section { margin-bottom: 72px; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .section-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--running-soft);
+    color: var(--running);
+    font-weight: 800;
+    font-size: 14px;
+    font-feature-settings: 'tnum';
+  }
+  .section-num.lift-num { background: var(--brand-soft); color: var(--brand); }
+  .section-num.new {
+    background: linear-gradient(135deg, var(--running-soft), var(--brand-soft));
+    color: var(--running);
+    position: relative;
+  }
+  .section-num.new::after {
+    content: 'NEW';
+    position: absolute; top: -10px; right: -22px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.06em;
+    background: var(--running); color: #fff;
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* Phone grid */
+  .phone-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    align-items: flex-start;
+    margin-top: 28px;
+  }
+  .phone-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .phone-label {
+    font-size: 12px;
+    color: #b0b0b8;
+    text-align: center;
+    max-width: 390px;
+    line-height: 1.4;
+  }
+  .phone-label strong { color: #fff; font-weight: 600; }
+
+  .phone {
+    width: 390px;
+    height: 800px;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 9px solid #050507;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .statusbar {
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 4px;
+    font-size: 15px;
+    font-weight: 600;
+    background: var(--bg);
+  }
+  .statusbar .time { font-feature-settings: 'tnum'; }
+  .statusbar .ind { display: flex; align-items: center; gap: 5px; }
+  .statusbar .ind .sig { width: 17px; height: 11px; }
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 90px;
+    background: var(--bg);
+  }
+  .page-content::-webkit-scrollbar { width: 0; }
+
+  /* Programme header */
+  .prog-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 6px 0 6px;
+  }
+  .prog-header .titles { flex: 1; min-width: 0; }
+  .prog-header h1 {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.015em; margin: 0;
+    color: var(--text);
+  }
+  .prog-header .sub {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+  }
+  .prog-header .utility { display: flex; gap: 2px; align-items: center; }
+  .util-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    position: relative;
+  }
+  .util-btn.running-nav { color: var(--running); background: var(--running-soft-6); }
+  .util-btn.lifting-nav { color: var(--brand); background: var(--brand-soft-6); }
+  .util-btn svg { width: 18px; height: 18px; }
+
+  /* Week + phase row */
+  .week-phase-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px;
+    margin-bottom: 2px;
+  }
+  .week-phase-row .nav-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+  .week-phase-row .nav-btn.disabled { opacity: 0.25; }
+  .week-phase-row .nav-btn.active { color: var(--text); }
+  .wpr-center {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .wpr-week {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600;
+    font-feature-settings: 'tnum';
+  }
+  .wpr-phase {
+    font-size: 14px; font-weight: 700; color: var(--text);
+  }
+
+  /* Day stepper */
+  .day-stepper {
+    display: flex;
+    padding: 6px 0 14px;
+    gap: 4px;
+  }
+  .day-stepper.dense { gap: 2px; }
+  .day-circle-col {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 0;
+  }
+  .day-circle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #D8D8DE;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 14px;
+    font-feature-settings: 'tnum';
+  }
+  .day-circle.today {
+    width: 48px; height: 48px;
+    border-color: var(--brand);
+    color: var(--brand);
+    box-shadow: 0 0 0 4px var(--brand-soft);
+    font-size: 16px;
+  }
+  .day-circle.today-selected {
+    width: 48px; height: 48px;
+    background: var(--brand); border-color: var(--brand);
+    color: #fff;
+    box-shadow: 0 0 0 4px var(--brand-soft), 0 4px 14px rgba(124,107,240,0.25);
+    font-size: 16px;
+  }
+  .day-circle.selected {
+    background: var(--brand); border-color: var(--brand);
+    color: #fff;
+  }
+  .day-circle.completed {
+    background: var(--success); border-color: var(--success);
+    color: #fff;
+    border-width: 0;
+  }
+  .day-circle.completed.today {
+    width: 48px; height: 48px;
+    box-shadow: 0 0 0 4px rgba(76,175,80,0.10), 0 4px 14px rgba(76,175,80,0.20);
+  }
+  .day-circle.skipped {
+    background: rgba(142,142,147,0.20); border-color: rgba(142,142,147,0.30);
+    color: var(--skipped);
+  }
+  .day-circle.missed {
+    background: transparent; border-color: rgba(212,99,122,0.40);
+    color: var(--running); opacity: 0.55;
+    position: relative;
+  }
+  .day-circle.missed::after {
+    content: '!'; position: absolute; top: -3px; right: -3px;
+    width: 14px; height: 14px;
+    background: var(--warning); color: #fff;
+    border-radius: 50%;
+    font-size: 9px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--bg);
+  }
+  .day-circle.run {
+    border-color: rgba(212,99,122,0.40);
+    color: var(--running);
+  }
+  .day-circle.run.selected, .day-circle.run.today-selected {
+    background: var(--running); border-color: var(--running); color: #fff;
+    box-shadow: 0 0 0 4px var(--running-soft), 0 4px 14px rgba(212,99,122,0.25);
+  }
+  .day-circle.run.today {
+    border-color: var(--running);
+    color: var(--running);
+    box-shadow: 0 0 0 4px var(--running-soft);
+  }
+  .day-circle.run.rest {
+    border-color: rgba(142,142,147,0.20);
+    color: var(--skipped);
+    background: transparent;
+  }
+  .day-circle .check { width: 18px; height: 18px; stroke: #fff; stroke-width: 3; fill: none; }
+  .day-circle.dense-mini { width: 34px; height: 34px; font-size: 12px; }
+  .day-circle.dense-mini.today, .day-circle.dense-mini.today-selected { width: 40px; height: 40px; font-size: 14px; }
+  .day-label {
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 6px;
+    color: var(--text-muted);
+    text-align: center;
+    white-space: nowrap;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .day-label.dense-mini { font-size: 9px; }
+  .day-label.today { color: var(--brand); }
+  .day-label.today.run { color: var(--running); }
+  .day-label.completed { color: var(--success); }
+  .day-label.missed { color: var(--running); opacity: 0.7; }
+
+  /* Session card */
+  .session-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 16px 18px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .sc-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .sc-pill.today { background: var(--brand-soft); color: var(--brand); }
+  .sc-pill.today.run { background: var(--running-soft); color: var(--running); }
+  .sc-pill.done { background: rgba(76,175,80,0.12); color: var(--success); }
+  .sc-pill.muted { background: var(--muted-bg); color: var(--text-muted); }
+  .sc-pill.missed { background: rgba(217,136,78,0.14); color: var(--warning); }
+
+  /* Run type icon row */
+  .sc-icon-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 10px 0 4px;
+  }
+  .sc-leading-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--running-soft);
+    color: var(--running);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sc-leading-icon.lift { background: var(--brand-soft); color: var(--brand); }
+  .sc-leading-icon svg { width: 22px; height: 22px; }
+  .sc-text-block { flex: 1; min-width: 0; }
+  .sc-title {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 0; color: var(--text);
+  }
+  .sc-meta {
+    font-size: 13px; color: var(--text-muted);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    margin-top: 2px;
+  }
+  .sc-meta .num { font-feature-settings: 'tnum'; font-weight: 600; color: var(--text); }
+  .sc-meta .sep { color: #D8D8DE; }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-top: 14px;
+  }
+  .stat-tile {
+    background: var(--muted-bg);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat-tile .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .stat-tile .value {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 2px;
+    font-feature-settings: 'tnum';
+  }
+  .stat-tile.success .value { color: var(--success); }
+  .stat-tile.warn .value { color: var(--warning); }
+
+  /* CTAs */
+  .cta-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .cta {
+    border: 0; cursor: pointer;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: inherit;
+    width: 100%;
+  }
+  .cta.primary { background: var(--brand); color: #fff; }
+  .cta.run-primary { background: var(--running); color: #fff; }
+  .cta.run-ghost {
+    background: transparent; color: var(--running);
+    border: 1.5px solid rgba(212,99,122,0.30);
+  }
+  .cta.secondary { background: var(--muted-bg); color: var(--text); }
+  .cta.warn-ghost { background: rgba(217,136,78,0.10); color: var(--warning); }
+
+  /* Rest pill */
+  .rest-pill {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 18px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+  .rest-pill .rest-icon-wrap {
+    width: 48px; height: 48px;
+    background: rgba(142,142,147,0.10);
+    color: var(--skipped);
+    border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .rest-pill .rest-title { font-size: 18px; font-weight: 800; color: var(--text); margin: 0; }
+  .rest-pill .rest-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Race strip */
+  .race-strip {
+    background: var(--running-soft-6);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .race-strip::before {
+    content: '';
+    position: absolute; top: -20px; right: -20px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(212,99,122,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .race-strip .rs-head {
+    display: flex; align-items: flex-start; gap: 12px;
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--running-soft);
+    color: var(--running);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .race-strip .rs-info { flex: 1; min-width: 0; }
+  .race-strip .rs-title { font-size: 16px; font-weight: 800; color: var(--text); margin: 0; }
+  .race-strip .rs-phase {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--running-soft);
+    color: var(--running);
+    margin-left: 8px;
+  }
+  .race-strip .rs-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .race-strip .rs-progress {
+    margin-top: 12px;
+    height: 4px;
+    background: rgba(212,99,122,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-progress-fill { height: 100%; background: var(--running); border-radius: 2px; }
+  .race-strip .rs-footer {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    position: relative; z-index: 1;
+  }
+  .race-strip .rs-footer strong { color: var(--text); font-weight: 700; }
+  .race-strip-link {
+    display: block;
+    margin-top: 10px;
+    color: var(--running);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: right;
+    position: relative; z-index: 1;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-soft);
+    padding: 8px 6px 24px;
+    display: flex;
+    justify-content: space-around;
+  }
+  .bn-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-muted); padding: 4px 8px; }
+  .bn-item.active { color: var(--brand); }
+  .bn-item svg { width: 22px; height: 22px; stroke-width: 1.6; }
+  .bn-item .bn-label { font-size: 10px; font-weight: 600; }
+
+  /* Bottom sheet */
+  .bottom-sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--card);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 12px 18px 28px;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.20);
+    max-height: 75%;
+    overflow-y: auto;
+  }
+  .bottom-sheet .grabber {
+    width: 36px; height: 4px; background: var(--border-soft);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+  .sheet-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .sheet-title { font-size: 18px; font-weight: 800; color: var(--text); margin: 0; }
+  .sheet-close { width: 32px; height: 32px; background: var(--muted-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px; }
+
+  .sheet-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.35);
+  }
+
+  /* Mileage chart for full plan modal */
+  .mileage-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; padding: 10px 0; }
+  .mb-bar { flex: 1; border-radius: 3px; min-height: 4px; position: relative; }
+  .mb-bar.current { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--text); }
+  .mb-bar.base { background: var(--teal); }
+  .mb-bar.build { background: var(--brand); }
+  .mb-bar.taper { background: var(--nutrition); }
+  .mb-bar.race { background: var(--running); }
+  .mb-label-row { display: flex; gap: 12px; margin-top: 6px; font-size: 9px; }
+  .mb-label { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-weight: 600; }
+  .mb-label .swatch { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* Week row in full plan */
+  .week-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .week-row:last-child { border-bottom: 0; }
+  .week-row.current { background: var(--running-soft-6); border-radius: 10px; padding: 10px; margin: 0 -4px; border-bottom: 0; }
+  .week-num { font-feature-settings: 'tnum'; font-weight: 800; color: var(--text-muted); font-size: 11px; }
+  .week-row.current .week-num { color: var(--running); }
+  .week-desc { font-size: 13px; }
+  .week-desc .week-name { font-weight: 700; color: var(--text); }
+  .week-desc .week-key { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .week-mileage {
+    font-feature-settings: 'tnum'; font-weight: 800; font-size: 13px; color: var(--text);
+    text-align: right;
+  }
+  .week-phase {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .phase-base { background: rgba(82,163,189,0.12); color: var(--teal); }
+  .phase-build { background: rgba(124,107,240,0.12); color: var(--brand); }
+  .phase-taper { background: rgba(217,136,78,0.12); color: var(--nutrition); }
+  .phase-race { background: rgba(212,99,122,0.14); color: var(--running); }
+
+  /* Plan settings */
+  .settings-section { margin-bottom: 18px; }
+  .settings-section h4 {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); font-weight: 700; margin: 0 0 8px;
+  }
+  .radio-stack { display: flex; flex-direction: column; gap: 8px; }
+  .radio-option {
+    background: var(--card); border: 1.5px solid var(--border-soft);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+  }
+  .radio-option.selected { border-color: var(--brand); background: var(--brand-soft-6); }
+  .radio-option.selected.run { border-color: var(--running); background: var(--running-soft-6); }
+  .radio-option .ro-text { flex: 1; }
+  .radio-option .ro-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .radio-option .ro-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .radio-option .ro-dot {
+    width: 18px; height: 18px; border: 2px solid var(--border-soft);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .radio-option.selected .ro-dot { border-color: var(--brand); }
+  .radio-option.selected.run .ro-dot { border-color: var(--running); }
+  .radio-option.selected .ro-dot::after {
+    content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--brand);
+  }
+  .radio-option.selected.run .ro-dot::after { background: var(--running); }
+
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    background: var(--muted-bg); color: var(--text);
+    padding: 7px 14px; border-radius: 10px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 1.5px solid transparent;
+  }
+  .chip.selected { background: var(--running-soft); color: var(--running); border-color: var(--running); }
+  .chip.selected.lift { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+  .form-input {
+    background: var(--card); border: 1px solid var(--border-soft);
+    border-radius: 10px; padding: 10px 12px; font-size: 14px;
+    font-family: inherit; width: 100%; color: var(--text);
+  }
+
+  /* Empty state (no-plan setup) */
+  .empty-hero {
+    text-align: center; padding: 32px 12px 12px;
+  }
+  .empty-hero .eh-icon {
+    width: 72px; height: 72px;
+    background: var(--running-soft);
+    color: var(--running);
+    border-radius: 22px;
+    margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .empty-hero h2 { font-size: 22px; font-weight: 800; color: var(--text); margin: 0 0 8px; letter-spacing: -0.01em; }
+  .empty-hero p { font-size: 14px; color: var(--text-muted); max-width: 280px; margin: 0 auto 16px; }
+
+  .option-card {
+    background: var(--card); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .option-card .oc-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .option-card .oc-icon.structured { background: var(--brand-soft); color: var(--brand); }
+  .option-card .oc-icon.race { background: var(--running-soft); color: var(--running); }
+  .option-card .oc-text { flex: 1; }
+  .option-card .oc-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .option-card .oc-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .option-card .oc-arrow { color: var(--text-muted); font-size: 18px; }
+
+  /* Picker rows for "Add another run" */
+  .picker-row {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .picker-row .pr-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--running-soft);
+    color: var(--running);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .picker-row .pr-text { flex: 1; }
+  .picker-row .pr-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .picker-row .pr-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .picker-row .pr-arrow { color: var(--running); font-weight: 800; }
+
+  /* Annotations */
+  .annotation {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 280px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-bottom: 12px;
+  }
+  .annotation .a-tag {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-right: 6px;
+    background: var(--running-soft); color: var(--running);
+  }
+  .annotation .a-tag.ok { background: rgba(76,175,80,0.15); color: var(--success); }
+  .annotation .a-tag.warn { background: rgba(217,136,78,0.15); color: var(--warning); }
+  .annotation .a-tag.brand { background: var(--brand-soft); color: var(--brand); }
+  .annotations-col { display: flex; flex-direction: column; max-width: 320px; padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="eyebrow">Tropos · Programme + Run · v4 mockups</div>
+  <h1>Iteration 4 · full feature coverage + visual polish</h1>
+  <p class="lede">Extends v3 with the missing screens: full 12-week race plan modal, plan settings sheet, no-plan setup flow, "+ Add another run today" sheet, skipped session handling, and a dense 5-run-week check. Plus tighter visuals — leading run-type icon on the session card, soft ghost button (not text-link) for "Just go for a run", and a small "View full plan" affordance baked into the race strip.</p>
+
+  <div class="changelog">
+    <h3>Changes from v3</h3>
+    <ul>
+      <li>Session card has a <strong>leading run-type icon</strong> (44px coral square with the type glyph). Same pattern as iOS notification icons.</li>
+      <li>"Just go for a run" upgraded from text-link to a <strong>soft coral ghost button</strong> — visible at thumb level without competing with the primary Start.</li>
+      <li>Race strip gains a <strong>"View full plan ›"</strong> link inside the card (top-right of the strip).</li>
+      <li>New: full 12-week plan modal with mileage bar chart + week-by-week list.</li>
+      <li>New: plan settings bottom-sheet — distance / date / runs-per-week picker.</li>
+      <li>New: no-plan setup flow — what footprint shows when user is freeform but wants to upgrade.</li>
+      <li>New: "+ Add another run today" sheet — quick picker for an extra session.</li>
+      <li>New: missed session state — coral circle with warning dot + "Catch up tomorrow?" affordance.</li>
+      <li>New: 5-run-week density check — does the stepper still feel right?</li>
+    </ul>
+  </div>
+
+  <div class="toc">
+    <h3>Sections</h3>
+    <div class="toc-grid">
+      <a href="#s2">2 · Run view · today is tempo (polished)</a>
+      <a href="#s7">7 · Full 12-week plan modal</a>
+      <a href="#s8">8 · Plan settings sheet</a>
+      <a href="#s9">9 · No-plan setup flow</a>
+      <a href="#s10">10 · "+ Add another run today" sheet</a>
+      <a href="#s11">11 · Missed session state</a>
+      <a href="#s12">12 · 5-run week density check</a>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 2 (revisited): Run view polished -->
+  <!-- ============================================ -->
+  <div class="section" id="s2">
+    <div class="section-head">
+      <span class="section-num">2</span>
+      <h2>Run view · today is tempo (visual polish)</h2>
+    </div>
+    <p class="lede">Tighter version of v3's section 2. Three changes: leading run-type icon in the session card header, "Just go for a run" is now a soft coral ghost button (not a thin text-link), and the section reads as a single coherent unit.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Run plan · Structured · 3 runs/week</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn lifting-nav" title="Back to lifts">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg>
+                </div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn disabled">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 3</div>
+                <div class="wpr-phase">Aerobic Base</div>
+              </div>
+              <div class="nav-btn disabled">›</div>
+            </div>
+
+            <div class="day-stepper">
+              <div class="day-circle-col">
+                <div class="day-circle completed"><svg class="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div class="day-label completed">Easy</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run today-selected">2</div>
+                <div class="day-label today run">Tempo</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run">3</div>
+                <div class="day-label">Long</div>
+              </div>
+            </div>
+
+            <div class="session-card">
+              <span class="sc-pill today run">Today</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon">
+                  <!-- Tempo icon: lightning bolt -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" fill-opacity="0.2"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta">
+                    <span>Threshold</span>
+                    <span class="sep">·</span>
+                    <span class="num">8 km</span>
+                    <span class="sep">·</span>
+                    <span class="num">~45 min</span>
+                  </div>
+                </div>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-tile">
+                  <div class="label">Target Pace</div>
+                  <div class="value">5:00</div>
+                </div>
+                <div class="stat-tile">
+                  <div class="label">Distance</div>
+                  <div class="value">8.0</div>
+                </div>
+                <div class="stat-tile">
+                  <div class="label">Calories</div>
+                  <div class="value">~560</div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-primary">Start tempo</button>
+                <button class="cta run-ghost">Just go for a run</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Run view · polished</strong> · leading lightning-bolt icon for tempo · ghost button for the escape hatch</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag">Leading icon</span>44px coral square with the run-type glyph. Easy = walking, Tempo = lightning, Intervals = bolts pair, Long = mountain arc. Same vocabulary across all run cards.</div>
+        <div class="annotation"><span class="a-tag ok">Ghost button</span>"Just go for a run" is now a coral-outlined button below Start. Visible at thumb level (matches Outsider feedback) but secondary in weight (matches First Principles — same action, different config).</div>
+        <div class="annotation"><span class="a-tag brand">Pill stays on top</span>"Today" pill kept at the top corner — separation between context (Today) and content (Tempo Run · stats · CTAs).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 7: Full 12-week plan modal -->
+  <!-- ============================================ -->
+  <div class="section" id="s7">
+    <div class="section-head">
+      <span class="section-num new">7</span>
+      <h2>Full 12-week plan modal</h2>
+    </div>
+    <p class="lede">Opens from the "View full plan ›" link inside the race strip. Read-only week-by-week list with a mileage chart at the top. Current week tinted. No drill-down in v1.0 — list-only is enough for race-prep users to see where they're going.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content" style="opacity: 0.4; pointer-events: none;">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">10K · 14 Aug 2026</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn lifting-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+            <div class="race-strip">
+              <div class="rs-head">
+                <div class="rs-icon">🎯</div>
+                <div class="rs-info">
+                  <div class="rs-title">10K · 14 Aug<span class="rs-phase">Base</span></div>
+                  <div class="rs-sub">Week 3 of 12</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-modal-backdrop"></div>
+
+          <div class="bottom-sheet" style="height: 78%;">
+            <div class="grabber"></div>
+            <div class="sheet-title-row">
+              <div>
+                <h3 class="sheet-title">12-week plan</h3>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">10K · target 14 Aug 2026</div>
+              </div>
+              <div class="sheet-close">✕</div>
+            </div>
+
+            <!-- Mileage chart -->
+            <div style="background: var(--muted-bg); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+              <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em;">Weekly mileage</div>
+              <div class="mileage-bars">
+                <div class="mb-bar base" style="height: 35%"></div>
+                <div class="mb-bar base" style="height: 40%"></div>
+                <div class="mb-bar base current" style="height: 48%"></div>
+                <div class="mb-bar base" style="height: 55%"></div>
+                <div class="mb-bar build" style="height: 65%"></div>
+                <div class="mb-bar build" style="height: 75%"></div>
+                <div class="mb-bar build" style="height: 82%"></div>
+                <div class="mb-bar build" style="height: 90%"></div>
+                <div class="mb-bar taper" style="height: 60%"></div>
+                <div class="mb-bar taper" style="height: 48%"></div>
+                <div class="mb-bar race" style="height: 36%"></div>
+              </div>
+              <div class="mb-label-row">
+                <div class="mb-label"><div class="swatch" style="background: var(--teal);"></div>Base</div>
+                <div class="mb-label"><div class="swatch" style="background: var(--brand);"></div>Build</div>
+                <div class="mb-label"><div class="swatch" style="background: var(--nutrition);"></div>Taper</div>
+                <div class="mb-label"><div class="swatch" style="background: var(--running);"></div>Race</div>
+              </div>
+            </div>
+
+            <!-- Week list -->
+            <div class="week-row">
+              <div class="week-num">01</div>
+              <div class="week-desc"><div class="week-name">Base week 1</div><div class="week-key">3 easy · Long 6 km</div></div>
+              <div class="week-mileage">18 km</div>
+              <div class="week-phase phase-base">Base</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">02</div>
+              <div class="week-desc"><div class="week-name">Base week 2</div><div class="week-key">3 easy · Long 7 km</div></div>
+              <div class="week-mileage">20 km</div>
+              <div class="week-phase phase-base">Base</div>
+            </div>
+            <div class="week-row current">
+              <div class="week-num">03</div>
+              <div class="week-desc"><div class="week-name">Base week 3 · Now</div><div class="week-key">Easy · Tempo · Long 8 km</div></div>
+              <div class="week-mileage">22 km</div>
+              <div class="week-phase phase-base">Base</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">04</div>
+              <div class="week-desc"><div class="week-name">Base week 4</div><div class="week-key">3 easy · Long 9 km</div></div>
+              <div class="week-mileage">24 km</div>
+              <div class="week-phase phase-base">Base</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">05</div>
+              <div class="week-desc"><div class="week-name">Build week 1</div><div class="week-key">Tempo · Long 10 km</div></div>
+              <div class="week-mileage">27 km</div>
+              <div class="week-phase phase-build">Build</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">06</div>
+              <div class="week-desc"><div class="week-name">Build week 2</div><div class="week-key">Intervals · Long 11 km</div></div>
+              <div class="week-mileage">30 km</div>
+              <div class="week-phase phase-build">Build</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">07</div>
+              <div class="week-desc"><div class="week-name">Build week 3</div><div class="week-key">Tempo · Long 12 km</div></div>
+              <div class="week-mileage">32 km</div>
+              <div class="week-phase phase-build">Build</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">08</div>
+              <div class="week-desc"><div class="week-name">Build week 4</div><div class="week-key">Intervals · Long 13 km</div></div>
+              <div class="week-mileage">34 km</div>
+              <div class="week-phase phase-build">Build</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">09</div>
+              <div class="week-desc"><div class="week-name">Taper 1</div><div class="week-key">Short tempo · Long 10 km</div></div>
+              <div class="week-mileage">26 km</div>
+              <div class="week-phase phase-taper">Taper</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">10</div>
+              <div class="week-desc"><div class="week-name">Taper 2</div><div class="week-key">Easy runs · Long 8 km</div></div>
+              <div class="week-mileage">20 km</div>
+              <div class="week-phase phase-taper">Taper</div>
+            </div>
+            <div class="week-row">
+              <div class="week-num">11</div>
+              <div class="week-desc"><div class="week-name">Race week</div><div class="week-key">Race pace · Easy shakeout</div></div>
+              <div class="week-mileage">16 km</div>
+              <div class="week-phase phase-race">Race</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Full plan modal</strong> · mileage bars + 11 week rows · current = Week 3 base building</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag">Mileage bars</span>Vertical bars coloured by phase. Current week outlined with a ring. At-a-glance: "I'm here, here's how it ramps."</div>
+        <div class="annotation"><span class="a-tag ok">Read-only</span>No drill-down in v1.0. List shows mileage, key sessions, phase pill per row. Tap a row → does nothing (or v1.1: opens that week's day stepper).</div>
+        <div class="annotation"><span class="a-tag warn">Short plans</span>For <code>totalWeeks &lt; 8</code>, mileage bars become a single progress bar (no jagged 4-bar chart). Conditional render.</div>
+        <div class="annotation"><span class="a-tag">Phase colours</span>Teal = Base · Purple = Build · Orange = Taper · Coral = Race. Anchors users to the periodisation language.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 8: Plan settings sheet -->
+  <!-- ============================================ -->
+  <div class="section" id="s8">
+    <div class="section-head">
+      <span class="section-num new">8</span>
+      <h2>Plan settings sheet · change distance / date / runs per week</h2>
+    </div>
+    <p class="lede">Opens from the overflow ⋯ menu on the Run view. Lifts the existing Settings→Training run-plan controls into a contextual sheet. Saving here calls <code>refreshRunSchedule()</code> in <code>useProgram</code> — no new backend.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content" style="opacity: 0.4; pointer-events: none;">
+            <div class="prog-header"><div class="titles"><h1>Programme</h1></div></div>
+          </div>
+
+          <div class="sheet-modal-backdrop"></div>
+
+          <div class="bottom-sheet" style="height: 82%;">
+            <div class="grabber"></div>
+            <div class="sheet-title-row">
+              <h3 class="sheet-title">Run plan settings</h3>
+              <div class="sheet-close">✕</div>
+            </div>
+
+            <div class="settings-section">
+              <h4>Plan mode</h4>
+              <div class="radio-stack">
+                <div class="radio-option">
+                  <div class="ro-text">
+                    <div class="ro-name">No running</div>
+                    <div class="ro-sub">Hide run UI entirely</div>
+                  </div>
+                  <div class="ro-dot"></div>
+                </div>
+                <div class="radio-option">
+                  <div class="ro-text">
+                    <div class="ro-name">Freeform</div>
+                    <div class="ro-sub">No plan, run when you like</div>
+                  </div>
+                  <div class="ro-dot"></div>
+                </div>
+                <div class="radio-option run">
+                  <div class="ro-text">
+                    <div class="ro-name">Structured</div>
+                    <div class="ro-sub">Scheduled runs each week</div>
+                  </div>
+                  <div class="ro-dot"></div>
+                </div>
+                <div class="radio-option selected run">
+                  <div class="ro-text">
+                    <div class="ro-name">Race prep</div>
+                    <div class="ro-sub">Periodised plan for a race</div>
+                  </div>
+                  <div class="ro-dot"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h4>Race distance</h4>
+              <div class="chip-row">
+                <div class="chip">5K</div>
+                <div class="chip selected">10K</div>
+                <div class="chip">Half</div>
+                <div class="chip">Marathon</div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h4>Race date</h4>
+              <input type="text" class="form-input" value="14 Aug 2026" readonly>
+            </div>
+
+            <div class="settings-section">
+              <h4>Runs per week</h4>
+              <div class="chip-row">
+                <div class="chip">2</div>
+                <div class="chip selected">3</div>
+                <div class="chip">4</div>
+                <div class="chip">5</div>
+              </div>
+            </div>
+
+            <button class="cta run-primary" style="margin-top: 8px;">Save changes</button>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Plan settings sheet</strong> · race prep · 10K · 14 Aug · 3 runs/week</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Lifted from Settings</span>Same controls as today's <code>TrainingSection.tsx</code> — just promoted to a contextual sheet on the Run view. Existing Settings page gets a deep-link banner pointing here.</div>
+        <div class="annotation"><span class="a-tag">Save triggers regen</span>Tapping Save calls <code>refreshRunSchedule()</code> in <code>useProgram</code>. <code>generateRacePlan</code> or <code>scheduleStructuredWeek</code> recomputes <code>runDays</code> + <code>runPlan</code>. Works today.</div>
+        <div class="annotation"><span class="a-tag warn">Date picker</span>Mocked as a read-only input — real picker is a native iOS date wheel via Capacitor or HTML date input.</div>
+        <div class="annotation"><span class="a-tag warn">Plan changes</span>Changing distance/date wipes the existing schedule and regenerates. Could lose completion history for in-flight weeks — needs a confirm dialog ("This will regenerate your plan").</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 9: No-plan setup flow -->
+  <!-- ============================================ -->
+  <div class="section" id="s9">
+    <div class="section-head">
+      <span class="section-num new">9</span>
+      <h2>No-plan setup · freeform user wants structure</h2>
+    </div>
+    <p class="lede">User has <code>runMode === 'freeform'</code>. Tapping footprint today goes to <code>/run</code> (current behaviour) — but if they want a structured plan, where do they go? Solution: the /run setup screen gains a small "Set up a training plan" link. Once enabled, the footprint becomes a switcher.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles" style="text-align: center;">
+                <h1>Programme</h1>
+                <div class="sub">Run plan</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn lifting-nav" title="Back to lifts">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg>
+                </div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <!-- Empty hero -->
+            <div class="empty-hero">
+              <div class="eh-icon">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/><path d="m5 11 4-2 4 4 2-2 4 3-3 3-3-1-2 4-3-2 2-4-5-3z"/></svg>
+              </div>
+              <h2>No run plan yet</h2>
+              <p>You're set to freeform. Pick a structure below or just start running anytime.</p>
+            </div>
+
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin: 16px 4px 8px;">Choose a plan</div>
+
+            <div class="option-card">
+              <div class="oc-icon structured">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Structured</div>
+                <div class="oc-sub">Pick how many runs per week. Get a weekly schedule.</div>
+              </div>
+              <div class="oc-arrow">›</div>
+            </div>
+
+            <div class="option-card">
+              <div class="oc-icon race">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+              </div>
+              <div class="oc-text">
+                <div class="oc-name">Race prep</div>
+                <div class="oc-sub">Periodised plan toward a 5K / 10K / Half / Marathon.</div>
+              </div>
+              <div class="oc-arrow">›</div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Or skip a plan</div>
+              <button class="cta run-ghost">Just go for a run</button>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>No plan yet</strong> · Run view shows setup options when <code>runMode === 'freeform'</code> but user opened Run view explicitly</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag">Updated rule</span>Footprint always goes to Run view. For freeform users, Run view is this empty state (not /run). They can still tap "Just go for a run" to bypass.</div>
+        <div class="annotation"><span class="a-tag ok">Two options</span>Structured (everyday runners) and Race prep (training for an event). Clear copy, no jargon.</div>
+        <div class="annotation"><span class="a-tag">Always-available escape</span>"Just go for a run" stays at the bottom — even on the empty state. Consistent affordance across all Run view states.</div>
+        <div class="annotation"><span class="a-tag warn">Backtrack option</span>If user picks "Structured" then realises they don't want a plan, they can switch back to Freeform via the ⋯ overflow → Plan settings.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 10: + Add another run today sheet -->
+  <!-- ============================================ -->
+  <div class="section" id="s10">
+    <div class="section-head">
+      <span class="section-num new">10</span>
+      <h2>"+ Add another run today" sheet</h2>
+    </div>
+    <p class="lede">Tapping "+ Add another run today" on the completed-state card opens this sheet. Three options. Doesn't modify the user's plan — just records an extra ad-hoc run alongside the completed planned one.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content" style="opacity: 0.4; pointer-events: none;">
+            <div class="prog-header"><div class="titles"><h1>Programme</h1></div></div>
+          </div>
+
+          <div class="sheet-modal-backdrop"></div>
+
+          <div class="bottom-sheet" style="height: 58%;">
+            <div class="grabber"></div>
+            <div class="sheet-title-row">
+              <div>
+                <h3 class="sheet-title">Add another run</h3>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Won't affect your training plan</div>
+              </div>
+              <div class="sheet-close">✕</div>
+            </div>
+
+            <div class="picker-row">
+              <div class="pr-icon">
+                <!-- Easy / recovery -->
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="M5 19l5-7 4 3 5-4"/></svg>
+              </div>
+              <div class="pr-text">
+                <div class="pr-name">Easy run</div>
+                <div class="pr-sub">Zone 1-2 · gentle · target 6:30/km</div>
+              </div>
+              <div class="pr-arrow">›</div>
+            </div>
+
+            <div class="picker-row">
+              <div class="pr-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+              </div>
+              <div class="pr-text">
+                <div class="pr-name">Just go for a run</div>
+                <div class="pr-sub">Freeform · no targets · use GPS</div>
+              </div>
+              <div class="pr-arrow">›</div>
+            </div>
+
+            <div class="picker-row">
+              <div class="pr-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 11h18"/></svg>
+              </div>
+              <div class="pr-text">
+                <div class="pr-name">Treadmill</div>
+                <div class="pr-sub">Manual distance · no GPS</div>
+              </div>
+              <div class="pr-arrow">›</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>+ Add another run sheet</strong> · 3 options · won't touch the plan</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">"Won't affect your plan"</span>Critical subtitle. The user has completed today's planned tempo. This extra run is ad-hoc — it doesn't satisfy tomorrow's planned long run.</div>
+        <div class="annotation"><span class="a-tag">Easy run first</span>Easy run is the most common reason people add a second session (recovery, dog walk run). Surface it.</div>
+        <div class="annotation"><span class="a-tag">Treadmill included</span>If user's gym session ended early and they want to bash out a treadmill mile, this is their entry. No GPS required.</div>
+        <div class="annotation"><span class="a-tag warn">Edge case</span>If user adds 2+ extra runs in one day, the doubles indicator on tomorrow's stepper shouldn't double-count. Track ad-hoc runs separately from planned.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 11: Missed session state -->
+  <!-- ============================================ -->
+  <div class="section" id="s11">
+    <div class="section-head">
+      <span class="section-num new">11</span>
+      <h2>Missed session state · Tuesday's tempo wasn't done</h2>
+    </div>
+    <p class="lede">User skipped Tuesday's tempo. Now it's Wednesday. The stepper shows the tempo circle with a warning dot. The Wednesday card surfaces the missed session and offers "Do it today" or "Skip this week's tempo."</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Run plan · Structured · 3 runs/week</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn lifting-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn disabled">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 3</div>
+                <div class="wpr-phase">Aerobic Base</div>
+              </div>
+              <div class="nav-btn disabled">›</div>
+            </div>
+
+            <div class="day-stepper">
+              <div class="day-circle-col">
+                <div class="day-circle completed"><svg class="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div class="day-label completed">Easy</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle missed">2</div>
+                <div class="day-label missed">Tempo</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run today-selected">3</div>
+                <div class="day-label today run">Long</div>
+              </div>
+            </div>
+
+            <!-- Missed session alert card -->
+            <div class="session-card" style="background: rgba(217,136,78,0.06);">
+              <span class="sc-pill missed">Missed Tuesday</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon" style="background: rgba(217,136,78,0.14); color: var(--warning);">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Tempo Run</div>
+                  <div class="sc-meta">Planned for Tuesday · 8 km</div>
+                </div>
+              </div>
+              <div class="cta-stack" style="margin-top: 12px;">
+                <button class="cta run-primary">Do it today</button>
+                <button class="cta warn-ghost">Skip this week's tempo</button>
+              </div>
+            </div>
+
+            <!-- Today's planned long run -->
+            <div class="session-card">
+              <span class="sc-pill today run">Today</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18l6-12 6 8 6-4"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Long Run</div>
+                  <div class="sc-meta">Zone 2 · 8 km · ~50 min</div>
+                </div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-primary">Start long run</button>
+                <button class="cta run-ghost">Just go for a run</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Missed session</strong> · Tuesday tempo skipped · two cards: catch-up + today's plan</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag warn">Stepper indicator</span>Coral circle with warning badge (orange dot top-right). Faded opacity. Clear visual: "this didn't happen but it was planned."</div>
+        <div class="annotation"><span class="a-tag">Two cards</span>Missed session card on top (orange-tinted, warning glyph). Today's planned card below. User chooses: catch up + skip today, do today + skip the tempo, or both.</div>
+        <div class="annotation"><span class="a-tag ok">"Skip this week's tempo"</span>Explicit dismissal. Clears the warning. Tempo circle in stepper turns to a dismissed-skipped state (grey, no warning). Plan doesn't auto-reflow.</div>
+        <div class="annotation"><span class="a-tag warn">Open question</span>What if user has 2+ missed sessions stacked? Show all of them, or just the most recent? My take: just the most recent — older misses auto-decay to "skipped" status after 48h.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SECTION 12: 5-run week density check -->
+  <!-- ============================================ -->
+  <div class="section" id="s12">
+    <div class="section-head">
+      <span class="section-num new">12</span>
+      <h2>Density check · 5 runs/week stepper</h2>
+    </div>
+    <p class="lede">For dedicated runners (marathon block, ultra training) with 5+ runs/week, does the circular stepper still feel right? 5 circles fit comfortably in the 390px viewport with no horizontal scroll. 6 circles tighten but still work. 7+ would need scroll — same as lifts.</p>
+
+    <div class="phone-row">
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="statusbar">
+            <span class="time">9:41</span>
+            <div class="ind"><span>•••</span><svg class="sig" viewBox="0 0 18 12"><rect x="0" y="2" width="3" height="10" rx="1" fill="#000"/><rect x="5" y="0" width="3" height="12" rx="1" fill="#000"/><rect x="10" y="4" width="3" height="8" rx="1" fill="#000"/></svg></div>
+          </div>
+          <div class="page-content">
+            <div class="prog-header">
+              <div class="titles">
+                <h1>Programme</h1>
+                <div class="sub">Marathon · 30 Sep 2026</div>
+              </div>
+              <div class="utility">
+                <div class="util-btn lifting-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5L17.5 17.5M4 8l4 4M16 16l4 4M3 11l8-8 1 1-8 8zM13 21l8-8-1-1-8 8z"/></svg></div>
+                <div class="util-btn">⋯</div>
+              </div>
+            </div>
+
+            <div class="race-strip">
+              <div class="rs-head">
+                <div class="rs-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+                </div>
+                <div class="rs-info">
+                  <div class="rs-title">Marathon<span class="rs-phase">Build</span></div>
+                  <div class="rs-sub">Week 8 of 16 · 56 days to race</div>
+                </div>
+              </div>
+              <div class="rs-progress"><div class="rs-progress-fill" style="width: 50%;"></div></div>
+              <div class="rs-footer">This week <strong>68 km</strong> · Long run <strong>22 km Sun</strong></div>
+              <a class="race-strip-link">View full plan ›</a>
+            </div>
+
+            <div class="week-phase-row">
+              <div class="nav-btn disabled">‹</div>
+              <div class="wpr-center">
+                <div class="wpr-week">Week 8</div>
+                <div class="wpr-phase">Build phase</div>
+              </div>
+              <div class="nav-btn disabled">›</div>
+            </div>
+
+            <!-- 5 circles, slightly tighter -->
+            <div class="day-stepper">
+              <div class="day-circle-col">
+                <div class="day-circle completed dense-mini"><svg class="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div class="day-label completed dense-mini">Easy</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle completed dense-mini"><svg class="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                <div class="day-label completed dense-mini">Intervals</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run dense-mini today-selected">3</div>
+                <div class="day-label today run dense-mini">Easy</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run dense-mini">4</div>
+                <div class="day-label dense-mini">Tempo</div>
+              </div>
+              <div class="day-circle-col">
+                <div class="day-circle run dense-mini">5</div>
+                <div class="day-label dense-mini">Long</div>
+              </div>
+            </div>
+
+            <div class="session-card">
+              <span class="sc-pill today run">Today</span>
+              <div class="sc-icon-row">
+                <div class="sc-leading-icon">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2"/><path d="M5 19l5-7 4 3 5-4"/></svg>
+                </div>
+                <div class="sc-text-block">
+                  <div class="sc-title">Easy Run</div>
+                  <div class="sc-meta">
+                    <span>Recovery Z2</span>
+                    <span class="sep">·</span>
+                    <span class="num">6 km</span>
+                    <span class="sep">·</span>
+                    <span class="num">~38 min</span>
+                  </div>
+                </div>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-tile"><div class="label">Target Pace</div><div class="value">6:25</div></div>
+                <div class="stat-tile"><div class="label">Distance</div><div class="value">6.0</div></div>
+                <div class="stat-tile"><div class="label">Calories</div><div class="value">~420</div></div>
+              </div>
+              <div class="cta-stack">
+                <button class="cta run-primary">Start easy</button>
+                <button class="cta run-ghost">Just go for a run</button>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg><span class="bn-label">Home</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg><span class="bn-label">Food</span></div>
+            <div class="bn-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/></svg><span class="bn-label">Programme</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="bn-label">History</span></div>
+            <div class="bn-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/></svg><span class="bn-label">Profile</span></div>
+          </div>
+        </div>
+        <div class="phone-label"><strong>Marathon block · 5 runs/week</strong> · stepper auto-scales circles to dense-mini at 5+ runs</div>
+      </div>
+
+      <div class="annotations-col">
+        <div class="annotation"><span class="a-tag ok">Auto-scaling</span>At 5+ runs, circles drop from 40px → 34px (today still scales to 40px from 48px). Labels shrink to 9px. Maintains hierarchy without scroll.</div>
+        <div class="annotation"><span class="a-tag warn">7+ runs</span>For 7 runs/week (every day) the stepper would need horizontal scroll. Matches lift behaviour for 7-day full-body. Edge case.</div>
+        <div class="annotation"><span class="a-tag">Race strip + stepper together</span>Above the fold on a 390×800 viewport. Today's session card is partly below — user scrolls naturally to reach it. Pattern works.</div>
+        <div class="annotation"><span class="a-tag brand">Lift accessory implied</span>For a marathon block, lifts are likely 2-3 days of strength accessory work. User toggles back via the purple dumbbell icon top-right — no extra UI needed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Implementation update -->
+  <!-- ============================================ -->
+  <div class="section">
+    <h2 style="color: #fff;">Updated build estimate</h2>
+    <div style="background: #25252b; border-radius: 16px; padding: 24px; color: #d0d0d8; font-size: 13px; line-height: 1.6; margin-top: 16px;">
+      <p style="margin: 0 0 14px;"><strong style="color: #fff; font-size: 15px;">Total: ~4.5 days</strong> (up from 3 in v3 — but covers the missing edges)</p>
+
+      <p style="margin: 14px 0 6px; color: #fff; font-weight: 700;">Core (v3): ~3 days</p>
+      <ul style="margin: 0 0 14px; padding-left: 22px;">
+        <li><code>Program.tsx</code> view-state plumbing · ~1 day</li>
+        <li>New <code>RunPlanView.tsx</code> · ~1 day</li>
+        <li>New <code>RunSessionCard.tsx</code> + <code>RestPill.tsx</code> · ~0.75 days</li>
+        <li>Icon swap on <code>RunningNavIcon</code> · ~0.25 days</li>
+      </ul>
+
+      <p style="margin: 14px 0 6px; color: #fff; font-weight: 700;">v4 additions: ~1.5 days</p>
+      <ul style="margin: 0; padding-left: 22px;">
+        <li>Run-type icon glyphs for the session card leading icon (Easy/Tempo/Intervals/Long/Race) · ~0.25 days</li>
+        <li>"Just go for a run" upgraded to ghost button variant · ~0.1 days</li>
+        <li>Full plan modal (mileage bars + week list) · ~0.5 days</li>
+        <li>Plan settings sheet (vaul drawer, lifted from TrainingSection) · ~0.25 days</li>
+        <li>No-plan empty state + setup options · ~0.2 days</li>
+        <li>"+ Add another run today" sheet · ~0.15 days</li>
+        <li>Missed session card + stepper warning indicator · ~0.1 days</li>
+      </ul>
+
+      <p style="margin: 14px 0 0; color: #b6b6c0;">Regression surface still tiny. The lift Programme code path is unchanged. Every new surface is gated on Run view + plan state.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
