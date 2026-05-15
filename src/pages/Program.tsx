@@ -6,6 +6,7 @@ import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
+import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
@@ -22,6 +23,7 @@ import {
   Dumbbell,
   RefreshCw,
   Settings2,
+  Sparkles,
   MoreHorizontal,
   Plus,
   FastForward,
@@ -93,6 +95,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
+  const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
 
   const { workouts: recentWorkouts } = useWorkouts();
 
@@ -903,6 +906,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
 
+      {/* P0-9: Configure Plan wizard. Renders nothing when closed —
+          the modal itself returns null on `!open`. */}
+      {profile && (
+        <ConfigurePlanModal
+          open={configurePlanOpen}
+          onClose={() => setConfigurePlanOpen(false)}
+          profile={profile}
+          programState={programState}
+          onSaved={() => {
+            // No explicit refresh — useProgram subscribes to the
+            // programState doc and re-renders on next snapshot. The
+            // toast inside the modal confirms the write landed.
+          }}
+        />
+      )}
+
       {/* Overflow Menu Sheet */}
       <AnimatePresence>
         {showOverflow && (
@@ -919,6 +938,23 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
+                {/* P0-9: Configure Plan wizard entry — opens the full-
+                    screen modal that runs planBuilder + configurePlan
+                    CF on Confirm. Lives at the top of the overflow
+                    because plan-shape changes are the more deliberate
+                    operation than the per-week settings below. */}
+                <button
+                  onClick={() => {
+                    setShowOverflow(false);
+                    if (phaseLocked) { setShowProSheet(true); } else { setConfigurePlanOpen(true); }
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                  style={{ minHeight: 44 }}
+                >
+                  <Sparkles className="w-4.5 h-4.5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground flex-1">Configure Plan</span>
+                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                </button>
                 <button
                   onClick={() => {
                     setShowOverflow(false);
