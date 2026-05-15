@@ -68,11 +68,21 @@ export default function Program() {
 }
 
 /**
- * P1-1: Today tab — a glanceable view of what's planned for today
- * (lift / run / both / rest) with the primary CTA. Minimum-viable
- * version; P1-2 expands this with completion states + doubles
- * handling. Pulled out to module scope so the ProgramInner JSX
- * stays focused on tab orchestration rather than per-tab content.
+ * P1-2: Today tab — single / doubles / rest / completion states.
+ *
+ * State machine:
+ *   - rest    → recovery card
+ *   - lift    → lift CTA + completion state when workouts[n].completed
+ *   - run     → run CTA + completion state when runDay.completed
+ *   - both    → lift CTA + run CTA + summary footer once both done
+ *
+ * Lift completion mapping: the workouts array is ordered by lift
+ * day. To find today's workout we count how many lift+both slots
+ * precede today's day-of-week in the user's weekSchedule. That
+ * index is the workout this user did (or will do) today. If the
+ * mapping returns a slot past `workouts.length` (legacy plans where
+ * weekSchedule and workouts drifted) we fall back to "all done"
+ * if every workout is completed/skipped, otherwise to incomplete.
  */
 function TodayTabContent({
   profile,
@@ -95,6 +105,28 @@ function TodayTabContent({
     ? RUN_TEMPLATES.find((t) => t.id === (todayRunDay.userOverride || todayRunDay.templateId))
     : null;
 
+  // Compute today's lift workout index by counting lift+both slots
+  // up to and including today in weekSchedule. Returns -1 when
+  // today isn't a lift day OR the schedule is missing.
+  const todayLiftIndex = (() => {
+    if (!profile?.weekSchedule) return -1;
+    if (todayType !== "lift" && todayType !== "both") return -1;
+    const sortedSchedule = [...profile.weekSchedule].sort((a, b) => a.day - b.day);
+    let counter = 0;
+    for (const d of sortedSchedule) {
+      if (d.type === "lift" || d.type === "both") {
+        if (d.day === todayDayIndex) return counter;
+        counter++;
+      }
+    }
+    return -1;
+  })();
+  const todayWorkout = todayLiftIndex >= 0
+    ? programState?.workouts?.[todayLiftIndex]
+    : undefined;
+  const liftCompleted = !!(todayWorkout?.completed || todayWorkout?.skipped);
+  const runCompleted = !!todayRunDay?.completed;
+
   if (todayType === "rest") {
     return (
       <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
@@ -109,75 +141,156 @@ function TodayTabContent({
 
   const showLift = todayType === "lift" || todayType === "both";
   const showRun = todayType === "run" || todayType === "both";
+  const isBoth = todayType === "both";
+  const allDone =
+    (showLift && showRun && liftCompleted && runCompleted) ||
+    (showLift && !showRun && liftCompleted) ||
+    (!showLift && showRun && runCompleted);
 
   return (
     <div className="space-y-3">
-      {showLift && (
-        <button
-          onClick={onOpenLift}
-          className="w-full rounded-2xl p-4 text-left transition-all active:scale-[0.98]"
+      {/* All-done summary banner — sits above the cards when every
+          session for today is complete. Cards still render below
+          (greyed-out completion state) so the user can see what
+          they finished. */}
+      {allDone && (
+        <div
+          className="rounded-2xl p-4 text-center"
           style={{
-            background: `${THEME.lifting}10`,
-            border: `1px solid ${THEME.lifting}30`,
+            background: `${THEME.success}12`,
+            border: `1px solid ${THEME.success}30`,
           }}
         >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ background: `${THEME.lifting}20` }}
-            >
-              <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold" style={{ color: THEME.lifting }}>
-                Today &middot; Lift
-              </p>
-              <p className="text-sm font-bold text-foreground">View today's workout</p>
-            </div>
-            <Play className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </button>
+          <Check
+            className="w-5 h-5 mx-auto mb-1.5"
+            style={{ color: THEME.success }}
+          />
+          <p className="text-sm font-semibold" style={{ color: THEME.success }}>
+            {isBoth ? "Both sessions complete" : "Done for today"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isBoth
+              ? "Recovery time — see you tomorrow."
+              : "Recovery time — see you tomorrow."}
+          </p>
+        </div>
+      )}
+
+      {showLift && (
+        <TodaySessionCard
+          kind="lift"
+          completed={liftCompleted}
+          title={liftCompleted ? "Today's workout" : "View today's workout"}
+          subtitle={liftCompleted ? "Complete" : todayWorkout?.dayName}
+          onClick={onOpenLift}
+          orderHint={isBoth && !liftCompleted ? "Recommended first" : null}
+        />
       )}
       {showRun && (
-        <button
+        <TodaySessionCard
+          kind="run"
+          completed={runCompleted}
+          title={runCompleted ? "Today's run" : tmpl?.name ?? "Start a run"}
+          subtitle={runCompleted ? "Complete" : tmpl?.description}
+          orderHint={isBoth && liftCompleted && !runCompleted ? "Up next" : null}
           onClick={() => {
-            const params = [];
+            const params: string[] = [];
             if (tmpl) params.push(`template=${tmpl.id}`);
-            if (todayRunDay?.id) params.push(`scheduledRunId=${encodeURIComponent(todayRunDay.id)}`);
+            if (todayRunDay?.id) {
+              params.push(`scheduledRunId=${encodeURIComponent(todayRunDay.id)}`);
+            }
             navigate("/run" + (params.length ? `?${params.join("&")}` : ""));
           }}
-          className="w-full rounded-2xl p-4 text-left transition-all active:scale-[0.98]"
-          style={{
-            background: `${THEME.running}10`,
-            border: `1px solid ${THEME.running}30`,
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ background: `${THEME.running}20` }}
-            >
-              <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold" style={{ color: THEME.running }}>
-                Today &middot; Run
-              </p>
-              <p className="text-sm font-bold text-foreground">{tmpl?.name ?? "Start a run"}</p>
-              {tmpl?.description && (
-                <p className="text-xs text-muted-foreground truncate">{tmpl.description}</p>
-              )}
-            </div>
-            <Play className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </button>
+        />
       )}
-      {todayType === "both" && (
+
+      {/* Doubles guidance — only shown when today is a Both day and
+          neither session is done yet. Once the user starts moving
+          we hide it (the order is decided), and once everything's
+          done the summary banner above covers the "what's next"
+          question. */}
+      {isBoth && !liftCompleted && !runCompleted && (
         <p className="text-xs text-center text-muted-foreground">
-          Two sessions today &middot; pick the easier run if you're not feeling fresh
+          Two sessions today &middot; lift first if you can; the easier
+          run is fine when fatigued
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * Card primitive shared by the lift + run sessions on Today.
+ * Centralises completion-state styling so a "done" card on Both
+ * day looks identical to a "done" card on a single-session day.
+ */
+function TodaySessionCard({
+  kind,
+  completed,
+  title,
+  subtitle,
+  onClick,
+  orderHint,
+}: {
+  kind: "lift" | "run";
+  completed: boolean;
+  title: string;
+  subtitle?: string | null;
+  onClick: () => void;
+  orderHint?: string | null;
+}) {
+  const color = kind === "lift" ? THEME.lifting : THEME.running;
+  const Icon = kind === "lift" ? Dumbbell : Footprints;
+  const kindLabel = kind === "lift" ? "Lift" : "Run";
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full rounded-2xl p-4 text-left transition-all active:scale-[0.98]"
+      style={{
+        background: completed ? "hsl(var(--muted) / 0.4)" : `${color}10`,
+        border: completed
+          ? "1px solid hsl(var(--border))"
+          : `1px solid ${color}30`,
+        opacity: completed ? 0.7 : 1,
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="w-10 h-10 rounded-lg flex items-center justify-center"
+          style={{
+            background: completed ? "hsl(var(--muted))" : `${color}20`,
+          }}
+        >
+          <Icon
+            className="w-5 h-5"
+            style={{ color: completed ? "hsl(var(--muted-foreground))" : color }}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-xs font-semibold"
+            style={{ color: completed ? "hsl(var(--muted-foreground))" : color }}
+          >
+            Today &middot; {kindLabel}
+            {orderHint && (
+              <span className="ml-1.5 text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
+                · {orderHint}
+              </span>
+            )}
+          </p>
+          <p className="text-sm font-bold text-foreground truncate">{title}</p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+          )}
+        </div>
+        {completed ? (
+          <Check className="w-4 h-4" style={{ color: THEME.success }} />
+        ) : (
+          <Play className="w-4 h-4 text-muted-foreground" />
+        )}
+      </div>
+    </button>
   );
 }
 
