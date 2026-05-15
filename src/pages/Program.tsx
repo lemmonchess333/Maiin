@@ -28,6 +28,8 @@ import {
   Sparkles,
   Footprints,
   Bed,
+  ChevronLeft,
+  ChevronRight,
   MoreHorizontal,
   Plus,
   FastForward,
@@ -295,20 +297,55 @@ function TodaySessionCard({
 }
 
 /**
- * P1-1: Week tab — 7-day strip showing the user's weekSchedule with
- * completed-run badging. Minimum-viable version; P1-3 adds visible
- * overflow menus + history nav + in-place minor edits.
+ * P1-3: Week tab — 7-day strip + per-day overflow menus + history nav.
+ *
+ * Each runDay chip carries a tap target that opens a bottom sheet
+ * with day-appropriate actions:
+ *   - Run day → Swap template / Skip / (cancel)
+ *   - Lift day → Skip lift / (cancel)
+ *   - Both → both action sets
+ *   - Rest → no actions (chip is not tappable)
+ *
+ * History nav uses the same goBack / goForward pipeline as
+ * Lift tab's WeekPhaseRow — `viewWeek(historyIndex | null)` from
+ * useProgram. When viewing history, the Week chip strip reflects
+ * the historical weekSchedule (which we'd need to snapshot per
+ * week in P0-A's weekHistory; for now we render the current
+ * weekSchedule with a "Week N" label so the historical week
+ * NUMBER is visible even if the layout snapshot isn't).
  */
 function WeekTabContent({
   profile,
   programState,
+  weekNumber,
+  canGoBack,
+  canGoForward,
+  onPrevWeek,
+  onNextWeek,
+  isViewingHistory,
+  overrideRunDay,
+  completeRunDay,
+  skipRunDay,
+  skipWorkoutDay,
 }: {
   profile: UserProfile | null;
   programState: ProgramState | null;
+  weekNumber: number;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  onPrevWeek: () => void;
+  onNextWeek: () => void;
+  isViewingHistory: boolean;
+  overrideRunDay: (dayIndex: number, templateId: string) => void;
+  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipWorkoutDay: (dayIndex: number) => Promise<void>;
 }) {
   const dayLetters = ["S", "M", "T", "W", "T", "F", "S"];
+  const dayFullLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const todayDayIndex = new Date().getDay();
   const schedule = profile?.weekSchedule ?? [];
+  const [openDayIndex, setOpenDayIndex] = useState<number | null>(null);
 
   if (schedule.length !== 7) {
     return (
@@ -320,21 +357,68 @@ function WeekTabContent({
     );
   }
 
+  const openDay = openDayIndex !== null ? schedule.find((d) => d.day === openDayIndex) : null;
+  const openRunDay = openDayIndex !== null
+    ? programState?.runDays?.find((rd) => rd.dayIndex === openDayIndex)
+    : null;
+
   return (
     <div className="space-y-3">
+      {/* History nav header — same layout as Lift tab's WeekPhaseRow
+          but stripped down: the Week tab doesn't need the phase
+          pill because the user is editing layout, not progressing
+          through phases. */}
+      <div className="flex items-center justify-center gap-3 py-1" style={{ height: 36 }}>
+        {canGoBack ? (
+          <button onClick={onPrevWeek} className="p-1 active:scale-95 transition-transform" aria-label="Previous week">
+            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+          </button>
+        ) : (
+          <div className="w-6" />
+        )}
+        <span className="text-sm font-semibold text-foreground">
+          Week {weekNumber}
+          {isViewingHistory && (
+            <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
+              · History
+            </span>
+          )}
+        </span>
+        {canGoForward ? (
+          <button onClick={onNextWeek} className="p-1 active:scale-95 transition-transform" aria-label="Next week">
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+        ) : (
+          <div className="w-6" />
+        )}
+      </div>
+
       <div className="grid grid-cols-7 gap-2">
         {schedule.map((d) => {
           const meta = WEEK_TAB_TYPE_META[d.type];
           const runDay = programState?.runDays?.find((rd) => rd.dayIndex === d.day);
           const completed = !!runDay?.completed;
           const isToday = d.day === todayDayIndex;
+          // Skipped runs get a distinct visual badge so the user
+          // can tell "I missed this" from "I haven't done it yet".
+          const skipped = runDay?.status === "skipped";
+          const isTappable = d.type !== "rest" && !isViewingHistory;
           return (
-            <div
+            <button
               key={d.day}
-              className="rounded-xl py-2 px-1 text-center"
+              type="button"
+              disabled={!isTappable}
+              onClick={() => isTappable && setOpenDayIndex(d.day)}
+              aria-label={`${dayFullLabels[d.day]} ${meta.label}${isTappable ? ", tap to edit" : ""}`}
+              className={cn(
+                "rounded-xl py-2 px-1 text-center transition-all",
+                isTappable && "hover:brightness-105 active:scale-95",
+              )}
               style={{
                 background: `${meta.color}18`,
                 border: isToday ? `2px solid ${meta.color}` : `1px solid ${meta.color}40`,
+                opacity: skipped ? 0.55 : 1,
+                cursor: isTappable ? "pointer" : "default",
               }}
             >
               <p
@@ -352,7 +436,15 @@ function WeekTabContent({
               {completed && (
                 <Check className="w-3 h-3 mx-auto mt-1" style={{ color: meta.color }} />
               )}
-            </div>
+              {skipped && !completed && (
+                <span
+                  className="block text-[8px] font-bold mt-1 uppercase tracking-wider"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
+                  Skip
+                </span>
+              )}
+            </button>
           );
         })}
       </div>
@@ -372,8 +464,144 @@ function WeekTabContent({
         })}
       </div>
       <p className="text-xs text-muted-foreground text-center pt-1">
-        Tweak the layout in Settings &rarr; Training
+        Tap any non-rest day to edit · Tweak the layout in Settings &rarr; Training
       </p>
+
+      {/* Per-day overflow sheet */}
+      <AnimatePresence>
+        {openDay && openDayIndex !== null && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpenDayIndex(null)}
+              className="fixed inset-0 bg-black/50 z-40"
+            />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
+            >
+              <div className="max-w-md mx-auto p-5 space-y-3">
+                <div className="w-10 h-1 rounded-full bg-border mx-auto mb-2" />
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-foreground">
+                    {dayFullLabels[openDayIndex]} &middot; {WEEK_TAB_TYPE_META[openDay.type].label}
+                  </p>
+                  {openRunDay && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {RUN_TEMPLATES.find((t) => t.id === (openRunDay.userOverride || openRunDay.templateId))?.name ?? "—"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Run-day actions */}
+                {(openDay.type === "run" || openDay.type === "both") && openRunDay && (
+                  <>
+                    {/* Template swap select */}
+                    <div className="space-y-1">
+                      <label
+                        htmlFor="weektab-template-swap"
+                        className="text-xs uppercase tracking-wider"
+                        style={{ color: "hsl(var(--muted-foreground))" }}
+                      >
+                        Run template
+                      </label>
+                      <select
+                        id="weektab-template-swap"
+                        value={openRunDay.userOverride || openRunDay.templateId}
+                        onChange={(e) => {
+                          overrideRunDay(openDay.day, e.target.value);
+                          setOpenDayIndex(null);
+                        }}
+                        className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border/50"
+                      >
+                        {RUN_TEMPLATES.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({t.type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Skip run action — only when not already terminal */}
+                    {!openRunDay.completed && openRunDay.status !== "skipped" && (
+                      <button
+                        onClick={async () => {
+                          await skipRunDay(openRunDay.id ?? openDay.day);
+                          setOpenDayIndex(null);
+                        }}
+                        className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground"
+                      >
+                        Skip this run
+                      </button>
+                    )}
+
+                    {/* Mark complete action — defensive: planned-only */}
+                    {!openRunDay.completed && openRunDay.status === "planned" && (
+                      <button
+                        onClick={async () => {
+                          await completeRunDay(openRunDay.id ?? openDay.day);
+                          setOpenDayIndex(null);
+                        }}
+                        className="w-full py-2.5 rounded-xl text-sm font-medium"
+                        style={{ background: `${THEME.success}20`, color: THEME.success }}
+                      >
+                        Mark complete (manual)
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Lift-day skip action — counts as "done for the
+                    week" semantics in useProgram parity, but the
+                    user can resume the workout from the Lift tab
+                    if they pick it back up. */}
+                {(openDay.type === "lift" || openDay.type === "both") && (
+                  <button
+                    onClick={async () => {
+                      // Lift index inside workouts[] — same mapping
+                      // as the Today tab: count lift+both slots up
+                      // to the open day.
+                      const sortedSchedule = [...schedule].sort((a, b) => a.day - b.day);
+                      let liftIdx = -1;
+                      let counter = 0;
+                      for (const d of sortedSchedule) {
+                        if (d.type === "lift" || d.type === "both") {
+                          if (d.day === openDay.day) {
+                            liftIdx = counter;
+                            break;
+                          }
+                          counter++;
+                        }
+                      }
+                      if (liftIdx >= 0) {
+                        await skipWorkoutDay(liftIdx);
+                      }
+                      setOpenDayIndex(null);
+                    }}
+                    className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground"
+                  >
+                    Skip lift session
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setOpenDayIndex(null)}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -420,6 +648,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWeekNumber,
     overrideRunDay,
     refreshRunSchedule,
+    completeRunDay,
+    skipRunDay,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
@@ -988,7 +1218,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {/* ── WEEK tab — 7-day strip with day-type chips + status. */}
       {activeTab === "week" && (
         <div className="pt-4">
-          <WeekTabContent profile={profile} programState={programState} />
+          <WeekTabContent
+            profile={profile}
+            programState={programState}
+            weekNumber={displayWeekNumber}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onPrevWeek={goBack}
+            onNextWeek={goForward}
+            isViewingHistory={isViewingHistory}
+            overrideRunDay={overrideRunDay}
+            completeRunDay={completeRunDay}
+            skipRunDay={skipRunDay}
+            skipWorkoutDay={skipWorkoutDay}
+          />
         </div>
       )}
 

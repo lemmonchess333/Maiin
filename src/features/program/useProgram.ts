@@ -539,6 +539,48 @@ export function useProgram() {
     [programState, user, saveProgram],
   );
 
+  // P1-3: Skip a run day (planned → skipped). Same id-or-index
+  // overload as completeRunDay so the Week tab's overflow menu can
+  // dispatch either way. Transition is gated by transitionStatus,
+  // so a no-op call against a terminal-state runDay logs and exits
+  // without writing.
+  const skipRunDay = useCallback(
+    async (idOrDayIndex: string | number) => {
+      if (!programState?.runDays || !user) return;
+
+      const targetIndex =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.findIndex((rd) => rd.dayIndex === idOrDayIndex);
+      if (targetIndex === -1) {
+        logger.warn(
+          `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+      const fromStatus = targetDay.status ?? "planned";
+      const toStatus: ScheduledRunStatus = "skipped";
+      if (!transitionStatus(fromStatus, toStatus)) {
+        logger.warn(
+          `[skipRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`,
+        );
+        return;
+      }
+
+      const updatedDays = programState.runDays.slice();
+      updatedDays[targetIndex] = {
+        ...targetDay,
+        // `completed` stays false — skipped is distinct from
+        // completed. The Week tab + status-derived analytics need
+        // to tell the two states apart.
+        status: toStatus,
+      };
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, saveProgram],
+  );
+
   // Override a run day template
   const overrideRunDay = useCallback(
     async (dayIndex: number, templateId: string) => {
@@ -813,6 +855,7 @@ export function useProgram() {
     regenerateProgram,
     saveProgram,
     completeRunDay,
+    skipRunDay,
     overrideRunDay,
     refreshRunSchedule,
     viewWeek,
