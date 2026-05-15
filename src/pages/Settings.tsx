@@ -5,16 +5,13 @@ import { calculateTDEE } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import { logger } from "@/lib/logger";
 import {
   Crown,
   ChevronRight,
 } from "lucide-react";
 import { useProgram } from "@/features/program/useProgram";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
-import { generateSchedule, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
-import type { ScheduleDay, DayType } from "@/lib/scheduleUtils";
+import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import {
   useMealReminders,
@@ -46,12 +43,30 @@ export default function Settings() {
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
   const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
 
+  // P0-7: schedule editor state lives in the shared hook so P0-8's
+  // Programme Run/Week tabs can reuse the exact same logic.
+  const scheduleEditor = useProgrammeScheduleEditor({
+    profile,
+    updateProfile,
+    refreshRunSchedule,
+    regenerateProgram,
+  });
+  const {
+    runsTarget,
+    schedule,
+    hasUnsavedScheduleChanges,
+    handleDayToggle,
+    handleApplyScheduleChanges,
+    showRestructureModal,
+    pendingLiftDays,
+    restructuring,
+    handleConfirmRestructure,
+    cancelRestructure,
+  } = scheduleEditor;
+
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
-  const [workoutsTarget, setWorkoutsTarget] = useState(
-    profile?.weeklyWorkoutsTarget || 4
-  );
   const [mealsTarget, setMealsTarget] = useState(
     Math.min(profile?.weeklyMealsTarget || 10, 20)
   );
@@ -66,10 +81,6 @@ export default function Settings() {
   const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
     (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
   );
-  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile) || 2);
-  const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
-    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
-  );
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
@@ -77,99 +88,9 @@ export default function Settings() {
   const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
   const { prefs: streakReminder, updatePrefs: updateStreakReminder } = useStreakReminder();
 
-  // Restructure warning modal state
-  const [showRestructureModal, setShowRestructureModal] = useState(false);
-  const [pendingLiftDays, setPendingLiftDays] = useState<number | null>(null);
-  const [restructuring, setRestructuring] = useState(false);
+  // P0-7: focus trap stays here because it binds the modal DOM
+  // element — the hook is logic-only and doesn't know about refs.
   const restructureModalRef = useFocusTrap<HTMLDivElement>(showRestructureModal);
-
-  // Schedule tracking for unsaved-changes detection
-  const [savedSchedule] = useState<ScheduleDay[] | null>(
-    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null
-  );
-  const savedLiftDays = useMemo(() => {
-    if (savedSchedule) return savedSchedule.filter((s) => s.type === "lift" || s.type === "both").length;
-    return profile?.weeklyWorkoutsTarget || 4;
-  }, [savedSchedule, profile?.weeklyWorkoutsTarget]);
-
-  const schedule = useMemo(() => {
-    if (customSchedule) return customSchedule;
-    return generateSchedule(workoutsTarget, runsTarget);
-  }, [workoutsTarget, runsTarget, customSchedule]);
-
-  const handleDayToggle = (day: number) => {
-    const current = schedule.find((s) => s.day === day);
-    if (!current) return;
-    const cycle: DayType[] = ["rest", "lift", "run", "both"];
-    const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
-    const updated = schedule.map((s) =>
-      s.day === day ? { ...s, type: cycle[nextIdx] } : s
-    );
-    setCustomSchedule(updated);
-    const newLiftDays = updated.filter((s) => s.type === "lift" || s.type === "both").length;
-    const newRunDays = updated.filter((s) => s.type === "run" || s.type === "both").length;
-    setRunsTarget(newRunDays);
-    setWorkoutsTarget(newLiftDays);
-  };
-
-  const hasUnsavedScheduleChanges = useMemo(() => {
-    if (!customSchedule) return false;
-    if (!savedSchedule) return true;
-    return customSchedule.some((s, i) => s.type !== savedSchedule[i]?.type);
-  }, [customSchedule, savedSchedule]);
-
-  const handleApplyScheduleChanges = async () => {
-    const currentLiftDays = schedule.filter((s) => s.type === "lift" || s.type === "both").length;
-    if (currentLiftDays !== savedLiftDays && currentLiftDays > 0) {
-      setPendingLiftDays(currentLiftDays);
-      setShowRestructureModal(true);
-    } else {
-      await updateProfile({ weekSchedule: schedule, weeklyWorkoutsTarget: workoutsTarget, ...runTargetWriteFields(runsTarget) });
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        await refreshRunSchedule();
-      }
-      // No success toast — Settings UI shows the new schedule directly.
-    }
-  };
-
-  const handleConfirmRestructure = async () => {
-    if (pendingLiftDays === null) return;
-    setRestructuring(true);
-    try {
-      // Save profile FIRST so subsequent reads (and the
-      // refreshRunSchedule fallback) see the new schedule. Then pass
-      // the new schedule directly into regenerateProgram via the
-      // `overrides` param so the run scheduler uses the user's
-      // confirmed layout, not the pre-edit profile state. Previously
-      // the order was inverted (regenerate → update profile) and the
-      // regenerate ran against stale liftIndices. The artificial
-      // 1.5s setTimeout was fake-spinner UX padding — the
-      // setRestructuring(true) state already shows "Rebuilding..."
-      // on the confirm button, so we don't need to slow the work down.
-      await updateProfile({
-        weekSchedule: schedule,
-        weeklyWorkoutsTarget: workoutsTarget,
-        ...runTargetWriteFields(runsTarget),
-      });
-      await regenerateProgram(undefined, pendingLiftDays, {
-        weekSchedule: schedule,
-        weeklyRunDaysTarget: runsTarget,
-      });
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        await refreshRunSchedule();
-      }
-      setShowRestructureModal(false);
-      const newSplit = chooseSplit(pendingLiftDays);
-      setPendingLiftDays(null);
-      // No success toast — the program section reflects the new split.
-      void newSplit;
-    } catch (error) {
-      logger.error("handleConfirmRestructure failed:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setRestructuring(false);
-    }
-  };
 
   const tdee = useMemo(() => {
     return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex || "male");
@@ -406,9 +327,9 @@ export default function Settings() {
             className="fixed inset-0 bg-black/50 z-40"
             role="button" tabIndex={0} aria-label="Close dialog"
             onClick={() => {
-              setShowRestructureModal(false);
+              cancelRestructure();
             }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowRestructureModal(false); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') cancelRestructure(); }}
           />
           <div ref={restructureModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-card rounded-2xl p-4 space-y-4 max-w-sm mx-auto shadow-xl">
             <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>
@@ -421,7 +342,7 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  setShowRestructureModal(false);
+                  cancelRestructure();
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
               >
