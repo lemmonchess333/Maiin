@@ -107,6 +107,7 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
         offPlan: false,
         planWeekIndex: 3,
         planTotalWeeks: 8,
+        scheduledRunId: null,
       },
     };
     const now = 2_000_000;

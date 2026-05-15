@@ -64,6 +64,19 @@ export interface RunPlanMetadata {
   offPlan: boolean;
   planWeekIndex: number | null;
   planTotalWeeks: number | null;
+  /**
+   * P0-6: the id of the ScheduledRunDay this run is fulfilling, if
+   * any. Set when the user starts a run via `?scheduledRunId=` (the
+   * canonical route) or when the prefill resolved to today's planned
+   * run and that runDay had an id. Used by RunSummary to complete
+   * the EXACT run day on save instead of "today's runDay by index",
+   * which would alias when a user opens a missed-day run from a
+   * past week.
+   *
+   * Nullable — freeform runs, URL-template-only runs, and legacy
+   * runDays without v2 ids all leave it null.
+   */
+  scheduledRunId: string | null;
 }
 
 /**
@@ -113,6 +126,7 @@ export function freeformPlanMetadata(planMode: PlanMode): RunPlanMetadata {
     offPlan: false,
     planWeekIndex: null,
     planTotalWeeks: null,
+    scheduledRunId: null,
   };
 }
 
@@ -147,6 +161,15 @@ export interface ComputePlanInputs {
    * `?type=` URL param value, if present and no `?template=`.
    */
   urlType: string | null;
+  /**
+   * P0-6: `?scheduledRunId=` URL param value, if present. When set,
+   * we look up THAT runDay by id instead of inferring from
+   * todayDayIndex — this is the canonical entry path from Programme
+   * UI (RunCTACard, Week tab session card, missed-day pickup).
+   * Falls through to the todayDayIndex path when null or when the
+   * id doesn't resolve.
+   */
+  urlScheduledRunId?: string | null;
 }
 
 // ─── Pure decision function ─────────────────────────────────────────
@@ -175,6 +198,29 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
   const planWeekIndex = inputs.runPlan?.currentWeek ?? null;
   const planTotalWeeks = inputs.runPlan?.totalWeeks ?? null;
 
+  // P0-6: when `?scheduledRunId=<id>` is on the URL, it pins WHICH
+  // runDay we treat as the planned context — even if the id refers
+  // to a non-today day (missed-day pickup) or a completed day
+  // (auditing a previously-completed slot). Falls through to the
+  // historical "find today's incomplete runDay" path when the URL
+  // param is absent or doesn't resolve.
+  function findRunDayByUrlId(): ScheduledRunDay | null {
+    if (!inputs.urlScheduledRunId || !inputs.runDays) return null;
+    return inputs.runDays.find((d) => d.id === inputs.urlScheduledRunId) ?? null;
+  }
+  function findTodayIncompleteRunDay(): ScheduledRunDay | null {
+    return (
+      inputs.runDays?.find(
+        (d) => d.dayIndex === inputs.todayDayIndex && !d.completed,
+      ) ?? null
+    );
+  }
+  // The resolved-day candidate used by branches (1), (2), and (3b).
+  // The completed-day branch (3a) and rest-day branch (3c) keep
+  // their existing today-only logic because pinning a non-today
+  // runDay via URL doesn't make either branch fire.
+  const resolvedPlannedDay = findRunDayByUrlId() ?? findTodayIncompleteRunDay();
+
   // ── 1. ?template= wins absolutely ─────────────────────────────────
   if (inputs.urlTemplateId) {
     const tmpl = RUN_TEMPLATES.find((t) => t.id === inputs.urlTemplateId);
@@ -189,11 +235,8 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     // Even if today has a planned run, URL wins for the prefill source.
     // But we still expose the programme's planned-day metadata so the
     // doc captures "user overrode their plan with a URL template".
-    const todayDay = inputs.runDays?.find(
-      (d) => d.dayIndex === inputs.todayDayIndex && !d.completed,
-    );
-    const plannedTemplate = todayDay
-      ? resolvePlannedTemplate(todayDay)
+    const plannedTemplate = resolvedPlannedDay
+      ? resolvePlannedTemplate(resolvedPlannedDay)
       : null;
     const matchedPlanExact = plannedTemplate
       ? tmpl.id === plannedTemplate.id
@@ -205,7 +248,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       metadata: {
         planMode,
         planSource: "url_template",
-        plannedRunDayIndex: todayDay ? todayDay.dayIndex : null,
+        plannedRunDayIndex: resolvedPlannedDay ? resolvedPlannedDay.dayIndex : null,
         plannedTemplateId: plannedTemplate?.id ?? null,
         plannedTemplateType: plannedTemplate?.type ?? null,
         actualTemplateId: tmpl.id,
@@ -218,6 +261,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         }),
         planWeekIndex,
         planTotalWeeks,
+        scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
       prefill: templateToPrefill(tmpl),
     };
@@ -228,17 +272,14 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     // ?type= doesn't pin a specific template, so actualTemplateId
     // stays null. We still surface programme context if a plan
     // applies today.
-    const todayDay = inputs.runDays?.find(
-      (d) => d.dayIndex === inputs.todayDayIndex && !d.completed,
-    );
-    const plannedTemplate = todayDay
-      ? resolvePlannedTemplate(todayDay)
+    const plannedTemplate = resolvedPlannedDay
+      ? resolvePlannedTemplate(resolvedPlannedDay)
       : null;
     return {
       metadata: {
         planMode,
         planSource: "url_template",
-        plannedRunDayIndex: todayDay ? todayDay.dayIndex : null,
+        plannedRunDayIndex: resolvedPlannedDay ? resolvedPlannedDay.dayIndex : null,
         plannedTemplateId: plannedTemplate?.id ?? null,
         plannedTemplateType: plannedTemplate?.type ?? null,
         actualTemplateId: null,
@@ -253,6 +294,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         }),
         planWeekIndex,
         planTotalWeeks,
+        scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
       prefill: { activityType: inputs.urlType },
     };
@@ -269,9 +311,14 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       };
     }
 
-    const todayDay = inputs.runDays.find(
-      (d) => d.dayIndex === inputs.todayDayIndex,
-    );
+    // P0-6: when ?scheduledRunId resolved, treat the URL-pinned day
+    // as the candidate. Otherwise fall back to today's day for the
+    // completed_day branch — that's a "today is done but user opened
+    // Run again" path and doesn't take URL pins (the URL-pinned id
+    // would have routed through 3b above already).
+    const todayDay = resolvedPlannedDay && inputs.urlScheduledRunId
+      ? resolvedPlannedDay
+      : inputs.runDays.find((d) => d.dayIndex === inputs.todayDayIndex) ?? null;
 
     // 3a. Today's planned run is already completed — extra-run state.
     if (todayDay && todayDay.completed) {
@@ -288,6 +335,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
           offPlan: true,
           planWeekIndex,
           planTotalWeeks,
+          scheduledRunId: todayDay.id ?? null,
         },
         prefill: {},
       };
@@ -299,7 +347,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       if (!plannedTemplate) {
         // Missing template ID — caller logs, no prefill.
         return {
-          metadata: freeformPlanMetadata(planMode),
+          metadata: { ...freeformPlanMetadata(planMode), scheduledRunId: todayDay.id ?? null },
           prefill: {},
         };
       }
@@ -316,6 +364,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
           offPlan: false,
           planWeekIndex,
           planTotalWeeks,
+          scheduledRunId: todayDay.id ?? null,
         },
         prefill: templateToPrefill(plannedTemplate),
       };
@@ -335,6 +384,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         offPlan: true,
         planWeekIndex,
         planTotalWeeks,
+        scheduledRunId: null,
       },
       prefill: {},
     };

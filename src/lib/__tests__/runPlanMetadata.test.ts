@@ -389,6 +389,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     // User chose Easy via the chooser instead of Intervals.
     const final = finalisePlanMetadata(start, "easy");
@@ -415,6 +416,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     const final = finalisePlanMetadata(start, "tempo");
     expect(final).toEqual(start);
@@ -439,6 +441,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: true,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     // User leaves the URL prefill alone — actualTemplateId stays
     // 'easy_30', match fields stay false.
@@ -461,6 +464,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: null,
       planTotalWeeks: null,
+      scheduledRunId: null,
     };
     // User picked Easy from the chooser, abandoning the 5x1k prefill.
     const final = finalisePlanMetadata(start, "easy");
@@ -488,6 +492,7 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
     offPlan: false,
     planWeekIndex: 2,
     planTotalWeeks: 8,
+    scheduledRunId: null,
   };
 
   // Scenario 6: exact planned-template match completes the day.
@@ -572,5 +577,179 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
     expect(
       shouldCompleteRunDay({ metadata: freeform, isValid: true }),
     ).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// P0-6: ?scheduledRunId= URL pin
+// ────────────────────────────────────────────────────────────────────
+
+/** v2-shape runDay constructor — adds the id + status fields. */
+function makeRunDayV2(args: {
+  id: string;
+  dayIndex: number;
+  templateId: string;
+  type: string;
+  completed?: boolean;
+  status?: ScheduledRunDay["status"];
+  userOverride?: string;
+}): ScheduledRunDay {
+  return {
+    id: args.id,
+    dayIndex: args.dayIndex,
+    templateId: args.templateId,
+    type: args.type,
+    completed: args.completed ?? false,
+    status: args.status ?? "planned",
+    ...(args.userOverride ? { userOverride: args.userOverride } : {}),
+  };
+}
+
+describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
+  it("freeform metadata exposes scheduledRunId: null", () => {
+    // Establishes the additive contract — every returned metadata
+    // shape now carries the scheduledRunId field, defaulting to null
+    // on freeform / rest-day / completed-day / mismatch paths.
+    const m = freeformPlanMetadata("freeform");
+    expect(m.scheduledRunId).toBeNull();
+  });
+
+  it("today_plan branch captures the resolved runDay's id when v2", () => {
+    // Even without a URL pin, the prefill from today's runDay
+    // should surface that day's id so RunSummary can complete by ID.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: MONDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+    });
+    expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
+    expect(metadata.planSource).toBe("today_plan");
+  });
+
+  it("URL pin overrides today's day — resolves the pinned id even when not today", () => {
+    // Missed-day pickup: today is Wednesday, user opens a missed
+    // Monday run via ?scheduledRunId=. The pinned day becomes the
+    // planned context for the entire metadata.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_long_10k",
+        dayIndex: MONDAY,
+        templateId: "long_10k",
+        type: "long",
+      }),
+      makeRunDayV2({
+        id: "runday_2026-05-10_3_tempo_20",
+        dayIndex: WEDNESDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata, prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: WEDNESDAY,
+      runPlan: racePlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "runday_2026-05-10_1_long_10k",
+    });
+    expect(metadata.planSource).toBe("today_plan");
+    expect(metadata.plannedRunDayIndex).toBe(MONDAY);
+    expect(metadata.plannedTemplateId).toBe("long_10k");
+    expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_long_10k");
+    expect(prefill.activityType).toBe("long");
+  });
+
+  it("URL pin that doesn't resolve falls back to today's day", () => {
+    // Defensive: a stale URL with an unknown id shouldn't strand
+    // the user. Falls through to the existing today-resolution path.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: MONDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "runday_does_not_exist",
+    });
+    expect(metadata.planSource).toBe("today_plan");
+    expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
+  });
+
+  it("URL pin is preserved through the ?template= override branch", () => {
+    // Stacking: user pinned a scheduled run AND overrode the template
+    // (e.g. wanted to swap a tempo for an easy run that day). The
+    // metadata should carry both the runDay id AND the actual
+    // template id, with matchedPlanExact reflecting the mismatch.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: MONDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: "easy_30",
+      urlType: null,
+      urlScheduledRunId: "runday_2026-05-10_1_tempo_20",
+    });
+    expect(metadata.planSource).toBe("url_template");
+    expect(metadata.plannedTemplateId).toBe("tempo_20");
+    expect(metadata.actualTemplateId).toBe("easy_30");
+    expect(metadata.matchedPlanExact).toBe(false);
+    expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
+  });
+
+  it("URL pin onto a completed runDay surfaces completed_day with the pinned id", () => {
+    // User taps a tile for a day they've already finished — should
+    // route into the completed_day branch (extra-run state) with
+    // the scheduledRunId preserved so analytics can attribute the
+    // extra activity to that slot.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+        completed: true,
+        status: "completed_exact",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: WEDNESDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "runday_2026-05-10_1_tempo_20",
+    });
+    expect(metadata.planSource).toBe("completed_day");
+    expect(metadata.offPlan).toBe(true);
+    expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
   });
 });

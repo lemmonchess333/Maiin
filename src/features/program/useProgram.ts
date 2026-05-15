@@ -5,8 +5,8 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
-import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay } from "./programTypes";
-import { normalizeProgramState } from "./programTypes";
+import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay, ScheduledRunStatus } from "./programTypes";
+import { normalizeProgramState, transitionStatus } from "./programTypes";
 import {
   generateProgram,
   advanceWeek,
@@ -470,17 +470,58 @@ export function useProgram() {
     [programState, profile, saveProgram],
   );
 
-  // Mark a run day as completed
+  // P0-6: Mark a run day as completed.
+  //
+  // Accepts either a v2 ScheduledRunDay.id (string) for precise
+  // by-id completion, or a legacy dayIndex (number) for the
+  // pre-v2 path that's still wired elsewhere in the UI. When the
+  // id path resolves, status transitions via `transitionStatus`
+  // (planned → completed_exact). The runtime `completed: true`
+  // flag is set on both paths for back-compat — the in-app
+  // `runDays.find(d => !d.completed)` lookups still work.
+  //
+  // The transition validation is a soft guard: a no-op (status
+  // already terminal) logs a warning and falls through without
+  // writing — completing the same scheduled run twice shouldn't
+  // double-fire the "ready for next week" toast.
   const completeRunDay = useCallback(
-    async (dayIndex: number) => {
+    async (idOrDayIndex: string | number) => {
       if (!programState?.runDays || !user) return;
 
-      const updated: ProgramState = {
-        ...programState,
-        runDays: programState.runDays.map((rd) =>
-          rd.dayIndex === dayIndex ? { ...rd, completed: true } : rd,
-        ),
+      // Resolve which runDay we're completing. By-id path takes
+      // precedence (P0-6 entry) but falls back to legacy by-index
+      // when the caller has only a dayIndex.
+      const targetIndex =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.findIndex((rd) => rd.dayIndex === idOrDayIndex);
+      if (targetIndex === -1) {
+        logger.warn(
+          `[completeRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+
+      // Status transition gate. Only the planned → completed_exact
+      // path is wired here; future transitions (skipped, late,
+      // modified) land in P1/P2 alongside their UI surfaces.
+      const fromStatus = targetDay.status ?? "planned";
+      const toStatus: ScheduledRunStatus = "completed_exact";
+      if (!transitionStatus(fromStatus, toStatus)) {
+        logger.warn(
+          `[completeRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`,
+        );
+        return;
+      }
+
+      const updatedDays = programState.runDays.slice();
+      updatedDays[targetIndex] = {
+        ...targetDay,
+        completed: true,
+        status: toStatus,
       };
+      const updated: ProgramState = { ...programState, runDays: updatedDays };
 
       await saveProgram(updated);
 

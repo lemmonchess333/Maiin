@@ -1,8 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
+import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
@@ -85,7 +88,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewingHistoryIndex,
     viewedWorkouts,
     viewedWeekNumber,
+    overrideRunDay,
+    refreshRunSchedule,
   } = useProgram();
+  const { profile, updateProfile } = useAuth();
+  const runsTarget = getWeeklyRunTarget(profile);
 
   const { workouts: recentWorkouts } = useWorkouts();
 
@@ -560,6 +567,24 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             <FastForward className="w-4 h-4" />
             {advancing ? "Advancing..." : "Advance to Next Week"}
           </button>
+        </div>
+      )}
+
+      {/* P0-8: run training controls — migrated out of Settings.
+            Hidden by the component itself when runsTarget === 0.
+            Lives above the lift session content so the run editor is
+            glanceable from the top of the page without scrolling
+            through the lift schedule first. */}
+      {profile && (
+        <div className="pt-4">
+          <ProgrammeRunSection
+            profile={profile}
+            programState={programState}
+            runsTarget={runsTarget}
+            updateProfile={updateProfile}
+            overrideRunDay={overrideRunDay}
+            refreshRunSchedule={refreshRunSchedule}
+          />
         </div>
       )}
 

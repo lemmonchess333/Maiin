@@ -298,11 +298,15 @@ export default function Run() {
   // the lifetime of the route).
   const urlTemplateId = searchParams.get('template');
   const urlType = searchParams.get('type');
+  // P0-6: explicit scheduled-run pin from RunCTACard / Week tab /
+  // missed-day flow. Resolved by computePlanMetadata into the
+  // planned context regardless of today's date.
+  const urlScheduledRunId = searchParams.get('scheduledRunId');
   const planDecision = useMemo(() => {
     // Freeform users skip the programme branches entirely — the
     // memo still runs (hook order) but returns trivially. This keeps
     // freeform users decoupled from useProgram's loading state.
-    if (isFreeformUser && !urlTemplateId && !urlType) {
+    if (isFreeformUser && !urlTemplateId && !urlType && !urlScheduledRunId) {
       return {
         metadata: freeformPlanMetadata('freeform'),
         prefill: {} as Partial<RunConfig>,
@@ -316,6 +320,7 @@ export default function Run() {
       runDays: programState?.runDays,
       urlTemplateId,
       urlType,
+      urlScheduledRunId,
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -351,6 +356,7 @@ export default function Run() {
     programState?.runDays,
     urlTemplateId,
     urlType,
+    urlScheduledRunId,
   ]);
 
   // Phase B3: restore-on-mount. Reads the persisted snapshot exactly

@@ -509,6 +509,12 @@ export default function RunSummary() {
       offPlan: planMetadata.offPlan,
       planWeekIndex: planMetadata.planWeekIndex,
       planTotalWeeks: planMetadata.planTotalWeeks,
+      // P0-6: pinpoint which scheduled slot this run fulfilled.
+      // Persisting alongside the legacy `plannedRunDayIndex` lets
+      // analytics distinguish "the Tuesday tempo from week 3" from
+      // "the Tuesday tempo from week 4" without re-deriving from
+      // dates. Null for freeform / URL-template-only / legacy.
+      scheduledRunId: planMetadata.scheduledRunId,
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB
@@ -627,7 +633,13 @@ export default function RunSummary() {
         planMetadata.plannedRunDayIndex !== null &&
         shouldCompleteRunDay({ metadata: planMetadata, isValid: !isInvalid })
       ) {
-        completeRunDay(planMetadata.plannedRunDayIndex).catch((err: unknown) => {
+        // P0-6: prefer the by-id path when the runDay carries a v2
+        // id (every new plan from P0-A onwards does). Falls back to
+        // dayIndex for legacy plans whose runDays predate the id
+        // field. completeRunDay accepts both via overload.
+        const completionKey: string | number =
+          planMetadata.scheduledRunId ?? planMetadata.plannedRunDayIndex;
+        completeRunDay(completionKey).catch((err: unknown) => {
           logger.warn('[RunSummary] completeRunDay failed after save:', err);
         });
       }

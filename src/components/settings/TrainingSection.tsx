@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import {
@@ -6,20 +5,28 @@ import {
   ChevronRight,
   RefreshCw,
   Footprints,
-  Check,
-  Flag,
 } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
-import type { ProgramState } from "@/features/program/programTypes";
 
+/**
+ * P0-8: TrainingSection scope narrowed.
+ *
+ * Pre-P0-8 this component owned the run mode picker, race goal form,
+ * race progress strip, and per-day template override list. Those
+ * have moved to Programme's `<ProgrammeRunSection />` — Settings now
+ * just provides the retake button, the weekly schedule editor, and
+ * a deep-link banner pointing the user at the new home for their
+ * plan controls.
+ *
+ * The schedule-editor state itself is owned by
+ * `useProgrammeScheduleEditor()` (P0-7) — this component is a render
+ * surface only.
+ */
 interface TrainingSectionProps {
   profile: UserProfile;
   runsTarget: number;
@@ -29,13 +36,10 @@ interface TrainingSectionProps {
   handleApplyScheduleChanges: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   navigate: (path: string, opts?: { state?: Record<string, unknown> }) => void;
-  programState: ProgramState | null;
-  overrideRunDay: (dayIndex: number, templateId: string) => void;
-  refreshRunSchedule: () => Promise<void>;
 }
 
 export default function TrainingSection({
-  profile,
+  profile: _profile,
   runsTarget,
   schedule,
   hasUnsavedScheduleChanges,
@@ -43,49 +47,9 @@ export default function TrainingSection({
   handleApplyScheduleChanges,
   updateProfile,
   navigate,
-  programState,
-  overrideRunDay,
-  refreshRunSchedule,
 }: TrainingSectionProps) {
-  const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
-  const [raceTargetDate, setRaceTargetDate] = useState("");
-  const [savingRaceGoal, setSavingRaceGoal] = useState(false);
-
-  const handleSaveRaceGoal = async () => {
-    // All validation toasts share one id so rapid-retry on the Save
-    // button replaces the previous message instead of stacking.
-    if (!raceTargetDate) {
-      toast.error("Please select a target date", { id: "race-goal" });
-      return;
-    }
-    const target = new Date(raceTargetDate);
-    const now = new Date();
-    if (target < now) {
-      toast.error("Target date is in the past", { id: "race-goal" });
-      return;
-    }
-    const weeksAway = Math.round((target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (weeksAway < 3) {
-      toast.error("Target date must be at least 3 weeks away", { id: "race-goal" });
-      return;
-    }
-    setSavingRaceGoal(true);
-    try {
-      await updateProfile({
-        runMode: "race_prep",
-        raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
-      });
-      await refreshRunSchedule();
-      toast.success("Race plan created!", { id: "race-goal" });
-    } catch {
-      toast.error("Failed to save race goal", { id: "race-goal" });
-    } finally {
-      setSavingRaceGoal(false);
-    }
-  };
-
   return (
-    <AccordionSection icon={<Target className="w-5 h-5 text-primary" />} title="Training" subtitle="Weekly schedule, run mode">
+    <AccordionSection icon={<Target className="w-5 h-5 text-primary" />} title="Training" subtitle="Weekly schedule, plan link">
       {/* Edit Programme */}
       <motion.button
         whileTap={{ scale: 0.98 }}
@@ -193,139 +157,29 @@ export default function TrainingSection({
           )}
         </div>
 
-        {/* Run mode — controls how run days get templates */}
+        {/* P0-8: active-plan controls (run mode picker, race goal form,
+            race progress strip, per-day template overrides) moved to
+            the Programme tab. This banner is the deep-link from
+            Settings to where those controls now live. Only shown when
+            the user actually has run days scheduled — freeform-only
+            users have nothing to manage on the Programme run section. */}
         {runsTarget > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-medium text-foreground flex items-center gap-2">
-              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
-              Run Mode
-            </p>
-            <div className="flex gap-2">
-              {(["freeform", "structured", "race_prep"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => updateProfile({ runMode: mode })}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                    (profile?.runMode ?? "freeform") === mode
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </button>
-              ))}
+          <button
+            onClick={() => {
+              haptic();
+              navigate("/program");
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium">Manage your run plan</p>
+              <p className="text-xs text-muted-foreground">
+                Run mode, race goal, weekly run templates — now in the Programme tab
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {(profile?.runMode ?? "freeform") === "freeform"
-                ? "Pick any run type when you start"
-                : (profile?.runMode ?? "freeform") === "structured"
-                  ? "Auto-assigns run templates to your run days"
-                  : "Follows a race training plan"}
-            </p>
-
-            {/* Race goal setup form */}
-            {profile?.runMode === "race_prep" && !programState?.runPlan?.raceGoal && (
-              <div className="p-3 rounded-xl bg-card space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Flag className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-medium text-foreground">Set Your Race Goal</span>
-                </div>
-                <fieldset>
-                  <legend className="text-xs text-muted-foreground uppercase tracking-wider">Distance</legend>
-                  <div className="flex gap-1.5 mt-1">
-                    {(["5k", "10k", "half", "marathon"] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setRaceDistance(d)}
-                        className={cn(
-                          "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                          raceDistance === d
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
-                <div>
-                  <label htmlFor="race-target-date" className="text-xs text-muted-foreground uppercase tracking-wider">Target Date</label>
-                  <input
-                    id="race-target-date"
-                    type="date"
-                    value={raceTargetDate}
-                    onChange={(e) => setRaceTargetDate(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-                  />
-                </div>
-                <button
-                  onClick={handleSaveRaceGoal}
-                  disabled={savingRaceGoal || !raceTargetDate}
-                  className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
-                >
-                  {savingRaceGoal ? "Creating plan..." : "Create Race Plan"}
-                </button>
-              </div>
-            )}
-
-            {/* Race prep details */}
-            {profile?.runMode === "race_prep" && programState?.runPlan?.raceGoal && (
-              <div className="p-3 rounded-xl bg-card space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {programState.runPlan.raceGoal.distance.toUpperCase()} &mdash; {programState.runPlan.raceGoal.targetDate}
-                  </span>
-                </div>
-                {programState.runPlan.totalWeeks && programState.runPlan.currentWeek != null && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {programState.runPlan.currentWeek + 1} / {programState.runPlan.totalWeeks}
-                        {" \u00B7 "}
-                        {getRacePhaseLabel(programState.runPlan.currentWeek, programState.runPlan.totalWeeks)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: ((programState.runPlan.currentWeek + 1) / programState.runPlan.totalWeeks * 100) + "%" }}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Template overrides per run day */}
-            {profile?.runMode && profile.runMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
-              <div className="p-3 rounded-xl bg-card space-y-1.5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
-                {(programState?.runDays ?? []).map((rd) => (
-                  <div key={rd.dayIndex} className="flex items-center gap-3 py-1">
-                    <span className="text-xs font-medium text-foreground w-8">
-                      {DAY_LABELS[rd.dayIndex]}
-                    </span>
-                    <select
-                      value={rd.userOverride || rd.templateId}
-                      onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                      className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
-                    >
-                      {RUN_TEMPLATES.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name} ({t.type})</option>
-                      ))}
-                    </select>
-                    {rd.completed && (
-                      <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
         )}
       </div>
     </AccordionSection>

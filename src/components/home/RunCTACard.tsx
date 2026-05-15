@@ -22,14 +22,20 @@ export default function RunCTACard({ todayRun, navigate }: {
   const runLabel = tmpl ? tmpl.name : "Start a run";
   const runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
   const runIcon = tmpl?.icon;
-  const templateParam = tmpl ? "?template=" + tmpl.id : "";
+  // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
+  // being fulfilled. Falls back to ?template= alone for legacy
+  // runDays without v2 ids (no id field on the schedule object).
+  const params: string[] = [];
+  if (tmpl) params.push("template=" + tmpl.id);
+  if (todayRun?.id) params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
+  const queryString = params.length ? "?" + params.join("&") : "";
   const RunIconComp = runIcon && RUN_ICON_MAP[runIcon] ? RUN_ICON_MAP[runIcon] : Footprints;
 
   const runKeyMetric = runDesc ? (runDesc.match(/(\d+\.?\d*\s*k(?:m|ilom[ei]t[er]*))/i)?.[1] || runDesc.match(/(\d+\.?\d*\s*mi(?:les?)?)/i)?.[1] || null) : null;
 
   return (
     <motion.button whileTap={{ scale: 0.97 }}
-      onClick={function() { haptic(); navigate("/run" + templateParam); }}
+      onClick={function() { haptic(); navigate("/run" + queryString); }}
       className="w-full rounded-xl bg-card text-left p-4"
       style={{ backgroundColor: THEME.running + "14" }}>
       <div className="flex items-center gap-3">

@@ -14,8 +14,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import type { ProgramTemplate, TemplateExercise } from "@/features/program/templates";
 import { matchTemplate, applyInjuryFilters } from "@/features/program/matchTemplate";
-import { generateProgram } from "@/features/program/programEngine";
 import type { ProgramState, WorkoutDay, ProgramExercise, SplitType } from "@/features/program/programTypes";
+import { buildPlan } from "@/features/program/planBuilder";
+import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import { localDateString } from "@/lib/dateHelpers";
 import {
   ChevronRight,
   Check,
@@ -183,7 +185,24 @@ function equipmentLabel(e: Equipment): string {
    STEP DEFINITIONS
 ============================ */
 
-const TOTAL_STEPS = 12;
+// P0-5: bumped to 13 to insert "Your week at a glance" between
+// injuries (10) and confirmation (12). The preview step renders
+// the planBuilder-derived weekSchedule so users see exactly how
+// their lift + run choices map onto the seven days before they
+// commit. Same step IDs as v6 (0-9 identity + program inputs),
+// new 10 = injuries, 11 = preview, 12 = confirm.
+const TOTAL_STEPS = 13;
+
+// P0-5: visual metadata for the weekly preview step. Lift = purple
+// (brand), Run = coral (running), Both = teal (the cross-discipline
+// accent we use for hybrid surfaces), Rest = muted. Keep in sync
+// with the sport-coding rules in CLAUDE.md.
+const WEEK_PREVIEW_TYPE_META: Record<ScheduleDay["type"], { label: string; color: string }> = {
+  lift: { label: "Lift", color: "#7B72E9" },
+  run: { label: "Run", color: "#D4637A" },
+  both: { label: "Both", color: "#52A3BD" },
+  rest: { label: "Rest", color: "#8E8E93" },
+};
 
 const STEP_META: { title: string; subtitle: string }[] = [
   { title: "What should we call you?", subtitle: "We'll show this on your profile and to friends." },
@@ -197,6 +216,7 @@ const STEP_META: { title: string; subtitle: string }[] = [
   { title: "Preferred training style", subtitle: "Pick a split or let us decide" },
   { title: "Do you run?", subtitle: "We'll weave runs into your schedule" },
   { title: "Any injuries?", subtitle: "We'll program around limitations" },
+  { title: "Your week at a glance", subtitle: "Here's how we'll lay out your training week" },
   { title: "Your plan is ready", subtitle: "Review your selections and let's go" },
 ];
 
@@ -281,6 +301,19 @@ export default function Onboarding() {
       if (profile.equipment) setEquipment(profile.equipment);
       if (profile.preferredSplit) setPreferredSplit(profile.preferredSplit);
       if (profile.runFrequency) setRunFrequency(profile.runFrequency);
+      // P0-5: retake prefills run-plan state so users editing an
+      // existing plan don't have to re-pick mode + targets. Mode +
+      // weekly count + race goal are independent of the higher-level
+      // runFrequency control — a "regular runner" can still be in
+      // race_prep, etc.
+      if (profile.runMode) setRunMode(profile.runMode as RunMode);
+      if (typeof profile.weeklyRunDaysTarget === "number" && profile.weeklyRunDaysTarget > 0) {
+        setWeeklyRunDays(profile.weeklyRunDaysTarget);
+      }
+      if (profile.raceGoal) {
+        setRaceDistance(profile.raceGoal.distance as RaceDistance);
+        setRaceTargetDate(profile.raceGoal.targetDate);
+      }
       if (profile.injuries) {
         const knownInjuries = ["none", "lower_back", "shoulder", "knee", "wrist", "elbow"];
         // Pre-W1c "other" / free-text injury values are ignored on retake —
@@ -323,6 +356,28 @@ export default function Onboarding() {
     [weightKg, heightCm, ageRange, activityLevel, primaryGoal, gender]
   );
 
+  // P0-5: derived run-day count for previews + planBuilder input.
+  // Freeform-regular → 3 default runs, freeform-occasional → 1.
+  // Structured/race_prep use the slider value directly. Same
+  // derivation as handleFinish so the preview reflects exactly what
+  // the save call will request.
+  const effectiveRunDays = useMemo(() => {
+    if (runFrequency === "none") return 0;
+    if (runMode === "freeform") {
+      return runFrequency === "regular" ? 3 : 1;
+    }
+    return weeklyRunDays;
+  }, [runFrequency, runMode, weeklyRunDays]);
+
+  // P0-5: weekly preview rendered on step 11. Pure derivation off
+  // generateSchedule — no Firestore read, no planBuilder call (the
+  // preview only needs the day-type structure, not the workouts).
+  // Both days appear automatically when liftDays + runDays > 7.
+  const previewWeekSchedule = useMemo<ScheduleDay[]>(
+    () => generateSchedule(daysPerWeek, effectiveRunDays),
+    [daysPerWeek, effectiveRunDays],
+  );
+
   // Split compatibility check
   function isSplitDisabled(split: PreferredSplit): boolean {
     if (split === "ppl" && daysPerWeek < 5) return true;
@@ -346,9 +401,14 @@ export default function Onboarding() {
     true,                                   // 6: days per week
     true,                                   // 7: equipment
     !isSplitDisabled(preferredSplit),        // 8: preferred split
-    runFrequency === "none" || (daysPerWeek + weeklyRunDays <= 7 && (runMode !== "race_prep" || raceTargetDate !== "")), // 9: run frequency + mode
+    // P0-5: doubles blocker dropped. `daysPerWeek + weeklyRunDays > 7`
+    // is no longer a constraint — generateSchedule emits Both days
+    // when the total exceeds 7 (see P0-B). The only remaining
+    // run-step gate is the race-prep date selector.
+    runFrequency === "none" || runMode !== "race_prep" || raceTargetDate !== "", // 9: run frequency + mode
     injuries.length > 0,                    // 10: injuries (must select at least one, including "none")
-    true,                                   // 11: confirmation
+    true,                                   // 11: weekly preview (always advanceable)
+    true,                                   // 12: confirmation
   ];
 
   // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
@@ -357,8 +417,9 @@ export default function Onboarding() {
     setSaving(true);
     try {
       const injuriesForSave = injuries;
-
-      const effectiveRunDays = runFrequency === "none" ? 0 : (runMode === "freeform" ? (runFrequency === "regular" ? 3 : 1) : weeklyRunDays);
+      // effectiveRunDays comes from the useMemo above so previews +
+      // save use the same value. Keep this reference in scope for
+      // the rest of the function.
 
       // Historical note: before this change, Onboarding did not collect
       // displayName. The only pre-existing user (the solo founder) was
@@ -430,58 +491,68 @@ export default function Onboarding() {
         runFrequency,
         injuries: injuriesForSave,
       };
-      // matchTemplate now returns a result object with an `isGoalMatch`
-      // signal. W1a: when no template matches the exact primaryGoal for
-      // this day-count + equipment combination (e.g. 4-day strength, 3-day
-      // fat_loss — gaps in the handwritten template matrix), fall back to
-      // the procedural engine with `primaryGoal` threaded through so the
-      // user actually gets rep ranges matching what they asked for,
-      // instead of silently receiving another goal's template.
+      const fitnessGoal = goalToFitnessGoal(primaryGoal);
+
+      // P0-5: planBuilder is the single source of truth for plan
+      // shape (lift workouts + weekSchedule + runDays + runPlan).
+      // The template-match path is preserved as a preference signal
+      // for the lift programme — when matchTemplate finds an exact
+      // primaryGoal hit, we feed its workouts in via existingState
+      // so planBuilder reuses them instead of regenerating. When
+      // there's no match, planBuilder falls through to generateProgram
+      // internally with the same primaryGoal threaded through.
       const matchResult = matchTemplate(
         profileForMatch as Parameters<typeof matchTemplate>[0],
         PROGRAM_TEMPLATES,
       );
-      const fitnessGoal = goalToFitnessGoal(primaryGoal);
-
-      let programState: ProgramState;
+      let existingStateSeed: ProgramState | undefined;
+      let templateIdForState: string | undefined;
       if (matchResult.isGoalMatch) {
-        // Pass PROGRAM_TEMPLATES as the contra-index source so
-        // applyInjuryFilters can validate alternatives across every
-        // template's contraindication data, not just the selected
-        // template's own alts. Without this the validator can miss
-        // e.g. a knee-contraindicated alternative declared in a
-        // different template.
         const filtered = applyInjuryFilters(
           matchResult.template,
           injuriesForSave,
           PROGRAM_TEMPLATES,
         );
-        programState = templateToProgramState(filtered, fitnessGoal);
-        programState.primaryGoal = primaryGoal;
-        programState.templateId = filtered.id;
-      } else {
-        // No exact-goal template. Use the procedural engine with
-        // primaryGoal so reps + volume reflect the user's stated goal.
-        const { splitType, workouts } = generateProgram(
-          fitnessGoal,
-          daysPerWeek,
-          undefined,
-          primaryGoal,
-        );
-        programState = {
-          goal: fitnessGoal,
-          currentPhase: "base",
-          weekNumber: 1,
-          splitType,
-          workouts,
-          fatigueScore: 0,
-          updatedAt: Date.now(),
-          settings: { autoProgression: true, microloading: true },
-          weekHistory: [],
-          primaryGoal,
-          // No templateId — this program came from the procedural engine.
-        };
+        existingStateSeed = templateToProgramState(filtered, fitnessGoal);
+        existingStateSeed.primaryGoal = primaryGoal;
+        templateIdForState = filtered.id;
       }
+
+      // P0-5: drive everything through planBuilder. Pure call with
+      // currentDate injected so the generated week anchors to the
+      // user's local Sunday — never the server's UTC.
+      const planInput = {
+        primaryGoal,
+        nutritionPhase: fitnessGoal,
+        experience,
+        liftDays: daysPerWeek,
+        preferredSplit: preferredSplit as SplitType,
+        runMode: runFrequency === "none" ? "freeform" as const : runMode,
+        weeklyRunDays: effectiveRunDays,
+        ...(runMode === "race_prep" && runFrequency !== "none" && raceTargetDate
+          ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
+          : {}),
+        equipment,
+        injuries: injuriesForSave,
+        currentDate: localDateString(new Date()),
+        existingState: existingStateSeed,
+        preserveHistory: false,
+      };
+      const plan = buildPlan(planInput);
+      const programState: ProgramState = plan.programState;
+      if (templateIdForState) {
+        programState.templateId = templateIdForState;
+      }
+
+      // Merge planBuilder's profileUpdates onto profileData. The
+      // server-side validator (P0-4 validatePlanPayload) reads
+      // weekSchedule + weekScheduleVersion + runMode + raceGoal
+      // off profileData; the merge keeps the v6 onboarding fields
+      // (TDEE, body metrics, etc.) intact while adding the v7
+      // plan-shape fields. plan.profileUpdates.weeklyRunsTarget
+      // and weeklyRunDaysTarget overwrite the locally-derived
+      // counts above so the values match the actual generated plan.
+      Object.assign(profileData, plan.profileUpdates);
 
       // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules.
       // Retry once on "internal" error: the function has no minInstances, so the
@@ -489,7 +560,15 @@ export default function Onboarding() {
       // client SDK's default wait window and surface as functions/internal even
       // though the warm instance will handle the second call fine.
       const completeOnboarding = httpsCallable(functions, "completeOnboarding");
-      const callCF = () => completeOnboarding({ profileData, programState });
+      // P0-5: payload now includes weekSchedule as an explicit
+      // top-level field. validatePlanPayload reads either the
+      // top-level field or profileData.weekSchedule; sending both
+      // keeps the contract explicit on the wire.
+      const callCF = () => completeOnboarding({
+        profileData,
+        programState,
+        weekSchedule: plan.weekSchedule,
+      });
       try {
         await callCF();
       } catch (err) {
@@ -999,14 +1078,20 @@ export default function Onboarding() {
                       <input
                         type="range"
                         min="1"
-                        max={Math.max(1, 7 - daysPerWeek)}
+                        max={7}
                         value={weeklyRunDays}
                         onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
                         className="w-full accent-primary"
                       />
                       {daysPerWeek + weeklyRunDays > 7 && (
-                        <p className="text-xs text-red-400 mt-1">
-                          Total training days ({daysPerWeek} lift + {weeklyRunDays} run = {daysPerWeek + weeklyRunDays}) exceeds 7. Reduce run or lift days.
+                        // P0-5: this is no longer a hard block. When
+                        // total > 7, generateSchedule packs the spare
+                        // workouts into Both days (one slot, one lift
+                        // + one run). The copy stays informational so
+                        // users understand the implication of the
+                        // combination they're picking.
+                        <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+                          {daysPerWeek} lift + {weeklyRunDays} run = {daysPerWeek + weeklyRunDays}. You'll see {Math.min(daysPerWeek + weeklyRunDays - 7, Math.min(daysPerWeek, weeklyRunDays))} double day{Math.min(daysPerWeek + weeklyRunDays - 7, Math.min(daysPerWeek, weeklyRunDays)) === 1 ? "" : "s"} (lift + run on the same day).
                         </p>
                       )}
                     </div>
@@ -1096,9 +1181,81 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 10 — Confirmation
+             STEP 11 — Weekly preview (P0-5)
           ════════════════════════════════ */}
           {step === 11 && (
+            <div
+              className="rounded-2xl p-5 space-y-4"
+              style={{
+                background: `${THEME.brand}08`,
+                border: `1px solid ${THEME.brand}25`,
+              }}
+            >
+              <div className="grid grid-cols-7 gap-2">
+                {previewWeekSchedule.map((d, i) => {
+                  const dayLetters = ["S", "M", "T", "W", "T", "F", "S"];
+                  const meta = WEEK_PREVIEW_TYPE_META[d.type];
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04, duration: 0.25 }}
+                      className="rounded-xl py-2 px-1 text-center"
+                      style={{
+                        background: `${meta.color}18`,
+                        border: `1px solid ${meta.color}40`,
+                      }}
+                    >
+                      <p
+                        className="text-[10px] uppercase tracking-wider"
+                        style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
+                      >
+                        {dayLetters[i]}
+                      </p>
+                      <p
+                        className="text-[11px] font-semibold mt-1 leading-tight"
+                        style={{ color: meta.color }}
+                      >
+                        {meta.label}
+                      </p>
+                    </motion.div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap pt-1">
+                {(["lift", "run", "both", "rest"] as const).map((t) => {
+                  const meta = WEEK_PREVIEW_TYPE_META[t];
+                  const count = previewWeekSchedule.filter((d) => d.type === t).length;
+                  if (count === 0) return null;
+                  return (
+                    <div key={t} className="flex items-center gap-1.5">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: meta.color }}
+                      />
+                      <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {count} {meta.label.toLowerCase()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p
+                className="text-xs leading-relaxed"
+                style={{ color: "hsl(var(--muted-foreground) / 0.85)" }}
+              >
+                {previewWeekSchedule.some((d) => d.type === "both")
+                  ? "Both days pair lifting and running on one slot — we'll schedule the easier run that day."
+                  : "We'll start you here. You can rearrange days later from the Programme tab."}
+              </p>
+            </div>
+          )}
+
+          {/* ════════════════════════════════
+             STEP 12 — Confirmation
+          ════════════════════════════════ */}
+          {step === 12 && (
             <div
               className="rounded-2xl p-5 space-y-0"
               style={{
@@ -1217,7 +1374,6 @@ export default function Onboarding() {
           {step === 2 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
           {step === 3 && 'Enter your height and weight to continue'}
           {step === 8 && 'This split requires more training days'}
-          {step === 9 && daysPerWeek + weeklyRunDays > 7 && `Reduce run days — total exceeds 7 (${daysPerWeek} lift + ${weeklyRunDays} run)`}
           {step === 9 && runMode === 'race_prep' && !raceTargetDate && 'Select a target race date'}
           {step === 10 && injuries.length === 0 && 'Select at least one option (or "None")'}
         </p>
