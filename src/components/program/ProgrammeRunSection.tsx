@@ -205,6 +205,36 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
+      {/* P3-2: race elapsed state. When the user's race date has
+          passed, we surface a muted "race day passed" card with a
+          CTA to set a new goal instead of leaving the user staring
+          at a dead progress strip. Detection logic mirrors
+          isRacePlanElapsed in runPlanMetadata so the analytics +
+          UI agree on what "elapsed" means. */}
+      {currentMode === "race_prep" && programState?.runPlan?.raceGoal && (() => {
+        const target = new Date(programState.runPlan.raceGoal.targetDate);
+        const now = new Date();
+        const elapsed = !Number.isNaN(target.getTime()) && target.getTime() < now.getTime();
+        if (!elapsed) return null;
+        return (
+          <div
+            className="p-3 rounded-xl text-xs"
+            style={{
+              background: "hsl(var(--muted) / 0.5)",
+              border: "1px solid hsl(var(--border))",
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <p className="font-semibold mb-0.5">Race day has passed</p>
+            <p style={{ color: "hsl(var(--muted-foreground))" }}>
+              {programState.runPlan.raceGoal.distance.toUpperCase()} on{" "}
+              {programState.runPlan.raceGoal.targetDate}. Open Configure Plan to set a new race
+              or switch to structured running.
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Race plan progress — only when raceGoal exists. P2-1:
           compressed banner appears above when the plan was
           shortened below the ideal weeks for the distance. */}
