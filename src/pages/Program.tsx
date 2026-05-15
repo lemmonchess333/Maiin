@@ -1011,7 +1011,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <h3 className="text-sm font-semibold text-foreground">Refresh programme?</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A new set of exercises will be generated for your current goal and training days. You&apos;ll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact.
+                A new set of exercises will be generated for your current nutrition phase and training days. You&apos;ll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
