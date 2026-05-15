@@ -1,19 +1,26 @@
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, ClipboardList, X } from "lucide-react";
+import { Dumbbell, ClipboardList, Footprints, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import type { ScheduledRunDay } from "@/features/program/programTypes";
 import { IconButton } from "@/components/ui/IconButton";
 
-export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, onClose }: {
+export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dailyTotals, onClose }: {
   dateKey: string;
   schedule: ScheduleDay[];
+  /** P1-4: programState.runDays for the current week. The peek
+   *  surfaces planned-run status (planned / completed / skipped)
+   *  alongside the existing workout + meal lines so users see the
+   *  full activity picture for the day, not just lift volume. */
+  runDays?: ScheduledRunDay[];
   workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[]; durationMinutes?: number }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
 }) {
   const dow = new Date(dateKey + "T00:00:00").getDay();
   const st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
+  const runDay = runDays?.find(function(r) { return r.dayIndex === dow; });
   const dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
   const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
   const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
@@ -46,7 +53,7 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
               icon={<X />}
             />
           </div>
-          {(hasW || hasM) ? (
+          {(hasW || hasM || runDay) ? (
             <div className="space-y-1 text-xs">
               {hasW && (
                 <div className="flex items-center gap-1.5">
@@ -70,6 +77,26 @@ export default function DayPeekCard({ dateKey, schedule, workouts, dailyTotals, 
                 <div className="flex items-center gap-1.5">
                   <ClipboardList className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.success }} />
                   <span className="text-foreground font-mono tabular-nums">{dailyTotals.calories.toLocaleString()} cal {"\u00B7"} {Math.round(dailyTotals.protein)}g protein</span>
+                </div>
+              )}
+              {/* P1-4: run-day status row. Shows planned vs actual
+                  (completed / skipped) so the peek captures the full
+                  activity picture, not just lift volume. */}
+              {runDay && (
+                <div className="flex items-center gap-1.5">
+                  <Footprints className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.running }} />
+                  <span className="text-foreground">
+                    {runDay.completed ? (
+                      <span className="inline-flex items-center gap-1">
+                        Run completed
+                        <Check className="w-3 h-3" style={{ color: THEME.success }} />
+                      </span>
+                    ) : runDay.status === "skipped" ? (
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Run skipped</span>
+                    ) : (
+                      <span>Run scheduled</span>
+                    )}
+                  </span>
                 </div>
               )}
             </div>

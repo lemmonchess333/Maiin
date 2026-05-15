@@ -432,7 +432,7 @@ export default function Home() {
       )}
 
       <motion.div ref={weekStripRef} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
-        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} selectedDate={peekDate} onDayTap={handleDayTap} />
+        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} runDays={programState?.runDays} selectedDate={peekDate} onDayTap={handleDayTap} />
         {/* One-shot discoverability hint. Latches off on first day-tap
             so users who already know don't keep seeing it. */}
         {showDayTapHint && !peekDate && (
@@ -441,7 +441,7 @@ export default function Home() {
           </p>
         )}
         <AnimatePresence>
-          {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
+          {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} runDays={programState?.runDays} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
         </AnimatePresence>
       </motion.div>
 
