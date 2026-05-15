@@ -389,6 +389,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     // User chose Easy via the chooser instead of Intervals.
     const final = finalisePlanMetadata(start, "easy");
@@ -415,6 +416,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     const final = finalisePlanMetadata(start, "tempo");
     expect(final).toEqual(start);
@@ -439,6 +441,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: true,
       planWeekIndex: 2,
       planTotalWeeks: 8,
+      scheduledRunId: null,
     };
     // User leaves the URL prefill alone — actualTemplateId stays
     // 'easy_30', match fields stay false.
@@ -461,6 +464,7 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
       offPlan: false,
       planWeekIndex: null,
       planTotalWeeks: null,
+      scheduledRunId: null,
     };
     // User picked Easy from the chooser, abandoning the 5x1k prefill.
     const final = finalisePlanMetadata(start, "easy");
@@ -488,6 +492,7 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
     offPlan: false,
     planWeekIndex: 2,
     planTotalWeeks: 8,
+    scheduledRunId: null,
   };
 
   // Scenario 6: exact planned-template match completes the day.

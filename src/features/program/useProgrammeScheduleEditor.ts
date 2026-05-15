@@ -58,9 +58,9 @@ export interface UseProgrammeScheduleEditorArgs {
    *  rebuild uses the user's confirmed layout rather than the pre-
    *  edit profile snapshot (see Settings comment block). */
   regenerateProgram: (
-    overrides?: unknown,
-    targetLiftDays?: number,
-    profileOverrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
+    goalOverride?: string,
+    weeklyTargetOverride?: number,
+    overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
   ) => Promise<void>;
 }
 

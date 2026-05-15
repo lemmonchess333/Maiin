@@ -38,7 +38,11 @@ function makeArgs(profileOverrides: Partial<UserProfile> = {}) {
   );
   const refreshRunSchedule = vi.fn<() => Promise<void>>(async () => {});
   const regenerateProgram = vi.fn<
-    (a?: unknown, b?: number, c?: unknown) => Promise<void>
+    (
+      goalOverride?: string,
+      weeklyTargetOverride?: number,
+      overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
+    ) => Promise<void>
   >(async () => {});
   return {
     profile: makeProfile(profileOverrides),
@@ -244,11 +248,11 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
     });
     expect(args.updateProfile).toHaveBeenCalledOnce();
     expect(args.regenerateProgram).toHaveBeenCalledOnce();
-    const [overrides, targetLiftDays, profileOverrides] =
+    const [goalOverride, weeklyTargetOverride, overrides] =
       args.regenerateProgram.mock.calls[0];
-    expect(overrides).toBeUndefined();
-    expect(targetLiftDays).toBe(4);
-    expect(profileOverrides).toMatchObject({ weeklyRunDaysTarget: 2 });
+    expect(goalOverride).toBeUndefined();
+    expect(weeklyTargetOverride).toBe(4);
+    expect(overrides).toMatchObject({ weeklyRunDaysTarget: 2 });
     expect(result.current.showRestructureModal).toBe(false);
     expect(result.current.pendingLiftDays).toBeNull();
     expect(result.current.restructuring).toBe(false);
