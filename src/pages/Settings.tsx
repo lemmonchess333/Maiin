@@ -41,7 +41,7 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
-  const { refreshRunSchedule, programState, overrideRunDay, regenerateProgram } = useProgram();
+  const { refreshRunSchedule, regenerateProgram } = useProgram();
 
   // P0-7: schedule editor state lives in the shared hook so P0-8's
   // Programme Run/Week tabs can reuse the exact same logic.
@@ -210,9 +210,6 @@ export default function Settings() {
         handleApplyScheduleChanges={handleApplyScheduleChanges}
         updateProfile={updateProfile}
         navigate={navigate}
-        programState={programState}
-        overrideRunDay={overrideRunDay}
-        refreshRunSchedule={refreshRunSchedule}
       />
 
       {/* 3. Nutrition */}
