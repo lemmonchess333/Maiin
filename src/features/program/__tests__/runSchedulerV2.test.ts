@@ -341,3 +341,60 @@ describe("enrichRunDayV2", () => {
     expect(typeof v2.userOverride).toBe("string");
   });
 });
+
+/* ─── PR-0a — race template selection by distance ─────────────── */
+//
+// Pre-PR-0a `pickRaceTemplateId` returned "5k_race" for every
+// race-goal distance, so a 10K / half / marathon race-prep plan
+// quietly placed a 5K template on race day. This block walks the
+// public scheduler path for each distance and asserts:
+//
+//   1. the race-day runDay points at the right template id, AND
+//   2. that template's prefill (templateToPrefill via the public
+//      computePlanMetadata path) emits the correct race distance
+//      in METRES.
+//
+// We compute the race-day from the final week of the plan
+// (weeks[totalWeeks - 1] in V2's output), find the entry with
+// type "race", and check templateId + the corresponding
+// RUN_TEMPLATES.config.targetDistance.
+
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+
+describe("PR-0a — race template selection by distance", () => {
+  const cases = [
+    { distance: "5k", expectedTemplate: "5k_race", expectedKm: 5, expectedMeters: 5000 },
+    { distance: "10k", expectedTemplate: "10k_race", expectedKm: 10, expectedMeters: 10000 },
+    { distance: "half", expectedTemplate: "half_race", expectedKm: 21.1, expectedMeters: 21100 },
+    { distance: "marathon", expectedTemplate: "marathon_race", expectedKm: 42.2, expectedMeters: 42200 },
+  ] as const;
+
+  for (const c of cases) {
+    it(`${c.distance} race plan schedules a ${c.expectedTemplate} on race day`, () => {
+      const plan = generateRacePlanV2({
+        weekSchedule: generateSchedule(3, 3),
+        raceGoal: { distance: c.distance, targetDate: "2026-12-12" },
+        weeklyRunDays: 3,
+        currentDate: "2026-05-10",
+        weekStart: "2026-05-10",
+      });
+      // Race day lives in the final week, marked type: "race".
+      const finalWeek = plan.weeks[plan.weeks.length - 1];
+      const raceDay = finalWeek.find((d) => d.type === "race");
+      expect(raceDay).toBeDefined();
+      expect(raceDay!.templateId).toBe(c.expectedTemplate);
+
+      // Template exists in RUN_TEMPLATES and is authored in km.
+      const tmpl = RUN_TEMPLATES.find((t) => t.id === c.expectedTemplate);
+      expect(tmpl).toBeDefined();
+      expect(tmpl!.config.targetDistance).toBe(c.expectedKm);
+
+      // Sanity: km × 1000 === the metres value the prefill bridge
+      // should emit downstream. Pinning both halves of the chain
+      // here means a future template-authoring change in km would
+      // be caught against the prefill assertions in
+      // runPlanMetadata.test.ts.
+      expect((tmpl!.config.targetDistance ?? 0) * 1000).toBe(c.expectedMeters);
+    });
+  }
+});

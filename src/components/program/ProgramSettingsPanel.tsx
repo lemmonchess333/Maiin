@@ -133,7 +133,7 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                   {splitLabel(currentSplit as SplitType)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Auto-derived from your training days. To change, edit your weekly schedule in Settings &rarr; Training.
+                  Auto-derived from your training days. To change, open the overflow menu &rarr; Edit weekly layout.
                 </p>
               </div>
             </div>

@@ -6,6 +6,8 @@ import { useRunTimer } from '../hooks/useRunTimer';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
 import { calculatePace, calculateSplits, haversine, paceAsNumber, totalElevationGain } from '../lib/gps';
+import { getDistanceTargetMeters } from '../lib/runConfigUnits';
+import { getScheduledRunStatus, isScheduledRunStartable } from '../lib/scheduledRunStatus';
 import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig, type ProgramContextStrip } from '../components/run/RunSetupModal';
 import RunSetupSkeleton from '../components/run/RunSetupSkeleton';
@@ -333,8 +335,11 @@ export default function Run() {
     }
     // Missing programme templateId (today's plan has an unknown ID).
     // Same signal — fall back happened in the helper; we log.
+    // PR-0b-iii: status-aware "today's pickable run" lookup.
+    // Pre-PR-0b-iii `!d.completed` surfaced skipped runs as
+    // startable. Helper restricts to `planned` only.
     const todayDay = programState?.runDays?.find(
-      (d) => d.dayIndex === new Date().getDay() && !d.completed,
+      (d) => d.dayIndex === new Date().getDay() && isScheduledRunStartable(getScheduledRunStatus(d)),
     );
     if (
       todayDay &&
@@ -564,9 +569,14 @@ export default function Run() {
       audioCues.checkPaceAlert(currentPaceSec, runConfig.target.value, timer.elapsed);
     }
 
-    // Halfway and final 500m for distance targets
-    if (runConfig?.target?.type === 'distance' && runConfig.target.value) {
-      const targetMeters = runConfig.target.value * 1000;
+    // Halfway and final 500m for distance targets.
+    // target.value is metres per the RunConfig contract (see the
+    // type definition in RunSetupModal). Read through the helper
+    // so the prior `* 1000` regression class can't reappear via
+    // copy-paste — both sides of the pipeline now agree on metres
+    // because templateToPrefill converts km→m at the bridge.
+    const targetMeters = getDistanceTargetMeters(runConfig?.target);
+    if (targetMeters > 0) {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }

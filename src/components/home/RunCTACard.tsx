@@ -4,6 +4,7 @@ import { Footprints, Play, PersonStanding, Zap, RefreshCw, Wind, Route, Flag } f
 import { haptic } from "@/lib/haptic";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import { getScheduledRunStatus, isScheduledRunStartable } from "@/lib/scheduledRunStatus";
 
 const RUN_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   'person-standing': PersonStanding,
@@ -53,7 +54,12 @@ export default function RunCTACard({ todayRun, navigate }: {
           <p className="text-micro text-muted-foreground truncate">{runDesc}</p>
         </div>
         <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm" style={{ background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`, color: "white" }}>
-          <Play className="w-3 h-3" fill="white" />{todayRun?.completed ? "Done" : "Go"}
+          <Play className="w-3 h-3" fill="white" />{
+            // PR-0b-iii: "Go" only when actually startable.
+            // Terminal AND reconciliation states both surface as
+            // "Done" (the user can't launch a fresh run flow).
+            todayRun && isScheduledRunStartable(getScheduledRunStatus(todayRun)) ? "Go" : todayRun ? "Done" : "Go"
+          }
         </div>
       </div>
     </motion.button>

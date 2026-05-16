@@ -25,8 +25,8 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getTodaySchedule, generateSchedule } from "@/lib/scheduleUtils";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { FitnessGoal } from "@/lib/tdee";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -37,6 +37,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
+import DayActionSheet from "@/components/program/DayActionSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import HealthScoreCard from "@/components/home/HealthScoreCard";
 import InsightStrip from "@/components/home/InsightStrip";
@@ -55,7 +56,17 @@ export default function Home() {
 
   const effectiveTargets = useEffectiveTargets();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  const { programState, loading: programLoading } = useProgram();
+  // PR-1: pull the action callbacks too so the new DayActionSheet
+  // (mounted from DayPeekCard's Manage CTA) can dispatch
+  // override/skip/complete without re-implementing them here.
+  const {
+    programState,
+    loading: programLoading,
+    overrideRunDay,
+    completeRunDay,
+    skipRunDay,
+    skipWorkoutDay,
+  } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
@@ -84,17 +95,31 @@ export default function Home() {
     }
   }, [profile, isInTrial]);
 
-  // getWeeklyRunTarget would be cleaner here but the
-  // react-hooks/preserve-manual-memoization rule can't see field-level
-  // access through the helper. Inline the resolution so deps stay
-  // explicit; semantics are identical.
-  const runTarget = profile?.weeklyRunDaysTarget ?? profile?.weeklyRunsTarget ?? 2;
-  const schedule = useMemo<ScheduleDay[]>(function() {
-    if (profile?.weekSchedule && profile.weekSchedule.length === 7) return profile.weekSchedule;
-    return generateSchedule(profile?.weeklyWorkoutsTarget || 3, runTarget);
-  }, [profile?.weekSchedule, profile?.weeklyWorkoutsTarget, runTarget]);
+  // PR-0c: single resolver call. Replaces three inline derivations
+  // that disagreed with each other and with the (now-retired) Programme Today tab:
+  //   1. `runTarget = ... ?? 2` — phantom runs for freeform users.
+  //      The resolver internally uses getWeeklyRunTarget which
+  //      defaults to 0.
+  //   2. `nextWorkout = workouts.find(d => !d.completed)` — the
+  //      next-incomplete lift, not today's scheduled lift.
+  //      The resolver uses liftIndexForDayOfWeek to map dow → lift idx.
+  //   3. `todayRun = runDays.find(r => dayIndex === todayDow && !completed)`
+  //      — treats skipped as startable, ignores date/weekKey.
+  //      The resolver enforces date → weekKey → guarded-legacy match
+  //      and uses isScheduledRunStartable for the gate.
+  const today = useMemo(function() { return new Date(); }, []);
+  const todayKey = localDateString(today);
+  const currentWeekKey = localWeekKey(today);
+  const resolvedToday = useMemo(function() {
+    return resolveTrainingDayForDate({
+      dateKey: todayKey,
+      profile,
+      programState,
+      currentWeekKey,
+    });
+  }, [todayKey, profile, programState, currentWeekKey]);
 
-  const todayType = (getTodaySchedule(schedule)?.type || "rest") as "lift" | "run" | "both" | "rest";
+  const todayType = resolvedToday.scheduleType;
   const streakDisplay = useCountUp(streak, { sessionKey: "streak", duration: 0.5 });
 
   useEffect(function() {
@@ -110,12 +135,10 @@ export default function Home() {
   const weightUnit = profile?.preferredWeightUnit || "kg";
   const { dailyCal, dailyProt, dailyCarbs, dailyFat, todayWorkoutCals, todayRunCals, lastWeightInfo, setLastWeightInfo, postWorkoutNudge } = useHomeData(user, profile, workouts, weightUnit);
 
-  const todayKey = format(new Date(), "yyyy-MM-dd");
   const todayTotals = getDailyTotals(todayKey);
   const todayWorkoutCount = useMemo(function() {
-    const tk = format(new Date(), "yyyy-MM-dd");
-    return workouts.filter(function(w) { return w.date === tk; }).length;
-  }, [workouts]);
+    return workouts.filter(function(w) { return w.date === todayKey; }).length;
+  }, [workouts, todayKey]);
 
   const healthScoreResult = useMemo(function() {
     return calculateHealthScore(
@@ -246,6 +269,11 @@ export default function Home() {
   };
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
+  // PR-1: which date the DayActionSheet is managing. Null = closed.
+  // Distinct from peekDate so the peek can stay expanded behind the
+  // sheet (the sheet is a temporary overlay, the peek is a longer-
+  // lived summary).
+  const [manageDate, setManageDate] = useState<string | null>(null);
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
@@ -274,7 +302,10 @@ export default function Home() {
   }, [peekDate]);
   const peekW = useMemo(function() { return peekDate ? getWorkoutsForDate(peekDate) : []; }, [peekDate, getWorkoutsForDate]);
   const peekT = useMemo(function() { return peekDate ? getDailyTotals(peekDate) : { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 }; }, [peekDate, getDailyTotals]);
-  const nextWorkout = programState?.workouts?.find(function(d) { return !d.completed; }) || null;
+  // PR-0c: today's scheduled lift, not next-incomplete. Resolver
+  // returns null when today isn't a lift/both day or the schedule
+  // has drifted past workouts[].length.
+  const nextWorkout = resolvedToday.lift.workout;
   const muscleGroups = useMemo(function() {
     if (!nextWorkout) return "";
     const groups = nextWorkout.exercises
@@ -286,14 +317,11 @@ export default function Home() {
     return unique.slice(0, 3).join(" · ") + " + more";
   }, [nextWorkout]);
 
-  // Find today's scheduled run (if any)
-  const todayDayIndex = new Date().getDay(); // 0=Sun, 6=Sat
-  const runDays = programState?.runDays;
-  const todayRun = useMemo(function() {
-    if (!runDays) return null;
-    const rd = runDays.find(function(r) { return r.dayIndex === todayDayIndex && !r.completed; });
-    return rd || null;
-  }, [runDays, todayDayIndex]);
+  // PR-0c: today's scheduled run, resolved date/weekKey-aware. The
+  // resolver returns the matched runDay (even when terminal — so
+  // RunCTACard can still render "Done" via the PR-0b-iii status
+  // gate). Returns null when there's no plan for today.
+  const todayRun = resolvedToday.run.runDay;
 
   if (!profile) return <HomeSkeleton />;
 
@@ -432,7 +460,7 @@ export default function Home() {
       )}
 
       <motion.div ref={weekStripRef} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="space-y-3">
-        <WeekStrip dayMap={weeklyDayMap} schedule={schedule} runDays={programState?.runDays} selectedDate={peekDate} onDayTap={handleDayTap} />
+        <WeekStrip dayMap={weeklyDayMap} profile={profile} programState={programState} selectedDate={peekDate} onDayTap={handleDayTap} />
         {/* One-shot discoverability hint. Latches off on first day-tap
             so users who already know don't keep seeing it. */}
         {showDayTapHint && !peekDate && (
@@ -441,7 +469,7 @@ export default function Home() {
           </p>
         )}
         <AnimatePresence>
-          {peekDate && <DayPeekCard dateKey={peekDate} schedule={schedule} runDays={programState?.runDays} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
+          {peekDate && <DayPeekCard dateKey={peekDate} profile={profile} programState={programState} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} onManage={function(dk) { setManageDate(dk); }} />}
         </AnimatePresence>
       </motion.div>
 
@@ -523,6 +551,22 @@ export default function Home() {
           </>
         )}
       </AnimatePresence>
+
+      {/* PR-1: per-day action sheet, opened by the peek's Manage
+          CTA. Centralised dispatch of override / complete / skip
+          for runs + skip for lifts — the three actions that were
+          Week-tab-only pre-PR-1. */}
+      <DayActionSheet
+        open={manageDate !== null}
+        onClose={function() { setManageDate(null); }}
+        dateKey={manageDate}
+        profile={profile}
+        programState={programState}
+        overrideRunDay={overrideRunDay}
+        completeRunDay={completeRunDay}
+        skipRunDay={skipRunDay}
+        skipWorkoutDay={skipWorkoutDay}
+      />
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
 

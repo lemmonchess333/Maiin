@@ -34,6 +34,14 @@
  *   - Race-goal state — that lives next to it in TrainingSection
  *     and writes via `updateProfile` directly. Pulling it in would
  *     widen the surface beyond what P0-8 / P0-9 need.
+ *
+ * PR-2 hydration strategy: the hook is mounted by a component
+ * (`ScheduleLayoutSheet`) that itself only mounts when its `open`
+ * prop is true. Closing the sheet unmounts the body, tearing the
+ * hook down. Opening it remounts → useState initialisers run
+ * fresh → draft state reflects the latest `profile`. NO hydration
+ * `useEffect` is needed; callers should keep the mount-when-open
+ * pattern intact rather than reintroducing a state-syncing effect.
  */
 
 import { useState, useMemo } from "react";
@@ -52,7 +60,12 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 export interface UseProgrammeScheduleEditorArgs {
   profile: UserProfile | null;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
-  refreshRunSchedule: () => Promise<void>;
+  /** Signature matches useProgram.refreshRunSchedule. Optional
+   *  overrides let the editor's apply path pass the freshly-
+   *  confirmed weekSchedule explicitly, avoiding a stale read of
+   *  `profile.weekSchedule` from useAuth's closure that hasn't
+   *  yet propagated from the immediately-preceding updateProfile. */
+  refreshRunSchedule: (overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }) => Promise<void>;
   /** Signature matches useProgram.regenerateProgram. The third arg
    *  carries weekSchedule + weeklyRunDaysTarget overrides so the
    *  rebuild uses the user's confirmed layout rather than the pre-
@@ -60,7 +73,7 @@ export interface UseProgrammeScheduleEditorArgs {
   regenerateProgram: (
     goalOverride?: string,
     weeklyTargetOverride?: number,
-    overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
+    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
   ) => Promise<void>;
 }
 
@@ -92,7 +105,12 @@ export function useProgrammeScheduleEditor(
   const { profile, updateProfile, refreshRunSchedule, regenerateProgram } = args;
 
   const [workoutsTarget, setWorkoutsTarget] = useState(profile?.weeklyWorkoutsTarget || 4);
-  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile) || 2);
+  // PR-2: zero-as-zero. Pre-PR-2 this was `getWeeklyRunTarget(profile) || 2`
+  // which silently coerced a user's explicit 0 runs into 2. Same class of
+  // bug PR-0c fixed for Home's runTarget. The slider's min stays at 1 in
+  // the UI; users land on the editor with 0 visible if that's their
+  // genuine setting, and the chips reflect it.
+  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile));
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
     profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null,
   );
@@ -156,7 +174,15 @@ export function useProgrammeScheduleEditor(
       ...runTargetWriteFields(runsTarget),
     });
     if (profile?.runMode && profile.runMode !== "freeform") {
-      await refreshRunSchedule();
+      // PR-0b-ii: pass the freshly-confirmed schedule explicitly.
+      // useAuth's profile closure may not yet reflect the
+      // updateProfile above by the time refreshRunSchedule reads
+      // it, so without the override refreshRunSchedule could
+      // regenerate runDays against a stale schedule.
+      await refreshRunSchedule({
+        weekSchedule: schedule,
+        weeklyRunDaysTarget: runsTarget,
+      });
     }
   }
 
@@ -178,9 +204,13 @@ export function useProgrammeScheduleEditor(
         weekSchedule: schedule,
         weeklyRunDaysTarget: runsTarget,
       });
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        await refreshRunSchedule();
-      }
+      // PR-0b-ii: removed redundant refreshRunSchedule() call.
+      // regenerateProgram above already used the confirmed schedule
+      // via the `overrides` arg, so a second pass through
+      // refreshRunSchedule would just re-write the same runDays
+      // against the same weekSchedule. The race-prep path would
+      // also reset currentWeek to 0 inside regenerate AND then
+      // refresh — pointless double work + extra Firestore write.
       setShowRestructureModal(false);
       // chooseSplit invocation kept for parity with the pre-P0-7
       // Settings code — it doesn't toast but pinning the call

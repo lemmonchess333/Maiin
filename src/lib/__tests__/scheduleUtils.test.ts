@@ -4,6 +4,7 @@ import {
   getTodaySchedule,
   countByType,
   liftIndexForDayOfWeek,
+  isValidWeekSchedule,
   type ScheduleDay,
 } from "../scheduleUtils";
 
@@ -385,5 +386,97 @@ describe("liftIndexForDayOfWeek", () => {
       d.day === 3 ? { ...d, type: "rest" as const } : d,
     );
     expect(liftIndexForDayOfWeek(modified, 3)).toBe(-1);
+  });
+});
+
+describe("isValidWeekSchedule", () => {
+  // The narrower-than-length-7 validator that backs
+  // backfillWeekScheduleIfMissing's regeneration trigger. Pre-
+  // PR-0b-i a 7-entry array with duplicate days or unknown types
+  // would slip through; this validator catches it.
+
+  it("accepts the canonical week (days 0-6, valid types)", () => {
+    expect(isValidWeekSchedule(generateSchedule(3, 2))).toBe(true);
+  });
+
+  it("rejects non-arrays", () => {
+    expect(isValidWeekSchedule(null)).toBe(false);
+    expect(isValidWeekSchedule(undefined)).toBe(false);
+    expect(isValidWeekSchedule("not a schedule")).toBe(false);
+    expect(isValidWeekSchedule({})).toBe(false);
+    expect(isValidWeekSchedule(42)).toBe(false);
+  });
+
+  it("rejects wrong-length arrays", () => {
+    expect(isValidWeekSchedule([])).toBe(false);
+    expect(isValidWeekSchedule(generateSchedule(3, 2).slice(0, 6))).toBe(false);
+    const tooMany = [...generateSchedule(3, 2), { day: 7, type: "rest" as const }];
+    expect(isValidWeekSchedule(tooMany)).toBe(false);
+  });
+
+  it("rejects schedules with duplicate days", () => {
+    const dup: ScheduleDay[] = [
+      { day: 0, type: "rest" },
+      { day: 0, type: "lift" }, // duplicate
+      { day: 2, type: "run" },
+      { day: 3, type: "lift" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 1, type: "rest" },
+    ];
+    expect(isValidWeekSchedule(dup)).toBe(false);
+  });
+
+  it("rejects schedules with missing days (gap in 0..6)", () => {
+    const gap: ScheduleDay[] = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "lift" },
+      { day: 2, type: "run" },
+      // day 3 missing
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+      { day: 7, type: "rest" as never }, // out of range
+    ];
+    expect(isValidWeekSchedule(gap)).toBe(false);
+  });
+
+  it("rejects schedules with unknown type strings", () => {
+    const badType = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "lift" },
+      { day: 2, type: "run" },
+      { day: 3, type: "long" as never }, // not in the enum
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+    ];
+    expect(isValidWeekSchedule(badType)).toBe(false);
+  });
+
+  it("rejects schedules with non-numeric or out-of-range day values", () => {
+    const badDay = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "lift" },
+      { day: 2, type: "run" },
+      { day: -1, type: "lift" as never }, // out of range
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+    ];
+    expect(isValidWeekSchedule(badDay)).toBe(false);
+  });
+
+  it("rejects schedules with malformed entries (non-object)", () => {
+    const malformed = [
+      { day: 0, type: "rest" },
+      "not an entry" as never,
+      { day: 2, type: "run" },
+      { day: 3, type: "lift" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+    ];
+    expect(isValidWeekSchedule(malformed)).toBe(false);
   });
 });

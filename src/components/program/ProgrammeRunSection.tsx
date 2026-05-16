@@ -1,50 +1,48 @@
 /**
- * P0-8: active-plan controls migrated out of Settings.
+ * P0-8 / PR-0d: active-plan controls on the Programme tab.
  *
- * Pre-P0-8, run-mode + race-goal + per-day template overrides lived
- * in Settings's TrainingSection because there was nowhere else for
- * them. The v7 architecture explicitly relocates "active plan
- * editing" to the Programme tab — Settings becomes a defaults +
- * deep-link surface, not a primary plan editor.
+ * Pre-PR-0d, this section's mode chips called `updateProfile({ runMode })`
+ * directly and rendered an inline race-goal form that wrote `raceGoal`
+ * without going through `buildPlan`. Both writes were structurally
+ * incomplete — flipping `runMode` from freeform → race_prep without
+ * regenerating `runDays`, templates, and the week schedule left users
+ * in an inconsistent state. PR-0d removes those bypasses:
  *
- * What lives here:
- *   - Run mode picker (freeform / structured / race_prep). Same
- *     write-on-tap semantics as the Settings copy — selecting a
- *     mode calls updateProfile immediately so reads downstream
- *     pick up the new value.
- *   - Race-goal form (only when runMode === "race_prep" AND no
- *     plan exists yet). Mirrors the validation + side-effects from
- *     TrainingSection's handleSaveRaceGoal verbatim — same
- *     toasts, same minimum-weeks gate, same refreshRunSchedule
- *     follow-up.
- *   - Race-plan progress strip (when a plan exists).
- *   - Per-day template override list (structured / race_prep
- *     only). Calls overrideRunDay; this is the same function that
- *     P0-6's `?scheduledRunId=` flow will now write to by id, so
- *     edits here are reachable from the Run page on next start.
+ *   - Run mode chips: active = no-op (preserves the selected
+ *     styling, no surprise side effects); non-active = opens
+ *     ConfigurePlanModal at the Running step. The modal runs
+ *     planBuilder + the configurePlan Cloud Function so the
+ *     whole plan rebuilds atomically.
+ *   - Race-goal entry: replaced with a "Race prep not set up yet"
+ *     stub + a [Set race goal] button that opens the same modal
+ *     at the Running step. One authoritative flow.
+ *
+ * What stays here:
+ *   - Race-elapsed banner (informational).
+ *   - Race-plan progress strip when a plan exists.
+ *   - Per-day template override list (still calls overrideRunDay
+ *     directly because that's a non-structural per-day swap).
  *
  * What stays in Settings (TrainingSection):
  *   - Edit programme button (retake onboarding).
- *   - Weekly schedule editor (chips + apply changes) — that's
- *     general "how do I want my week to look" and applies to both
- *     non-running and running users. Stays where Settings is.
- *
- * The component is plain props-driven; the Programme page hands it
- * everything from useAuth + useProgram. Pulling these from context
- * directly would couple the section to the broader page lifecycle
- * (and break the storybook-style isolation we'd want when this
- * eventually moves to its own Run tab in P1-1).
+ *   - Weekly schedule editor (chips + apply changes).
  */
 
 import { useState } from "react";
-import { Footprints, Flag, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Footprints, Check, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
+import {
+  getScheduledRunStatus,
+  isScheduledRunEditable,
+  isScheduledRunReconciliation,
+} from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
-import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
+import DayActionSheet from "./DayActionSheet";
+import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
 interface ProgrammeRunSectionProps {
@@ -53,63 +51,42 @@ interface ProgrammeRunSectionProps {
   /** Number of run days the user has scheduled. When 0, the entire
    *  section hides — there's no plan to edit. */
   runsTarget: number;
-  updateProfile: (
-    data: Partial<UserProfile>,
-    opts?: { allowProtected?: boolean },
-  ) => Promise<UpdateProfileResult>;
-  overrideRunDay: (dayIndex: number, templateId: string) => void;
-  refreshRunSchedule: () => Promise<void>;
+  overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
+  /** PR-1: action callbacks for the per-row DayActionSheet. The
+   *  sheet preserves the manual-complete + skip-run + skip-lift
+   *  flows that pre-PR-1 were Week-tab-only — once Week is
+   *  retired (PR-2) these are the canonical surface. */
+  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipWorkoutDay: (dayIndex: number) => Promise<void>;
+  /** PR-0d: opens ConfigurePlanModal. The mode chips and the
+   *  race-goal stub pass `CONFIGURE_PLAN_RUNNING_STEP` so the user
+   *  lands directly in the run-config step. Without this callback
+   *  the chips silently fall through to no-op (defensive — a parent
+   *  that hasn't wired the modal yet won't crash, just won't open
+   *  the editor). */
+  onOpenConfigurePlan?: (initialStep?: number) => void;
 }
 
 export default function ProgrammeRunSection({
   profile,
   programState,
   runsTarget,
-  updateProfile,
   overrideRunDay,
-  refreshRunSchedule,
+  completeRunDay,
+  skipRunDay,
+  skipWorkoutDay,
+  onOpenConfigurePlan,
 }: ProgrammeRunSectionProps) {
-  const [raceDistance, setRaceDistance] = useState<"5k" | "10k" | "half" | "marathon">("10k");
-  const [raceTargetDate, setRaceTargetDate] = useState("");
-  const [savingRaceGoal, setSavingRaceGoal] = useState(false);
+  // PR-1: which row is opening DayActionSheet. Stores the runDay's
+  // matched date (so the sheet resolves the day the same way Home
+  // does) or null when closed.
+  const [manageDate, setManageDate] = useState<string | null>(null);
 
   // No run days scheduled — nothing to edit, hide the whole section.
   // P0-9's Configure Plan wizard is the surface for going from 0 → N
   // run days, not this inline editor.
   if (runsTarget <= 0) return null;
-
-  const handleSaveRaceGoal = async (): Promise<void> => {
-    // All validation toasts share one id so rapid-retry on the Save
-    // button replaces the previous message instead of stacking.
-    if (!raceTargetDate) {
-      toast.error("Please select a target date", { id: "race-goal" });
-      return;
-    }
-    const target = new Date(raceTargetDate);
-    const now = new Date();
-    if (target < now) {
-      toast.error("Target date is in the past", { id: "race-goal" });
-      return;
-    }
-    const weeksAway = Math.round((target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    if (weeksAway < 3) {
-      toast.error("Target date must be at least 3 weeks away", { id: "race-goal" });
-      return;
-    }
-    setSavingRaceGoal(true);
-    try {
-      await updateProfile({
-        runMode: "race_prep",
-        raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
-      });
-      await refreshRunSchedule();
-      toast.success("Race plan created!", { id: "race-goal" });
-    } catch {
-      toast.error("Failed to save race goal", { id: "race-goal" });
-    } finally {
-      setSavingRaceGoal(false);
-    }
-  };
 
   const currentMode = profile.runMode ?? "freeform";
 
@@ -127,26 +104,40 @@ export default function ProgrammeRunSection({
         <h2 className="text-sm font-semibold text-foreground">Run training</h2>
       </header>
 
-      {/* Run mode picker */}
+      {/* Run mode picker — PR-0d: chip taps route through Configure
+          Plan instead of mutating runMode directly. */}
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
           Run mode
         </p>
         <div className="flex gap-2">
-          {(["freeform", "structured", "race_prep"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => updateProfile({ runMode: mode })}
-              className={cn(
-                "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                currentMode === mode
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-            </button>
-          ))}
+          {(["freeform", "structured", "race_prep"] as const).map((mode) => {
+            const isActive = currentMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => {
+                  // PR-0d: structural change. Active chip is a no-op
+                  // (preserves selected styling). Non-active chip
+                  // routes through ConfigurePlanModal so raceGoal /
+                  // runDays / week schedule rebuild atomically via
+                  // the configurePlan Cloud Function — the
+                  // previous direct updateProfile({ runMode })
+                  // left the rest of the plan stale.
+                  if (isActive) return;
+                  onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP);
+                }}
+                className={cn(
+                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            );
+          })}
         </div>
         <p className="text-xs text-muted-foreground">
           {currentMode === "freeform"
@@ -157,50 +148,21 @@ export default function ProgrammeRunSection({
         </p>
       </div>
 
-      {/* Race goal setup form — only when race_prep + no existing plan */}
+      {/* PR-0d: race-prep without a goal → single CTA into the
+          canonical setup flow (ConfigurePlanModal at Running step).
+          Replaces the inline distance/date form whose handler wrote
+          { runMode, raceGoal } without rebuilding the plan. */}
       {currentMode === "race_prep" && !programState?.runPlan?.raceGoal && (
-        <div className="p-3 rounded-xl bg-card space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Flag className="w-4 h-4 text-primary" />
-            <span className="text-xs font-medium text-foreground">Set Your Race Goal</span>
-          </div>
-          <fieldset>
-            <legend className="text-xs text-muted-foreground uppercase tracking-wider">Distance</legend>
-            <div className="flex gap-1.5 mt-1">
-              {(["5k", "10k", "half", "marathon"] as const).map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setRaceDistance(d)}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
-                    raceDistance === d
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <div>
-            <label htmlFor="programme-race-target-date" className="text-xs text-muted-foreground uppercase tracking-wider">
-              Target Date
-            </label>
-            <input
-              id="programme-race-target-date"
-              type="date"
-              value={raceTargetDate}
-              onChange={(e) => setRaceTargetDate(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-            />
-          </div>
+        <div className="p-3 rounded-xl bg-card space-y-2">
+          <p className="text-sm font-medium text-foreground">Race prep not set up yet</p>
+          <p className="text-xs text-muted-foreground">
+            Pick a distance and target date to generate your periodised plan.
+          </p>
           <button
-            onClick={handleSaveRaceGoal}
-            disabled={savingRaceGoal || !raceTargetDate}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+            onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
+            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
           >
-            {savingRaceGoal ? "Creating plan..." : "Create Race Plan"}
+            Set race goal
           </button>
         </div>
       )}
@@ -288,14 +250,29 @@ export default function ProgrammeRunSection({
         <div className="p-3 rounded-xl bg-card space-y-1.5">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
           {(programState?.runDays ?? []).map((rd) => {
-            // Disable swap when the day is in a terminal state.
-            // overrideRunDay in useProgram refuses the write
-            // anyway, but disabling the dropdown surfaces "you
-            // can't change a done/skipped day" before the user
-            // taps. race_completed_unlinked stays editable per
-            // the state machine (it can still transition).
-            const status = rd.status ?? "planned";
-            const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
+            // PR-0b-iii: status-aware row rendering.
+            //   - reconciliation (race_completed_unlinked) →
+            //     passive copy, no Start/Change/Skip
+            //   - editable (planned) → enabled select
+            //   - otherwise (terminal: completed_*, skipped,
+            //     race_no_show) → disabled select + completion
+            //     check icon for completed_* states
+            const status = getScheduledRunStatus(rd);
+
+            if (isScheduledRunReconciliation(status)) {
+              return (
+                <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
+                  <span className="text-xs font-medium text-foreground w-8">
+                    {DAY_LABELS[rd.dayIndex]}
+                  </span>
+                  <p className="flex-1 text-xs text-muted-foreground italic">
+                    Race completed separately. Review this in History.
+                  </p>
+                </div>
+              );
+            }
+
+            const editable = isScheduledRunEditable(status);
             return (
             <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
               <span className="text-xs font-medium text-foreground w-8">
@@ -303,9 +280,9 @@ export default function ProgrammeRunSection({
               </span>
               <select
                 value={rd.userOverride || rd.templateId}
-                onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                disabled={isTerminal}
-                aria-label={isTerminal ? `${status} — template locked` : `Run template for ${DAY_LABELS[rd.dayIndex]}`}
+                onChange={(e) => overrideRunDay(rd.id ?? rd.dayIndex, e.target.value)}
+                disabled={!editable}
+                aria-label={editable ? `Run template for ${DAY_LABELS[rd.dayIndex]}` : `${status} — template locked`}
                 className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {RUN_TEMPLATES.map((t) => (
@@ -315,11 +292,43 @@ export default function ProgrammeRunSection({
                 ))}
               </select>
               {rd.completed && <Check className="w-4 h-4 text-green-500 shrink-0" />}
+              {/* PR-1: per-row "Manage" affordance opens
+                  DayActionSheet for this runDay's date. Preserves
+                  the manual-complete + skip-run flows that
+                  pre-PR-1 lived only in the (now-removed) Week tab. The button
+                  renders for every row (terminal too) — the sheet
+                  itself locks down disallowed actions. */}
+              {rd.date && (
+                <button
+                  type="button"
+                  onClick={() => setManageDate(rd.date ?? null)}
+                  aria-label={`Manage ${DAY_LABELS[rd.dayIndex]} run`}
+                  className="p-1.5 -m-1 rounded-md text-muted-foreground active:scale-95"
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             );
           })}
         </div>
       )}
+
+      {/* PR-1: per-day action sheet. Mounted once at the section
+          level; the per-row Manage buttons set `manageDate` to the
+          runDay's calendar date so the sheet resolves the same
+          slot Home would. */}
+      <DayActionSheet
+        open={manageDate !== null}
+        onClose={() => setManageDate(null)}
+        dateKey={manageDate}
+        profile={profile}
+        programState={programState}
+        overrideRunDay={overrideRunDay}
+        completeRunDay={completeRunDay}
+        skipRunDay={skipRunDay}
+        skipWorkoutDay={skipWorkoutDay}
+      />
     </section>
   );
 }

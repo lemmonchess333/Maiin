@@ -7,6 +7,7 @@ import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay, ScheduledRunStatus } from "./programTypes";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
+import { migrateProgramState, backfillWeekScheduleIfMissing } from "./migrations";
 import {
   generateProgram,
   advanceWeek,
@@ -37,18 +38,56 @@ export interface CompletedSessionData {
   setLogs: CompletedSetLog[][];
 }
 import {
-  scheduleStructuredWeek,
-  generateRacePlan,
-  getCurrentRaceWeek,
+  scheduleStructuredWeekV2,
+  generateRacePlanV2,
 } from "./runScheduler";
+import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  getScheduledRunStatus,
+  isScheduledRunEditable,
+} from "@/lib/scheduledRunStatus";
 import { toast } from "sonner";
 
 const PROGRAM_DOC = "current";
 
-function getLiftDayIndices(weekSchedule?: { day: number; type: string }[]): number[] | undefined {
-  if (!weekSchedule || weekSchedule.length !== 7) return undefined;
-  const indices = weekSchedule.filter(s => s.type === "lift" || s.type === "both").map(s => s.day);
-  return indices.length > 0 ? indices : undefined;
+/**
+ * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
+ * output. Preserves previous-plan continuity for the
+ * "Week N of M" display: callers that advance / refresh pass
+ * the prior `currentWeek` + `totalWeeks` through `carry` so the
+ * stored counters keep their semantic meaning. Initial /
+ * full-regenerate paths leave `carry` empty and accept V2's
+ * fresh values + currentWeek=0.
+ *
+ * `compressed` always trusts V2's fresh output — config changes
+ * (e.g. race date pushed earlier) can flip an uncompressed plan
+ * to compressed and the UI banner needs to reflect that.
+ */
+function makeRunPlanRecord(
+  v2: { totalWeeks: number; compressed: boolean },
+  raceGoal: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string },
+  carry: { currentWeek?: number; totalWeeks?: number } = {},
+): ProgramState["runPlan"] {
+  return {
+    mode: "race_prep",
+    raceGoal,
+    totalWeeks: carry.totalWeeks ?? v2.totalWeeks,
+    currentWeek: carry.currentWeek ?? 0,
+    compressed: v2.compressed,
+  };
+}
+
+interface RefreshRunScheduleOverrides {
+  /** Confirmed week schedule from the editor's apply path —
+   *  threaded explicitly so a freshly-`updateProfile`'d schedule
+   *  doesn't get overwritten by a stale `profile.weekSchedule`
+   *  read from useAuth's closure. */
+  weekSchedule?: ScheduleDay[];
+  /** Confirmed weekly run target from the editor. Same staleness
+   *  concern as `weekSchedule`. */
+  weeklyRunDaysTarget?: number;
 }
 
 export function useProgram() {
@@ -66,6 +105,20 @@ export function useProgram() {
         return;
       }
 
+      // PR-0b-i: weekSchedule backfill on read. Self-heals legacy
+      // profiles where weekSchedule is absent / wrong-length /
+      // duplicated-day / corrupted-type. The patch persists via
+      // updateProfile so subsequent reads (and the V2 writer
+      // paths below, which read `profile.weekSchedule` directly
+      // for run-day generation) see the repaired value.
+      // backfillWeekScheduleIfMissing returns null when the
+      // schedule is already valid, so this is a no-op on
+      // the warm path.
+      const profilePatch = backfillWeekScheduleIfMissing(profile);
+      if (profilePatch) {
+        await updateProfile(profilePatch);
+      }
+
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
       const snap = await getDoc(ref);
 
@@ -80,40 +133,67 @@ export function useProgram() {
           primaryGoal: profile.primaryGoal,
         });
 
+        // PR-0b-i: shape-aware migration on read. Repairs V1-shaped
+        // runDays (missing id / date / weekKey / status) and aligns
+        // inconsistent completed↔status pairs. Idempotent — healthy
+        // V2 docs return the input reference, and the
+        // JSON.stringify guard below avoids writes when nothing
+        // changed. Migration NEVER regenerates workouts; any
+        // customizations the user made survive untouched.
+        const migrated = migrateProgramState(normalized, localWeekKey());
+
+        // Persist-if-changed guard. Avoids a Firestore write on every
+        // cold app open for users whose docs are already clean. The
+        // stringify comparison is safe here because the doc is plain
+        // JSON (no undefineds, functions, Symbols, or Dates that
+        // wouldn't survive serialisation). It's a write optimisation
+        // — the React state below uses `migrated` directly, so
+        // correctness doesn't depend on this guard firing.
+        if (JSON.stringify(migrated) !== JSON.stringify(raw)) {
+          await setDoc(ref, migrated, { merge: true });
+        }
+
         // Hydrate run days if user has run mode but no runDays yet
-        if (!normalized.runDays && profile.runMode && profile.runMode !== "freeform") {
-          const liftCount = normalized.workouts.length;
-          const liftIndices = getLiftDayIndices(profile.weekSchedule);
+        if (!migrated.runDays && profile.runMode && profile.runMode !== "freeform") {
+          // PR-0b-ii: V2 writers. Reads weekSchedule directly so
+          // hybrid Both-day slots get a scheduled run (V1 lost them
+          // because it derived run-eligible days from liftIndices).
+          // PR-0b-i's backfill above guarantees a valid 7-entry
+          // weekSchedule is present on profile by this point.
+          const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
+          const weekStart = localWeekKey();
           let runDays: ScheduledRunDay[] = [];
-          let runPlan = normalized.runPlan;
+          let runPlan = migrated.runPlan;
 
           if (profile.runMode === "race_prep" && profile.raceGoal) {
-            const plan = generateRacePlan(
-              profile.raceGoal.distance,
-              profile.raceGoal.targetDate,
-              liftCount,
-              runTarget,
-              liftIndices,
-            );
-            const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
-            runDays = plan.weeks[weekIdx] ?? [];
-            runPlan = {
-              mode: "race_prep",
+            const plan = generateRacePlanV2({
+              weekSchedule,
               raceGoal: profile.raceGoal,
-              totalWeeks: plan.totalWeeks,
-              currentWeek: weekIdx,
-            };
+              weeklyRunDays: runTarget,
+              currentDate: localDateString(),
+              weekStart,
+            });
+            runDays = plan.weeks[0] ?? [];
+            runPlan = makeRunPlanRecord(plan, profile.raceGoal);
           } else {
-            runDays = scheduleStructuredWeek(liftCount, runTarget, normalized.weekNumber, liftIndices);
+            runDays = scheduleStructuredWeekV2({
+              weekSchedule,
+              weekNumber: migrated.weekNumber,
+              weekStart,
+            });
             runPlan = { mode: "structured" };
           }
 
-          const withRuns = { ...normalized, runDays, runPlan };
+          const withRuns = { ...migrated, runDays, runPlan };
           await setDoc(ref, { ...withRuns, updatedAt: Date.now() }, { merge: true });
           setProgramState(withRuns);
         } else {
-          setProgramState(normalized);
+          // PR-0b-i: drive React state from the migrated value so
+          // the UI sees v2-shaped runDays + corrected status/
+          // completed pairs. Pre-PR-0b-i this set `normalized`,
+          // which would leave consumers reading legacy fields.
+          setProgramState(migrated);
         }
       } else {
         const goal = profile.program?.goal ?? "recomp";
@@ -128,30 +208,29 @@ export function useProgram() {
           profile.primaryGoal,
         );
 
-        // Generate run schedule if applicable
+        // Generate run schedule if applicable. PR-0b-ii: V2 writers.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
         if (profile.runMode && profile.runMode !== "freeform") {
+          const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
-          const liftIndices = getLiftDayIndices(profile.weekSchedule);
+          const weekStart = localWeekKey();
           if (profile.runMode === "race_prep" && profile.raceGoal) {
-            const plan = generateRacePlan(
-              profile.raceGoal.distance,
-              profile.raceGoal.targetDate,
-              workouts.length,
-              runTarget,
-              liftIndices,
-            );
-            const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
-            runDays = plan.weeks[weekIdx] ?? [];
-            runPlan = {
-              mode: "race_prep",
+            const plan = generateRacePlanV2({
+              weekSchedule,
               raceGoal: profile.raceGoal,
-              totalWeeks: plan.totalWeeks,
-              currentWeek: weekIdx,
-            };
+              weeklyRunDays: runTarget,
+              currentDate: localDateString(),
+              weekStart,
+            });
+            runDays = plan.weeks[0] ?? [];
+            runPlan = makeRunPlanRecord(plan, profile.raceGoal);
           } else {
-            runDays = scheduleStructuredWeek(workouts.length, runTarget, 1, liftIndices);
+            runDays = scheduleStructuredWeekV2({
+              weekSchedule,
+              weekNumber: 1,
+              weekStart,
+            });
             runPlan = { mode: "structured" };
           }
         }
@@ -171,6 +250,11 @@ export function useProgram() {
           updatedAt: Date.now(),
           settings: { autoProgression: true, microloading: true },
           weekHistory: [],
+          // PR-0b-ii: explicit schema version on initial creation so
+          // PR-0b-i's shape-aware migration sees a current doc on
+          // next read. Without this, the doc would migrate (no-op)
+          // on every cold open until the next saveProgram.
+          programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
           ...(runDays !== undefined && { runDays }),
           ...(runPlan !== undefined && { runPlan }),
         };
@@ -186,6 +270,12 @@ export function useProgram() {
       logger.error("Failed to load program:", err);
       setLoading(false);
     });
+    // updateProfile is intentionally omitted: it's a stable
+    // function reference from useAuth's context and including it
+    // would force a re-run on every render that recreates it.
+    // The PR-0b-i profilePatch call uses updateProfile inside the
+    // effect body — same call style as elsewhere in the file.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
 
   // Save program to Firestore
@@ -436,25 +526,36 @@ export function useProgram() {
 
       const advanced = advanceWeek(programState);
 
-      // Refresh run days for new week
+      // Refresh run days for new week. PR-0b-ii: V2 writers + next-
+      // week date vantage so the saved runDays carry next-week
+      // dates / weekKey. `currentWeek` increments to track week-
+      // since-plan-start; `totalWeeks` preserved from prev so the
+      // race-strip "Week N of M" display stays consistent.
       if (profile?.runMode && profile.runMode !== "freeform") {
-        const liftCount = advanced.workouts.length;
-        const liftIndices = getLiftDayIndices(profile.weekSchedule);
+        const weekSchedule = profile.weekSchedule ?? [];
         const runTarget = getWeeklyRunTarget(profile) || 3;
+        const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
+        const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
 
-        if (profile.runMode === "race_prep" && profile.raceGoal && advanced.runPlan?.totalWeeks) {
-          const weekIdx = getCurrentRaceWeek(advanced.runPlan.totalWeeks, profile.raceGoal.targetDate);
-          const plan = generateRacePlan(
-            profile.raceGoal.distance,
-            profile.raceGoal.targetDate,
-            liftCount,
-            runTarget,
-            liftIndices,
-          );
-          advanced.runDays = plan.weeks[weekIdx] ?? [];
-          advanced.runPlan = { ...advanced.runPlan, currentWeek: weekIdx };
+        if (profile.runMode === "race_prep" && profile.raceGoal) {
+          const plan = generateRacePlanV2({
+            weekSchedule,
+            raceGoal: profile.raceGoal,
+            weeklyRunDays: runTarget,
+            currentDate: nextWeekCurrentDate,
+            weekStart: nextWeekStart,
+          });
+          advanced.runDays = plan.weeks[0] ?? [];
+          advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
+            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+            totalWeeks: advanced.runPlan?.totalWeeks,
+          });
         } else {
-          advanced.runDays = scheduleStructuredWeek(liftCount, runTarget, advanced.weekNumber, liftIndices);
+          advanced.runDays = scheduleStructuredWeekV2({
+            weekSchedule,
+            weekNumber: advanced.weekNumber,
+            weekStart: nextWeekStart,
+          });
         }
       }
 
@@ -506,7 +607,13 @@ export function useProgram() {
       // Status transition gate. Only the planned → completed_exact
       // path is wired here; future transitions (skipped, late,
       // modified) land in P1/P2 alongside their UI surfaces.
-      const fromStatus = targetDay.status ?? "planned";
+      // PR-0b-iii: legacy-completed-aware status read via the
+      // central helper. A pre-status doc with completed: true +
+      // status: undefined resolves to "completed_exact" (not
+      // "planned"), so transitionStatus refuses the
+      // completed_exact → completed_exact illegal transition and
+      // we skip + log instead of double-completing.
+      const fromStatus = getScheduledRunStatus(targetDay);
       const toStatus: ScheduledRunStatus = "completed_exact";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
@@ -559,7 +666,13 @@ export function useProgram() {
         return;
       }
       const targetDay = programState.runDays[targetIndex];
-      const fromStatus = targetDay.status ?? "planned";
+      // PR-0b-iii: legacy-completed-aware status read via the
+      // central helper. A pre-status doc with completed: true +
+      // status: undefined resolves to "completed_exact" (not
+      // "planned"), so transitionStatus refuses the
+      // completed_exact → completed_exact illegal transition and
+      // we skip + log instead of double-completing.
+      const fromStatus = getScheduledRunStatus(targetDay);
       const toStatus: ScheduledRunStatus = "skipped";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
@@ -596,26 +709,48 @@ export function useProgram() {
   // If product wants un-skip, add `skipped → planned` to
   // LEGAL_TRANSITIONS and surface an "un-skip" button in the
   // Week tab overflow instead of overloading override semantics.
+  // PR-1: id-preferring overload. Same shape as completeRunDay /
+  // skipRunDay — string = runDay.id, number = legacy dayIndex.
+  // V2 docs have stable IDs (PR-0b-i); future surfaces (Home
+  // DayActionSheet) need to address a specific runDay across weeks,
+  // not "whichever runDay happens to match this dayIndex". The
+  // dayIndex fallback stays for legacy callers (Programme Run tab
+  // row select, Week-tab template select) that still pass dow.
   const overrideRunDay = useCallback(
-    async (dayIndex: number, templateId: string) => {
+    async (idOrDayIndex: string | number, templateId: string) => {
       if (!programState?.runDays) return;
-      const target = programState.runDays.find((rd) => rd.dayIndex === dayIndex);
+      const target =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.find((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.find((rd) => rd.dayIndex === idOrDayIndex);
       if (!target) {
-        logger.warn(`[overrideRunDay] no runDay matched dayIndex=${dayIndex}; skipping`);
+        logger.warn(
+          `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+        );
         return;
       }
-      const status = target.status ?? "planned";
-      if (status !== "planned" && status !== "race_completed_unlinked") {
+      // PR-0b-iii: editability gate via the central helper.
+      // Only `planned` qualifies for in-place template swap.
+      // race_completed_unlinked (reconciliation) is now excluded
+      // — its only outgoing path is via a future linking UI, not
+      // the shared template editor.
+      const status = getScheduledRunStatus(target);
+      if (!isScheduledRunEditable(status)) {
         logger.warn(
-          `[overrideRunDay] refusing to swap template on terminal runDay (status="${status}", dayIndex=${dayIndex}); use Configure Plan to rebuild instead`,
+          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`,
         );
         return;
       }
 
+      // Match against the resolved target's id when present
+      // (id-preferring), falling back to dayIndex. Without this
+      // a multi-week V2 runDays array could double-overwrite
+      // (multiple rows with the same dayIndex).
       const updated: ProgramState = {
         ...programState,
         runDays: programState.runDays.map((rd) =>
-          rd.dayIndex === dayIndex
+          (target.id && rd.id === target.id) ||
+          (!target.id && rd.dayIndex === target.dayIndex)
             ? { ...rd, templateId, userOverride: templateId }
             : rd,
         ),
@@ -729,7 +864,7 @@ export function useProgram() {
     async (
       goalOverride?: string,
       weeklyTargetOverride?: number,
-      overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
+      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
     ) => {
       if (!profile) return;
 
@@ -745,32 +880,31 @@ export function useProgram() {
         primaryGoal,
       );
 
-      // Regenerate run schedule using the override schedule when
-      // provided, falling back to the profile's persisted schedule.
+      // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
+      // resets currentWeek to 0 and trusts V2's fresh totalWeeks
+      // (caller intent is "rebuild this plan from scratch").
       let runDays: ScheduledRunDay[] | undefined;
       let runPlan: ProgramState["runPlan"];
       if (profile.runMode && profile.runMode !== "freeform") {
         const runTarget = overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
-        const effectiveSchedule = overrides?.weekSchedule ?? profile.weekSchedule;
-        const liftIndices = getLiftDayIndices(effectiveSchedule);
+        const effectiveSchedule = overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+        const weekStart = localWeekKey();
         if (profile.runMode === "race_prep" && profile.raceGoal) {
-          const plan = generateRacePlan(
-            profile.raceGoal.distance,
-            profile.raceGoal.targetDate,
-            workouts.length,
-            runTarget,
-            liftIndices,
-          );
-          const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
-          runDays = plan.weeks[weekIdx] ?? [];
-          runPlan = {
-            mode: "race_prep",
+          const plan = generateRacePlanV2({
+            weekSchedule: effectiveSchedule,
             raceGoal: profile.raceGoal,
-            totalWeeks: plan.totalWeeks,
-            currentWeek: weekIdx,
-          };
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          });
+          runDays = plan.weeks[0] ?? [];
+          runPlan = makeRunPlanRecord(plan, profile.raceGoal);
         } else {
-          runDays = scheduleStructuredWeek(workouts.length, runTarget, 1, liftIndices);
+          runDays = scheduleStructuredWeekV2({
+            weekSchedule: effectiveSchedule,
+            weekNumber: 1,
+            weekStart,
+          });
           runPlan = { mode: "structured" };
         }
       }
@@ -793,6 +927,12 @@ export function useProgram() {
         updatedAt: Date.now(),
         settings: programState?.settings ?? { autoProgression: true, microloading: true },
         weekHistory: [],
+        // PR-0b-ii: explicit schema version on regenerate so the
+        // freshly-rebuilt state matches the current contract. Pre-
+        // PR-0b-ii this was inherited from the prior doc (or
+        // missing), which is exactly the V1-shape-in-current-
+        // version footgun PR-0b-i's shape-aware migration repairs.
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
         ...(runDays !== undefined && { runDays }),
         ...(runPlan !== undefined && { runPlan }),
       };
@@ -812,36 +952,47 @@ export function useProgram() {
     [profile, programState, saveProgram, updateProfile],
   );
 
-  // Refresh run schedule without resetting program (called when weekSchedule changes)
+  // Refresh run schedule without resetting program (called when
+  // weekSchedule changes). PR-0b-ii: V2 writers + optional
+  // overrides to avoid stale-closure reads of profile.weekSchedule.
+  // Editor apply path passes the freshly-confirmed schedule
+  // through explicitly so we never use the pre-`updateProfile`
+  // value.
   const refreshRunSchedule = useCallback(
-    async () => {
+    async (overrides?: RefreshRunScheduleOverrides) => {
       if (!programState || !profile) return;
       if (!profile.runMode || profile.runMode === "freeform") return;
 
-      const liftIndices = getLiftDayIndices(profile.weekSchedule);
-      const liftCount = liftIndices?.length ?? programState.workouts.length;
-      const runTarget = getWeeklyRunTarget(profile) || 3;
+      const weekSchedule = overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+      const runTarget = overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+      const weekStart = localWeekKey();
       let runDays: ScheduledRunDay[];
       let runPlan = programState.runPlan;
 
       if (profile.runMode === "race_prep" && profile.raceGoal) {
-        const plan = generateRacePlan(
-          profile.raceGoal.distance,
-          profile.raceGoal.targetDate,
-          liftCount,
-          runTarget,
-          liftIndices,
-        );
-        const weekIdx = getCurrentRaceWeek(plan.totalWeeks, profile.raceGoal.targetDate);
-        runDays = plan.weeks[weekIdx] ?? [];
-        runPlan = {
-          mode: "race_prep",
+        const plan = generateRacePlanV2({
+          weekSchedule,
           raceGoal: profile.raceGoal,
-          totalWeeks: plan.totalWeeks,
-          currentWeek: weekIdx,
-        };
+          weeklyRunDays: runTarget,
+          currentDate: localDateString(),
+          weekStart,
+        });
+        runDays = plan.weeks[0] ?? [];
+        // Refresh preserves currentWeek + totalWeeks so the user's
+        // race-strip position stays put across mid-week schedule
+        // edits. Only `compressed` updates (V2 may flip it if the
+        // schedule change pushed run count below race-config
+        // thresholds).
+        runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
+          currentWeek: programState.runPlan?.currentWeek,
+          totalWeeks: programState.runPlan?.totalWeeks,
+        });
       } else {
-        runDays = scheduleStructuredWeek(liftCount, runTarget, programState.weekNumber, liftIndices);
+        runDays = scheduleStructuredWeekV2({
+          weekSchedule,
+          weekNumber: programState.weekNumber,
+          weekStart,
+        });
         runPlan = { mode: "structured" };
       }
 

@@ -236,10 +236,13 @@ export function generateRacePlan(
           })
         );
       } else {
-        // Race week: just easy + race day
+        // Race week: just easy + race day. PR-0a — route through
+        // pickRaceTemplateId so the race-day template matches the
+        // user's actual race distance instead of collapsing to a
+        // 5K. `distance` is the function parameter at line 138.
         week.push({
           dayIndex: remaining[0],
-          templateId: "5k_race",
+          templateId: pickRaceTemplateId(distance),
           type: "race",
           completed: false,
         });
@@ -587,12 +590,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 }
 
 /** Race template IDs by distance. Centralised to avoid scattering
- *  string literals through the scheduler. Today only `5k_race`
- *  exists — longer-distance race templates ship in v1.1 alongside
- *  the dedicated race-day setup. v1 falls back to `5k_race` for
- *  consistency with the V1 generator's behaviour. */
-function pickRaceTemplateId(_distance: "5k" | "10k" | "half" | "marathon"): string {
-  // TODO(P0-3+): add dedicated 10K / Half / Marathon race templates
-  // to workoutTemplates.ts. For now mirror V1 behaviour.
-  return "5k_race";
+ *  string literals through the scheduler. Each distance maps to
+ *  its own race template in RUN_TEMPLATES — pre-PR-0a this
+ *  fallback returned "5k_race" for every distance, which
+ *  collapsed 10K / half / marathon race days to a 5K prefill. */
+function pickRaceTemplateId(distance: "5k" | "10k" | "half" | "marathon"): string {
+  switch (distance) {
+    case "5k": return "5k_race";
+    case "10k": return "10k_race";
+    case "half": return "half_race";
+    case "marathon": return "marathon_race";
+  }
 }

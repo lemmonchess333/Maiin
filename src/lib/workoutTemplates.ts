@@ -27,6 +27,9 @@ export const RUN_TEMPLATES: RunTemplate[] = [
   { id: 'long_10k', name: 'Long 10K', type: 'long', icon: 'route', description: '10km at easy-to-moderate pace', estimatedDuration: 55, config: { targetDistance: 10 } },
   { id: 'long_15k', name: 'Long 15K', type: 'long', icon: 'route', description: '15km steady state', estimatedDuration: 80, config: { targetDistance: 15 } },
   { id: '5k_race', name: '5K Race', type: 'race', icon: 'flag', description: 'All-out 5km effort', estimatedDuration: 25, config: { targetDistance: 5 } },
+  { id: '10k_race', name: '10K Race', type: 'race', icon: 'flag', description: 'All-out 10km effort', estimatedDuration: 50, config: { targetDistance: 10 } },
+  { id: 'half_race', name: 'Half Marathon Race', type: 'race', icon: 'flag', description: 'All-out half-marathon effort', estimatedDuration: 110, config: { targetDistance: 21.1 } },
+  { id: 'marathon_race', name: 'Marathon Race', type: 'race', icon: 'flag', description: 'All-out marathon effort', estimatedDuration: 240, config: { targetDistance: 42.2 } },
 ];
 
 /**

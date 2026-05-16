@@ -1,27 +1,40 @@
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, ClipboardList, Footprints, X, Check } from "lucide-react";
+import { Dumbbell, ClipboardList, Footprints, X, Check, Settings2 } from "lucide-react";
 import { format } from "date-fns";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
-import type { ScheduledRunDay } from "@/features/program/programTypes";
+import type { UserProfile } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { IconButton } from "@/components/ui/IconButton";
 
-export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dailyTotals, onClose }: {
+export default function DayPeekCard({ dateKey, profile, programState, workouts, dailyTotals, onClose, onManage }: {
   dateKey: string;
-  schedule: ScheduleDay[];
-  /** P1-4: programState.runDays for the current week. The peek
-   *  surfaces planned-run status (planned / completed / skipped)
-   *  alongside the existing workout + meal lines so users see the
-   *  full activity picture for the day, not just lift volume. */
-  runDays?: ScheduledRunDay[];
+  /** P1-4 / PR-0c: profile + programState replace the previous
+   *  `schedule` + `runDays` props. The peek calls the shared
+   *  training resolver which enforces date/weekKey-aware runDay
+   *  matching — so tapping next Monday on the strip can no longer
+   *  inherit this Monday's runDay status (the old
+   *  `runDays.find(r => r.dayIndex === dow)` bug). */
+  profile: UserProfile | null;
+  programState: ProgramState | null;
   workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[]; durationMinutes?: number }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
+  /** PR-1: opens DayActionSheet for this date. Only rendered as a
+   *  secondary CTA when there's actionable training for the day
+   *  (matched lift or runDay). Home remains glance-first — the
+   *  inline rows above stay summary copy, not buttons. */
+  onManage?: (dateKey: string) => void;
 }) {
-  const dow = new Date(dateKey + "T00:00:00").getDay();
-  const st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
-  const runDay = runDays?.find(function(r) { return r.dayIndex === dow; });
-  const dayLabel = format(new Date(dateKey + "T00:00:00"), "EEE d MMM");
+  const resolved = resolveTrainingDayForDate({
+    dateKey,
+    profile,
+    programState,
+    currentWeekKey: localWeekKey(new Date()),
+  });
+  const st = resolved.scheduleType;
+  const dayLabel = format(parseLocalDate(dateKey), "EEE d MMM");
   const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
   const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
   let tonnage = 0;
@@ -36,6 +49,7 @@ export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dail
   });
   const hasW = workouts.length > 0;
   const hasM = dailyTotals.mealCount > 0;
+  const hasRun = resolved.run.runDay !== null;
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
       <div className="pt-1 pb-0.5 px-1">
@@ -53,7 +67,22 @@ export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dail
               icon={<X />}
             />
           </div>
-          {(hasW || hasM || runDay) ? (
+          {/* PR-1: secondary "Manage" CTA. Only rendered when the
+              day has a matched lift or runDay AND a parent supplied
+              onManage. Home remains glance-first: this is the only
+              affordance that exposes day-level actions; the summary
+              rows above stay informational. */}
+          {onManage && (resolved.run.runDay !== null || resolved.lift.workout !== null) && (
+            <button
+              type="button"
+              onClick={() => onManage(dateKey)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
+            >
+              <Settings2 className="w-3 h-3" />
+              Manage day
+            </button>
+          )}
+          {(hasW || hasM || hasRun) ? (
             <div className="space-y-1 text-xs">
               {hasW && (
                 <div className="flex items-center gap-1.5">
@@ -62,12 +91,12 @@ export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dail
                     {workouts.length} session{workouts.length !== 1 ? "s" : ""}
                     {totalMinutes > 0 && (
                       <span className="text-muted-foreground">
-                        {" \u00B7 "}{totalMinutes} min
+                        {" · "}{totalMinutes} min
                       </span>
                     )}
                     {tonnage > 0 && (
                       <span className="text-muted-foreground">
-                        {" \u00B7 "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "k kg" : Math.round(tonnage) + " kg"}
+                        {" · "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "k kg" : Math.round(tonnage) + " kg"}
                       </span>
                     )}
                   </span>
@@ -76,23 +105,29 @@ export default function DayPeekCard({ dateKey, schedule, runDays, workouts, dail
               {hasM && (
                 <div className="flex items-center gap-1.5">
                   <ClipboardList className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.success }} />
-                  <span className="text-foreground font-mono tabular-nums">{dailyTotals.calories.toLocaleString()} cal {"\u00B7"} {Math.round(dailyTotals.protein)}g protein</span>
+                  <span className="text-foreground font-mono tabular-nums">{dailyTotals.calories.toLocaleString()} cal {"·"} {Math.round(dailyTotals.protein)}g protein</span>
                 </div>
               )}
-              {/* P1-4: run-day status row. Shows planned vs actual
-                  (completed / skipped) so the peek captures the full
-                  activity picture, not just lift volume. */}
-              {runDay && (
+              {/* PR-0c: run-day status row. Resolver delivers a
+                  status-aware view — when no runDay matches this
+                  date (freeform user, future strip day, etc.) we
+                  skip the row entirely rather than render a fake
+                  "Run scheduled" line for an inherited slot. */}
+              {hasRun && (
                 <div className="flex items-center gap-1.5">
                   <Footprints className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.running }} />
                   <span className="text-foreground">
-                    {runDay.completed ? (
+                    {resolved.run.isCompleted ? (
                       <span className="inline-flex items-center gap-1">
                         Run completed
                         <Check className="w-3 h-3" style={{ color: THEME.success }} />
                       </span>
-                    ) : runDay.status === "skipped" ? (
+                    ) : resolved.run.status === "skipped" ? (
                       <span style={{ color: "hsl(var(--muted-foreground))" }}>Run skipped</span>
+                    ) : resolved.run.status === "race_no_show" ? (
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Race day passed</span>
+                    ) : resolved.run.isReconciliation ? (
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Race completed separately</span>
                     ) : (
                       <span>Run scheduled</span>
                     )}

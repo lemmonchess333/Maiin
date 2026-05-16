@@ -1,12 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
-import { useAuth, type UserProfile } from "@/lib/auth";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { ProgramState } from "@/features/program/programTypes";
+import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { getWeeklyRunTarget, liftIndexForDayOfWeek, SCHEDULE_TYPE_META } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
@@ -18,6 +16,7 @@ import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import RunningNavIcon from "@/components/program/RunningNavIcon";
 import Coachmark from "@/components/ui/Coachmark";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
+import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import { THEME } from "@/lib/theme";
 import {
   Lock,
@@ -27,9 +26,7 @@ import {
   Settings2,
   Sparkles,
   Footprints,
-  Bed,
-  ChevronLeft,
-  ChevronRight,
+  CalendarDays,
   MoreHorizontal,
   Plus,
   FastForward,
@@ -69,531 +66,6 @@ export default function Program() {
   return <ProgramInner phaseLocked={!features.phaseModes} />;
 }
 
-/**
- * P1-2: Today tab — single / doubles / rest / completion states.
- *
- * State machine:
- *   - rest    → recovery card
- *   - lift    → lift CTA + completion state when workouts[n].completed
- *   - run     → run CTA + completion state when runDay.completed
- *   - both    → lift CTA + run CTA + summary footer once both done
- *
- * Lift completion mapping: the workouts array is ordered by lift
- * day. To find today's workout we count how many lift+both slots
- * precede today's day-of-week in the user's weekSchedule. That
- * index is the workout this user did (or will do) today. If the
- * mapping returns a slot past `workouts.length` (legacy plans where
- * weekSchedule and workouts drifted) we fall back to "all done"
- * if every workout is completed/skipped, otherwise to incomplete.
- */
-function TodayTabContent({
-  profile,
-  programState,
-  navigate,
-  onOpenLift,
-}: {
-  profile: UserProfile | null;
-  programState: ProgramState | null;
-  navigate: ReturnType<typeof useNavigate>;
-  onOpenLift: () => void;
-}) {
-  const todayDayIndex = new Date().getDay();
-  const todayEntry = profile?.weekSchedule?.find((d) => d.day === todayDayIndex);
-  const todayType = todayEntry?.type ?? "rest";
-  const todayRunDay = programState?.runDays?.find(
-    (rd) => rd.dayIndex === todayDayIndex,
-  );
-  const tmpl = todayRunDay
-    ? RUN_TEMPLATES.find((t) => t.id === (todayRunDay.userOverride || todayRunDay.templateId))
-    : null;
-
-  // Today's lift workout index. Shared helper in scheduleUtils so
-  // the Week tab overflow menu (P1-3) uses the same mapping. -1
-  // when today isn't a lift+both day or the schedule is missing.
-  const todayLiftIndex = liftIndexForDayOfWeek(profile?.weekSchedule, todayDayIndex);
-  const todayWorkout = todayLiftIndex >= 0
-    ? programState?.workouts?.[todayLiftIndex]
-    : undefined;
-  const liftCompleted = !!(todayWorkout?.completed || todayWorkout?.skipped);
-  const runCompleted = !!todayRunDay?.completed;
-
-  if (todayType === "rest") {
-    return (
-      <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
-        <Bed className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm font-semibold mb-1">Rest day</p>
-        <p className="text-xs text-muted-foreground">
-          No training planned today. Recovery is part of the programme.
-        </p>
-      </div>
-    );
-  }
-
-  const showLift = todayType === "lift" || todayType === "both";
-  const showRun = todayType === "run" || todayType === "both";
-  const isBoth = todayType === "both";
-  const allDone =
-    (showLift && showRun && liftCompleted && runCompleted) ||
-    (showLift && !showRun && liftCompleted) ||
-    (!showLift && showRun && runCompleted);
-
-  return (
-    <div className="space-y-3">
-      {/* All-done summary banner — sits above the cards when every
-          session for today is complete. Cards still render below
-          (greyed-out completion state) so the user can see what
-          they finished. */}
-      {allDone && (
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{
-            background: `${THEME.success}12`,
-            border: `1px solid ${THEME.success}30`,
-          }}
-        >
-          <Check
-            className="w-5 h-5 mx-auto mb-1.5"
-            style={{ color: THEME.success }}
-          />
-          <p className="text-sm font-semibold" style={{ color: THEME.success }}>
-            {isBoth ? "Both sessions complete" : "Done for today"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {isBoth
-              ? "Recovery time — see you tomorrow."
-              : "Recovery time — see you tomorrow."}
-          </p>
-        </div>
-      )}
-
-      {showLift && (
-        <TodaySessionCard
-          kind="lift"
-          completed={liftCompleted}
-          title={liftCompleted ? "Today's workout" : "View today's workout"}
-          subtitle={liftCompleted ? "Complete" : todayWorkout?.dayName}
-          onClick={onOpenLift}
-          orderHint={isBoth && !liftCompleted ? "Recommended first" : null}
-        />
-      )}
-      {showRun && (
-        <TodaySessionCard
-          kind="run"
-          completed={runCompleted}
-          title={runCompleted ? "Today's run" : tmpl?.name ?? "Start a run"}
-          subtitle={runCompleted ? "Complete" : tmpl?.description}
-          orderHint={isBoth && liftCompleted && !runCompleted ? "Up next" : null}
-          onClick={() => {
-            const params: string[] = [];
-            if (tmpl) params.push(`template=${tmpl.id}`);
-            if (todayRunDay?.id) {
-              params.push(`scheduledRunId=${encodeURIComponent(todayRunDay.id)}`);
-            }
-            navigate("/run" + (params.length ? `?${params.join("&")}` : ""));
-          }}
-        />
-      )}
-
-      {/* Doubles guidance — only shown when today is a Both day and
-          neither session is done yet. Once the user starts moving
-          we hide it (the order is decided), and once everything's
-          done the summary banner above covers the "what's next"
-          question. */}
-      {isBoth && !liftCompleted && !runCompleted && (
-        <p className="text-xs text-center text-muted-foreground">
-          Two sessions today &middot; lift first if you can; the easier
-          run is fine when fatigued
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
- * Card primitive shared by the lift + run sessions on Today.
- * Centralises completion-state styling so a "done" card on Both
- * day looks identical to a "done" card on a single-session day.
- */
-function TodaySessionCard({
-  kind,
-  completed,
-  title,
-  subtitle,
-  onClick,
-  orderHint,
-}: {
-  kind: "lift" | "run";
-  completed: boolean;
-  title: string;
-  subtitle?: string | null;
-  onClick: () => void;
-  orderHint?: string | null;
-}) {
-  const color = kind === "lift" ? THEME.lifting : THEME.running;
-  const Icon = kind === "lift" ? Dumbbell : Footprints;
-  const kindLabel = kind === "lift" ? "Lift" : "Run";
-
-  return (
-    <button
-      onClick={onClick}
-      className="w-full rounded-2xl p-4 text-left transition-all active:scale-[0.98]"
-      style={{
-        background: completed ? "hsl(var(--muted) / 0.4)" : `${color}10`,
-        border: completed
-          ? "1px solid hsl(var(--border))"
-          : `1px solid ${color}30`,
-        opacity: completed ? 0.7 : 1,
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center"
-          style={{
-            background: completed ? "hsl(var(--muted))" : `${color}20`,
-          }}
-        >
-          <Icon
-            className="w-5 h-5"
-            style={{ color: completed ? "hsl(var(--muted-foreground))" : color }}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-semibold"
-            style={{ color: completed ? "hsl(var(--muted-foreground))" : color }}
-          >
-            Today &middot; {kindLabel}
-            {orderHint && (
-              <span className="ml-1.5 text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
-                · {orderHint}
-              </span>
-            )}
-          </p>
-          <p className="text-sm font-bold text-foreground truncate">{title}</p>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-          )}
-        </div>
-        {completed ? (
-          <Check className="w-4 h-4" style={{ color: THEME.success }} />
-        ) : (
-          <Play className="w-4 h-4 text-muted-foreground" />
-        )}
-      </div>
-    </button>
-  );
-}
-
-/**
- * P1-3: Week tab — 7-day strip + per-day overflow menus + history nav.
- *
- * Each runDay chip carries a tap target that opens a bottom sheet
- * with day-appropriate actions:
- *   - Run day → Swap template / Skip / (cancel)
- *   - Lift day → Skip lift / (cancel)
- *   - Both → both action sets
- *   - Rest → no actions (chip is not tappable)
- *
- * History nav uses the same goBack / goForward pipeline as
- * Lift tab's WeekPhaseRow — `viewWeek(historyIndex | null)` from
- * useProgram. When viewing history, the Week chip strip reflects
- * the historical weekSchedule (which we'd need to snapshot per
- * week in P0-A's weekHistory; for now we render the current
- * weekSchedule with a "Week N" label so the historical week
- * NUMBER is visible even if the layout snapshot isn't).
- */
-function WeekTabContent({
-  profile,
-  programState,
-  weekNumber,
-  canGoBack,
-  canGoForward,
-  onPrevWeek,
-  onNextWeek,
-  isViewingHistory,
-  overrideRunDay,
-  completeRunDay,
-  skipRunDay,
-  skipWorkoutDay,
-}: {
-  profile: UserProfile | null;
-  programState: ProgramState | null;
-  weekNumber: number;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  onPrevWeek: () => void;
-  onNextWeek: () => void;
-  isViewingHistory: boolean;
-  overrideRunDay: (dayIndex: number, templateId: string) => void;
-  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  skipWorkoutDay: (dayIndex: number) => Promise<void>;
-}) {
-  const dayLetters = ["S", "M", "T", "W", "T", "F", "S"];
-  const dayFullLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const todayDayIndex = new Date().getDay();
-  const schedule = profile?.weekSchedule ?? [];
-  const [openDayIndex, setOpenDayIndex] = useState<number | null>(null);
-
-  if (schedule.length !== 7) {
-    return (
-      <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
-        <p className="text-sm text-muted-foreground">
-          No weekly schedule set yet. Configure your plan to get started.
-        </p>
-      </div>
-    );
-  }
-
-  const openDay = openDayIndex !== null ? schedule.find((d) => d.day === openDayIndex) : null;
-  const openRunDay = openDayIndex !== null
-    ? programState?.runDays?.find((rd) => rd.dayIndex === openDayIndex)
-    : null;
-
-  return (
-    <div className="space-y-3">
-      {/* History nav header — same layout as Lift tab's WeekPhaseRow
-          but stripped down: the Week tab doesn't need the phase
-          pill because the user is editing layout, not progressing
-          through phases. */}
-      <div className="flex items-center justify-center gap-3 py-1" style={{ height: 36 }}>
-        {canGoBack ? (
-          <button onClick={onPrevWeek} className="p-1 active:scale-95 transition-transform" aria-label="Previous week">
-            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-          </button>
-        ) : (
-          <div className="w-6" />
-        )}
-        <span className="text-sm font-semibold text-foreground">
-          Week {weekNumber}
-          {isViewingHistory && (
-            <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>
-              · History
-            </span>
-          )}
-        </span>
-        {canGoForward ? (
-          <button onClick={onNextWeek} className="p-1 active:scale-95 transition-transform" aria-label="Next week">
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-        ) : (
-          <div className="w-6" />
-        )}
-      </div>
-
-      <div className="grid grid-cols-7 gap-2">
-        {schedule.map((d) => {
-          const meta = SCHEDULE_TYPE_META[d.type];
-          const runDay = programState?.runDays?.find((rd) => rd.dayIndex === d.day);
-          const completed = !!runDay?.completed;
-          const isToday = d.day === todayDayIndex;
-          // Skipped runs get a distinct visual badge so the user
-          // can tell "I missed this" from "I haven't done it yet".
-          const skipped = runDay?.status === "skipped";
-          const isTappable = d.type !== "rest" && !isViewingHistory;
-          return (
-            <button
-              key={d.day}
-              type="button"
-              disabled={!isTappable}
-              onClick={() => isTappable && setOpenDayIndex(d.day)}
-              aria-label={`${dayFullLabels[d.day]} ${meta.label}${isTappable ? ", tap to edit" : ""}`}
-              className={cn(
-                "rounded-xl py-2 px-1 text-center transition-all",
-                isTappable && "hover:brightness-105 active:scale-95",
-              )}
-              style={{
-                background: `${meta.color}18`,
-                border: isToday ? `2px solid ${meta.color}` : `1px solid ${meta.color}40`,
-                opacity: skipped ? 0.55 : 1,
-                cursor: isTappable ? "pointer" : "default",
-              }}
-            >
-              <p
-                className="text-[10px] uppercase tracking-wider"
-                style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-              >
-                {dayLetters[d.day]}
-              </p>
-              <p
-                className="text-[11px] font-semibold mt-1 leading-tight"
-                style={{ color: meta.color }}
-              >
-                {meta.label}
-              </p>
-              {completed && (
-                <Check className="w-3 h-3 mx-auto mt-1" style={{ color: meta.color }} />
-              )}
-              {skipped && !completed && (
-                <span
-                  className="block text-[8px] font-bold mt-1 uppercase tracking-wider"
-                  style={{ color: "hsl(var(--muted-foreground))" }}
-                >
-                  Skip
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-3 flex-wrap pt-1">
-        {(["lift", "run", "both", "rest"] as const).map((t) => {
-          const meta = SCHEDULE_TYPE_META[t];
-          const count = schedule.filter((d) => d.type === t).length;
-          if (count === 0) return null;
-          return (
-            <div key={t} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
-              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-                {count} {meta.label.toLowerCase()}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="text-xs text-muted-foreground text-center pt-1">
-        Tap any non-rest day to edit · Tweak the layout in Settings &rarr; Training
-      </p>
-
-      {/* Per-day overflow sheet */}
-      <AnimatePresence>
-        {openDay && openDayIndex !== null && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpenDayIndex(null)}
-              className="fixed inset-0 bg-black/50 z-40"
-            />
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
-            >
-              <div className="max-w-md mx-auto p-5 space-y-3">
-                <div className="w-10 h-1 rounded-full bg-border mx-auto mb-2" />
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-foreground">
-                    {dayFullLabels[openDayIndex]} &middot; {SCHEDULE_TYPE_META[openDay.type].label}
-                  </p>
-                  {openRunDay && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {RUN_TEMPLATES.find((t) => t.id === (openRunDay.userOverride || openRunDay.templateId))?.name ?? "—"}
-                    </p>
-                  )}
-                </div>
-
-                {/* Run-day actions */}
-                {(openDay.type === "run" || openDay.type === "both") && openRunDay && (() => {
-                  // Disable template swap when the day is terminal.
-                  // overrideRunDay refuses the write at the data
-                  // layer; surfacing the disabled state here makes
-                  // the constraint visible before the user taps.
-                  const status = openRunDay.status ?? "planned";
-                  const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
-                  return (
-                  <>
-                    {/* Template swap select */}
-                    <div className="space-y-1">
-                      <label
-                        htmlFor="weektab-template-swap"
-                        className="text-xs uppercase tracking-wider"
-                        style={{ color: "hsl(var(--muted-foreground))" }}
-                      >
-                        Run template
-                        {isTerminal && (
-                          <span className="ml-1.5 text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
-                            · {status === "skipped" ? "skipped — locked" : "completed — locked"}
-                          </span>
-                        )}
-                      </label>
-                      <select
-                        id="weektab-template-swap"
-                        value={openRunDay.userOverride || openRunDay.templateId}
-                        onChange={(e) => {
-                          overrideRunDay(openDay.day, e.target.value);
-                          setOpenDayIndex(null);
-                        }}
-                        disabled={isTerminal}
-                        className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {RUN_TEMPLATES.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name} ({t.type})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Skip run action — only when not already terminal */}
-                    {!openRunDay.completed && openRunDay.status !== "skipped" && (
-                      <button
-                        onClick={async () => {
-                          await skipRunDay(openRunDay.id ?? openDay.day);
-                          setOpenDayIndex(null);
-                        }}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground"
-                      >
-                        Skip this run
-                      </button>
-                    )}
-
-                    {/* Mark complete action — defensive: planned-only */}
-                    {!openRunDay.completed && openRunDay.status === "planned" && (
-                      <button
-                        onClick={async () => {
-                          await completeRunDay(openRunDay.id ?? openDay.day);
-                          setOpenDayIndex(null);
-                        }}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium"
-                        style={{ background: `${THEME.success}20`, color: THEME.success }}
-                      >
-                        Mark complete (manual)
-                      </button>
-                    )}
-                  </>
-                  );
-                })()}
-
-                {/* Lift-day skip action — counts as "done for the
-                    week" semantics in useProgram parity, but the
-                    user can resume the workout from the Lift tab
-                    if they pick it back up. */}
-                {(openDay.type === "lift" || openDay.type === "both") && (
-                  <button
-                    onClick={async () => {
-                      const liftIdx = liftIndexForDayOfWeek(schedule, openDay.day);
-                      if (liftIdx >= 0) {
-                        await skipWorkoutDay(liftIdx);
-                      }
-                      setOpenDayIndex(null);
-                    }}
-                    className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground"
-                  >
-                    Skip lift session
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setOpenDayIndex(null)}
-                  className="w-full py-2.5 rounded-xl text-sm font-medium text-muted-foreground"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 function formatVolume(kg: number): string {
   // 0kg isn't a meaningful "volume achievement" — it just means
   // every exercise in the session was bodyweight or uncalibrated, in
@@ -622,22 +94,36 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWorkouts,
     viewedWeekNumber,
     overrideRunDay,
-    refreshRunSchedule,
     completeRunDay,
     skipRunDay,
+    refreshRunSchedule,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
   const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
-  // P1-1: 4-tab segmented control.
-  //   today — what's planned for today + primary CTA
-  //   week  — 7-day weekSchedule strip with status
-  //   lift  — existing lift programme (WeekPhaseRow + DayStepper + session swiper)
-  //   run   — ProgrammeRunSection (P0-8 content)
-  // Default to "today" so users land on glanceable state rather than
-  // dropped into the lift swiper (which the previous default was).
-  type ProgramTab = "today" | "week" | "lift" | "run";
-  const [activeTab, setActiveTab] = useState<ProgramTab>("today");
+  // PR-2: weekly layout editor sheet. Mounted conditionally — when
+  // closed the body unmounts and the inner useProgrammeScheduleEditor
+  // hook tears down, so the next open re-reads `profile` fresh.
+  const [editLayoutOpen, setEditLayoutOpen] = useState(false);
+  const openEditLayout = useCallback(() => {
+    setEditLayoutOpen(true);
+  }, []);
+  // PR-0d: which step the wizard lands on. The overflow menu opens
+  // at step 0 (full wizard); the run-mode chips + race-goal CTA in
+  // ProgrammeRunSection open at the Running step.
+  const [configurePlanInitialStep, setConfigurePlanInitialStep] = useState(0);
+  const openConfigurePlan = useCallback((step: number = 0) => {
+    setConfigurePlanInitialStep(step);
+    setConfigurePlanOpen(true);
+  }, []);
+  // PR-3: 2-tab segmented control — Lift | Run. Today / Week shells
+  // were retired once Home owned today-glance (via the shared
+  // `resolveTrainingDayForDate` path — PR-0c) and DayActionSheet
+  // owned per-day actions (PR-1). The Footprint nav icon owns
+  // "start a run". Defaulting to Lift because the lift swiper is the
+  // most-edited surface and is where the user most often returns.
+  type ProgramTab = "lift" | "run";
+  const [activeTab, setActiveTab] = useState<ProgramTab>("lift");
 
   const { workouts: recentWorkouts } = useWorkouts();
 
@@ -689,11 +175,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
 
-  // Refresh-programme confirmation (overflow item) — separate from
-  // Settings → Training's restructure modal because that one fires only
-  // when day-count changes; this one rebuilds with the same params and
-  // is destructive in a different way (clears weekHistory, resets
-  // weekNumber). User should know before tapping.
+  // PR-2: Reset-programme confirmation (overflow item) — separate
+  // from ScheduleLayoutSheet's restructure modal because that one
+  // fires only when the user changes lift-day count; this one
+  // rebuilds with the same params and is destructive in a different
+  // way (clears weekHistory, resets weekNumber to 1). User should
+  // know before tapping. Pre-PR-2 this was labelled "Refresh
+  // Programme" — renamed to "Reset programme" so the destructive
+  // intent matches the function it calls.
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
   // Swipe navigation
@@ -701,6 +190,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Exercise card state — read-only, tap opens info sheet
   const [reorderMode, setReorderMode] = useState(false);
+  // PR-2: reorderMode is meaningless outside the Lift tab — the
+  // DndContext that consumes it only renders when activeTab === "lift"
+  // (and only when there are exercises). Without this effect the
+  // boolean could survive a tab switch and silently re-activate
+  // drag-and-drop when the user returns to Lift.
+  useEffect(() => {
+    if (activeTab !== "lift" && reorderMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from tab-change event
+      setReorderMode(false);
+    }
+  }, [activeTab, reorderMode]);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{ dayIndex: number; exIndex: number; x: number; y: number } | null>(null);
@@ -1049,22 +549,29 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <RunningNavIcon />
             </Coachmark>
-            {reorderMode ? (
-              <button
-                onClick={() => setReorderMode(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
-              >
-                Done
-              </button>
-            ) : (
-              <button
-                onClick={() => setReorderMode(true)}
-                aria-label="Reorder exercises"
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-                style={{ minWidth: 44, minHeight: 44 }}
-              >
-                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-              </button>
+            {/* PR-2: reorder toggle only renders where it works —
+                Lift tab AND the user actually has lift workouts in
+                their programState. Pre-PR-2 the button lived
+                outside the activeTab guard, so users on Today/Week/
+                Run saw an inert icon that toggled hidden state. */}
+            {activeTab === "lift" && (programState?.workouts?.length ?? 0) > 0 && (
+              reorderMode ? (
+                <button
+                  onClick={() => setReorderMode(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  onClick={() => setReorderMode(true)}
+                  aria-label="Reorder exercises"
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                  style={{ minWidth: 44, minHeight: 44 }}
+                >
+                  <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )
             )}
             <button
               onClick={() => setShowOverflow(true)}
@@ -1078,18 +585,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
       </header>
 
-        {/* P1-1: 4-tab segmented control. Persistent across the tab
-            switches below — Today, Week, Lift, Run. */}
+        {/* PR-3: 2-tab segmented control. Today / Week were retired —
+            Home owns today-glance, DayActionSheet owns per-day
+            actions, and the Footprint nav icon starts a run. */}
         <div className="pt-2">
           <div
             role="tablist"
             aria-label="Programme sections"
-            className="grid grid-cols-4 gap-1 p-1 rounded-xl"
+            className="grid grid-cols-2 gap-1 p-1 rounded-xl"
             style={{ background: "hsl(var(--muted) / 0.5)" }}
           >
             {([
-              { id: "today", label: "Today" },
-              { id: "week", label: "Week" },
               { id: "lift", label: "Lift" },
               { id: "run", label: "Run" },
             ] as { id: ProgramTab; label: string }[]).map((t) => (
@@ -1162,9 +668,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             profile={profile}
             programState={programState}
             runsTarget={runsTarget}
-            updateProfile={updateProfile}
             overrideRunDay={overrideRunDay}
-            refreshRunSchedule={refreshRunSchedule}
+            completeRunDay={completeRunDay}
+            skipRunDay={skipRunDay}
+            skipWorkoutDay={skipWorkoutDay}
+            onOpenConfigurePlan={openConfigurePlan}
           />
           {runsTarget === 0 && (
             <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
@@ -1175,38 +683,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </p>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ── TODAY tab — what's planned for today + primary CTA. */}
-      {activeTab === "today" && (
-        <div className="pt-4">
-          <TodayTabContent
-            profile={profile}
-            programState={programState}
-            navigate={navigate}
-            onOpenLift={() => setActiveTab("lift")}
-          />
-        </div>
-      )}
-
-      {/* ── WEEK tab — 7-day strip with day-type chips + status. */}
-      {activeTab === "week" && (
-        <div className="pt-4">
-          <WeekTabContent
-            profile={profile}
-            programState={programState}
-            weekNumber={displayWeekNumber}
-            canGoBack={canGoBack}
-            canGoForward={canGoForward}
-            onPrevWeek={goBack}
-            onNextWeek={goForward}
-            isViewingHistory={isViewingHistory}
-            overrideRunDay={overrideRunDay}
-            completeRunDay={completeRunDay}
-            skipRunDay={skipRunDay}
-            skipWorkoutDay={skipWorkoutDay}
-          />
         </div>
       )}
 
@@ -1530,6 +1006,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
 
+      {/* PR-2: Edit weekly layout sheet. Returns null when closed —
+          so the body component (and its useProgrammeScheduleEditor
+          hook) only mounts while the sheet is open. That's the
+          hydration guarantee: each open is a fresh hook mount that
+          re-reads the current profile. */}
+      <ScheduleLayoutSheet
+        open={editLayoutOpen}
+        onClose={() => setEditLayoutOpen(false)}
+        profile={profile}
+        updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
+        regenerateProgram={regenerateProgram}
+      />
+
       {/* P0-9: Configure Plan wizard. Renders nothing when closed —
           the modal itself returns null on `!open`. */}
       {profile && (
@@ -1538,6 +1028,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           onClose={() => setConfigurePlanOpen(false)}
           profile={profile}
           programState={programState}
+          initialStep={configurePlanInitialStep}
           onSaved={() => {
             // No explicit refresh — useProgram subscribes to the
             // programState doc and re-renders on next snapshot. The
@@ -1562,21 +1053,37 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
-                {/* P0-9: Configure Plan wizard entry — opens the full-
-                    screen modal that runs planBuilder + configurePlan
-                    CF on Confirm. Lives at the top of the overflow
-                    because plan-shape changes are the more deliberate
-                    operation than the per-week settings below. */}
+                {/* PR-2: Edit weekly layout — basic-tier capability.
+                    Opens ScheduleLayoutSheet (the editor that pre-PR-2
+                    lived in Settings → Training). Intentionally NOT
+                    phase-locked: day-to-day layout is foundational,
+                    not a premium feature. The other three items below
+                    keep their Pro gate (plan-shape change, phase
+                    settings, full reset). */}
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { setConfigurePlanOpen(true); }
+                    openEditLayout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                  style={{ minHeight: 44 }}
+                >
+                  <CalendarDays className="w-4.5 h-4.5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground flex-1">Edit weekly layout</span>
+                </button>
+                {/* P0-9: Configure programme wizard — runs planBuilder +
+                    configurePlan CF on Confirm. Deliberate plan-shape
+                    change (not a day toggle), so Pro-locked. */}
+                <button
+                  onClick={() => {
+                    setShowOverflow(false);
+                    if (phaseLocked) { setShowProSheet(true); } else { openConfigurePlan(); }
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
                   <Sparkles className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Configure Plan</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Configure programme</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
                 <button
@@ -1588,9 +1095,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <Settings2 className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Programme Settings</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Programme settings</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
+                {/* PR-2: "Reset programme" replaces "Refresh Programme".
+                    `regenerateProgram` resets weekNumber to 1 and clears
+                    weekHistory — that's a hard reset, not a refresh.
+                    Calling it Refresh invited accidental taps; the new
+                    label discloses the destructive nature. */}
                 <button
                   onClick={() => {
                     setShowOverflow(false);
@@ -1601,7 +1113,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <RefreshCw className={cn("w-4.5 h-4.5 text-muted-foreground", regenerating && "animate-spin")} />
-                  <span className="text-sm font-medium text-foreground flex-1">Refresh Programme</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Reset programme</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
               </div>
@@ -1610,10 +1122,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* Refresh Programme Confirmation — destructive: regenerateProgram
-          rebuilds the workouts array, resets weekNumber to 1, and
-          clears weekHistory (the user's "Browse Past Weeks" data).
-          Logged workouts in History are NOT affected. */}
+      {/* PR-2: Reset programme confirmation — destructive.
+          `regenerateProgram` rebuilds the workouts array, resets
+          weekNumber to 1, and clears weekHistory (the user's
+          "Browse Past Weeks" data). Logged workouts in History are
+          NOT affected. The copy and confirm-button label spell this
+          out so users can't tap "Refresh" expecting a benign sync
+          and lose their week summaries. */}
       <AnimatePresence>
         {showRefreshConfirm && (
           <>
@@ -1633,9 +1148,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               transition={{ duration: 0.15 }}
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
             >
-              <h3 className="text-sm font-semibold text-foreground">Refresh programme?</h3>
+              <h3 className="text-sm font-semibold text-foreground">Reset your programme?</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A new set of exercises will be generated for your current nutrition phase and training days. You&apos;ll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact.
+                This rebuilds your lift split for the current nutrition phase and training days,
+                restarts you at Week&nbsp;1, and clears the week-by-week summary history. Logged
+                workouts and runs in History are not affected.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
@@ -1651,7 +1168,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
                 >
-                  Refresh
+                  Reset programme
                 </button>
               </div>
             </motion.div>
