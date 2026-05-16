@@ -295,7 +295,7 @@ export default function ProgrammeRunSection({
               {/* PR-1: per-row "Manage" affordance opens
                   DayActionSheet for this runDay's date. Preserves
                   the manual-complete + skip-run flows that
-                  pre-PR-1 lived only in WeekTabContent. The button
+                  pre-PR-1 lived only in the (now-removed) Week tab. The button
                   renders for every row (terminal too) — the sheet
                   itself locks down disallowed actions. */}
               {rd.date && (

@@ -1,23 +1,23 @@
 /**
- * PR-1: per-day action sheet.
+ * PR-1: per-day action sheet — canonical surface (post-PR-3).
  *
- * Single place to manage one day's training. Same status-aware
- * surface mounted from:
+ * Single place to manage one day's training. Mounted from:
  *
  *   - Home DayPeekCard secondary "Manage" CTA — off-Programme
- *     access without exposing all actions inline.
- *   - Programme Run rows — replaces the Week-tab overflow as
- *     the per-day editor while Week stays alive for parity.
+ *     access without exposing all actions inline. Home remains
+ *     glance-first; the sheet handles the editing.
+ *   - Programme Run rows — per-row "Manage" affordance on
+ *     ProgrammeRunSection's per-day list.
  *   - (Lift swiper continues to use SkipConfirmSheet for in-
  *     session skip — DayActionSheet doesn't compete with that
  *     flow.)
  *
- * Pre-PR-1 these three actions (manual `completeRunDay`, manual
- * `skipRunDay`, `skipWorkoutDay` from a non-swiper context) were
- * only reachable from WeekTabContent. Deleting Week without this
- * sheet would lose them entirely. PR-1 preserves them on the new
- * surface so Week can be retired later (PR-2) without losing
- * capability.
+ * Before PR-1 the three workflows (manual `completeRunDay`, manual
+ * `skipRunDay`, `skipWorkoutDay` from a non-swiper context) lived
+ * only inside the Programme Week tab's overflow sheet. PR-1
+ * extracted them into this sheet; PR-3 removed the Week tab once
+ * coverage was verified — these are now the only path to those
+ * actions outside Settings's retake-onboarding flow.
  *
  * Status-aware rules (PR-0b-iii):
  *   - planned                       → template swap + Skip + Mark complete
@@ -26,8 +26,8 @@
  *   - race_completed_unlinked       → passive copy, no actions
  *
  * The sheet resolves the day via the shared trainingResolver
- * (PR-0c) so it agrees with Home / WeekStrip / Programme Today
- * about what's training for the given date.
+ * (PR-0c) so it agrees with Home's WeekStrip + DayPeekCard about
+ * what's training for the given date.
  */
 
 import { useMemo } from "react";

@@ -96,7 +96,7 @@ export default function Home() {
   }, [profile, isInTrial]);
 
   // PR-0c: single resolver call. Replaces three inline derivations
-  // that disagreed with each other and with Programme TodayTabContent:
+  // that disagreed with each other and with the (now-retired) Programme Today tab:
   //   1. `runTarget = ... ?? 2` — phantom runs for freeform users.
   //      The resolver internally uses getWeeklyRunTarget which
   //      defaults to 0.

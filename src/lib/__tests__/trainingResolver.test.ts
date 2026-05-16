@@ -2,9 +2,9 @@
  * Tests for the shared date-aware training resolver (PR-0c).
  *
  * The resolver answers "what's training for this calendar date?"
- * for Home, DayPeek, WeekStrip, and Programme TodayTabContent.
- * These tests pin the correctness contracts inline derivations
- * got wrong:
+ * for Home, DayPeekCard, WeekStrip, and DayActionSheet. These
+ * tests pin the correctness contracts inline derivations got
+ * wrong:
  *
  *   - runDay matching is by date, then weekKey+dayIndex, then
  *     legacy-fallback ONLY when target date is in current week.

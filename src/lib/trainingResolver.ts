@@ -1,11 +1,11 @@
 /**
  * Shared date-aware training resolver · PR-0c · spec v7.
  *
- * Home, DayPeekCard, WeekStrip, and Programme TodayTabContent all
- * answer the same question — "what's training for this calendar
- * date?" — but pre-PR-0c each one derived it inline from raw
- * `schedule` / `runDays` / `dayIndex` / `completed`. Those inline
- * derivations had five concrete bugs and disagreed with each other:
+ * Home, DayPeekCard, WeekStrip, and DayActionSheet all answer the
+ * same question — "what's training for this calendar date?" — but
+ * pre-PR-0c each one derived it inline from raw `schedule` /
+ * `runDays` / `dayIndex` / `completed`. Those inline derivations
+ * had five concrete bugs and disagreed with each other:
  *
  *   1. `runDays.find(r => r.dayIndex === dow)` matches a strip-
  *      future Monday to this-Monday's runDay (date-inheritance bug).
