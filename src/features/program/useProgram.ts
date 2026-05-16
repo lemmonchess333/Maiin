@@ -709,12 +709,24 @@ export function useProgram() {
   // If product wants un-skip, add `skipped → planned` to
   // LEGAL_TRANSITIONS and surface an "un-skip" button in the
   // Week tab overflow instead of overloading override semantics.
+  // PR-1: id-preferring overload. Same shape as completeRunDay /
+  // skipRunDay — string = runDay.id, number = legacy dayIndex.
+  // V2 docs have stable IDs (PR-0b-i); future surfaces (Home
+  // DayActionSheet) need to address a specific runDay across weeks,
+  // not "whichever runDay happens to match this dayIndex". The
+  // dayIndex fallback stays for legacy callers (Programme Run tab
+  // row select, Week-tab template select) that still pass dow.
   const overrideRunDay = useCallback(
-    async (dayIndex: number, templateId: string) => {
+    async (idOrDayIndex: string | number, templateId: string) => {
       if (!programState?.runDays) return;
-      const target = programState.runDays.find((rd) => rd.dayIndex === dayIndex);
+      const target =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.find((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.find((rd) => rd.dayIndex === idOrDayIndex);
       if (!target) {
-        logger.warn(`[overrideRunDay] no runDay matched dayIndex=${dayIndex}; skipping`);
+        logger.warn(
+          `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+        );
         return;
       }
       // PR-0b-iii: editability gate via the central helper.
@@ -725,15 +737,20 @@ export function useProgram() {
       const status = getScheduledRunStatus(target);
       if (!isScheduledRunEditable(status)) {
         logger.warn(
-          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", dayIndex=${dayIndex}); use Configure Plan to rebuild instead`,
+          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`,
         );
         return;
       }
 
+      // Match against the resolved target's id when present
+      // (id-preferring), falling back to dayIndex. Without this
+      // a multi-week V2 runDays array could double-overwrite
+      // (multiple rows with the same dayIndex).
       const updated: ProgramState = {
         ...programState,
         runDays: programState.runDays.map((rd) =>
-          rd.dayIndex === dayIndex
+          (target.id && rd.id === target.id) ||
+          (!target.id && rd.dayIndex === target.dayIndex)
             ? { ...rd, templateId, userOverride: templateId }
             : rd,
         ),

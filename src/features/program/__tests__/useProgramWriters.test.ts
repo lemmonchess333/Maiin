@@ -431,3 +431,138 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
     expect(setDocCalls.length).toBe(0);
   });
 });
+
+// ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
+
+describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => {
+  // Pre-PR-1, overrideRunDay only took `dayIndex: number`. V2 docs
+  // have stable IDs, and multi-week runDays arrays can share a
+  // dayIndex across weeks — so a callable that addresses runDays
+  // by id is essential before Week is retired (DayActionSheet
+  // dispatches via id). The number overload stays for legacy
+  // callers (per-day Run-tab select, Week-tab template <select>).
+
+  function plannedRunDay(dayIndex: number, id: string): ScheduledRunDay {
+    return {
+      id,
+      dayIndex,
+      templateId: "easy_30",
+      type: "easy",
+      completed: false,
+      status: "planned",
+      // Date + weekKey present (PR-0b-i shape) so migration on
+      // load doesn't touch the row.
+      date: "2026-05-18",
+      weekKey: "2026-05-17",
+    } as ScheduledRunDay;
+  }
+
+  it("called with a string id updates the matching runDay", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        plannedRunDay(1, "runday_target_id"),
+        plannedRunDay(3, "runday_other_id"),
+      ],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.overrideRunDay("runday_target_id", "tempo_20");
+    });
+
+    expect(setDocCalls.length).toBe(1);
+    const written = setDocCalls[0].data as ProgramState;
+    const updated = written.runDays!.find((rd) => rd.id === "runday_target_id");
+    const untouched = written.runDays!.find((rd) => rd.id === "runday_other_id");
+    expect(updated!.templateId).toBe("tempo_20");
+    expect(updated!.userOverride).toBe("tempo_20");
+    // The other row stays on easy_30 — id lookup did not splash
+    // across dayIndex matches.
+    expect(untouched!.templateId).toBe("easy_30");
+    expect(untouched!.userOverride).toBeUndefined();
+  });
+
+  it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [plannedRunDay(1, "runday_a"), plannedRunDay(3, "runday_b")],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.overrideRunDay(3, "tempo_20");
+    });
+
+    expect(setDocCalls.length).toBe(1);
+    const written = setDocCalls[0].data as ProgramState;
+    const updated = written.runDays!.find((rd) => rd.dayIndex === 3);
+    expect(updated!.templateId).toBe("tempo_20");
+    expect(updated!.userOverride).toBe("tempo_20");
+  });
+
+  it("refuses to override a non-editable runDay (terminal status)", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          ...plannedRunDay(1, "runday_skipped"),
+          status: "skipped",
+        },
+      ],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.overrideRunDay("runday_skipped", "tempo_20");
+    });
+
+    // Editable gate refuses. Zero writes.
+    expect(setDocCalls.length).toBe(0);
+  });
+});

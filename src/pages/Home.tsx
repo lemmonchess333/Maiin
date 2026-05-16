@@ -37,6 +37,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
+import DayActionSheet from "@/components/program/DayActionSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import HealthScoreCard from "@/components/home/HealthScoreCard";
 import InsightStrip from "@/components/home/InsightStrip";
@@ -55,7 +56,17 @@ export default function Home() {
 
   const effectiveTargets = useEffectiveTargets();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
-  const { programState, loading: programLoading } = useProgram();
+  // PR-1: pull the action callbacks too so the new DayActionSheet
+  // (mounted from DayPeekCard's Manage CTA) can dispatch
+  // override/skip/complete without re-implementing them here.
+  const {
+    programState,
+    loading: programLoading,
+    overrideRunDay,
+    completeRunDay,
+    skipRunDay,
+    skipWorkoutDay,
+  } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
@@ -258,6 +269,11 @@ export default function Home() {
   };
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
+  // PR-1: which date the DayActionSheet is managing. Null = closed.
+  // Distinct from peekDate so the peek can stay expanded behind the
+  // sheet (the sheet is a temporary overlay, the peek is a longer-
+  // lived summary).
+  const [manageDate, setManageDate] = useState<string | null>(null);
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
@@ -453,7 +469,7 @@ export default function Home() {
           </p>
         )}
         <AnimatePresence>
-          {peekDate && <DayPeekCard dateKey={peekDate} profile={profile} programState={programState} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} />}
+          {peekDate && <DayPeekCard dateKey={peekDate} profile={profile} programState={programState} workouts={peekW} dailyTotals={peekT} onClose={function() { setPeekDate(null); }} onManage={function(dk) { setManageDate(dk); }} />}
         </AnimatePresence>
       </motion.div>
 
@@ -535,6 +551,22 @@ export default function Home() {
           </>
         )}
       </AnimatePresence>
+
+      {/* PR-1: per-day action sheet, opened by the peek's Manage
+          CTA. Centralised dispatch of override / complete / skip
+          for runs + skip for lifts — the three actions that were
+          Week-tab-only pre-PR-1. */}
+      <DayActionSheet
+        open={manageDate !== null}
+        onClose={function() { setManageDate(null); }}
+        dateKey={manageDate}
+        profile={profile}
+        programState={programState}
+        overrideRunDay={overrideRunDay}
+        completeRunDay={completeRunDay}
+        skipRunDay={skipRunDay}
+        skipWorkoutDay={skipWorkoutDay}
+      />
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
 

@@ -1,6 +1,6 @@
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, ClipboardList, Footprints, X, Check } from "lucide-react";
+import { Dumbbell, ClipboardList, Footprints, X, Check, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -8,7 +8,7 @@ import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { IconButton } from "@/components/ui/IconButton";
 
-export default function DayPeekCard({ dateKey, profile, programState, workouts, dailyTotals, onClose }: {
+export default function DayPeekCard({ dateKey, profile, programState, workouts, dailyTotals, onClose, onManage }: {
   dateKey: string;
   /** P1-4 / PR-0c: profile + programState replace the previous
    *  `schedule` + `runDays` props. The peek calls the shared
@@ -21,6 +21,11 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
   workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[]; durationMinutes?: number }[];
   dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
   onClose: () => void;
+  /** PR-1: opens DayActionSheet for this date. Only rendered as a
+   *  secondary CTA when there's actionable training for the day
+   *  (matched lift or runDay). Home remains glance-first — the
+   *  inline rows above stay summary copy, not buttons. */
+  onManage?: (dateKey: string) => void;
 }) {
   const resolved = resolveTrainingDayForDate({
     dateKey,
@@ -62,6 +67,21 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
               icon={<X />}
             />
           </div>
+          {/* PR-1: secondary "Manage" CTA. Only rendered when the
+              day has a matched lift or runDay AND a parent supplied
+              onManage. Home remains glance-first: this is the only
+              affordance that exposes day-level actions; the summary
+              rows above stay informational. */}
+          {onManage && (resolved.run.runDay !== null || resolved.lift.workout !== null) && (
+            <button
+              type="button"
+              onClick={() => onManage(dateKey)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
+            >
+              <Settings2 className="w-3 h-3" />
+              Manage day
+            </button>
+          )}
           {(hasW || hasM || hasRun) ? (
             <div className="space-y-1 text-xs">
               {hasW && (

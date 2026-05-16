@@ -28,7 +28,8 @@
  *   - Weekly schedule editor (chips + apply changes).
  */
 
-import { Footprints, Check } from "lucide-react";
+import { useState } from "react";
+import { Footprints, Check, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
@@ -40,6 +41,7 @@ import {
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
+import DayActionSheet from "./DayActionSheet";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
@@ -49,7 +51,14 @@ interface ProgrammeRunSectionProps {
   /** Number of run days the user has scheduled. When 0, the entire
    *  section hides — there's no plan to edit. */
   runsTarget: number;
-  overrideRunDay: (dayIndex: number, templateId: string) => void;
+  overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
+  /** PR-1: action callbacks for the per-row DayActionSheet. The
+   *  sheet preserves the manual-complete + skip-run + skip-lift
+   *  flows that pre-PR-1 were Week-tab-only — once Week is
+   *  retired (PR-2) these are the canonical surface. */
+  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  skipWorkoutDay: (dayIndex: number) => Promise<void>;
   /** PR-0d: opens ConfigurePlanModal. The mode chips and the
    *  race-goal stub pass `CONFIGURE_PLAN_RUNNING_STEP` so the user
    *  lands directly in the run-config step. Without this callback
@@ -64,8 +73,16 @@ export default function ProgrammeRunSection({
   programState,
   runsTarget,
   overrideRunDay,
+  completeRunDay,
+  skipRunDay,
+  skipWorkoutDay,
   onOpenConfigurePlan,
 }: ProgrammeRunSectionProps) {
+  // PR-1: which row is opening DayActionSheet. Stores the runDay's
+  // matched date (so the sheet resolves the day the same way Home
+  // does) or null when closed.
+  const [manageDate, setManageDate] = useState<string | null>(null);
+
   // No run days scheduled — nothing to edit, hide the whole section.
   // P0-9's Configure Plan wizard is the surface for going from 0 → N
   // run days, not this inline editor.
@@ -263,7 +280,7 @@ export default function ProgrammeRunSection({
               </span>
               <select
                 value={rd.userOverride || rd.templateId}
-                onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
+                onChange={(e) => overrideRunDay(rd.id ?? rd.dayIndex, e.target.value)}
                 disabled={!editable}
                 aria-label={editable ? `Run template for ${DAY_LABELS[rd.dayIndex]}` : `${status} — template locked`}
                 className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -275,11 +292,43 @@ export default function ProgrammeRunSection({
                 ))}
               </select>
               {rd.completed && <Check className="w-4 h-4 text-green-500 shrink-0" />}
+              {/* PR-1: per-row "Manage" affordance opens
+                  DayActionSheet for this runDay's date. Preserves
+                  the manual-complete + skip-run flows that
+                  pre-PR-1 lived only in WeekTabContent. The button
+                  renders for every row (terminal too) — the sheet
+                  itself locks down disallowed actions. */}
+              {rd.date && (
+                <button
+                  type="button"
+                  onClick={() => setManageDate(rd.date ?? null)}
+                  aria-label={`Manage ${DAY_LABELS[rd.dayIndex]} run`}
+                  className="p-1.5 -m-1 rounded-md text-muted-foreground active:scale-95"
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             );
           })}
         </div>
       )}
+
+      {/* PR-1: per-day action sheet. Mounted once at the section
+          level; the per-row Manage buttons set `manageDate` to the
+          runDay's calendar date so the sheet resolves the same
+          slot Home would. */}
+      <DayActionSheet
+        open={manageDate !== null}
+        onClose={() => setManageDate(null)}
+        dateKey={manageDate}
+        profile={profile}
+        programState={programState}
+        overrideRunDay={overrideRunDay}
+        completeRunDay={completeRunDay}
+        skipRunDay={skipRunDay}
+        skipWorkoutDay={skipWorkoutDay}
+      />
     </section>
   );
 }

@@ -1,0 +1,416 @@
+/**
+ * PR-1: DayActionSheet status-aware contract.
+ *
+ * The sheet is the unified surface for per-day actions (template
+ * swap, mark complete, skip run, skip lift). It replaces what was
+ * Week-tab-only pre-PR-1 and mounts from Home + Programme Run rows.
+ *
+ * Pinned here:
+ *   - Planned run renders the template select (enabled), "Mark
+ *     complete (manual)", and "Skip this run".
+ *   - Terminal runs (completed_* / skipped / race_no_show) render
+ *     a locked status badge and a disabled select; no Skip/Complete
+ *     buttons.
+ *   - race_completed_unlinked renders passive copy with no
+ *     interactive controls (template select hidden, no buttons).
+ *   - Planned lift renders the "Skip this lift" button; completed/
+ *     skipped lifts render a status badge with no action.
+ *   - Action callbacks fire with the id-preferring overload
+ *     (runDay.id when present, dayIndex fallback).
+ *   - Empty day (no lift, no run match) renders the empty-state
+ *     copy.
+ *
+ * Notes:
+ * vaul's Drawer renders to a portal under document.body, NOT
+ * inside the test container. All queries use `screen` (which
+ * queries the entire document) or `document.querySelector` for
+ * raw element access.
+ */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import DayActionSheet from "../DayActionSheet";
+import type { UserProfile } from "@/lib/auth";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+  WorkoutDay,
+} from "@/features/program/programTypes";
+
+function makeProfile(weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[]): UserProfile {
+  return {
+    uid: "u-1",
+    displayName: "Test",
+    email: "t@example.com",
+    weekSchedule,
+  } as UserProfile;
+}
+
+function makeRunDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
+  return {
+    id: "runday_2026-05-17_1_easy_30",
+    dayIndex: 1,
+    date: "2026-05-18",
+    weekKey: "2026-05-17",
+    templateId: "easy_30",
+    type: "easy",
+    completed: false,
+    status: "planned",
+    ...overrides,
+  };
+}
+
+function makeWorkout(overrides: Partial<WorkoutDay> = {}): WorkoutDay {
+  return {
+    dayName: "Push",
+    dayType: "lift",
+    exercises: [],
+    completed: false,
+    ...overrides,
+  };
+}
+
+function makeProgramState(
+  runDays: ScheduledRunDay[],
+  workouts: WorkoutDay[] = [],
+): ProgramState {
+  return {
+    goal: "recomp",
+    currentPhase: "base",
+    weekNumber: 1,
+    splitType: "ppl",
+    workouts,
+    fatigueScore: 0,
+    updatedAt: Date.now(),
+    settings: { autoProgression: true, microloading: true },
+    weekHistory: [],
+    programSchemaVersion: 2,
+    runDays,
+  } as ProgramState;
+}
+
+// Anchor fixtures on the live "today" so the resolver's
+// currentWeekKey (computed from new Date() inside the sheet)
+// matches the fixture weekKey.
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function todayWeekKey() {
+  const d = new Date();
+  const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+  return `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`;
+}
+function todayDow() {
+  return new Date().getDay();
+}
+
+beforeEach(() => {
+  cleanup();
+});
+
+function commonCallbacks() {
+  return {
+    overrideRunDay: vi.fn(),
+    completeRunDay: vi.fn(async () => {}),
+    skipRunDay: vi.fn(async () => {}),
+    skipWorkoutDay: vi.fn(async () => {}),
+  };
+}
+
+describe("DayActionSheet — empty / null state", () => {
+  it("renders nothing when open=false", () => {
+    render(
+      <DayActionSheet
+        open={false}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={makeProfile([])}
+        programState={null}
+        {...commonCallbacks()}
+      />,
+    );
+    // Sheet returns null when closed — no body, no portal content.
+    expect(screen.queryByText(/Manage day/i)).not.toBeInTheDocument();
+  });
+
+  it("renders 'Nothing scheduled' when no lift and no run match", () => {
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={makeProfile([
+          { day: 0, type: "rest" }, { day: 1, type: "rest" },
+          { day: 2, type: "rest" }, { day: 3, type: "rest" },
+          { day: 4, type: "rest" }, { day: 5, type: "rest" },
+          { day: 6, type: "rest" },
+        ])}
+        programState={makeProgramState([])}
+        {...commonCallbacks()}
+      />,
+    );
+    expect(screen.getByText(/Nothing scheduled for this day\./i)).toBeInTheDocument();
+  });
+});
+
+describe("DayActionSheet — planned run", () => {
+  function setup() {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      })),
+    );
+    const runDay = makeRunDay({
+      id: "runday_target",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "planned",
+    });
+    const programState = makeProgramState([runDay]);
+    const callbacks = commonCallbacks();
+    return { profile, programState, callbacks, runDay };
+  }
+
+  it("renders template select (enabled), Mark complete, and Skip this run", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(false);
+    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+  });
+
+  it("Mark complete calls completeRunDay with the runDay's id (id-preferring)", () => {
+    const { profile, programState, callbacks, runDay } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    fireEvent.click(screen.getByText(/Mark complete \(manual\)/i));
+    expect(callbacks.completeRunDay).toHaveBeenCalledWith(runDay.id);
+  });
+
+  it("Skip this run calls skipRunDay with the runDay's id", () => {
+    const { profile, programState, callbacks, runDay } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    fireEvent.click(screen.getByText(/Skip this run/i));
+    expect(callbacks.skipRunDay).toHaveBeenCalledWith(runDay.id);
+  });
+
+  it("template select calls overrideRunDay with the runDay's id", () => {
+    const { profile, programState, callbacks, runDay } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "tempo_20" } });
+    expect(callbacks.overrideRunDay).toHaveBeenCalledWith(runDay.id, "tempo_20");
+  });
+});
+
+describe("DayActionSheet — terminal run states locked", () => {
+  function setupWithStatus(status: ScheduledRunDay["status"], completed = false) {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      })),
+    );
+    const runDay = makeRunDay({
+      id: "runday_terminal",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status,
+      completed,
+    });
+    return { profile, programState: makeProgramState([runDay]), callbacks: commonCallbacks() };
+  }
+
+  it("completed_exact: select disabled, no Skip / Complete buttons", () => {
+    const { profile, programState, callbacks } = setupWithStatus("completed_exact", true);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+  });
+
+  it("skipped: select disabled, no Skip / Complete buttons, 'Skipped' badge", () => {
+    const { profile, programState, callbacks } = setupWithStatus("skipped");
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+    // The "Skipped" badge is the run-section status indicator.
+    expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("DayActionSheet — race_completed_unlinked passive", () => {
+  it("renders passive copy and no interactive controls", () => {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      })),
+    );
+    const runDay = makeRunDay({
+      id: "runday_recon",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "race_completed_unlinked",
+    });
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={makeProgramState([runDay])}
+        {...commonCallbacks()}
+      />,
+    );
+
+    // Passive copy present.
+    expect(screen.getByText(/Race completed separately\. Review this in History\./i)).toBeInTheDocument();
+    // No template select rendered for this status.
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    // No Skip/Complete buttons.
+    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("DayActionSheet — lift section", () => {
+  function setup(workoutOverrides: Partial<WorkoutDay> = {}) {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("lift" as const) : ("rest" as const),
+      })),
+    );
+    return {
+      profile,
+      programState: makeProgramState([], [makeWorkout(workoutOverrides)]),
+      callbacks: commonCallbacks(),
+    };
+  }
+
+  it("planned lift: renders 'Skip this lift' button", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    expect(screen.getByText(/Skip this lift/i)).toBeInTheDocument();
+  });
+
+  it("Skip this lift calls skipWorkoutDay with the lift index", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    fireEvent.click(screen.getByText(/Skip this lift/i));
+    expect(callbacks.skipWorkoutDay).toHaveBeenCalledWith(0);
+  });
+
+  it("completed lift: 'Completed' badge, no Skip button", () => {
+    const { profile, programState, callbacks } = setup({ completed: true });
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    expect(screen.queryByText(/Skip this lift/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+  });
+
+  it("skipped lift: 'Skipped' badge, no Skip button", () => {
+    const { profile, programState, callbacks } = setup({ skipped: true });
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        {...callbacks}
+      />,
+    );
+    expect(screen.queryByText(/Skip this lift/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
+  });
+});

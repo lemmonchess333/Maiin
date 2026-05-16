@@ -81,6 +81,13 @@ function commonProps() {
     profile: makeProfile(),
     runsTarget: 2,
     overrideRunDay: vi.fn(),
+    // PR-1: the per-row DayActionSheet needs these to dispatch
+    // manual-complete / skip-run / skip-lift. Tests mock them so
+    // the sheet renders without crashing; assertions live in the
+    // dedicated DayActionSheet test file.
+    completeRunDay: vi.fn(async () => {}),
+    skipRunDay: vi.fn(async () => {}),
+    skipWorkoutDay: vi.fn(async () => {}),
     onOpenConfigurePlan: vi.fn(),
   };
 }

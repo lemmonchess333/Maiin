@@ -348,7 +348,7 @@ function WeekTabContent({
   onPrevWeek: () => void;
   onNextWeek: () => void;
   isViewingHistory: boolean;
-  overrideRunDay: (dayIndex: number, templateId: string) => void;
+  overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
   completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
@@ -551,7 +551,7 @@ function WeekTabContent({
                         id="weektab-template-swap"
                         value={openRunDay.userOverride || openRunDay.templateId}
                         onChange={(e) => {
-                          overrideRunDay(openDay.day, e.target.value);
+                          overrideRunDay(openRunDay.id ?? openDay.day, e.target.value);
                           setOpenDayIndex(null);
                         }}
                         disabled={!editable}
@@ -1207,6 +1207,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             programState={programState}
             runsTarget={runsTarget}
             overrideRunDay={overrideRunDay}
+            completeRunDay={completeRunDay}
+            skipRunDay={skipRunDay}
+            skipWorkoutDay={skipWorkoutDay}
             onOpenConfigurePlan={openConfigurePlan}
           />
           {runsTarget === 0 && (
