@@ -2,63 +2,50 @@ import { useMemo } from "react";
 import { THEME } from "@/lib/theme";
 import { Check } from "lucide-react";
 import { format } from "date-fns";
-import type { ScheduleDay } from "@/lib/scheduleUtils";
-import type { ScheduledRunDay } from "@/features/program/programTypes";
+import type { UserProfile } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import { resolveTrainingWindow } from "@/lib/trainingResolver";
+import { parseLocalDate } from "@/lib/dateHelpers";
 
-export default function WeekStrip({ dayMap, schedule, runDays, selectedDate, onDayTap }: {
+export default function WeekStrip({ dayMap, profile, programState, selectedDate, onDayTap }: {
   dayMap: Map<string, { workouts: number; meals: number; caloriesHit: boolean }>;
-  schedule: ScheduleDay[];
-  /** P1-4: programState.runDays for the current week. Used to
-   *  reconcile the recurring weekSchedule type with actual run
-   *  completion / skip status. Only matches against today + future
-   *  strip days within the current calendar week — runDays beyond
-   *  the current week haven't been generated yet. */
-  runDays?: ScheduledRunDay[];
+  /** P1-4 / PR-0c: profile + programState replace the previous
+   *  `schedule` + `runDays` props. The strip resolves a 7-day
+   *  window via the shared training resolver — every day inherits
+   *  one currentWeekKey anchored at today, so a strip-future
+   *  Monday no longer borrows this-Monday's runDay status (the
+   *  old `inSameWeek` heuristic + dayIndex-only match bug). */
+  profile: UserProfile | null;
+  programState: ProgramState | null;
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
 }) {
   const days = useMemo(() => {
     const today = new Date();
     const todayKey = format(today, "yyyy-MM-dd");
-    const todayDow = today.getDay();
-    // Left-aligned rolling 7-day window: today at index 0, then 6
-    // future days. The Home strip is forward-facing — the past is done,
-    // what matters is today's progress and what's coming. Follows
-    // Apple Fitness / Fitbit convention.
-    return Array.from({ length: 7 }, function(_, i) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const k = format(d, "yyyy-MM-dd");
-      const data = dayMap.get(k);
-      const isToday = k === todayKey;
-      const hasAct = !!(data && (data.workouts > 0 || data.meals > 0));
-      const dow = d.getDay();
-      const st = schedule.find(function(s) { return s.day === dow; })?.type || "rest";
-      // P1-4: recurring-vs-actual precedence.
-      //   - inSameWeek: i < 7 days from today AND d.getDay() >= today.getDay()
-      //     ensures runDays only match strip days inside the current
-      //     week. A "Monday" strip day three days from now (when today
-      //     is Friday) is NEXT week's Monday, not the current
-      //     runDays[Monday].
-      //   - runDay completion / skip overrides the recurring dot.
-      const inSameWeek = i === 0 || dow > todayDow || (i === 0 && dow === todayDow);
-      const rd = inSameWeek
-        ? runDays?.find(function(r) { return r.dayIndex === dow; })
-        : undefined;
-      const runCompleted = !!rd?.completed;
-      const runSkipped = rd?.status === "skipped";
+    // PR-0c: the resolver handles the rolling 7-day window. Each
+    // resolved day already carries scheduleType + run status with
+    // the date-inheritance guard baked in.
+    const resolved = resolveTrainingWindow({
+      startDate: today,
+      days: 7,
+      profile,
+      programState,
+    });
+    return resolved.map((r) => {
+      const data = dayMap.get(r.dateKey);
       return {
-        date: d,
-        key: k,
-        isToday: isToday,
-        hasActivity: hasAct,
-        sType: st,
-        isSelected: k === selectedDate,
-        runCompleted,
-        runSkipped,
+        date: parseLocalDate(r.dateKey),
+        key: r.dateKey,
+        isToday: r.dateKey === todayKey,
+        hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
+        sType: r.scheduleType,
+        isSelected: r.dateKey === selectedDate,
+        runCompleted: r.run.isCompleted,
+        runSkipped: r.run.status === "skipped",
       };
     });
-  }, [dayMap, schedule, runDays, selectedDate]);
+  }, [dayMap, profile, programState, selectedDate]);
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function(day) {
@@ -87,11 +74,12 @@ export default function WeekStrip({ dayMap, schedule, runDays, selectedDate, onD
               {(day.sType === "both" || day.sType === "lift") && (
                 <div className="w-[7px] h-[7px] rounded-full" style={{ backgroundColor: THEME.lifting }} />
               )}
-              {/* P1-4: actual-state precedence on run indicator.
-                  Completed run renders the recurring rhombus with a
-                  Check overlay. Skipped run fades it to 40% opacity
-                  + drops the colour. Planned (no actual state) stays
-                  as the original recurring rhombus. */}
+              {/* PR-0c: actual-state precedence on run indicator.
+                  Resolver-aware: completed renders Check, skipped
+                  fades to 40% opacity, planned stays as the
+                  recurring rhombus. Future strip days that don't
+                  have a matched runDay just show the rhombus from
+                  the recurring weekSchedule. */}
               {(day.sType === "both" || day.sType === "run") && day.runCompleted && (
                 <Check className="w-[10px] h-[10px]" style={{ color: THEME.running }} strokeWidth={3} />
               )}

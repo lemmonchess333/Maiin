@@ -13,6 +13,8 @@ import {
   isScheduledRunReconciliation,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
@@ -103,25 +105,37 @@ function TodayTabContent({
   navigate: ReturnType<typeof useNavigate>;
   onOpenLift: () => void;
 }) {
-  const todayDayIndex = new Date().getDay();
-  const todayEntry = profile?.weekSchedule?.find((d) => d.day === todayDayIndex);
-  const todayType = todayEntry?.type ?? "rest";
-  const todayRunDay = programState?.runDays?.find(
-    (rd) => rd.dayIndex === todayDayIndex,
-  );
-  const tmpl = todayRunDay
-    ? RUN_TEMPLATES.find((t) => t.id === (todayRunDay.userOverride || todayRunDay.templateId))
-    : null;
-
-  // Today's lift workout index. Shared helper in scheduleUtils so
-  // the Week tab overflow menu (P1-3) uses the same mapping. -1
-  // when today isn't a lift+both day or the schedule is missing.
-  const todayLiftIndex = liftIndexForDayOfWeek(profile?.weekSchedule, todayDayIndex);
-  const todayWorkout = todayLiftIndex >= 0
-    ? programState?.workouts?.[todayLiftIndex]
-    : undefined;
-  const liftCompleted = !!(todayWorkout?.completed || todayWorkout?.skipped);
-  const runCompleted = !!todayRunDay?.completed;
+  // PR-0c: single shared resolver call. Replaces inline lookups
+  // (`runDays.find(rd => rd.dayIndex === todayDow)` and inline
+  // `liftIndexForDayOfWeek`) so Home and Programme Today always
+  // resolve identically. The resolver delivers:
+  //   - status-aware lift completion (covers completed AND skipped
+  //     via `isTerminal`)
+  //   - status-aware run completion (only completed_* maps to
+  //     `isCompleted`; skipped no longer fakes "done")
+  //   - date/weekKey-aware runDay matching
+  //   - the URL-built startUrl when the run is actually startable
+  const today = new Date();
+  const resolved = resolveTrainingDayForDate({
+    dateKey: localDateString(today),
+    profile,
+    programState,
+    currentWeekKey: localWeekKey(today),
+  });
+  const todayType = resolved.scheduleType;
+  const tmpl = resolved.run.template;
+  const todayWorkout = resolved.lift.workout;
+  // `isTerminal` covers both completed and skipped lifts — the
+  // "all-done" banner gates on any resolution, not just success.
+  const liftCompleted = resolved.lift.isTerminal;
+  // PR-0c tightening: was `!!todayRunDay?.completed` which was
+  // true for legacy completed-true docs but false for skipped
+  // (which has completed=false). Now strictly the completed_*
+  // states. Skipped falls into the all-done banner via
+  // `resolved.run.isTerminal`, but the "Complete" badge only
+  // fires for actual completion.
+  const runCompleted = resolved.run.isCompleted;
+  const runTerminal = resolved.run.isTerminal;
 
   if (todayType === "rest") {
     return (
@@ -138,10 +152,15 @@ function TodayTabContent({
   const showLift = todayType === "lift" || todayType === "both";
   const showRun = todayType === "run" || todayType === "both";
   const isBoth = todayType === "both";
+  // PR-0c: the all-done banner asks "is every slot for today
+  // resolved?". A skipped run + completed lift on a Both day
+  // qualifies — the user is done for the day even though they
+  // didn't do the run. Uses `isTerminal` (any resolution) rather
+  // than `isCompleted` (success only).
   const allDone =
-    (showLift && showRun && liftCompleted && runCompleted) ||
+    (showLift && showRun && liftCompleted && runTerminal) ||
     (showLift && !showRun && liftCompleted) ||
-    (!showLift && showRun && runCompleted);
+    (!showLift && showRun && runTerminal);
 
   return (
     <div className="space-y-3">
@@ -190,12 +209,11 @@ function TodayTabContent({
           subtitle={runCompleted ? "Complete" : tmpl?.description}
           orderHint={isBoth && liftCompleted && !runCompleted ? "Up next" : null}
           onClick={() => {
-            const params: string[] = [];
-            if (tmpl) params.push(`template=${tmpl.id}`);
-            if (todayRunDay?.id) {
-              params.push(`scheduledRunId=${encodeURIComponent(todayRunDay.id)}`);
-            }
-            navigate("/run" + (params.length ? `?${params.join("&")}` : ""));
+            // PR-0c: navigate via the resolver-built startUrl when
+            // the run is startable. Falls back to "/run" (generic
+            // log) when the slot is terminal/reconciliation — the
+            // CTA still works as a "log a run anyway" escape hatch.
+            navigate(resolved.run.startUrl ?? "/run");
           }}
         />
       )}

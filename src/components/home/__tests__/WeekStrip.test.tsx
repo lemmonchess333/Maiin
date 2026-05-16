@@ -7,25 +7,28 @@
  * itself: future days that have a planned runDay must render the
  * coral planned-run indicator, NOT a blank chip.
  *
- * The render of planned vs completed vs skipped is implemented
- * via SVG/icon swaps inside a flex row — we assert on the SVG
- * class names ("lucide-check" appears only on completed runs)
- * and on the run-rhombus presence via inline-style colours.
+ * PR-0c moves the strip's runDay-matching from inline
+ * `runDays.find(r => r.dayIndex === dow)` + `inSameWeek` heuristic
+ * to the shared training resolver, which enforces date/weekKey-
+ * aware matching anchored on today's currentWeekKey. So next-
+ * week strip days can no longer borrow this-week's runDay state.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WeekStrip from "@/components/home/WeekStrip";
+import type { UserProfile } from "@/lib/auth";
+import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import type { ScheduledRunDay } from "@/features/program/programTypes";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 
 function makeSchedule(types: ScheduleDay["type"][]): ScheduleDay[] {
   return types.map((type, day) => ({ day, type }));
 }
 
-function makeRunDay(dayIndex: number, overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
+function makeRunDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
   return {
-    id: `runday_test_${dayIndex}`,
-    dayIndex,
+    id: `runday_test_${overrides.dayIndex ?? 0}`,
+    dayIndex: 0,
     templateId: "easy_30",
     type: "easy",
     completed: false,
@@ -34,110 +37,142 @@ function makeRunDay(dayIndex: number, overrides: Partial<ScheduledRunDay> = {}):
   };
 }
 
-describe("WeekStrip — runDay status precedence (spec gate #11)", () => {
-  it("renders the planned-run rhombus when a future runDay is planned and not completed", () => {
-    // Strip is forward-facing (today + 6 future days). At least
-    // one of those days needs to be a "run" with a matching
-    // planned runDay. The strip uses d.getDay() to match runDays
-    // by dayIndex, so we set ALL days to run-type to guarantee a
-    // match regardless of which weekday "today" falls on.
+function makeProfile(weekSchedule: ScheduleDay[]): UserProfile {
+  return {
+    uid: "u-1",
+    displayName: "Test",
+    email: "t@example.com",
+    weekSchedule,
+  } as UserProfile;
+}
+
+function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
+  return {
+    goal: "recomp",
+    currentPhase: "base",
+    weekNumber: 1,
+    splitType: "ppl",
+    workouts: [],
+    fatigueScore: 0,
+    updatedAt: Date.now(),
+    settings: { autoProgression: true, microloading: true },
+    weekHistory: [],
+    programSchemaVersion: 2,
+    runDays,
+  } as ProgramState;
+}
+
+describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)", () => {
+  it("renders the planned-run rhombus when today's runDay is planned and not completed", () => {
+    const today = new Date();
+    const todayDow = today.getDay();
+    const todayKey = localDateString(today);
+    const todayWeekKey = localWeekKey(today);
     const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
-    const todayDow = new Date().getDay();
-    const runDays = [makeRunDay(todayDow)];
+    const profile = makeProfile(schedule);
+    const programState = makeProgramState([
+      makeRunDay({ dayIndex: todayDow, date: todayKey, weekKey: todayWeekKey }),
+    ]);
 
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
-        schedule={schedule}
-        runDays={runDays}
+        profile={profile}
+        programState={programState}
         selectedDate={null}
         onDayTap={vi.fn()}
       />,
     );
 
-    // Coral rhombus — planned, not completed. The render uses an
-    // inline backgroundColor matching THEME.running (#D4637A).
-    // We assert via the rhombus's rotate-45 className being
-    // present in at least one chip.
+    // Coral rhombus — planned, not completed.
     const rhombuses = container.querySelectorAll(".rotate-45");
     expect(rhombuses.length).toBeGreaterThan(0);
-    // No Check icon should appear for a planned (not completed)
-    // run. Check icons would render via lucide-check class.
+    // No Check icon — planned (not completed) does not render a check.
     const checks = container.querySelectorAll(".lucide-check");
     expect(checks.length).toBe(0);
   });
 
   it("renders a Check icon for a completed run day (precedence over recurring rhombus)", () => {
-    // Today's day is set to "run" + completed.
+    const today = new Date();
+    const todayDow = today.getDay();
+    const todayKey = localDateString(today);
+    const todayWeekKey = localWeekKey(today);
     const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
-    const todayDow = new Date().getDay();
-    const runDays = [makeRunDay(todayDow, { completed: true, status: "completed_exact" })];
+    const profile = makeProfile(schedule);
+    const programState = makeProgramState([
+      makeRunDay({
+        dayIndex: todayDow, date: todayKey, weekKey: todayWeekKey,
+        completed: true, status: "completed_exact",
+      }),
+    ]);
 
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
-        schedule={schedule}
-        runDays={runDays}
+        profile={profile}
+        programState={programState}
         selectedDate={null}
         onDayTap={vi.fn()}
       />,
     );
 
-    // A lucide Check should render for today's completed run.
     const checks = container.querySelectorAll(".lucide-check");
     expect(checks.length).toBeGreaterThan(0);
   });
 
-  it("does not match runDays beyond the current calendar week", () => {
-    // The strip's `inSameWeek` check excludes future days that
-    // wrap into next week from current-week runDays. Concretely:
-    // if today is Sunday (dow=0) and the strip's day-6 chip is
-    // next Saturday, a runDay for dayIndex=6 should NOT match it
-    // (it belongs to the previous Saturday's slot).
-    //
-    // This test sets up that exact scenario but only meaningful
-    // when today is Sunday. We test the structural invariant by
-    // asserting no extra Check renders show up beyond today.
+  it("PR-0c: does not match next-week strip dates to this-week's runDay", () => {
+    // Strip is rolling 7-day forward. If today is mid-week, the
+    // last few strip days fall into NEXT week. Even when a
+    // legacy-shaped runDay (no date/weekKey) matches by dayIndex,
+    // the resolver's currentWeekKey gate prevents it from
+    // surfacing on next-week strip dates.
     const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
-    const todayDow = new Date().getDay();
-    // Mark every other dayIndex completed EXCEPT today. Strip
-    // checks only today's index (i=0) so no completed Checks
-    // should render.
+    const profile = makeProfile(schedule);
+    const today = new Date();
+    const todayDow = today.getDay();
+    // A legacy runDay with NO date/weekKey, dayIndex covering all
+    // dows except today's. With the legacy code these would leak
+    // status onto every strip day (including next-week dates).
     const runDays = [0, 1, 2, 3, 4, 5, 6]
       .filter((d) => d !== todayDow)
-      .map((d) => makeRunDay(d, { completed: true, status: "completed_exact" }));
+      .map((d) =>
+        makeRunDay({
+          dayIndex: d,
+          date: undefined,
+          weekKey: undefined,
+          completed: true,
+          status: "completed_exact",
+        }),
+      );
 
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
-        schedule={schedule}
-        runDays={runDays}
+        profile={profile}
+        programState={makeProgramState(runDays)}
         selectedDate={null}
         onDayTap={vi.fn()}
       />,
     );
 
-    // Strip iterates today + 6 forward. Only `inSameWeek` chips
-    // (today + the rest of the calendar week) get runDay matches.
-    // The number of Check icons can't exceed (7 - todayDow) -
-    // since we excluded today from the runDays list above, the
-    // count should be (7 - todayDow - 1) at most (covering the
-    // rest of the calendar week, excluding today).
+    // The strip iterates today + 6 forward. Of those, only strip
+    // positions whose dates fall in the SAME week as today should
+    // match the legacy-shaped runDays. That's exactly `7 - todayDow`
+    // positions — minus today itself (excluded from runDays).
     const checks = container.querySelectorAll(".lucide-check");
     const maxExpected = Math.max(0, 7 - todayDow - 1);
     expect(checks.length).toBeLessThanOrEqual(maxExpected);
   });
 
-  it("renders the recurring rhombus when runDays prop is omitted (back-compat)", () => {
-    // P1-4 added runDays as optional. Callers that haven't
-    // upgraded shouldn't break — the strip still renders the
-    // recurring layout from `schedule` alone.
+  it("renders the recurring rhombus when programState is omitted (back-compat)", () => {
     const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
+    const profile = makeProfile(schedule);
 
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
-        schedule={schedule}
+        profile={profile}
+        programState={null}
         selectedDate={null}
         onDayTap={vi.fn()}
       />,
