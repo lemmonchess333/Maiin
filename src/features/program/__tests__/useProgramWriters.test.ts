@@ -337,3 +337,97 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     lastWrite.runDays!.forEach(expectV2Shape);
   });
 });
+
+// ─── PR-0b-iii — writers respect status-aware gates ──────────────────
+
+describe("PR-0b-iii — legacy completed:true is not treated as planned", () => {
+  // Pre-PR-0b-iii, completeRunDay/skipRunDay read
+  // `targetDay.status ?? "planned"` — which silently treated a
+  // legacy `completed: true` + `status: undefined` doc as planned,
+  // letting the transitionStatus gate accept planned → completed_exact
+  // (or planned → skipped) on top of an already-done slot. With
+  // getScheduledRunStatus the resolution is "completed_exact" so
+  // the transitionStatus check refuses (terminal → anything is illegal).
+
+  function legacyCompletedRunDay() {
+    // Legacy shape: only `completed: true`, no v2 status field.
+    // PR-0b-i migration would normally repair this on read, but
+    // the helper is the defensive line for any caller that hasn't
+    // been through migration. We construct the legacy shape
+    // directly in the programState to bypass migration and verify
+    // the writer-side gate.
+    return {
+      dayIndex: 2,
+      templateId: "easy_30",
+      type: "easy",
+      completed: true,
+      // intentionally no `status` field
+    } as ScheduledRunDay;
+  }
+
+  it("completeRunDay refuses to re-complete a legacy completed:true doc", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [legacyCompletedRunDay()],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    // PR-0b-i's migration MAY have already aligned status on load
+    // (writing back to Firestore). Reset the call log so we
+    // capture only the post-load completeRunDay attempt.
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.completeRunDay(2); // by dayIndex
+    });
+
+    // Helper resolves the legacy doc to "completed_exact".
+    // transitionStatus(completed_exact, completed_exact) is
+    // illegal → completeRunDay logs + skips → zero writes.
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("skipRunDay refuses to skip a legacy completed:true doc", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [legacyCompletedRunDay()],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.skipRunDay(2);
+    });
+
+    // transitionStatus(completed_exact, skipped) is illegal —
+    // completed_* is terminal. Zero writes.
+    expect(setDocCalls.length).toBe(0);
+  });
+});

@@ -7,6 +7,12 @@ import type { ProgramState } from "@/features/program/programTypes";
 import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget, liftIndexForDayOfWeek, SCHEDULE_TYPE_META } from "@/lib/scheduleUtils";
+import {
+  getScheduledRunStatus,
+  isScheduledRunEditable,
+  isScheduledRunReconciliation,
+  isScheduledRunStartable,
+} from "@/lib/scheduledRunStatus";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
@@ -488,14 +494,25 @@ function WeekTabContent({
                   )}
                 </div>
 
-                {/* Run-day actions */}
+                {/* Run-day actions — PR-0b-iii: status-aware. */}
                 {(openDay.type === "run" || openDay.type === "both") && openRunDay && (() => {
-                  // Disable template swap when the day is terminal.
-                  // overrideRunDay refuses the write at the data
-                  // layer; surfacing the disabled state here makes
-                  // the constraint visible before the user taps.
-                  const status = openRunDay.status ?? "planned";
-                  const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
+                  const status = getScheduledRunStatus(openRunDay);
+
+                  // Reconciliation branch: race_completed_unlinked
+                  // gets passive copy only — no Start/Change/Skip.
+                  // A future linking UI will dispatch through a
+                  // dedicated path, not the shared editor.
+                  if (isScheduledRunReconciliation(status)) {
+                    return (
+                      <p className="text-sm text-muted-foreground italic">
+                        Race completed separately. Review this in History.
+                      </p>
+                    );
+                  }
+
+                  const editable = isScheduledRunEditable(status);
+                  const startable = isScheduledRunStartable(status);
+
                   return (
                   <>
                     {/* Template swap select */}
@@ -506,7 +523,7 @@ function WeekTabContent({
                         style={{ color: "hsl(var(--muted-foreground))" }}
                       >
                         Run template
-                        {isTerminal && (
+                        {!editable && (
                           <span className="ml-1.5 text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
                             · {status === "skipped" ? "skipped — locked" : "completed — locked"}
                           </span>
@@ -519,7 +536,7 @@ function WeekTabContent({
                           overrideRunDay(openDay.day, e.target.value);
                           setOpenDayIndex(null);
                         }}
-                        disabled={isTerminal}
+                        disabled={!editable}
                         className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {RUN_TEMPLATES.map((t) => (
@@ -530,8 +547,11 @@ function WeekTabContent({
                       </select>
                     </div>
 
-                    {/* Skip run action — only when not already terminal */}
-                    {!openRunDay.completed && openRunDay.status !== "skipped" && (
+                    {/* Skip + Mark-complete actions are startable-only.
+                        skipRunDay/completeRunDay refuse non-planned
+                        anyway, but hiding the buttons up-front matches
+                        the helper's gate. */}
+                    {startable && (
                       <button
                         onClick={async () => {
                           await skipRunDay(openRunDay.id ?? openDay.day);
@@ -543,8 +563,7 @@ function WeekTabContent({
                       </button>
                     )}
 
-                    {/* Mark complete action — defensive: planned-only */}
-                    {!openRunDay.completed && openRunDay.status === "planned" && (
+                    {startable && (
                       <button
                         onClick={async () => {
                           await completeRunDay(openRunDay.id ?? openDay.day);

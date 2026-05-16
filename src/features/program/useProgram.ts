@@ -44,6 +44,10 @@ import {
 import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  getScheduledRunStatus,
+  isScheduledRunEditable,
+} from "@/lib/scheduledRunStatus";
 import { toast } from "sonner";
 
 const PROGRAM_DOC = "current";
@@ -603,7 +607,13 @@ export function useProgram() {
       // Status transition gate. Only the planned → completed_exact
       // path is wired here; future transitions (skipped, late,
       // modified) land in P1/P2 alongside their UI surfaces.
-      const fromStatus = targetDay.status ?? "planned";
+      // PR-0b-iii: legacy-completed-aware status read via the
+      // central helper. A pre-status doc with completed: true +
+      // status: undefined resolves to "completed_exact" (not
+      // "planned"), so transitionStatus refuses the
+      // completed_exact → completed_exact illegal transition and
+      // we skip + log instead of double-completing.
+      const fromStatus = getScheduledRunStatus(targetDay);
       const toStatus: ScheduledRunStatus = "completed_exact";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
@@ -656,7 +666,13 @@ export function useProgram() {
         return;
       }
       const targetDay = programState.runDays[targetIndex];
-      const fromStatus = targetDay.status ?? "planned";
+      // PR-0b-iii: legacy-completed-aware status read via the
+      // central helper. A pre-status doc with completed: true +
+      // status: undefined resolves to "completed_exact" (not
+      // "planned"), so transitionStatus refuses the
+      // completed_exact → completed_exact illegal transition and
+      // we skip + log instead of double-completing.
+      const fromStatus = getScheduledRunStatus(targetDay);
       const toStatus: ScheduledRunStatus = "skipped";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
@@ -701,10 +717,15 @@ export function useProgram() {
         logger.warn(`[overrideRunDay] no runDay matched dayIndex=${dayIndex}; skipping`);
         return;
       }
-      const status = target.status ?? "planned";
-      if (status !== "planned" && status !== "race_completed_unlinked") {
+      // PR-0b-iii: editability gate via the central helper.
+      // Only `planned` qualifies for in-place template swap.
+      // race_completed_unlinked (reconciliation) is now excluded
+      // — its only outgoing path is via a future linking UI, not
+      // the shared template editor.
+      const status = getScheduledRunStatus(target);
+      if (!isScheduledRunEditable(status)) {
         logger.warn(
-          `[overrideRunDay] refusing to swap template on terminal runDay (status="${status}", dayIndex=${dayIndex}); use Configure Plan to rebuild instead`,
+          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", dayIndex=${dayIndex}); use Configure Plan to rebuild instead`,
         );
         return;
       }

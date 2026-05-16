@@ -19,6 +19,11 @@
 
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
+import {
+  getScheduledRunStatus,
+  isScheduledRunStartable,
+  isScheduledRunTerminal,
+} from "./scheduledRunStatus";
 
 // ─── Field types ─────────────────────────────────────────────────────
 
@@ -209,9 +214,14 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     return inputs.runDays.find((d) => d.id === inputs.urlScheduledRunId) ?? null;
   }
   function findTodayIncompleteRunDay(): ScheduledRunDay | null {
+    // PR-0b-iii: status-aware "pickable" check via the central
+    // helper. Pre-PR-0b-iii used `!d.completed` which surfaced
+    // skipped runs (which have completed=false) as startable.
+    // Now only `planned` qualifies — skipped, race_no_show, and
+    // race_completed_unlinked all refuse.
     return (
       inputs.runDays?.find(
-        (d) => d.dayIndex === inputs.todayDayIndex && !d.completed,
+        (d) => d.dayIndex === inputs.todayDayIndex && isScheduledRunStartable(getScheduledRunStatus(d)),
       ) ?? null
     );
   }
@@ -320,8 +330,15 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       ? resolvedPlannedDay
       : inputs.runDays.find((d) => d.dayIndex === inputs.todayDayIndex) ?? null;
 
-    // 3a. Today's planned run is already completed — extra-run state.
-    if (todayDay && todayDay.completed) {
+    // PR-0b-iii: branch via the central status helper. Pre-
+    // PR-0b-iii these branches read `todayDay.completed` which
+    // missed skipped runs (treated them as 3b incomplete-day,
+    // surfacing them as startable). Now any terminal status
+    // (completed_*, skipped, race_no_show) lands in 3a.
+    const todayStatus = todayDay ? getScheduledRunStatus(todayDay) : null;
+
+    // 3a. Today's slot is terminal — extra-run state.
+    if (todayDay && todayStatus && isScheduledRunTerminal(todayStatus)) {
       return {
         metadata: {
           planMode,
@@ -341,8 +358,12 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       };
     }
 
-    // 3b. Today has an incomplete planned run — prefill from it.
-    if (todayDay && !todayDay.completed) {
+    // 3b. Today has a planned run — prefill from it.
+    // race_completed_unlinked falls through to 3c rest_day:
+    // the user can't start a fresh run against a pending-link
+    // slot. (The race run was logged separately; a future
+    // reconciliation UI links it, not a re-attempt here.)
+    if (todayDay && todayStatus && isScheduledRunStartable(todayStatus)) {
       const plannedTemplate = resolvePlannedTemplate(todayDay);
       if (!plannedTemplate) {
         // Missing template ID — caller logs, no prefill.

@@ -7,6 +7,7 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useRunVisibility } from '../hooks/useRunVisibility';
 import { calculatePace, calculateSplits, haversine, paceAsNumber, totalElevationGain } from '../lib/gps';
 import { getDistanceTargetMeters } from '../lib/runConfigUnits';
+import { getScheduledRunStatus, isScheduledRunStartable } from '../lib/scheduledRunStatus';
 import RunMap from '../components/run/RunMapLazy';
 import RunSetupModal, { type RunConfig, type ProgramContextStrip } from '../components/run/RunSetupModal';
 import RunSetupSkeleton from '../components/run/RunSetupSkeleton';
@@ -334,8 +335,11 @@ export default function Run() {
     }
     // Missing programme templateId (today's plan has an unknown ID).
     // Same signal — fall back happened in the helper; we log.
+    // PR-0b-iii: status-aware "today's pickable run" lookup.
+    // Pre-PR-0b-iii `!d.completed` surfaced skipped runs as
+    // startable. Helper restricts to `planned` only.
     const todayDay = programState?.runDays?.find(
-      (d) => d.dayIndex === new Date().getDay() && !d.completed,
+      (d) => d.dayIndex === new Date().getDay() && isScheduledRunStartable(getScheduledRunStatus(d)),
     );
     if (
       todayDay &&

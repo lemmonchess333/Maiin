@@ -42,6 +42,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  getScheduledRunStatus,
+  isScheduledRunEditable,
+  isScheduledRunReconciliation,
+} from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
@@ -292,14 +297,29 @@ export default function ProgrammeRunSection({
         <div className="p-3 rounded-xl bg-card space-y-1.5">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
           {(programState?.runDays ?? []).map((rd) => {
-            // Disable swap when the day is in a terminal state.
-            // overrideRunDay in useProgram refuses the write
-            // anyway, but disabling the dropdown surfaces "you
-            // can't change a done/skipped day" before the user
-            // taps. race_completed_unlinked stays editable per
-            // the state machine (it can still transition).
-            const status = rd.status ?? "planned";
-            const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
+            // PR-0b-iii: status-aware row rendering.
+            //   - reconciliation (race_completed_unlinked) →
+            //     passive copy, no Start/Change/Skip
+            //   - editable (planned) → enabled select
+            //   - otherwise (terminal: completed_*, skipped,
+            //     race_no_show) → disabled select + completion
+            //     check icon for completed_* states
+            const status = getScheduledRunStatus(rd);
+
+            if (isScheduledRunReconciliation(status)) {
+              return (
+                <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
+                  <span className="text-xs font-medium text-foreground w-8">
+                    {DAY_LABELS[rd.dayIndex]}
+                  </span>
+                  <p className="flex-1 text-xs text-muted-foreground italic">
+                    Race completed separately. Review this in History.
+                  </p>
+                </div>
+              );
+            }
+
+            const editable = isScheduledRunEditable(status);
             return (
             <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
               <span className="text-xs font-medium text-foreground w-8">
@@ -308,8 +328,8 @@ export default function ProgrammeRunSection({
               <select
                 value={rd.userOverride || rd.templateId}
                 onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                disabled={isTerminal}
-                aria-label={isTerminal ? `${status} — template locked` : `Run template for ${DAY_LABELS[rd.dayIndex]}`}
+                disabled={!editable}
+                aria-label={editable ? `Run template for ${DAY_LABELS[rd.dayIndex]}` : `${status} — template locked`}
                 className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {RUN_TEMPLATES.map((t) => (

@@ -38,26 +38,11 @@ import {
   addLocalDays,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 
-/**
- * Status enums that imply the run actually happened. `status` is
- * the authoritative source for completion; the legacy `completed`
- * boolean is derived from / aligned to this set.
- *
- * `race_completed_unlinked` is intentionally NOT in this set:
- * it's a pending-link state ("user logged a run on race day but
- * we haven't matched it to the scheduled slot yet") and shouldn't
- * count as done until the link resolves to `completed_exact`.
- */
-const COMPLETED_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
-  "completed_exact",
-  "completed_modified",
-  "completed_late",
-]);
-
-function isCompletedStatus(s: ScheduledRunStatus | undefined): boolean {
-  return s ? COMPLETED_STATUSES.has(s) : false;
-}
+// PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
+// `src/lib/scheduledRunStatus.ts` so every consumer shares one
+// source of truth. The semantics here are unchanged.
 
 /**
  * Minimal profile shape needed for backfill. Avoids importing the
@@ -121,7 +106,7 @@ function migrateScheduledRunDay(
 
   // ── Semantic repair: completed ↔ status alignment ──
   // status wins. After this step the two fields can't disagree.
-  const completed = isCompletedStatus(status);
+  const completed = isScheduledRunCompleted(status);
 
   // ── Idempotency short-circuit ──
   // If we'd produce exactly what we received, return the input
