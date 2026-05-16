@@ -566,3 +566,190 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     expect(setDocCalls.length).toBe(0);
   });
 });
+
+// ─── PR-B regression — refreshRunSchedule REPLACES runDays, never patches ───
+
+describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structured", () => {
+  // The inline mode picker (restored in PR-B) sequences
+  // `updateProfile({ runMode: "structured" })` then
+  // `refreshRunSchedule(...)`. Phase B QA flagged a concern: if
+  // refreshRunSchedule were to MERGE the freshly-generated structured
+  // runDays into the pre-existing race-shape array (rather than
+  // replace), race-period templates would leak into structured mode
+  // — the "leftover race entries in structured runDays" failure
+  // mode in Test 4 of the device-QA brief.
+  //
+  // Structural pre-verification (read-only) showed:
+  //   - scheduleStructuredWeekV2 builds a fresh array from scratch
+  //   - refreshRunSchedule line 999: `saveProgram({ ...programState,
+  //     runDays, runPlan })` — runDays is a top-level overwrite,
+  //     not a merge
+  //
+  // This test locks that behaviour as a regression gate so a future
+  // change to `saveProgram` or `refreshRunSchedule` that
+  // accidentally introduces a merge-instead-of-replace pattern
+  // fails CI before reaching device QA.
+
+  const STRUCTURED_TEMPLATE_IDS = new Set([
+    "long_10k",
+    "tempo_20",
+    "5x1k",
+    "8x400",
+    "easy_30",
+  ]);
+  const RACE_TEMPLATE_IDS = new Set([
+    "5k_race",
+    "10k_race",
+    "half_race",
+    "marathon_race",
+  ]);
+
+  it("structured-mode refresh emits zero race-period templates even when previous runDays were race-shaped", async () => {
+    // Profile is already structured (matches the composing handler's
+    // sequence: updateProfile → refreshRunSchedule, with the
+    // refreshRunSchedule call running against the post-update profile).
+    mockProfile = structuredProfile({
+      weeklyRunDaysTarget: 3,
+      // raceGoal preserved per R1 GATED — present on profile, but
+      // refreshRunSchedule's race-branch only fires when runMode is
+      // race_prep, so this should be a no-op input here.
+      raceGoal: { distance: "10k", targetDate: "2027-09-15" },
+    });
+
+    // programState carries the previous race-period runDays. These
+    // are the "leftover entries" the QA brief is worried about. They
+    // include race-day template IDs (10k_race) plus marker IDs that
+    // could not be produced by scheduleStructuredWeekV2 — so if any
+    // of them survive into the post-refresh runDays, we know merge
+    // happened.
+    const racePeriodRunDays: ScheduledRunDay[] = [
+      {
+        id: "LEGACY_RACE_DAY_long_marker",
+        dayIndex: 0,
+        date: "2026-05-17",
+        weekKey: "2026-05-17",
+        templateId: "long_10k", // valid structured ID too — covers the merge-key collision case
+        type: "long",
+        status: "planned",
+      } as ScheduledRunDay,
+      {
+        id: "LEGACY_RACE_DAY_race_marker",
+        dayIndex: 6,
+        date: "2026-05-23",
+        weekKey: "2026-05-17",
+        templateId: "10k_race", // distinctive race-only template
+        type: "race",
+        status: "planned",
+      } as ScheduledRunDay,
+    ];
+
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: racePeriodRunDays,
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-09-15" },
+        currentWeek: 0,
+        totalWeeks: 12,
+        compressed: false,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: generateSchedule(6, 3),
+        weeklyRunDaysTarget: 3,
+      });
+    });
+
+    expect(setDocCalls.length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const writtenRunDays = lastWrite.runDays ?? [];
+
+    // Replace, not merge: the legacy marker IDs MUST NOT survive.
+    const markerIdsFound = writtenRunDays.filter((rd) =>
+      rd.id?.startsWith("LEGACY_RACE_DAY_"),
+    );
+    expect(markerIdsFound).toHaveLength(0);
+
+    // Every written runDay's templateId is in the structured pool.
+    // If a `10k_race` template leaks through, this catches it.
+    writtenRunDays.forEach((rd) => {
+      expect(STRUCTURED_TEMPLATE_IDS.has(rd.templateId)).toBe(true);
+      expect(RACE_TEMPLATE_IDS.has(rd.templateId)).toBe(false);
+    });
+
+    // runPlan also resets to structured shape (not race_prep).
+    expect(lastWrite.runPlan?.mode).toBe("structured");
+  });
+
+  it("race_prep refresh from a structured-shape runDays array also replaces (inverse direction)", async () => {
+    // The reverse case — restoring race_prep from a structured
+    // baseline. Same replace-not-merge contract; if we ever
+    // regress to merging, structured easy_30 entries would leak
+    // into race-period weeks.
+    mockProfile = raceProfile("2027-09-15", { weeklyRunDaysTarget: 3 });
+
+    const structuredPeriodRunDays: ScheduledRunDay[] = [
+      {
+        id: "LEGACY_STRUCTURED_easy_marker",
+        dayIndex: 2,
+        date: "2026-05-19",
+        weekKey: "2026-05-17",
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+      } as ScheduledRunDay,
+    ];
+
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: structuredPeriodRunDays,
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: generateSchedule(6, 3),
+        weeklyRunDaysTarget: 3,
+      });
+    });
+
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const writtenRunDays = lastWrite.runDays ?? [];
+
+    // Marker ID must not survive.
+    expect(writtenRunDays.some((rd) => rd.id?.startsWith("LEGACY_STRUCTURED_"))).toBe(false);
+    // runPlan flipped to race_prep with a goal.
+    expect(lastWrite.runPlan?.mode).toBe("race_prep");
+    expect(lastWrite.runPlan?.raceGoal?.distance).toBe("10k");
+  });
+});

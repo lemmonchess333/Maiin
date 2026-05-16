@@ -25,13 +25,25 @@
  *   - The "Race prep not set up yet" stub remains the hero for
  *     race_prep + no goal.
  */
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "../ConfigurePlanModal";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+
+// PR-B: ProgrammeRunSection now consumes useAuth() directly (to
+// call updateProfile from the inline mode-change handler). Mock
+// it so the component renders standalone.
+const mockUpdateProfile = vi.fn(async () => ({ ok: true } as { ok: true }));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({
+    user: { uid: "u-1" },
+    profile: { uid: "u-1" },
+    updateProfile: mockUpdateProfile,
+  }),
+}));
 
 // PR-4: ProgrammeRunSection now consumes useRunningStats. Mock it
 // so tests don't try to hit Firestore. Per-test override via
@@ -112,6 +124,10 @@ function commonProps() {
     completeRunDay: vi.fn(async () => {}),
     skipRunDay: vi.fn(async () => {}),
     skipWorkoutDay: vi.fn(async () => {}),
+    // PR-B: refreshRunSchedule is the composing handler's second
+    // half. Tests pass an async no-op since the assertions are on
+    // the chip + form behaviour, not the regenerator output.
+    refreshRunSchedule: vi.fn(async () => {}),
     onOpenConfigurePlan: vi.fn(),
   };
 }
@@ -355,14 +371,18 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         programState={makeProgramState([], { runPlan: undefined })}
       />,
     );
-    expect(screen.getByText(/Race prep not set up yet/i)).toBeInTheDocument();
-    // Old inline date input is gone.
-    expect(container.querySelector('input[type="date"]')).toBeNull();
+    // PR-B4: the PR-0d "Race prep not set up yet" stub is replaced
+    // by the PR-B3 inline race-goal form, which auto-opens when
+    // race_prep is the active mode but no raceGoal exists.
+    expect(screen.queryByText(/Race prep not set up yet/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
+    // The inline date input IS now present (it's the form).
+    expect(container.querySelector('input[type="date"]')).not.toBeNull();
   });
 
-  it("'Set race goal' button opens ConfigurePlanModal at the Running step", () => {
+  it("'Create race plan' button + race_prep chip open the inline form, not the wizard", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "race_prep", raceGoal: undefined });
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(
       <ProgrammeRunSection
         {...props}
@@ -370,8 +390,180 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         programState={makeProgramState([], { runPlan: undefined })}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Set race goal/i }));
-    expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
+    // PR-B: tapping Race Prep chip reveals the inline form. No
+    // wizard / onOpenConfigurePlan call.
+    fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
+    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+  });
+});
+
+describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", () => {
+  beforeEach(() => {
+    mockUpdateProfile.mockClear();
+  });
+
+  it("freeform → structured composes updateProfile + refreshRunSchedule with default target=3", async () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+      weeklyRunsTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    });
+
+    // updateProfile called with mode + target (default 3)
+    expect(mockUpdateProfile).toHaveBeenCalledTimes(1);
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runMode: "structured",
+        weeklyRunDaysTarget: 3,
+        weeklyRunsTarget: 3,
+      }),
+    );
+    // refreshRunSchedule called with the override target
+    expect(props.refreshRunSchedule).toHaveBeenCalledWith(
+      expect.objectContaining({ weeklyRunDaysTarget: 3 }),
+    );
+    // NOT routed through the wizard
+    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+  });
+
+  it("structured → freeform composes updateProfile + refreshRunSchedule", async () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "structured",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 3,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([makeRunDay({ status: "planned" })], { runPlan: { mode: "structured" } })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Freeform$/i }));
+    });
+
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ runMode: "freeform" }),
+    );
+    expect(props.refreshRunSchedule).toHaveBeenCalled();
+    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+  });
+
+  it("race_prep chip from freeform reveals form, does NOT write yet", async () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    });
+
+    // Form is visible, but no writes happened yet.
+    expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+    expect(props.refreshRunSchedule).not.toHaveBeenCalled();
+  });
+
+  it("race_prep chip from non-race_prep mode shows chip as selected while form is open", async () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    });
+
+    const raceChip = screen.getByRole("button", { name: /Race Prep/i });
+    expect(raceChip.getAttribute("aria-pressed")).toBe("true");
+    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("race_prep with preserved goal: chip tap opens form prefilled with old goal", async () => {
+    const props = commonProps();
+    // User was previously in race_prep — raceGoal preserved
+    // on profile per R1 GATED verdict — and switched to freeform.
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: { distance: "half", targetDate: "2027-09-15" },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    });
+
+    // Form title acknowledges existing goal
+    expect(screen.getByText(/Edit race goal/i)).toBeInTheDocument();
+    // Date input prefilled
+    const dateInput = document.getElementById(
+      "programme-race-target-date",
+    ) as HTMLInputElement | null;
+    expect(dateInput?.value).toBe("2027-09-15");
+  });
+
+  it("double-tap guard: chips are disabled while a mode change is in flight", () => {
+    // Slow refresh to make the handler stay in flight long enough
+    // for the assertion to land before it resolves.
+    const slowRefresh = vi.fn(
+      () => new Promise<void>(() => { /* never resolves */ }),
+    );
+    const props = { ...commonProps(), refreshRunSchedule: slowRefresh };
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    // While the handler is mid-flight, the not-yet-selected chips
+    // disable to prevent a double-tap race.
+    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i }) as HTMLButtonElement;
+    expect(freeformChip.disabled).toBe(true);
   });
 });
 
@@ -385,6 +577,5 @@ function beforeEachReset() {
   });
 }
 
-// beforeEach helper from vitest — imported lazily so the file's
-// describe block above doesn't have to declare it at the top.
-import { beforeEach } from "vitest";
+// beforeEach is imported at the top of the file (used by both
+// the PR-B chip suite and the freeform-hero reset helper).
