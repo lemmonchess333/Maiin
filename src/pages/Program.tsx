@@ -25,7 +25,6 @@ import {
   RefreshCw,
   Settings2,
   Sparkles,
-  Footprints,
   CalendarDays,
   MoreHorizontal,
   Plus,
@@ -660,8 +659,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         </div>
       )}
 
-      {/* ── RUN tab — ProgrammeRunSection (P0-8). Section hides itself
-            when the user has no run days scheduled. */}
+      {/* ── RUN tab — ProgrammeRunSection (PR-4). The section owns
+            every state (freeform hero / structured next-run /
+            race-prep progress / setup CTA / zero-runs CTA); no
+            parallel Program.tsx fallback needed. */}
       {activeTab === "run" && profile && (
         <div className="pt-4">
           <ProgrammeRunSection
@@ -674,15 +675,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             skipWorkoutDay={skipWorkoutDay}
             onOpenConfigurePlan={openConfigurePlan}
           />
-          {runsTarget === 0 && (
-            <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
-              <Footprints className="w-6 h-6 mx-auto mb-2" style={{ color: THEME.running }} />
-              <p className="text-sm font-medium mb-1">No runs in your plan yet</p>
-              <p className="text-xs text-muted-foreground">
-                Open Configure Plan from the overflow menu to add a run mode.
-              </p>
-            </div>
-          )}
         </div>
       )}
 
