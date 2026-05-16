@@ -209,6 +209,36 @@ export function liftIndexForDayOfWeek(
   return -1;
 }
 
+const VALID_DAY_TYPES = new Set<DayType>(["lift", "run", "both", "rest"]);
+
+/**
+ * Returns true iff `schedule` is a structurally valid 7-day week:
+ *   - exactly 7 entries
+ *   - days 0..6 each present exactly once
+ *   - every entry's `type` is one of "rest" | "lift" | "run" | "both"
+ *
+ * The narrower-than-`length === 7` check exists because Firestore
+ * documents can be corrupted (duplicate days, missing days, unknown
+ * type strings from a future schema). `backfillWeekScheduleIfMissing`
+ * regenerates the schedule when this returns false, so the
+ * authoritative invariant lives here — one place to update if the
+ * day-type enum changes.
+ */
+export function isValidWeekSchedule(schedule: unknown): schedule is ScheduleDay[] {
+  if (!Array.isArray(schedule) || schedule.length !== 7) return false;
+  const seenDays = new Set<number>();
+  for (const entry of schedule) {
+    if (!entry || typeof entry !== "object") return false;
+    const day = (entry as ScheduleDay).day;
+    const type = (entry as ScheduleDay).type;
+    if (typeof day !== "number" || day < 0 || day > 6) return false;
+    if (seenDays.has(day)) return false;
+    seenDays.add(day);
+    if (!VALID_DAY_TYPES.has(type as DayType)) return false;
+  }
+  return seenDays.size === 7;
+}
+
 /**
  * Count active days by type.
  */

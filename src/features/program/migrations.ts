@@ -30,7 +30,7 @@
 
 import type { ProgramState, ScheduledRunDay, ScheduledRunStatus } from "./programTypes";
 import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "./programTypes";
-import { generateSchedule } from "@/lib/scheduleUtils";
+import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
   localDateString,
@@ -38,6 +38,26 @@ import {
   addLocalDays,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+
+/**
+ * Status enums that imply the run actually happened. `status` is
+ * the authoritative source for completion; the legacy `completed`
+ * boolean is derived from / aligned to this set.
+ *
+ * `race_completed_unlinked` is intentionally NOT in this set:
+ * it's a pending-link state ("user logged a run on race day but
+ * we haven't matched it to the scheduled slot yet") and shouldn't
+ * count as done until the link resolves to `completed_exact`.
+ */
+const COMPLETED_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
+  "completed_exact",
+  "completed_modified",
+  "completed_late",
+]);
+
+function isCompletedStatus(s: ScheduledRunStatus | undefined): boolean {
+  return s ? COMPLETED_STATUSES.has(s) : false;
+}
 
 /**
  * Minimal profile shape needed for backfill. Avoids importing the
@@ -54,71 +74,132 @@ interface ProfileLike {
 /* ─── ScheduledRunDay shape repair ──────────────────────────────── */
 
 /**
- * Bring a legacy `ScheduledRunDay` up to v2 shape without changing
- * its semantics. Adds:
- *   - `id` — stable scheduledRunId derived from weekKey + dayIndex + templateId
+ * Bring a legacy `ScheduledRunDay` up to v2 shape AND repair
+ * semantic inconsistencies in place. Two stages:
+ *
+ * **Shape repair (adds missing fields):**
+ *   - `id` — stable scheduledRunId from weekKey + dayIndex + templateId
  *   - `date` — derived from weekStart + dayIndex (best-effort)
  *   - `weekKey` — derived from week-start date
  *   - `status` — derived from legacy `completed` boolean
  *
- * Idempotent: if all v2 fields are already present, returns the
- * input unchanged (referentially or as a structural no-op).
+ * **Semantic repair (aligns `completed` ↔ `status`):**
+ *   - `status` is authoritative. `completed` is rederived from it
+ *     post-shape-repair so an inconsistent legacy doc (e.g.
+ *     `completed: false` + `status: "completed_exact"`) ends up
+ *     with `completed: true`.
+ *   - The terminal-completed set is `completed_exact` /
+ *     `completed_modified` / `completed_late`. `skipped`,
+ *     `race_no_show`, and `race_completed_unlinked` all map to
+ *     `completed: false` (race_completed_unlinked is "pending link",
+ *     not done).
+ *
+ * **Idempotency:** if the input is already shape-complete AND
+ * semantically consistent, the input reference is returned
+ * unchanged. The caller's deep-equality persist guard then sees
+ * no diff and skips a Firestore write.
  */
 function migrateScheduledRunDay(
   rd: ScheduledRunDay,
   weekStartDate: Date,
 ): ScheduledRunDay {
-  // Already at v2 — no work
-  if (rd.id && rd.date && rd.weekKey && rd.status) {
-    return rd;
-  }
-
+  // ── Shape repair (fill missing fields) ──
   const weekKey = rd.weekKey ?? localWeekKey(weekStartDate);
-  const date =
-    rd.date ?? localDateString(addLocalDays(weekStartDate, rd.dayIndex));
-  const id = rd.id ?? generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
-  // Derive status from legacy `completed`. We use `completed_exact` as
-  // the migration default because we can't distinguish exact-match
-  // from modified completions post-hoc. The status only matters going
-  // forward; existing completed runs don't need reconciliation.
+  const date = rd.date ?? localDateString(addLocalDays(weekStartDate, rd.dayIndex));
+  const id =
+    rd.id ?? generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
+
+  // ── Status repair ──
+  // Default: planned. Promote to completed_exact when legacy
+  // `completed: true` but no status — that's the only signal we
+  // have for "this happened". `completed_exact` is the safe
+  // default (rather than completed_modified) because we can't
+  // know post-hoc whether the user did the planned template;
+  // pinning to exact preserves the on-plan rate at migration.
   const status: ScheduledRunStatus =
     rd.status ?? (rd.completed ? "completed_exact" : "planned");
 
-  return {
-    ...rd,
-    id,
-    date,
-    weekKey,
-    status,
-  };
+  // ── Semantic repair: completed ↔ status alignment ──
+  // status wins. After this step the two fields can't disagree.
+  const completed = isCompletedStatus(status);
+
+  // ── Idempotency short-circuit ──
+  // If we'd produce exactly what we received, return the input
+  // reference unchanged. Lets `migrateProgramState` skip cloning
+  // the runDays array entirely when every entry is already clean.
+  if (
+    rd.id === id &&
+    rd.date === date &&
+    rd.weekKey === weekKey &&
+    rd.status === status &&
+    rd.completed === completed
+  ) {
+    return rd;
+  }
+
+  return { ...rd, id, date, weekKey, status, completed };
 }
 
 /**
  * Repair a ProgramState's shape to current schema version without
  * regenerating any plan content. Safe to call on every read.
  *
- * @param state - existing program state (possibly legacy)
- * @param weekStart - local-date "YYYY-MM-DD" representing the
- *   Sunday of the week this state's runDays belong to. Used to
- *   derive each `runDays[i].date` from its `dayIndex`. If the
- *   caller doesn't know the week start, pass today and accept
- *   that dates will be approximate (the user will see a stale
- *   week but no data is lost; planBuilder will produce correct
- *   dates on the next plan rebuild).
+ * **Shape-aware, not version-aware.** A doc with the current
+ * schema version but V1-shaped runDays (e.g. missing `id`) STILL
+ * triggers per-runDay repair. The version field alone is no
+ * longer a sufficient "this is clean" signal — `useProgram.ts`'s
+ * V1 writers can mark a doc as current-schema while writing
+ * V1-shape runDays. Defending against that drift is exactly why
+ * this helper exists.
+ *
+ * **Idempotent + zero-cost on clean input.** When every runDay
+ * passes `migrateScheduledRunDay`'s identity short-circuit AND
+ * the schema version is already current, the input state
+ * reference is returned unchanged. The caller's deep-equality
+ * persist guard then skips the Firestore write.
+ *
+ * **Never regenerates `workouts`, `weekHistory`, `runPlan`, or
+ * any other field outside `runDays` + `programSchemaVersion`.**
+ * Customisations the user made (exercise swaps, weight
+ * progressions, recent completions) survive untouched.
+ *
+ * @param state - existing program state (possibly legacy or
+ *   internally inconsistent)
+ * @param weekStart - local-date "YYYY-MM-DD" representing any
+ *   date in the week this state's runDays belong to. Defensively
+ *   normalised to that week's Sunday — callers can pass today
+ *   and the helper will resolve the right week. Defaults to
+ *   `localWeekKey()` (this week's Sunday).
  */
 export function migrateProgramState(
   state: ProgramState,
-  weekStart: string = localDateString(),
+  weekStart: string = localWeekKey(),
 ): ProgramState {
-  // Already at current version — no work
-  if (state.programSchemaVersion === CURRENT_PROGRAM_SCHEMA_VERSION) {
-    return state;
-  }
+  // Defensive normalisation: callers may pass today's date
+  // (mid-week). We always want the Sunday on or before so derived
+  // run-day dates land in the user's current calendar week. Pre-
+  // PR-0b-i the default was `localDateString()` which produced
+  // mid-week weekKey values for any user opening the app on a
+  // non-Sunday.
+  const normalizedWeekStart = localWeekKey(parseLocalDate(weekStart));
+  const weekStartDate = parseLocalDate(normalizedWeekStart);
 
-  const weekStartDate = parseLocalDate(weekStart);
-  const migratedRunDays = (state.runDays ?? []).map((rd) =>
+  const runDays = state.runDays ?? [];
+  const migratedRunDays = runDays.map((rd) =>
     migrateScheduledRunDay(rd, weekStartDate),
   );
+
+  // Reference-equality check on every runDay — true only when
+  // every entry hit `migrateScheduledRunDay`'s idempotent
+  // short-circuit. Combined with the version check below, this is
+  // how we keep the returned reference === input when nothing
+  // needs repair.
+  const runDaysChanged = migratedRunDays.some((rd, i) => rd !== runDays[i]);
+  const versionChanged = state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
+
+  if (!runDaysChanged && !versionChanged) {
+    return state;
+  }
 
   return {
     ...state,
@@ -144,11 +225,14 @@ export function migrateProgramState(
 export function backfillWeekScheduleIfMissing(
   profile: ProfileLike,
 ): Partial<ProfileLike> | null {
-  // Already at current version with a valid 7-entry schedule — no work
+  // Already at current version with a structurally valid schedule
+  // — no work. `isValidWeekSchedule` is stricter than
+  // `length === 7`: it also requires days 0..6 each present once
+  // and types within the enum, so a 7-entry array with duplicate
+  // days or a stale "long" type still triggers a regeneration.
   if (
     profile.weekScheduleVersion === CURRENT_WEEKSCHEDULE_VERSION &&
-    profile.weekSchedule &&
-    profile.weekSchedule.length === 7
+    isValidWeekSchedule(profile.weekSchedule)
   ) {
     return null;
   }
