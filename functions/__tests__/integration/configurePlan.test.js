@@ -91,14 +91,18 @@ function validProfileUpdates(overrides = {}) {
 
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
-  admin = require("firebase-admin");
-  if (!admin.apps.length) {
-    admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "demo-tropos" });
-  }
-  db = admin.firestore();
+  // Require index BEFORE touching admin.initializeApp() ourselves.
+  // index.js calls admin.initializeApp() at module load (line 5);
+  // doing our own init first would trigger a double-init error
+  // ("The default Firebase app already exists") because the second
+  // call inside index.js doesn't pass an app name. Once index has
+  // loaded, admin.apps.length > 0 so any later guarded re-init
+  // we attempt is a no-op.
   const idx = require("../../index");
   configurePlan = idx.configurePlan;
   completeOnboarding = idx.completeOnboarding;
+  admin = require("firebase-admin");
+  db = admin.firestore();
 });
 
 async function clearTestUserState() {
