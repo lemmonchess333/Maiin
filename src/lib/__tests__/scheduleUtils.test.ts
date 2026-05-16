@@ -3,6 +3,7 @@ import {
   generateSchedule,
   getTodaySchedule,
   countByType,
+  liftIndexForDayOfWeek,
   type ScheduleDay,
 } from "../scheduleUtils";
 
@@ -319,5 +320,70 @@ describe("countByType", () => {
     expect(counts.run).toBe(3);
     expect(counts.rest).toBe(0);
     expect(counts.both).toBe(0);
+  });
+});
+
+describe("liftIndexForDayOfWeek", () => {
+  // Pin the mapping the Today + Week tabs use to find today's
+  // workouts[] entry. Regression here breaks completion state
+  // + skip dispatch on Programme.
+
+  it("maps the first lift day to workout index 0", () => {
+    const schedule = generateSchedule(3, 2);
+    const liftDays = schedule
+      .filter((d) => d.type === "lift" || d.type === "both")
+      .map((d) => d.day)
+      .sort((a, b) => a - b);
+    expect(liftIndexForDayOfWeek(schedule, liftDays[0])).toBe(0);
+  });
+
+  it("maps subsequent lift days incrementally", () => {
+    const schedule = generateSchedule(3, 2);
+    const liftDays = schedule
+      .filter((d) => d.type === "lift" || d.type === "both")
+      .map((d) => d.day)
+      .sort((a, b) => a - b);
+    expect(liftIndexForDayOfWeek(schedule, liftDays[1])).toBe(1);
+    expect(liftIndexForDayOfWeek(schedule, liftDays[2])).toBe(2);
+  });
+
+  it("returns -1 for a rest day", () => {
+    const schedule = generateSchedule(3, 2);
+    const restDay = schedule.find((d) => d.type === "rest");
+    expect(restDay).toBeDefined();
+    expect(liftIndexForDayOfWeek(schedule, restDay!.day)).toBe(-1);
+  });
+
+  it("returns -1 for a run-only day (not lift+both)", () => {
+    const schedule = generateSchedule(3, 2);
+    const runOnlyDay = schedule.find((d) => d.type === "run");
+    expect(runOnlyDay).toBeDefined();
+    expect(liftIndexForDayOfWeek(schedule, runOnlyDay!.day)).toBe(-1);
+  });
+
+  it("counts a Both day as a lift slot", () => {
+    // 5 lift + 4 run = 9 exposures, packs 2 into Both days.
+    const schedule = generateSchedule(5, 4);
+    const bothDay = schedule.find((d) => d.type === "both");
+    expect(bothDay).toBeDefined();
+    const idx = liftIndexForDayOfWeek(schedule, bothDay!.day);
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(idx).toBeLessThan(5);
+  });
+
+  it("returns -1 for a missing or wrong-length schedule", () => {
+    expect(liftIndexForDayOfWeek(undefined, 1)).toBe(-1);
+    expect(liftIndexForDayOfWeek(null, 1)).toBe(-1);
+    expect(liftIndexForDayOfWeek([], 1)).toBe(-1);
+    const tooShort: ScheduleDay[] = [{ day: 0, type: "lift" }];
+    expect(liftIndexForDayOfWeek(tooShort, 0)).toBe(-1);
+  });
+
+  it("returns -1 for a day-of-week converted to rest", () => {
+    const schedule = generateSchedule(3, 2);
+    const modified = schedule.map((d) =>
+      d.day === 3 ? { ...d, type: "rest" as const } : d,
+    );
+    expect(liftIndexForDayOfWeek(modified, 3)).toBe(-1);
   });
 });

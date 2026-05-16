@@ -6,7 +6,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ProgramState } from "@/features/program/programTypes";
 import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget, liftIndexForDayOfWeek, SCHEDULE_TYPE_META } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
@@ -107,22 +107,10 @@ function TodayTabContent({
     ? RUN_TEMPLATES.find((t) => t.id === (todayRunDay.userOverride || todayRunDay.templateId))
     : null;
 
-  // Compute today's lift workout index by counting lift+both slots
-  // up to and including today in weekSchedule. Returns -1 when
-  // today isn't a lift day OR the schedule is missing.
-  const todayLiftIndex = (() => {
-    if (!profile?.weekSchedule) return -1;
-    if (todayType !== "lift" && todayType !== "both") return -1;
-    const sortedSchedule = [...profile.weekSchedule].sort((a, b) => a.day - b.day);
-    let counter = 0;
-    for (const d of sortedSchedule) {
-      if (d.type === "lift" || d.type === "both") {
-        if (d.day === todayDayIndex) return counter;
-        counter++;
-      }
-    }
-    return -1;
-  })();
+  // Today's lift workout index. Shared helper in scheduleUtils so
+  // the Week tab overflow menu (P1-3) uses the same mapping. -1
+  // when today isn't a lift+both day or the schedule is missing.
+  const todayLiftIndex = liftIndexForDayOfWeek(profile?.weekSchedule, todayDayIndex);
   const todayWorkout = todayLiftIndex >= 0
     ? programState?.workouts?.[todayLiftIndex]
     : undefined;
@@ -395,7 +383,7 @@ function WeekTabContent({
 
       <div className="grid grid-cols-7 gap-2">
         {schedule.map((d) => {
-          const meta = WEEK_TAB_TYPE_META[d.type];
+          const meta = SCHEDULE_TYPE_META[d.type];
           const runDay = programState?.runDays?.find((rd) => rd.dayIndex === d.day);
           const completed = !!runDay?.completed;
           const isToday = d.day === todayDayIndex;
@@ -450,7 +438,7 @@ function WeekTabContent({
       </div>
       <div className="flex items-center gap-3 flex-wrap pt-1">
         {(["lift", "run", "both", "rest"] as const).map((t) => {
-          const meta = WEEK_TAB_TYPE_META[t];
+          const meta = SCHEDULE_TYPE_META[t];
           const count = schedule.filter((d) => d.type === t).length;
           if (count === 0) return null;
           return (
@@ -491,7 +479,7 @@ function WeekTabContent({
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-2" />
                 <div className="text-center">
                   <p className="text-sm font-semibold text-foreground">
-                    {dayFullLabels[openDayIndex]} &middot; {WEEK_TAB_TYPE_META[openDay.type].label}
+                    {dayFullLabels[openDayIndex]} &middot; {SCHEDULE_TYPE_META[openDay.type].label}
                   </p>
                   {openRunDay && (
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -565,21 +553,7 @@ function WeekTabContent({
                 {(openDay.type === "lift" || openDay.type === "both") && (
                   <button
                     onClick={async () => {
-                      // Lift index inside workouts[] — same mapping
-                      // as the Today tab: count lift+both slots up
-                      // to the open day.
-                      const sortedSchedule = [...schedule].sort((a, b) => a.day - b.day);
-                      let liftIdx = -1;
-                      let counter = 0;
-                      for (const d of sortedSchedule) {
-                        if (d.type === "lift" || d.type === "both") {
-                          if (d.day === openDay.day) {
-                            liftIdx = counter;
-                            break;
-                          }
-                          counter++;
-                        }
-                      }
+                      const liftIdx = liftIndexForDayOfWeek(schedule, openDay.day);
                       if (liftIdx >= 0) {
                         await skipWorkoutDay(liftIdx);
                       }
@@ -605,19 +579,6 @@ function WeekTabContent({
     </div>
   );
 }
-
-// Sport-coding for the Week tab chips. Same palette as Onboarding's
-// preview step + ConfigurePlanModal's preview step — single source
-// for "what colour is a lift / run / both / rest day".
-const WEEK_TAB_TYPE_META: Record<
-  "lift" | "run" | "both" | "rest",
-  { label: string; color: string }
-> = {
-  lift: { label: "Lift", color: "#7B72E9" },
-  run: { label: "Run", color: "#D4637A" },
-  both: { label: "Both", color: "#52A3BD" },
-  rest: { label: "Rest", color: "#8E8E93" },
-};
 
 function formatVolume(kg: number): string {
   // 0kg isn't a meaningful "volume achievement" — it just means

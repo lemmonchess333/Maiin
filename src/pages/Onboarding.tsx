@@ -16,7 +16,7 @@ import type { ProgramTemplate, TemplateExercise } from "@/features/program/templ
 import { matchTemplate, applyInjuryFilters } from "@/features/program/matchTemplate";
 import type { ProgramState, WorkoutDay, ProgramExercise, SplitType } from "@/features/program/programTypes";
 import { buildPlan } from "@/features/program/planBuilder";
-import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import { generateSchedule, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   ChevronRight,
@@ -193,16 +193,9 @@ function equipmentLabel(e: Equipment): string {
 // new 10 = injuries, 11 = preview, 12 = confirm.
 const TOTAL_STEPS = 13;
 
-// P0-5: visual metadata for the weekly preview step. Lift = purple
-// (brand), Run = coral (running), Both = teal (the cross-discipline
-// accent we use for hybrid surfaces), Rest = muted. Keep in sync
-// with the sport-coding rules in CLAUDE.md.
-const WEEK_PREVIEW_TYPE_META: Record<ScheduleDay["type"], { label: string; color: string }> = {
-  lift: { label: "Lift", color: "#7B72E9" },
-  run: { label: "Run", color: "#D4637A" },
-  both: { label: "Both", color: "#52A3BD" },
-  rest: { label: "Rest", color: "#8E8E93" },
-};
+// Sport-coding for the weekly preview step now lives in
+// scheduleUtils.SCHEDULE_TYPE_META — single source across
+// Onboarding, ConfigurePlanModal, and Programme Week tab.
 
 const STEP_META: { title: string; subtitle: string }[] = [
   { title: "What should we call you?", subtitle: "We'll show this on your profile and to friends." },
@@ -1194,7 +1187,7 @@ export default function Onboarding() {
               <div className="grid grid-cols-7 gap-2">
                 {previewWeekSchedule.map((d, i) => {
                   const dayLetters = ["S", "M", "T", "W", "T", "F", "S"];
-                  const meta = WEEK_PREVIEW_TYPE_META[d.type];
+                  const meta = SCHEDULE_TYPE_META[d.type];
                   return (
                     <motion.div
                       key={i}
@@ -1225,7 +1218,7 @@ export default function Onboarding() {
               </div>
               <div className="flex items-center gap-3 flex-wrap pt-1">
                 {(["lift", "run", "both", "rest"] as const).map((t) => {
-                  const meta = WEEK_PREVIEW_TYPE_META[t];
+                  const meta = SCHEDULE_TYPE_META[t];
                   const count = previewWeekSchedule.filter((d) => d.type === t).length;
                   if (count === 0) return null;
                   return (
