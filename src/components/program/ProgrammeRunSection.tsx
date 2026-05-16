@@ -205,7 +205,55 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* Race plan progress — only when raceGoal exists */}
+      {/* P3-2: race elapsed state. When the user's race date has
+          passed, we surface a muted "race day passed" card with a
+          CTA to set a new goal instead of leaving the user staring
+          at a dead progress strip. Detection logic mirrors
+          isRacePlanElapsed in runPlanMetadata so the analytics +
+          UI agree on what "elapsed" means. */}
+      {currentMode === "race_prep" && programState?.runPlan?.raceGoal && (() => {
+        const target = new Date(programState.runPlan.raceGoal.targetDate);
+        const now = new Date();
+        const elapsed = !Number.isNaN(target.getTime()) && target.getTime() < now.getTime();
+        if (!elapsed) return null;
+        return (
+          <div
+            className="p-3 rounded-xl text-xs"
+            style={{
+              background: "hsl(var(--muted) / 0.5)",
+              border: "1px solid hsl(var(--border))",
+              color: "hsl(var(--foreground))",
+            }}
+          >
+            <p className="font-semibold mb-0.5">Race day has passed</p>
+            <p style={{ color: "hsl(var(--muted-foreground))" }}>
+              {programState.runPlan.raceGoal.distance.toUpperCase()} on{" "}
+              {programState.runPlan.raceGoal.targetDate}. Open Configure Plan to set a new race
+              or switch to structured running.
+            </p>
+          </div>
+        );
+      })()}
+
+      {/* Race plan progress — only when raceGoal exists. P2-1:
+          compressed banner appears above when the plan was
+          shortened below the ideal weeks for the distance. */}
+      {currentMode === "race_prep" && programState?.runPlan?.raceGoal && programState.runPlan.compressed && (
+        <div
+          className="p-3 rounded-xl text-xs"
+          style={{
+            background: `${THEME.warning ?? "#D9884E"}12`,
+            border: `1px solid ${THEME.warning ?? "#D9884E"}40`,
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          <p className="font-semibold mb-0.5">Plan is compressed</p>
+          <p style={{ color: "hsl(var(--muted-foreground))" }}>
+            Your target date is sooner than the ideal build for this distance, so we've trimmed
+            interval work and shortened the long-run progression to keep the plan safe.
+          </p>
+        </div>
+      )}
       {currentMode === "race_prep" && programState?.runPlan?.raceGoal && (
         <div className="p-3 rounded-xl bg-card space-y-2">
           <div className="flex items-center justify-between">

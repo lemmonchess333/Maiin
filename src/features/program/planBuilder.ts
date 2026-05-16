@@ -165,6 +165,9 @@ function buildRunPlan(
         raceGoal: input.raceGoal,
         totalWeeks: racePlan.totalWeeks,
         currentWeek: 0,
+        // P2-1: thread the compressed flag through so the Programme
+        // run section can surface a "your plan is compressed" banner.
+        compressed: racePlan.compressed,
       },
     };
   }

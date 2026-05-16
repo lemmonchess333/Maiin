@@ -49,9 +49,9 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
     // affected, so PRs / streaks / analytics stay intact.
     const pendingBody =
       pending?.kind === "goal"
-        ? "Your programme will be rebuilt with the new goal. You'll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact."
+        ? "Your programme will be rebuilt with the new nutrition phase. You'll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact."
         : pending?.kind === "reset"
-          ? "Your programme will be rebuilt from scratch with your current goal and training days. You'll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact."
+          ? "Your programme will be rebuilt from scratch with your current nutrition phase and training days. You'll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact."
           : "";
 
     return (
@@ -94,11 +94,13 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
               </div>
             </div>
 
-            {/* Goal selector — confirmation required since changing goal
-                triggers a full programme rebuild. Tapping the current
-                goal is a no-op. */}
+            {/* Nutrition phase selector — confirmation required since
+                changing phase triggers a full programme rebuild.
+                Tapping the current phase is a no-op. Spec v7 rename:
+                the underlying field on programState stays as `goal`
+                for back-compat, only the user-facing label changes. */}
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Goal</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Nutrition phase</p>
               <div className="flex gap-1">
                 {(["cut", "recomp", "lean bulk"] as Goal[]).map((g) => (
                   <button

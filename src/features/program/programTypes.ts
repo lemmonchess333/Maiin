@@ -242,6 +242,13 @@ export interface RunPlan {
   raceGoal?: { distance: string; targetDate: string };
   totalWeeks?: number;
   currentWeek?: number;
+  /** P2-1: true when totalWeeks fell below the ideal for the race
+   *  distance (5k=4, 10k=6, half=8, marathon=12). Race-prep users
+   *  with a tight target date see a "compressed plan" banner in
+   *  Programme so they understand the plan dropped intervals or
+   *  trimmed long-run progression. Source: generateRacePlanV2's
+   *  `compressed` output. */
+  compressed?: boolean;
 }
 
 /* ================================
