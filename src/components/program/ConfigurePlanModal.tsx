@@ -28,7 +28,7 @@
  * intact — only the lift workouts + run plan regenerate.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Footprints, Dumbbell, Flag, Target, Sparkles, Apple } from "lucide-react";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import OptionCard from "@/components/onboarding/OptionCard";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { generateSchedule, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
+import { generateSchedule, getWeeklyRunTarget, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import type {
   PrimaryGoal,
@@ -62,7 +62,19 @@ interface ConfigurePlanModalProps {
    *  any cached state. Optional — programState refreshes via the
    *  AuthProvider/useProgram pipeline anyway. */
   onSaved?: () => void;
+  /** PR-0d: which step to land on when the modal opens. Defaults
+   *  to 0 (Training focus — the full wizard from the top). The
+   *  run-mode chips + race-goal CTA in ProgrammeRunSection pass
+   *  CONFIGURE_PLAN_RUNNING_STEP so the user lands directly in
+   *  the run-config view. The modal also resets to this step
+   *  after a successful save, so re-opens from the same surface
+   *  stay in context. */
+  initialStep?: number;
 }
+
+/** Index of the Running step in STEP_META. Exported so callers
+ *  don't hardcode 3 when deep-linking. */
+export const CONFIGURE_PLAN_RUNNING_STEP = 3;
 
 const STEP_META: { title: string; subtitle: string; icon: typeof Target }[] = [
   { title: "Training focus", subtitle: "What are you optimising for?", icon: Target },
@@ -81,13 +93,19 @@ export default function ConfigurePlanModal({
   profile,
   programState,
   onSaved,
+  initialStep = 0,
 }: ConfigurePlanModalProps) {
   const modalRef = useFocusTrap<HTMLDivElement>(open);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [saving, setSaving] = useState(false);
 
   // Draft state — initialised from current profile/program. Mutations
   // stay local until Confirm calls planBuilder + configurePlan.
+  // PR-0d: the hydration useEffect below re-reads these from
+  // `profile` every time the modal opens — the initialisers here
+  // only fire on first mount, and the modal returns null (does
+  // not unmount) when !open, so without re-hydration the draft
+  // would be stale on every subsequent open.
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
     (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
   );
@@ -99,11 +117,41 @@ export default function ConfigurePlanModal({
     (profile.preferredSplit as SplitType | "auto") ?? "auto",
   );
   const [runMode, setRunMode] = useState<RunMode>(profile.runMode ?? "freeform");
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(profile.weeklyRunDaysTarget ?? 2);
+  // PR-0c canonical reader — falls back to 2 only when totally unset
+  // (the slider on this step has min=1 and renders only when
+  // runMode is non-freeform, so 2 is the sensible default for a
+  // user who has just affirmatively picked structured/race_prep).
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(getWeeklyRunTarget(profile) || 2);
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     (profile.raceGoal?.distance as RaceDistance) ?? "10k",
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(profile.raceGoal?.targetDate ?? "");
+
+  // PR-0d: hydrate draft state on every open transition. The modal
+  // returns null when !open but does not unmount, so the useState
+  // initialisers above only fire on the very first mount. Without
+  // this effect, edits to `profile` between opens (Onboarding redo,
+  // a sibling Cloud Function write, etc.) would be invisible —
+  // the user would see a stale draft and could overwrite live
+  // values via Confirm.
+  //
+  // Deps are intentionally `[open, initialStep]` only. Re-hydrating
+  // on every `profile` change while open would clobber the user's
+  // in-progress edits.
+  useEffect(() => {
+    if (!open) return;
+    setStep(initialStep);
+    setSaving(false);
+    setPrimaryGoal((profile.primaryGoal as PrimaryGoal) ?? "hypertrophy");
+    setNutritionPhase((profile.program?.goal as Goal) ?? "recomp");
+    setLiftDays(profile.weeklyWorkoutsTarget ?? 4);
+    setPreferredSplit((profile.preferredSplit as SplitType | "auto") ?? "auto");
+    setRunMode(profile.runMode ?? "freeform");
+    setWeeklyRunDays(getWeeklyRunTarget(profile) || 2);
+    setRaceDistance((profile.raceGoal?.distance as RaceDistance) ?? "10k");
+    setRaceTargetDate(profile.raceGoal?.targetDate ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see comment above
+  }, [open, initialStep]);
 
   const effectiveRunDays = useMemo(() => {
     if (runMode === "freeform") return 0;
@@ -127,8 +175,14 @@ export default function ConfigurePlanModal({
     true, // step 5 — confirm
   ];
 
-  function reset() {
-    setStep(0);
+  function reset(toStep: number = initialStep) {
+    // PR-0d: reset to `initialStep` rather than always 0 so a save
+    // initiated from the Running deep-link returns to Running on
+    // the next open (matches user mental model). The hydration
+    // effect above also re-reads `step = initialStep` on every
+    // open transition, so this `reset` call is really about the
+    // close path within a single open session.
+    setStep(toStep);
     setSaving(false);
   }
 

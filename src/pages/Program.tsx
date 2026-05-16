@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useAuth, type UserProfile } from "@/lib/auth";
@@ -659,13 +659,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWorkouts,
     viewedWeekNumber,
     overrideRunDay,
-    refreshRunSchedule,
     completeRunDay,
     skipRunDay,
   } = useProgram();
-  const { profile, updateProfile } = useAuth();
+  const { profile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
   const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
+  // PR-0d: which step the wizard lands on. The overflow menu opens
+  // at step 0 (full wizard); the run-mode chips + race-goal CTA in
+  // ProgrammeRunSection open at the Running step.
+  const [configurePlanInitialStep, setConfigurePlanInitialStep] = useState(0);
+  const openConfigurePlan = useCallback((step: number = 0) => {
+    setConfigurePlanInitialStep(step);
+    setConfigurePlanOpen(true);
+  }, []);
   // P1-1: 4-tab segmented control.
   //   today — what's planned for today + primary CTA
   //   week  — 7-day weekSchedule strip with status
@@ -1199,9 +1206,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             profile={profile}
             programState={programState}
             runsTarget={runsTarget}
-            updateProfile={updateProfile}
             overrideRunDay={overrideRunDay}
-            refreshRunSchedule={refreshRunSchedule}
+            onOpenConfigurePlan={openConfigurePlan}
           />
           {runsTarget === 0 && (
             <div className="rounded-2xl p-5 text-center bg-card border border-border/50">
@@ -1575,6 +1581,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           onClose={() => setConfigurePlanOpen(false)}
           profile={profile}
           programState={programState}
+          initialStep={configurePlanInitialStep}
           onSaved={() => {
             // No explicit refresh — useProgram subscribes to the
             // programState doc and re-renders on next snapshot. The
@@ -1607,7 +1614,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { setConfigurePlanOpen(true); }
+                    if (phaseLocked) { setShowProSheet(true); } else { openConfigurePlan(); }
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
