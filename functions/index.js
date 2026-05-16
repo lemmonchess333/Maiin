@@ -2,7 +2,17 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
-admin.initializeApp();
+// Idempotent — admin keeps an app registry as module-level state
+// that survives Vitest's per-file module-cache reset. Without this
+// guard, a second test file that requires `../index` (e.g.
+// __tests__/integration/configurePlan.test.js after
+// __tests__/planWriteCallables.test.js) re-evaluates this module
+// and trips "The default Firebase app already exists". In production
+// the module is only loaded once per Cloud Function instance, so
+// this no-ops on the warm path.
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;

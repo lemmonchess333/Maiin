@@ -581,10 +581,36 @@ export function useProgram() {
     [programState, user, saveProgram],
   );
 
-  // Override a run day template
+  // Override a run day template. Refuses to write when the target
+  // runDay is already in a terminal status (completed_*, skipped,
+  // race_no_show) — the UI is expected to disable the template
+  // dropdown in those cases, and this is the defence-in-depth gate
+  // for any caller that slips past. Without this, swapping a
+  // template on a skipped/completed runDay would silently update
+  // the dropdown but leave the day terminal, surfacing as "the
+  // change didn't take" from the user's perspective.
+  //
+  // The "re-engage a skipped run" use case isn't covered here on
+  // purpose — that requires an explicit status reset and the
+  // current state-machine map (P0-A) treats `skipped` as terminal.
+  // If product wants un-skip, add `skipped → planned` to
+  // LEGAL_TRANSITIONS and surface an "un-skip" button in the
+  // Week tab overflow instead of overloading override semantics.
   const overrideRunDay = useCallback(
     async (dayIndex: number, templateId: string) => {
       if (!programState?.runDays) return;
+      const target = programState.runDays.find((rd) => rd.dayIndex === dayIndex);
+      if (!target) {
+        logger.warn(`[overrideRunDay] no runDay matched dayIndex=${dayIndex}; skipping`);
+        return;
+      }
+      const status = target.status ?? "planned";
+      if (status !== "planned" && status !== "race_completed_unlinked") {
+        logger.warn(
+          `[overrideRunDay] refusing to swap template on terminal runDay (status="${status}", dayIndex=${dayIndex}); use Configure Plan to rebuild instead`,
+        );
+        return;
+      }
 
       const updated: ProgramState = {
         ...programState,

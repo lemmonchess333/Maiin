@@ -753,3 +753,154 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
     expect(metadata.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// Spec v7 required tests #8 + #9 — full-chain completion semantics
+// ────────────────────────────────────────────────────────────────────
+//
+// These mirror the high-level RunSummary save flow:
+//   1. compute metadata from URL + plan context
+//   2. finalise against the user's actual activityType
+//   3. shouldCompleteRunDay verdict drives completion
+//
+// Pinned end-to-end so a future refactor on any one step (URL
+// parsing, finalisation rule, completion gate) can't silently
+// regress the contract that drives scheduled-slot completion.
+
+describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () => {
+  it("user launches Monday's tempo via ?scheduledRunId= + does the planned tempo → completes Monday's slot", () => {
+    // Setup: today is Wednesday. Monday's tempo run is still
+    // open in the plan. User opens it via the explicit URL pin
+    // from RunCTACard / Week tab / Today tab.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: WEDNESDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "runday_2026-05-10_1_tempo_20",
+    });
+    // User does a tempo (same type as planned).
+    const final = finalisePlanMetadata(metadata, "tempo");
+
+    // Pin: this is the scheduled run we're fulfilling, not "today".
+    expect(final.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
+    expect(final.plannedRunDayIndex).toBe(MONDAY);
+    expect(final.planSource).toBe("today_plan");
+    // Pin: match is exact (user did the planned template).
+    expect(final.matchedPlanExact).toBe(true);
+    expect(final.offPlan).toBe(false);
+    // Pin: completion gate fires → useProgram.completeRunDay(id)
+    // will be dispatched against THIS scheduled slot, not today's.
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(true);
+  });
+
+  it("scheduledRunId without ?template=, user picks a DIFFERENT template → completion fires for THAT slot only when match remains exact", () => {
+    // Edge case: URL pins the slot but user changes the template
+    // from the chooser. finalisePlanMetadata clears
+    // actualTemplateId once the user diverges, so completion gate
+    // refuses → the scheduled slot stays open + the off-plan
+    // metadata persists on the saved run.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_1_tempo_20",
+        dayIndex: MONDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: MONDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+      urlScheduledRunId: "runday_2026-05-10_1_tempo_20",
+    });
+    // User picked easy from the chooser, abandoning the prefill.
+    const final = finalisePlanMetadata(metadata, "easy");
+    expect(final.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
+    expect(final.matchedPlanExact).toBe(false);
+    expect(final.offPlan).toBe(true);
+    // Slot does NOT auto-complete. The P3-1 reconciliation card
+    // will fire on save instead.
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+  });
+});
+
+describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled run", () => {
+  it("user opens ?template=easy_30 on a Tuesday with a planned tempo → today_plan with mismatch, no completion", () => {
+    // Setup: today is Tuesday, planned tempo. User opens Run via
+    // ?template=easy_30 (a different template) without any
+    // scheduledRunId pin.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_2_tempo_20",
+        dayIndex: TUESDAY,
+        templateId: "tempo_20",
+        type: "tempo",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "structured",
+      todayDayIndex: TUESDAY,
+      runPlan: structuredPlan,
+      runDays: days,
+      urlTemplateId: "easy_30",
+      urlType: null,
+    });
+    // User runs the easy_30 they explicitly picked.
+    const final = finalisePlanMetadata(metadata, "easy");
+
+    // Pin: planned context still reflects Tuesday's tempo slot.
+    expect(final.planSource).toBe("url_template");
+    expect(final.plannedTemplateId).toBe("tempo_20");
+    expect(final.scheduledRunId).toBe("runday_2026-05-10_2_tempo_20");
+    // Pin: actual differs from planned.
+    expect(final.actualTemplateId).toBe("easy_30");
+    expect(final.matchedPlanExact).toBe(false);
+    expect(final.offPlan).toBe(true);
+    // CRITICAL: shouldCompleteRunDay returns false. RunSummary
+    // will NOT call completeRunDay against Tuesday's scheduled
+    // slot. The slot stays open; the saved run carries off-plan
+    // metadata for analytics; the P3-1 prompt fires.
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+  });
+
+  it("user opens ?template=tempo_20 on a Tuesday with a planned long_10k → both same-type & exact mismatch, no completion", () => {
+    // Same shape, harder edge: the URL template matches NEITHER
+    // exact ID nor type of the planned slot. Both match fields
+    // come back false and the gate stays shut.
+    const days = [
+      makeRunDayV2({
+        id: "runday_2026-05-10_2_long_10k",
+        dayIndex: TUESDAY,
+        templateId: "long_10k",
+        type: "long",
+      }),
+    ];
+    const { metadata } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: TUESDAY,
+      runPlan: racePlan,
+      runDays: days,
+      urlTemplateId: "tempo_20",
+      urlType: null,
+    });
+    const final = finalisePlanMetadata(metadata, "tempo");
+    expect(final.matchedPlanExact).toBe(false);
+    expect(final.matchedPlanType).toBe(false);
+    expect(final.offPlan).toBe(true);
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+  });
+});

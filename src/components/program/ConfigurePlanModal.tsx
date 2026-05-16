@@ -40,7 +40,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import OptionCard from "@/components/onboarding/OptionCard";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import { generateSchedule, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import type {
   PrimaryGoal,
@@ -74,14 +74,6 @@ const STEP_META: { title: string; subtitle: string; icon: typeof Target }[] = [
 ];
 
 const TOTAL_STEPS = STEP_META.length;
-
-// Reused from Onboarding's preview step. Same sport-coding.
-const WEEK_PREVIEW_TYPE_META: Record<ScheduleDay["type"], { label: string; color: string }> = {
-  lift: { label: "Lift", color: "#7B72E9" },
-  run: { label: "Run", color: "#D4637A" },
-  both: { label: "Both", color: "#52A3BD" },
-  rest: { label: "Rest", color: "#8E8E93" },
-};
 
 export default function ConfigurePlanModal({
   open,
@@ -457,7 +449,7 @@ export default function ConfigurePlanModal({
                   <div className="grid grid-cols-7 gap-2">
                     {previewWeekSchedule.map((d, i) => {
                       const dayLetters = ["S", "M", "T", "W", "T", "F", "S"];
-                      const meta = WEEK_PREVIEW_TYPE_META[d.type];
+                      const meta = SCHEDULE_TYPE_META[d.type];
                       return (
                         <motion.div
                           key={i}
@@ -488,7 +480,7 @@ export default function ConfigurePlanModal({
                   </div>
                   <div className="flex items-center gap-3 flex-wrap pt-1">
                     {(["lift", "run", "both", "rest"] as const).map((t) => {
-                      const meta = WEEK_PREVIEW_TYPE_META[t];
+                      const meta = SCHEDULE_TYPE_META[t];
                       const count = previewWeekSchedule.filter((d) => d.type === t).length;
                       if (count === 0) return null;
                       return (

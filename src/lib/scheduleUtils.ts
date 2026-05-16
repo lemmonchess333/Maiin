@@ -16,6 +16,28 @@ const DAY_LABELS_SHORT = ["S", "M", "T", "W", "T", "F", "S"];
 export { DAY_LABELS, DAY_LABELS_SHORT };
 
 /**
+ * Sport-coding for weekSchedule chips. Single source of truth used by:
+ *   - Onboarding weekly preview step (P0-5)
+ *   - ConfigurePlanModal weekly preview step (P0-9)
+ *   - Programme Week tab strip (P1-1)
+ *
+ * Lift = purple (#7B72E9, matches THEME.lifting / brand).
+ * Run  = coral (#D4637A, matches THEME.running).
+ * Both = teal (#52A3BD, the cross-discipline accent).
+ * Rest = muted grey (#8E8E93, iOS system grey).
+ *
+ * Anchored here rather than theme.ts so the rest of the
+ * schedule API (generateSchedule, day labels) lives in one
+ * import statement for callers.
+ */
+export const SCHEDULE_TYPE_META: Record<DayType, { label: string; color: string }> = {
+  lift: { label: "Lift", color: "#7B72E9" },
+  run: { label: "Run", color: "#D4637A" },
+  both: { label: "Both", color: "#52A3BD" },
+  rest: { label: "Rest", color: "#8E8E93" },
+};
+
+/**
  * Generate a sensible weekly schedule given lift + run day counts.
  *
  * Two regimes:
@@ -147,6 +169,44 @@ function assembleSlots(
 export function getTodaySchedule(schedule: ScheduleDay[]): ScheduleDay | null {
   const today = new Date().getDay();
   return schedule.find((s) => s.day === today) || null;
+}
+
+/**
+ * Map a day-of-week (0=Sun … 6=Sat) to its position in the lift
+ * programme's `workouts[]` array. The workouts array is ordered by
+ * lift exposure: workouts[0] is the first lift/both day in the
+ * week, workouts[1] is the second, etc. This helper counts how
+ * many lift+both slots precede `dayIndex` (inclusive) in the
+ * (sorted by `day`) weekSchedule to find that position.
+ *
+ * Returns -1 when:
+ *   - the schedule is missing or wrong-length
+ *   - the day-of-week isn't a lift+both slot
+ *   - the day-of-week isn't in the schedule at all
+ *
+ * Callers responsible for bounds-checking against `workouts.length`
+ * (legacy plans where schedule drifted from workouts).
+ *
+ * Used by:
+ *   - Programme Today tab (P1-2) — find today's workout to read
+ *     completion state
+ *   - Programme Week tab overflow menu (P1-3) — dispatch
+ *     skipWorkoutDay against the right lift index
+ */
+export function liftIndexForDayOfWeek(
+  schedule: ScheduleDay[] | undefined | null,
+  dayOfWeek: number,
+): number {
+  if (!schedule || schedule.length !== 7) return -1;
+  const sorted = [...schedule].sort((a, b) => a.day - b.day);
+  let counter = 0;
+  for (const d of sorted) {
+    if (d.type === "lift" || d.type === "both") {
+      if (d.day === dayOfWeek) return counter;
+      counter++;
+    }
+  }
+  return -1;
 }
 
 /**

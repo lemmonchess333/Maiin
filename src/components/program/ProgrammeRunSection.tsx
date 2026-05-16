@@ -287,7 +287,16 @@ export default function ProgrammeRunSection({
       {currentMode !== "freeform" && (programState?.runDays ?? []).length > 0 && (
         <div className="p-3 rounded-xl bg-card space-y-1.5">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
-          {(programState?.runDays ?? []).map((rd) => (
+          {(programState?.runDays ?? []).map((rd) => {
+            // Disable swap when the day is in a terminal state.
+            // overrideRunDay in useProgram refuses the write
+            // anyway, but disabling the dropdown surfaces "you
+            // can't change a done/skipped day" before the user
+            // taps. race_completed_unlinked stays editable per
+            // the state machine (it can still transition).
+            const status = rd.status ?? "planned";
+            const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
+            return (
             <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
               <span className="text-xs font-medium text-foreground w-8">
                 {DAY_LABELS[rd.dayIndex]}
@@ -295,7 +304,9 @@ export default function ProgrammeRunSection({
               <select
                 value={rd.userOverride || rd.templateId}
                 onChange={(e) => overrideRunDay(rd.dayIndex, e.target.value)}
-                className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50"
+                disabled={isTerminal}
+                aria-label={isTerminal ? `${status} — template locked` : `Run template for ${DAY_LABELS[rd.dayIndex]}`}
+                className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {RUN_TEMPLATES.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -305,7 +316,8 @@ export default function ProgrammeRunSection({
               </select>
               {rd.completed && <Check className="w-4 h-4 text-green-500 shrink-0" />}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

@@ -317,13 +317,34 @@ export default function RunSummary() {
   // valid save when the gating conditions match.
   const { completeRunDay, skipRunDay, programState } = useProgram();
   // P3-1: reconciliation choice — 'pending' until the user picks,
-  // then 'completed' / 'skipped' / 'dismissed' once they do. State
-  // is local to this RunSummary mount; navigating away ends the
-  // window without re-prompting.
+  // then 'completed' / 'skipped' / 'dismissed' once they do.
+  //
+  // P3-1 follow-up: the dismissal persists across mounts of the
+  // same saved run via localStorage keyed on the Firestore docId
+  // (captured after addDoc resolves below). Re-visits don't
+  // re-fire the prompt for an already-decided run.
   const [reconciliation, setReconciliation] = useState<
     'pending' | 'completed' | 'skipped' | 'dismissed'
   >('pending');
   const [reconciliationBusy, setReconciliationBusy] = useState(false);
+  const [savedRunId, setSavedRunId] = useState<string | null>(null);
+
+  // Pull dismissal state from localStorage whenever the saved-run
+  // id arrives. The doc id is the natural unique key — different
+  // off-plan runs for the same scheduled slot still each get one
+  // prompt-then-quiet cycle.
+  useEffect(() => {
+    if (!savedRunId) return;
+    try {
+      const flag = localStorage.getItem(`tropos:reconcileDismissed:${savedRunId}`);
+      if (flag === '1') setReconciliation('dismissed');
+    } catch {
+      // localStorage might be unavailable (private mode, blocked).
+      // Fall through silently — the prompt re-fires per mount;
+      // user can dismiss again. Same end state, just one extra
+      // tap in the rare error path.
+    }
+  }, [savedRunId]);
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   /* Save flow state. Replaces a single `saved: boolean` so the UI can
@@ -532,7 +553,17 @@ export default function RunSummary() {
       // runConfig.target.value on `target.type === 'none'`, etc.).
       // Surfaced in QA as "addDoc() called with invalid data" failures
       // that landed users in the retry banner with no recovery path.
-      await addDoc(collection(db, 'users', user.uid, 'runs'), stripUndefined(runData));
+      // P3-1 follow-up: capture the doc id so the reconciliation
+      // card's dismissal can persist across mounts of this same
+      // saved run (e.g. user dismisses, navigates to Home, comes
+      // back via History). Without the id, every remount fires the
+      // prompt again — annoying nag for a user who already decided
+      // "Leave open".
+      const savedDocRef = await addDoc(
+        collection(db, 'users', user.uid, 'runs'),
+        stripUndefined(runData),
+      );
+      setSavedRunId(savedDocRef.id);
 
       /* Skip the share-composer for invalid runs. The user chose
          "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
@@ -863,7 +894,25 @@ export default function RunSummary() {
               </button>
               <button
                 disabled={reconciliationBusy}
-                onClick={() => setReconciliation('dismissed')}
+                onClick={() => {
+                  setReconciliation('dismissed');
+                  // Persist so re-mounts of this same saved run
+                  // don't re-prompt. Same key the on-mount
+                  // useEffect reads above.
+                  if (savedRunId) {
+                    try {
+                      localStorage.setItem(
+                        `tropos:reconcileDismissed:${savedRunId}`,
+                        '1',
+                      );
+                    } catch {
+                      // localStorage unavailable — dismissal still
+                      // sticks for this mount via React state; it
+                      // just won't survive a re-mount. Acceptable
+                      // degraded mode.
+                    }
+                  }
+                }}
                 className="w-full py-2 text-xs text-muted-foreground disabled:opacity-50"
               >
                 Leave open (decide later)
