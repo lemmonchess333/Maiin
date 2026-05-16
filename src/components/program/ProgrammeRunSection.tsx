@@ -41,7 +41,7 @@ import { Footprints, Flag, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { DAY_LABELS } from "@/lib/scheduleUtils";
+import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
@@ -58,7 +58,11 @@ interface ProgrammeRunSectionProps {
     opts?: { allowProtected?: boolean },
   ) => Promise<UpdateProfileResult>;
   overrideRunDay: (dayIndex: number, templateId: string) => void;
-  refreshRunSchedule: () => Promise<void>;
+  /** PR-0b-ii: optional overrides arg now in the upstream
+   *  signature. ProgrammeRunSection never passes overrides — the
+   *  race-goal save uses no-arg refresh — but the prop type
+   *  widens to stay assignment-compatible with useProgram. */
+  refreshRunSchedule: (overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }) => Promise<void>;
 }
 
 export default function ProgrammeRunSection({

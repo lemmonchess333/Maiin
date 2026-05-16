@@ -52,7 +52,12 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 export interface UseProgrammeScheduleEditorArgs {
   profile: UserProfile | null;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
-  refreshRunSchedule: () => Promise<void>;
+  /** Signature matches useProgram.refreshRunSchedule. Optional
+   *  overrides let the editor's apply path pass the freshly-
+   *  confirmed weekSchedule explicitly, avoiding a stale read of
+   *  `profile.weekSchedule` from useAuth's closure that hasn't
+   *  yet propagated from the immediately-preceding updateProfile. */
+  refreshRunSchedule: (overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }) => Promise<void>;
   /** Signature matches useProgram.regenerateProgram. The third arg
    *  carries weekSchedule + weeklyRunDaysTarget overrides so the
    *  rebuild uses the user's confirmed layout rather than the pre-
@@ -60,7 +65,7 @@ export interface UseProgrammeScheduleEditorArgs {
   regenerateProgram: (
     goalOverride?: string,
     weeklyTargetOverride?: number,
-    overrides?: { weekSchedule?: { day: number; type: string }[]; weeklyRunDaysTarget?: number },
+    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
   ) => Promise<void>;
 }
 
@@ -156,7 +161,15 @@ export function useProgrammeScheduleEditor(
       ...runTargetWriteFields(runsTarget),
     });
     if (profile?.runMode && profile.runMode !== "freeform") {
-      await refreshRunSchedule();
+      // PR-0b-ii: pass the freshly-confirmed schedule explicitly.
+      // useAuth's profile closure may not yet reflect the
+      // updateProfile above by the time refreshRunSchedule reads
+      // it, so without the override refreshRunSchedule could
+      // regenerate runDays against a stale schedule.
+      await refreshRunSchedule({
+        weekSchedule: schedule,
+        weeklyRunDaysTarget: runsTarget,
+      });
     }
   }
 
@@ -178,9 +191,13 @@ export function useProgrammeScheduleEditor(
         weekSchedule: schedule,
         weeklyRunDaysTarget: runsTarget,
       });
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        await refreshRunSchedule();
-      }
+      // PR-0b-ii: removed redundant refreshRunSchedule() call.
+      // regenerateProgram above already used the confirmed schedule
+      // via the `overrides` arg, so a second pass through
+      // refreshRunSchedule would just re-write the same runDays
+      // against the same weekSchedule. The race-prep path would
+      // also reset currentWeek to 0 inside regenerate AND then
+      // refresh — pointless double work + extra Firestore write.
       setShowRestructureModal(false);
       // chooseSplit invocation kept for parity with the pre-P0-7
       // Settings code — it doesn't toast but pinning the call
