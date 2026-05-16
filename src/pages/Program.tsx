@@ -26,6 +26,7 @@ import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import RunningNavIcon from "@/components/program/RunningNavIcon";
 import Coachmark from "@/components/ui/Coachmark";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
+import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import { THEME } from "@/lib/theme";
 import {
   Lock,
@@ -36,6 +37,7 @@ import {
   Sparkles,
   Footprints,
   Bed,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
@@ -476,7 +478,7 @@ function WeekTabContent({
         })}
       </div>
       <p className="text-xs text-muted-foreground text-center pt-1">
-        Tap any non-rest day to edit · Tweak the layout in Settings &rarr; Training
+        Tap any non-rest day to edit · Open the overflow menu for the full weekly layout editor
       </p>
 
       {/* Per-day overflow sheet */}
@@ -661,10 +663,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     overrideRunDay,
     completeRunDay,
     skipRunDay,
+    refreshRunSchedule,
   } = useProgram();
-  const { profile } = useAuth();
+  const { profile, updateProfile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
   const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
+  // PR-2: weekly layout editor sheet. Mounted conditionally — when
+  // closed the body unmounts and the inner useProgrammeScheduleEditor
+  // hook tears down, so the next open re-reads `profile` fresh.
+  const [editLayoutOpen, setEditLayoutOpen] = useState(false);
+  const openEditLayout = useCallback(() => {
+    setEditLayoutOpen(true);
+  }, []);
   // PR-0d: which step the wizard lands on. The overflow menu opens
   // at step 0 (full wizard); the run-mode chips + race-goal CTA in
   // ProgrammeRunSection open at the Running step.
@@ -733,11 +743,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
 
-  // Refresh-programme confirmation (overflow item) — separate from
-  // Settings → Training's restructure modal because that one fires only
-  // when day-count changes; this one rebuilds with the same params and
-  // is destructive in a different way (clears weekHistory, resets
-  // weekNumber). User should know before tapping.
+  // PR-2: Reset-programme confirmation (overflow item) — separate
+  // from ScheduleLayoutSheet's restructure modal because that one
+  // fires only when the user changes lift-day count; this one
+  // rebuilds with the same params and is destructive in a different
+  // way (clears weekHistory, resets weekNumber to 1). User should
+  // know before tapping. Pre-PR-2 this was labelled "Refresh
+  // Programme" — renamed to "Reset programme" so the destructive
+  // intent matches the function it calls.
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
   // Swipe navigation
@@ -745,6 +758,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Exercise card state — read-only, tap opens info sheet
   const [reorderMode, setReorderMode] = useState(false);
+  // PR-2: reorderMode is meaningless outside the Lift tab — the
+  // DndContext that consumes it only renders when activeTab === "lift"
+  // (and only when there are exercises). Without this effect the
+  // boolean could survive a tab switch and silently re-activate
+  // drag-and-drop when the user returns to Lift.
+  useEffect(() => {
+    if (activeTab !== "lift" && reorderMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from tab-change event
+      setReorderMode(false);
+    }
+  }, [activeTab, reorderMode]);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{ dayIndex: number; exIndex: number; x: number; y: number } | null>(null);
@@ -1093,22 +1117,29 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <RunningNavIcon />
             </Coachmark>
-            {reorderMode ? (
-              <button
-                onClick={() => setReorderMode(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
-              >
-                Done
-              </button>
-            ) : (
-              <button
-                onClick={() => setReorderMode(true)}
-                aria-label="Reorder exercises"
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-                style={{ minWidth: 44, minHeight: 44 }}
-              >
-                <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-              </button>
+            {/* PR-2: reorder toggle only renders where it works —
+                Lift tab AND the user actually has lift workouts in
+                their programState. Pre-PR-2 the button lived
+                outside the activeTab guard, so users on Today/Week/
+                Run saw an inert icon that toggled hidden state. */}
+            {activeTab === "lift" && (programState?.workouts?.length ?? 0) > 0 && (
+              reorderMode ? (
+                <button
+                  onClick={() => setReorderMode(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  onClick={() => setReorderMode(true)}
+                  aria-label="Reorder exercises"
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                  style={{ minWidth: 44, minHeight: 44 }}
+                >
+                  <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )
             )}
             <button
               onClick={() => setShowOverflow(true)}
@@ -1576,6 +1607,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
 
+      {/* PR-2: Edit weekly layout sheet. Returns null when closed —
+          so the body component (and its useProgrammeScheduleEditor
+          hook) only mounts while the sheet is open. That's the
+          hydration guarantee: each open is a fresh hook mount that
+          re-reads the current profile. */}
+      <ScheduleLayoutSheet
+        open={editLayoutOpen}
+        onClose={() => setEditLayoutOpen(false)}
+        profile={profile}
+        updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
+        regenerateProgram={regenerateProgram}
+      />
+
       {/* P0-9: Configure Plan wizard. Renders nothing when closed —
           the modal itself returns null on `!open`. */}
       {profile && (
@@ -1609,11 +1654,27 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
-                {/* P0-9: Configure Plan wizard entry — opens the full-
-                    screen modal that runs planBuilder + configurePlan
-                    CF on Confirm. Lives at the top of the overflow
-                    because plan-shape changes are the more deliberate
-                    operation than the per-week settings below. */}
+                {/* PR-2: Edit weekly layout — basic-tier capability.
+                    Opens ScheduleLayoutSheet (the editor that pre-PR-2
+                    lived in Settings → Training). Intentionally NOT
+                    phase-locked: day-to-day layout is foundational,
+                    not a premium feature. The other three items below
+                    keep their Pro gate (plan-shape change, phase
+                    settings, full reset). */}
+                <button
+                  onClick={() => {
+                    setShowOverflow(false);
+                    openEditLayout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                  style={{ minHeight: 44 }}
+                >
+                  <CalendarDays className="w-4.5 h-4.5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground flex-1">Edit weekly layout</span>
+                </button>
+                {/* P0-9: Configure programme wizard — runs planBuilder +
+                    configurePlan CF on Confirm. Deliberate plan-shape
+                    change (not a day toggle), so Pro-locked. */}
                 <button
                   onClick={() => {
                     setShowOverflow(false);
@@ -1623,7 +1684,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <Sparkles className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Configure Plan</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Configure programme</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
                 <button
@@ -1635,9 +1696,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <Settings2 className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Programme Settings</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Programme settings</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
+                {/* PR-2: "Reset programme" replaces "Refresh Programme".
+                    `regenerateProgram` resets weekNumber to 1 and clears
+                    weekHistory — that's a hard reset, not a refresh.
+                    Calling it Refresh invited accidental taps; the new
+                    label discloses the destructive nature. */}
                 <button
                   onClick={() => {
                     setShowOverflow(false);
@@ -1648,7 +1714,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <RefreshCw className={cn("w-4.5 h-4.5 text-muted-foreground", regenerating && "animate-spin")} />
-                  <span className="text-sm font-medium text-foreground flex-1">Refresh Programme</span>
+                  <span className="text-sm font-medium text-foreground flex-1">Reset programme</span>
                   {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                 </button>
               </div>
@@ -1657,10 +1723,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* Refresh Programme Confirmation — destructive: regenerateProgram
-          rebuilds the workouts array, resets weekNumber to 1, and
-          clears weekHistory (the user's "Browse Past Weeks" data).
-          Logged workouts in History are NOT affected. */}
+      {/* PR-2: Reset programme confirmation — destructive.
+          `regenerateProgram` rebuilds the workouts array, resets
+          weekNumber to 1, and clears weekHistory (the user's
+          "Browse Past Weeks" data). Logged workouts in History are
+          NOT affected. The copy and confirm-button label spell this
+          out so users can't tap "Refresh" expecting a benign sync
+          and lose their week summaries. */}
       <AnimatePresence>
         {showRefreshConfirm && (
           <>
@@ -1680,9 +1749,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               transition={{ duration: 0.15 }}
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
             >
-              <h3 className="text-sm font-semibold text-foreground">Refresh programme?</h3>
+              <h3 className="text-sm font-semibold text-foreground">Reset your programme?</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                A new set of exercises will be generated for your current nutrition phase and training days. You&apos;ll start fresh at Week 1 — past week summaries will be cleared. Logged workouts in History stay intact.
+                This rebuilds your lift split for the current nutrition phase and training days,
+                restarts you at Week&nbsp;1, and clears the week-by-week summary history. Logged
+                workouts and runs in History are not affected.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
@@ -1698,7 +1769,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
                 >
-                  Refresh
+                  Reset programme
                 </button>
               </div>
             </motion.div>

@@ -9,9 +9,6 @@ import {
   Crown,
   ChevronRight,
 } from "lucide-react";
-import { useProgram } from "@/features/program/useProgram";
-import { chooseSplit, splitLabel } from "@/features/program/programEngine";
-import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import {
   useMealReminders,
@@ -19,7 +16,6 @@ import {
   useStreakReminder,
 } from "@/hooks/RemindersProvider";
 import { useCrews } from "@/hooks/useCrews";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 import ProfileInfoSection from "@/components/settings/ProfileInfoSection";
 import TrainingSection from "@/components/settings/TrainingSection";
@@ -32,7 +28,6 @@ import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
 import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
-import { Spinner } from "@/components/ui/Spinner";
 
 declare const __APP_VERSION__: string;
 
@@ -41,28 +36,9 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
-  const { refreshRunSchedule, regenerateProgram } = useProgram();
-
-  // P0-7: schedule editor state lives in the shared hook so P0-8's
-  // Programme Run/Week tabs can reuse the exact same logic.
-  const scheduleEditor = useProgrammeScheduleEditor({
-    profile,
-    updateProfile,
-    refreshRunSchedule,
-    regenerateProgram,
-  });
-  const {
-    runsTarget,
-    schedule,
-    hasUnsavedScheduleChanges,
-    handleDayToggle,
-    handleApplyScheduleChanges,
-    showRestructureModal,
-    pendingLiftDays,
-    restructuring,
-    handleConfirmRestructure,
-    cancelRestructure,
-  } = scheduleEditor;
+  // PR-2: Settings no longer owns the schedule editor — the hook
+  // and its restructure modal moved to Programme's "Edit weekly
+  // layout" sheet. TrainingSection is link-only here.
 
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
@@ -87,10 +63,6 @@ export default function Settings() {
   const { reminders: mealReminders, updateReminders: updateMealReminders } = useMealReminders();
   const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
   const { prefs: streakReminder, updatePrefs: updateStreakReminder } = useStreakReminder();
-
-  // P0-7: focus trap stays here because it binds the modal DOM
-  // element — the hook is logic-only and doesn't know about refs.
-  const restructureModalRef = useFocusTrap<HTMLDivElement>(showRestructureModal);
 
   const tdee = useMemo(() => {
     return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex || "male");
@@ -200,14 +172,13 @@ export default function Settings() {
         updateProfile={updateProfile}
       />
 
-      {/* 2. Training */}
+      {/* 2. Training — PR-2: link-only. Programme owns the weekly
+          layout editor, run-mode picker, race-goal flow, per-day
+          overrides, configure plan, reset. Settings keeps the
+          retake-onboarding action because that's a full identity
+          rebuild, not a tweak. */}
       <TrainingSection
         profile={profile}
-        runsTarget={runsTarget}
-        schedule={schedule}
-        hasUnsavedScheduleChanges={hasUnsavedScheduleChanges}
-        handleDayToggle={handleDayToggle}
-        handleApplyScheduleChanges={handleApplyScheduleChanges}
         updateProfile={updateProfile}
         navigate={navigate}
       />
@@ -317,52 +288,6 @@ export default function Settings() {
         Tropos v{__APP_VERSION__}
       </p>
 
-      {/* Restructure Warning Modal */}
-      {showRestructureModal && pendingLiftDays !== null && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40"
-            role="button" tabIndex={0} aria-label="Close dialog"
-            onClick={() => {
-              cancelRestructure();
-            }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') cancelRestructure(); }}
-          />
-          <div ref={restructureModalRef} role="dialog" aria-modal="true" className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 bg-card rounded-2xl p-4 space-y-4 max-w-sm mx-auto shadow-xl">
-            <h3 className="text-base font-semibold text-foreground">Restructure Program?</h3>
-            <p className="text-sm text-muted-foreground">
-              Changing your training days will restructure your program. Your workout history won&apos;t be affected, but your program will be rebuilt. This cannot be undone.
-            </p>
-            <p className="text-sm font-medium text-foreground">
-              Your new program will use a <span className="text-primary">{splitLabel(chooseSplit(pendingLiftDays))}</span> split.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  cancelRestructure();
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmRestructure}
-                disabled={restructuring}
-                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
-              >
-                {restructuring ? (
-                  <>
-                    <Spinner size="sm" variant="inverse" label="Rebuilding programme" />
-                    Rebuilding...
-                  </>
-                ) : (
-                  "Confirm"
-                )}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
     </motion.div>
   );
 }

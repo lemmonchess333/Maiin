@@ -377,3 +377,39 @@ describe("PR-0b-ii — restructure no longer triggers redundant refreshRunSchedu
     expect(args.refreshRunSchedule).not.toHaveBeenCalled();
   });
 });
+
+describe("useProgrammeScheduleEditor — PR-2 zero-as-zero", () => {
+  it("runsTarget initialises to 0 when getWeeklyRunTarget returns 0", () => {
+    // Pre-PR-2 the initialiser was `getWeeklyRunTarget(profile) || 2`
+    // — a user with weeklyRunDaysTarget:0 (legitimate freeform setup)
+    // would see the editor open with 2 selected. Tapping Apply could
+    // then silently restore 2 runs to a user who deliberately removed
+    // them. The fix: `getWeeklyRunTarget(profile)` alone; zero stays
+    // zero.
+    const args = makeArgs({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 0 });
+    const { result } = renderHook(() => useProgrammeScheduleEditor(args));
+    expect(result.current.runsTarget).toBe(0);
+  });
+
+  it("a fresh remount (sheet re-opens) re-reads runsTarget from the latest profile", () => {
+    // PR-2 hydration contract: ScheduleLayoutSheet mounts/unmounts
+    // its body component on every open transition, so the hook's
+    // useState initialisers fire fresh each open. Simulate that
+    // here by re-mounting the hook against a changed profile and
+    // asserting the new value surfaces.
+    const argsA = makeArgs({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 0 });
+    const { result: resultA, unmount } = renderHook(() =>
+      useProgrammeScheduleEditor(argsA),
+    );
+    expect(resultA.current.runsTarget).toBe(0);
+    unmount();
+
+    // Profile updated externally between opens (e.g. Configure Plan
+    // ran a save). Next mount must reflect it.
+    const argsB = makeArgs({ weeklyRunDaysTarget: 3, weeklyRunsTarget: 3 });
+    const { result: resultB } = renderHook(() =>
+      useProgrammeScheduleEditor(argsB),
+    );
+    expect(resultB.current.runsTarget).toBe(3);
+  });
+});

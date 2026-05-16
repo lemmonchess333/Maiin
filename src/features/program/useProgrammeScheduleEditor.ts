@@ -34,6 +34,14 @@
  *   - Race-goal state — that lives next to it in TrainingSection
  *     and writes via `updateProfile` directly. Pulling it in would
  *     widen the surface beyond what P0-8 / P0-9 need.
+ *
+ * PR-2 hydration strategy: the hook is mounted by a component
+ * (`ScheduleLayoutSheet`) that itself only mounts when its `open`
+ * prop is true. Closing the sheet unmounts the body, tearing the
+ * hook down. Opening it remounts → useState initialisers run
+ * fresh → draft state reflects the latest `profile`. NO hydration
+ * `useEffect` is needed; callers should keep the mount-when-open
+ * pattern intact rather than reintroducing a state-syncing effect.
  */
 
 import { useState, useMemo } from "react";
@@ -97,7 +105,12 @@ export function useProgrammeScheduleEditor(
   const { profile, updateProfile, refreshRunSchedule, regenerateProgram } = args;
 
   const [workoutsTarget, setWorkoutsTarget] = useState(profile?.weeklyWorkoutsTarget || 4);
-  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile) || 2);
+  // PR-2: zero-as-zero. Pre-PR-2 this was `getWeeklyRunTarget(profile) || 2`
+  // which silently coerced a user's explicit 0 runs into 2. Same class of
+  // bug PR-0c fixed for Home's runTarget. The slider's min stays at 1 in
+  // the UI; users land on the editor with 0 visible if that's their
+  // genuine setting, and the chips reflect it.
+  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile));
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
     profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null,
   );
