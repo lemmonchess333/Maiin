@@ -315,7 +315,15 @@ export default function RunSummary() {
   // but Firestore caches the warm read so cost is minimal.
   // `completeRunDay` is called fire-and-forget after a successful
   // valid save when the gating conditions match.
-  const { completeRunDay } = useProgram();
+  const { completeRunDay, skipRunDay, programState } = useProgram();
+  // P3-1: reconciliation choice — 'pending' until the user picks,
+  // then 'completed' / 'skipped' / 'dismissed' once they do. State
+  // is local to this RunSummary mount; navigating away ends the
+  // window without re-prompting.
+  const [reconciliation, setReconciliation] = useState<
+    'pending' | 'completed' | 'skipped' | 'dismissed'
+  >('pending');
+  const [reconciliationBusy, setReconciliationBusy] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   /* Save flow state. Replaces a single `saved: boolean` so the UI can
@@ -763,6 +771,116 @@ export default function RunSummary() {
               {isOnline ? 'Run saved!' : 'Saved locally — will sync when online'}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* P3-1: save-time mismatch reconciliation.
+          Fires only when the saved run is off-plan AND points at a
+          still-planned scheduled slot. Auto-complete (shouldCompleteRunDay)
+          already fired silently for the matched case — this is the
+          "you did something else, what should the scheduled slot do?"
+          dialog. State is local to this RunSummary mount.
+
+          Conditions for the card to appear:
+            - run was saved successfully (saved === true)
+            - run is valid (the invalid-save banner handles those)
+            - planMetadata indicates a real plan context (mode !== freeform,
+              scheduledRunId or plannedRunDayIndex present)
+            - planMetadata.offPlan === true (mismatch occurred)
+            - shouldCompleteRunDay returned false (no silent auto-complete)
+            - the scheduled run is still in `planned` status (no point
+              reconciling a terminal-state day)
+            - the user hasn't picked an option yet (reconciliation
+              still 'pending') */}
+      {saved && !isInvalid && reconciliation === 'pending' && (() => {
+        const m = runConfig?.planMetadata;
+        if (!m) return null;
+        if (m.planMode === 'freeform') return null;
+        if (!m.offPlan) return null;
+        const refKey = m.scheduledRunId ?? m.plannedRunDayIndex;
+        if (refKey === null || refKey === undefined) return null;
+        if (shouldCompleteRunDay({ metadata: m, isValid: !isInvalid })) return null;
+        // Resolve current scheduled-run status from programState. If
+        // the runDay is already terminal (completed / skipped / etc.)
+        // there's nothing to reconcile — the user must have already
+        // resolved it elsewhere (Week tab overflow, for instance).
+        const runDay = programState?.runDays?.find((rd) =>
+          typeof refKey === 'string' ? rd.id === refKey : rd.dayIndex === refKey,
+        );
+        if (runDay && runDay.status && runDay.status !== 'planned') return null;
+
+        const plannedTypeLabel = m.plannedTemplateType ?? 'planned run';
+
+        return (
+          <div
+            className="mx-4 mb-4 p-4 rounded-2xl space-y-3"
+            style={{
+              background: 'rgba(217,136,78,0.10)',
+              border: '1px solid rgba(217,136,78,0.30)',
+            }}
+          >
+            <div>
+              <p className="text-sm font-semibold text-foreground">Off-plan save</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {`This didn't match today's ${plannedTypeLabel}. How should we handle the scheduled slot?`}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                disabled={reconciliationBusy}
+                onClick={async () => {
+                  setReconciliationBusy(true);
+                  try {
+                    await completeRunDay(refKey);
+                    setReconciliation('completed');
+                  } catch (err) {
+                    logger.warn('[RunSummary] reconciliation: completeRunDay failed:', err);
+                  } finally {
+                    setReconciliationBusy(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+                style={{ background: 'rgba(52,211,153,0.20)', color: 'rgb(52,211,153)' }}
+              >
+                Mark scheduled run complete
+              </button>
+              <button
+                disabled={reconciliationBusy}
+                onClick={async () => {
+                  setReconciliationBusy(true);
+                  try {
+                    await skipRunDay(refKey);
+                    setReconciliation('skipped');
+                  } catch (err) {
+                    logger.warn('[RunSummary] reconciliation: skipRunDay failed:', err);
+                  } finally {
+                    setReconciliationBusy(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground disabled:opacity-50"
+              >
+                Skip scheduled run
+              </button>
+              <button
+                disabled={reconciliationBusy}
+                onClick={() => setReconciliation('dismissed')}
+                className="w-full py-2 text-xs text-muted-foreground disabled:opacity-50"
+              >
+                Leave open (decide later)
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* P3-1: post-reconciliation confirmation pill. Replaces the
+          prompt once the user picks an option so they get clear
+          feedback that the choice landed. Auto-fades visually by
+          living in the same flow position as the prompt. */}
+      {saved && !isInvalid && (reconciliation === 'completed' || reconciliation === 'skipped') && (
+        <div className="mx-4 mb-4 px-4 py-2.5 rounded-xl text-xs"
+          style={{ background: 'hsl(var(--muted) / 0.5)', color: 'hsl(var(--muted-foreground))' }}>
+          {reconciliation === 'completed' ? "Scheduled run marked complete." : "Scheduled run skipped."}
         </div>
       )}
 
