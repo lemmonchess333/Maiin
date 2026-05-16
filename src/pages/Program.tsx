@@ -673,6 +673,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             completeRunDay={completeRunDay}
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
+            refreshRunSchedule={refreshRunSchedule}
             onOpenConfigurePlan={openConfigurePlan}
           />
         </div>
