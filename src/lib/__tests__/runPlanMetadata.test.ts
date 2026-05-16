@@ -105,7 +105,10 @@ describe("computePlanMetadata — programme today_plan", () => {
     expect(metadata.planWeekIndex).toBe(2);
     expect(metadata.planTotalWeeks).toBe(8);
     expect(prefill.activityType).toBe("long");
-    expect(prefill.target).toEqual({ type: "distance", value: 10 });
+    // PR-0a: distance prefill is metres (10km → 10000), not km.
+    // The RUN_TEMPLATES author in km but the RunConfig contract
+    // requires m — templateToPrefill bridges.
+    expect(prefill.target).toEqual({ type: "distance", value: 10000 });
   });
 
   it("structured user gets prefill with a structured-mode strip", () => {
@@ -902,5 +905,78 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     expect(final.matchedPlanType).toBe(false);
     expect(final.offPlan).toBe(true);
     expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// PR-0a — Prefill distance unit (metres)
+// ────────────────────────────────────────────────────────────────────
+//
+// Pins the km→m conversion in templateToPrefill against the user
+// path. Pre-PR-0a long_10k.config.targetDistance (10) flowed
+// through unchanged, hitting RunSetupModal's value/1000 display
+// as 0.01km. After the fix, every distance template emits metres
+// via the prefill so the RunConfig contract is honoured end-to-end.
+//
+// We test through computePlanMetadata (public surface) rather than
+// importing templateToPrefill directly — it's private to
+// runPlanMetadata.ts and the public path is what the user actually
+// hits.
+
+describe("PR-0a — prefill distance unit (metres)", () => {
+  function prefillForTemplate(templateId: string) {
+    const type = templateId.startsWith("long_") ? "long" : "race";
+    const days = [makeRunDay(MONDAY, templateId, type)];
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: days,
+      urlTemplateId: null,
+      urlType: null,
+    });
+    return prefill;
+  }
+
+  it("long_10k prefill emits 10000 metres", () => {
+    expect(prefillForTemplate("long_10k").target).toEqual({
+      type: "distance",
+      value: 10000,
+    });
+  });
+
+  it("long_15k prefill emits 15000 metres", () => {
+    expect(prefillForTemplate("long_15k").target).toEqual({
+      type: "distance",
+      value: 15000,
+    });
+  });
+
+  it("5k_race prefill emits 5000 metres", () => {
+    expect(prefillForTemplate("5k_race").target).toEqual({
+      type: "distance",
+      value: 5000,
+    });
+  });
+
+  it("10k_race prefill emits 10000 metres", () => {
+    expect(prefillForTemplate("10k_race").target).toEqual({
+      type: "distance",
+      value: 10000,
+    });
+  });
+
+  it("half_race prefill emits 21100 metres (half-marathon rounded)", () => {
+    expect(prefillForTemplate("half_race").target).toEqual({
+      type: "distance",
+      value: 21100,
+    });
+  });
+
+  it("marathon_race prefill emits 42200 metres (marathon rounded)", () => {
+    expect(prefillForTemplate("marathon_race").target).toEqual({
+      type: "distance",
+      value: 42200,
+    });
   });
 });

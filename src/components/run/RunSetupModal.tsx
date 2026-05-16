@@ -32,6 +32,24 @@ export interface RunConfig {
   paceAlerts: boolean;
   voiceRate: number;
   displayStats: ('pace' | 'distance' | 'time' | 'calories' | 'elevation' | 'avgPace')[];
+  /**
+   * Activity target. `value`'s unit depends on `type` — single
+   * canonical contract used by every layer that touches a target:
+   *
+   *   - "distance": metres            (e.g. 10000 = 10km)
+   *   - "time":     seconds           (e.g. 1800  = 30min)
+   *   - "pace":     seconds/kilometre (e.g. 270   = 4:30/km)
+   *   - "none":     value omitted
+   *
+   * Source of truth: the distance + time inputs below already
+   * divide value/1000 and value/60 for display, and multiply back
+   * on write. Bridge layers (e.g. templateToPrefill in
+   * `src/lib/runPlanMetadata.ts`) MUST convert their inputs to
+   * metres / seconds / s-per-km BEFORE assigning to target.value.
+   *
+   * Audio-cue consumers in `src/pages/Run.tsx` read target.value
+   * as the unit above with no further conversion.
+   */
   target: {
     type: 'none' | 'distance' | 'time' | 'pace';
     value?: number;

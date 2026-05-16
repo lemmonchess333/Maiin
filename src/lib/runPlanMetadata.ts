@@ -563,7 +563,14 @@ function isRacePlanElapsed(runPlan: RunPlan | undefined): boolean {
 function templateToPrefill(tmpl: RunTemplate): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
   if (tmpl.config.targetDistance) {
-    prefill.target = { type: "distance", value: tmpl.config.targetDistance };
+    // RUN_TEMPLATES authoring uses kilometres (friendlier for
+    // editing templates), but RunConfig.target.value is metres
+    // per the canonical contract documented on the RunConfig
+    // type in `src/components/run/RunSetupModal.tsx`. Convert
+    // here so the contract holds end-to-end — RunSetupModal
+    // renders `value / 1000`, Run.tsx audio cues read metres
+    // directly, no scattered multipliers.
+    prefill.target = { type: "distance", value: tmpl.config.targetDistance * 1000 };
   } else if (tmpl.config.targetPace) {
     prefill.target = { type: "pace", value: tmpl.config.targetPace };
   }
