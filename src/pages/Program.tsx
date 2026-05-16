@@ -489,7 +489,14 @@ function WeekTabContent({
                 </div>
 
                 {/* Run-day actions */}
-                {(openDay.type === "run" || openDay.type === "both") && openRunDay && (
+                {(openDay.type === "run" || openDay.type === "both") && openRunDay && (() => {
+                  // Disable template swap when the day is terminal.
+                  // overrideRunDay refuses the write at the data
+                  // layer; surfacing the disabled state here makes
+                  // the constraint visible before the user taps.
+                  const status = openRunDay.status ?? "planned";
+                  const isTerminal = status !== "planned" && status !== "race_completed_unlinked";
+                  return (
                   <>
                     {/* Template swap select */}
                     <div className="space-y-1">
@@ -499,6 +506,11 @@ function WeekTabContent({
                         style={{ color: "hsl(var(--muted-foreground))" }}
                       >
                         Run template
+                        {isTerminal && (
+                          <span className="ml-1.5 text-[10px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
+                            · {status === "skipped" ? "skipped — locked" : "completed — locked"}
+                          </span>
+                        )}
                       </label>
                       <select
                         id="weektab-template-swap"
@@ -507,7 +519,8 @@ function WeekTabContent({
                           overrideRunDay(openDay.day, e.target.value);
                           setOpenDayIndex(null);
                         }}
-                        className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border/50"
+                        disabled={isTerminal}
+                        className="w-full bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {RUN_TEMPLATES.map((t) => (
                           <option key={t.id} value={t.id}>
@@ -544,7 +557,8 @@ function WeekTabContent({
                       </button>
                     )}
                   </>
-                )}
+                  );
+                })()}
 
                 {/* Lift-day skip action — counts as "done for the
                     week" semantics in useProgram parity, but the
