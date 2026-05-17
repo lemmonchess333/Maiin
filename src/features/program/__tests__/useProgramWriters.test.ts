@@ -804,11 +804,19 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
-    // Allow the auto-transition effect to fire and write
+    // Allow the auto-transition effect to fire and write. PR-G's
+    // auto-rollover runs immediately after and archives the
+    // (now-race_no_show) runDay into weekHistory, so we can't
+    // assert against the last write. Instead, scan ALL writes for
+    // the one PR-D produced — that's the race_no_show write,
+    // regardless of what PR-G does next.
     await waitFor(() => {
-      const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as ProgramState | undefined;
-      const raceRunDay = lastWrite?.runDays?.find((rd) => rd.date === raceDate);
-      expect(raceRunDay?.status).toBe("race_no_show");
+      const wroteRaceNoShow = setDocCalls.some((c) => {
+        const data = c.data as ProgramState | undefined;
+        const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
+        return raceRunDay?.status === "race_no_show";
+      });
+      expect(wroteRaceNoShow).toBe(true);
     }, { timeout: 2000 });
   });
 
@@ -1167,6 +1175,134 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     // No writes during grace — phase preserved.
+    expect(setDocCalls.length).toBe(0);
+  });
+});
+
+// ─── PR-G — auto week rollover ──────────────────────────────────────
+
+describe("PR-G — auto-rollover on calendar-week change", () => {
+  // Effect detects stale runDays (last week's weekKey) and runs
+  // advanceWeek + runDays regen in a loop up to 12 iterations.
+  // Batches writes into one saveProgram at the end.
+
+  it("rolls forward when runDays weekKey is older than today's week", async () => {
+    const twoWeeksAgoSunday = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - d.getDay() - 14); // Sunday two weeks ago
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = structuredProfile({ weeklyRunDaysTarget: 2 });
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "stale_runday",
+          dayIndex: 1,
+          date: twoWeeksAgoSunday,
+          weekKey: twoWeeksAgoSunday,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+
+    // Wait for the rollover effect to fire + save.
+    await waitFor(() => {
+      const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as ProgramState | undefined;
+      // After rollover, runDays[0].weekKey should match current week
+      expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
+      // weekHistory should have entries from the archived weeks
+      expect((lastWrite?.weekHistory?.length ?? 0)).toBeGreaterThan(0);
+    }, { timeout: 2000 });
+  });
+
+  it("does not roll forward when runDays weekKey matches today's week", async () => {
+    const thisSunday = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - d.getDay()); // Sunday of this week
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = structuredProfile({ weeklyRunDaysTarget: 2 });
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "current_runday",
+          dayIndex: 1,
+          date: thisSunday,
+          weekKey: thisSunday,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+    await new Promise((r) => setTimeout(r, 100));
+    // No rollover write — current week, nothing to advance.
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("skips freeform users (no runDays to rotate)", async () => {
+    mockProfile = structuredProfile({ runMode: "freeform" });
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+    await new Promise((r) => setTimeout(r, 100));
     expect(setDocCalls.length).toBe(0);
   });
 });

@@ -394,6 +394,113 @@ export function useProgram() {
     });
   }, [programState, saveProgram]);
 
+  // PR-G: auto week-rollover effect. When the user opens the app
+  // and the calendar week has advanced past the week their
+  // runDays were generated for, automatically rotate forward to
+  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // button does on the Lift tab, but driven by calendar instead
+  // of lift completion.
+  //
+  // Ordering: this effect is declared AFTER PR-D's auto-transition
+  // and PR-E's recovery-exit so they run first. Without that
+  // ordering, the rollover would archive a planned race-day
+  // runDay into weekHistory BEFORE the auto-transition writes
+  // `race_no_show` to it, losing the inferred state.
+  //
+  // Detection: `programState.runDays[0]?.weekKey` is the Sunday of
+  // the week the runDays were last generated for. If that's
+  // before `localWeekKey()`, the user is ≥1 week stale.
+  //
+  // Loop: while stale, run `advanceWeek` and regenerate runDays
+  // for the new week. Cap at 12 iterations to prevent runaway
+  // in pathological cases (user gone for months). Each iteration
+  // archives the previous week into `weekHistory` and increments
+  // `weekNumber`.
+  //
+  // Trade-off (per the design grill): a planned-but-never-done
+  // Saturday run gets archived as `status: "planned"` in
+  // weekHistory on the Monday rollover. That's intentional —
+  // honest record of "we didn't do this." Better than zombie
+  // planned entries lingering in the current week.
+  //
+  // Skips: freeform users (no runDays to rotate); users whose
+  // runDays is empty (no signal to compare).
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!profile.runMode || profile.runMode === "freeform") return;
+
+    const runDayWeekKey = programState.runDays?.[0]?.weekKey;
+    if (!runDayWeekKey) return;
+
+    const todayKeyG = localWeekKey();
+    if (runDayWeekKey >= todayKeyG) return;
+
+    // Loop up to 12 iterations. Each iteration advances the
+    // local `rolling` state but doesn't write to Firestore — we
+    // batch all writes into a single saveProgram at the end.
+    let rolling = programState;
+    let iterations = 0;
+    while (iterations < 12) {
+      const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
+      if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
+
+      // Advance lift side (workouts, weekNumber, weekHistory).
+      const advanced = advanceWeek(rolling);
+
+      // Advance run side. Compute the next week's start key. Take
+      // one week step from the current runDay week key.
+      const nextWeekStart = localWeekKey(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+      );
+      const nextWeekCurrentDate = localDateString(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+      );
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+
+      if (profile.runMode === "race_prep" && profile.raceGoal) {
+        const plan = generateRacePlanV2({
+          weekSchedule,
+          raceGoal: profile.raceGoal,
+          weeklyRunDays: runTarget,
+          currentDate: nextWeekCurrentDate,
+          weekStart: nextWeekStart,
+        });
+        advanced.runDays = plan.weeks[0] ?? [];
+        advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
+          currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+          totalWeeks: advanced.runPlan?.totalWeeks,
+        });
+      } else {
+        advanced.runDays = scheduleStructuredWeekV2({
+          weekSchedule,
+          weekNumber: advanced.weekNumber,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { mode: "structured" };
+      }
+
+      rolling = advanced;
+      iterations++;
+    }
+
+    if (iterations === 0) return;
+
+    logger.log(
+      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`,
+    );
+
+    saveProgram(rolling)
+      .then(() => {
+        toast.success(
+          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`,
+        );
+      })
+      .catch((err) => {
+        logger.warn("[auto-rollover] save failed", err);
+      });
+  }, [programState, profile, saveProgram]);
+
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
   //
