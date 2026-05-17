@@ -18,6 +18,32 @@ This document is the plan to close all of these, designed end-to-end in a /grill
 
 ---
 
+## Revision — soft-link reframe (May 17 2026, second /grill-me)
+
+After PR-F, PR-D, PR-E, PR-C, PR-G shipped, a follow-up grill on race-day reconciliation reached a different conclusion than the original plan. The reframe:
+
+**What we built:** persisted `linkedRunId` linkage between saved runs and `runDay` slots, plus a state-machine status (`completed_exact`, `race_no_show`, etc.) tracking whether the linkage exists.
+
+**What the reference apps do** (see `CONTEXT.md` for the full audit): Strava, Nike Run Club, Garmin Connect, and TrainingPeaks all do linkage **invisibly** — date-based at render time, or start-time selection. None surface "link / unlink" as a user concept.
+
+**The revision:** drop user-facing linkage entirely. Compute completion at render time via "saved run with matching date + template exists." This means:
+
+- **DROP:** the planned Q1 "Was this your scheduled race?" RunSummary prompt — out of pattern with reference apps.
+- **DROP:** the planned Q2 late-reconciliation UI (post-race card "Link a past run" button, History overflow) — same reason.
+- **MODIFY:** the planned Q3 enum collapse — go further. Remove `completed_exact / completed_modified / completed_late` entirely. runDay statuses become `planned | skipped | race_no_show | expired`. Completion is derived, never stored.
+- **KEEP:** Q4 "What's next?" card after recovery clears. Independent of linkage.
+- **KEEP:** Q5 mid-recovery mode-change banner. Independent.
+- **KEEP:** Q6 auto-rollover archive + Welcome-back sheet. Modify to use `expired` status from the simplified enum.
+- **NEW:** rip `linkedRunId` writes out of `completeRunDay`. The function becomes `markRunDayDone(idOrDayIndex)` that flips status from `planned` to a non-existent-anymore terminal — replaced by the soft-link computation. Actually: even `markRunDayDone` may not be needed if completion is purely derived. To investigate during implementation.
+
+**Race-day recovery trigger (new mechanism):** today, PR-D's `completeRunDay` enters recovery when the race-day runDay completes. Under soft-link, recovery enters when an effect detects: `profile.runMode === "race_prep"` AND `today >= raceGoal.targetDate` AND `a saved run exists on raceGoal.targetDate with matching distance`. Strava-synced races trigger recovery on next app open after sync.
+
+**Race-no-show trigger:** PR-D's auto-transition stays. The 3-day-grace + no-saved-run check still fires on app open. Independent of linkage.
+
+This is captured as **PR-J — soft-link reframe**, to be sequenced after the current 5 PRs settle and before any new linkage-related work. See `CONTEXT.md` "Linking a saved run to a planned training-plan slot" for the full reference-app audit.
+
+---
+
 ## Suggested PR sequence
 
 PR-F + PR-G can ship in parallel with the PR-D → PR-E → PR-C chain.
@@ -313,6 +339,49 @@ A planned-but-never-done Saturday run gets archived in `weekHistory` as `status:
 
 ---
 
+## PR-L — Server-side reconciliation (Apple Watch precondition)
+
+Hard prerequisite for the near-term Apple Watch sequence. WatchOS apps can't run our React/TS reconciliation logic — they hit endpoints — so when Watch lands, state must be server-authoritative or the two clients will drift.
+
+Ports the three pieces of shipped client-side reconciliation (PR-D, PR-E, PR-J) into Cloud Functions. Removes the `useEffect`-driven write path from `useProgram`; the hook becomes a pure Firestore reader + UI dispatcher.
+
+### Scope
+
+1. **Race no-show trigger** — new scheduled Cloud Function (daily, ~04:00 UTC). Iterates users where `programState.raceDate` is within the last 3 days and no run matching `raceTarget` distance was logged within ±2 days. Writes the no-show transition. Pattern matches existing `weeklyPerformanceRollup` user iteration.
+
+2. **Recovery entry trigger** — extend existing `onRunCreated` Firestore trigger. When a saved run's distance matches the user's `programState.raceTarget` (within tolerance) and the run date is within ±2 days of `raceDate`, write `programState.recovery = { startDate, endDate }` using `recoveryWeeksForDistance` from PR-E.
+
+3. **Recovery exit trigger** — fold into the same daily scheduled function as #1. When `recovery.endDate < now`, clear the recovery block.
+
+4. **Fell-behind detection** — new scheduled Cloud Function (weekly, Mondays ~05:00 UTC, after performance rollup). Per-user evaluation of prior week's `weekHistory` entry: if `<50%` of prescribed runs have matching saved runs, set a `programState.pendingFellBehindPrompt` flag. Client renders the bottom sheet (PR-J) when it sees the flag on next app open and clears it on user choice.
+
+5. **Remove client-side reconciliation** from `useProgram.ts`. Delete the reconciliation `useEffect` that today wraps race-no-show / recovery / fell-behind logic. The Q11a-A deep-equal guard (stopgap) also goes — there's no client write to guard.
+
+### Tests
+
+- Cloud Function unit tests for each new trigger (firebase-functions-test harness; already used by `weeklyPerformanceRollup`).
+- Race no-show: fixture user with `raceDate = today - 1d`, no matching run → assert no-show write. Same user with a matching run → assert no write.
+- Recovery entry via `onRunCreated`: fixture run matching `raceTarget` → assert recovery block written with correct end date. Non-matching distance → no write.
+- Recovery exit: fixture user with `recovery.endDate < now` → assert cleared. With `endDate > now` → no change.
+- Fell-behind: fixture week with 1/4 prescribed runs matched → assert flag set. 3/4 matched → no flag.
+- Client: `useProgram` no longer calls `setDoc` from the reconciliation path. Render hook with stale state, assert it surfaces the state but does not mutate it.
+
+### Migration
+
+Existing users with client-side-reconciled state stay correct (state in Firestore is the same shape). New server triggers take over forward. No backfill needed — the next time each user's race/recovery/week-end event fires, the server reconciles.
+
+### Trade-offs honestly noted
+
+- **Latency.** Recovery hero pops in 3-10s after race completion on cold Function start vs <1s today. Acceptable — recovery is a multi-day state, not a moment.
+- **Offline.** Run logged offline → queued via `offlineQueue.ts` → triggers fire when sync completes. User sees stale state until reconnect. Acceptable — recovery state isn't time-critical at the second-by-second level.
+- **`functions/` is plain CommonJS JS.** Reconciliation logic loses TS type-safety on the server side. We extract shared constants (`recoveryWeeksForDistance` durations, `raceTarget` distance map) into a plain-JS module imported by both client (via build-time copy or shared package) and functions, to avoid drift.
+
+### Sequencing
+
+Ships before any Apple Watch work begins. Should sequence after PR-K (Q25 taper, small) and after PR-J ships its client-side version (we port the matured logic, not the in-flight one).
+
+---
+
 ## Decision log
 
 22 decisions from the /grill-me session that produced this plan. Captured so we don't re-litigate.
@@ -338,6 +407,12 @@ A planned-but-never-done Saturday run gets archived in `weekHistory` as `status:
 | 20 | `userOverride` across schedule refresh | Preserve where day still exists |
 | 21 | Chip pending state UX | Status line in existing error slot |
 | 22 | Week rollover | B-loop auto, manual button kept as escape hatch |
+| 23 | Soft-link reframe (race-day reconciliation) | Drop user-facing linkage; derive completion at render time; race-no-show + recovery triggers stay (PR-J) |
+| 24 | Fell-behind handling | E + (ii) — bottom sheet on next app open after a week where <50% of prescribed runs have saved-run matches. Three choices: shift plan back 1 week / compress remaining weeks / skip-and-continue. Coalesced (one sheet per low-completion week, not per missed run). Matches NRC's adaptive-plan pattern. |
+| 25 | Race-week taper | A/B/A/B. **Q9a (trace):** taper already exists in `runScheduler.ts:130` (`getPhaseForWeek`) and applies in both v1 + v2 generators — long run becomes `easy_30`, one quality session retained (`8x400`), rest easy. **Q9b (duration):** current 25%-of-plan rule mis-scales — a full-length 5K plan gets 2 weeks taper (too much), marathon gets 4 weeks (fine). Replace with distance-aware cap: 5K/10K = 1w, half = 2w, marathon = 3w. Hard cap, taper phase begins `totalWeeks - taperWeeks` regardless of pct. **Q9c (shape):** volume-only — current code already matches (long run dropped, one short quality kept for sharpness). No change needed. **Q9d (surfacing):** add "TAPER WEEK · race in X days" section label on the race_prep operational hero when current week is in taper phase. New work — doesn't exist today. Sequenced as PR-K. |
+| 10 | Recovery duration values (`recoveryWeeksForDistance`) | A/A/A. **Q10a (values):** lock 5K=1w / 10K=2w / half=3w / marathon=4w as shipped in PR-E. Within reference-app bell curve (Hal Higdon's marathon reverse-taper = 4w matches; Strava plans ~1w/2-3w/4w roughly matches). No telemetry to justify deviating. **Q10b (personalisation):** distance only — don't condition on experience or race-effort. Experience inference is fragile (new users may have years of unlogged training), race-effort needs estimation we don't have. Revisit with telemetry. **Q10c (surfacing):** keep current "Recovery week N of M" — explicit > vague date. Users in recovery are training-aware. No new work; existing PR-E values stand. Revisit in 6 months with churn data on race_prep users. |
+| 11 | `useProgram` reconciliation cost & race conditions | **Q11a → C** (server-side reconciliation), sequenced as **PR-L** before Apple Watch sequence. Watch is near-term; WatchOS can't run our React/TS reconciliation, so server-authoritative state is unavoidable. C dissolves Q11b (no client writes → no multi-tab clobber) and Q11c (no client reconciliation → no cold-start race). **Stopgap:** ship Q11a-A (deep-equal guard on the existing `useEffect`) in the interim — ~1hr work, prevents the recursion bug from biting production while PR-L is built. Removed in PR-L when the `useEffect` itself is deleted. |
+| 12 | Apple Watch data model & sync surface | **Q12a → B+water** (run logging + water logging at launch; lift logging deferred). Water already lives on the Home screen as a glanceable action — extending it to the Watch is trivial and high-value for a fitness wearable. Lift logging is hard on a small screen and lower priority; revisit when run-logging is proven. **Q12b → A** (direct Watch → Firestore via the Watch's own Firebase SDK, signed in via shared keychain). iPhone relay (B) is fatal for phone-free runs — defeats the whole point of Watch cellular. WatchConnectivity is also notoriously flaky. **Q12c → A** (Watch GPS authoritative when paired; iPhone fallback when Watch absent). Modern Watch GPS is purpose-built and comparable to phone GPS. Merge-server-side (C) is over-engineered for v1. **Impact on PR-L:** server-side reconciliation must remain client-agnostic — no client-version checks, no "writes only from React app" assumptions. Already true in PR-L's design but pinned explicitly here. |
 
 (Q1, Q2, Q13 dissolved into later decisions — Q1 led into the state-machine investigation, Q2 became the PR-D / PR-E split, Q13 ("rename Switch to recovery") became Q14 ("what is recovery?").)
 
