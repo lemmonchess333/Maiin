@@ -1022,3 +1022,151 @@ describe("PR-D — completeRunDay accepts savedRunId and enters recovery phase",
     expect(updated?.linkedRunId).toBe("saved_run_late");
   });
 });
+
+// ─── PR-E — recovery phase generation + exit ────────────────────────
+
+describe("PR-E — recovery phase emits all easy_30 templates", () => {
+  // PR-D writes the phase on race completion; PR-E consumes the
+  // phase when refreshRunSchedule fires (e.g. mid-recovery
+  // schedule edit). Test pins: while in recovery, ALL run/both
+  // slots emit `easy_30` regardless of week position.
+
+  it("scheduleRecoveryWeekV2 emits easy_30 for every scheduled run/both slot", async () => {
+    // Set up: race_prep user in recovery phase. Schedule has 4
+    // run slots (Mon/Tue/Thu/Sat). recoveryEndDate is in the
+    // future so refreshRunSchedule's `inRecovery` check fires.
+    const future = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: future,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: generateSchedule(0, 4),
+        weeklyRunDaysTarget: 4,
+      });
+    });
+
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(lastWrite.runDays).toBeDefined();
+    expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+    for (const rd of lastWrite.runDays!) {
+      expect(rd.templateId).toBe("easy_30");
+      expect(rd.type).toBe("easy");
+    }
+    // Phase preserved (we're still in recovery).
+    expect(lastWrite.runPlan?.phase).toBe("recovery");
+  });
+
+  it("recovery-exit effect clears phase after recoveryEndDate + 7d grace", async () => {
+    // recoveryEndDate is 8 days in the past — past the 7-day grace.
+    const eightDaysAgo = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 8);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = raceProfile("2099-09-15"); // raceGoal future to avoid auto-transition
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: eightDaysAgo,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+
+    // The exit effect should fire and clear phase + recoveryEndDate.
+    await waitFor(() => {
+      const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as ProgramState | undefined;
+      expect(lastWrite?.runPlan?.phase).toBeUndefined();
+      expect(lastWrite?.runPlan?.recoveryEndDate).toBeUndefined();
+    }, { timeout: 2000 });
+  });
+
+  it("recovery-exit effect does NOT fire within the 7-day grace window", async () => {
+    // recoveryEndDate is 3 days in the past — inside the 7-day grace.
+    const threeDaysAgo = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 3);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: threeDaysAgo,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    setDocCalls.length = 0;
+    await new Promise((r) => setTimeout(r, 100));
+    // No writes during grace — phase preserved.
+    expect(setDocCalls.length).toBe(0);
+  });
+});

@@ -40,6 +40,7 @@ export interface CompletedSessionData {
 import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
+  scheduleRecoveryWeekV2,
   recoveryWeeksForDistance,
 } from "./runScheduler";
 import { localWeekKey, localDateString, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
@@ -352,6 +353,46 @@ export function useProgram() {
       logger.warn("[auto-transition] save failed", err);
     });
   }, [programState, profile, saveProgram]);
+
+  // PR-E: recovery-phase exit effect. When the user has been in
+  // recovery and the grace period (recoveryEndDate + 7 days) has
+  // passed, silently clear `phase` and `recoveryEndDate` from
+  // runPlan. The 7-day window between `recoveryEndDate` and the
+  // grace-end is when PR-C's "Recovery ended — what's next?"
+  // card variant prompts the user to pick their next direction;
+  // if they ignore it for a full week, we auto-promote back to
+  // normal training shape.
+  //
+  // Mid-recovery (today < recoveryEndDate): no-op, this effect
+  // skips. The card shows "Recovering — N days left."
+  // Post-recovery, in grace (today >= recoveryEndDate, today <
+  // recoveryEndDate + 7d): no-op here either. PR-C's variant 3
+  // renders. Phase stays "recovery" so refreshRunSchedule keeps
+  // emitting easy_30 (the user's still in the soft window).
+  // Post-grace (today >= recoveryEndDate + 7d): silent clear.
+  useEffect(() => {
+    if (!programState?.runPlan) return;
+    if (programState.runPlan.phase !== "recovery") return;
+    if (!programState.runPlan.recoveryEndDate) return;
+
+    const gracePost = parseLocalDate(programState.runPlan.recoveryEndDate);
+    gracePost.setDate(gracePost.getDate() + 7);
+    const todayKey = localDateString();
+    const graceEndKey = localDateString(gracePost);
+    if (todayKey < graceEndKey) return;
+
+    const cleared = { ...programState.runPlan };
+    delete cleared.phase;
+    delete cleared.recoveryEndDate;
+
+    logger.log(
+      `[recovery-exit] phase cleared after grace (recoveryEndDate ${programState.runPlan.recoveryEndDate}, today ${todayKey})`,
+    );
+
+    saveProgram({ ...programState, runPlan: cleared }).catch((err) => {
+      logger.warn("[recovery-exit] save failed", err);
+    });
+  }, [programState, saveProgram]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
@@ -1077,7 +1118,23 @@ export function useProgram() {
         }
       }
 
-      if (profile.runMode === "race_prep" && profile.raceGoal) {
+      // PR-E: recovery phase takes precedence over the runMode
+      // branches. When the user just completed a race and is
+      // mid-recovery (runPlan.phase === "recovery" + not yet
+      // expired), emit all easy_30 templates regardless of mode.
+      // runMode stays at race_prep during recovery; the phase flag
+      // does the differentiation. PR-D writes the phase on race
+      // completion; this generator consumes it on subsequent
+      // refreshes (e.g. mid-week schedule edits while recovering).
+      const inRecovery =
+        programState.runPlan?.phase === "recovery" &&
+        programState.runPlan?.recoveryEndDate &&
+        localDateString() < programState.runPlan.recoveryEndDate;
+
+      if (inRecovery) {
+        runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+        runPlan = { ...programState.runPlan! };
+      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const plan = generateRacePlanV2({
           weekSchedule,
           raceGoal: profile.raceGoal,
@@ -1090,7 +1147,10 @@ export function useProgram() {
         // race-strip position stays put across mid-week schedule
         // edits. Only `compressed` updates (V2 may flip it if the
         // schedule change pushed run count below race-config
-        // thresholds).
+        // thresholds). PR-E: also clear any stale recovery phase
+        // — if user has aged out of recovery (recoveryEndDate
+        // passed) and we're re-rendering race_prep, drop phase
+        // and recoveryEndDate.
         runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
           currentWeek: programState.runPlan?.currentWeek,
           totalWeeks: programState.runPlan?.totalWeeks,
