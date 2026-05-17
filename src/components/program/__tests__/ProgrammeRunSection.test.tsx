@@ -276,7 +276,18 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         completedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000),
       },
     ];
-    mockWeeklyData = [{ week: "2026-05-10", totalDistance: 12.3, runCount: 2, avgPace: 330 }];
+    // PR-F: "This week" filter now uses `localWeekKey(new Date())`
+    // so the fixture must reflect the current calendar week, not
+    // a hardcoded historical week. Use the runtime week key.
+    const todayWeekKey = (() => {
+      const d = new Date();
+      const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+      const y = sunday.getFullYear();
+      const m = String(sunday.getMonth() + 1).padStart(2, "0");
+      const day = String(sunday.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockWeeklyData = [{ week: todayWeekKey, totalDistance: 12.3, runCount: 2, avgPace: 330 }];
     const props = commonProps();
     const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(

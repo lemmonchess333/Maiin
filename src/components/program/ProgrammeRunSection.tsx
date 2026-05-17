@@ -62,6 +62,7 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
 import DayActionSheet from "./DayActionSheet";
+import { localDateString, localWeekKey, addLocalDays } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
 
@@ -219,10 +220,37 @@ export default function ProgrammeRunSection({
     runDays.length > 0 &&
     !nextStartable;
 
+  // PR-F: temporal-anchored label for the "Next planned run" card.
+  // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
+  // forces the user to compute proximity ("is today Tuesday? then
+  // Wed = tomorrow"). Today / Tomorrow / Pending makes the common
+  // cases explicit; Pending flags past-planned runDays still
+  // sitting startable in the current week (e.g. yesterday's
+  // unstarted easy run) so the user doesn't think it's "next".
+  const nextStartableLabel = useMemo<string>(() => {
+    if (!nextStartable) return "";
+    if (!nextStartable.date) return DAY_LABELS[nextStartable.dayIndex];
+    const today = new Date();
+    const todayKey = localDateString(today);
+    const tomorrowKey = localDateString(addLocalDays(today, 1));
+    if (nextStartable.date === todayKey) return "Today";
+    if (nextStartable.date === tomorrowKey) return "Tomorrow";
+    if (nextStartable.date < todayKey) return "Pending";
+    return DAY_LABELS[nextStartable.dayIndex];
+  }, [nextStartable]);
+
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.
+  //
+  // PR-F: "This week" must match the actual current calendar
+  // week, not "the most recent week with any runs." Previously
+  // `weeklyData[weeklyData.length - 1]` returned whichever week
+  // last had a run logged — so for users who hadn't run in 10
+  // days, it labelled last week's data as "This week." Filter by
+  // explicit weekKey match instead.
   const lastRun = runs[0] ?? null;
-  const thisWeek = weeklyData[weeklyData.length - 1] ?? null;
+  const thisWeekKey = localWeekKey(new Date());
+  const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
 
   const modeLabel =
     currentMode === "race_prep" ? "Race prep" : currentMode === "structured" ? "Structured" : "Freeform";
@@ -429,11 +457,18 @@ export default function ProgrammeRunSection({
               ? "Auto-assigns run templates to your run days"
               : "Follows a race training plan"}
         </p>
-        {modeError && (
+        {/* PR-F: reuse this slot for an in-flight "Updating your
+            plan…" message. modeChangePending fires from chip tap
+            until updateProfile + refreshRunSchedule both resolve.
+            Same slot later renders modeError on failure. Three
+            states: pending → error → silent. */}
+        {modeChangePending ? (
+          <p className="text-xs text-muted-foreground">Updating your plan…</p>
+        ) : modeError ? (
           <p className="text-xs" style={{ color: THEME.running }} role="alert">
             {modeError}
           </p>
-        )}
+        ) : null}
       </div>
 
       {/* PR-B3: inline race-goal form. Replaces the "Race prep not
@@ -727,7 +762,7 @@ export default function ProgrammeRunSection({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold mb-0.5" style={{ color: THEME.running }}>
-              Next · {DAY_LABELS[nextStartable.dayIndex]}
+              Next · {nextStartableLabel}
             </p>
             <p className="text-sm font-bold text-foreground truncate">
               {nextStartableTemplate?.name ?? "Run"}

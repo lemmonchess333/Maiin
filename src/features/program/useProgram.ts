@@ -969,6 +969,23 @@ export function useProgram() {
       let runDays: ScheduledRunDay[];
       let runPlan = programState.runPlan;
 
+      // PR-F: snapshot per-day userOverrides BEFORE regenerating.
+      // Pre-PR-F, refreshRunSchedule called the generator (which
+      // builds fresh runDays via buildRunDayV2 with no userOverride
+      // field) and wrote the result directly — silently destroying
+      // any per-day template overrides the user had set via the
+      // inline <select> in ProgrammeRunSection's per-day list.
+      // Snapshot dayIndex → userOverride map; restore after the
+      // generator runs but only for days still scheduled as
+      // run/both (orphan overrides on a day that became rest get
+      // dropped).
+      const overrideSnapshot: Record<number, string> = {};
+      for (const rd of programState.runDays ?? []) {
+        if (rd.userOverride) {
+          overrideSnapshot[rd.dayIndex] = rd.userOverride;
+        }
+      }
+
       if (profile.runMode === "race_prep" && profile.raceGoal) {
         const plan = generateRacePlanV2({
           weekSchedule,
@@ -995,6 +1012,20 @@ export function useProgram() {
         });
         runPlan = { mode: "structured" };
       }
+
+      // Re-apply preserved overrides. The generator emits entries
+      // keyed by dayIndex; we re-key the snapshot the same way so
+      // a user's "Monday=tempo" intent survives weeklyRunDays
+      // edits, schedule reshuffles, and mode flips (via the chip
+      // row's handleModeChange path). Templates that are no longer
+      // scheduled drop silently (snapshot lookup misses; original
+      // generator template wins).
+      runDays = runDays.map((rd) => {
+        const preserved = overrideSnapshot[rd.dayIndex];
+        return preserved
+          ? { ...rd, userOverride: preserved, templateId: preserved }
+          : rd;
+      });
 
       await saveProgram({ ...programState, runDays, runPlan });
     },
