@@ -372,3 +372,24 @@ Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plu
 - [ ] iOS Safari + Capacitor build: rubber-band scroll doesn't drift the portal
 - [ ] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays
 - [ ] First-use Coachmark on the Programme page running icon dismisses correctly via all paths (anchor tap, outside tap, Escape, 6s timeout) and persists across reloads
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `lemmonchess333/Maiin`. Local sessions use `gh`; agent
+harness sessions use the GitHub MCP tools (`mcp__github__*`). See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical vocabulary — `needs-triage` / `needs-info` /
+`ready-for-agent` / `ready-for-human` / `wontfix`. Labels are
+auto-created on first `/triage` use if absent on GitHub. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context. `CONTEXT.md` at repo root (seed; fill with domain
+vocabulary as it crystallises); ADRs in `docs/adr/`. See
+`docs/agents/domain.md`.
