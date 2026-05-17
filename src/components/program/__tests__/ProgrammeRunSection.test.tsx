@@ -128,6 +128,7 @@ function commonProps() {
     // half. Tests pass an async no-op since the assertions are on
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
+    skipRecoveryEarly: vi.fn(async () => {}),
     onOpenConfigurePlan: vi.fn(),
   };
 }
@@ -144,26 +145,10 @@ function renderWith(node: React.ReactElement) {
   return render(<MemoryRouter>{node}</MemoryRouter>);
 }
 
-describe("ProgrammeRunSection — race_completed_unlinked passive copy", () => {
-  it("shows 'Race completed separately. Review this in History.' for a race_completed_unlinked row", () => {
-    const programState = makeProgramState([makeRunDay({ status: "race_completed_unlinked" })]);
-    renderSection(commonProps(), programState);
-    expect(screen.getByText(/Race completed separately\. Review this in History\./)).toBeInTheDocument();
-  });
-
-  it("does NOT render a template-swap select for race_completed_unlinked rows", () => {
-    const programState = makeProgramState([makeRunDay({ status: "race_completed_unlinked" })]);
-    const { container } = renderSection(commonProps(), programState);
-    // No <select> for the reconciliation row itself. (Row-level
-    // assertion — other rows might still render a select.)
-    expect(container.querySelectorAll("select").length).toBe(0);
-  });
-
-  it("does NOT render Skip / Start buttons for race_completed_unlinked", () => {
-    const programState = makeProgramState([makeRunDay({ status: "race_completed_unlinked" })]);
-    renderSection(commonProps(), programState);
-    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
-  });
+describe("ProgrammeRunSection — runDay rendering", () => {
+  // PR-D: `race_completed_unlinked` passive-copy block removed
+  // alongside the status drop. The per-day list now renders the
+  // standard template select for every non-reconciliation status.
 
   it("planned rows DO show the template-swap select (control)", () => {
     const programState = makeProgramState([makeRunDay({ status: "planned" })]);
@@ -276,7 +261,18 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         completedAt: new Date(Date.now() - 2 * 24 * 3600 * 1000),
       },
     ];
-    mockWeeklyData = [{ week: "2026-05-10", totalDistance: 12.3, runCount: 2, avgPace: 330 }];
+    // PR-F: "This week" filter now uses `localWeekKey(new Date())`
+    // so the fixture must reflect the current calendar week, not
+    // a hardcoded historical week. Use the runtime week key.
+    const todayWeekKey = (() => {
+      const d = new Date();
+      const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+      const y = sunday.getFullYear();
+      const m = String(sunday.getMonth() + 1).padStart(2, "0");
+      const day = String(sunday.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockWeeklyData = [{ week: todayWeekKey, totalDistance: 12.3, runCount: 2, avgPace: 330 }];
     const props = commonProps();
     const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(

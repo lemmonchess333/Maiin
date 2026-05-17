@@ -430,6 +430,41 @@ export function scheduleStructuredWeekV2(input: StructuredWeekV2Input): Schedule
   return result.sort((a, b) => a.dayIndex - b.dayIndex);
 }
 
+/**
+ * PR-E: Recovery-phase week generator. All scheduled run/both
+ * slots emit `easy_30` regardless of weekly position — no long
+ * run, no tempo, no intervals. Frequency unchanged from the
+ * user's weekSchedule.
+ *
+ * Used by `refreshRunSchedule` when `runPlan.phase === "recovery"`.
+ * Auto-entered by `completeRunDay` (PR-D) when the race-day
+ * runDay transitions to completed_*; exits via the post-race
+ * card's "Skip recovery early" affordance (PR-C) or by the
+ * one-week grace beyond `recoveryEndDate` (load-effect logic in
+ * useProgram).
+ */
+export function scheduleRecoveryWeekV2(input: {
+  weekSchedule: ScheduleDay[];
+  weekStart: string;
+}): ScheduledRunDay[] {
+  const runEligibleSlots = input.weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  if (runEligibleSlots.length === 0) return [];
+
+  const weekStart = parseLocalDate(input.weekStart);
+  return runEligibleSlots
+    .map((dayIndex) =>
+      buildRunDayV2({
+        dayIndex,
+        templateId: "easy_30",
+        type: "easy",
+        weekStart,
+      }),
+    )
+    .sort((a, b) => a.dayIndex - b.dayIndex);
+}
+
 export interface RacePlanV2Input {
   weekSchedule: ScheduleDay[];
   raceGoal: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string };
@@ -600,5 +635,20 @@ function pickRaceTemplateId(distance: "5k" | "10k" | "half" | "marathon"): strin
     case "10k": return "10k_race";
     case "half": return "half_race";
     case "marathon": return "marathon_race";
+  }
+}
+
+/**
+ * PR-D / PR-E: recovery duration by race distance, in whole weeks.
+ * Used by `completeRunDay` to set `runPlan.recoveryEndDate` when a
+ * race-day runDay transitions to completed_*. Standard coach
+ * periodisation: bigger races → longer recovery.
+ */
+export function recoveryWeeksForDistance(distance: "5k" | "10k" | "half" | "marathon"): number {
+  switch (distance) {
+    case "5k": return 1;
+    case "10k": return 2;
+    case "half": return 3;
+    case "marathon": return 4;
   }
 }

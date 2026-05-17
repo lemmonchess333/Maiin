@@ -53,7 +53,6 @@ import { DAY_LABELS, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/sche
 import {
   getScheduledRunStatus,
   isScheduledRunEditable,
-  isScheduledRunReconciliation,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -62,6 +61,7 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
 import DayActionSheet from "./DayActionSheet";
+import { localDateString, localWeekKey, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
 
@@ -92,6 +92,12 @@ interface ProgrammeRunSectionProps {
    *  weekSchedule + target instead of reading from a stale auth
    *  closure (PR-0b-ii). */
   refreshRunSchedule: (overrides?: RefreshRunScheduleOverrides) => Promise<void>;
+  /** PR-C: atomic writer to exit the recovery phase early. Clears
+   *  `runPlan.phase` + `runPlan.recoveryEndDate` AND flips
+   *  `profile.runMode` to "structured" in a coordinated pair of
+   *  writes. The post-race card's "Skip recovery early" link calls
+   *  this when the user wants to bail out of the soft window. */
+  skipRecoveryEarly: () => Promise<void>;
   /** PR-0d → PR-4: opens ConfigurePlanModal at the Running step.
    *  Now an escape hatch for full plan rebuilds, not the only path
    *  to a mode change. The inline chip row + race-goal form (PR-B)
@@ -131,6 +137,7 @@ export default function ProgrammeRunSection({
   skipRunDay,
   skipWorkoutDay,
   refreshRunSchedule,
+  skipRecoveryEarly,
   onOpenConfigurePlan,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
@@ -188,6 +195,36 @@ export default function ProgrammeRunSection({
     raceElapsedTarget.getTime() < new Date().getTime()
   );
 
+  // PR-C: post-race card state derivation. Driven by:
+  //   - the race-day runDay status (planned / completed_* / race_no_show)
+  //   - runPlan.phase ("recovery" or undefined)
+  //   - today vs runPlan.recoveryEndDate (in-recovery / ended-grace / past-grace)
+  //
+  // Variants:
+  //   inRecovery       → "Recovering — N days left" + Skip-recovery link
+  //   recoveryEnded    → "Recovery complete. What's next?" + Set next race / Switch to structured
+  //   noShow           → "We marked this as no-show. Log it now if you ran." + Log race now / Set next race / Switch to structured
+  //
+  // Outside these three: fall back to the legacy "Race day has passed"
+  // banner (covers e.g. an old elapsed race where recovery already
+  // ran its course and the +7d grace cleared phase).
+  const raceDayRunDay = raceGoal
+    ? runDays.find((rd) => rd.date === raceGoal.targetDate)
+    : null;
+  const raceDayStatus = raceDayRunDay ? getScheduledRunStatus(raceDayRunDay) : null;
+  const phase = programState?.runPlan?.phase;
+  const recoveryEndDate = programState?.runPlan?.recoveryEndDate;
+  const todayKeyDerivation = localDateString(new Date());
+  const inRecovery = phase === "recovery" && !!recoveryEndDate && todayKeyDerivation < recoveryEndDate;
+  const recoveryEnded = phase === "recovery" && !!recoveryEndDate && todayKeyDerivation >= recoveryEndDate;
+  const isNoShow = raceDayStatus === "race_no_show";
+  const recoveryDaysLeft = useMemo(() => {
+    if (!inRecovery || !recoveryEndDate) return 0;
+    const end = parseLocalDate(recoveryEndDate);
+    const ms = end.getTime() - new Date().getTime();
+    return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+  }, [inRecovery, recoveryEndDate]);
+
   // PR-4: surface the first non-terminal runDay as a promoted
   // "Next planned run" Start card on structured + race_prep. The
   // same `/run?template=…&scheduledRunId=…` URL pattern Home's
@@ -219,10 +256,37 @@ export default function ProgrammeRunSection({
     runDays.length > 0 &&
     !nextStartable;
 
+  // PR-F: temporal-anchored label for the "Next planned run" card.
+  // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
+  // forces the user to compute proximity ("is today Tuesday? then
+  // Wed = tomorrow"). Today / Tomorrow / Pending makes the common
+  // cases explicit; Pending flags past-planned runDays still
+  // sitting startable in the current week (e.g. yesterday's
+  // unstarted easy run) so the user doesn't think it's "next".
+  const nextStartableLabel = useMemo<string>(() => {
+    if (!nextStartable) return "";
+    if (!nextStartable.date) return DAY_LABELS[nextStartable.dayIndex];
+    const today = new Date();
+    const todayKey = localDateString(today);
+    const tomorrowKey = localDateString(addLocalDays(today, 1));
+    if (nextStartable.date === todayKey) return "Today";
+    if (nextStartable.date === tomorrowKey) return "Tomorrow";
+    if (nextStartable.date < todayKey) return "Pending";
+    return DAY_LABELS[nextStartable.dayIndex];
+  }, [nextStartable]);
+
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.
+  //
+  // PR-F: "This week" must match the actual current calendar
+  // week, not "the most recent week with any runs." Previously
+  // `weeklyData[weeklyData.length - 1]` returned whichever week
+  // last had a run logged — so for users who hadn't run in 10
+  // days, it labelled last week's data as "This week." Filter by
+  // explicit weekKey match instead.
   const lastRun = runs[0] ?? null;
-  const thisWeek = weeklyData[weeklyData.length - 1] ?? null;
+  const thisWeekKey = localWeekKey(new Date());
+  const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
 
   const modeLabel =
     currentMode === "race_prep" ? "Race prep" : currentMode === "structured" ? "Structured" : "Freeform";
@@ -309,6 +373,21 @@ export default function ProgrammeRunSection({
       setModeError("Couldn't change mode. Check your connection and try again.");
     } finally {
       setModeChangePending(false);
+    }
+  }
+
+  // PR-C: skip-recovery-early handler. Calls the dedicated
+  // useProgram writer (`skipRecoveryEarly`) which atomically
+  // clears `runPlan.phase` + `runPlan.recoveryEndDate` AND flips
+  // `runMode` to "structured" so the user immediately gets their
+  // normal training shape back. Race is past, recovery is done by
+  // user's choice — the cleanest next direction is structured
+  // training, which the user can then change via the chip row.
+  async function handleSkipRecoveryEarly(): Promise<void> {
+    try {
+      await skipRecoveryEarly();
+    } catch (e) {
+      logger.error("[handleSkipRecoveryEarly] failed", e);
     }
   }
 
@@ -429,11 +508,18 @@ export default function ProgrammeRunSection({
               ? "Auto-assigns run templates to your run days"
               : "Follows a race training plan"}
         </p>
-        {modeError && (
+        {/* PR-F: reuse this slot for an in-flight "Updating your
+            plan…" message. modeChangePending fires from chip tap
+            until updateProfile + refreshRunSchedule both resolve.
+            Same slot later renders modeError on failure. Three
+            states: pending → error → silent. */}
+        {modeChangePending ? (
+          <p className="text-xs text-muted-foreground">Updating your plan…</p>
+        ) : modeError ? (
           <p className="text-xs" style={{ color: THEME.running }} role="alert">
             {modeError}
           </p>
-        )}
+        ) : null}
       </div>
 
       {/* PR-B3: inline race-goal form. Replaces the "Race prep not
@@ -622,8 +708,126 @@ export default function ProgrammeRunSection({
           is missing, and is also reachable from the Race Prep chip
           tap or the "Edit race" button on the progress card. */}
 
-      {/* ── Hero: race_prep elapsed banner (promoted) ───────────── */}
-      {currentMode === "race_prep" && raceGoal && raceElapsed && (
+      {/* ── PR-C: Post-race card. State-driven variants:
+            inRecovery     → Recovering N days left + Skip-early link
+            recoveryEnded  → Recovery complete. What's next? + Set next race / Switch to structured
+            noShow         → We marked this as no-show + Log race now / Set next race / Switch to structured
+            Legacy elapsed → Race day has passed (fallback for old elapsed
+                             races whose recovery already cleared) */}
+      {currentMode === "race_prep" && raceGoal && inRecovery && (
+        <div
+          className="p-3 rounded-xl text-xs"
+          style={{
+            background: `${THEME.running}10`,
+            border: `1px solid ${THEME.running}30`,
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          <p className="font-semibold mb-0.5">
+            Recovering &mdash; {recoveryDaysLeft} day{recoveryDaysLeft === 1 ? "" : "s"} left
+          </p>
+          <p style={{ color: "hsl(var(--muted-foreground))" }}>
+            Easy runs this week. Templates auto-set to easy_30 until recovery ends.
+          </p>
+          <button
+            type="button"
+            onClick={handleSkipRecoveryEarly}
+            className="inline-flex items-center gap-0.5 mt-1 text-xs font-semibold active:scale-95"
+            style={{ color: THEME.running }}
+          >
+            Skip recovery early &rsaquo;
+          </button>
+        </div>
+      )}
+
+      {currentMode === "race_prep" && raceGoal && recoveryEnded && (
+        <div
+          className="p-3 rounded-xl text-xs"
+          style={{
+            background: `${THEME.running}10`,
+            border: `1px solid ${THEME.running}30`,
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          <p className="font-semibold mb-0.5">Recovery complete</p>
+          <p style={{ color: "hsl(var(--muted-foreground))" }}>What&apos;s next?</p>
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => setShowRaceForm(true)}
+              className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+            >
+              Set next race
+            </button>
+            <button
+              type="button"
+              onClick={handleSkipRecoveryEarly}
+              className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+            >
+              Switch to structured
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentMode === "race_prep" && raceGoal && isNoShow && (
+        <div
+          className="p-3 rounded-xl text-xs"
+          style={{
+            background: "hsl(var(--muted) / 0.5)",
+            border: "1px solid hsl(var(--border))",
+            color: "hsl(var(--foreground))",
+          }}
+        >
+          <p className="font-semibold mb-0.5">
+            {raceGoal.distance.toUpperCase()} &mdash; {raceGoal.targetDate}
+          </p>
+          <p style={{ color: "hsl(var(--muted-foreground))" }}>
+            We marked this as no-show after 3 days with no log. Log it now if you actually ran.
+          </p>
+          <div className="flex flex-col gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (raceDayRunDay?.id) {
+                  haptic();
+                  navigate(`/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`);
+                }
+              }}
+              className="w-full py-2 rounded-lg text-xs font-bold shadow-sm"
+              style={{
+                background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
+                color: "white",
+              }}
+            >
+              Log race now
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRaceForm(true)}
+                className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+              >
+                Set next race
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange("structured")}
+                className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+              >
+                Switch to structured
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legacy elapsed fallback — race date passed, no recovery
+          state, no no-show. e.g. a long-ago race where recovery
+          already cleared past +7d grace. Keeps the original muted
+          banner so users aren't suddenly looking at a startable
+          race-prep tab for a race that finished months ago. */}
+      {currentMode === "race_prep" && raceGoal && raceElapsed && !inRecovery && !recoveryEnded && !isNoShow && (
         <div
           className="p-3 rounded-xl text-xs"
           style={{
@@ -634,8 +838,7 @@ export default function ProgrammeRunSection({
         >
           <p className="font-semibold mb-0.5">Race day has passed</p>
           <p style={{ color: "hsl(var(--muted-foreground))" }}>
-            {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Open Configure plan to set a new
-            race or switch to structured running.
+            {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Switch to structured or set a new race goal via the chip row.
           </p>
         </div>
       )}
@@ -727,7 +930,7 @@ export default function ProgrammeRunSection({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold mb-0.5" style={{ color: THEME.running }}>
-              Next · {DAY_LABELS[nextStartable.dayIndex]}
+              Next · {nextStartableLabel}
             </p>
             <p className="text-sm font-bold text-foreground truncate">
               {nextStartableTemplate?.name ?? "Run"}
@@ -772,20 +975,6 @@ export default function ProgrammeRunSection({
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
           {runDays.map((rd) => {
             const status = getScheduledRunStatus(rd);
-
-            if (isScheduledRunReconciliation(status)) {
-              return (
-                <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
-                  <span className="text-xs font-medium text-foreground w-8">
-                    {DAY_LABELS[rd.dayIndex]}
-                  </span>
-                  <p className="flex-1 text-xs text-muted-foreground italic">
-                    Race completed separately. Review this in History.
-                  </p>
-                </div>
-              );
-            }
-
             const editable = isScheduledRunEditable(status);
             return (
               <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">

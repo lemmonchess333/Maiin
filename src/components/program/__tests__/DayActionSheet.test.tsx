@@ -300,41 +300,10 @@ describe("DayActionSheet — terminal run states locked", () => {
   });
 });
 
-describe("DayActionSheet — race_completed_unlinked passive", () => {
-  it("renders passive copy and no interactive controls", () => {
-    const profile = makeProfile(
-      Array.from({ length: 7 }, (_, i) => ({
-        day: i,
-        type: i === todayDow() ? ("run" as const) : ("rest" as const),
-      })),
-    );
-    const runDay = makeRunDay({
-      id: "runday_recon",
-      dayIndex: todayDow(),
-      date: todayKey(),
-      weekKey: todayWeekKey(),
-      status: "race_completed_unlinked",
-    });
-    render(
-      <DayActionSheet
-        open={true}
-        onClose={() => {}}
-        dateKey={todayKey()}
-        profile={profile}
-        programState={makeProgramState([runDay])}
-        {...commonCallbacks()}
-      />,
-    );
-
-    // Passive copy present.
-    expect(screen.getByText(/Race completed separately\. Review this in History\./i)).toBeInTheDocument();
-    // No template select rendered for this status.
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    // No Skip/Complete buttons.
-    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
-  });
-});
+// PR-D: the `race_completed_unlinked` describe block was removed
+// alongside the status itself. The reconciliation pattern in
+// RunSummary now writes completed_exact directly via
+// completeRunDay; no intermediate state is needed.
 
 describe("DayActionSheet — lift section", () => {
   function setup(workoutOverrides: Partial<WorkoutDay> = {}) {

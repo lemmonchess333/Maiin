@@ -160,17 +160,16 @@ export default function DayActionSheet({
               )}
             </div>
 
-            {/* Reconciliation — passive copy, no actions. The user
-                will resolve this from History via a future linking
-                flow, not by mashing buttons here. */}
-            {run.isReconciliation ? (
-              <p className="text-xs text-muted-foreground italic">
-                Race completed separately. Review this in History.
-              </p>
-            ) : (
-              <>
-                {/* Template swap — only enabled when startable. */}
-                <label className="block">
+            {/* PR-D: reconciliation branch removed alongside the
+                drop of `race_completed_unlinked`. The reconciliation
+                pattern still works — RunSummary's "Mark scheduled
+                run complete" flow now transitions directly to
+                completed_exact (or recovers from race_no_show
+                under the updated LEGAL_TRANSITIONS). No
+                intermediate status is needed. */}
+            <>
+              {/* Template swap — only enabled when startable. */}
+              <label className="block">
                   <span className="text-xs uppercase tracking-wider text-muted-foreground">
                     Template
                   </span>
@@ -229,8 +228,7 @@ export default function DayActionSheet({
                     </button>
                   </div>
                 )}
-              </>
-            )}
+            </>
           </section>
         )}
 

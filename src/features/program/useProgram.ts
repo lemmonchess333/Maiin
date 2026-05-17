@@ -17,7 +17,7 @@ import {
 } from "./programEngine";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -40,8 +40,10 @@ export interface CompletedSessionData {
 import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
+  scheduleRecoveryWeekV2,
+  recoveryWeeksForDistance,
 } from "./runScheduler";
-import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import { localWeekKey, localDateString, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
@@ -298,6 +300,206 @@ export function useProgram() {
     },
     [user],
   );
+
+  // PR-D: race-day auto-transition effect. When the race date has
+  // passed AND the race-day runDay is still `planned`, infer a
+  // no-show and transition the status. Fires on programState
+  // load and on subsequent programState changes (idempotent —
+  // once the status is no-show or completed_*, this skips).
+  //
+  // Conditions:
+  //   - profile.runMode === "race_prep" AND profile.raceGoal exists
+  //   - a runDay with `date === raceGoal.targetDate` AND `status === "planned"`
+  //   - today - 3 days > race date (the 3-day grace period locked in Q5)
+  //
+  // Recoverability: race_no_show → completed_* is legal (per PR-D's
+  // LEGAL_TRANSITIONS update). If the user later logs the race via
+  // RunSummary's reconciliation flow, the slot transitions onward.
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
+
+    const raceDate = profile.raceGoal.targetDate;
+    const raceDay = programState.runDays?.find((rd) => rd.date === raceDate);
+    if (!raceDay) return;
+
+    const status = getScheduledRunStatus(raceDay);
+    if (status !== "planned") return;
+
+    // 3-day grace period — auto-transition only fires when the
+    // race date is more than 3 days in the past. Users who
+    // upload late get the chance to reconcile before we infer
+    // no-show.
+    const gracePassed =
+      new Date().getTime() - parseLocalDate(raceDate).getTime() >
+      3 * 24 * 60 * 60 * 1000;
+    if (!gracePassed) return;
+
+    // Transition gate. transitionStatus(planned, race_no_show) is
+    // legal per LEGAL_TRANSITIONS. Defense in depth — refuses if
+    // the transition table changes underneath us.
+    if (!transitionStatus(status, "race_no_show")) return;
+
+    const updatedRunDays = programState.runDays!.map((rd) =>
+      rd === raceDay ? { ...rd, status: "race_no_show" as ScheduledRunStatus } : rd,
+    );
+
+    logger.log(
+      `[auto-transition] race-day runDay ${raceDay.id ?? raceDay.dayIndex} → race_no_show ` +
+        `(date ${raceDate}, ${Math.floor((new Date().getTime() - parseLocalDate(raceDate).getTime()) / 86400000)} days past)`,
+    );
+
+    saveProgram({ ...programState, runDays: updatedRunDays }).catch((err) => {
+      logger.warn("[auto-transition] save failed", err);
+    });
+  }, [programState, profile, saveProgram]);
+
+  // PR-E: recovery-phase exit effect. When the user has been in
+  // recovery and the grace period (recoveryEndDate + 7 days) has
+  // passed, silently clear `phase` and `recoveryEndDate` from
+  // runPlan. The 7-day window between `recoveryEndDate` and the
+  // grace-end is when PR-C's "Recovery ended — what's next?"
+  // card variant prompts the user to pick their next direction;
+  // if they ignore it for a full week, we auto-promote back to
+  // normal training shape.
+  //
+  // Mid-recovery (today < recoveryEndDate): no-op, this effect
+  // skips. The card shows "Recovering — N days left."
+  // Post-recovery, in grace (today >= recoveryEndDate, today <
+  // recoveryEndDate + 7d): no-op here either. PR-C's variant 3
+  // renders. Phase stays "recovery" so refreshRunSchedule keeps
+  // emitting easy_30 (the user's still in the soft window).
+  // Post-grace (today >= recoveryEndDate + 7d): silent clear.
+  useEffect(() => {
+    if (!programState?.runPlan) return;
+    if (programState.runPlan.phase !== "recovery") return;
+    if (!programState.runPlan.recoveryEndDate) return;
+
+    const gracePost = parseLocalDate(programState.runPlan.recoveryEndDate);
+    gracePost.setDate(gracePost.getDate() + 7);
+    const todayKey = localDateString();
+    const graceEndKey = localDateString(gracePost);
+    if (todayKey < graceEndKey) return;
+
+    const cleared = { ...programState.runPlan };
+    delete cleared.phase;
+    delete cleared.recoveryEndDate;
+
+    logger.log(
+      `[recovery-exit] phase cleared after grace (recoveryEndDate ${programState.runPlan.recoveryEndDate}, today ${todayKey})`,
+    );
+
+    saveProgram({ ...programState, runPlan: cleared }).catch((err) => {
+      logger.warn("[recovery-exit] save failed", err);
+    });
+  }, [programState, saveProgram]);
+
+  // PR-G: auto week-rollover effect. When the user opens the app
+  // and the calendar week has advanced past the week their
+  // runDays were generated for, automatically rotate forward to
+  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // button does on the Lift tab, but driven by calendar instead
+  // of lift completion.
+  //
+  // Ordering: this effect is declared AFTER PR-D's auto-transition
+  // and PR-E's recovery-exit so they run first. Without that
+  // ordering, the rollover would archive a planned race-day
+  // runDay into weekHistory BEFORE the auto-transition writes
+  // `race_no_show` to it, losing the inferred state.
+  //
+  // Detection: `programState.runDays[0]?.weekKey` is the Sunday of
+  // the week the runDays were last generated for. If that's
+  // before `localWeekKey()`, the user is ≥1 week stale.
+  //
+  // Loop: while stale, run `advanceWeek` and regenerate runDays
+  // for the new week. Cap at 12 iterations to prevent runaway
+  // in pathological cases (user gone for months). Each iteration
+  // archives the previous week into `weekHistory` and increments
+  // `weekNumber`.
+  //
+  // Trade-off (per the design grill): a planned-but-never-done
+  // Saturday run gets archived as `status: "planned"` in
+  // weekHistory on the Monday rollover. That's intentional —
+  // honest record of "we didn't do this." Better than zombie
+  // planned entries lingering in the current week.
+  //
+  // Skips: freeform users (no runDays to rotate); users whose
+  // runDays is empty (no signal to compare).
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!profile.runMode || profile.runMode === "freeform") return;
+
+    const runDayWeekKey = programState.runDays?.[0]?.weekKey;
+    if (!runDayWeekKey) return;
+
+    const todayKeyG = localWeekKey();
+    if (runDayWeekKey >= todayKeyG) return;
+
+    // Loop up to 12 iterations. Each iteration advances the
+    // local `rolling` state but doesn't write to Firestore — we
+    // batch all writes into a single saveProgram at the end.
+    let rolling = programState;
+    let iterations = 0;
+    while (iterations < 12) {
+      const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
+      if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
+
+      // Advance lift side (workouts, weekNumber, weekHistory).
+      const advanced = advanceWeek(rolling);
+
+      // Advance run side. Compute the next week's start key. Take
+      // one week step from the current runDay week key.
+      const nextWeekStart = localWeekKey(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+      );
+      const nextWeekCurrentDate = localDateString(
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+      );
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+
+      if (profile.runMode === "race_prep" && profile.raceGoal) {
+        const plan = generateRacePlanV2({
+          weekSchedule,
+          raceGoal: profile.raceGoal,
+          weeklyRunDays: runTarget,
+          currentDate: nextWeekCurrentDate,
+          weekStart: nextWeekStart,
+        });
+        advanced.runDays = plan.weeks[0] ?? [];
+        advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
+          currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+          totalWeeks: advanced.runPlan?.totalWeeks,
+        });
+      } else {
+        advanced.runDays = scheduleStructuredWeekV2({
+          weekSchedule,
+          weekNumber: advanced.weekNumber,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { mode: "structured" };
+      }
+
+      rolling = advanced;
+      iterations++;
+    }
+
+    if (iterations === 0) return;
+
+    logger.log(
+      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`,
+    );
+
+    saveProgram(rolling)
+      .then(() => {
+        toast.success(
+          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`,
+        );
+      })
+      .catch((err) => {
+        logger.warn("[auto-rollover] save failed", err);
+      });
+  }, [programState, profile, saveProgram]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
@@ -586,7 +788,7 @@ export function useProgram() {
   // writing — completing the same scheduled run twice shouldn't
   // double-fire the "ready for next week" toast.
   const completeRunDay = useCallback(
-    async (idOrDayIndex: string | number) => {
+    async (idOrDayIndex: string | number, savedRunId?: string) => {
       if (!programState?.runDays || !user) return;
 
       // Resolve which runDay we're completing. By-id path takes
@@ -604,9 +806,10 @@ export function useProgram() {
       }
       const targetDay = programState.runDays[targetIndex];
 
-      // Status transition gate. Only the planned → completed_exact
-      // path is wired here; future transitions (skipped, late,
-      // modified) land in P1/P2 alongside their UI surfaces.
+      // Status transition gate. PR-D: race_no_show → completed_*
+      // is now legal (recovery from inferred no-show state via
+      // the reconciliation flow). transitionStatus enforces the
+      // updated LEGAL_TRANSITIONS table.
       // PR-0b-iii: legacy-completed-aware status read via the
       // central helper. A pre-status doc with completed: true +
       // status: undefined resolves to "completed_exact" (not
@@ -627,8 +830,44 @@ export function useProgram() {
         ...targetDay,
         completed: true,
         status: toStatus,
+        // PR-D: write linkedRunId when present so a future
+        // "tap completed run → view saved run" navigation hook
+        // can resolve the connection. Optional — DayActionSheet's
+        // manual "Mark complete" calls without a savedRunId.
+        ...(savedRunId ? { linkedRunId: savedRunId } : {}),
       };
-      const updated: ProgramState = { ...programState, runDays: updatedDays };
+
+      // PR-D: when the just-completed runDay is the race day for a
+      // race_prep user, also enter the recovery phase. Distance-
+      // scaled duration: 5K=1w, 10K=2w, half=3w, marathon=4w.
+      // Auto-enter only on completion (not on no-show — Q17 in
+      // the design grill).
+      let updatedRunPlan = programState.runPlan;
+      const raceGoal = programState.runPlan?.raceGoal;
+      if (
+        profile?.runMode === "race_prep" &&
+        raceGoal &&
+        targetDay.date === raceGoal.targetDate &&
+        programState.runPlan
+      ) {
+        const recoveryWeeks = recoveryWeeksForDistance(
+          raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+        );
+        const recoveryEndDate = localDateString(
+          addLocalDays(parseLocalDate(raceGoal.targetDate), recoveryWeeks * 7),
+        );
+        updatedRunPlan = {
+          ...programState.runPlan,
+          phase: "recovery",
+          recoveryEndDate,
+        };
+      }
+
+      const updated: ProgramState = {
+        ...programState,
+        runDays: updatedDays,
+        runPlan: updatedRunPlan,
+      };
 
       await saveProgram(updated);
 
@@ -643,7 +882,7 @@ export function useProgram() {
         toast.success("All workouts & runs complete! Ready for next week.");
       }
     },
-    [programState, user, saveProgram],
+    [programState, user, saveProgram, profile?.runMode],
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -969,7 +1208,40 @@ export function useProgram() {
       let runDays: ScheduledRunDay[];
       let runPlan = programState.runPlan;
 
-      if (profile.runMode === "race_prep" && profile.raceGoal) {
+      // PR-F: snapshot per-day userOverrides BEFORE regenerating.
+      // Pre-PR-F, refreshRunSchedule called the generator (which
+      // builds fresh runDays via buildRunDayV2 with no userOverride
+      // field) and wrote the result directly — silently destroying
+      // any per-day template overrides the user had set via the
+      // inline <select> in ProgrammeRunSection's per-day list.
+      // Snapshot dayIndex → userOverride map; restore after the
+      // generator runs but only for days still scheduled as
+      // run/both (orphan overrides on a day that became rest get
+      // dropped).
+      const overrideSnapshot: Record<number, string> = {};
+      for (const rd of programState.runDays ?? []) {
+        if (rd.userOverride) {
+          overrideSnapshot[rd.dayIndex] = rd.userOverride;
+        }
+      }
+
+      // PR-E: recovery phase takes precedence over the runMode
+      // branches. When the user just completed a race and is
+      // mid-recovery (runPlan.phase === "recovery" + not yet
+      // expired), emit all easy_30 templates regardless of mode.
+      // runMode stays at race_prep during recovery; the phase flag
+      // does the differentiation. PR-D writes the phase on race
+      // completion; this generator consumes it on subsequent
+      // refreshes (e.g. mid-week schedule edits while recovering).
+      const inRecovery =
+        programState.runPlan?.phase === "recovery" &&
+        programState.runPlan?.recoveryEndDate &&
+        localDateString() < programState.runPlan.recoveryEndDate;
+
+      if (inRecovery) {
+        runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+        runPlan = { ...programState.runPlan! };
+      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const plan = generateRacePlanV2({
           weekSchedule,
           raceGoal: profile.raceGoal,
@@ -982,7 +1254,10 @@ export function useProgram() {
         // race-strip position stays put across mid-week schedule
         // edits. Only `compressed` updates (V2 may flip it if the
         // schedule change pushed run count below race-config
-        // thresholds).
+        // thresholds). PR-E: also clear any stale recovery phase
+        // — if user has aged out of recovery (recoveryEndDate
+        // passed) and we're re-rendering race_prep, drop phase
+        // and recoveryEndDate.
         runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
           currentWeek: programState.runPlan?.currentWeek,
           totalWeeks: programState.runPlan?.totalWeeks,
@@ -996,9 +1271,68 @@ export function useProgram() {
         runPlan = { mode: "structured" };
       }
 
+      // Re-apply preserved overrides. The generator emits entries
+      // keyed by dayIndex; we re-key the snapshot the same way so
+      // a user's "Monday=tempo" intent survives weeklyRunDays
+      // edits, schedule reshuffles, and mode flips (via the chip
+      // row's handleModeChange path). Templates that are no longer
+      // scheduled drop silently (snapshot lookup misses; original
+      // generator template wins).
+      runDays = runDays.map((rd) => {
+        const preserved = overrideSnapshot[rd.dayIndex];
+        return preserved
+          ? { ...rd, userOverride: preserved, templateId: preserved }
+          : rd;
+      });
+
       await saveProgram({ ...programState, runDays, runPlan });
     },
     [programState, profile, saveProgram],
+  );
+
+  // PR-C: skip-recovery-early writer. Atomic phase clear + mode
+  // flip + run-schedule regenerate. Called from the post-race
+  // card when the user opts out of the soft window. Race is past,
+  // raceGoal preserved (R1 GATED), but the user wants normal
+  // training back NOW instead of waiting for the 7-day grace to
+  // elapse and the recovery-exit effect to fire.
+  //
+  // Why a dedicated writer instead of composing skipRecovery +
+  // handleModeChange + refresh: refreshRunSchedule reads
+  // `programState.runPlan.phase` from its closure. If we cleared
+  // phase via saveProgram and then called refresh, the closure
+  // would lag and refresh would still emit easy_30. By doing the
+  // whole transition in one saveProgram call, we sidestep the
+  // closure-lag problem.
+  const skipRecoveryEarly = useCallback(
+    async () => {
+      if (!programState || !profile) return;
+      if (programState.runPlan?.phase !== "recovery") return;
+
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+      const weekStart = localWeekKey();
+
+      // User skipping early = "I'm done with the race-prep arc,
+      // give me structured training now." Flip profile.runMode and
+      // regenerate runDays with the structured generator.
+      const runDays = scheduleStructuredWeekV2({
+        weekSchedule,
+        weekNumber: programState.weekNumber,
+        weekStart,
+      });
+      const runPlan = { mode: "structured" as const };
+
+      logger.log(
+        `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`,
+      );
+
+      await Promise.all([
+        updateProfile({ runMode: "structured", ...runTargetWriteFields(runTarget) }),
+        saveProgram({ ...programState, runDays, runPlan }),
+      ]);
+    },
+    [programState, profile, saveProgram, updateProfile],
   );
 
   // Week navigation
@@ -1035,6 +1369,7 @@ export function useProgram() {
     skipRunDay,
     overrideRunDay,
     refreshRunSchedule,
+    skipRecoveryEarly,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

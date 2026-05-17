@@ -241,21 +241,24 @@ describe("resolveTrainingDayForDate — next-Monday-does-not-inherit-this-Monday
 });
 
 describe("resolveTrainingDayForDate — status surfacing", () => {
+  // PR-D: `race_completed_unlinked` dropped from the enum;
+  // `isReconciliation` field removed from `ResolvedRun`.
+  // `race_no_show` is now PR-D's recoverable inferred state —
+  // terminal=false because the reconciliation flow allows
+  // race_no_show → completed_*.
   const cases: Array<{
     status: ScheduledRunStatus;
     startable: boolean;
     terminal: boolean;
-    reconciliation: boolean;
     completed: boolean;
     hasStartUrl: boolean;
   }> = [
-    { status: "planned", startable: true, terminal: false, reconciliation: false, completed: false, hasStartUrl: true },
-    { status: "completed_exact", startable: false, terminal: true, reconciliation: false, completed: true, hasStartUrl: false },
-    { status: "completed_modified", startable: false, terminal: true, reconciliation: false, completed: true, hasStartUrl: false },
-    { status: "completed_late", startable: false, terminal: true, reconciliation: false, completed: true, hasStartUrl: false },
-    { status: "skipped", startable: false, terminal: true, reconciliation: false, completed: false, hasStartUrl: false },
-    { status: "race_no_show", startable: false, terminal: true, reconciliation: false, completed: false, hasStartUrl: false },
-    { status: "race_completed_unlinked", startable: false, terminal: false, reconciliation: true, completed: false, hasStartUrl: false },
+    { status: "planned", startable: true, terminal: false, completed: false, hasStartUrl: true },
+    { status: "completed_exact", startable: false, terminal: true, completed: true, hasStartUrl: false },
+    { status: "completed_modified", startable: false, terminal: true, completed: true, hasStartUrl: false },
+    { status: "completed_late", startable: false, terminal: true, completed: true, hasStartUrl: false },
+    { status: "skipped", startable: false, terminal: true, completed: false, hasStartUrl: false },
+    { status: "race_no_show", startable: false, terminal: false, completed: false, hasStartUrl: false },
   ];
 
   cases.forEach((c) => {
@@ -289,7 +292,6 @@ describe("resolveTrainingDayForDate — status surfacing", () => {
       expect(r.run.status).toBe(c.status);
       expect(r.run.isStartable).toBe(c.startable);
       expect(r.run.isTerminal).toBe(c.terminal);
-      expect(r.run.isReconciliation).toBe(c.reconciliation);
       expect(r.run.isCompleted).toBe(c.completed);
       expect(r.run.startUrl !== null).toBe(c.hasStartUrl);
     });

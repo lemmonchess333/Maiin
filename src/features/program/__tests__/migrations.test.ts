@@ -317,22 +317,10 @@ describe("PR-0b-i — migrateProgramState semantic repair", () => {
     expect(migrated.runDays![0].completed).toBe(false);
   });
 
-  it("treats race_completed_unlinked as NOT completed (pending link)", () => {
-    // race_completed_unlinked has a legal outgoing transition to
-    // completed_exact. Until that link resolves, the run is in a
-    // pending state, not a done state. completed=false reflects
-    // that.
-    const state = makeLegacyProgramState({
-      runDays: [
-        {
-          ...legacyRunDay({ completed: true }),
-          status: "race_completed_unlinked",
-        },
-      ],
-    });
-    const migrated = migrateProgramState(state, "2026-05-10");
-    expect(migrated.runDays![0].completed).toBe(false);
-  });
+  // PR-D: `race_completed_unlinked` was dropped from the
+  // ScheduledRunStatus enum. The test that pinned its
+  // not-completed alignment is no longer applicable — there is
+  // nothing to migrate. Kept as a comment for historical context.
 
   it("treats race_no_show as NOT completed", () => {
     const state = makeLegacyProgramState({

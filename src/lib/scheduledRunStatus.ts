@@ -1,30 +1,33 @@
 /**
- * Central scheduled-run status helpers · PR-0b-iii · spec v7.
+ * Central scheduled-run status helpers · PR-0b-iii (PR-D revision).
  *
  * Single source of truth for "what can the user do with this
- * runDay?" — startable / editable / terminal / reconciliation.
+ * runDay?" — startable / editable / terminal / completed.
  *
- * Pre-PR-0b-iii, every consumer site did its own inline check:
- *   - `!rd.completed` — used to find pickable runs. Wrong for
- *     skipped runs (they have completed=false).
- *   - `rd.status ?? "planned"` — used by writers. Wrong for
- *     legacy completed:true + status:undefined docs (treats them
- *     as planned, so re-completing slips past the transition gate).
- *   - `status !== "planned" && status !== "race_completed_unlinked"`
- *     — used by overrideRunDay + Week-tab overflow. The race
- *     carve-out was reasonable but open-coded in two places and
- *     gave race_completed_unlinked rows Start/Change/Skip
- *     buttons when the only sensible UX is "pending link".
- *
- * Helpers project the ScheduledRunStatus enum into the four
- * decisions the UI actually needs to make:
+ * Helpers project the ScheduledRunStatus enum into the decisions
+ * the UI actually needs to make:
  *
  *   - getScheduledRunStatus: legacy-completed-aware status read
  *   - isScheduledRunStartable: can the user launch a Run flow?
  *   - isScheduledRunEditable:  can the user swap template / type?
- *   - isScheduledRunTerminal:  is the slot resolved (any outcome)?
- *   - isScheduledRunReconciliation: pending-link from another source?
+ *   - isScheduledRunTerminal:  is the slot hard-resolved (can't
+ *                              accept any further transition)?
  *   - isScheduledRunCompleted: did the run actually happen on plan?
+ *
+ * PR-D removed `isScheduledRunReconciliation` along with the
+ * `race_completed_unlinked` status — both were paper (never
+ * written, never reached). The reconciliation pattern lives in
+ * RunSummary's reconciliation UI, which writes `completed_exact`
+ * directly via completeRunDay; the unlinked intermediate state was
+ * never necessary.
+ *
+ * PR-D also softened `race_no_show`: it's no longer in
+ * `TERMINAL_STATUSES` because the auto-transition in useProgram's
+ * load effect writes it as an INFERRED state ("we guessed you
+ * no-showed after 3 days of silence"). If the user later logs the
+ * race via reconciliation, race_no_show → completed_* is legal.
+ * race_no_show remains startable=false / editable=false in the
+ * day-to-day sense, but it's not hard-terminal.
  *
  * Pure module: types only at compile time, no runtime imports
  * beyond constants. Safe to consume from useProgram (which
@@ -53,18 +56,17 @@ export function getScheduledRunStatus(rd: ScheduledRunDay): ScheduledRunStatus {
 }
 
 /**
- * Terminal states: the slot is resolved — the run either
- * happened, was skipped, or was missed at the race. The slot
- * can no longer be started, edited, or reconciled. Distinct
- * from `race_completed_unlinked`, which is a pending-link
- * reconciliation state.
+ * Hard terminal states: the slot is resolved and cannot accept
+ * any further transition. PR-D removed `race_no_show` from this
+ * set — that status is recoverable via the reconciliation flow
+ * (race_no_show → completed_*). Terminal here means
+ * "no legal outgoing transition exists at all".
  */
 const TERMINAL_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
   "completed_exact",
   "completed_modified",
   "completed_late",
   "skipped",
-  "race_no_show",
 ]);
 
 export function isScheduledRunTerminal(status: ScheduledRunStatus): boolean {
@@ -74,9 +76,11 @@ export function isScheduledRunTerminal(status: ScheduledRunStatus): boolean {
 /**
  * Startable = the user can launch a Run flow against this slot.
  * Only `planned` qualifies. Terminal states refuse (the run
- * already happened or was skipped). Reconciliation refuses
- * (a race run was logged separately; the link will resolve
- * the slot, not a fresh attempt).
+ * already happened or was skipped). `race_no_show` also refuses
+ * — although the status is recoverable via reconciliation, the
+ * day-to-day "start a fresh run flow against this slot" semantic
+ * doesn't apply; the user logs the race retrospectively via a
+ * regular saved-run flow, which then reconciles.
  */
 export function isScheduledRunStartable(status: ScheduledRunStatus): boolean {
   return status === "planned";
@@ -84,34 +88,18 @@ export function isScheduledRunStartable(status: ScheduledRunStatus): boolean {
 
 /**
  * Editable = the user can swap the template / change the run
- * type via in-place edits (Week tab overflow, ProgrammeRunSection
- * per-day list). Only `planned` qualifies. Reconciliation is
- * not "normally editable" — if a future reconciliation UI
- * lands it will dispatch through a dedicated linking path, not
- * the shared template editor.
+ * type via in-place edits (ProgrammeRunSection per-day list,
+ * DayActionSheet). Only `planned` qualifies.
  */
 export function isScheduledRunEditable(status: ScheduledRunStatus): boolean {
   return status === "planned";
 }
 
 /**
- * Reconciliation = the run happened separately and is waiting
- * to be linked to this scheduled slot. Today the only value is
- * `race_completed_unlinked` (a race-day GPS run that wasn't
- * automatically linked to the race-prep slot). The helper
- * exists so future additions to the reconciliation family
- * don't have to be searched-and-replaced.
- */
-export function isScheduledRunReconciliation(status: ScheduledRunStatus): boolean {
-  return status === "race_completed_unlinked";
-}
-
-/**
  * Completed status set — runs that actually happened on plan.
  * Shared with `migrations.ts` so the alignment of
  * `completed: boolean` with `status` enum has one source of
- * truth. `race_completed_unlinked` is intentionally NOT in this
- * set: it's pending-link, not done.
+ * truth.
  */
 export const COMPLETED_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
   "completed_exact",

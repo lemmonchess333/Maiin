@@ -1,0 +1,352 @@
+# Programme Run Section — Follow-Up Work
+
+## Context
+
+The Programme → Run section landed in its current shape across PR-0a → PR-B (May 2026). It's structurally sound: inline mode picker (PR-B), composing handler that sequences `updateProfile` + `refreshRunSchedule` atomically, per-mode operational heroes (PR-4), DayActionSheet for per-day actions (PR-1), `/setup-matt-pocock-skills` repo config (May 17).
+
+What's still incomplete or incorrect:
+
+- **Post-race state is paper.** `race_no_show` and `race_completed_unlinked` are defined in `ScheduledRunStatus` but never written by any code path. The UI has dead branches for them. `linkedRunId` is similarly defined but never written.
+- **No recovery phase.** After a user completes a race plan, the UI shows a dead-end "Race day has passed" muted banner. The "Switch to structured running" button on the post-race card today mislabels what it does.
+- **No automatic week rollover.** A run-only user (no lifts) never sees a rotation of their `programState.runDays`. The same Mon/Wed/Sat entries persist until they manually edit their schedule. Race-prep users' `currentWeek` never ticks up automatically.
+- **Per-day template overrides die on schedule refresh.** Setting Monday=tempo via the per-row `<select>` writes `userOverride: "tempo_20"`. Any subsequent `refreshRunSchedule` (triggered by a schedule edit, target change, or — once PR-D ships — the auto-transition) regenerates `runDays[]` from scratch and silently drops the override.
+- **"This week" label in the freeform hero is wrong.** Uses `weeklyData[weeklyData.length - 1]` (most recent week with any runs), which can be a past calendar week when a user hasn't run this week. Labels last week's data as "This week."
+- **"Next planned run" card lacks temporal anchor.** Today's `Next · {dayLabel}` doesn't distinguish today / tomorrow / past-planned. The user has to compute proximity.
+- **Mode-change pending state is silent.** During the 1-2 second `updateProfile` + `refreshRunSchedule` window, only the non-active chips dim — no positive "we're working on this" signal.
+
+This document is the plan to close all of these, designed end-to-end in a /grill-me session (22 decisions, May 17 2026).
+
+---
+
+## Suggested PR sequence
+
+PR-F + PR-G can ship in parallel with the PR-D → PR-E → PR-C chain.
+
+```
+PR-F: Run-section polish              ─┐
+                                       ├─ ship parallel
+PR-G: Auto week rollover              ─┘
+
+PR-D: Race state-machine writers      ─┐
+PR-E: Recovery phase                  ─┼─ ship sequenced (D first)
+PR-C: Post-race card UX               ─┘
+```
+
+---
+
+## PR-F — Run-section polish
+
+Small follow-ups, independent of any state-machine or rollover work. Shippable first.
+
+### Scope
+
+1. **Fix "This week" labelling bug** in the freeform hero. Replace:
+   ```ts
+   const thisWeek = weeklyData[weeklyData.length - 1] ?? null;
+   ```
+   with:
+   ```ts
+   const thisWeekKey = localWeekKey(new Date());
+   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+   ```
+   When no bucket exists for the current calendar week, hide the "This week" line.
+
+2. **Next-planned-run label with today/tomorrow/Pending detection.** Replace the current:
+   ```tsx
+   <p>Next · {DAY_LABELS[nextStartable.dayIndex]}</p>
+   ```
+   with a derived label:
+   - `nextStartable.date === todayKey` → "Today"
+   - `nextStartable.date === tomorrowKey` → "Tomorrow"
+   - `nextStartable.date < todayKey` → "Pending" (past-planned, still startable but the date has passed)
+   - else → `DAY_LABELS[dayIndex]`
+
+3. **Preserve per-day `userOverride` across `refreshRunSchedule`.** In `useProgram.ts:refreshRunSchedule`, snapshot the existing overrides before regenerating and re-apply after. Pattern:
+   ```ts
+   const overrideSnapshot: Record<number, string> = {};
+   for (const rd of programState.runDays ?? []) {
+     if (rd.userOverride && (rd.type === "run" || rd.type === "both")) {
+       overrideSnapshot[rd.dayIndex] = rd.userOverride;
+     }
+   }
+   // ... generator runs ...
+   runDays = runDays.map((rd) => {
+     const preserved = overrideSnapshot[rd.dayIndex];
+     return preserved ? { ...rd, userOverride: preserved, templateId: preserved } : rd;
+   });
+   ```
+   Drops orphan overrides (where the day became rest); preserves where the day still has a run/both slot.
+
+4. **Pending status line during mode changes.** Reuse the existing `modeError` slot in `ProgrammeRunSection.tsx`:
+   ```tsx
+   {modeChangePending ? (
+     <p className="text-xs text-muted-foreground">Updating your plan…</p>
+   ) : modeError ? (
+     <p className="text-xs" style={{ color: THEME.running }} role="alert">{modeError}</p>
+   ) : null}
+   ```
+
+### Tests
+
+- Pin "this week" filter via `weekKey === currentWeekKey` exact-match.
+- Pin override-preservation round-trip in `useProgramWriters.test.ts`: pre-populate `runDays` with a `userOverride`, fire `refreshRunSchedule`, assert the written runDay still carries it.
+- Snapshot the next-run label derivation across todayKey / tomorrowKey / past-date / future-week cases.
+
+---
+
+## PR-D — Race state-machine writers
+
+The structural foundation. Closes the "paper states" gap that PR-0a → PR-0b-iii left behind.
+
+### Scope
+
+1. **Auto-transition effect in `useProgram` load path.** When `programState` resolves, walk `runDays[]` for an entry matching `date === programState.runPlan.raceGoal.targetDate`. If found and `status === "planned"` and `(today - date) >= 3 days` → write `status: "race_no_show"` via `saveProgram`. Idempotent (subsequent runs find non-planned status and skip).
+
+2. **Make `race_no_show` recoverable.** In `programTypes.ts:LEGAL_TRANSITIONS`:
+   ```diff
+   - race_no_show: [],
+   + race_no_show: ["completed_exact", "completed_modified", "completed_late"],
+   ```
+   In `scheduledRunStatus.ts:TERMINAL_STATUSES`:
+   ```diff
+   - "race_no_show",
+   ```
+   `race_no_show` becomes a "soft terminal" status — recoverable via the existing reconciliation flow.
+
+3. **Extend `completeRunDay` to accept `savedRunId`.** Signature becomes:
+   ```ts
+   completeRunDay(idOrDayIndex: string | number, savedRunId?: string)
+   ```
+   When `savedRunId` present, write `linkedRunId: savedRunId` alongside the status transition. Callers:
+   - `RunSummary.tsx` post-save (line ~681) — has savedRunId, plumb it through
+   - `RunSummary.tsx` reconciliation "Mark scheduled run complete" (line ~865) — same
+   - `DayActionSheet.tsx` "Mark complete (manual)" — no savedRunId, omit the second arg
+
+4. **Recovery-phase entry coupled to completion.** Inside `completeRunDay`, when the transition is `planned → completed_*` AND the target runDay is the race day (i.e. `date === raceGoal.targetDate`) AND the user's mode is `race_prep`, also write:
+   ```ts
+   runPlan.phase: "recovery"
+   runPlan.recoveryEndDate: <distance-scaled>
+   ```
+   See PR-E for the duration table.
+
+5. **Drop `race_completed_unlinked`.** Remove from `ScheduledRunStatus` enum, `LEGAL_TRANSITIONS`, `scheduledRunStatus.ts` helpers (`isScheduledRunReconciliation` returns `false` always — or delete the helper). Clean dead branches in:
+   - `src/components/program/ProgrammeRunSection.tsx`
+   - `src/components/program/DayActionSheet.tsx`
+   - `src/components/home/DayPeekCard.tsx`
+   - `src/lib/trainingResolver.ts` (the `isReconciliation` field in `ResolvedRun`)
+
+6. **Keep `linkedRunId` on the type.** Reserve for future navigation hook (e.g. "tap a completed race in History → jump to RunSummary view"). No consumer yet.
+
+### Tests
+
+- Auto-transition: pre-populate `programState` with a race-day runDay where `date` is 4 days ago and `status: "planned"`. Render hook. Assert `setDoc` was called with that runDay's status updated to `race_no_show`.
+- Recoverability: starting from a `race_no_show` runDay, call `completeRunDay(id, savedRunId)`. Assert the transition succeeds and `linkedRunId` is set.
+- Idempotency: run the load effect twice. Assert the second pass writes nothing.
+- Coupling: when `completeRunDay` transitions a race-day runDay, assert `runPlan.phase === "recovery"` and `recoveryEndDate` is set.
+
+---
+
+## PR-E — Recovery phase
+
+Builds on PR-D's writers. Adds the actual phase semantics.
+
+### Scope
+
+1. **Phase storage.** Add to `RunPlan` type in `programTypes.ts`:
+   ```ts
+   interface RunPlan {
+     mode: "structured" | "race_prep";
+     raceGoal?: { distance: RaceDistance; targetDate: string };
+     totalWeeks?: number;
+     currentWeek?: number;
+     compressed?: boolean;
+     phase?: "recovery";              // NEW
+     recoveryEndDate?: string;        // NEW — "YYYY-MM-DD"
+   }
+   ```
+
+2. **Duration table.** Helper in `runScheduler.ts`:
+   ```ts
+   export function recoveryWeeksForDistance(distance: RaceDistance): number {
+     switch (distance) {
+       case "5k": return 1;
+       case "10k": return 2;
+       case "half": return 3;
+       case "marathon": return 4;
+     }
+   }
+   ```
+
+3. **Recovery template generator.** Add a branch in `refreshRunSchedule` (or a new `scheduleRecoveryWeekV2`):
+   ```ts
+   if (runPlan.phase === "recovery") {
+     // emit all easy_30 entries on the same weekly slots as the user's
+     // weekSchedule, frequency unchanged
+   }
+   ```
+   `runMode` stays `race_prep` during recovery (don't flip to structured). The phase distinguishes "in recovery" from "out of recovery" while preserving the user's original mode for re-entry semantics.
+
+4. **Recovery exit logic in the load effect.** When `today >= recoveryEndDate`, the next render shows the "Recovery ended — what's next?" card variant (PR-C). One-week grace beyond `recoveryEndDate` before silent auto-promotion: at `today >= recoveryEndDate + 7 days`, clear `phase` and `recoveryEndDate`, leaving `runMode` as the user's pre-race value (which is still `race_prep` — but if the user wants to leave race_prep they pick a different mode via the chip row).
+
+### Tests
+
+- Phase entry: complete a 10K race runDay → assert `phase === "recovery"` and `recoveryEndDate === raceGoal.targetDate + 14 days`.
+- Template emission: with `phase === "recovery"` and a 4-run-day weekSchedule, assert generated runDays all have `templateId === "easy_30"`.
+- Phase exit: setting `today` past `recoveryEndDate` triggers the card variant change. At `+7d`, auto-promote (phase cleared).
+- Distance scaling: assert 5K=7d, 10K=14d, half=21d, marathon=28d.
+
+---
+
+## PR-C — Post-race card UX
+
+UI wrap. Depends on PR-D + PR-E writers.
+
+### Scope
+
+Replace the current "Race day has passed" muted banner (`ProgrammeRunSection.tsx:626-642`) with a state-driven card. Four variants:
+
+**Variant 1: Completed → In recovery**
+Trigger: race-day runDay status is `completed_*` AND `runPlan.phase === "recovery"`.
+
+```
+✓  10K — Saturday 14 Sep
+   Race complete. Recovering for the next 2 weeks.
+   Templates this week are all easy.
+
+   [ Skip recovery early →  ]              (small link)
+   [ View race-day run →    ]              (small link, only if linkedRunId)
+```
+
+**Variant 2: Mid-recovery**
+Trigger: `runPlan.phase === "recovery"` AND today between race date + 1 and `recoveryEndDate`.
+
+```
+   Recovering — 12 days left.
+   Easy runs this week.
+
+   [ Skip recovery early →  ]              (small link)
+```
+
+**Variant 3: Recovery ended → choose next**
+Trigger: `runPlan.phase === "recovery"` AND `today >= recoveryEndDate` AND `today < recoveryEndDate + 7 days`.
+
+```
+   Recovery complete.
+   What's next?
+
+   [ Set next race                ]
+   [ Switch to structured running ]
+```
+
+**Variant 4: No-show**
+Trigger: race-day runDay status is `race_no_show`.
+
+```
+?  10K — Saturday 14 Sep
+   We marked this as no-show after three days with no log.
+   Log it now if you actually ran.
+
+   [ Log race now                  ]   ← primary, coral
+   [ Set next race                 ]
+   [ Switch to structured running  ]
+```
+
+### Behaviour
+
+- All "Set next race" buttons open the existing inline race-goal form (already in `ProgrammeRunSection.tsx`).
+- "Switch to structured running" calls existing `handleModeChange("structured")`.
+- "Log race now" navigates to `/run?scheduledRunId=<race-runDay.id>` — uses the existing URL-pinning flow, which PR-D's extended `completeRunDay` will then write `linkedRunId` on completion.
+- "View race-day run" — needs a `linkedRunId` value to navigate; route is `/run/{linkedRunId}` per the existing run detail pattern.
+- "Skip recovery early" sets `runPlan.phase` undefined, clears `recoveryEndDate`, triggers a `refreshRunSchedule` to regenerate normal structured templates.
+- In-card explanation copy directly under the headline — no separate toast.
+
+### Tests
+
+- Each variant renders the right set of buttons given the corresponding state.
+- "Log race now" link includes `?scheduledRunId=<id>`.
+- "Skip recovery early" clears `phase` and `recoveryEndDate` in the next setDoc call.
+- The auto-transition wrote `phase: "recovery"` IS reflected in Variant 1 immediately on next render.
+
+---
+
+## PR-G — Auto week rollover
+
+Independent of post-race work. Closes the "structured / race-prep runDays never rotate" gap.
+
+### Scope
+
+1. **Load-effect detection.** In `useProgram`'s load path, after `programState` resolves:
+   ```ts
+   const detectStaleWeek = (state: ProgramState): boolean => {
+     const currentWeekKey = localWeekKey();
+     const lastKnownWeekKey = state.runDays?.[0]?.weekKey ?? state.weekHistory?.[0]?.weekKey;
+     return !!lastKnownWeekKey && lastKnownWeekKey < currentWeekKey;
+   };
+
+   let rolling = programState;
+   let iterations = 0;
+   while (detectStaleWeek(rolling) && iterations < 12) {
+     rolling = advanceWeek(rolling);
+     iterations++;
+   }
+   if (iterations > 0) {
+     await saveProgram(rolling);
+     toast.success(`Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`);
+   }
+   ```
+   12-iteration cap prevents runaway in pathological cases (user opens app after 3+ months).
+
+2. **Keep the Lift-tab "Advance to Next Week" button** as the "advance early" escape hatch. User who finished all this week's lifts on Wednesday can still tap it to roll forward immediately.
+
+3. **Race progress strip auto-advancement.** With B-loop rolling weekly, `currentWeek` ticks up automatically. The race progress strip ("Week 3 / 8 · Build") stays current without any manual action. Once `currentWeek >= totalWeeks`, the race-day check (PR-D) fires and the post-race card takes over.
+
+### Tests
+
+- Stale-week detection: programState with `runDays[0].weekKey` set to 2 weeks ago. Render hook. Assert `advanceWeek` ran twice and `saveProgram` wrote the result.
+- Iteration cap: programState with `weekKey` 14 weeks ago. Assert iterations capped at 12.
+- No-op when current: `weekKey === localWeekKey()`. Assert no setDoc, no toast.
+- Manual button still works: tap "Advance to Next Week" on the Lift tab → fires `advanceToNextWeek()` directly, bypasses the calendar gate.
+
+### Trade-off honestly noted
+
+A planned-but-never-done Saturday run gets archived in `weekHistory` as `status: "planned"` on the Monday rollover. That's intentional — honest record of "we didn't do this." If the user later logs the run with the Saturday date, the saved run is independent of the archived runDay; the runDay status remains `planned` in history. Acceptable for v1; could be improved by writing `status: "skipped"` (auto) on rollover for non-race past-planned runs, but that's an opinionated take we're deferring.
+
+---
+
+## Decision log
+
+22 decisions from the /grill-me session that produced this plan. Captured so we don't re-litigate.
+
+| # | Decision | Pick |
+|---|---|---|
+| 3 | Where auto-transition lives | Client-side effect in useProgram load |
+| 4 | Is `race_no_show` recoverable? | Yes (α) — add transition arrows, remove from terminal |
+| 5 | Grace period before auto-transition | 3 days |
+| 6 | Scope of auto-transition | Narrow — race-day slot only, by date match |
+| 7 | Keep `race_completed_unlinked`? | Drop entirely |
+| 8 | Keep `linkedRunId`? | Yes — future navigation hook |
+| 9 | How to write `linkedRunId` | Extend `completeRunDay(idOrDayIndex, savedRunId?)` |
+| 10 | Notify user when auto-transition fires? | In-card explanation, no toast |
+| 11 | Post-race card shape | Two-button card + optional secondary link |
+| 12 | Edit race goal mid-plan | Split by edit type: date preserves currentWeek, distance resets |
+| 14 | Recovery: 4th runMode or phase? | Phase only (B) |
+| 15 | Recovery templates | All easy_30, frequency unchanged |
+| 16 | Recovery end behaviour | Prompt via card (C) |
+| 17 | Recovery entry trigger | Auto-enter on completion only (not no-show) |
+| 18 | `useRunningStats` window | Keep 30 days, fix labelling bug |
+| 19 | Next-planned-run label | Today / Tomorrow / Pending detection |
+| 20 | `userOverride` across schedule refresh | Preserve where day still exists |
+| 21 | Chip pending state UX | Status line in existing error slot |
+| 22 | Week rollover | B-loop auto, manual button kept as escape hatch |
+
+(Q1, Q2, Q13 dissolved into later decisions — Q1 led into the state-machine investigation, Q2 became the PR-D / PR-E split, Q13 ("rename Switch to recovery") became Q14 ("what is recovery?").)
+
+---
+
+## What's NOT in scope here
+
+- **The earlier deferred "hybrid week-advancement" debate (atomic vs lift-only).** Dissolves under B-loop auto-rollover — the loop is calendar-driven, not completion-driven, so the gate question becomes moot. The Lift-tab manual button keeps the runMode-aware atomic semantics for users who want to advance early.
+- **Future navigation hook for `linkedRunId`** ("tap completed race in History → jump to RunSummary view"). Field reserved by PR-D; consumer UI deferred until a real use case lands.
+- **Coach analytics on no-show rates / completion rates.** Would require a Cloud Function instead of the client effect; defer until product asks for it.
+- **`recovery` as a user-selectable runMode for ad-hoc recovery** (injury, overreach, life stress). Q14 rejected this; if real demand emerges later, promoting phase → mode is the path.
+- **Distance-scaled recovery template variation** (e.g. one short long run mid-recovery). Q15 picked "all easy" for v1; the duration scaling alone covers the marathon-vs-5K distinction adequately.
