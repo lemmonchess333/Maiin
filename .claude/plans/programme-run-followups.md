@@ -364,6 +364,8 @@ A planned-but-never-done Saturday run gets archived in `weekHistory` as `status:
 | 20 | `userOverride` across schedule refresh | Preserve where day still exists |
 | 21 | Chip pending state UX | Status line in existing error slot |
 | 22 | Week rollover | B-loop auto, manual button kept as escape hatch |
+| 23 | Soft-link reframe (race-day reconciliation) | Drop user-facing linkage; derive completion at render time; race-no-show + recovery triggers stay (PR-J) |
+| 24 | Fell-behind handling | E + (ii) — bottom sheet on next app open after a week where <50% of prescribed runs have saved-run matches. Three choices: shift plan back 1 week / compress remaining weeks / skip-and-continue. Coalesced (one sheet per low-completion week, not per missed run). Matches NRC's adaptive-plan pattern. |
 
 (Q1, Q2, Q13 dissolved into later decisions — Q1 led into the state-machine investigation, Q2 became the PR-D / PR-E split, Q13 ("rename Switch to recovery") became Q14 ("what is recovery?").)
 
