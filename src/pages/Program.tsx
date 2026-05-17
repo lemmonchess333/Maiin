@@ -96,6 +96,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     completeRunDay,
     skipRunDay,
     refreshRunSchedule,
+    skipRecoveryEarly,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const runsTarget = getWeeklyRunTarget(profile);
@@ -674,6 +675,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
             refreshRunSchedule={refreshRunSchedule}
+            skipRecoveryEarly={skipRecoveryEarly}
             onOpenConfigurePlan={openConfigurePlan}
           />
         </div>

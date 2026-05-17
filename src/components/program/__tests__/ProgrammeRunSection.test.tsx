@@ -128,6 +128,7 @@ function commonProps() {
     // half. Tests pass an async no-op since the assertions are on
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
+    skipRecoveryEarly: vi.fn(async () => {}),
     onOpenConfigurePlan: vi.fn(),
   };
 }

@@ -17,7 +17,7 @@ import {
 } from "./programEngine";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -1183,6 +1183,51 @@ export function useProgram() {
     [programState, profile, saveProgram],
   );
 
+  // PR-C: skip-recovery-early writer. Atomic phase clear + mode
+  // flip + run-schedule regenerate. Called from the post-race
+  // card when the user opts out of the soft window. Race is past,
+  // raceGoal preserved (R1 GATED), but the user wants normal
+  // training back NOW instead of waiting for the 7-day grace to
+  // elapse and the recovery-exit effect to fire.
+  //
+  // Why a dedicated writer instead of composing skipRecovery +
+  // handleModeChange + refresh: refreshRunSchedule reads
+  // `programState.runPlan.phase` from its closure. If we cleared
+  // phase via saveProgram and then called refresh, the closure
+  // would lag and refresh would still emit easy_30. By doing the
+  // whole transition in one saveProgram call, we sidestep the
+  // closure-lag problem.
+  const skipRecoveryEarly = useCallback(
+    async () => {
+      if (!programState || !profile) return;
+      if (programState.runPlan?.phase !== "recovery") return;
+
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+      const weekStart = localWeekKey();
+
+      // User skipping early = "I'm done with the race-prep arc,
+      // give me structured training now." Flip profile.runMode and
+      // regenerate runDays with the structured generator.
+      const runDays = scheduleStructuredWeekV2({
+        weekSchedule,
+        weekNumber: programState.weekNumber,
+        weekStart,
+      });
+      const runPlan = { mode: "structured" as const };
+
+      logger.log(
+        `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`,
+      );
+
+      await Promise.all([
+        updateProfile({ runMode: "structured", ...runTargetWriteFields(runTarget) }),
+        saveProgram({ ...programState, runDays, runPlan }),
+      ]);
+    },
+    [programState, profile, saveProgram, updateProfile],
+  );
+
   // Week navigation
   const viewWeek = useCallback((historyIndex: number | null) => {
     setViewingHistoryIndex(historyIndex);
@@ -1217,6 +1262,7 @@ export function useProgram() {
     skipRunDay,
     overrideRunDay,
     refreshRunSchedule,
+    skipRecoveryEarly,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
