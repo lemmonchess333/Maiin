@@ -356,6 +356,28 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - Section headers use 10px uppercase with tracking — this is a deliberate typographic choice, not an error
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
 
+## Reference apps — for /grill-me and /grill-with-docs sessions
+
+**Scope:** this rule activates ONLY during `/grill-me` or `/grill-with-docs` sessions. Don't apply it on regular feature work, code reviews, or bug fixes unless the user explicitly asks "what do competitors do here?"
+
+**The rule (when grilling):** before locking a decision that introduces user-visible abstractions, multi-step flows, or new state machines in our domain, consult what the dominant apps do for the same pattern. Surfacing concepts those apps hide is a sign we're overcomplicating; inventing concepts those apps don't have is fine when there's a Tropos-specific reason, but the bar is "explicitly justified," not "it sounded right."
+
+**Reference apps by domain** (audit summaries live in `CONTEXT.md`):
+
+- **Run tracking + training plans:** Strava, Nike Run Club, Garmin Connect, TrainingPeaks
+- **Food logging:** MyFitnessPal, Cronometer, MacroFactor, Lose It!
+- **Body / lifting tracking:** Hevy, Strong, Fitbod
+- **Weight tracking:** Renpho, Withings, Happy Scale
+- **Social fitness feeds:** Strava, Nike Run Club, Garmin Connect
+- **Streaks + gamification:** Duolingo, Apple Activity rings
+
+**Heuristics during grilling:**
+
+- If 3+ reference apps do X invisibly — Tropos should surface X only when there's an explicit Tropos-specific reason.
+- If 3+ reference apps do X with a one-tap confirmation — match that; don't gold-plate.
+- If 3+ reference apps don't have X at all — strong signal the feature doesn't justify the build.
+- When deviating, write the reason into `CONTEXT.md` so future grills can revisit it.
+
 ## Pre-launch QA backlog
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.

@@ -18,6 +18,32 @@ This document is the plan to close all of these, designed end-to-end in a /grill
 
 ---
 
+## Revision — soft-link reframe (May 17 2026, second /grill-me)
+
+After PR-F, PR-D, PR-E, PR-C, PR-G shipped, a follow-up grill on race-day reconciliation reached a different conclusion than the original plan. The reframe:
+
+**What we built:** persisted `linkedRunId` linkage between saved runs and `runDay` slots, plus a state-machine status (`completed_exact`, `race_no_show`, etc.) tracking whether the linkage exists.
+
+**What the reference apps do** (see `CONTEXT.md` for the full audit): Strava, Nike Run Club, Garmin Connect, and TrainingPeaks all do linkage **invisibly** — date-based at render time, or start-time selection. None surface "link / unlink" as a user concept.
+
+**The revision:** drop user-facing linkage entirely. Compute completion at render time via "saved run with matching date + template exists." This means:
+
+- **DROP:** the planned Q1 "Was this your scheduled race?" RunSummary prompt — out of pattern with reference apps.
+- **DROP:** the planned Q2 late-reconciliation UI (post-race card "Link a past run" button, History overflow) — same reason.
+- **MODIFY:** the planned Q3 enum collapse — go further. Remove `completed_exact / completed_modified / completed_late` entirely. runDay statuses become `planned | skipped | race_no_show | expired`. Completion is derived, never stored.
+- **KEEP:** Q4 "What's next?" card after recovery clears. Independent of linkage.
+- **KEEP:** Q5 mid-recovery mode-change banner. Independent.
+- **KEEP:** Q6 auto-rollover archive + Welcome-back sheet. Modify to use `expired` status from the simplified enum.
+- **NEW:** rip `linkedRunId` writes out of `completeRunDay`. The function becomes `markRunDayDone(idOrDayIndex)` that flips status from `planned` to a non-existent-anymore terminal — replaced by the soft-link computation. Actually: even `markRunDayDone` may not be needed if completion is purely derived. To investigate during implementation.
+
+**Race-day recovery trigger (new mechanism):** today, PR-D's `completeRunDay` enters recovery when the race-day runDay completes. Under soft-link, recovery enters when an effect detects: `profile.runMode === "race_prep"` AND `today >= raceGoal.targetDate` AND `a saved run exists on raceGoal.targetDate with matching distance`. Strava-synced races trigger recovery on next app open after sync.
+
+**Race-no-show trigger:** PR-D's auto-transition stays. The 3-day-grace + no-saved-run check still fires on app open. Independent of linkage.
+
+This is captured as **PR-J — soft-link reframe**, to be sequenced after the current 5 PRs settle and before any new linkage-related work. See `CONTEXT.md` "Linking a saved run to a planned training-plan slot" for the full reference-app audit.
+
+---
+
 ## Suggested PR sequence
 
 PR-F + PR-G can ship in parallel with the PR-D → PR-E → PR-C chain.
