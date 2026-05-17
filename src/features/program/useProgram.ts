@@ -40,8 +40,9 @@ export interface CompletedSessionData {
 import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
+  recoveryWeeksForDistance,
 } from "./runScheduler";
-import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import { localWeekKey, localDateString, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
@@ -298,6 +299,59 @@ export function useProgram() {
     },
     [user],
   );
+
+  // PR-D: race-day auto-transition effect. When the race date has
+  // passed AND the race-day runDay is still `planned`, infer a
+  // no-show and transition the status. Fires on programState
+  // load and on subsequent programState changes (idempotent —
+  // once the status is no-show or completed_*, this skips).
+  //
+  // Conditions:
+  //   - profile.runMode === "race_prep" AND profile.raceGoal exists
+  //   - a runDay with `date === raceGoal.targetDate` AND `status === "planned"`
+  //   - today - 3 days > race date (the 3-day grace period locked in Q5)
+  //
+  // Recoverability: race_no_show → completed_* is legal (per PR-D's
+  // LEGAL_TRANSITIONS update). If the user later logs the race via
+  // RunSummary's reconciliation flow, the slot transitions onward.
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
+
+    const raceDate = profile.raceGoal.targetDate;
+    const raceDay = programState.runDays?.find((rd) => rd.date === raceDate);
+    if (!raceDay) return;
+
+    const status = getScheduledRunStatus(raceDay);
+    if (status !== "planned") return;
+
+    // 3-day grace period — auto-transition only fires when the
+    // race date is more than 3 days in the past. Users who
+    // upload late get the chance to reconcile before we infer
+    // no-show.
+    const gracePassed =
+      new Date().getTime() - parseLocalDate(raceDate).getTime() >
+      3 * 24 * 60 * 60 * 1000;
+    if (!gracePassed) return;
+
+    // Transition gate. transitionStatus(planned, race_no_show) is
+    // legal per LEGAL_TRANSITIONS. Defense in depth — refuses if
+    // the transition table changes underneath us.
+    if (!transitionStatus(status, "race_no_show")) return;
+
+    const updatedRunDays = programState.runDays!.map((rd) =>
+      rd === raceDay ? { ...rd, status: "race_no_show" as ScheduledRunStatus } : rd,
+    );
+
+    logger.log(
+      `[auto-transition] race-day runDay ${raceDay.id ?? raceDay.dayIndex} → race_no_show ` +
+        `(date ${raceDate}, ${Math.floor((new Date().getTime() - parseLocalDate(raceDate).getTime()) / 86400000)} days past)`,
+    );
+
+    saveProgram({ ...programState, runDays: updatedRunDays }).catch((err) => {
+      logger.warn("[auto-transition] save failed", err);
+    });
+  }, [programState, profile, saveProgram]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
@@ -586,7 +640,7 @@ export function useProgram() {
   // writing — completing the same scheduled run twice shouldn't
   // double-fire the "ready for next week" toast.
   const completeRunDay = useCallback(
-    async (idOrDayIndex: string | number) => {
+    async (idOrDayIndex: string | number, savedRunId?: string) => {
       if (!programState?.runDays || !user) return;
 
       // Resolve which runDay we're completing. By-id path takes
@@ -604,9 +658,10 @@ export function useProgram() {
       }
       const targetDay = programState.runDays[targetIndex];
 
-      // Status transition gate. Only the planned → completed_exact
-      // path is wired here; future transitions (skipped, late,
-      // modified) land in P1/P2 alongside their UI surfaces.
+      // Status transition gate. PR-D: race_no_show → completed_*
+      // is now legal (recovery from inferred no-show state via
+      // the reconciliation flow). transitionStatus enforces the
+      // updated LEGAL_TRANSITIONS table.
       // PR-0b-iii: legacy-completed-aware status read via the
       // central helper. A pre-status doc with completed: true +
       // status: undefined resolves to "completed_exact" (not
@@ -627,8 +682,44 @@ export function useProgram() {
         ...targetDay,
         completed: true,
         status: toStatus,
+        // PR-D: write linkedRunId when present so a future
+        // "tap completed run → view saved run" navigation hook
+        // can resolve the connection. Optional — DayActionSheet's
+        // manual "Mark complete" calls without a savedRunId.
+        ...(savedRunId ? { linkedRunId: savedRunId } : {}),
       };
-      const updated: ProgramState = { ...programState, runDays: updatedDays };
+
+      // PR-D: when the just-completed runDay is the race day for a
+      // race_prep user, also enter the recovery phase. Distance-
+      // scaled duration: 5K=1w, 10K=2w, half=3w, marathon=4w.
+      // Auto-enter only on completion (not on no-show — Q17 in
+      // the design grill).
+      let updatedRunPlan = programState.runPlan;
+      const raceGoal = programState.runPlan?.raceGoal;
+      if (
+        profile?.runMode === "race_prep" &&
+        raceGoal &&
+        targetDay.date === raceGoal.targetDate &&
+        programState.runPlan
+      ) {
+        const recoveryWeeks = recoveryWeeksForDistance(
+          raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+        );
+        const recoveryEndDate = localDateString(
+          addLocalDays(parseLocalDate(raceGoal.targetDate), recoveryWeeks * 7),
+        );
+        updatedRunPlan = {
+          ...programState.runPlan,
+          phase: "recovery",
+          recoveryEndDate,
+        };
+      }
+
+      const updated: ProgramState = {
+        ...programState,
+        runDays: updatedDays,
+        runPlan: updatedRunPlan,
+      };
 
       await saveProgram(updated);
 
@@ -643,7 +734,7 @@ export function useProgram() {
         toast.success("All workouts & runs complete! Ready for next week.");
       }
     },
-    [programState, user, saveProgram],
+    [programState, user, saveProgram, profile?.runMode],
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index

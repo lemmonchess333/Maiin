@@ -126,8 +126,6 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
                       <span style={{ color: "hsl(var(--muted-foreground))" }}>Run skipped</span>
                     ) : resolved.run.status === "race_no_show" ? (
                       <span style={{ color: "hsl(var(--muted-foreground))" }}>Race day passed</span>
-                    ) : resolved.run.isReconciliation ? (
-                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Race completed separately</span>
                     ) : (
                       <span>Run scheduled</span>
                     )}

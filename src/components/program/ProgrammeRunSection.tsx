@@ -53,7 +53,6 @@ import { DAY_LABELS, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/sche
 import {
   getScheduledRunStatus,
   isScheduledRunEditable,
-  isScheduledRunReconciliation,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -807,20 +806,6 @@ export default function ProgrammeRunSection({
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
           {runDays.map((rd) => {
             const status = getScheduledRunStatus(rd);
-
-            if (isScheduledRunReconciliation(status)) {
-              return (
-                <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
-                  <span className="text-xs font-medium text-foreground w-8">
-                    {DAY_LABELS[rd.dayIndex]}
-                  </span>
-                  <p className="flex-1 text-xs text-muted-foreground italic">
-                    Race completed separately. Review this in History.
-                  </p>
-                </div>
-              );
-            }
-
             const editable = isScheduledRunEditable(status);
             return (
               <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">

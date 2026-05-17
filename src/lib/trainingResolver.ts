@@ -64,7 +64,6 @@ import {
   getScheduledRunStatus,
   isScheduledRunStartable,
   isScheduledRunTerminal,
-  isScheduledRunReconciliation,
   isScheduledRunCompleted,
 } from "@/lib/scheduledRunStatus";
 
@@ -95,7 +94,6 @@ export interface ResolvedRun {
   status: ScheduledRunStatus | "none";
   isTerminal: boolean;
   isStartable: boolean;
-  isReconciliation: boolean;
   isCompleted: boolean;
   /** Populated only when `isStartable`. Includes `?template=` and
    *  `?scheduledRunId=` when the matched runDay has them. */
@@ -230,7 +228,6 @@ export function resolveTrainingDayForDate(args: {
       status: "none",
       isTerminal: false,
       isStartable: false,
-      isReconciliation: false,
       isCompleted: false,
       startUrl: null,
     };
@@ -250,7 +247,6 @@ export function resolveTrainingDayForDate(args: {
       status,
       isTerminal: isScheduledRunTerminal(status),
       isStartable: startable,
-      isReconciliation: isScheduledRunReconciliation(status),
       isCompleted: isScheduledRunCompleted(status),
       startUrl: startable
         ? "/run" + (params.length ? "?" + params.join("&") : "")

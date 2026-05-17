@@ -602,3 +602,18 @@ function pickRaceTemplateId(distance: "5k" | "10k" | "half" | "marathon"): strin
     case "marathon": return "marathon_race";
   }
 }
+
+/**
+ * PR-D / PR-E: recovery duration by race distance, in whole weeks.
+ * Used by `completeRunDay` to set `runPlan.recoveryEndDate` when a
+ * race-day runDay transitions to completed_*. Standard coach
+ * periodisation: bigger races → longer recovery.
+ */
+export function recoveryWeeksForDistance(distance: "5k" | "10k" | "half" | "marathon"): number {
+  switch (distance) {
+    case "5k": return 1;
+    case "10k": return 2;
+    case "half": return 3;
+    case "marathon": return 4;
+  }
+}
