@@ -42,7 +42,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Footprints, Check, Settings2, Play, ChevronRight, Flag } from "lucide-react";
+import { Footprints, Check, Play, ChevronRight, Flag } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
@@ -52,7 +52,6 @@ import { useAuth } from "@/lib/auth";
 import { DAY_LABELS, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
-  isScheduledRunEditable,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -61,6 +60,7 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
 import DayActionSheet from "./DayActionSheet";
+import RunWeekStrip from "./RunWeekStrip";
 import { localDateString, localWeekKey, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
@@ -1012,51 +1012,16 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── This week's runs (per-day list with template select +
-            Manage) — structured + race_prep with runDays. */}
+      {/* Run7 Q3 + Q8: compact 7-column week strip replaces the legacy
+          7-row dropdown stack (~340pt saved). Tap any column → opens
+          DayActionSheet for that date (canonical edit path per Pgm3).
+          The inline template-swap dropdown was a duplicate of
+          DayActionSheet's same picker. */}
       {currentMode !== "freeform" && runDays.length > 0 && (
-        <div className="p-3 rounded-xl bg-card space-y-1.5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">This week&apos;s runs</p>
-          {runDays.map((rd) => {
-            const status = getScheduledRunStatus(rd);
-            const editable = isScheduledRunEditable(status);
-            return (
-              <div key={rd.id ?? rd.dayIndex} className="flex items-center gap-3 py-1">
-                <span className="text-xs font-medium text-foreground w-8">
-                  {DAY_LABELS[rd.dayIndex]}
-                </span>
-                <select
-                  value={rd.userOverride || rd.templateId}
-                  onChange={(e) => overrideRunDay(rd.id ?? rd.dayIndex, e.target.value)}
-                  disabled={!editable}
-                  aria-label={
-                    editable
-                      ? `Run template for ${DAY_LABELS[rd.dayIndex]}`
-                      : `${status} — template locked`
-                  }
-                  className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-xs border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {RUN_TEMPLATES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.type})
-                    </option>
-                  ))}
-                </select>
-                {rd.completed && <Check className="w-4 h-4 text-green-500 shrink-0" />}
-                {rd.date && (
-                  <button
-                    type="button"
-                    onClick={() => setManageDate(rd.date ?? null)}
-                    aria-label={`Manage ${DAY_LABELS[rd.dayIndex]} run`}
-                    className="p-1.5 -m-1 rounded-md text-muted-foreground active:scale-95"
-                  >
-                    <Settings2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <RunWeekStrip
+          runDays={runDays}
+          onDayTap={(dateKey) => setManageDate(dateKey)}
+        />
       )}
 
       {/* Run7 Q2 + Q6: footer is a single muted-gray text-link.

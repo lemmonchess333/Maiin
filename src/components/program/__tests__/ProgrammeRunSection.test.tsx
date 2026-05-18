@@ -146,24 +146,25 @@ function renderWith(node: React.ReactElement) {
 }
 
 describe("ProgrammeRunSection — runDay rendering", () => {
-  // PR-D: `race_completed_unlinked` passive-copy block removed
-  // alongside the status drop. The per-day list now renders the
-  // standard template select for every non-reconciliation status.
+  // Run7 Q3 + Q8: the legacy 7-row dropdown stack was replaced by a
+  // compact 7-column week strip (RunWeekStrip). The inline template-
+  // swap <select> was a duplicate of DayActionSheet's same picker
+  // and is gone. Edit path is now tap-through → DayActionSheet.
 
-  it("planned rows DO show the template-swap select (control)", () => {
+  it("renders the compact week strip (no inline template <select>)", () => {
     const programState = makeProgramState([makeRunDay({ status: "planned" })]);
     const { container } = renderSection(commonProps(), programState);
-    const selects = container.querySelectorAll("select");
-    expect(selects.length).toBeGreaterThan(0);
-    expect((selects[0] as HTMLSelectElement).disabled).toBe(false);
+    expect(container.querySelectorAll("select").length).toBe(0);
+    expect(screen.getByLabelText(/this week's runs/i)).toBeInTheDocument();
   });
 
-  it("terminal (skipped) rows render a disabled select, not passive copy", () => {
+  it("strikes through terminal runs (skipped) in the strip — no passive copy", () => {
     const programState = makeProgramState([makeRunDay({ status: "skipped" })]);
-    const { container } = renderSection(commonProps(), programState);
-    const selects = container.querySelectorAll("select");
-    expect(selects.length).toBeGreaterThan(0);
-    expect((selects[0] as HTMLSelectElement).disabled).toBe(true);
+    renderSection(commonProps(), programState);
+    // Find the column button for that day and confirm its label is strikethrough.
+    const col = screen.getByRole("button", { name: /Tue.*skipped/i });
+    const label = col.querySelector(".line-through");
+    expect(label).not.toBeNull();
     expect(screen.queryByText(/Race completed separately/i)).not.toBeInTheDocument();
   });
 });
