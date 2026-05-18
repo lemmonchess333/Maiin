@@ -103,18 +103,27 @@ beforeAll(() => {
   completeOnboarding = idx.completeOnboarding;
   admin = require("firebase-admin");
   db = admin.firestore();
-  // [DEBUG-cfg] capture the admin/db identity at test-setup time
-  console.log("[DEBUG-cfg] test beforeAll", JSON.stringify({
-    appProjectId: admin.app().options.projectId || "(unset)",
-    dbProjectId: db._projectId || db.projectId || "(unset)",
-    dbDatabaseId: db._databaseId || "(unset)",
-    envGCLOUD: process.env.GCLOUD_PROJECT || "(unset)",
-    envGOOGLE_CLOUD: process.env.GOOGLE_CLOUD_PROJECT || "(unset)",
-    envFIREBASE_CONFIG: process.env.FIREBASE_CONFIG ? "(set)" : "(unset)",
-    envFIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "(unset)",
-    adminAppsCount: admin.apps.length,
-  }));
 });
+
+// Firestore emulator under CI load occasionally returns
+// batch.commit() success a few milliseconds before the
+// just-written doc is visible to a fresh .get() from the same
+// client. Diagnosed via [DEBUG-cfg] logs on CI run 26028363406:
+// every projectId / path / writeResultCount matched, the only
+// variable was timing (~30ms between commit success and first
+// successful read on the run where logs were present, < that on
+// the run where they weren't). Production Firestore is strongly
+// consistent — this defensive poll only matters against the
+// emulator. Three attempts at 50ms intervals = 150ms ceiling, which
+// is still under the 30s vitest timeout by a large margin.
+async function getDocSettled(ref, attempts = 3) {
+  for (let i = 0; i < attempts - 1; i++) {
+    const doc = await ref.get();
+    if (doc.exists) return doc;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return ref.get();
+}
 
 async function clearTestUserState() {
   // Wipe rate-limit entries for both callables so each test starts
@@ -228,16 +237,7 @@ suite("completeOnboarding — emulator integration", () => {
     expect(result).toMatchObject({ success: true });
 
     // Profile doc — should exist with ownership-forced fields.
-    const userRefForRead = db.collection("users").doc(TEST_UID);
-    const userDoc = await userRefForRead.get();
-    // [DEBUG-cfg] read-side state — compare with callable pre-commit log
-    console.log("[DEBUG-cfg] test post-call read", JSON.stringify({
-      readPath: userRefForRead.path,
-      readExists: userDoc.exists,
-      readDataKeys: userDoc.exists ? Object.keys(userDoc.data() || {}).sort() : null,
-      readDbProjectId: db._projectId || db.projectId || "(unset)",
-      result,
-    }));
+    const userDoc = await getDocSettled(db.collection("users").doc(TEST_UID));
     expect(userDoc.exists).toBe(true);
     const userData = userDoc.data();
     expect(userData.uid).toBe(TEST_UID);
@@ -248,12 +248,9 @@ suite("completeOnboarding — emulator integration", () => {
     expect(userData.weekScheduleVersion).toBe(1);
 
     // programState doc — committed in the same batch.
-    const psDoc = await db
-      .collection("users")
-      .doc(TEST_UID)
-      .collection("programState")
-      .doc("current")
-      .get();
+    const psDoc = await getDocSettled(
+      db.collection("users").doc(TEST_UID).collection("programState").doc("current"),
+    );
     expect(psDoc.exists).toBe(true);
     const psData = psDoc.data();
     expect(psData.programSchemaVersion).toBe(2);

@@ -382,24 +382,7 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
       batch.set(userRef, profileData);
     }
     batch.set(programRef, programState);
-    // [DEBUG-cfg] pre-commit state — verifying projectId / db identity / paths
-    console.log("[DEBUG-cfg] callable pre-commit", JSON.stringify({
-      handlerUid: uid,
-      authUid: context.auth && context.auth.uid,
-      userRefPath: userRef.path,
-      programRefPath: programRef.path,
-      appProjectId: admin.app().options.projectId || "(unset)",
-      dbProjectId: db._projectId || db.projectId || "(unset)",
-      dbDatabaseId: db._databaseId || "(unset)",
-      existing: existing.exists,
-      profileDataKeys: Object.keys(profileData).sort(),
-    }));
-    const writeResults = await batch.commit();
-    // [DEBUG-cfg] post-commit — confirm writes succeeded
-    console.log("[DEBUG-cfg] callable post-commit", JSON.stringify({
-      writeResultCount: writeResults.length,
-      writeTimes: writeResults.map((r) => r.writeTime && r.writeTime.toDate().toISOString()),
-    }));
+    await batch.commit();
 
     return {success: true};
   } catch (err) {
