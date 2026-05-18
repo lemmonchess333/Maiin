@@ -26,9 +26,10 @@
  *   - lg   52px — hero close (e.g. ProModal hero close)
  */
 import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 import type { ButtonVariant } from "./Button";
 
 export type IconButtonSize = "sm" | "md" | "lg";
@@ -72,6 +73,15 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline:
     "bg-transparent text-foreground border border-border hover:bg-muted",
+  sport: "text-white",
+  "sport-tinted": "",
+};
+
+// Mirrors Button.tsx — see comment there about why sport variants use
+// inline style rather than Tailwind classes.
+const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
+  sport: { backgroundColor: THEME.running },
+  "sport-tinted": { backgroundColor: `${THEME.running}1A`, color: THEME.running },
 };
 
 /**
@@ -100,11 +110,13 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       icon,
       className,
       type,
+      style,
       ...rest
     },
     ref,
   ) {
     const isInteractive = !disabled && !loading;
+    const variantStyle = VARIANT_INLINE_STYLES[variant];
     return (
       <button
         ref={ref}
@@ -117,6 +129,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
           SIZE_CLASSES[size],
           className,
         )}
+        style={variantStyle ? { ...variantStyle, ...style } : style}
         {...rest}
       >
         {loading ? (

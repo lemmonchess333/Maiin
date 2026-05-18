@@ -23,7 +23,7 @@ import { freeformPlanMetadata, type RunPlanMetadata } from '@/lib/runPlanMetadat
 export type { ActivityType };
 
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = { Footprints, PersonStanding, Zap, RefreshCw, Route, Flag, Dumbbell, Headphones };
 
 export interface RunConfig {
   activityType: ActivityType;
