@@ -103,7 +103,39 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 ---
 
-## When to update this doc
+## Visual vocabulary
+
+Sharpened during /grill-with-docs sessions on visual / layout decisions. These are precise definitions for terms that appeared ambiguous in CLAUDE.md or the codebase.
+
+### Contextual card
+
+A card whose CONTENT is sport-specific AND ACTIONABLE — not a card that merely lives within a sport-themed section.
+
+- **Coral-tinted**: "Today's run" CTA on Home — it IS the run action.
+- **NOT coral-tinted**: the outer "Run training" container on Programme — it's adjacent to run content, not the run action itself.
+
+Disambiguates CLAUDE.md's "Running = coral. These two colours appear in calendar dots, section labels, icon tints, and contextual cards" — which the codebase previously read as "any card in run section." The sharper definition prevents coral overuse where every card-in-run-section took a coral fill.
+
+### Coral discipline (run section)
+
+Coral (#D4637A) appears as semantic accent in the Run section on:
+
+- Run icon tints
+- Section labels (10px uppercase tracking)
+- Start CTAs (semantic: Start = start running)
+- Active mode chip when the user is in run mode
+
+Coral does NOT appear as:
+
+- Large card fills
+- Navigation links ("Change plan ›" footer is muted-gray, not coral)
+- Save / general action buttons (those use brand-purple)
+
+Equivalent discipline applies for purple (lifting) — accent not fill.
+
+---
+
+
 
 - After a /grill-me or /grill-with-docs session that touched feature design
 - When a competitor changes a relevant pattern (and the change is material)
