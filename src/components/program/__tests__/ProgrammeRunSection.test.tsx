@@ -731,6 +731,92 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
   });
 });
 
+// Run7 Q6 + Q10 — banners hoisted ABOVE the section label, severity-
+// ordered, with the shared <Banner> primitive. State-derived banners
+// (raceCompressed, inRecovery) are non-dismissible; action-prompting
+// raceElapsed is dismissible per-week via localStorage.
+describe("ProgrammeRunSection — Q10 banner system", () => {
+  beforeEach(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.clear();
+    }
+  });
+
+  it("compressed-plan banner uses warning severity (amber) and is not dismissible", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-01-01" },
+        totalWeeks: 12,
+        currentWeek: 0,
+        compressed: true,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    const banner = screen.getByRole("alert");
+    expect(banner.textContent).toContain("Plan is compressed");
+    expect(
+      screen.queryByRole("button", { name: /dismiss/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("race-elapsed banner is dismissible and persists via localStorage for the week", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    // Past race date with no recovery / no-show state → triggers
+    // the legacy elapsed fallback.
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    const { unmount } = renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    const dismissBtn = screen.getByRole("button", {
+      name: /Dismiss race elapsed banner/i,
+    });
+    expect(screen.getByText(/Race day has passed/i)).toBeInTheDocument();
+    fireEvent.click(dismissBtn);
+    // Hidden after dismiss.
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    // Remount → still hidden (localStorage persisted).
+    unmount();
+    renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+  });
+
+  it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "structured",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+    expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Configure plan$/i }),
+    ).toBeInTheDocument();
+  });
+});
+
 // Reset the useRunningStats mock between tests so the freeform-hero
 // cases see fresh fixture data each time.
 function beforeEachReset() {

@@ -61,6 +61,7 @@ import { haptic } from "@/lib/haptic";
 import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
+import { Banner } from "@/components/ui/Banner";
 import { localDateString, localWeekKey, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
@@ -179,6 +180,33 @@ export default function ProgrammeRunSection({
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(profile.raceGoal?.targetDate ?? "");
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
+
+  // Run7 Q10 — per-week dismissibility for action-prompting banners.
+  // raceElapsed is the only banner that's both action-prompting AND
+  // dismissible per the spec (state-derived recovery + compressed
+  // stay visible; isNoShow + recoveryEnded host critical actions and
+  // shouldn't be dismissed either). Dismissal is keyed by this week's
+  // localWeekKey so each Monday rollover the banner re-surfaces if
+  // the race is still elapsed.
+  const thisWeekKeyForDismissal = useMemo(() => localWeekKey(new Date()), []);
+  const raceElapsedDismissKey = `tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
+  const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(raceElapsedDismissKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+  function dismissRaceElapsedBanner() {
+    setRaceElapsedDismissed(true);
+    try {
+      window.localStorage.setItem(raceElapsedDismissKey, "1");
+    } catch {
+      // localStorage unavailable / quota — swallow; the in-memory
+      // state still hides the banner for this session.
+    }
+  }
 
   const currentMode = profile.runMode ?? "freeform";
   // Clear visual-intent override once the profile catches up. Keeps
@@ -502,6 +530,154 @@ export default function ProgrammeRunSection({
        separated by vertical spacing alone. Run sub-tab is the contextual
        anchor; no need for a second container chrome around it. */
     <section aria-label="Run training" className="space-y-4">
+      {/* Run7 Q6 + Q10: banners stack ABOVE the section label, in
+          severity-urgency order (warnings before info). Each uses the
+          shared <Banner> primitive — info = coral 6%, warning = amber 8%,
+          no error variant (errors are toasts). State-derived banners
+          (inRecovery, raceCompressed) stay non-dismissible; raceElapsed
+          is action-prompting and dismissible per-week via localStorage. */}
+
+      {/* Warning: race day has passed (legacy elapsed fallback).
+          Dismissible per-week — once the user acknowledges, it stays
+          hidden until Monday rollover when the dismissal key resets. */}
+      {currentMode === "race_prep" && raceGoal && raceElapsed
+        && !inRecovery && !recoveryEnded && !isNoShow
+        && !raceElapsedDismissed && (
+        <Banner
+          variant="warning"
+          title="Race day has passed"
+          description={
+            <>
+              {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Switch to structured or set a new race goal via the chip row.
+            </>
+          }
+          onDismiss={dismissRaceElapsedBanner}
+          dismissLabel="Dismiss race elapsed banner"
+        />
+      )}
+
+      {/* Warning: plan compressed (state-derived — visibility tracks
+          runPlan.compressed; user can't dismiss). */}
+      {currentMode === "race_prep" && raceGoal && !raceElapsed && raceCompressed && (
+        <Banner
+          variant="warning"
+          title="Plan is compressed"
+          description="Your target date is sooner than the ideal build for this distance, so we've trimmed interval work and shortened the long-run progression to keep the plan safe."
+        />
+      )}
+
+      {/* Warning: race-day no-show. Hosts critical actions (Log race
+          now / Set next race / Switch to structured) so the banner
+          itself is the affordance — not dismissible. */}
+      {currentMode === "race_prep" && raceGoal && isNoShow && (
+        <Banner
+          variant="warning"
+          title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
+          description="We marked this as no-show after 3 days with no log. Log it now if you actually ran."
+          action={
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (raceDayRunDay?.id) {
+                    haptic();
+                    navigate(`/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`);
+                  }
+                }}
+                className="w-full py-2 rounded-lg text-xs font-bold text-white"
+                style={{ background: THEME.running }}
+              >
+                Log race now
+              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRaceForm(true)}
+                  className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+                >
+                  Set next race
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("structured")}
+                  className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+                >
+                  Switch to structured
+                </button>
+              </div>
+            </div>
+          }
+        />
+      )}
+
+      {/* Warning: malformed plan (non-freeform mode with no scheduled
+          runs and no race goal). Action-prompting but critical —
+          dismissing would hide the only Configure plan entry point. */}
+      {currentMode !== "freeform" && runsTarget === 0 && !raceGoal && (
+        <Banner
+          variant="warning"
+          title="Configure your runs"
+          description={`You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`}
+          action={
+            <button
+              type="button"
+              onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
+              className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+            >
+              Configure plan
+            </button>
+          }
+        />
+      )}
+
+      {/* Info: recovery complete. Hosts critical "Set next race" /
+          "Switch to structured" prompts — non-dismissible. */}
+      {currentMode === "race_prep" && raceGoal && recoveryEnded && (
+        <Banner
+          variant="info"
+          title="Recovery complete"
+          description="What's next?"
+          action={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRaceForm(true)}
+                className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+              >
+                Set next race
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipRecoveryEarly}
+                className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+              >
+                Switch to structured
+              </button>
+            </div>
+          }
+        />
+      )}
+
+      {/* Info: in recovery (state-derived — visibility tracks
+          runPlan.phase === "recovery"; user can't dismiss). */}
+      {currentMode === "race_prep" && raceGoal && inRecovery && (
+        <Banner
+          variant="info"
+          title={`Recovering — ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
+          description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
+          action={
+            <button
+              type="button"
+              onClick={handleSkipRecoveryEarly}
+              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95"
+              style={{ color: THEME.running }}
+            >
+              Skip recovery early &rsaquo;
+            </button>
+          }
+        />
+      )}
+
       {/* Run7 Q6: section label as 10px uppercase a11y h2, RunningNavIcon
           inline left, coral icon + muted-foreground label. */}
       <header className="flex items-center gap-1.5">
@@ -731,182 +907,11 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── Hero: non-freeform with 0 runs (malformed plan) ─────── */}
-      {currentMode !== "freeform" && runsTarget === 0 && !raceGoal && (
-        <div className="p-3 rounded-xl bg-card border border-border/50 space-y-2 text-center">
-          <Footprints className="w-6 h-6 mx-auto mb-1" style={{ color: THEME.running }} />
-          <p className="text-sm font-medium">Configure your runs</p>
-          <p className="text-xs text-muted-foreground">
-            You&apos;re on {modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.
-          </p>
-          <button
-            type="button"
-            onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
-            className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
-          >
-            Configure plan
-          </button>
-        </div>
-      )}
-
       {/* PR-B4: the "Race prep not set up yet → Set race goal" stub
           PR-0d added is replaced by the PR-B3 inline form above —
           it auto-opens when currentMode is race_prep but raceGoal
           is missing, and is also reachable from the Race Prep chip
           tap or the "Edit race" button on the progress card. */}
-
-      {/* ── PR-C: Post-race card. State-driven variants:
-            inRecovery     → Recovering N days left + Skip-early link
-            recoveryEnded  → Recovery complete. What's next? + Set next race / Switch to structured
-            noShow         → We marked this as no-show + Log race now / Set next race / Switch to structured
-            Legacy elapsed → Race day has passed (fallback for old elapsed
-                             races whose recovery already cleared) */}
-      {currentMode === "race_prep" && raceGoal && inRecovery && (
-        <div
-          className="p-3 rounded-xl text-xs"
-          style={{
-            background: `${THEME.running}10`,
-            border: `1px solid ${THEME.running}30`,
-            color: "hsl(var(--foreground))",
-          }}
-        >
-          <p className="font-semibold mb-0.5">
-            Recovering &mdash; {recoveryDaysLeft} day{recoveryDaysLeft === 1 ? "" : "s"} left
-          </p>
-          <p style={{ color: "hsl(var(--muted-foreground))" }}>
-            Easy runs this week. Templates auto-set to easy_30 until recovery ends.
-          </p>
-          <button
-            type="button"
-            onClick={handleSkipRecoveryEarly}
-            className="inline-flex items-center gap-0.5 mt-1 text-xs font-semibold active:scale-95"
-            style={{ color: THEME.running }}
-          >
-            Skip recovery early &rsaquo;
-          </button>
-        </div>
-      )}
-
-      {currentMode === "race_prep" && raceGoal && recoveryEnded && (
-        <div
-          className="p-3 rounded-xl text-xs"
-          style={{
-            background: `${THEME.running}10`,
-            border: `1px solid ${THEME.running}30`,
-            color: "hsl(var(--foreground))",
-          }}
-        >
-          <p className="font-semibold mb-0.5">Recovery complete</p>
-          <p style={{ color: "hsl(var(--muted-foreground))" }}>What&apos;s next?</p>
-          <div className="flex gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => setShowRaceForm(true)}
-              className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
-            >
-              Set next race
-            </button>
-            <button
-              type="button"
-              onClick={handleSkipRecoveryEarly}
-              className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
-            >
-              Switch to structured
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentMode === "race_prep" && raceGoal && isNoShow && (
-        <div
-          className="p-3 rounded-xl text-xs"
-          style={{
-            background: "hsl(var(--muted) / 0.5)",
-            border: "1px solid hsl(var(--border))",
-            color: "hsl(var(--foreground))",
-          }}
-        >
-          <p className="font-semibold mb-0.5">
-            {raceGoal.distance.toUpperCase()} &mdash; {raceGoal.targetDate}
-          </p>
-          <p style={{ color: "hsl(var(--muted-foreground))" }}>
-            We marked this as no-show after 3 days with no log. Log it now if you actually ran.
-          </p>
-          <div className="flex flex-col gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (raceDayRunDay?.id) {
-                  haptic();
-                  navigate(`/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`);
-                }
-              }}
-              className="w-full py-2 rounded-lg text-xs font-bold shadow-sm"
-              style={{
-                background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
-                color: "white",
-              }}
-            >
-              Log race now
-            </button>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowRaceForm(true)}
-                className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
-              >
-                Set next race
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange("structured")}
-                className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
-              >
-                Switch to structured
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Legacy elapsed fallback — race date passed, no recovery
-          state, no no-show. e.g. a long-ago race where recovery
-          already cleared past +7d grace. Keeps the original muted
-          banner so users aren't suddenly looking at a startable
-          race-prep tab for a race that finished months ago. */}
-      {currentMode === "race_prep" && raceGoal && raceElapsed && !inRecovery && !recoveryEnded && !isNoShow && (
-        <div
-          className="p-3 rounded-xl text-xs"
-          style={{
-            background: "hsl(var(--muted) / 0.5)",
-            border: "1px solid hsl(var(--border))",
-            color: "hsl(var(--foreground))",
-          }}
-        >
-          <p className="font-semibold mb-0.5">Race day has passed</p>
-          <p style={{ color: "hsl(var(--muted-foreground))" }}>
-            {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Switch to structured or set a new race goal via the chip row.
-          </p>
-        </div>
-      )}
-
-      {/* ── Hero: race_prep compressed banner (promoted) ────────── */}
-      {currentMode === "race_prep" && raceGoal && !raceElapsed && raceCompressed && (
-        <div
-          className="p-3 rounded-xl text-xs"
-          style={{
-            background: `${THEME.warning ?? "#D9884E"}12`,
-            border: `1px solid ${THEME.warning ?? "#D9884E"}40`,
-            color: "hsl(var(--foreground))",
-          }}
-        >
-          <p className="font-semibold mb-0.5">Plan is compressed</p>
-          <p style={{ color: "hsl(var(--muted-foreground))" }}>
-            Your target date is sooner than the ideal build for this distance, so we&apos;ve trimmed
-            interval work and shortened the long-run progression to keep the plan safe.
-          </p>
-        </div>
-      )}
 
       {/* ── Hero: race_prep progress card (promoted) ──────────────
           Run7 Q5: the race-goal form collapses to a one-line summary
