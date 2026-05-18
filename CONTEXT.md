@@ -18,6 +18,7 @@ Update when a /grill-me session crystallises new vocabulary, when we adopt or re
 - **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
 - **expired** *(proposed, not shipped — Q6)* — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
 - **softlink** *(proposed, not shipped — Q7 revision)* — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
+- **Ad-hoc run launcher** — the run-type picker accessed via the **footprint icon** on the Programme page (top-right). Lets the user start a run on demand without committing to a programmed plan. Run types: Free Run, Easy Run, Tempo Run, Intervals, Long Run, Race (outdoor GPS); Treadmill, Guided Run (other). **Freeform mode shares this same launcher surface** — Freeform mode's "Go" CTA opens the same Choose-run-type picker. Distinct from Structured / Race Prep modes which surface their pre-scheduled runs day-by-day in ProgrammeRunSection. The ad-hoc launcher is the single canonical entry point for unplanned runs, regardless of which mode the user is in.
 
 ### Lifting (for cross-reference)
 
