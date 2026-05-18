@@ -328,7 +328,13 @@ export default function ProgrammeRunSection({
     setModeChangePending(true);
     try {
       if (newMode === "freeform") {
-        await updateProfile({ runMode: "freeform" });
+        // throwOnError so the catch below actually fires on a failed
+        // profile write — without it, updateProfile swallows the error,
+        // surfaces a generic toast from auth.tsx, and execution falls
+        // through to refreshRunSchedule which then writes runDays based
+        // on the OLD profile.runMode (state divergence). See Run7 Q9
+        // pin in the followups plan.
+        await updateProfile({ runMode: "freeform" }, { throwOnError: true });
         try {
           await refreshRunSchedule({ weekSchedule: profile.weekSchedule });
         } catch (e) {
@@ -344,10 +350,13 @@ export default function ProgrammeRunSection({
         // structured
         const current = getWeeklyRunTarget(profile);
         const target = current < 1 ? 3 : current;
-        await updateProfile({
-          runMode: "structured",
-          ...runTargetWriteFields(target),
-        });
+        await updateProfile(
+          {
+            runMode: "structured",
+            ...runTargetWriteFields(target),
+          },
+          { throwOnError: true },
+        );
         try {
           await refreshRunSchedule({
             weekSchedule: profile.weekSchedule,
@@ -368,7 +377,11 @@ export default function ProgrammeRunSection({
       }
       setShowRaceForm(false);
     } catch (e) {
-      // updateProfile threw — runMode unchanged, no need to roll back.
+      // updateProfile threw (throwOnError) — profile.runMode is
+      // unchanged, so currentMode + the chip selection naturally
+      // reflect the last-saved state. We just need to surface the
+      // failure inline; the generic auth.tsx toast is suppressed
+      // by throwOnError.
       logger.error("[handleModeChange] updateProfile failed", e);
       setModeError("Couldn't change mode. Check your connection and try again.");
     } finally {
@@ -413,10 +426,18 @@ export default function ProgrammeRunSection({
     setSavingRaceGoal(true);
     setModeError(null);
     try {
-      await updateProfile({
-        runMode: "race_prep",
-        raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
-      });
+      await updateProfile(
+        {
+          runMode: "race_prep",
+          raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
+        },
+        // throwOnError so the catch below fires on a failed write and
+        // we surface a single specific toast instead of the generic
+        // auth.tsx one. Also short-circuits refreshRunSchedule below
+        // — without throwing, a failed runMode write would still let
+        // the plan regen run against the OLD runMode. See Run7 Q9.
+        { throwOnError: true },
+      );
       const target3 = getWeeklyRunTarget(profile) || 3;
       try {
         await refreshRunSchedule({

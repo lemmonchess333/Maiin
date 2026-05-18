@@ -420,7 +420,8 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
     });
 
-    // updateProfile called with mode + target (default 3)
+    // updateProfile called with mode + target (default 3), plus
+    // throwOnError so a failed write skips refreshRunSchedule.
     expect(mockUpdateProfile).toHaveBeenCalledTimes(1);
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -428,6 +429,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         weeklyRunDaysTarget: 3,
         weeklyRunsTarget: 3,
       }),
+      expect.objectContaining({ throwOnError: true }),
     );
     // refreshRunSchedule called with the override target
     expect(props.refreshRunSchedule).toHaveBeenCalledWith(
@@ -458,6 +460,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ runMode: "freeform" }),
+      expect.objectContaining({ throwOnError: true }),
     );
     expect(props.refreshRunSchedule).toHaveBeenCalled();
     expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
@@ -532,6 +535,74 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       "programme-race-target-date",
     ) as HTMLInputElement | null;
     expect(dateInput?.value).toBe("2027-09-15");
+  });
+
+  // Regression: pre-fix, handleModeChange called updateProfile without
+  // throwOnError, so a failed write surfaced the generic auth.tsx toast
+  // AND the code continued past the rejected write into
+  // refreshRunSchedule — writing run-day schedules against the OLD
+  // runMode (state divergence). Run7 Q9 prescribes the fix: throwOnError
+  // so the local catch fires and refreshRunSchedule never runs.
+  it("updateProfile failure: skips refreshRunSchedule and surfaces inline error", async () => {
+    mockUpdateProfile.mockImplementationOnce(async () => {
+      throw new Error("firestore-unavailable");
+    });
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    });
+
+    // throwOnError was honoured: refreshRunSchedule did NOT run, so the
+    // OLD runMode is never used to regenerate the schedule.
+    expect(props.refreshRunSchedule).not.toHaveBeenCalled();
+    // Chip stays on Freeform (selection derives from profile.runMode,
+    // which is unchanged on failure).
+    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-pressed")).toBe("true");
+    // Inline error surfaces.
+    expect(
+      screen.getByText(/Couldn't change mode\. Check your connection/i),
+    ).toBeInTheDocument();
+  });
+
+  it("updateProfile call passes throwOnError so generic auth toast is suppressed", async () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    });
+
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ runMode: "structured" }),
+      expect.objectContaining({ throwOnError: true }),
+    );
   });
 
   it("double-tap guard: chips are disabled while a mode change is in flight", () => {
