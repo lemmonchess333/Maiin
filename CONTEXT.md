@@ -18,6 +18,7 @@ Update when a /grill-me session crystallises new vocabulary, when we adopt or re
 - **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
 - **expired** *(proposed, not shipped — Q6)* — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
 - **softlink** *(proposed, not shipped — Q7 revision)* — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
+- **Ad-hoc run launcher** — the run-type picker accessed via the **footprint icon** on the Programme page (top-right). Lets the user start a run on demand without committing to a programmed plan. Run types: Free Run, Easy Run, Tempo Run, Intervals, Long Run, Race (outdoor GPS); Treadmill, Guided Run (other). **Freeform mode shares this same launcher surface** — Freeform mode's "Go" CTA opens the same Choose-run-type picker. Distinct from Structured / Race Prep modes which surface their pre-scheduled runs day-by-day in ProgrammeRunSection. The ad-hoc launcher is the single canonical entry point for unplanned runs, regardless of which mode the user is in.
 
 ### Lifting (for cross-reference)
 
@@ -103,7 +104,39 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 ---
 
-## When to update this doc
+## Visual vocabulary
+
+Sharpened during /grill-with-docs sessions on visual / layout decisions. These are precise definitions for terms that appeared ambiguous in CLAUDE.md or the codebase.
+
+### Contextual card
+
+A card whose CONTENT is sport-specific AND ACTIONABLE — not a card that merely lives within a sport-themed section.
+
+- **Coral-tinted**: "Today's run" CTA on Home — it IS the run action.
+- **NOT coral-tinted**: the outer "Run training" container on Programme — it's adjacent to run content, not the run action itself.
+
+Disambiguates CLAUDE.md's "Running = coral. These two colours appear in calendar dots, section labels, icon tints, and contextual cards" — which the codebase previously read as "any card in run section." The sharper definition prevents coral overuse where every card-in-run-section took a coral fill.
+
+### Coral discipline (run section)
+
+Coral (#D4637A) appears as semantic accent in the Run section on:
+
+- Run icon tints
+- Section labels (10px uppercase tracking)
+- Start CTAs (semantic: Start = start running)
+- Active mode chip when the user is in run mode
+
+Coral does NOT appear as:
+
+- Large card fills
+- Navigation links ("Change plan ›" footer is muted-gray, not coral)
+- Save / general action buttons (those use brand-purple)
+
+Equivalent discipline applies for purple (lifting) — accent not fill.
+
+---
+
+
 
 - After a /grill-me or /grill-with-docs session that touched feature design
 - When a competitor changes a relevant pattern (and the change is material)
