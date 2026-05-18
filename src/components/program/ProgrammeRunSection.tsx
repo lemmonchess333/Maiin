@@ -40,7 +40,7 @@
  *     the Running step (escape hatch, not the only path).
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Footprints, Check, Settings2, Play, ChevronRight, Flag } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -162,6 +162,12 @@ export default function ProgrammeRunSection({
   //     across mode exits and rehydrate on form open).
   const [modeChangePending, setModeChangePending] = useState(false);
   const [modeError, setModeError] = useState<string | null>(null);
+  // Run7 Q9 — visual-intent state. The chip + description update
+  // immediately on tap so the user sees their intent reflected before
+  // the profile write completes. Cleared automatically when
+  // currentMode catches up (success) or in handleModeChange's catch
+  // block (failure → revert to last-saved).
+  const [intentMode, setIntentMode] = useState<RunMode | null>(null);
   // Auto-open the form when the user is in race_prep but missing
   // a goal (the malformed state PR-0d's stub used to handle). For
   // any other entry path the user taps the Race Prep chip first.
@@ -175,6 +181,14 @@ export default function ProgrammeRunSection({
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
 
   const currentMode = profile.runMode ?? "freeform";
+  // Clear visual-intent override once the profile catches up. Keeps
+  // the chip in sync with last-saved state without needing the
+  // handler success path to reset intent manually.
+  useEffect(() => {
+    if (intentMode && intentMode === currentMode) {
+      setIntentMode(null);
+    }
+  }, [intentMode, currentMode]);
   const raceGoal = programState?.runPlan?.raceGoal;
   const raceCompressed = !!programState?.runPlan?.compressed;
   // Memoised: `programState?.runDays ?? []` produces a fresh array
@@ -322,9 +336,14 @@ export default function ProgrammeRunSection({
     // race-form / errors from a previous attempt).
     if (newMode === currentMode) {
       setShowRaceForm(false);
+      setIntentMode(null);
       return;
     }
 
+    // Run7 Q9 — set visual intent BEFORE the await so the chip +
+    // description reflect the user's choice during the in-flight
+    // write. The catch block reverts it on failure.
+    setIntentMode(newMode);
     setModeChangePending(true);
     try {
       if (newMode === "freeform") {
@@ -378,11 +397,12 @@ export default function ProgrammeRunSection({
       setShowRaceForm(false);
     } catch (e) {
       // updateProfile threw (throwOnError) — profile.runMode is
-      // unchanged, so currentMode + the chip selection naturally
-      // reflect the last-saved state. We just need to surface the
-      // failure inline; the generic auth.tsx toast is suppressed
+      // unchanged. Clear the visual-intent override so the chip +
+      // description revert to last-saved state per Run7 Q9. Surface
+      // the failure inline; the generic auth.tsx toast is suppressed
       // by throwOnError.
       logger.error("[handleModeChange] updateProfile failed", e);
+      setIntentMode(null);
       setModeError("Couldn't change mode. Check your connection and try again.");
     } finally {
       setModeChangePending(false);
@@ -466,56 +486,59 @@ export default function ProgrammeRunSection({
     }
   }
 
-  // Chip-selected state: while showRaceForm is open from a
-  // non-race_prep mode the user has visually picked race_prep but
-  // the write is pending the form. Reflect that selection on the
-  // chip so the affordance doesn't snap back to the previous mode.
-  const selectedMode: RunMode = showRaceForm ? "race_prep" : currentMode;
+  // Chip-selected state — Run7 Q9 visual-intent layering:
+  //   1. showRaceForm: race_prep wins (form open from a non-race_prep
+  //      mode visually counts as race_prep selection).
+  //   2. intentMode: in-flight optimistic state for freeform / structured
+  //      — updates immediately on chip tap before the profile write
+  //      resolves. Reverts on save failure (handler catch block).
+  //   3. currentMode: last-saved profile.runMode.
+  const selectedMode: RunMode = showRaceForm
+    ? "race_prep"
+    : (intentMode ?? currentMode);
 
   return (
-    <section
-      aria-label="Run training"
-      className="rounded-2xl p-4 space-y-4"
-      style={{
-        background: `${THEME.running}08`,
-        border: `1px solid ${THEME.running}25`,
-      }}
-    >
-      <header className="flex items-center gap-2">
-        <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
-        <h2 className="text-sm font-semibold text-foreground">Run training</h2>
+    /* Run7 Q1: outer "Run training" coral container dropped — sections
+       separated by vertical spacing alone. Run sub-tab is the contextual
+       anchor; no need for a second container chrome around it. */
+    <section aria-label="Run training" className="space-y-4">
+      {/* Run7 Q6: section label as 10px uppercase a11y h2, RunningNavIcon
+          inline left, coral icon + muted-foreground label. */}
+      <header className="flex items-center gap-1.5">
+        <Footprints
+          aria-hidden="true"
+          className="w-3.5 h-3.5"
+          style={{ color: THEME.running }}
+        />
+        <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Run training
+        </h2>
       </header>
 
-      {/* PR-B2: three-segment mode chip row. Restored from pre-PR-0d
-          but wired to the composing handler — chip taps trigger
-          updateProfile + refreshRunSchedule atomically, OR for
-          race_prep reveal the inline form (the only mode that
-          blocks on input). The PR-0d "direct updateProfile({ runMode })"
-          bug is NOT reintroduced — see handleModeChange above. */}
+      {/* Run7 Q9: three-pill mode chips. radiogroup/radio roles (was
+          aria-pressed), active = coral solid (was brand purple), inactive
+          = bg-muted. Visual intent updates immediately via intentMode;
+          writes still happen on chip tap (freeform/structured) or via
+          the form (race_prep). Reduced-motion users get no scale/transition. */}
       <div className="space-y-2">
-        <p
-          className="text-xs uppercase tracking-wider"
-          style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-        >
-          Run mode
-        </p>
-        <div className="flex gap-2">
+        <div role="radiogroup" aria-label="Run mode" className="flex gap-2">
           {(["freeform", "structured", "race_prep"] as const).map((mode) => {
             const isSelected = selectedMode === mode;
             return (
               <button
                 key={mode}
                 type="button"
+                role="radio"
+                aria-checked={isSelected}
                 onClick={() => handleModeChange(mode)}
                 disabled={modeChangePending}
-                aria-pressed={isSelected}
                 className={cn(
-                  "flex-1 py-2 rounded-lg text-xs font-medium transition-all active:scale-[0.97]",
-                  isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                  modeChangePending && !isSelected && "opacity-50 cursor-not-allowed",
+                  "flex-1 min-h-[44px] px-3 rounded-lg text-xs font-medium",
+                  "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
+                  isSelected ? "text-white" : "bg-muted text-muted-foreground",
+                  modeChangePending && !isSelected && "opacity-40 cursor-not-allowed",
                 )}
+                style={isSelected ? { backgroundColor: THEME.running } : undefined}
               >
                 {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
               </button>
@@ -1036,23 +1059,15 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── Footer: "Running mode: X" + [Change plan ›] ──────────
-          Single affordance for switching modes. Same callback
-          PR-0d's chips used — opens ConfigurePlanModal at the
-          Running step. The atomic rebuild path: planBuilder +
-          configurePlan CF. Never a direct updateProfile({runMode}).
-          Visually separate from the status label so the chevron
-          + colour read as "tap me to enter plan reconfiguration",
-          not as a status bar. */}
-      <div className="flex items-center justify-between pt-2 border-t border-border/30">
-        <span className="text-xs text-muted-foreground">
-          Running mode: <span className="text-foreground font-medium">{modeLabel}</span>
-        </span>
+      {/* Run7 Q2 + Q6: footer is a single muted-gray text-link.
+          "Running mode: X" prefix is dropped (the active chip already
+          conveys mode). Coral colour is reserved for sport-discipline
+          accents — navigation is not one. */}
+      <div className="flex justify-end pt-2 border-t border-border/30">
         <button
           type="button"
           onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
-          className="inline-flex items-center gap-0.5 text-xs font-semibold px-1 -m-1 rounded-md active:scale-95"
-          style={{ color: THEME.running }}
+          className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
         >
           Change plan
           <ChevronRight className="w-3.5 h-3.5" />

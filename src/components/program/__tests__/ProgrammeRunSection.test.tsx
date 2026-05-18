@@ -205,9 +205,14 @@ describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
     expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
   });
 
-  it("the footer label reflects the current mode (Race prep)", () => {
+  // Run7 Q6 — "Running mode: X" prefix dropped. Mode is conveyed by
+  // the active chip; footer is now a pure muted-gray "Change plan ›"
+  // text-link. Pin the new shape so a future revert reintroduces the
+  // status-bar pattern only with explicit intent.
+  it("footer is a single Change plan link with no 'Running mode:' status prefix", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
-    expect(screen.getByText(/Running mode:/i).textContent).toMatch(/Race prep/);
+    expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Change plan/i })).toBeInTheDocument();
   });
 });
 
@@ -388,7 +393,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
     // PR-B: tapping Race Prep chip reveals the inline form. No
     // wizard / onOpenConfigurePlan call.
-    fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
     expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
   });
@@ -417,7 +422,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     });
 
     // updateProfile called with mode + target (default 3), plus
@@ -455,7 +460,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Freeform$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Freeform$/i }));
     });
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
@@ -478,7 +483,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
     // Form is visible, but no writes happened yet.
@@ -499,13 +504,13 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
-    const raceChip = screen.getByRole("button", { name: /Race Prep/i });
-    expect(raceChip.getAttribute("aria-pressed")).toBe("true");
-    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i });
-    expect(freeformChip.getAttribute("aria-pressed")).toBe("false");
+    const raceChip = screen.getByRole("radio", { name: /Race Prep/i });
+    expect(raceChip.getAttribute("aria-checked")).toBe("true");
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-checked")).toBe("false");
   });
 
   it("race_prep with preserved goal: chip tap opens form prefilled with old goal", async () => {
@@ -525,7 +530,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
     // Form title acknowledges existing goal
@@ -563,7 +568,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     });
 
     // throwOnError was honoured: refreshRunSchedule did NOT run, so the
@@ -571,8 +576,8 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     expect(props.refreshRunSchedule).not.toHaveBeenCalled();
     // Chip stays on Freeform (selection derives from profile.runMode,
     // which is unchanged on failure).
-    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i });
-    expect(freeformChip.getAttribute("aria-pressed")).toBe("true");
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-checked")).toBe("true");
     // Inline error surfaces.
     expect(
       screen.getByText(/Couldn't change mode\. Check your connection/i),
@@ -596,13 +601,80 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     });
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ runMode: "structured" }),
       expect.objectContaining({ throwOnError: true }),
     );
+  });
+
+  // Run7 Q9 — visual intent. The chip + description should reflect
+  // the user's selection immediately on tap, before updateProfile
+  // resolves. Pre-Q9 the chip read from profile.runMode (currentMode)
+  // which only updates after the round-trip — the in-flight state
+  // showed the OLD chip highlighted while "Updating your plan…" was
+  // displayed below.
+  it("chip selection + description update immediately on tap, before write resolves", async () => {
+    // Hold updateProfile in flight so we can assert state during the gap.
+    let resolveUpdate!: () => void;
+    mockUpdateProfile.mockImplementationOnce(
+      () =>
+        new Promise<{ ok: true }>((resolve) => {
+          resolveUpdate = () => resolve({ ok: true });
+        }),
+    );
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
+
+    // updateProfile is in-flight — currentMode is still freeform — but
+    // the chip + description should already reflect Structured intent.
+    const structuredChip = screen.getByRole("radio", { name: /^Structured$/i });
+    expect(structuredChip.getAttribute("aria-checked")).toBe("true");
+    expect(
+      screen.getByText(/Auto-assigns run templates to your run days/i),
+    ).toBeInTheDocument();
+
+    // Resolve the in-flight write so the test cleans up.
+    await act(async () => {
+      resolveUpdate();
+    });
+  });
+
+  // Run7 Q9 — radiogroup semantics. The chip cluster MUST be queryable
+  // as a radio group with role="radio" on each chip; aria-checked
+  // mirrors selection. Pin the contract so a refactor can't silently
+  // revert to aria-pressed (button-toggle semantics, which screen
+  // readers announce differently).
+  it("chip cluster is a radiogroup with role=radio chips", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+    const group = screen.getByRole("radiogroup", { name: /run mode/i });
+    expect(group).toBeInTheDocument();
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(3);
   });
 
   it("double-tap guard: chips are disabled while a mode change is in flight", () => {
@@ -626,10 +698,10 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     // While the handler is mid-flight, the not-yet-selected chips
     // disable to prevent a double-tap race.
-    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i }) as HTMLButtonElement;
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i }) as HTMLButtonElement;
     expect(freeformChip.disabled).toBe(true);
   });
 });
