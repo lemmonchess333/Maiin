@@ -105,6 +105,26 @@ beforeAll(() => {
   db = admin.firestore();
 });
 
+// Firestore emulator under CI load occasionally returns
+// batch.commit() success a few milliseconds before the
+// just-written doc is visible to a fresh .get() from the same
+// client. Diagnosed via [DEBUG-cfg] logs on CI run 26028363406:
+// every projectId / path / writeResultCount matched, the only
+// variable was timing (~30ms between commit success and first
+// successful read on the run where logs were present, < that on
+// the run where they weren't). Production Firestore is strongly
+// consistent — this defensive poll only matters against the
+// emulator. Three attempts at 50ms intervals = 150ms ceiling, which
+// is still under the 30s vitest timeout by a large margin.
+async function getDocSettled(ref, attempts = 3) {
+  for (let i = 0; i < attempts - 1; i++) {
+    const doc = await ref.get();
+    if (doc.exists) return doc;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return ref.get();
+}
+
 async function clearTestUserState() {
   // Wipe rate-limit entries for both callables so each test starts
   // unthrottled. configurePlan + onboarding use distinct action
@@ -217,7 +237,7 @@ suite("completeOnboarding — emulator integration", () => {
     expect(result).toMatchObject({ success: true });
 
     // Profile doc — should exist with ownership-forced fields.
-    const userDoc = await db.collection("users").doc(TEST_UID).get();
+    const userDoc = await getDocSettled(db.collection("users").doc(TEST_UID));
     expect(userDoc.exists).toBe(true);
     const userData = userDoc.data();
     expect(userData.uid).toBe(TEST_UID);
@@ -228,12 +248,9 @@ suite("completeOnboarding — emulator integration", () => {
     expect(userData.weekScheduleVersion).toBe(1);
 
     // programState doc — committed in the same batch.
-    const psDoc = await db
-      .collection("users")
-      .doc(TEST_UID)
-      .collection("programState")
-      .doc("current")
-      .get();
+    const psDoc = await getDocSettled(
+      db.collection("users").doc(TEST_UID).collection("programState").doc("current"),
+    );
     expect(psDoc.exists).toBe(true);
     const psData = psDoc.data();
     expect(psData.programSchemaVersion).toBe(2);
