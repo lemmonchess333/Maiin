@@ -7,11 +7,22 @@
  * minimum touch targets had drifted apart.
  *
  * Variants:
- *   - primary     filled brand colour (uses --primary-strong for AA contrast)
- *   - secondary   tinted on muted surface
- *   - destructive filled --destructive (Sprint 0 token)
- *   - ghost       transparent with hover tint
- *   - outline     transparent with border
+ *   - primary       filled brand colour (uses --primary-strong for AA contrast)
+ *   - secondary     tinted on muted surface
+ *   - destructive   filled --destructive (Sprint 0 token)
+ *   - ghost         transparent with hover tint
+ *   - outline       transparent with border
+ *   - sport         coral-solid run CTA (Start/Go) — pairs with brand
+ *                   purple `primary` for the 5-tier hierarchy from
+ *                   Run7 Q4. Use whenever the action's discipline is
+ *                   running (`/run`, "Start", "Go"). For lifting CTAs
+ *                   continue using `primary` (brand purple = lift).
+ *   - sport-tinted  coral-tinted run destructive (Skip-style) — used
+ *                   when the action is sport-discipline AND non-
+ *                   critical destructive (e.g. "Skip recovery early").
+ *                   Distinct from the red `destructive` variant which
+ *                   stays for genuinely destructive flows (delete
+ *                   account, end subscription).
  *
  * Sizes:
  *   - sm   36px tall — used for inline / compact contexts (chips,
@@ -39,16 +50,19 @@
  * sprint.
  */
 import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 
 export type ButtonVariant =
   | "primary"
   | "secondary"
   | "destructive"
   | "ghost"
-  | "outline";
+  | "outline"
+  | "sport"
+  | "sport-tinted";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -86,6 +100,10 @@ const BASE_CLASSES = [
  * borderline for white text contrast. The strong variant is the
  * AA-clearing CTA filled colour.
  */
+/* The sport variants use inline style via THEME.running rather than a
+ * CSS variable because the running coral is a theme constant that
+ * doesn't live in :root / .dark yet. If/when --running lands as an
+ * HSL token, swap these to bg-running classes. */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
@@ -95,6 +113,16 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline:
     "bg-transparent text-foreground border border-border hover:bg-muted",
+  sport: "text-white",
+  "sport-tinted": "",
+};
+
+const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
+  sport: { backgroundColor: THEME.running },
+  // 10% coral tint surface + full-saturation coral text — pairs with
+  // the standard destructive variant for sport-discipline actions
+  // that aren't genuinely destructive.
+  "sport-tinted": { backgroundColor: `${THEME.running}1A`, color: THEME.running },
 };
 
 /**
@@ -119,11 +147,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     children,
     className,
     type,
+    style,
     ...rest
   },
   ref,
 ) {
   const isInteractive = !disabled && !loading;
+  const variantStyle = VARIANT_INLINE_STYLES[variant];
   return (
     <button
       ref={ref}
@@ -140,6 +170,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         fullWidth && "w-full",
         className,
       )}
+      // Variant inline style (sport / sport-tinted) merges under any
+      // caller-supplied `style` so consumers can still override.
+      style={variantStyle ? { ...variantStyle, ...style } : style}
       {...rest}
     >
       {loading ? (

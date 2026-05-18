@@ -69,6 +69,40 @@ describe("Button — variants", () => {
     render(<Button variant="outline">Outline</Button>);
     expect(screen.getByRole("button").className).toContain("border-border");
   });
+
+  // Run7 Q4: 5-tier button hierarchy adds sport-discipline variants.
+  // sport = coral-solid Start/Go CTA (pairs with brand-purple primary).
+  // sport-tinted = coral-tinted Skip-style destructive (distinct from
+  // the red `destructive` variant which stays for genuinely destructive
+  // flows). Both use inline style via THEME.running because the
+  // running coral isn't an HSL token yet.
+  it("sport variant fills with the running coral via inline style", () => {
+    render(<Button variant="sport">Start</Button>);
+    const btn = screen.getByRole("button") as HTMLButtonElement;
+    expect(btn.style.backgroundColor).toBe("rgb(212, 99, 122)"); // #D4637A
+    expect(btn.className).toContain("text-white");
+  });
+
+  it("sport-tinted variant uses a coral tint surface + coral text", () => {
+    render(<Button variant="sport-tinted">Skip recovery</Button>);
+    const btn = screen.getByRole("button") as HTMLButtonElement;
+    // 10% (1A hex) tint of coral
+    expect(btn.style.backgroundColor.replace(/\s/g, "")).toMatch(
+      /rgba\(212,99,122,0\.1/,
+    );
+    expect(btn.style.color).toBe("rgb(212, 99, 122)");
+  });
+
+  it("caller-supplied style overrides variant inline style fields", () => {
+    render(
+      <Button variant="sport" style={{ backgroundColor: "rgb(0, 0, 0)" }}>
+        Override
+      </Button>,
+    );
+    expect((screen.getByRole("button") as HTMLButtonElement).style.backgroundColor).toBe(
+      "rgb(0, 0, 0)",
+    );
+  });
 });
 
 describe("Button — sizes", () => {
