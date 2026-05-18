@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f .claude/plans/programme-run-followups.md ]; then echo '## Recent locked decisions (plan file)'; echo ''; grep -E '^\\| (W?[0-9]+|RP[0-9]+|F[0-9]+|S[0-9]+|P[0-9]+|A[0-9]+|Sub[0-9]+) \\|' .claude/plans/programme-run-followups.md | tail -3 | awk -F'|' '{gsub(/^ +| +$/, \"\", $2); gsub(/^ +| +$/, \"\", $3); printf \"- **%s** -- %s\\n\", $2, $3}'; echo ''; echo '_Full plan: .claude/plans/programme-run-followups.md_'; fi"
+            "command": "if [ -f .claude/plans/programme-run-followups.md ]; then echo '## Recent locked decisions (plan file)'; echo ''; grep -E '^\\| (W?[0-9]+|RP[0-9]+|F[0-9]+|S[0-9]+|P[0-9]+|A[0-9]+|Sub[0-9]+|Set[0-9]+) \\|' .claude/plans/programme-run-followups.md | tail -3 | awk -F'|' '{gsub(/^ +| +$/, \"\", $2); gsub(/^ +| +$/, \"\", $3); printf \"- **%s** -- %s\\n\", $2, $3}'; echo ''; echo '_Full plan: .claude/plans/programme-run-followups.md_'; fi"
           }
         ]
       }
