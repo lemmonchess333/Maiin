@@ -103,6 +103,17 @@ beforeAll(() => {
   completeOnboarding = idx.completeOnboarding;
   admin = require("firebase-admin");
   db = admin.firestore();
+  // [DEBUG-cfg] capture the admin/db identity at test-setup time
+  console.log("[DEBUG-cfg] test beforeAll", JSON.stringify({
+    appProjectId: admin.app().options.projectId || "(unset)",
+    dbProjectId: db._projectId || db.projectId || "(unset)",
+    dbDatabaseId: db._databaseId || "(unset)",
+    envGCLOUD: process.env.GCLOUD_PROJECT || "(unset)",
+    envGOOGLE_CLOUD: process.env.GOOGLE_CLOUD_PROJECT || "(unset)",
+    envFIREBASE_CONFIG: process.env.FIREBASE_CONFIG ? "(set)" : "(unset)",
+    envFIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || "(unset)",
+    adminAppsCount: admin.apps.length,
+  }));
 });
 
 async function clearTestUserState() {
@@ -217,7 +228,16 @@ suite("completeOnboarding — emulator integration", () => {
     expect(result).toMatchObject({ success: true });
 
     // Profile doc — should exist with ownership-forced fields.
-    const userDoc = await db.collection("users").doc(TEST_UID).get();
+    const userRefForRead = db.collection("users").doc(TEST_UID);
+    const userDoc = await userRefForRead.get();
+    // [DEBUG-cfg] read-side state — compare with callable pre-commit log
+    console.log("[DEBUG-cfg] test post-call read", JSON.stringify({
+      readPath: userRefForRead.path,
+      readExists: userDoc.exists,
+      readDataKeys: userDoc.exists ? Object.keys(userDoc.data() || {}).sort() : null,
+      readDbProjectId: db._projectId || db.projectId || "(unset)",
+      result,
+    }));
     expect(userDoc.exists).toBe(true);
     const userData = userDoc.data();
     expect(userData.uid).toBe(TEST_UID);
