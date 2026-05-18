@@ -43,7 +43,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Footprints, Check, Play, ChevronRight, Flag } from "lucide-react";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict, format } from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -637,7 +637,10 @@ export default function ProgrammeRunSection({
 
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
-          state when the user has no recent runs. */}
+          state when the user has no recent runs.
+          Run7 Q7: subtle coral 6% tint (was gradient 18%→8%), icon
+          container coral ~10% (was 13%). Same treatment applied to
+          the Next · Pending card below for visual coherence. */}
       {currentMode === "freeform" && (
         <div className="space-y-3">
           <button
@@ -648,13 +651,13 @@ export default function ProgrammeRunSection({
             }}
             className="w-full rounded-xl p-4 text-left flex items-center gap-3"
             style={{
-              background: `linear-gradient(135deg, ${THEME.running}18, ${THEME.running}08)`,
+              background: `${THEME.running}0F`,
               border: `1px solid ${THEME.running}30`,
             }}
           >
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${THEME.running}22` }}
+              style={{ backgroundColor: `${THEME.running}1A` }}
             >
               <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
             </div>
@@ -905,25 +908,40 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── Hero: race_prep progress card (promoted) ────────────── */}
+      {/* ── Hero: race_prep progress card (promoted) ──────────────
+          Run7 Q5: the race-goal form collapses to a one-line summary
+          when a goal is already saved. Pre-Q5 the form was either
+          fully open or replaced by a two-row "Race" label card with
+          a coral Edit button. New shape: "Race goal: 10K · 16 Jul 2026
+          · Edit ›" — single text run, muted-gray Edit link with
+          chevron (Q2 navigation discipline: no coral on Edit). Week
+          progress row stays as separate content underneath. */}
       {currentMode === "race_prep" && raceGoal && !raceElapsed && !showRaceForm && (
         <div className="p-3 rounded-xl bg-card space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">Race</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">
-                {raceGoal.distance.toUpperCase()} &mdash; {raceGoal.targetDate}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-foreground">
+              <span className="text-muted-foreground">Race goal: </span>
+              <span className="font-medium">
+                {raceGoal.distance.toUpperCase()}
+                {" · "}
+                {(() => {
+                  try {
+                    return format(parseLocalDate(raceGoal.targetDate), "d MMM yyyy");
+                  } catch {
+                    return raceGoal.targetDate;
+                  }
+                })()}
               </span>
-              <button
-                type="button"
-                onClick={() => setShowRaceForm(true)}
-                className="text-xs font-medium px-1 -m-1 rounded-md active:scale-95"
-                style={{ color: THEME.running }}
-                aria-label="Edit race goal"
-              >
-                Edit
-              </button>
-            </div>
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowRaceForm(true)}
+              className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
+              aria-label="Edit race goal"
+            >
+              Edit
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
           {programState?.runPlan?.totalWeeks && programState.runPlan.currentWeek != null && (
             <>
@@ -952,7 +970,11 @@ export default function ProgrammeRunSection({
       {/* ── Next planned run (structured + race_prep with goal) ──
           Same URL pattern as RunCTACard / trainingResolver.startUrl.
           Skipped when every runDay in the week is already terminal
-          (we render a "done this week" affirmation instead). */}
+          (we render a "done this week" affirmation instead).
+          Run7 Q7: subtle coral 6% tint (was 6.25%), icon container
+          coral ~10% (was ~13%), Start button flat coral solid (was
+          coral→light gradient), description line-clamp-2 (was single-
+          line truncate). Eyebrow stays semibold. */}
       {currentMode !== "freeform" && nextStartable && nextStartUrl && (
         <button
           type="button"
@@ -962,13 +984,13 @@ export default function ProgrammeRunSection({
           }}
           className="w-full rounded-xl p-3 text-left flex items-center gap-3"
           style={{
-            background: `${THEME.running}10`,
+            background: `${THEME.running}0F`,
             border: `1px solid ${THEME.running}30`,
           }}
         >
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${THEME.running}22` }}
+            style={{ backgroundColor: `${THEME.running}1A` }}
           >
             <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
           </div>
@@ -980,15 +1002,15 @@ export default function ProgrammeRunSection({
               {nextStartableTemplate?.name ?? "Run"}
             </p>
             {nextStartableTemplate?.description && (
-              <p className="text-micro text-muted-foreground truncate">
+              <p className="text-micro text-muted-foreground line-clamp-2">
                 {nextStartableTemplate.description}
               </p>
             )}
           </div>
           <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0"
             style={{
-              background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
+              background: THEME.running,
               color: "white",
             }}
           >

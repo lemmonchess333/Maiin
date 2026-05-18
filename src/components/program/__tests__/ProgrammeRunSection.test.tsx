@@ -215,6 +215,30 @@ describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
     expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Change plan/i })).toBeInTheDocument();
   });
+
+  // Run7 Q5 — race goal form collapses to a one-line summary when a
+  // goal is already saved. Pre-Q5 the row was "Race" + "10K — 2026-04-18"
+  // + coral Edit button (two-piece header). New shape: a single text
+  // run "Race goal: 10K · 16 Jul 2026" plus a muted-gray Edit chevron.
+  it("renders race-goal summary as 'Race goal: <distance> · <human date>' one-liner with muted Edit ›", () => {
+    const programState = makeProgramState([makeRunDay()], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-07-16" },
+        totalWeeks: 12,
+        currentWeek: 0,
+      },
+    });
+    renderSection(commonProps(), programState);
+    // Summary line — order-of-text + human-readable month.
+    expect(screen.getByText(/Race goal:/i)).toBeInTheDocument();
+    expect(screen.getByText(/10K · 16 Jul 2027/)).toBeInTheDocument();
+    // Edit button is muted-gray text-link (Q2 navigation discipline),
+    // not coral.
+    const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
+    expect(editBtn.className).toContain("text-muted-foreground");
+    expect(editBtn.style.color).toBe("");
+  });
 });
 
 describe("ProgrammeRunSection — PR-4 freeform hero", () => {
