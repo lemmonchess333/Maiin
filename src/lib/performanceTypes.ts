@@ -8,6 +8,34 @@
 /** Load band emitted by the engine — categorical state derived from PI score. */
 export type LoadBand = 'deload' | 'low' | 'moderate' | 'high' | 'overreach';
 
+/**
+ * Data-aware signals emitted by the engine on every perf doc write.
+ * Drive the client-side `getLine(state, signals)` mapping for the
+ * consolidated Performance hero card's supporting copy.
+ *
+ * All fields have defensive defaults in `normalisePerformanceDoc` —
+ * missing fields on legacy docs (pre-PI1a deploy) get neutral values
+ * so the line lookup falls through to generic copy for the verb-state.
+ */
+export interface PerformanceSignals {
+  /** Both lift and run loads are strong this week (lls >= 70 && rls >= 70). */
+  bothLoadsStrong: boolean;
+  /** Lift tonnage ratio above baseline, e.g. 0.18 = 18% above. 0 if not notable (<5%). */
+  liftAheadOfBaseline: number;
+  /** Run volume ratio above baseline, e.g. 0.20 = 20% above. 0 if not notable (<5%). */
+  runAheadOfBaseline: number;
+  /** Recovery sub-score below 50. */
+  recoveryWeak: boolean;
+  /** Adherence sub-score below 50. */
+  adherenceWeak: boolean;
+  /** Mirrors top-level deloadRecommended for client convenience. */
+  deloadFlag: boolean;
+  /** Distinct compute-weeks of data the engine has seen for this user. */
+  lifetimeWeeks: number;
+  /** Days since user's most recent workout or run (whichever is later). */
+  daysSinceLastTraining: number;
+}
+
 /** Raw weekly aggregates before scoring */
 export interface WeeklyAggregates {
   weekKey: string; // "YYYY-MM-DD" (Sunday start)
@@ -63,8 +91,14 @@ export interface PerformanceDoc {
 
   // Meta
   confidence: 'high' | 'medium' | 'low';
-  loadBand: 'deload' | 'low' | 'moderate' | 'high' | 'overreach';
+  loadBand: LoadBand;
   deloadRecommended: boolean;
+
+  // PI1a: data-aware signals consumed by the consolidated card's
+  // client-side getLine(state, signals) mapping. Optional in the
+  // type because legacy docs (pre-PI1a deploy) may not have it;
+  // defaults filled in by normalisePerformanceDoc.
+  signals?: PerformanceSignals;
 
   // Coach-like insights
   insight: {
@@ -123,6 +157,12 @@ export interface PerformanceWeekDoc {
     lift: string[];
     run: string[];
   };
+
+  // PI1a: data-aware signals consumed by the consolidated card's
+  // client-side getLine(state, signals) mapping. Always populated
+  // by normalisePerformanceDoc (defaults applied if missing on
+  // legacy docs).
+  signals: PerformanceSignals;
 }
 
 /** Weights for PI formula */

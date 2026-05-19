@@ -39,6 +39,19 @@ function makeWeek(overrides: Partial<PerformanceWeekDoc> = {}): PerformanceWeekD
     aggregates: {} as PerformanceWeekDoc["aggregates"],
     adherenceScore: 80,
     loadBand: "normal",
+    // PI1a: signals is required on PerformanceWeekDoc — defaulted to
+    // "no notable signal" values matching normalisePerformanceDoc's
+    // DEFAULT_SIGNALS so legacy PerformanceCard renders consistently.
+    signals: {
+      bothLoadsStrong: false,
+      liftAheadOfBaseline: 0,
+      runAheadOfBaseline: 0,
+      recoveryWeak: false,
+      adherenceWeak: false,
+      deloadFlag: false,
+      lifetimeWeeks: 0,
+      daysSinceLastTraining: 0,
+    },
     ...overrides,
   };
 }
