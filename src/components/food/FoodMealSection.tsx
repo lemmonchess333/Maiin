@@ -138,54 +138,92 @@ export default function FoodMealSection({
       </div>
 
       {/* Macro micro-bar — 3 segments P/C/F directly under the
-          caption with 4px breathing room. */}
-      <div className="px-3.5 pb-1.5">
-        <MealMacroBar
-          totalProtein={totalPro}
-          totalCarbs={totalCarb}
-          totalFat={totalFat}
-        />
-      </div>
+          caption with 4px breathing room. Hidden in empty state
+          (a flat zero bar reads as noise — the empty CTA is the
+          real signal). */}
+      {groupedEntries.length > 0 && (
+        <div className="px-3.5 pb-1.5">
+          <MealMacroBar
+            totalProtein={totalPro}
+            totalCarbs={totalCarb}
+            totalFat={totalFat}
+          />
+        </div>
+      )}
 
-      {/* Food rows with swipe-to-delete. Each row receives the
-          lifted `isOpen` + `onOpenChange` props so at most one
-          row swipe is open across the page. */}
-      <div className="divide-y divide-border/12">
-        {groupedEntries.map((group) => {
-          const rowGroup: FoodRowGroup = {
-            id: group.id,
-            foodName: group.foodName,
-            items: group.meals.flatMap((m) => m.items ?? []),
-            count: group.meals.length,
-            totalCal: group.totalCal,
-            totalPro: group.totalPro,
-            totalCarb: group.totalCarb,
-            totalFat: group.totalFat,
-          };
-          return (
-            <FoodRow
-              key={group.id}
-              group={rowGroup}
-              isOpen={openRowId === group.id}
-              onOpenChange={(open) => setOpenRowId(open ? group.id : null)}
-              onDelete={() =>
-                onDelete(
-                  group.meals.map((m) => m.id),
-                  group.foodName,
-                )
-              }
-              onEdit={() => {
-                setOpenRowId(null);
-                onEdit({
-                  id: group.id,
-                  foodName: group.foodName,
-                  meals: group.meals,
-                });
-              }}
-            />
-          );
-        })}
-      </div>
+      {/* Food6d-1: empty slot shows a muted "+ Add to [slot]" CTA in
+          place of food rows. Per-slot empty state replaces the
+          single centered prompt that used to sit below all sections
+          — mixed states (breakfast logged, lunch empty) now read as
+          intentional independent slots rather than "page is half
+          broken". Tapping routes through onTargetMeal so it shares
+          the composer-focus path with the header + pill. */}
+      {groupedEntries.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => onTargetMeal(mealKey)}
+          aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
+          className="w-full flex items-center justify-center gap-1.5 px-3.5 py-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-[0.99]"
+        >
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          Add to {MEAL_LABELS[mealKey]}
+        </button>
+      ) : (
+        <>
+          {/* Food rows with swipe-to-delete. Each row receives the
+              lifted `isOpen` + `onOpenChange` props so at most one
+              row swipe is open across the page. */}
+          <div className="divide-y divide-border/12">
+            {groupedEntries.map((group) => {
+              const rowGroup: FoodRowGroup = {
+                id: group.id,
+                foodName: group.foodName,
+                items: group.meals.flatMap((m) => m.items ?? []),
+                count: group.meals.length,
+                totalCal: group.totalCal,
+                totalPro: group.totalPro,
+                totalCarb: group.totalCarb,
+                totalFat: group.totalFat,
+              };
+              return (
+                <FoodRow
+                  key={group.id}
+                  group={rowGroup}
+                  isOpen={openRowId === group.id}
+                  onOpenChange={(open) => setOpenRowId(open ? group.id : null)}
+                  onDelete={() =>
+                    onDelete(
+                      group.meals.map((m) => m.id),
+                      group.foodName,
+                    )
+                  }
+                  onEdit={() => {
+                    setOpenRowId(null);
+                    onEdit({
+                      id: group.id,
+                      foodName: group.foodName,
+                      meals: group.meals,
+                    });
+                  }}
+                />
+              );
+            })}
+          </div>
+          {/* Food6d-3: smaller "+ Add another" affordance at the
+              bottom of a populated slot — section-level CTA, not
+              an in-list row, so it doesn't shift swipe targets or
+              compete with the header + button or the per-slot pill. */}
+          <button
+            type="button"
+            onClick={() => onTargetMeal(mealKey)}
+            aria-label={`Add another to ${MEAL_LABELS[mealKey]}`}
+            className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.99]"
+          >
+            <Plus className="w-3 h-3" aria-hidden="true" />
+            Add another
+          </button>
+        </>
+      )}
     </motion.div>
   );
 }

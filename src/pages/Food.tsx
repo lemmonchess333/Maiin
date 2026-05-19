@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { THEME } from "@/lib/theme";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
 import { addDays, format } from "date-fns";
@@ -18,10 +17,7 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
-import {
-  Utensils,
-  RotateCcw,
-} from "lucide-react";
+import { RotateCcw } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -295,15 +291,6 @@ export default function Food() {
     return segments;
   }, [visibleTodaysMeals]);
 
-  // Split meal keys into populated vs empty so the renderer can show
-  // populated cards in MEAL_ORDER and roll empty slots into a single
-  // compact chip row at the bottom — instead of three dashed boxes
-  // sandwiching the actual content.
-  const populatedMealKeys = useMemo(
-    () => MEAL_ORDER.filter((k) => mealSegmentedMeals[k].length > 0),
-    [mealSegmentedMeals],
-  );
-
   // Yesterday's meals for "Copy from yesterday" feature
   const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
   const yesterdayMeals = getMealsForDate(yesterdayDate);
@@ -402,12 +389,24 @@ export default function Food() {
     });
   }, [todaysMeals.length, selectedDate, saveLog]);
 
+  // Food6a-3: tap-back limited to 90 days; beyond that the History
+  // page is the surface for review (privacy + data freshness).
+  // Forward navigation is bounded by today — logging in the future
+  // has no meaning in a diary.
+  const FOOD_TAP_BACK_DAYS = 90;
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const minDateStr = format(addDays(new Date(), -FOOD_TAP_BACK_DAYS), "yyyy-MM-dd");
+
   const changeDate = (delta: number) => {
     const d = new Date(selectedDate + "T12:00:00");
-    setSelectedDate(format(addDays(d, delta), "yyyy-MM-dd"));
+    const next = format(addDays(d, delta), "yyyy-MM-dd");
+    if (next < minDateStr || next > todayStr) return;
+    setSelectedDate(next);
   };
 
-  const isToday = selectedDate === format(new Date(), "yyyy-MM-dd");
+  const isToday = selectedDate === todayStr;
+  const canGoBack = selectedDate > minDateStr;
+  const canGoForward = selectedDate < todayStr;
 
   // Swipe-to-delete: close any open row when the user taps outside a food row.
   // A row marks itself with `data-food-row` so we can detect the boundary via
@@ -1077,7 +1076,14 @@ export default function Food() {
         isToday={isToday}
         onPrev={() => changeDate(-1)}
         onNext={() => changeDate(1)}
-        onPick={(next) => setSelectedDate(next)}
+        onPick={(next) => {
+          if (next < minDateStr || next > todayStr) return;
+          setSelectedDate(next);
+        }}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        minDate={minDateStr}
+        maxDate={todayStr}
         itemVariant={itemVariant}
       />
 
@@ -1186,78 +1192,56 @@ export default function Food() {
       </motion.div>
 
 
-      {/* Meal sections — only populated meals render as full cards.
-          Empty slots are reachable via the always-visible ADD TO pill
-          row near the NL input, not via per-slot placeholder chips
-          (those competed with real data for attention). Framer Motion
-          `layout` so height transitions animate smoothly when entries
-          come and go. */}
-      {todaysMeals.length > 0 && (
-        <motion.div variants={itemVariant} className="space-y-3">
-          {populatedMealKeys.map((mealKey) => (
-            <FoodMealSection
-              key={mealKey}
-              mealKey={mealKey}
-              meals={mealSegmentedMeals[mealKey]}
-              targetMeal={targetMeal}
-              openRowId={openRowId}
-              setOpenRowId={setOpenRowId}
-              onTargetMeal={handleTargetMeal}
-              onDelete={handleDeleteMeal}
-              onEdit={setEditingGroup}
-            />
-          ))}
+      {/* Meal sections — Food6d locks per-slot independent empty
+          states: all four slots always render so mixed states
+          (breakfast logged, lunch empty) read as intentional rather
+          than "page is half broken". The empty body in each slot is
+          a muted "+ Add to [slot]" CTA that routes through the
+          composer-focus path. Framer Motion `layout` keeps height
+          transitions smooth when entries come and go. */}
+      <motion.div variants={itemVariant} className="space-y-3">
+        {MEAL_ORDER.map((mealKey) => (
+          <FoodMealSection
+            key={mealKey}
+            mealKey={mealKey}
+            meals={mealSegmentedMeals[mealKey]}
+            targetMeal={targetMeal}
+            openRowId={openRowId}
+            setOpenRowId={setOpenRowId}
+            onTargetMeal={handleTargetMeal}
+            onDelete={handleDeleteMeal}
+            onEdit={setEditingGroup}
+          />
+        ))}
 
-          {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
-              has slots today is missing. Label is intentionally short:
-              a single missing slot names it (`Copy yesterday's lunch`),
-              two or more collapses to the generic `Copy yesterday's meals`
-              — listing every slot was verbose and the user can read the
-              toast after tapping to see what was copied where. */}
-          {slotsToCopyFromYesterday.length > 0 && (() => {
-            const inFlight = copyingMealKey === "__all__";
-            const label =
-              slotsToCopyFromYesterday.length === 1
-                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-                : "Copy yesterday's meals";
-            return (
-              <div className="flex justify-center pt-2">
-                <button
-                  type="button"
-                  onClick={handleCopyAllMissingFromYesterday}
-                  disabled={inFlight}
-                  aria-label={label}
-                  className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  {label}
-                </button>
-              </div>
-            );
-          })()}
-        </motion.div>
-      )}
-
-      {/* Empty day state — centered prompt when nothing logged */}
-      {todaysMeals.length === 0 && (
-        <motion.div variants={itemVariant} className="flex flex-col items-center justify-center py-10 space-y-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${THEME.semantic.nutrition}12` }}>
-            <Utensils className="w-5 h-5" style={{ color: THEME.semantic.nutrition, opacity: 0.5 }} />
-          </div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {isToday
-              ? "Start by logging your first meal"
-              : selectedDate > format(new Date(), "yyyy-MM-dd")
-                ? "Nothing planned"
-                : "Nothing logged"}
-          </p>
-          {isToday && dailyTargets.dayType !== "rest" && (
-            <p className="text-xs text-muted-foreground/60 italic">
-              {({ lift: "Lift day — fuel up to recover stronger", run: "Run day — carbs are your friend today", both: "Lift + Run day — fuel up for both" } as Record<string, string>)[dailyTargets.dayType]}
-            </p>
-          )}
-        </motion.div>
-      )}
+        {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
+            has slots today is missing. Label is intentionally short:
+            a single missing slot names it (`Copy yesterday's lunch`),
+            two or more collapses to the generic `Copy yesterday's meals`
+            — listing every slot was verbose and the user can read the
+            toast after tapping to see what was copied where. */}
+        {slotsToCopyFromYesterday.length > 0 && (() => {
+          const inFlight = copyingMealKey === "__all__";
+          const label =
+            slotsToCopyFromYesterday.length === 1
+              ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
+              : "Copy yesterday's meals";
+          return (
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={handleCopyAllMissingFromYesterday}
+                disabled={inFlight}
+                aria-label={label}
+                className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            </div>
+          );
+        })()}
+      </motion.div>
 
       <Suspense fallback={null}>
         <ManualFoodLogger
