@@ -60,6 +60,8 @@ const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const Settings = lazyRetry(() => import("@/pages/Settings"));
+const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
+const SettingsTraining = lazyRetry(() => import("@/pages/settings/SettingsTraining"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
@@ -309,7 +311,14 @@ function AppRoutes() {
           <Route path="/food" element={<RouteErrorBoundary><Food /></RouteErrorBoundary>} />
           <Route path="/history" element={<RouteErrorBoundary><History /></RouteErrorBoundary>} />
           <Route path="/history/exercise/:name" element={<RouteErrorBoundary><ExerciseHistory /></RouteErrorBoundary>} />
-          <Route path="/settings" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
+          {/* Set1.1: nested-page Settings IA. /settings is the index;
+              each section gets its own route. The legacy flat page
+              stays reachable at /settings/legacy until each section
+              has been migrated (the SettingsIndex rows route there
+              for non-migrated sections). */}
+          <Route path="/settings" element={<RouteErrorBoundary><SettingsIndex /></RouteErrorBoundary>} />
+          <Route path="/settings/legacy" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
+          <Route path="/settings/training" element={<RouteErrorBoundary><SettingsTraining /></RouteErrorBoundary>} />
           <Route path="/upgrade" element={<RouteErrorBoundary><Upgrade /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
           <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />
