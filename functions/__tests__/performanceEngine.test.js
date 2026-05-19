@@ -16,10 +16,19 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 // Initialise admin BEFORE requiring performanceEngine — the module
-// calls admin.firestore() at top level.
+// calls admin.firestore() at top level. We DON'T hardcode a project
+// ID: in CI's emulator-tests workflow, vitest runs all test files
+// in a single process so admin.apps is shared across files. If we
+// initialised with a hardcoded "tropos-unit-test" project, the
+// emulator-backed integration tests (configurePlan, auditLog, etc.)
+// would inherit that admin client and write to the wrong project —
+// causing every integration test to silently fail against an empty
+// project. Prefer the emulator's GCLOUD_PROJECT (set to demo-tropos
+// by the workflow) and fall back to a unit-test project name only
+// for isolated local runs without the emulator.
 const admin = require("firebase-admin");
 if (!admin.apps.length) {
-  admin.initializeApp({ projectId: "tropos-unit-test" });
+  admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test" });
 }
 
 const {
