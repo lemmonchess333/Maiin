@@ -90,19 +90,32 @@ export default function PerformanceCard({
     );
   }
 
-  const pi = Math.round(currentWeek.performanceIndex);
+  const pi = Math.round(currentWeek.performanceIndex ?? 0);
   const delta = previousWeek
-    ? Math.round(currentWeek.performanceIndex - previousWeek.performanceIndex)
+    ? Math.round((currentWeek.performanceIndex ?? 0) - (previousWeek.performanceIndex ?? 0))
     : null;
   const color = bandColor(pi);
 
+  // Defensive: an early-rollup doc may have partial fields. Falling
+  // back to 0 lands the insight in the "low" band for missing
+  // sub-scores, which the templates frame as baseline rather than
+  // failure. Also catches any future schema drift between the CF
+  // and the consumer-facing type without crashing the Home page.
+  const safeBreakdown = currentWeek.breakdown ?? {
+    liftLoadScore: 0,
+    runLoadScore: 0,
+    recoveryScore: 0,
+    adherenceScore: 0,
+  };
   const insight = uid
     ? buildPerformanceInsight({
         uid,
         weekKey: currentWeek.weekKey,
-        loadScore: currentWeek.breakdown.liftLoadScore + currentWeek.breakdown.runLoadScore,
-        recoveryScore: currentWeek.breakdown.recoveryScore,
-        adherenceScore: currentWeek.breakdown.adherenceScore,
+        loadScore:
+          (safeBreakdown.liftLoadScore ?? 0)
+          + (safeBreakdown.runLoadScore ?? 0),
+        recoveryScore: safeBreakdown.recoveryScore ?? 0,
+        adherenceScore: safeBreakdown.adherenceScore ?? 0,
         weeksAvailable,
         delta,
         loadBand: currentWeek.labels?.loadBand ?? currentWeek.loadBand,
