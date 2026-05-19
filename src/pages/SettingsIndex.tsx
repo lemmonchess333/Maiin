@@ -28,6 +28,7 @@ import {
   Crown,
   HelpCircle,
   Settings as Cog,
+  Trash2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -63,6 +64,10 @@ const SECTIONS: SectionRow[] = [
   { slug: "subscription",       label: "Subscription",        description: "Plan, billing, restore",             icon: Crown,       migrated: true },
   { slug: "support-legal",      label: "Support & Legal",     description: "Help, privacy policy, terms",        icon: HelpCircle,  migrated: true },
   { slug: "account",            label: "Account",             description: "Sign out, delete account",           icon: Cog,         migrated: true },
+  // F5c — soft-delete archive. Sits under Account/Data semantically;
+  // surfaces as its own index row so it's discoverable without
+  // drilling through the Account page.
+  { slug: "recently-deleted-meals", label: "Recently deleted meals", description: "Restore meals you deleted in the last 24 hours", icon: Trash2,      migrated: true },
 ];
 
 export default function SettingsIndex() {

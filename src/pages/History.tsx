@@ -105,10 +105,17 @@ export default function History() {
 
   // Initial tab resolution order (first hit wins):
   //   1. ?tab=... query param (shareable link from another surface)
-  //   2. sessionStorage("history-tab") (deep-link from StreakFlame or
+  //   2. #<tab> URL fragment (P2c deep-link — Home PerformanceCard
+  //      taps to /history#performance; this hook reads it once)
+  //   3. sessionStorage("history-tab") (deep-link from StreakFlame or
   //      other in-app entry points — avoids polluting the URL)
-  //   3. "all"
+  //   4. "all"
   const initialTab = searchParams.get("tab") as FilterTab | null;
+  const initialHashTab = (() => {
+    if (typeof window === "undefined") return null;
+    const raw = window.location.hash.replace(/^#/, "") as FilterTab;
+    return VALID_TABS.includes(raw) ? raw : null;
+  })();
   const stashedTab = (() => {
     try {
       return sessionStorage.getItem("history-tab") as FilterTab | null;
@@ -119,9 +126,11 @@ export default function History() {
   const [filter, setFilter] = useState<FilterTab>(
     initialTab && VALID_TABS.includes(initialTab)
       ? initialTab
-      : stashedTab && VALID_TABS.includes(stashedTab)
-        ? stashedTab
-        : "all"
+      : initialHashTab
+        ? initialHashTab
+        : stashedTab && VALID_TABS.includes(stashedTab)
+          ? stashedTab
+          : "all"
   );
 
   useEffect(() => {
