@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
 import { addDays, format } from "date-fns";
@@ -80,7 +81,42 @@ export default function Food() {
   const { user } = useAuth();
   const { saveLog } = useDailyLogs();
 
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  // Food6 ci5: deep-link `/food?date=YYYY-MM-DD` makes the URL the
+  // source of truth for which day the diary shows. Lets external
+  // links (notifications, share cards, Home2 widgets) point at a
+  // specific day, and means browser back/forward navigates between
+  // days the same way the on-screen arrows do. URL writes are
+  // {replace:true} so each arrow tap doesn't accumulate history.
+  // Out-of-range or malformed `?date=` values silently fall back to
+  // today rather than throwing — direct URLs come from many places
+  // and should be lenient.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const FOOD_TAP_BACK_DAYS = 90;
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const minDateStr = format(addDays(new Date(), -FOOD_TAP_BACK_DAYS), "yyyy-MM-dd");
+  const selectedDate = useMemo(() => {
+    const fromUrl = searchParams.get("date");
+    if (
+      fromUrl &&
+      /^\d{4}-\d{2}-\d{2}$/.test(fromUrl) &&
+      fromUrl >= minDateStr &&
+      fromUrl <= todayStr
+    ) {
+      return fromUrl;
+    }
+    return todayStr;
+  }, [searchParams, minDateStr, todayStr]);
+  const setSelectedDate = (next: string) => {
+    setSearchParams(
+      (params) => {
+        const updated = new URLSearchParams(params);
+        if (next === todayStr) updated.delete("date");
+        else updated.set("date", next);
+        return updated;
+      },
+      { replace: true },
+    );
+  };
   const [scanOpen, setScanOpen] = useState(false);
   const [nlInput, setNlInput] = useState("");
   const [nlParsing, setNlParsing] = useState(false);
@@ -392,11 +428,8 @@ export default function Food() {
   // Food6a-3: tap-back limited to 90 days; beyond that the History
   // page is the surface for review (privacy + data freshness).
   // Forward navigation is bounded by today — logging in the future
-  // has no meaning in a diary.
-  const FOOD_TAP_BACK_DAYS = 90;
-  const todayStr = format(new Date(), "yyyy-MM-dd");
-  const minDateStr = format(addDays(new Date(), -FOOD_TAP_BACK_DAYS), "yyyy-MM-dd");
-
+  // has no meaning in a diary. Bounds use todayStr / minDateStr
+  // declared above alongside the URL-derived selectedDate.
   const changeDate = (delta: number) => {
     const d = new Date(selectedDate + "T12:00:00");
     const next = format(addDays(d, delta), "yyyy-MM-dd");
