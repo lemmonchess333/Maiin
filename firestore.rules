@@ -40,6 +40,7 @@ service cloud.firestore {
         'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
         'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',
         'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
+        'weekScheduleVersion',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
@@ -48,6 +49,7 @@ service cloud.firestore {
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
+        'trialExpiryPromptShown',
         'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
       ];
     }

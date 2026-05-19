@@ -116,9 +116,21 @@ export function useProgram() {
       // backfillWeekScheduleIfMissing returns null when the
       // schedule is already valid, so this is a no-op on
       // the warm path.
+      //
+      // throwOnError so we own failure handling — without it, a
+      // rules rejection (e.g. a new UserProfile field not yet in
+      // allowedUserFields) would fire the generic "Couldn't save
+      // your settings" toast on every Programme page load.
+      // Migrations should be silent: log + move on, retry next
+      // load. The user still gets the page, just with a stale
+      // weekSchedule until the rules catch up.
       const profilePatch = backfillWeekScheduleIfMissing(profile);
       if (profilePatch) {
-        await updateProfile(profilePatch);
+        try {
+          await updateProfile(profilePatch, { throwOnError: true });
+        } catch (e) {
+          logger.warn("[useProgram] weekSchedule backfill failed; continuing with stale shape", e);
+        }
       }
 
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
