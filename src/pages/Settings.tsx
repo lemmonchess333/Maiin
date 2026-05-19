@@ -8,7 +8,9 @@ import { motion } from "framer-motion";
 import {
   Crown,
   ChevronRight,
+  Target,
 } from "lucide-react";
+import AccordionSection from "@/components/AccordionSection";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import {
   useMealReminders,
@@ -177,11 +179,21 @@ export default function Settings() {
           overrides, configure plan, reset. Settings keeps the
           retake-onboarding action because that's a full identity
           rebuild, not a tweak. */}
-      <TrainingSection
-        profile={profile}
-        updateProfile={updateProfile}
-        navigate={navigate}
-      />
+      {/* A1c refactor: TrainingSection no longer wraps itself in an
+          AccordionSection (the new /settings/training nested page
+          renders it inline). The legacy flat page composes the
+          accordion chrome here so the visual stays unchanged. */}
+      <AccordionSection
+        icon={<Target className="w-5 h-5 text-primary" />}
+        title="Training"
+        subtitle="Plan structure"
+      >
+        <TrainingSection
+          profile={profile}
+          updateProfile={updateProfile}
+          navigate={navigate}
+        />
+      </AccordionSection>
 
       {/* 3. Nutrition */}
       <NutritionSection

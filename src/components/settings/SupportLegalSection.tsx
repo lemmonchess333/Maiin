@@ -59,9 +59,13 @@ function buildModerationMailto(): string {
   return `mailto:support@troposfit.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-export default function SupportLegalSection() {
+interface SupportLegalSectionProps {
+  inline?: boolean;
+}
+
+export default function SupportLegalSection({ inline = false }: SupportLegalSectionProps = {}) {
   return (
-    <AccordionSection icon={<Scale className="w-5 h-5 text-primary" />} title="Support & Legal" subtitle="Help, privacy policy, terms">
+    <AccordionSection inline={inline} icon={<Scale className="w-5 h-5 text-primary" />} title="Support & Legal" subtitle="Help, privacy policy, terms">
       <a
         href={buildSupportMailto()}
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"

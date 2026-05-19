@@ -12,15 +12,17 @@ interface UnitsAppearanceSectionProps {
   profile: UserProfile;
   toggleUnit: (key: "preferredWeightUnit" | "preferredHeightUnit", current: string) => void;
   toggleDark: () => void;
+  inline?: boolean;
 }
 
 export default function UnitsAppearanceSection({
   profile,
   toggleUnit,
   toggleDark,
+  inline = false,
 }: UnitsAppearanceSectionProps) {
   return (
-    <AccordionSection icon={<Palette className="w-5 h-5 text-primary" />} title="Units & Appearance" subtitle="Weight, height, dark mode">
+    <AccordionSection inline={inline} icon={<Palette className="w-5 h-5 text-primary" />} title="Units & Appearance" subtitle="Weight, height, dark mode">
       <div className="space-y-2">
         <button
           onClick={() => toggleUnit("preferredWeightUnit", profile.preferredWeightUnit)}

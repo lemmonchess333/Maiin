@@ -12,6 +12,7 @@ interface WorkoutPrefsSectionProps {
   audioCues: boolean;
   setAudioCues: (v: boolean) => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  inline?: boolean;
 }
 
 export default function WorkoutPrefsSection({
@@ -22,9 +23,10 @@ export default function WorkoutPrefsSection({
   audioCues,
   setAudioCues,
   updateProfile,
+  inline = false,
 }: WorkoutPrefsSectionProps) {
   return (
-    <AccordionSection icon={<Timer className="w-5 h-5 text-primary" />} title="Workout Preferences" subtitle="Rest timer, audio cues">
+    <AccordionSection inline={inline} icon={<Timer className="w-5 h-5 text-primary" />} title="Workout Preferences" subtitle="Rest timer, audio cues">
       <div className="space-y-3">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>

@@ -29,9 +29,24 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
-import { CONFIGURE_PLAN_RUNNING_STEP } from "../ConfigurePlanModal";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+
+// A1c cleanup — the "Change plan" link now deeplinks to
+// /settings/training instead of opening the legacy ConfigurePlanModal.
+// Mock useNavigate so tests can assert the route.
+const navigateMock = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+beforeEach(() => {
+  navigateMock.mockClear();
+});
 
 // PR-B: ProgrammeRunSection now consumes useAuth() directly (to
 // call updateProfile from the inline mode-change handler). Mock
@@ -129,7 +144,6 @@ function commonProps() {
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
     skipRecoveryEarly: vi.fn(async () => {}),
-    onOpenConfigurePlan: vi.fn(),
   };
 }
 
@@ -169,8 +183,12 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   });
 });
 
-describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
-  it("clicking 'Change plan' opens ConfigurePlanModal at the Running step (freeform)", () => {
+describe("ProgrammeRunSection — A1c 'Change plan' deeplink", () => {
+  beforeEach(() => {
+    navigateMock.mockClear();
+  });
+
+  it("clicking 'Change plan' deeplinks to /settings/training (freeform)", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(
@@ -181,11 +199,11 @@ describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Change plan/i }));
-    expect(props.onOpenConfigurePlan).toHaveBeenCalledTimes(1);
-    expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
 
-  it("clicking 'Change plan' opens ConfigurePlanModal at the Running step (structured)", () => {
+  it("clicking 'Change plan' deeplinks to /settings/training (structured)", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
     renderWith(
@@ -196,14 +214,14 @@ describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Change plan/i }));
-    expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
+    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
 
-  it("clicking 'Change plan' opens ConfigurePlanModal at the Running step (race_prep with goal)", () => {
+  it("clicking 'Change plan' deeplinks to /settings/training (race_prep with goal)", () => {
     const props = commonProps();
     renderSection(props, makeProgramState([makeRunDay()]));
     fireEvent.click(screen.getByRole("button", { name: /Change plan/i }));
-    expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
+    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
 
   // Run7 Q6 — "Running mode: X" prefix dropped. Mode is conveyed by
@@ -420,7 +438,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     // wizard / onOpenConfigurePlan call.
     fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
-    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });
 
@@ -466,7 +484,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       expect.objectContaining({ weeklyRunDaysTarget: 3 }),
     );
     // NOT routed through the wizard
-    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("structured → freeform composes updateProfile + refreshRunSchedule", async () => {
@@ -493,7 +511,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       expect.objectContaining({ throwOnError: true }),
     );
     expect(props.refreshRunSchedule).toHaveBeenCalled();
-    expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("race_prep chip from freeform reveals form, does NOT write yet", async () => {

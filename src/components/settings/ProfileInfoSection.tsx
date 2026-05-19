@@ -32,6 +32,9 @@ interface ProfileInfoSectionProps {
   heightCm: number;
   setHeightCm: (v: number) => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  /** Set1.2 — skip the AccordionSection shell when rendered inside a
+   *  SettingsSection nested page (which provides its own chrome). */
+  inline?: boolean;
 }
 
 export default function ProfileInfoSection({
@@ -43,9 +46,10 @@ export default function ProfileInfoSection({
   heightCm,
   setHeightCm,
   updateProfile,
+  inline = false,
 }: ProfileInfoSectionProps) {
   return (
-    <AccordionSection icon={<User className="w-5 h-5 text-primary" />} title="Profile" subtitle="Name, weight, height" defaultOpen>
+    <AccordionSection inline={inline} icon={<User className="w-5 h-5 text-primary" />} title="Profile" subtitle="Name, weight, height" defaultOpen>
       <input
         type="text"
         value={name}
