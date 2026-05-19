@@ -394,9 +394,11 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
-Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus four wire-ups (Performance Index in `PerformanceTab.tsx`, Nutrition HealthScore in `nutrition/HealthScoreCard.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, Running nav coachmark in `pages/Program.tsx`).
+Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus three wire-ups (Performance Index in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, Running nav coachmark in `pages/Program.tsx`).
 
-- [ ] Light + dark mode visibility on all 4 wire-ups — tooltip body and arrow must register in both themes
+Note: the Nutrition HealthScore wire-up (`nutrition/HealthScoreCard.tsx`) was removed by PI2 (Performance arc consolidation) — that surface no longer exists.
+
+- [ ] Light + dark mode visibility on all 3 wire-ups — tooltip body and arrow must register in both themes
 - [ ] 375px viewport — body wraps at `max-w-[280px]`, never overflows the screen
 - [ ] Open a vaul drawer while a tooltip is showing — the drawer should occlude (z-50 > z-40)
 - [ ] VoiceOver: body content is announced when the anchor receives focus (via `aria-describedby`)
