@@ -13,6 +13,14 @@ export const THEME = {
   liftingLight: '#9590E0',
   brand: '#7B72E9',
   brandLight: '#9590E0',
+  /* Amber — warning banners (Run7 Q10). Distinct from `warning` /
+     `semantic.nutrition` (#D9884E) which is the warm orange used for
+     food/calorie/macro context. Amber here is a Tailwind amber-600
+     base with an amber-500 step for dark-mode visibility (per the
+     12–15% tint floor in Q10). Only applied to severity = warning
+     banner surfaces + icons; do not use as a CTA fill. */
+  amber: '#D97706',
+  amberLight: '#F59E0B',
   /* Darker brand step for filled primary CTAs (Join, Follow, Invite,
      post-confirm pills). Use when text sits *on* the colour — the
      lighter `brand` is borderline for WCAG AA on white text at 14–15px.

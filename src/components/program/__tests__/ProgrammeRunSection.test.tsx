@@ -146,24 +146,25 @@ function renderWith(node: React.ReactElement) {
 }
 
 describe("ProgrammeRunSection — runDay rendering", () => {
-  // PR-D: `race_completed_unlinked` passive-copy block removed
-  // alongside the status drop. The per-day list now renders the
-  // standard template select for every non-reconciliation status.
+  // Run7 Q3 + Q8: the legacy 7-row dropdown stack was replaced by a
+  // compact 7-column week strip (RunWeekStrip). The inline template-
+  // swap <select> was a duplicate of DayActionSheet's same picker
+  // and is gone. Edit path is now tap-through → DayActionSheet.
 
-  it("planned rows DO show the template-swap select (control)", () => {
+  it("renders the compact week strip (no inline template <select>)", () => {
     const programState = makeProgramState([makeRunDay({ status: "planned" })]);
     const { container } = renderSection(commonProps(), programState);
-    const selects = container.querySelectorAll("select");
-    expect(selects.length).toBeGreaterThan(0);
-    expect((selects[0] as HTMLSelectElement).disabled).toBe(false);
+    expect(container.querySelectorAll("select").length).toBe(0);
+    expect(screen.getByLabelText(/this week's runs/i)).toBeInTheDocument();
   });
 
-  it("terminal (skipped) rows render a disabled select, not passive copy", () => {
+  it("strikes through terminal runs (skipped) in the strip — no passive copy", () => {
     const programState = makeProgramState([makeRunDay({ status: "skipped" })]);
-    const { container } = renderSection(commonProps(), programState);
-    const selects = container.querySelectorAll("select");
-    expect(selects.length).toBeGreaterThan(0);
-    expect((selects[0] as HTMLSelectElement).disabled).toBe(true);
+    renderSection(commonProps(), programState);
+    // Find the column button for that day and confirm its label is strikethrough.
+    const col = screen.getByRole("button", { name: /Tue.*skipped/i });
+    const label = col.querySelector(".line-through");
+    expect(label).not.toBeNull();
     expect(screen.queryByText(/Race completed separately/i)).not.toBeInTheDocument();
   });
 });
@@ -205,9 +206,38 @@ describe("ProgrammeRunSection — PR-4 footer 'Change plan' affordance", () => {
     expect(props.onOpenConfigurePlan).toHaveBeenCalledWith(CONFIGURE_PLAN_RUNNING_STEP);
   });
 
-  it("the footer label reflects the current mode (Race prep)", () => {
+  // Run7 Q6 — "Running mode: X" prefix dropped. Mode is conveyed by
+  // the active chip; footer is now a pure muted-gray "Change plan ›"
+  // text-link. Pin the new shape so a future revert reintroduces the
+  // status-bar pattern only with explicit intent.
+  it("footer is a single Change plan link with no 'Running mode:' status prefix", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
-    expect(screen.getByText(/Running mode:/i).textContent).toMatch(/Race prep/);
+    expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Change plan/i })).toBeInTheDocument();
+  });
+
+  // Run7 Q5 — race goal form collapses to a one-line summary when a
+  // goal is already saved. Pre-Q5 the row was "Race" + "10K — 2026-04-18"
+  // + coral Edit button (two-piece header). New shape: a single text
+  // run "Race goal: 10K · 16 Jul 2026" plus a muted-gray Edit chevron.
+  it("renders race-goal summary as 'Race goal: <distance> · <human date>' one-liner with muted Edit ›", () => {
+    const programState = makeProgramState([makeRunDay()], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-07-16" },
+        totalWeeks: 12,
+        currentWeek: 0,
+      },
+    });
+    renderSection(commonProps(), programState);
+    // Summary line — order-of-text + human-readable month.
+    expect(screen.getByText(/Race goal:/i)).toBeInTheDocument();
+    expect(screen.getByText(/10K · 16 Jul 2027/)).toBeInTheDocument();
+    // Edit button is muted-gray text-link (Q2 navigation discipline),
+    // not coral.
+    const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
+    expect(editBtn.className).toContain("text-muted-foreground");
+    expect(editBtn.style.color).toBe("");
   });
 });
 
@@ -388,7 +418,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
     // PR-B: tapping Race Prep chip reveals the inline form. No
     // wizard / onOpenConfigurePlan call.
-    fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
     expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
   });
@@ -417,10 +447,11 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     });
 
-    // updateProfile called with mode + target (default 3)
+    // updateProfile called with mode + target (default 3), plus
+    // throwOnError so a failed write skips refreshRunSchedule.
     expect(mockUpdateProfile).toHaveBeenCalledTimes(1);
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -428,6 +459,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         weeklyRunDaysTarget: 3,
         weeklyRunsTarget: 3,
       }),
+      expect.objectContaining({ throwOnError: true }),
     );
     // refreshRunSchedule called with the override target
     expect(props.refreshRunSchedule).toHaveBeenCalledWith(
@@ -453,11 +485,12 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /^Freeform$/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /^Freeform$/i }));
     });
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ runMode: "freeform" }),
+      expect.objectContaining({ throwOnError: true }),
     );
     expect(props.refreshRunSchedule).toHaveBeenCalled();
     expect(props.onOpenConfigurePlan).not.toHaveBeenCalled();
@@ -475,7 +508,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
     // Form is visible, but no writes happened yet.
@@ -496,13 +529,13 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
-    const raceChip = screen.getByRole("button", { name: /Race Prep/i });
-    expect(raceChip.getAttribute("aria-pressed")).toBe("true");
-    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i });
-    expect(freeformChip.getAttribute("aria-pressed")).toBe("false");
+    const raceChip = screen.getByRole("radio", { name: /Race Prep/i });
+    expect(raceChip.getAttribute("aria-checked")).toBe("true");
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-checked")).toBe("false");
   });
 
   it("race_prep with preserved goal: chip tap opens form prefilled with old goal", async () => {
@@ -522,7 +555,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     );
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Race Prep/i }));
+      fireEvent.click(screen.getByRole("radio", { name: /Race Prep/i }));
     });
 
     // Form title acknowledges existing goal
@@ -532,6 +565,141 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       "programme-race-target-date",
     ) as HTMLInputElement | null;
     expect(dateInput?.value).toBe("2027-09-15");
+  });
+
+  // Regression: pre-fix, handleModeChange called updateProfile without
+  // throwOnError, so a failed write surfaced the generic auth.tsx toast
+  // AND the code continued past the rejected write into
+  // refreshRunSchedule — writing run-day schedules against the OLD
+  // runMode (state divergence). Run7 Q9 prescribes the fix: throwOnError
+  // so the local catch fires and refreshRunSchedule never runs.
+  it("updateProfile failure: skips refreshRunSchedule and surfaces inline error", async () => {
+    mockUpdateProfile.mockImplementationOnce(async () => {
+      throw new Error("firestore-unavailable");
+    });
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
+    });
+
+    // throwOnError was honoured: refreshRunSchedule did NOT run, so the
+    // OLD runMode is never used to regenerate the schedule.
+    expect(props.refreshRunSchedule).not.toHaveBeenCalled();
+    // Chip stays on Freeform (selection derives from profile.runMode,
+    // which is unchanged on failure).
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i });
+    expect(freeformChip.getAttribute("aria-checked")).toBe("true");
+    // Inline error surfaces.
+    expect(
+      screen.getByText(/Couldn't change mode\. Check your connection/i),
+    ).toBeInTheDocument();
+  });
+
+  it("updateProfile call passes throwOnError so generic auth toast is suppressed", async () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
+    });
+
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ runMode: "structured" }),
+      expect.objectContaining({ throwOnError: true }),
+    );
+  });
+
+  // Run7 Q9 — visual intent. The chip + description should reflect
+  // the user's selection immediately on tap, before updateProfile
+  // resolves. Pre-Q9 the chip read from profile.runMode (currentMode)
+  // which only updates after the round-trip — the in-flight state
+  // showed the OLD chip highlighted while "Updating your plan…" was
+  // displayed below.
+  it("chip selection + description update immediately on tap, before write resolves", async () => {
+    // Hold updateProfile in flight so we can assert state during the gap.
+    let resolveUpdate!: () => void;
+    mockUpdateProfile.mockImplementationOnce(
+      () =>
+        new Promise<{ ok: true }>((resolve) => {
+          resolveUpdate = () => resolve({ ok: true });
+        }),
+    );
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "freeform",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
+
+    // updateProfile is in-flight — currentMode is still freeform — but
+    // the chip + description should already reflect Structured intent.
+    const structuredChip = screen.getByRole("radio", { name: /^Structured$/i });
+    expect(structuredChip.getAttribute("aria-checked")).toBe("true");
+    expect(
+      screen.getByText(/Auto-assigns run templates to your run days/i),
+    ).toBeInTheDocument();
+
+    // Resolve the in-flight write so the test cleans up.
+    await act(async () => {
+      resolveUpdate();
+    });
+  });
+
+  // Run7 Q9 — radiogroup semantics. The chip cluster MUST be queryable
+  // as a radio group with role="radio" on each chip; aria-checked
+  // mirrors selection. Pin the contract so a refactor can't silently
+  // revert to aria-pressed (button-toggle semantics, which screen
+  // readers announce differently).
+  it("chip cluster is a radiogroup with role=radio chips", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+    const group = screen.getByRole("radiogroup", { name: /run mode/i });
+    expect(group).toBeInTheDocument();
+    const radios = screen.getAllByRole("radio");
+    expect(radios).toHaveLength(3);
   });
 
   it("double-tap guard: chips are disabled while a mode change is in flight", () => {
@@ -555,11 +723,97 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^Structured$/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     // While the handler is mid-flight, the not-yet-selected chips
     // disable to prevent a double-tap race.
-    const freeformChip = screen.getByRole("button", { name: /^Freeform$/i }) as HTMLButtonElement;
+    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i }) as HTMLButtonElement;
     expect(freeformChip.disabled).toBe(true);
+  });
+});
+
+// Run7 Q6 + Q10 — banners hoisted ABOVE the section label, severity-
+// ordered, with the shared <Banner> primitive. State-derived banners
+// (raceCompressed, inRecovery) are non-dismissible; action-prompting
+// raceElapsed is dismissible per-week via localStorage.
+describe("ProgrammeRunSection — Q10 banner system", () => {
+  beforeEach(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.clear();
+    }
+  });
+
+  it("compressed-plan banner uses warning severity (amber) and is not dismissible", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-01-01" },
+        totalWeeks: 12,
+        currentWeek: 0,
+        compressed: true,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    const banner = screen.getByRole("alert");
+    expect(banner.textContent).toContain("Plan is compressed");
+    expect(
+      screen.queryByRole("button", { name: /dismiss/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("race-elapsed banner is dismissible and persists via localStorage for the week", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    // Past race date with no recovery / no-show state → triggers
+    // the legacy elapsed fallback.
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    const { unmount } = renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    const dismissBtn = screen.getByRole("button", {
+      name: /Dismiss race elapsed banner/i,
+    });
+    expect(screen.getByText(/Race day has passed/i)).toBeInTheDocument();
+    fireEvent.click(dismissBtn);
+    // Hidden after dismiss.
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+    // Remount → still hidden (localStorage persisted).
+    unmount();
+    renderWith(
+      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+    );
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+  });
+
+  it("malformed-plan warning hosts the Configure plan CTA inside the banner action slot", () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runMode: "structured",
+      raceGoal: undefined,
+      weeklyRunDaysTarget: 0,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />,
+    );
+    expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Configure plan$/i }),
+    ).toBeInTheDocument();
   });
 });
 
