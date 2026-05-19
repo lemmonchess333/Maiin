@@ -675,6 +675,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         <ReportModal
           targetType="activity"
           targetId={feedItem.activityId}
+          targetAuthorUid={feedItem.authorId}
           onClose={() => setShowReport(false)}
         />
       )}

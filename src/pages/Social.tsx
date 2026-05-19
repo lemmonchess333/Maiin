@@ -1,4 +1,5 @@
 import { useSocialFeed } from '../hooks/useSocialFeed';
+import { useHiddenActivities } from '@/hooks/useHiddenActivities';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
@@ -43,6 +44,10 @@ export default function Social() {
      mutators are consumed by ActivityCard which calls useBlockedUsers
      itself. The module-level cache keeps the two instances in sync. */
   const { blocked: blockedUsers } = useBlockedUsers();
+  // S4c: user-hidden activity IDs filter the feed alongside blocked
+  // users. Local-only (localStorage) per device; spec defers cross-
+  // device sync until demand emerges.
+  const { hidden: hiddenActivityIds } = useHiddenActivities();
   const [tab, setTab] = useState<SocialTab>('feed');
   /**
    * Smart default: new / zero-follow users land on Discover; users
@@ -87,7 +92,7 @@ export default function Social() {
      AND the Following sub-tab. Previously it fetched on every Social
      mount even when the user landed straight on Discover and never
      opened Following — wasted reads on the cold start. */
-  const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following');
+  const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following', hiddenActivityIds);
   const exploreFeed = useDiscoverFeed(feedSubTab === 'explore', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : exploreFeed;
 

@@ -354,7 +354,12 @@ export default function UserProfile() {
       </div>
 
       {showReport && uid && (
-        <ReportModal targetType="user" targetId={uid} onClose={() => setShowReport(false)} />
+        <ReportModal
+          targetType="user"
+          targetId={uid}
+          targetAuthorUid={uid}
+          onClose={() => setShowReport(false)}
+        />
       )}
 
       <ConfirmDialog
