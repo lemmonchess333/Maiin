@@ -45,7 +45,6 @@ import { track } from "@/lib/paywallAnalytics";
 import {
   X,
   Sparkles,
-  TrendingUp,
   Zap,
   BarChart2,
   Utensils,
@@ -65,48 +64,11 @@ import { Spinner } from "@/components/ui/Spinner";
  * other keys fall back to the registry's title + tagline without a
  * preview card.
  */
+/* Sub2: `performance_engine` preview removed alongside the registry
+ * key — Performance Index is now free for everyone. */
 const FEATURE_PREVIEWS: Partial<
   Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
 > = {
-  performance_engine: {
-    icon: <TrendingUp className="w-6 h-6" style={{ color: THEME.brand }} />,
-    preview: (
-      <div className="relative rounded-xl overflow-hidden">
-        <div
-          className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-border"
-          style={{ background: `${THEME.brand}12` }}
-        >
-          <div className="flex items-end justify-between mb-2">
-            {[42, 55, 61, 58, 70, 74, 68].map((v, i) => (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <div
-                  className="w-6 rounded-t-sm"
-                  style={{
-                    height: v * 0.8,
-                    background: THEME.brand,
-                    opacity: 0.7,
-                  }}
-                />
-                <span className="text-xs text-muted-foreground">W{i + 1}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <span className="text-2xl font-bold" style={{ color: THEME.brand }}>
-              74
-            </span>
-            <span className="text-xs text-success">↑ +6 this week</span>
-          </div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
-          <div className="flex flex-col items-center gap-1">
-            <Sparkles className="w-7 h-7" style={{ color: THEME.brand }} />
-            <p className="text-xs font-semibold text-foreground">Unlock your score</p>
-          </div>
-        </div>
-      </div>
-    ),
-  },
   ai_coaching: {
     icon: <Brain className="w-6 h-6" style={{ color: THEME.teal }} />,
     preview: (

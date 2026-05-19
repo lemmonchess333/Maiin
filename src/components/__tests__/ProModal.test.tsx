@@ -11,7 +11,6 @@
  *   - Checkout receives the selected plan (test-pinned both for
  *     the default and after a tile switch)
  *   - featureKey="adaptive_tdee" renders the registry's title
- *   - featureKey="performance_engine" renders the registry's title
  *   - Restore-purchases is hidden on web, shown on native iOS
  *   - Checkout failure surfaces an inline role="alert" above the CTA
  *   - Close button has an accessible name and fires onClose
@@ -172,14 +171,11 @@ describe("ProModal — feature-specific hero", () => {
     expect(visible).toBeTruthy();
   });
 
-  it("renders the registry's title for featureKey='performance_engine'", () => {
-    renderModal({ onClose: () => {}, featureKey: "performance_engine" });
-    const headings = screen.getAllByRole("heading", {
-      name: "Unlock Performance Engine",
-    });
-    const visible = headings.find((h) => !h.className.includes("sr-only"));
-    expect(visible).toBeTruthy();
-  });
+  // Sub2 (Pro scope shrinkage): performance_engine + advanced_insights
+  // removed from the registry. PI + insights are free for everyone;
+  // a featureKey value of those strings would now fail at compile
+  // time. The remaining Pro keys (adaptive_tdee covered above) carry
+  // the registry-title contract.
 });
 
 describe("ProModal — checkout", () => {

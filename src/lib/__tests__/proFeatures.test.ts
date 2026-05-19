@@ -17,18 +17,19 @@ import {
 } from "../proFeatures";
 
 describe("PRO_FEATURES — registry shape", () => {
-  it("contains all the keys the app references", () => {
+  it("contains the 4 keys the app references (Sub2 narrowed scope)", () => {
     const required: ProFeatureKey[] = [
-      "performance_engine",
       "ai_food_logging",
       "ai_coaching",
       "adaptive_macros",
       "adaptive_tdee",
-      "advanced_insights",
     ];
     for (const key of required) {
       expect(PRO_FEATURES[key]).toBeDefined();
     }
+    // Sub2: performance_engine and advanced_insights are no longer
+    // in the Pro registry — PI + insights are free for everyone now.
+    expect(Object.keys(PRO_FEATURES)).toHaveLength(required.length);
   });
 
   it("every entry has a non-empty label, title, tagline, sourceLabel", () => {
@@ -55,9 +56,9 @@ describe("PRO_FEATURES — registry shape", () => {
 
 describe("getProFeature", () => {
   it("returns the matching config for a known key", () => {
-    const result = getProFeature("performance_engine");
-    expect(result?.key).toBe("performance_engine");
-    expect(result?.label).toBe("Performance Engine");
+    const result = getProFeature("adaptive_tdee");
+    expect(result?.key).toBe("adaptive_tdee");
+    expect(result?.label).toBe("Adaptive TDEE");
   });
 
   it("returns null for undefined (ProModal fall-through path)", () => {

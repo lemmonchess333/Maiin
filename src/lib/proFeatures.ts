@@ -18,15 +18,21 @@
  * `tagline` is the supporting copy under the title.
  * `sourceLabel` is the analytics dimension — emitted with the
  * paywall_viewed event so we can see which gates drive interest.
+ *
+ * Sub2 — Pro scope shrinkage (locked in /grill-me). The Pro
+ * registry narrows from 6 keys to 4: `performance_engine` and
+ * `advanced_insights` removed. Performance Index, plateau
+ * detection, and the broader "performance insights" surface are
+ * now free for everyone (P2 made PI a Home-card hero; gating it
+ * was hiding Tropos's whole adaptive positioning from free users).
+ * Pro now gates only AI-augmented + adaptive-optimisation features.
  */
 
 export type ProFeatureKey =
-  | "performance_engine"
   | "ai_food_logging"
   | "ai_coaching"
   | "adaptive_macros"
-  | "adaptive_tdee"
-  | "advanced_insights";
+  | "adaptive_tdee";
 
 export interface ProFeatureConfig {
   key: ProFeatureKey;
@@ -41,13 +47,6 @@ export interface ProFeatureConfig {
 }
 
 export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
-  performance_engine: {
-    key: "performance_engine",
-    label: "Performance Engine",
-    title: "Unlock Performance Engine",
-    tagline: "Get recovery, consistency and training-load signals with Pro.",
-    sourceLabel: "performance_engine",
-  },
   ai_food_logging: {
     key: "ai_food_logging",
     label: "AI food photo logging",
@@ -75,13 +74,6 @@ export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
     title: "Unlock Adaptive TDEE",
     tagline: "Adjust calorie targets using your real weight and intake trends.",
     sourceLabel: "adaptive_tdee",
-  },
-  advanced_insights: {
-    key: "advanced_insights",
-    label: "Advanced insights",
-    title: "Unlock Advanced Insights",
-    tagline: "See deeper trends across food, lifting and running.",
-    sourceLabel: "advanced_insights",
   },
 };
 
