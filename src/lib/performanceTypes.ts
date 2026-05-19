@@ -140,6 +140,13 @@ export interface PerformanceWeekDoc {
   adherenceScore: number | null;
   loadBand: string;
 
+  // PI1a: top-level fields the CF writes alongside the legacy
+  // labels/flags wrappers. normalisePerformanceDoc spreads ...data
+  // so they're present on the resulting object; declared here so
+  // the consolidated PerformanceCard can read them without a cast.
+  confidence?: 'high' | 'medium' | 'low';
+  deloadRecommended?: boolean;
+
   labels?: {
     loadBand: string;
   };

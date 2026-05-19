@@ -15,7 +15,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dumbbell, Sparkles, Settings as SettingsIcon, Flame, Footprints, X, Target, Minus, Plus, Check } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
-import { calculateHealthScore } from "@/lib/healthScore";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
@@ -39,7 +38,6 @@ import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import DayActionSheet from "@/components/program/DayActionSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import HealthScoreCard from "@/components/home/HealthScoreCard";
 import PerformanceCard from "@/components/home/PerformanceCard";
 import InsightStrip from "@/components/home/InsightStrip";
 
@@ -72,7 +70,6 @@ export default function Home() {
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
-  const [prevHealthScore, setPrevHealthScore] = useState<number | null>(null);
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
@@ -136,37 +133,6 @@ export default function Home() {
   const weightUnit = profile?.preferredWeightUnit || "kg";
   const { dailyCal, dailyProt, dailyCarbs, dailyFat, todayWorkoutCals, todayRunCals, lastWeightInfo, setLastWeightInfo, postWorkoutNudge } = useHomeData(user, profile, workouts, weightUnit);
 
-  const todayTotals = getDailyTotals(todayKey);
-  const todayWorkoutCount = useMemo(function() {
-    return workouts.filter(function(w) { return w.date === todayKey; }).length;
-  }, [workouts, todayKey]);
-
-  const healthScoreResult = useMemo(function() {
-    return calculateHealthScore(
-      {
-        calories: todayTotals.calories,
-        protein: todayTotals.protein,
-        mealCount: todayTotals.mealCount,
-      },
-      {
-        calories: effectiveTargets.finalTarget,
-        protein: effectiveTargets.protein,
-      },
-      {
-        workoutsToday: todayWorkoutCount,
-        waterGlasses: waterGlasses,
-        waterTarget: waterTarget,
-        isRestDay: todayType === "rest",
-      }
-    );
-  }, [todayTotals, effectiveTargets, todayWorkoutCount, waterGlasses, waterTarget, todayType]);
-  const healthScore = healthScoreResult.score;
-
-  useEffect(function() {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- tracking previous value for animation
-    if (healthScore != null) setPrevHealthScore(healthScore);
-  }, [healthScore]);
-
   // Daily burn for Today's Energy card
 
   const dailyBurn = useMemo(function() {
@@ -183,7 +149,7 @@ export default function Home() {
   // Pull up to 4 weeks: currentWeek powers the home card, the prior
   // week feeds the delta chip, and the count drives the baseline-
   // establishing copy when <4 weeks of data are available.
-  const { weeks: perfWeeks, currentWeek: perfWeek } = usePerformanceWeeks(4);
+  const { weeks: perfWeeks, currentWeek: perfWeek, loading: perfLoading } = usePerformanceWeeks(4);
   const perfPrevWeek = perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
   const perfLoadBand = perfWeek?.labels?.loadBand || perfWeek?.loadBand || "";
   const showInsightStrip = perfWeek?.insight && (perfLoadBand === "high" || perfLoadBand === "overreach" || perfWeek?.flags?.deloadRecommended);
@@ -478,22 +444,18 @@ export default function Home() {
         </AnimatePresence>
       </motion.div>
 
-      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
-      </motion.div>
-
-      {/* P2a: Performance Index compact tile. Sub2 moved PI from
-          Pro-gated to free-for-all, so every user with logged
-          sessions sees this; empty state renders for users without
-          a rollup yet. Tap → /history#performance per P2c. Sits
-          under HealthScoreCard so it pairs with the day-level
-          "are you on track" answer above. */}
+      {/* PI1b: consolidated Performance hero — drop-in replacement
+          for HealthScoreCard (deleted) + compact PerformanceCard
+          (superseded). Single rolling-7-day PI card with ring, verb,
+          data-aware line, and delta chip. Per PI4 lock the legacy
+          PerformanceCard slot is removed and the layout collapses
+          by one card via the existing gap-4 spacing. */}
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <SectionErrorBoundary sectionName="performance-card">
           <PerformanceCard
             currentWeek={perfWeek ?? null}
             previousWeek={perfPrevWeek}
-            weeksAvailable={perfWeeks.length}
+            loading={perfLoading}
             uid={user?.uid ?? null}
           />
         </SectionErrorBoundary>
@@ -501,9 +463,7 @@ export default function Home() {
 
       {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
-          bottom of the scroll it was below the fold on first load. Now lives
-          directly under the Health Score card so it's always visible in the
-          first paint. */}
+          bottom of the scroll it was below the fold on first load. */}
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
           <SectionErrorBoundary sectionName="today-intake">
