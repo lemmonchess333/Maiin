@@ -1248,6 +1248,7 @@ const {
   acquireCooldownLock,
   releaseLock,
   getWeekKey,
+  isInRollingWindow,
 } = require("./performanceEngine");
 
 const db = admin.firestore();
@@ -1491,10 +1492,11 @@ exports.onWorkoutCreated = functions.firestore
       }
 
       if (data.date) {
-        const workoutWeek = getWeekKey(new Date(data.date + "T00:00:00Z"));
-        const currentWeek = getWeekKey(new Date());
-        if (workoutWeek !== currentWeek) {
-          console.log(`onWorkoutCreated: skipping recompute for ${uid}, workout in week ${workoutWeek} (current: ${currentWeek})`);
+        const currentKey = getWeekKey(new Date());
+        // PI1a: skip recompute when the workout falls outside the
+        // rolling 7-day window (was: outside the current Sunday-week).
+        if (!isInRollingWindow(data.date, currentKey)) {
+          console.log(`onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window ending ${currentKey}`);
           return null;
         }
       }
@@ -1581,10 +1583,12 @@ exports.onRunCreated = functions.firestore
 
       if (data.completedAt) {
         const runDate = data.completedAt.toDate ? data.completedAt.toDate() : new Date(data.completedAt);
-        const runWeek = getWeekKey(runDate);
-        const currentWeek = getWeekKey(new Date());
-        if (runWeek !== currentWeek) {
-          console.log(`onRunCreated: skipping recompute for ${uid}, run in week ${runWeek} (current: ${currentWeek})`);
+        const runDateStr = runDate.toISOString().split("T")[0];
+        const currentKey = getWeekKey(new Date());
+        // PI1a: skip recompute when the run falls outside the rolling
+        // 7-day window (was: outside the current Sunday-week).
+        if (!isInRollingWindow(runDateStr, currentKey)) {
+          console.log(`onRunCreated: skipping recompute for ${uid}, run on ${runDateStr} outside rolling window ending ${currentKey}`);
           return null;
         }
       }
