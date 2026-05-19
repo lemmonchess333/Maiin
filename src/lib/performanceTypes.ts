@@ -5,6 +5,9 @@
    is a copy-paste when the time comes.
    ───────────────────────────────────────────── */
 
+/** Load band emitted by the engine — categorical state derived from PI score. */
+export type LoadBand = 'deload' | 'low' | 'moderate' | 'high' | 'overreach';
+
 /** Raw weekly aggregates before scoring */
 export interface WeeklyAggregates {
   weekKey: string; // "YYYY-MM-DD" (Sunday start)
