@@ -509,17 +509,21 @@ export function AdaptiveSummary({
           <p className="text-xs text-muted-foreground">{badgeInfo.motivational}</p>
         </div>
 
-        {/* PRO GATE — locked card now leads somewhere. Pre-fix this
-            section showed pricing but had no action; tapping the
-            card did nothing and showing pricing without a way to
-            buy is exactly what the spec called out as the dead-end
-            pattern to remove. */}
+        {/* PRO GATE — locked card.
+            Sub2 (Pro scope shrinkage): the card no longer upsells
+            "Performance Engine" wholesale — Performance Index and
+            plateau detection are now FREE per Sub2c. The locked card
+            now describes only the features that remain Pro on this
+            surface: adaptive TDEE (calorie targets follow weight
+            trends), adaptive macros, and phase modes. featureKey
+            points at adaptive_tdee since that's the headline
+            optimisation hook for AdaptiveSummary's content. */}
         {!isPro && (
           <div className="p-4 rounded-xl bg-muted/30 border border-border text-center space-y-3">
             <Lock className="mx-auto w-5 h-5 text-muted-foreground" aria-hidden="true" />
-            <p className="text-sm font-medium text-foreground">Unlock Performance Engine</p>
+            <p className="text-sm font-medium text-foreground">Unlock Adaptive Tracking</p>
             <p className="text-xs text-muted-foreground">
-              AI macro adjustments, plateau detection, phase modes, and performance insights.
+              Adaptive TDEE, adaptive macros, and day-type phase modes.
             </p>
             <p className="text-xs font-semibold text-foreground">{getInlinePriceSummary()}</p>
             <button
@@ -535,7 +539,7 @@ export function AdaptiveSummary({
           {showPaywall && (
             <Suspense fallback={null}>
               <ProModal
-                featureKey="performance_engine"
+                featureKey="adaptive_tdee"
                 onClose={() => setShowPaywall(false)}
               />
             </Suspense>

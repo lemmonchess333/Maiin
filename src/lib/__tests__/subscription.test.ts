@@ -156,10 +156,19 @@ describe('getSubscriptionInfo', () => {
 // longer owns pricing — only tier / trial / feature-access logic.
 
 describe('featureAccess', () => {
-  it('free tier lacks pro features', () => {
+  it('free tier lacks adaptive / AI pro features', () => {
+    // Sub2: only aiAdjustments + phaseModes are the adaptive-only Pro
+    // flags now. plateauDetection + performanceInsights moved to free.
     expect(featureAccess.free.aiAdjustments).toBe(false);
-    expect(featureAccess.free.plateauDetection).toBe(false);
-    expect(featureAccess.free.performanceInsights).toBe(false);
+    expect(featureAccess.free.phaseModes).toBe(false);
+  });
+
+  it('free tier gains plateau detection + performance insights (Sub2 shrinkage)', () => {
+    // Sub2c: plateauDetection is a SAFETY feature; gating safety
+    // behind Pro is hostile. performanceInsights was contradicted by
+    // P2's hero-card positioning — both are free for everyone now.
+    expect(featureAccess.free.plateauDetection).toBe(true);
+    expect(featureAccess.free.performanceInsights).toBe(true);
   });
 
   it('pro tier has all features', () => {
