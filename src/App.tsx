@@ -72,6 +72,7 @@ const SettingsNotifications = lazyRetry(() => import("@/pages/settings/SettingsN
 const SettingsSubscription = lazyRetry(() => import("@/pages/settings/SettingsSubscription"));
 const SettingsSupportLegal = lazyRetry(() => import("@/pages/settings/SettingsSupportLegal"));
 const SettingsAccount = lazyRetry(() => import("@/pages/settings/SettingsAccount"));
+const SettingsRecentlyDeleted = lazyRetry(() => import("@/pages/settings/SettingsRecentlyDeleted"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
@@ -339,6 +340,7 @@ function AppRoutes() {
           <Route path="/settings/subscription" element={<RouteErrorBoundary><SettingsSubscription /></RouteErrorBoundary>} />
           <Route path="/settings/support-legal" element={<RouteErrorBoundary><SettingsSupportLegal /></RouteErrorBoundary>} />
           <Route path="/settings/account" element={<RouteErrorBoundary><SettingsAccount /></RouteErrorBoundary>} />
+          <Route path="/settings/recently-deleted-meals" element={<RouteErrorBoundary><SettingsRecentlyDeleted /></RouteErrorBoundary>} />
           <Route path="/upgrade" element={<RouteErrorBoundary><Upgrade /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
           <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />
