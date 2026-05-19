@@ -58,7 +58,6 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRacePhaseLabel } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
-import { CONFIGURE_PLAN_RUNNING_STEP } from "./ConfigurePlanModal";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
 import { Banner } from "@/components/ui/Banner";
@@ -99,11 +98,6 @@ interface ProgrammeRunSectionProps {
    *  writes. The post-race card's "Skip recovery early" link calls
    *  this when the user wants to bail out of the soft window. */
   skipRecoveryEarly: () => Promise<void>;
-  /** PR-0d → PR-4: opens ConfigurePlanModal at the Running step.
-   *  Now an escape hatch for full plan rebuilds, not the only path
-   *  to a mode change. The inline chip row + race-goal form (PR-B)
-   *  handle the common cases. */
-  onOpenConfigurePlan?: (initialStep?: number) => void;
 }
 
 function paceLabel(paceSec: number): string {
@@ -139,7 +133,6 @@ export default function ProgrammeRunSection({
   skipWorkoutDay,
   refreshRunSchedule,
   skipRecoveryEarly,
-  onOpenConfigurePlan,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const { updateProfile } = useAuth();
@@ -621,7 +614,7 @@ export default function ProgrammeRunSection({
           action={
             <button
               type="button"
-              onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
+              onClick={() => { haptic(); navigate("/settings/training"); }}
               className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
             >
               Configure plan
@@ -1058,7 +1051,7 @@ export default function ProgrammeRunSection({
       <div className="flex justify-end pt-2 border-t border-border/30">
         <button
           type="button"
-          onClick={() => onOpenConfigurePlan?.(CONFIGURE_PLAN_RUNNING_STEP)}
+          onClick={() => { haptic(); navigate("/settings/training"); }}
           className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
         >
           Change plan
