@@ -10,6 +10,12 @@ interface FoodDateBarProps {
   onPrev: () => void;
   onNext: () => void;
   onPick: (nextDate: string) => void;
+  /** Food6a-3: disable navigation past the 90-day tap-back / future bounds. */
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  /** Native picker bounds (YYYY-MM-DD); also gates the controlled value. */
+  minDate?: string;
+  maxDate?: string;
   /** Parent stagger variant so the bar participates in the page animation. */
   itemVariant?: Variants;
 }
@@ -30,6 +36,10 @@ function FoodDateBar({
   onPrev,
   onNext,
   onPick,
+  canGoBack = true,
+  canGoForward = true,
+  minDate,
+  maxDate,
   itemVariant,
 }: FoodDateBarProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -42,11 +52,12 @@ function FoodDateBar({
     >
       <button
         onClick={() => { haptic(); onPrev(); }}
+        disabled={!canGoBack}
         aria-label="Previous day"
         /* min 44×44 hit area per iOS HIG / WCAG. Pre-F1 was p-2
            (~36px) — the icon stays 16px so the visual weight is
            unchanged, only the tappable region grows. */
-        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
+        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
       </button>
@@ -64,14 +75,17 @@ function FoodDateBar({
         ref={dateInputRef}
         type="date"
         value={selectedDate}
+        min={minDate}
+        max={maxDate}
         aria-label="Select date"
         onChange={(e) => e.target.value && onPick(e.target.value)}
         className="sr-only"
       />
       <button
         onClick={() => { haptic(); onNext(); }}
+        disabled={!canGoForward}
         aria-label="Next day"
-        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all"
+        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
       </button>
