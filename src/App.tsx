@@ -61,7 +61,17 @@ const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const Settings = lazyRetry(() => import("@/pages/Settings"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
+const SettingsProfile = lazyRetry(() => import("@/pages/settings/SettingsProfile"));
 const SettingsTraining = lazyRetry(() => import("@/pages/settings/SettingsTraining"));
+const SettingsNutrition = lazyRetry(() => import("@/pages/settings/SettingsNutrition"));
+const SettingsWorkoutPrefs = lazyRetry(() => import("@/pages/settings/SettingsWorkoutPrefs"));
+const SettingsUnitsAppearance = lazyRetry(() => import("@/pages/settings/SettingsUnitsAppearance"));
+const SettingsPrivacy = lazyRetry(() => import("@/pages/settings/SettingsPrivacy"));
+const SettingsShoes = lazyRetry(() => import("@/pages/settings/SettingsShoes"));
+const SettingsNotifications = lazyRetry(() => import("@/pages/settings/SettingsNotifications"));
+const SettingsSubscription = lazyRetry(() => import("@/pages/settings/SettingsSubscription"));
+const SettingsSupportLegal = lazyRetry(() => import("@/pages/settings/SettingsSupportLegal"));
+const SettingsAccount = lazyRetry(() => import("@/pages/settings/SettingsAccount"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
@@ -318,7 +328,17 @@ function AppRoutes() {
               for non-migrated sections). */}
           <Route path="/settings" element={<RouteErrorBoundary><SettingsIndex /></RouteErrorBoundary>} />
           <Route path="/settings/legacy" element={<RouteErrorBoundary><Settings /></RouteErrorBoundary>} />
+          <Route path="/settings/profile" element={<RouteErrorBoundary><SettingsProfile /></RouteErrorBoundary>} />
           <Route path="/settings/training" element={<RouteErrorBoundary><SettingsTraining /></RouteErrorBoundary>} />
+          <Route path="/settings/nutrition" element={<RouteErrorBoundary><SettingsNutrition /></RouteErrorBoundary>} />
+          <Route path="/settings/workout-prefs" element={<RouteErrorBoundary><SettingsWorkoutPrefs /></RouteErrorBoundary>} />
+          <Route path="/settings/units-appearance" element={<RouteErrorBoundary><SettingsUnitsAppearance /></RouteErrorBoundary>} />
+          <Route path="/settings/privacy" element={<RouteErrorBoundary><SettingsPrivacy /></RouteErrorBoundary>} />
+          <Route path="/settings/shoes" element={<RouteErrorBoundary><SettingsShoes /></RouteErrorBoundary>} />
+          <Route path="/settings/notifications" element={<RouteErrorBoundary><SettingsNotifications /></RouteErrorBoundary>} />
+          <Route path="/settings/subscription" element={<RouteErrorBoundary><SettingsSubscription /></RouteErrorBoundary>} />
+          <Route path="/settings/support-legal" element={<RouteErrorBoundary><SettingsSupportLegal /></RouteErrorBoundary>} />
+          <Route path="/settings/account" element={<RouteErrorBoundary><SettingsAccount /></RouteErrorBoundary>} />
           <Route path="/upgrade" element={<RouteErrorBoundary><Upgrade /></RouteErrorBoundary>} />
           <Route path="/program" element={<RouteErrorBoundary><Program /></RouteErrorBoundary>} />
           <Route path="/social" element={<RouteErrorBoundary><Social /></RouteErrorBoundary>} />

@@ -35,6 +35,7 @@ interface NutritionSectionProps {
   };
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   onPhaseChange: (phase: "cut" | "lean bulk" | "recomp") => void;
+  inline?: boolean;
 }
 
 export default function NutritionSection({
@@ -50,6 +51,7 @@ export default function NutritionSection({
   tdee,
   updateProfile,
   onPhaseChange,
+  inline = false,
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
   const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -67,7 +69,7 @@ export default function NutritionSection({
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   return (
-    <AccordionSection icon={<Calculator className="w-5 h-5 text-primary" />} title="Nutrition" subtitle="TDEE, phase, macros, meal target">
+    <AccordionSection inline={inline} icon={<Calculator className="w-5 h-5 text-primary" />} title="Nutrition" subtitle="TDEE, phase, macros, meal target">
 
       {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">

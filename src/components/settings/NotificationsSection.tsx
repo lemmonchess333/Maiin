@@ -23,6 +23,7 @@ interface NotificationsSectionProps {
   updateWorkoutReminders: (data: Partial<WorkoutReminders>) => Promise<void>;
   streakReminder: StreakReminderPrefs;
   updateStreakReminder: (data: Partial<StreakReminderPrefs>) => Promise<void>;
+  inline?: boolean;
 }
 
 export default function NotificationsSection({
@@ -32,6 +33,7 @@ export default function NotificationsSection({
   updateWorkoutReminders,
   streakReminder,
   updateStreakReminder,
+  inline = false,
 }: NotificationsSectionProps) {
   // Permission state for the inline denied-banner. Re-poll on every toggle
   // action below so if the user opts in, hits the OS prompt, and denies,
@@ -133,7 +135,7 @@ export default function NotificationsSection({
     mealReminders.enabled || workoutReminders.enabled || streakReminder.enabled;
 
   return (
-    <AccordionSection icon={<Bell className="w-5 h-5 text-primary" />} title="Notifications" subtitle="Meal, workout & streak reminders">
+    <AccordionSection inline={inline} icon={<Bell className="w-5 h-5 text-primary" />} title="Notifications" subtitle="Meal, workout & streak reminders">
       {/* Permission-denied banner — only shown when the user has at least one
           reminder turned on AND the OS is blocking delivery. Silent failure
           is confusing: the toggle says "on" but nothing fires. Surfacing the

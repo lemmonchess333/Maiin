@@ -18,11 +18,13 @@ import { Spinner } from "@/components/ui/Spinner";
 interface AccountSectionProps {
   user: User | null;
   signOut: () => Promise<void>;
+  inline?: boolean;
 }
 
 export default function AccountSection({
   user,
   signOut,
+  inline = false,
 }: AccountSectionProps) {
   const [exporting, setExporting] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,7 +34,7 @@ export default function AccountSection({
 
   return (
     <>
-      <AccordionSection icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, sign out">
+      <AccordionSection inline={inline} icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, sign out">
         <div className="space-y-2">
           {[
             { label: "Export Workouts (CSV)", key: "workouts" },

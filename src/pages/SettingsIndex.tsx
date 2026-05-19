@@ -52,17 +52,17 @@ interface SectionRow {
 /** Section catalogue. Order matches the iOS Settings convention
  *  (identity → preferences → app → support → account at bottom). */
 const SECTIONS: SectionRow[] = [
-  { slug: "profile",            label: "Profile",             description: "Name, photo, body metrics",          icon: User,        migrated: false },
-  { slug: "training",           label: "Training",            description: "Programme, run mode, retake setup",  icon: Target,      migrated: true  },
-  { slug: "nutrition",          label: "Nutrition",           description: "Calorie targets, activity level",    icon: Apple,       migrated: false },
-  { slug: "workout-prefs",      label: "Workout preferences", description: "Rest timer, audio cues",             icon: Dumbbell,    migrated: false },
-  { slug: "units-appearance",   label: "Units & Appearance",  description: "Weight, height units, dark mode",    icon: Palette,     migrated: false },
-  { slug: "privacy",            label: "Social & Privacy",    description: "Visibility, crew, GPS zones",        icon: Lock,        migrated: false },
-  { slug: "shoes",              label: "My Shoes",            description: "Track mileage per pair",             icon: Footprints,  migrated: false },
-  { slug: "notifications",      label: "Notifications",       description: "Meal, workout, streak reminders",    icon: Bell,        migrated: false },
-  { slug: "subscription",       label: "Subscription",        description: "Plan, billing, restore",             icon: Crown,       migrated: false },
-  { slug: "support-legal",      label: "Support & Legal",     description: "Help, privacy policy, terms",        icon: HelpCircle,  migrated: false },
-  { slug: "account",            label: "Account",             description: "Sign out, delete account",           icon: Cog,         migrated: false },
+  { slug: "profile",            label: "Profile",             description: "Name, photo, body metrics",          icon: User,        migrated: true },
+  { slug: "training",           label: "Training",            description: "Programme, run mode, retake setup",  icon: Target,      migrated: true },
+  { slug: "nutrition",          label: "Nutrition",           description: "Calorie targets, activity level",    icon: Apple,       migrated: true },
+  { slug: "workout-prefs",      label: "Workout preferences", description: "Rest timer, audio cues",             icon: Dumbbell,    migrated: true },
+  { slug: "units-appearance",   label: "Units & Appearance",  description: "Weight, height units, dark mode",    icon: Palette,     migrated: true },
+  { slug: "privacy",            label: "Social & Privacy",    description: "Visibility, crew, GPS zones",        icon: Lock,        migrated: true },
+  { slug: "shoes",              label: "My Shoes",            description: "Track mileage per pair",             icon: Footprints,  migrated: true },
+  { slug: "notifications",      label: "Notifications",       description: "Meal, workout, streak reminders",    icon: Bell,        migrated: true },
+  { slug: "subscription",       label: "Subscription",        description: "Plan, billing, restore",             icon: Crown,       migrated: true },
+  { slug: "support-legal",      label: "Support & Legal",     description: "Help, privacy policy, terms",        icon: HelpCircle,  migrated: true },
+  { slug: "account",            label: "Account",             description: "Sign out, delete account",           icon: Cog,         migrated: true },
 ];
 
 export default function SettingsIndex() {
