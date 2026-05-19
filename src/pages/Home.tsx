@@ -40,6 +40,7 @@ import DayPeekCard from "@/components/home/DayPeekCard";
 import DayActionSheet from "@/components/program/DayActionSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import HealthScoreCard from "@/components/home/HealthScoreCard";
+import PerformanceCard from "@/components/home/PerformanceCard";
 import InsightStrip from "@/components/home/InsightStrip";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
@@ -179,7 +180,11 @@ export default function Home() {
   }, [profile?.targetCalories, profile?.program?.goal, todayWorkoutCals, todayRunCals]);
 
   // Performance data for InsightStrip
-  const { currentWeek: perfWeek } = usePerformanceWeeks(1);
+  // Pull up to 4 weeks: currentWeek powers the home card, the prior
+  // week feeds the delta chip, and the count drives the baseline-
+  // establishing copy when <4 weeks of data are available.
+  const { weeks: perfWeeks, currentWeek: perfWeek } = usePerformanceWeeks(4);
+  const perfPrevWeek = perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
   const perfLoadBand = perfWeek?.labels?.loadBand || perfWeek?.loadBand || "";
   const showInsightStrip = perfWeek?.insight && (perfLoadBand === "high" || perfLoadBand === "overreach" || perfWeek?.flags?.deloadRecommended);
 
@@ -475,6 +480,23 @@ export default function Home() {
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <HealthScoreCard healthScore={healthScore} prevHealthScore={prevHealthScore} />
+      </motion.div>
+
+      {/* P2a: Performance Index compact tile. Sub2 moved PI from
+          Pro-gated to free-for-all, so every user with logged
+          sessions sees this; empty state renders for users without
+          a rollup yet. Tap → /history#performance per P2c. Sits
+          under HealthScoreCard so it pairs with the day-level
+          "are you on track" answer above. */}
+      <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <SectionErrorBoundary sectionName="performance-card">
+          <PerformanceCard
+            currentWeek={perfWeek ?? null}
+            previousWeek={perfPrevWeek}
+            weeksAvailable={perfWeeks.length}
+            uid={user?.uid ?? null}
+          />
+        </SectionErrorBoundary>
       </motion.div>
 
       {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
