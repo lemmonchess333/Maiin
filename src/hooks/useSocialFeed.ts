@@ -63,7 +63,12 @@ export interface FeedItem {
  * user immediately landed on Discover and never saw Following. The
  * gate skips the loadFeed effect when enabled is false; flipping it
  * to true triggers a refresh-style fetch. */
-export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>, enabled = true) {
+export function useSocialFeed(
+  highlightsOnly = false,
+  blockedUsers?: Set<string>,
+  enabled = true,
+  hiddenActivityIds?: Set<string>,
+) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
   /* `internalLoading` reflects whether a fetch is in flight; the
@@ -120,6 +125,15 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
         enriched = enriched.filter(item => !blockedUsers.has(item.authorId));
       }
 
+      // S4c: filter out user-hidden activity IDs (Hide-from-feed
+      // checkbox on the report modal). hiddenActivityIds is keyed
+      // by activityId not feed-item id — there can be multiple feed
+      // items for the same activity (e.g. fan-out duplicates) so
+      // hiding one hides all renderings.
+      if (hiddenActivityIds && hiddenActivityIds.size > 0) {
+        enriched = enriched.filter(item => !hiddenActivityIds.has(item.activityId));
+      }
+
       if (highlightsOnly) {
         enriched = enriched.filter(item =>
           item.prHit ||
@@ -150,7 +164,7 @@ export function useSocialFeed(highlightsOnly = false, blockedUsers?: Set<string>
       setError(e instanceof Error ? e.message : 'Failed to load feed');
     }
     setInternalLoading(false);
-  }, [user, highlightsOnly, blockedUsers]);
+  }, [user, highlightsOnly, blockedUsers, hiddenActivityIds]);
 
   useEffect(() => {
     /* When disabled, skip the network read entirely. Don't setState

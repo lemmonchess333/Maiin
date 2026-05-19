@@ -668,19 +668,73 @@ export async function batchGetKudos(activityIds: string[], userId: string): Prom
 // ============================================
 // Report Content (App Store Guideline 1.2)
 // ============================================
+//
+// S4 (locked) — two-tier categories. Top-level reporter category +
+// optional sub-reason. The reasoner picks a category in the modal,
+// then a more specific sub-reason inside it. Server-side severity
+// computation (S4d, deferred) maps category + sub-reason + target
+// content to a severity tier; this client just submits what the
+// reporter said. `reason` retained as a derived "best top-level
+// summary" so the admin queue (which still filters by reason) keeps
+// working without breaking the existing client-server contract.
 export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+export type ReportCategory =
+  | 'harassment'
+  | 'spam'
+  | 'inappropriate'
+  | 'impersonation'
+  | 'other';
 
-export async function reportContent(reporterId: string, data: {
+export interface ReportContentInput {
   targetType: 'activity' | 'comment' | 'user';
   targetId: string;
-  reason: ReportReason;
+  /** Top-level category — S4b two-tier first level. */
+  category: ReportCategory;
+  /** Sub-reason within the category (free-form string per category;
+   *  v1 picker enforces a closed set per category but the server
+   *  accepts any string to allow new sub-reasons without redeploys). */
+  subReason?: string;
+  /** 500-char freeform note. Server-side profanity filter may flag
+   *  for admin review; UI redacts on the admin queue side. */
+  freeformNote?: string;
+  /** Optional. The author of the reported content — kept on the
+   *  report doc so the admin queue can group by target user even
+   *  when targetType is "comment" (where targetId is the comment
+   *  doc id, not the author uid). */
+  targetUid?: string;
+  /** Informational only — the report doc records whether the
+   *  reporter also hid + blocked. Doesn't trigger server actions;
+   *  the client orchestrates those calls separately. */
+  hideFromFeed?: boolean;
+  blockAuthor?: boolean;
+  /** Backwards-compat: a callsite that still uses the old `reason`
+   *  field overrides the derived value. Stays optional so new
+   *  callsites can drop it. */
+  reason?: ReportReason;
+  /** Backwards-compat alias for `freeformNote`. */
   details?: string;
-}) {
+}
+
+export async function reportContent(reporterId: string, data: ReportContentInput) {
   const authedUid = getAuthUid();
   if (reporterId !== authedUid) throw new Error('Identity mismatch');
+  // Derive `reason` from `category` for the admin queue's existing
+  // filter (which uses ReportReason, the old 4-value enum). The
+  // category enum is a superset so the mapping is straightforward.
+  const derivedReason: ReportReason =
+    data.reason
+    ?? (data.category === 'impersonation' ? 'other' : data.category);
   await addDoc(collection(db, 'reports'), {
     reporterId,
-    ...data,
+    targetType: data.targetType,
+    targetId: data.targetId,
+    targetUid: data.targetUid,
+    reason: derivedReason,
+    category: data.category,
+    subReason: data.subReason,
+    freeformNote: data.freeformNote ?? data.details,
+    hideFromFeed: !!data.hideFromFeed,
+    blockAuthor: !!data.blockAuthor,
     status: 'pending',
     createdAt: serverTimestamp(),
   });
