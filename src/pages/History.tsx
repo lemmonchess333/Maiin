@@ -112,54 +112,94 @@ function buildDelta(current: number, previous: number): { value: string; positiv
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Initial tab resolution order (first hit wins):
-  //   1. ?tab=... query param (shareable link from another surface)
-  //   2. #<tab> URL fragment (P2c deep-link — Home PerformanceCard
-  //      taps to /history#performance; this hook reads it once)
-  //   3. sessionStorage("history-tab") (deep-link from StreakFlame or
-  //      other in-app entry points — avoids polluting the URL)
+  // Hist4: URL `?tab=` is now the source of truth. The previous
+  // "read URL, then clear it" pattern broke the lock's URL-
+  // persistence requirement — and silently dropped other query
+  // params (the now-fixed `?range=` collision). Filter is derived
+  // from the URL on every render; setFilter writes back via
+  // setSearchParams({replace:true}) so tab-tapping doesn't
+  // accumulate browser history entries. Mirrors Soc5 + Food6.
+  //
+  // Deep-link sources (in resolution order, first hit wins) still
+  // work — but ALL of them now reconcile into the URL on mount
+  // rather than living in three separate side-channels:
+  //   1. ?tab=... query param  ← canonical source going forward
+  //   2. #<tab> URL fragment (P2c — /history#performance from the
+  //      Home PerformanceCard)
+  //   3. sessionStorage("history-tab") (StreakFlame + other in-app
+  //      deep-links that prefer not to pollute the URL until
+  //      mount)
   //   4. "all"
-  const initialTab = searchParams.get("tab") as FilterTab | null;
-  const initialHashTab = (() => {
-    if (typeof window === "undefined") return null;
-    const raw = window.location.hash.replace(/^#/, "") as FilterTab;
-    return VALID_TABS.includes(raw) ? raw : null;
-  })();
-  const stashedTab = (() => {
-    try {
-      return sessionStorage.getItem("history-tab") as FilterTab | null;
-    } catch {
-      return null;
-    }
-  })();
-  const [filter, setFilter] = useState<FilterTab>(
-    initialTab && VALID_TABS.includes(initialTab)
-      ? initialTab
-      : initialHashTab
-        ? initialHashTab
-        : stashedTab && VALID_TABS.includes(stashedTab)
-          ? stashedTab
-          : "all"
+  const tabFromUrl = searchParams.get("tab");
+  const filter: FilterTab =
+    tabFromUrl && VALID_TABS.includes(tabFromUrl as FilterTab)
+      ? (tabFromUrl as FilterTab)
+      : "all";
+  const setFilter = useCallback(
+    (next: FilterTab) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (next === "all") updated.delete("tab");
+          else updated.set("tab", next);
+          return updated;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
   );
 
+  // One-shot reconciliation on mount: if the URL doesn't already
+  // carry a tab AND a hash / sessionStorage hint exists, promote
+  // that hint to the URL so the rest of the page can rely on URL
+  // as the single source of truth. Also clears the hash and the
+  // sessionStorage entry so a later refresh doesn't silently force
+  // a tab the user has since navigated away from.
+  const reconciledRef = useRef(false);
   useEffect(() => {
-    if (searchParams.has("tab")) {
-      // Strip only the `tab` param — preserving `?range=` and any
-      // other future query params landed by deep links. Pre-Hist4
-      // this called setSearchParams({}, ...) which nuked everything.
-      const next = new URLSearchParams(searchParams);
-      next.delete("tab");
-      setSearchParams(next, { replace: true });
+    if (reconciledRef.current) return;
+    reconciledRef.current = true;
+
+    let hintedTab: FilterTab | null = null;
+    if (typeof window !== "undefined") {
+      const hashRaw = window.location.hash.replace(/^#/, "") as FilterTab;
+      if (VALID_TABS.includes(hashRaw)) hintedTab = hashRaw;
     }
-    // One-shot consume: clear the sessionStorage hint once we've applied
-    // it so refreshing History doesn't silently force a tab the user may
-    // have navigated away from.
+    if (!hintedTab) {
+      try {
+        const stashed = sessionStorage.getItem("history-tab") as FilterTab | null;
+        if (stashed && VALID_TABS.includes(stashed)) hintedTab = stashed;
+      } catch {
+        /* private mode — nothing to read */
+      }
+    }
+    // Promote to URL only if URL doesn't already have a tab and
+    // the hint isn't "all" (which is the URL-clean state).
+    if (!tabFromUrl && hintedTab && hintedTab !== "all") {
+      setFilter(hintedTab);
+    }
+    // Clear the side-channel hints regardless — URL now owns the
+    // state, side-channels were one-shot entry points.
     try {
       sessionStorage.removeItem("history-tab");
     } catch {
-      /* private mode — nothing to clean up */
+      /* private mode */
     }
-  }, [searchParams, setSearchParams]);
+    if (typeof window !== "undefined" && window.location.hash) {
+      // Strip the hash without scrolling. Replacing state keeps
+      // the back-button history short.
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
+    }
+    // Intentionally only on mount — the ref guard ensures this
+    // runs once per page load even if React renders the effect
+    // multiple times.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hist4: range persisted via URL `?range=` per the lock's "Tab +
   // range persistence via URL search params" pin. Default '1M'
