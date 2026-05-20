@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
 
@@ -64,10 +65,10 @@ export default function WaterCard({ waterGlasses, waterTarget, onAddWater, onRem
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={function(e) { e.stopPropagation(); haptic(); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg, borderColor: THEME.semantic.hydration + "30" }}>
+          <button onClick={function(e) { e.stopPropagation(); haptic(); trackHomeEvent("home_card_tapped", { card: "water" }); onRemoveWater(); }} aria-label="Remove water" disabled={waterGlasses <= 0} className={cn("size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border", waterGlasses <= 0 && "opacity-30")} style={{ backgroundColor: THEME.iconBg, borderColor: THEME.semantic.hydration + "30" }}>
             <Minus className="w-4 h-4" style={{ color: THEME.semantic.hydration }} />
           </button>
-          <button onClick={function(e) { e.stopPropagation(); haptic(); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.semantic.hydration + "26", borderColor: "transparent" }}>
+          <button onClick={function(e) { e.stopPropagation(); haptic(); trackHomeEvent("home_card_tapped", { card: "water" }); onAddWater(); setRippleKey(function(k) { return k + 1; }); }} aria-label="Add water" disabled={waterGlasses >= waterTarget} className={cn("size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0", waterGlasses >= waterTarget && "opacity-30")} style={{ backgroundColor: THEME.semantic.hydration + "26", borderColor: "transparent" }}>
             <Plus className="w-4 h-4" style={{ color: THEME.semantic.hydration }} />
           </button>
         </div>
