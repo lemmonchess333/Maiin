@@ -1,6 +1,7 @@
 import { memo, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
+import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -10,16 +11,30 @@ interface ServingSource {
   /** Total calories across all current servings — used to derive a
    *  per-serving figure for the live preview. */
   currentTotalCalories: number;
+  /** F5a: current meal slot if all underlying docs share one. When
+   *  the group spans multiple slots (mixed state — unusual but
+   *  possible if a user moved one of two duplicates), this is null
+   *  and the picker renders un-selected. Editing snaps the whole
+   *  group to whichever pill the user taps. */
+  currentMeal: MealKey | null;
+}
+
+export interface EditServingsChanges {
+  targetCount: number;
+  /** Null = unchanged from the source's currentMeal. When the user
+   *  picks a different slot, parent maps this through the F5a
+   *  editMeal API to each underlying doc in the group. */
+  targetMeal: MealKey | null;
 }
 
 interface EditServingsSheetProps {
   /** When non-null the sheet is open and targets this group. */
   source: ServingSource | null;
   onCancel: () => void;
-  /** Parent persists the change (add/remove meal docs). Resolves when
-   *  the write completes so the sheet can close without flashing a
-   *  stale target count. */
-  onSave: (targetCount: number) => Promise<void> | void;
+  /** Parent persists the change (add/remove meal docs +/or edit slot
+   *  on each existing doc). Resolves when the write completes so the
+   *  sheet can close without flashing a stale state. */
+  onSave: (changes: EditServingsChanges) => Promise<void> | void;
 }
 
 /**
@@ -46,21 +61,33 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   // new `source` object identity (which happens often via Firestore
   // listeners) and stomp the user's stepper input mid-edit.
   const [target, setTarget] = useState<number>(source?.currentCount ?? 1);
+  // F5a: meal-slot edit. Null tracks "user hasn't picked a different
+  // slot yet"; the Save button only flags the change when the picked
+  // slot differs from the source's currentMeal. Lets the parent
+  // distinguish "slot change requested" from "slot unchanged but
+  // count changed" cleanly.
+  const [pickedMeal, setPickedMeal] = useState<MealKey | null>(
+    source?.currentMeal ?? null,
+  );
   const [saving, setSaving] = useState(false);
 
   if (!source) return null;
 
-  const { foodName, currentCount, currentTotalCalories } = source;
+  const { foodName, currentCount, currentTotalCalories, currentMeal } = source;
   const perServingCal = currentCount > 0 ? currentTotalCalories / currentCount : 0;
   const previewCal = Math.round(perServingCal * target);
-  const delta = target - currentCount;
-  const unchanged = delta === 0;
+  const countDelta = target - currentCount;
+  const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
+  const unchanged = countDelta === 0 && !mealChanged;
 
   const handleSave = async () => {
     if (unchanged || saving) return;
     setSaving(true);
     try {
-      await onSave(target);
+      await onSave({
+        targetCount: target,
+        targetMeal: mealChanged ? pickedMeal : null,
+      });
     } finally {
       setSaving(false);
     }
@@ -85,6 +112,46 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
           <p className="text-xs text-muted-foreground">
             {currentCount} {currentCount === 1 ? "serving" : "servings"} logged
           </p>
+        </div>
+
+        {/* F5a meal-slot picker. Tappable pill row matches the
+            "+ Snacks" composer-pill visual language. Picked state
+            uses the brand purple; unpicked state stays muted so the
+            visual weight signals "tap to change", not "tap to log".
+            Hidden when source.currentMeal is null AND the picker
+            hasn't been touched — that covers groups spanning
+            multiple slots, where snapping all docs to one slot via
+            this picker IS the intended outcome but the section
+            label here would be misleading. */}
+        <div className="space-y-1.5">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+            Meal slot
+          </p>
+          <div className="flex gap-1.5 justify-center flex-wrap">
+            {MEAL_ORDER.map((slot) => {
+              const isPicked = pickedMeal === slot;
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => {
+                    haptic("light");
+                    setPickedMeal(slot);
+                  }}
+                  disabled={saving}
+                  aria-pressed={isPicked}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[12px] font-semibold transition-colors active:scale-[0.97]",
+                    isPicked
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {MEAL_LABELS[slot]}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Stepper */}
@@ -125,9 +192,16 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
           ) : (
             <span>
               ~ {previewCal} cal
-              <span className="ml-2" style={{ color: delta > 0 ? "#D9884E" : "#8E8E93" }}>
-                ({delta > 0 ? "+" : ""}{delta} {Math.abs(delta) === 1 ? "serving" : "servings"})
-              </span>
+              {countDelta !== 0 && (
+                <span className="ml-2" style={{ color: countDelta > 0 ? "#D9884E" : "#8E8E93" }}>
+                  ({countDelta > 0 ? "+" : ""}{countDelta} {Math.abs(countDelta) === 1 ? "serving" : "servings"})
+                </span>
+              )}
+              {mealChanged && pickedMeal && (
+                <span className="ml-2 text-primary">
+                  → {MEAL_LABELS[pickedMeal]}
+                </span>
+              )}
             </span>
           )}
         </div>
