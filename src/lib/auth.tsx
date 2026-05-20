@@ -97,6 +97,13 @@ export interface UserProfilePreferences {
   defaultRestSeconds?: number;
   audioCues?: boolean;
   enableRolloverCalories?: boolean;
+  /** F1 privacy toggle: user opt-out for Gemini-backed food analysis
+   *  (image AI + NL text refinement). Undefined / missing = enabled
+   *  (default behaviour). Set to false via Settings → Privacy to
+   *  disable; AI CTAs hide and the underlying calls refuse. The
+   *  manual parse / barcode paths are unaffected — only AI calls
+   *  are gated. */
+  aiAnalysisEnabled?: boolean;
 }
 
 /** Nutrition targets */

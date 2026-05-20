@@ -46,7 +46,8 @@ export type SettingsToggle =
   | "theme"
   | "meal_reminders"
   | "workout_reminders"
-  | "streak_reminder";
+  | "streak_reminder"
+  | "ai_analysis_enabled";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user

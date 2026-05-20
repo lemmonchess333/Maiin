@@ -25,6 +25,7 @@ export default function SettingsPrivacy() {
       <PrivacySection
         inline
         user={user}
+        profile={profile}
         updateProfile={updateProfile}
         defaultVisibility={defaultVisibility}
         setDefaultVisibility={setDefaultVisibility}
