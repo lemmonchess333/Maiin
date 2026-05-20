@@ -95,6 +95,11 @@ service cloud.firestore {
     match /users/{uid}/foodFavourites/{doc} {
       allow read, write: if isOwner(uid);
     }
+    // F2d pantry — user-curated local food database. Owner-only.
+    // Storage shape pinned by parsePantryDoc in usePantry.ts.
+    match /users/{uid}/pantry/{doc} {
+      allow read, write: if isOwner(uid);
+    }
     match /users/{uid}/waterLog/{doc} {
       allow read, write: if isOwner(uid);
     }
