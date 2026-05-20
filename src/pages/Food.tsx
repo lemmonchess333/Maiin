@@ -238,7 +238,7 @@ export default function Food() {
     () => { haptic(); setScanOpen(!scanOpen); },
   );
 
-  const { meals, getMealsForDate, getDailyTotals, deleteMeal, loading: mealsLoading } = useMeals();
+  const { meals, getMealsForDate, getDailyTotals, deleteMeal, editMeal, loading: mealsLoading } = useMeals();
 
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
   // takes its first-paint timestamp from the post-mount effect (rather
@@ -771,11 +771,36 @@ export default function Food() {
   // open and persists the change when the user taps Save.
   const [editingGroup, setEditingGroup] = useState<{ id: string; foodName: string; meals: Meal[] } | null>(null);
 
-  const applyServingsChange = async (targetCount: number) => {
+  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null }) => {
     if (!user || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
+    const { targetCount, targetMeal } = changes;
+
+    // F5a: meal-slot change runs first (independent of count). One
+    // editMeal per doc — bumps userEditCount so the F5b "Edited" pill
+    // surfaces this as a user touch on each affected row. Errors here
+    // surface to the user via toast but don't abort the count branch
+    // below — slot and count are independently meaningful changes.
+    if (targetMeal) {
+      try {
+        await Promise.all(
+          groupMeals.map((m) => editMeal(m.id, { meal: targetMeal })),
+        );
+      } catch (err) {
+        logger.error('[Food] meal-slot edit failed', err);
+        toast.error('Could not change meal slot');
+      }
+    }
     if (targetCount === currentCount || targetCount < 1) {
+      if (targetMeal) {
+        // Slot-only change — surface a confirmation so the action
+        // doesn't feel silently no-op'd. Count branch below has its
+        // own toast for the count case.
+        toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
+          id: `food-slot-${foodName}`,
+        });
+      }
       setEditingGroup(null);
       return;
     }
@@ -1359,6 +1384,18 @@ export default function Food() {
             foodName: editingGroup.foodName,
             currentCount: editingGroup.meals.length,
             currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
+            // F5a: if all docs in the group share one slot, that's
+            // the current. Mixed-state groups (rare, e.g. user moved
+            // one of two duplicates) get null so the picker renders
+            // un-selected and any pick snaps the whole group to that
+            // slot.
+            currentMeal: (() => {
+              const first = editingGroup.meals[0]?.meal ?? null;
+              const allSame = editingGroup.meals.every(
+                (m) => (m.meal ?? null) === first,
+              );
+              return allSame ? first : null;
+            })(),
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}

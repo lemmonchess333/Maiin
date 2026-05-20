@@ -5,18 +5,30 @@ vi.mock("@/lib/haptic", function() {
   return { haptic: vi.fn() };
 });
 
-import EditServingsSheet from "../EditServingsSheet";
+import EditServingsSheet, { type EditServingsChanges } from "../EditServingsSheet";
+import type { MealKey } from "../mealConstants";
 
 afterEach(cleanup);
 
+interface RenderSourceOverride {
+  foodName: string;
+  currentCount: number;
+  currentTotalCalories: number;
+  currentMeal?: MealKey | null;
+}
+
 function renderSheet(overrides: {
-  source?: { foodName: string; currentCount: number; currentTotalCalories: number } | null;
+  source?: RenderSourceOverride | null;
   onCancel?: () => void;
-  onSave?: (n: number) => void | Promise<void>;
+  onSave?: (c: EditServingsChanges) => void | Promise<void>;
 } = {}) {
-  const source = overrides.source === undefined
-    ? { foodName: "Boiled egg", currentCount: 2, currentTotalCalories: 156 }
-    : overrides.source;
+  const baseSource: RenderSourceOverride =
+    overrides.source === undefined
+      ? { foodName: "Boiled egg", currentCount: 2, currentTotalCalories: 156, currentMeal: "breakfast" }
+      : overrides.source ?? { foodName: "", currentCount: 0, currentTotalCalories: 0, currentMeal: null };
+  const source = overrides.source === null
+    ? null
+    : { ...baseSource, currentMeal: baseSource.currentMeal ?? null };
   return render(
     <EditServingsSheet
       source={source}
@@ -70,7 +82,7 @@ describe("EditServingsSheet", function() {
     fireEvent.click(screen.getByLabelText("Increase servings"));
     fireEvent.click(screen.getByLabelText("Increase servings"));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith(4);
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 4, targetMeal: null });
   });
 
   it("calls onCancel when Cancel is tapped", function() {
@@ -101,12 +113,63 @@ describe("EditServingsSheet", function() {
     expect(screen.getByLabelText(/3 servings/)).toBeInTheDocument();
     rerender(
       <EditServingsSheet
-        source={{ foodName: "Apple", currentCount: 1, currentTotalCalories: 95 }}
+        source={{ foodName: "Apple", currentCount: 1, currentTotalCalories: 95, currentMeal: "snacks" }}
         onCancel={vi.fn()}
         onSave={vi.fn()}
       />,
     );
     // Same component instance → stepper target persists.
     expect(screen.getByLabelText(/3 servings/)).toBeInTheDocument();
+  });
+
+  /* F5a — meal-slot picker. The Save signature now ships both the
+     stepped count and the picked slot; tests below pin the four
+     interaction shapes (slot only, count only, both, neither). */
+
+  it("enables Save when the user picks a different meal slot from the current", function() {
+    renderSheet({
+      source: { foodName: "Yoghurt", currentCount: 1, currentTotalCalories: 120, currentMeal: "breakfast" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+  });
+
+  it("calls onSave with targetMeal when ONLY the slot changed (count unchanged)", async function() {
+    const onSave = vi.fn();
+    renderSheet({
+      source: { foodName: "Yoghurt", currentCount: 1, currentTotalCalories: 120, currentMeal: "breakfast" },
+      onSave,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 1, targetMeal: "snacks" });
+  });
+
+  it("calls onSave with both targetCount and targetMeal when both changed", async function() {
+    const onSave = vi.fn();
+    renderSheet({
+      source: { foodName: "Yoghurt", currentCount: 1, currentTotalCalories: 120, currentMeal: "breakfast" },
+      onSave,
+    });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.click(screen.getByRole("button", { name: "Dinner" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: "dinner" });
+  });
+
+  it("treats re-picking the original slot as no-change (targetMeal=null on Save)", async function() {
+    const onSave = vi.fn();
+    renderSheet({
+      source: { foodName: "Yoghurt", currentCount: 1, currentTotalCalories: 120, currentMeal: "breakfast" },
+      onSave,
+    });
+    // Bump count so Save isn't disabled, then explicitly re-pick the
+    // original slot — that should NOT propagate as a slot change.
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.click(screen.getByRole("button", { name: "Lunch" }));
+    fireEvent.click(screen.getByRole("button", { name: "Breakfast" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: null });
   });
 });
