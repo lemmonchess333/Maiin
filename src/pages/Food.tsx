@@ -30,6 +30,7 @@ import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
+import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
 import FoodMealSection from "@/components/food/FoodMealSection";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
@@ -128,6 +129,10 @@ export default function Food() {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
   const [targetMeal, setTargetMeal] = useState<MealKey | null>(null);
+  // Food6 a2: tap-on-hero opens a detailed nutrition-breakdown sheet
+  // (calories + macros + activity-burn adjustment). Read-only — the
+  // sheet is a drill-down for review, not an editing surface.
+  const [heroSheetOpen, setHeroSheetOpen] = useState(false);
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
   // unfocused + not adding to a specific meal). Stops the moment the
@@ -1141,8 +1146,22 @@ export default function Food() {
             carbs: dailyTotals.carbs,
             fat: dailyTotals.fat,
           }}
+          onTapDrillDown={() => setHeroSheetOpen(true)}
         />
       </motion.div>
+      <HeroDrillDownSheet
+        open={heroSheetOpen}
+        onOpenChange={setHeroSheetOpen}
+        selectedDate={selectedDate}
+        isToday={isToday}
+        dailyTotals={{
+          calories: dailyTotals.calories,
+          protein: dailyTotals.protein,
+          carbs: dailyTotals.carbs,
+          fat: dailyTotals.fat,
+        }}
+        dailyTargets={dailyTargets}
+      />
 
       {/* Composer: NL textarea + Add to pills + Scan CTA + manual
           log fallback. Extracted to components/food/FoodComposerCard.

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Info, Settings as SettingsIcon, X } from "lucide-react";
+import { Beef, Wheat, Info, Settings as SettingsIcon, X, ChevronRight } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -26,6 +26,11 @@ interface FoodHeroCardProps {
   /** From useEffectiveTargets() — includes effective finalTarget and caption */
   dailyTargets: EffectiveTargets;
   dailyTotals: DailyTotals;
+  /** Food6 a2: opens the detailed nutrition-breakdown sheet. Optional
+   *  so legacy call sites without drill-down behaviour still render
+   *  the hero correctly — the affordance is omitted when no handler
+   *  is supplied. */
+  onTapDrillDown?: () => void;
 }
 
 interface TrainingBurnToast {
@@ -55,6 +60,7 @@ export default function FoodHeroCard({
   isToday,
   dailyTargets,
   dailyTotals,
+  onTapDrillDown,
 }: FoodHeroCardProps) {
   /* Targets-set detection. When a user hasn't customised
      `profile.targetCalories`, useDailyTargets falls back to a
@@ -436,6 +442,27 @@ export default function FoodHeroCard({
           <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
             {glanceLine}
           </p>
+        )}
+        {/* Food6 a2: drill-down affordance. Subtle chevron pill at the
+            bottom of the calorie card opens the detailed breakdown
+            sheet. Distinct tap target so it doesn't conflict with the
+            CalorieRing mode-toggle, the Settings link, or any nested
+            buttons in the card. */}
+        {onTapDrillDown && (
+          <div className="flex justify-center mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                onTapDrillDown();
+              }}
+              aria-label="View nutrition breakdown"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
+            >
+              <span>Details</span>
+              <ChevronRight aria-hidden="true" className="w-3 h-3" />
+            </button>
+          </div>
         )}
       </div>
 
