@@ -49,6 +49,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-ki
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import { Spinner } from "@/components/ui/Spinner";
+import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 
 /**
  * IMPORTANT:
@@ -440,6 +441,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     isAnimating.current = true;
     setDirection(newIndex > idx ? 1 : -1);
     setSelectedDayIndex(newIndex);
+    trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
   };
 
   const goalLabel = (g: string) => {
