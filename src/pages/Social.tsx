@@ -180,7 +180,7 @@ export default function Social() {
     useSuggestedPeople(tab === 'find', blockedUsers);
 
   // Crews
-  const { crews, currentCrew, joinCrew, leaveCrew, createCrew } = useCrews();
+  const { crews, currentCrew, joinCrew, leaveCrew, createCrew, refresh: refreshCrews } = useCrews();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
@@ -279,11 +279,18 @@ export default function Social() {
     };
   }, []);
 
-  // Pull-to-refresh with iOS conflict fix (#9)
+  // Pull-to-refresh with iOS conflict fix (#9).
+  // Soc5 cross-cutting pin: pull-to-refresh re-fetches the active
+  // tab's data — feed view re-pulls the active feed, Crews tab
+  // re-pulls the crew list (and Suggested Crews in Phase 2). Ref
+  // is on the outer motion.div so the touch listener attaches once
+  // and stays attached across tab switches; the dispatch table
+  // resolves the right refresh action at touchend based on the
+  // current tab.
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const isSwiping = useRef(false);
-  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const pullContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     pullStartY.current = e.touches[0].clientY;
@@ -291,7 +298,7 @@ export default function Social() {
   };
 
   useEffect(() => {
-    const el = feedContainerRef.current;
+    const el = pullContainerRef.current;
     if (!el) return;
     const handler = (e: TouchEvent) => {
       const diff = e.touches[0].clientY - pullStartY.current;
@@ -308,8 +315,16 @@ export default function Social() {
     const diff = e.changedTouches[0].clientY - pullStartY.current;
     if (diff > 80 && isSwiping.current && !pullRefreshing) {
       setPullRefreshing(true);
-      await activeFeed.refresh();
-      setPullRefreshing(false);
+      try {
+        if (tab === 'feed') {
+          await activeFeed.refresh();
+        } else if (tab === 'crews') {
+          await refreshCrews();
+        }
+        // Find tab: search results are user-driven; no refresh action.
+      } finally {
+        setPullRefreshing(false);
+      }
     }
     isSwiping.current = false;
   };
@@ -350,7 +365,13 @@ export default function Social() {
   const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
   return (
-    <motion.div className="space-y-4" initial="hidden" animate="visible"
+    <motion.div
+      ref={pullContainerRef}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="space-y-4"
+      initial="hidden"
+      animate="visible"
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
       <motion.header variants={itemVariant} className="pt-1">
         <div className="flex items-center justify-between">
@@ -411,7 +432,7 @@ export default function Social() {
       {/* ========== FEED TAB ========== */}
       {tab === 'feed' && (
         <section aria-label="Activity feed">
-        <div ref={feedContainerRef} className="!mt-3" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <div className="!mt-3">
           {/* Feed sub-tabs: Following | Explore */}
           <div className="flex gap-2">
             {(['following', 'explore'] as FeedSubTab[]).map(st => (
