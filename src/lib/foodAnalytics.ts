@@ -23,7 +23,8 @@ export type FoodEvent =
   | "food_pantry_eviction"
   | "food_pantry_graduated"
   | "food_pantry_chip_tapped"
-  | "food_pantry_chip_removed";
+  | "food_pantry_chip_removed"
+  | "food_pantry_typeahead_selected";
 
 export interface FoodEventMetadata {
   /** food_meal_slot_tapped: which slot ("breakfast" | "lunch" | "snacks" | "dinner"). */

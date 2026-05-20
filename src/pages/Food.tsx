@@ -40,6 +40,7 @@ import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
 import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 
@@ -513,6 +514,36 @@ export default function Food() {
     return lastPart.length >= 2 ? getFoodSuggestions(lastPart, 4) : [];
   }, [nlInput]);
 
+  /** Pantry typeahead — case-insensitive substring match across the
+   *  user's whole favourites collection. F2d locked decision: gate
+   *  OFF (no useCount>=2 graduation filter) for this surface because
+   *  typing 2+ chars is an explicit intent signal that the ambient
+   *  chip row doesn't have. Capped at 3 to keep the dropdown lean —
+   *  the chip row + manual search still cover the long tail.
+   *  Mapped to the dropdown's narrower PantrySuggestion shape so the
+   *  full FoodFavourite (with Timestamp + timeOfDay) doesn't leak
+   *  into the presentational component's prop contract. */
+  const pantrySuggestions = useMemo<PantrySuggestion[]>(() => {
+    const parts = nlInput.split(/,/);
+    const lastPart = (parts[parts.length - 1] || "").trim();
+    if (lastPart.length < 2) return [];
+    const needle = lastPart.toLowerCase();
+    return favourites
+      .filter((f) => f.name.toLowerCase().includes(needle))
+      .slice(0, 3)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        calories: f.calories,
+        protein: f.protein,
+        carbs: f.carbs,
+        fat: f.fat,
+        servingSize: f.servingSize,
+        useCount: f.useCount,
+        source: f.source,
+      }));
+  }, [nlInput, favourites]);
+
   const offSearchQuery = useMemo(() => {
     const parts = nlInput.split(/,/);
     const lastPart = (parts[parts.length - 1] || "").trim();
@@ -524,7 +555,7 @@ export default function Food() {
      with zero matches and we have no local suggestions to show.
      Without that fallback the dropdown silently disappeared and
      the user had no signal that the search returned nothing. */
-  const showSuggestions = suggestionsActive && (suggestions.length > 0 || offResults.length > 0 || (offEmpty && offSearchQuery !== null));
+  const showSuggestions = suggestionsActive && (pantrySuggestions.length > 0 || suggestions.length > 0 || offResults.length > 0 || (offEmpty && offSearchQuery !== null));
 
   const [prevOffQuery, setPrevOffQuery] = useState(offSearchQuery);
   if (offSearchQuery !== prevOffQuery) {
@@ -1314,6 +1345,62 @@ export default function Food() {
     setQuickAdding(null);
   };
 
+  /* Typeahead pantry pick. Same persisted shape as a chip tap
+     (full macros + servingSize known, no portion drawer needed),
+     but routed through its own analytic so dashboards can split
+     "Quick Add chip" vs "typed and picked from pantry" funnels.
+     Clears the NL input + dismisses the dropdown so the user sees
+     the meal land in the diary rather than the dropdown lingering. */
+  const handlePantrySelect = async (fav: (typeof pantrySuggestions)[number]) => {
+    if (!user || quickAdding) return;
+    trackFoodEvent("food_pantry_typeahead_selected", {
+      favouriteId: fav.id,
+      useCount: fav.useCount,
+    });
+    setQuickAdding(fav.name);
+    try {
+      await addDoc(collection(db, "users", user.uid, "meals"), {
+        date: selectedDate,
+        foodName: fav.name,
+        items: [
+          {
+            name: fav.name,
+            portionSize: fav.servingSize || "1 serving",
+            calories: fav.calories,
+            protein: fav.protein,
+            carbs: fav.carbs,
+            fat: fav.fat,
+          },
+        ],
+        totalCalories: fav.calories,
+        totalProtein: fav.protein,
+        totalCarbs: fav.carbs,
+        totalFat: fav.fat,
+        confidence: "quick-add",
+        createdAt: Timestamp.now(),
+        ...(targetMeal ? { meal: targetMeal } : {}),
+      });
+      // Re-route the favourite through addFavourite so useCount /
+      // lastUsed update like any other log — typeahead taps are
+      // graduation-relevant signal.
+      void addFavourite({
+        name: fav.name,
+        calories: fav.calories,
+        protein: fav.protein,
+        carbs: fav.carbs,
+        fat: fav.fat,
+        servingSize: fav.servingSize,
+        source: fav.source,
+      });
+      setNlInput("");
+      setSuggestionsActive(false);
+      setTargetMeal(null);
+    } catch {
+      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+    }
+    setQuickAdding(null);
+  };
+
 
   return (
     <motion.div
@@ -1412,10 +1499,12 @@ export default function Food() {
           showSuggestions={showSuggestions}
           suggestions={suggestions}
           offResults={offResults}
+          pantryResults={pantrySuggestions}
           offEmpty={offEmpty}
           offSearchQuery={offSearchQuery}
           onSelectSuggestion={handleSuggestionSelect}
           onSelectOff={handleOFFSelect}
+          onSelectPantry={handlePantrySelect}
           scanUsage={scanUsage}
           scanOverrides={scanOverrides}
           onUpgrade={handleUpgrade}

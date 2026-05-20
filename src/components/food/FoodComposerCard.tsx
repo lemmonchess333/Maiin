@@ -6,6 +6,7 @@ import { haptic } from "@/lib/haptic";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import FoodSuggestionsDropdown, {
   type OFFResult,
+  type PantrySuggestion,
 } from "./FoodSuggestionsDropdown";
 import ScanMealButton from "./ScanMealButton";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
@@ -51,10 +52,16 @@ interface FoodComposerCardProps {
   showSuggestions: boolean;
   suggestions: FoodSuggestion[];
   offResults: OFFResult[];
+  /** F2d PR 4: "Your pantry" matches at the top of the dropdown.
+   *  Gate-OFF substring search across the user's full favourites
+   *  collection — typing 2+ chars is intent enough; no graduation
+   *  filter here. Max 3 enforced upstream. */
+  pantryResults: PantrySuggestion[];
   offEmpty: boolean;
   offSearchQuery: string | null;
   onSelectSuggestion: (s: FoodSuggestion) => void;
   onSelectOff: (food: OFFResult) => void;
+  onSelectPantry: (p: PantrySuggestion) => void;
   // ── Scan + manual log ─────────────────────────────────────────
   scanUsage: ScanUsageSnapshot;
   scanOverrides: ScanOverrides;
@@ -99,10 +106,12 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
       showSuggestions,
       suggestions,
       offResults,
+      pantryResults,
       offEmpty,
       offSearchQuery,
       onSelectSuggestion,
       onSelectOff,
+      onSelectPantry,
       scanUsage,
       scanOverrides,
       onUpgrade,
@@ -207,10 +216,12 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
               ref={suggestionsRef}
               suggestions={suggestions}
               offResults={offResults}
+              pantryResults={pantryResults}
               offEmpty={offEmpty}
               offSearchQuery={offSearchQuery}
               onSelectSuggestion={onSelectSuggestion}
               onSelectOff={onSelectOff}
+              onSelectPantry={onSelectPantry}
               onLogManually={() => {
                 haptic();
                 onManualOpen();
