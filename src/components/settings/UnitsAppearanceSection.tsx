@@ -6,6 +6,7 @@ import {
   Sun,
 } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
+import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import type { UserProfile } from "@/lib/auth";
 
 interface UnitsAppearanceSectionProps {
@@ -25,7 +26,15 @@ export default function UnitsAppearanceSection({
     <AccordionSection inline={inline} icon={<Palette className="w-5 h-5 text-primary" />} title="Units & Appearance" subtitle="Weight, height, dark mode">
       <div className="space-y-2">
         <button
-          onClick={() => toggleUnit("preferredWeightUnit", profile.preferredWeightUnit)}
+          onClick={() => {
+            // The current value flips on the next render; we capture
+            // the value BEFORE the flip so the telemetry reads as
+            // "user picked this state" rather than "user was on this
+            // state". toggleUnit() handles the actual flip + persist.
+            const next = profile.preferredWeightUnit === "kg" ? "lbs" : "kg";
+            trackSettingsEvent("settings_toggle_changed", { toggle: "weight_unit", value: next });
+            toggleUnit("preferredWeightUnit", profile.preferredWeightUnit);
+          }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -38,7 +47,11 @@ export default function UnitsAppearanceSection({
         </button>
 
         <button
-          onClick={() => toggleUnit("preferredHeightUnit", profile.preferredHeightUnit)}
+          onClick={() => {
+            const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
+            trackSettingsEvent("settings_toggle_changed", { toggle: "distance_unit", value: next });
+            toggleUnit("preferredHeightUnit", profile.preferredHeightUnit);
+          }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -51,7 +64,10 @@ export default function UnitsAppearanceSection({
         </button>
 
         <button
-          onClick={toggleDark}
+          onClick={() => {
+            trackSettingsEvent("settings_toggle_changed", { toggle: "theme", value: profile.darkMode ? "light" : "dark" });
+            toggleDark();
+          }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">

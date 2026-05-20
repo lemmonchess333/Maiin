@@ -38,13 +38,15 @@ export type SettingsSection =
 export type SettingsToggle =
   | "auto_rest_timer"
   | "auto_post_runs"
+  | "auto_post_workouts"
   | "weekly_summary_email"
   | "default_visibility"
   | "weight_unit"
   | "distance_unit"
   | "theme"
   | "meal_reminders"
-  | "workout_reminders";
+  | "workout_reminders"
+  | "streak_reminder";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user

@@ -1,6 +1,7 @@
 import { Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
@@ -39,6 +40,7 @@ export default function WorkoutPrefsSection({
               const prev = autoRestTimer;
               const next = !autoRestTimer;
               setAutoRestTimer(next);
+              trackSettingsEvent("settings_toggle_changed", { toggle: "auto_rest_timer", value: next });
               const result = await updateProfile({ autoRestTimer: next });
               if (!result.ok) setAutoRestTimer(prev);
             }}
