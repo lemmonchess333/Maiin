@@ -48,6 +48,7 @@ import TodayEnergy from "@/components/home/TodayEnergy";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsights";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import TrackSectionView from "@/components/home/TrackSectionView";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -510,14 +511,16 @@ export default function Home() {
           under HealthScoreCard so it pairs with the day-level
           "are you on track" answer above. */}
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <SectionErrorBoundary sectionName="performance-card">
-          <PerformanceCard
-            currentWeek={perfWeek ?? null}
-            previousWeek={perfPrevWeek}
-            weeksAvailable={perfWeeks.length}
-            uid={user?.uid ?? null}
-          />
-        </SectionErrorBoundary>
+        <TrackSectionView section="hero">
+          <SectionErrorBoundary sectionName="performance-card">
+            <PerformanceCard
+              currentWeek={perfWeek ?? null}
+              previousWeek={perfPrevWeek}
+              weeksAvailable={perfWeeks.length}
+              uid={user?.uid ?? null}
+            />
+          </SectionErrorBoundary>
+        </TrackSectionView>
       </motion.div>
 
       {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
@@ -527,26 +530,32 @@ export default function Home() {
           first paint. */}
       <section aria-label="Today's energy">
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-          <SectionErrorBoundary sectionName="today-intake">
-            <TodayEnergy calories={dailyCal} protein={dailyProt} carbs={dailyCarbs} fat={dailyFat} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
-          </SectionErrorBoundary>
+          <TrackSectionView section="today_energy">
+            <SectionErrorBoundary sectionName="today-intake">
+              <TodayEnergy calories={dailyCal} protein={dailyProt} carbs={dailyCarbs} fat={dailyFat} burn={dailyBurn} targets={effectiveTargets} totalLifetimeMeals={totalLifetimeMeals} daysSinceLastMeal={daysSinceLastMeal} mealsLoading={mealsLoading} postWorkoutNudge={postWorkoutNudge} nutritionInsight={topNutritionInsight} />
+            </SectionErrorBoundary>
+          </TrackSectionView>
         </motion.div>
       </section>
 
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         {programLoading ? <div className="h-20 rounded-2xl bg-muted animate-pulse" /> : (
-          <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
-            waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
-            lastWeight={lastWeightInfo?.weight || null}
-            weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} userSegment={userSegment} muscleGroups={muscleGroups} />
+          <TrackSectionView section="stacked_cta">
+            <StackedCTACards nextWorkout={nextWorkout} todayType={todayType} navigate={function(p: string) { closePeek(); navigate(p); }}
+              waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={function() { closePeek(); logWater(1); }} onRemoveWater={function() { setWaterAmount(waterGlasses - 1); }}
+              lastWeight={lastWeightInfo?.weight || null}
+              weightUnit={weightUnit} onLogWeight={function() { closePeek(); setWeightInput(lastWeightInfo?.weight || ""); setShowWeightSheet(true); }} lastWeightDate={weightRelativeTime} todayRun={todayRun} userSegment={userSegment} muscleGroups={muscleGroups} />
+          </TrackSectionView>
         )}
       </motion.div>
 
       {showInsightStrip && perfWeek?.insight && (
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-          <SectionErrorBoundary sectionName="insight-strip">
-            <InsightStrip title={perfWeek.insight.title} bullet={perfWeek.insight.bullets[0] || ""} loadBand={perfLoadBand} />
-          </SectionErrorBoundary>
+          <TrackSectionView section="insights">
+            <SectionErrorBoundary sectionName="insight-strip">
+              <InsightStrip title={perfWeek.insight.title} bullet={perfWeek.insight.bullets[0] || ""} loadBand={perfLoadBand} />
+            </SectionErrorBoundary>
+          </TrackSectionView>
         </motion.div>
       )}
 
