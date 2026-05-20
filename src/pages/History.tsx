@@ -19,6 +19,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
+import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
@@ -628,6 +629,12 @@ export default function History() {
       <motion.header variants={itemVariant}>
         <h1 className="text-lg font-extrabold text-foreground">History</h1>
       </motion.header>
+
+      {/* Hist4: sustained-offline notice (30s threshold). Additive to
+          the global Layout banner — surfaces only after the disconnect
+          has lasted 30s and clarifies that History reads from the
+          Firestore local cache while offline. */}
+      <HistoryOfflineBanner />
 
       <motion.div variants={itemVariant}>
         <FilterPills
