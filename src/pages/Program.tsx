@@ -50,6 +50,7 @@ import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import { Spinner } from "@/components/ui/Spinner";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
+import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 
 /**
  * IMPORTANT:
@@ -624,26 +625,30 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               only renders when the user explicitly switches to it. */}
         {activeTab === "lift" && (
           <>
-            <div>
-              <WeekPhaseRow
-                weekNumber={displayWeekNumber}
-                phaseName={goalLabel(programState.goal)}
-                onPrevWeek={goBack}
-                onNextWeek={goForward}
-                canGoPrev={canGoBack}
-                canGoNext={canGoForward}
-              />
-            </div>
+            <TrackProgrammeSectionView section="week_phase_row">
+              <div>
+                <WeekPhaseRow
+                  weekNumber={displayWeekNumber}
+                  phaseName={goalLabel(programState.goal)}
+                  onPrevWeek={goBack}
+                  onNextWeek={goForward}
+                  canGoPrev={canGoBack}
+                  canGoNext={canGoForward}
+                />
+              </div>
+            </TrackProgrammeSectionView>
 
             {/* Day Stepper */}
-            <div>
-              <DayStepper
-                days={stepperDays}
-                selectedIndex={idx}
-                todayIndex={!isViewingHistory && todayIndex >= 0 ? todayIndex : null}
-                onSelect={handleSelect}
-              />
-            </div>
+            <TrackProgrammeSectionView section="day_stepper">
+              <div>
+                <DayStepper
+                  days={stepperDays}
+                  selectedIndex={idx}
+                  todayIndex={!isViewingHistory && todayIndex >= 0 ? todayIndex : null}
+                  onSelect={handleSelect}
+                />
+              </div>
+            </TrackProgrammeSectionView>
           </>
         )}
       </div>
@@ -685,6 +690,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {/* ── Session Content — LIFT tab only ── */}
       {activeTab === "lift" && (
       <>
+      <TrackProgrammeSectionView section="session_card">
       <div className="pt-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         <AnimatePresence
           mode="wait"
@@ -892,6 +898,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </div>
         )}
       </div>
+      </TrackProgrammeSectionView>
       </>
       )}
 
