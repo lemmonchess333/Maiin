@@ -12,6 +12,13 @@ export interface OFFResult {
   carbs: number;
   fat: number;
   servingSize: string;
+  /** F2: signal from the OFF mapper that a real serving size was
+   *  available ('high') vs the fall-back per-100g default ('low').
+   *  Drives the "Per-100g data only · Confirm serving size" banner
+   *  in ServingSizeDrawer so the user knows the macro numbers are
+   *  per 100g, not per actual serving. Optional for back-compat
+   *  with existing fixtures. */
+  unitConfidence?: "high" | "low";
 }
 
 interface FoodSuggestionsDropdownProps {
