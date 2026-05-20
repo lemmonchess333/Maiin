@@ -26,6 +26,7 @@ export type SettingsSection =
   | "workout_prefs"
   | "units_appearance"
   | "privacy"
+  | "pantry"
   | "shoes"
   | "notifications"
   | "subscription"
