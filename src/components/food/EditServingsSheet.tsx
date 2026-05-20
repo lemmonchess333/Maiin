@@ -9,14 +9,33 @@ interface ServingSource {
   /** Number of docs currently in this group (= current serving count). */
   currentCount: number;
   /** Total calories across all current servings — used to derive a
-   *  per-serving figure for the live preview. */
+   *  per-serving figure for the live preview AND seed the F5a macro
+   *  inputs below. */
   currentTotalCalories: number;
+  /** F5a: total macros across all current servings. Sheet renders the
+   *  per-serving (rounded) values in the inputs; on save, per-serving
+   *  values are written to each underlying doc via editMeal so the
+   *  group's new total = N_servings × per-serving value. */
+  currentTotalProtein: number;
+  currentTotalCarbs: number;
+  currentTotalFat: number;
   /** F5a: current meal slot if all underlying docs share one. When
    *  the group spans multiple slots (mixed state — unusual but
    *  possible if a user moved one of two duplicates), this is null
    *  and the picker renders un-selected. Editing snaps the whole
    *  group to whichever pill the user taps. */
   currentMeal: MealKey | null;
+}
+
+/** F5a: per-serving macro overrides. All fields optional — only the
+ *  fields the user actually changed are propagated, so editMeal
+ *  partial-update writes only the dimensions the user touched. */
+export interface MacroOverrides {
+  /** Per-serving calories. Will be written to each doc's totalCalories. */
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
 }
 
 export interface EditServingsChanges {
@@ -29,6 +48,12 @@ export interface EditServingsChanges {
    *  foodName. Empty / whitespace-only input is treated as a no-op
    *  and never propagated. */
   targetName: string | null;
+  /** F5a: per-serving macro overrides for the dimensions the user
+   *  actually changed. Null = no macro inputs touched. Empty object
+   *  is never sent — at least one dimension is present when non-null.
+   *  Each value is per-serving, so the parent applies it to each doc
+   *  in the group via editMeal. */
+  targetMacros: MacroOverrides | null;
 }
 
 interface EditServingsSheetProps {
@@ -79,6 +104,26 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   // empty / whitespace-only input is treated as no-op (never
   // propagated to editMeal — empty foodName has no useful meaning).
   const [pickedName, setPickedName] = useState<string>(source?.foodName ?? "");
+  // F5a: per-serving macro inputs. Initial values are the rounded
+  // per-serving figures derived from the group totals; on save we
+  // write the picked per-serving value back to each underlying doc.
+  // String state (not number) so partial input — "12." or empty
+  // mid-edit — doesn't shimmer the input value or fight the user's
+  // typing. Parsed at compare/save time.
+  const initialPerServing = ((): { cal: number; pro: number; car: number; fat: number } => {
+    if (!source) return { cal: 0, pro: 0, car: 0, fat: 0 };
+    const div = Math.max(1, source.currentCount);
+    return {
+      cal: Math.round(source.currentTotalCalories / div),
+      pro: Math.round(source.currentTotalProtein / div),
+      car: Math.round(source.currentTotalCarbs / div),
+      fat: Math.round(source.currentTotalFat / div),
+    };
+  })();
+  const [pickedCal, setPickedCal] = useState<string>(String(initialPerServing.cal));
+  const [pickedPro, setPickedPro] = useState<string>(String(initialPerServing.pro));
+  const [pickedCar, setPickedCar] = useState<string>(String(initialPerServing.car));
+  const [pickedFat, setPickedFat] = useState<string>(String(initialPerServing.fat));
   const [saving, setSaving] = useState(false);
 
   if (!source) return null;
@@ -90,7 +135,41 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
   const trimmedName = pickedName.trim();
   const nameChanged = trimmedName.length > 0 && trimmedName !== foodName.trim();
-  const unchanged = countDelta === 0 && !mealChanged && !nameChanged;
+
+  // F5a: macro change detection. Per dimension, the string input is
+  // parsed to a finite non-negative number; only differing values
+  // count. Blank / non-numeric / negative inputs are treated as
+  // "unchanged for this dimension" so a half-typed edit doesn't
+  // trip Save and an editMeal call doesn't write junk.
+  const parseMacro = (raw: string): number | null => {
+    const trimmed = raw.trim();
+    if (trimmed === "") return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return Math.round(n);
+  };
+  const picked = {
+    cal: parseMacro(pickedCal),
+    pro: parseMacro(pickedPro),
+    car: parseMacro(pickedCar),
+    fat: parseMacro(pickedFat),
+  };
+  const macroOverrides: MacroOverrides = {};
+  if (picked.cal !== null && picked.cal !== initialPerServing.cal) {
+    macroOverrides.totalCalories = picked.cal;
+  }
+  if (picked.pro !== null && picked.pro !== initialPerServing.pro) {
+    macroOverrides.totalProtein = picked.pro;
+  }
+  if (picked.car !== null && picked.car !== initialPerServing.car) {
+    macroOverrides.totalCarbs = picked.car;
+  }
+  if (picked.fat !== null && picked.fat !== initialPerServing.fat) {
+    macroOverrides.totalFat = picked.fat;
+  }
+  const macrosChanged = Object.keys(macroOverrides).length > 0;
+
+  const unchanged = countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
 
   const handleSave = async () => {
     if (unchanged || saving) return;
@@ -100,6 +179,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
         targetCount: target,
         targetMeal: mealChanged ? pickedMeal : null,
         targetName: nameChanged ? trimmedName : null,
+        targetMacros: macrosChanged ? macroOverrides : null,
       });
     } finally {
       setSaving(false);
@@ -189,6 +269,57 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
           </div>
         </div>
 
+        {/* F5a macro inputs. Per-serving figures derived from group
+            totals — on save, the picked per-serving value is written
+            to each underlying doc via editMeal so the group's new
+            total = N × per-serving. Inputs use type=number with
+            inputMode="numeric" so mobile shows the numeric keypad
+            but the input still accepts the typing-friendly empty
+            state. Only dimensions the user actually changes are
+            propagated to editMeal — parseMacro() above gates which
+            fields land in macroOverrides. */}
+        <div className="space-y-1.5">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+            Per serving
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {(
+              [
+                { id: "edit-meal-cal", label: "Cal", value: pickedCal, setter: setPickedCal },
+                { id: "edit-meal-pro", label: "Protein", value: pickedPro, setter: setPickedPro },
+                { id: "edit-meal-car", label: "Carbs", value: pickedCar, setter: setPickedCar },
+                { id: "edit-meal-fat", label: "Fat", value: pickedFat, setter: setPickedFat },
+              ] as const
+            ).map(({ id, label, value, setter }) => (
+              <div key={id} className="flex flex-col items-center gap-1">
+                <label
+                  htmlFor={id}
+                  className="text-[10px] uppercase tracking-wide text-muted-foreground"
+                >
+                  {label}
+                </label>
+                <input
+                  id={id}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={value}
+                  onChange={(e) => setter(e.target.value)}
+                  disabled={saving}
+                  aria-label={`Per-serving ${label.toLowerCase()}`}
+                  className={cn(
+                    "w-full text-center text-base font-mono tabular-nums font-semibold text-foreground bg-muted/50",
+                    "rounded-lg px-2 py-1.5 border border-transparent",
+                    "focus:outline-none focus:border-border focus:bg-card transition-colors",
+                    "disabled:opacity-60",
+                    "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Stepper */}
         <div className="flex items-center justify-center gap-4">
           <button
@@ -239,6 +370,9 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
               )}
               {nameChanged && (
                 <span className="ml-2 text-primary">renamed</span>
+              )}
+              {macrosChanged && (
+                <span className="ml-2 text-primary">macros updated</span>
               )}
             </span>
           )}
