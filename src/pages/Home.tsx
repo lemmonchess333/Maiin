@@ -49,6 +49,7 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsights";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import TrackSectionView from "@/components/home/TrackSectionView";
+import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -510,6 +511,20 @@ export default function Home() {
           a rollup yet. Tap → /history#performance per P2c. Sits
           under HealthScoreCard so it pairs with the day-level
           "are you on track" answer above. */}
+      {/* A1 contextual tip: nudge the user to add age + sex if
+          either is missing. These two fields drive TDEE precision
+          (calculateTDEE consumes both); without them the user gets
+          generic defaults and the calorie targets drift from
+          accurate. One-shot per dismiss — the banner doesn't re-
+          appear after dismissal even if the user re-introduces
+          the gap. */}
+      <ContextualTipBanner
+        tipKey="body-metrics-v1"
+        title="Personalise your calorie targets"
+        description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
+        visible={!profile?.age || !profile?.sex}
+      />
+
       <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
         <TrackSectionView section="hero">
           <SectionErrorBoundary sectionName="performance-card">
