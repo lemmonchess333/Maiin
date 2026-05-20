@@ -25,6 +25,7 @@ import { EmptyState } from '../components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import Coachmark from '@/components/ui/Coachmark';
+import { track as trackSocialEvent } from '@/lib/socialAnalytics';
 
 /* "discover" used to mean two different things: a top-level tab AND
    a feed sub-tab. The top-level tab is now `find` (search + invite +
@@ -73,6 +74,7 @@ export default function Social() {
         },
         { replace: true },
       );
+      trackSocialEvent('social_tab_selected', { tab: next });
     },
     [setSearchParams],
   );
@@ -152,6 +154,26 @@ export default function Social() {
   const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following', hiddenActivityIds);
   const exploreFeed = useDiscoverFeed(feedSubTab === 'explore', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : exploreFeed;
+
+  // Soc5: capture initial-render duration. renderStartRef takes its
+  // timestamp from the post-mount effect (rather than lazy useState
+  // which would trip the react-hooks/purity rule for performance.now()
+  // in render). Fires once when activeFeed.loading transitions to
+  // false — the moment the user sees real feed content instead of
+  // skeleton state. Guarded so the event fires at most once per
+  // session, regardless of sub-tab churn.
+  const renderStartRef = useRef<number>(0);
+  const renderReportedRef = useRef(false);
+  useEffect(() => {
+    renderStartRef.current = performance.now();
+  }, []);
+  useEffect(() => {
+    if (activeFeed.loading || renderReportedRef.current) return;
+    if (renderStartRef.current === 0) return;
+    const ms = performance.now() - renderStartRef.current;
+    trackSocialEvent('social_initial_render_ms', { durationMs: Math.round(ms) });
+    renderReportedRef.current = true;
+  }, [activeFeed.loading]);
 
   // Suggested People — fetches lazily only when the Discover tab is shown.
   const { people: suggestedPeople, loading: suggestedLoading, refresh: refreshSuggestions, remove: removeSuggestion } =
@@ -393,7 +415,10 @@ export default function Social() {
           {/* Feed sub-tabs: Following | Explore */}
           <div className="flex gap-2">
             {(['following', 'explore'] as FeedSubTab[]).map(st => (
-              <button key={st} onClick={() => setFeedSubTab(st)}
+              <button key={st} onClick={() => {
+                setFeedSubTab(st);
+                trackSocialEvent('social_feed_subtab_changed', { subTab: st });
+              }}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   feedSubTab === st
                     ? 'bg-primary-strong text-white'
@@ -1069,6 +1094,7 @@ export default function Social() {
                 storageKey="social-find-invite"
                 placement="top"
                 content="Share your profile link to get started"
+                onDismiss={() => trackSocialEvent('social_coachmark_dismissed', { coachmarkKey: 'social-find-invite' })}
               >
                 <button
                   onClick={handleShareInvite}

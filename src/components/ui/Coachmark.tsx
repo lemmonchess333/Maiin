@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useCoachMarks } from "@/hooks/useCoachMarks";
 import Tooltip, { type TooltipPlacement } from "./Tooltip";
 
@@ -13,6 +13,11 @@ interface CoachmarkProps {
    *  persists so the user only sees it once even if they didn't
    *  actively interact. */
   autoDismissMs?: number;
+  /** Optional callback fired exactly once on the first dismissal —
+   *  whether via the user (tap-outside, escape, close button) or
+   *  the auto-dismiss timer. Lets call sites emit telemetry without
+   *  reaching past the primitive into useCoachMarks. */
+  onDismiss?: () => void;
   children: ReactElement;
 }
 
@@ -27,18 +32,33 @@ export default function Coachmark({
   content,
   placement = "top",
   autoDismissMs = 6000,
+  onDismiss,
   children,
 }: CoachmarkProps) {
   const { showCoachMarks, dismiss } = useCoachMarks(storageKey);
+
+  // Wrap dismiss so onDismiss fires exactly once per session, on the
+  // first dismissal regardless of path (manual close, tap-outside,
+  // escape, auto-timer). Subsequent dismiss() calls are no-ops at the
+  // hook level — showCoachMarks becomes false and the wrapper's guard
+  // prevents duplicate onDismiss invocations.
+  const dismissedFiredRef = useRef(false);
+  const dismissAndNotify = useCallback(() => {
+    if (!dismissedFiredRef.current) {
+      dismissedFiredRef.current = true;
+      onDismiss?.();
+    }
+    dismiss();
+  }, [dismiss, onDismiss]);
 
   /* Auto-dismiss runs only while the coachmark is currently shown.
      Once dismissed (by any path), the timer is cleared and won't
      re-fire — useCoachMarks is single-shot per key. */
   useEffect(() => {
     if (!showCoachMarks) return;
-    const t = window.setTimeout(() => dismiss(), autoDismissMs);
+    const t = window.setTimeout(() => dismissAndNotify(), autoDismissMs);
     return () => window.clearTimeout(t);
-  }, [showCoachMarks, autoDismissMs, dismiss]);
+  }, [showCoachMarks, autoDismissMs, dismissAndNotify]);
 
   return (
     <Tooltip
@@ -46,7 +66,7 @@ export default function Coachmark({
       placement={placement}
       open={showCoachMarks}
       onOpenChange={(next) => {
-        if (!next) dismiss();
+        if (!next) dismissAndNotify();
       }}
     >
       {children}
