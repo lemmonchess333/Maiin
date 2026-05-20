@@ -167,5 +167,5 @@ export function useCrews() {
   const defaultCrews = crews.filter(c => c.type === 'default');
   const customCrews = crews.filter(c => c.type === 'custom');
 
-  return { crews, defaultCrews, customCrews, currentCrew, currentCrewId, loading, joinCrew, leaveCrew, createCrew };
+  return { crews, defaultCrews, customCrews, currentCrew, currentCrewId, loading, joinCrew, leaveCrew, createCrew, refresh: fetchCrews };
 }
