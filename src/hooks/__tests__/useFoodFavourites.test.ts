@@ -483,6 +483,101 @@ describe("useFoodFavourites", () => {
     });
   });
 
+  describe("graduation events", () => {
+    it("does NOT fire on the initial snapshot (existing useCount>=2 docs)", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot([
+          makeDoc({ id: "a", useCount: 5 }),
+          makeDoc({ id: "b", useCount: 3 }),
+        ]);
+      });
+      expect(result.current.graduationToken).toBe(0);
+      const evs = trackedEvents.filter((e) => e.event === "food_pantry_graduated");
+      expect(evs).toHaveLength(0);
+    });
+
+    it("fires on the < 2 → >= 2 transition between snapshots", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 1 })]);
+      });
+      expect(result.current.graduationToken).toBe(0);
+      // Second snapshot reflects the graduation.
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 2 })]);
+      });
+      expect(result.current.graduationToken).toBe(1);
+      const ev = trackedEvents.find((e) => e.event === "food_pantry_graduated");
+      expect(ev?.metadata.favouriteId).toBe("a");
+      expect(ev?.metadata.useCount).toBe(2);
+    });
+
+    it("catches multi-increment jumps (1 → 3 via offline sync)", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 1 })]);
+      });
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 3 })]);
+      });
+      expect(result.current.graduationToken).toBe(1);
+    });
+
+    it("includes the originating source on the graduation event", async () => {
+      renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 1, source: "nl" })]);
+      });
+      await act(async () => {
+        pumpSnapshot([makeDoc({ id: "a", useCount: 2, source: "nl" })]);
+      });
+      const ev = trackedEvents.find((e) => e.event === "food_pantry_graduated");
+      expect(ev?.metadata.source).toBe("nl");
+    });
+  });
+
+  describe("restoreFavourite", () => {
+    it("writes the captured favourite back via setDoc(merge:false)", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot([]);
+      });
+      // Tests use FakeTimestamp via the firebase mock; the production
+      // type is the real Timestamp class. The shape is structurally
+      // compatible (toMillis), so cast at the boundary.
+      const captured = {
+        id: "oats",
+        name: "Oats",
+        calories: 200,
+        protein: 8,
+        carbs: 30,
+        fat: 4,
+        fiber: undefined,
+        sugar: undefined,
+        sodium: undefined,
+        servingSize: "1 bowl",
+        lastUsed: new FakeTimestamp(12345),
+        useCount: 7,
+        timeOfDay: "morning" as const,
+        source: "nl" as const,
+      } as unknown as Parameters<typeof result.current.restoreFavourite>[0];
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.restoreFavourite(captured);
+      });
+      expect(ok).toBe(true);
+      expect(setDocCalls).toHaveLength(1);
+      expect(setDocCalls[0].ref.id).toBe("oats");
+      // Restored payload preserves the captured numerics — undo must
+      // not bump useCount or reset lastUsed.
+      expect(setDocCalls[0].payload.useCount).toBe(7);
+      expect(setDocCalls[0].payload.lastUsed).toBe(captured.lastUsed);
+      expect(setDocCalls[0].payload.timeOfDay).toBe("morning");
+      expect(setDocCalls[0].payload.source).toBe("nl");
+    });
+  });
+
   describe("removeFavourite", () => {
     it("calls deleteDoc with the favourite id", async () => {
       const { result } = renderHook(() => useFoodFavourites());

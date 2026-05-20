@@ -110,12 +110,29 @@ export function useFoodFavourites() {
   const { isOnline } = useOnlineStatus();
   const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
   const [loading, setLoading] = useState(true);
+  /** Increments whenever a favourite crosses the graduation
+   *  threshold (previousCount < 2 → newCount >= 2). Consumers
+   *  effect on this to trigger one-shot UI (first-graduation
+   *  coachmark). The "< 2 → >= 2" inequality catches multi-
+   *  increment jumps (offline sync delivering useCount 1 → 3 in a
+   *  single snapshot) where a strict `=== 2` check would miss the
+   *  transition. */
+  const [graduationToken, setGraduationToken] = useState(0);
   /** Re-entrancy guard for eviction. The snapshot can re-fire while
    *  a deleteDoc is in flight — without the guard, the effect would
    *  pick the same target (still present in the cached snapshot) and
    *  fire a second delete on the same id. Flipped true on schedule,
    *  cleared in the delete's finally. */
   const evictingRef = useRef(false);
+  /** Previous-snapshot lookup keyed by doc id. Graduation detection
+   *  diffs current snapshot against this map. */
+  const previousByIdRef = useRef<Map<string, FoodFavourite>>(new Map());
+  /** Skip graduation detection on the first snapshot — existing
+   *  useCount=5+ items from prior sessions must not all "graduate"
+   *  on every login. The flag flips true after the initial snapshot
+   *  lands; from then on, transitions across the threshold fire
+   *  graduation events. */
+  const initialSnapshotSeenRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -142,6 +159,31 @@ export function useFoodFavourites() {
           if (b.useCount !== a.useCount) return b.useCount - a.useCount;
           return b.lastUsed.toMillis() - a.lastUsed.toMillis();
         });
+
+        // Graduation detection: diff current vs previous snapshot
+        // for `< 2 → >= 2` transitions. Skipped on the initial
+        // snapshot so prior-session high-useCount items don't all
+        // fire on first load. Emits analytics + bumps the token
+        // for consumer-side coachmark trigger.
+        if (initialSnapshotSeenRef.current) {
+          for (const fav of parsed) {
+            const prev = previousByIdRef.current.get(fav.id);
+            const wasBelow = (prev?.useCount ?? 0) < 2;
+            const isAtOrAbove = fav.useCount >= 2;
+            if (wasBelow && isAtOrAbove) {
+              trackFoodEvent("food_pantry_graduated", {
+                favouriteId: fav.id,
+                useCount: fav.useCount,
+                source: fav.source,
+              });
+              setGraduationToken((t) => t + 1);
+            }
+          }
+        } else {
+          initialSnapshotSeenRef.current = true;
+        }
+        previousByIdRef.current = new Map(parsed.map((f) => [f.id, f]));
+
         setFavourites(parsed);
         setLoading(false);
       },
@@ -346,12 +388,52 @@ export function useFoodFavourites() {
   );
 
   const removeFavourite = useCallback(
-    async (id: string) => {
-      if (!user) return;
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
       try {
         await deleteDoc(doc(db, "users", user.uid, "foodFavourites", id));
+        return true;
       } catch (err) {
         logger.error("[useFoodFavourites] removeFavourite failed", err);
+        return false;
+      }
+    },
+    [user]
+  );
+
+  /** Undo handler — restores a previously-removed favourite to its
+   *  pre-delete shape. Used by the long-press → undo-toast flow so
+   *  tapping Undo within the 5s window writes back the captured doc
+   *  with `merge: false` (a full overwrite rather than the partial
+   *  field-merge addFavourite uses), preserving the original
+   *  useCount/lastUsed/timeOfDay/source intact. */
+  const restoreFavourite = useCallback(
+    async (favourite: FoodFavourite): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        await setDoc(
+          doc(db, "users", user.uid, "foodFavourites", favourite.id),
+          {
+            name: favourite.name,
+            calories: favourite.calories,
+            protein: favourite.protein,
+            carbs: favourite.carbs,
+            fat: favourite.fat,
+            fiber: favourite.fiber ?? null,
+            sugar: favourite.sugar ?? null,
+            sodium: favourite.sodium ?? null,
+            servingSize: favourite.servingSize,
+            lastUsed: favourite.lastUsed,
+            useCount: favourite.useCount,
+            timeOfDay: favourite.timeOfDay,
+            source: favourite.source,
+          },
+          { merge: false },
+        );
+        return true;
+      } catch (err) {
+        logger.error("[useFoodFavourites] restoreFavourite failed", err);
+        return false;
       }
     },
     [user]
@@ -360,8 +442,10 @@ export function useFoodFavourites() {
   return {
     favourites,
     loading,
+    graduationToken,
     getTimeRelevant,
     addFavourite,
     removeFavourite,
+    restoreFavourite,
   };
 }

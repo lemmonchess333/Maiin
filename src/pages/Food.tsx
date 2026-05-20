@@ -38,6 +38,7 @@ import EditServingsSheet from "@/components/food/EditServingsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
+import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
@@ -167,11 +168,30 @@ export default function Food() {
   // entries and the section actually becomes populated. Prevents double-taps.
   const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const { addFavourite, getTimeRelevant } = useFoodFavourites();
+  const {
+    addFavourite,
+    getTimeRelevant,
+    favourites,
+    removeFavourite,
+    restoreFavourite,
+    graduationToken,
+  } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const quickAddScrollRef = useRef<HTMLDivElement>(null);
+  /* Optimistic-hide set for long-press → remove. Chips with an id
+     in here are filtered from the rendered row immediately so the
+     user sees their action take effect before the deleteDoc round-
+     trip. Cleared when the snapshot reflects the deletion (the
+     chip won't reappear because the underlying favourite is gone)
+     or rolled back if deleteDoc fails. The undo-toast Action also
+     clears this set as part of restoring the doc.
+     Lives up here (not next to handleRemoveFavourite below) because
+     quickMeals useMemo reads from it — `useState` ordering matters. */
+  const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   /* Stable per-date order cache. The frequency map underneath
      would otherwise reshuffle chips on every log (each new entry
      bumps a count and shifts ties). Snapshot the order ONCE per
@@ -1023,7 +1043,7 @@ export default function Food() {
        to claim their stable slot). */
     const current = new Map<string, QuickAddItem>();
 
-    const push = (entry: { name: string; cal: number; pro: number; carb: number; fat: number; portionSize: string }) => {
+    const push = (entry: { name: string; cal: number; pro: number; carb: number; fat: number; portionSize: string; favouriteId?: string }) => {
       const key = entry.name.toLowerCase().trim();
       if (!key || current.has(key)) return;
       /* Legacy hygiene: filter generic / unidentifiable AI names
@@ -1045,6 +1065,10 @@ export default function Food() {
     //    `new Date().getHours()` here would re-introduce the F2 escape
     //    hatch the F4 audit identified.
     for (const f of getTimeRelevant(timeRelevantHour, 10)) {
+      // Optimistic hide for in-flight long-press removals — skip
+      // chips whose favourite is pending delete so the row updates
+      // immediately on user action without waiting for the snapshot.
+      if (pendingRemovalIds.has(f.id)) continue;
       push({
         name: f.name,
         cal: f.calories,
@@ -1052,6 +1076,11 @@ export default function Food() {
         carb: f.carbs,
         fat: f.fat,
         portionSize: f.servingSize || "1 serving",
+        /* favouriteId enables the long-press → remove flow on
+           chips that came from the user's pantry. Recents /
+           defaults stay non-removable (no id to delete against
+           — they re-derive from meal history each render). */
+        favouriteId: f.id,
       });
     }
 
@@ -1142,7 +1171,7 @@ export default function Food() {
        can verify the dep wiring — even though it derives from
        selectedDate, an explicit dep makes the freeze contract
        readable to future maintainers (and to the linter). */
-  }, [meals, getTimeRelevant, selectedDate, timeRelevantHour]);
+  }, [meals, getTimeRelevant, selectedDate, timeRelevantHour, pendingRemovalIds]);
 
   /* Reset Quick Add scroll position whenever the rendered chips
      change. Without this, the carousel keeps its previous scrollLeft
@@ -1158,8 +1187,102 @@ export default function Food() {
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
 
+  /* Coachmark gating. Default false so we don't flash on every
+     Food page mount — the user must actually graduate a favourite
+     for the explainer to surface. Once the underlying useCoachMarks
+     localStorage flag is set (by Coachmark's dismiss path), this
+     state still flips but the primitive will no-op. */
+  const [coachmarkActive, setCoachmarkActive] = useState(false);
+  useEffect(() => {
+    if (graduationToken === 0) return;
+    // Skip if the user already dismissed the coachmark in a prior
+    // session — useCoachMarks would otherwise immediately resolve
+    // to "not showing" and flicker the wrapper for a frame.
+    try {
+      if (
+        window.localStorage.getItem(
+          "tropos-coach-marks-dismissed:quickAdd-firstGraduation-v1",
+        )
+      ) {
+        return;
+      }
+    } catch {
+      // localStorage unavailable (private mode) — let the coachmark
+      // run; it'll just re-show on every graduation in that session.
+    }
+    setCoachmarkActive(true);
+  }, [graduationToken]);
+
+  const handleRemoveFavourite = async (favouriteId: string, name: string) => {
+    /* Capture the doc BEFORE the optimistic hide so undo can
+       restore an exact copy (useCount, lastUsed, timeOfDay,
+       source). Reading from `favourites` not from props because
+       the parent owns the canonical pantry state. */
+    const captured = favourites.find((f) => f.id === favouriteId);
+    if (!captured) return;
+
+    setPendingRemovalIds((prev) => {
+      const next = new Set(prev);
+      next.add(favouriteId);
+      return next;
+    });
+    trackFoodEvent("food_pantry_chip_removed", {
+      favouriteId,
+      useCount: captured.useCount,
+    });
+
+    const ok = await removeFavourite(favouriteId);
+    if (!ok) {
+      // Rollback the optimistic hide — chip reappears, error toast
+      // explains the failure. The favourite doc is still present
+      // server-side.
+      setPendingRemovalIds((prev) => {
+        const next = new Set(prev);
+        next.delete(favouriteId);
+        return next;
+      });
+      toast.error("Couldn't remove. Try again.", { id: "pantry-remove-error" });
+      return;
+    }
+
+    /* iOS Mail / Gmail destructive-with-undo pattern: single toast
+       with an Undo action, 5s window. Replaces the earlier confirm-
+       dialog-plus-toast double-confirmation flow — the optimistic
+       hide is the "confirmation" and the toast is the recovery path. */
+    toast(`Removed ${name}`, {
+      id: `pantry-remove-${favouriteId}`,
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          const restored = await restoreFavourite(captured);
+          if (restored) {
+            // Clear the optimistic hide so the chip surfaces again
+            // on the next snapshot.
+            setPendingRemovalIds((prev) => {
+              const next = new Set(prev);
+              next.delete(favouriteId);
+              return next;
+            });
+          } else {
+            toast.error("Couldn't undo. The item stays removed.", {
+              id: "pantry-undo-error",
+            });
+          }
+        },
+      },
+    });
+  };
+
   const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
     if (!user || quickAdding) return;
+    /* Telemetry — emit BEFORE the save so we capture taps that
+       fail mid-write too. favouriteId is undefined for recents /
+       seeded defaults, which is meaningful — dashboards can split
+       "tapped a curated chip" vs "tapped a fallback chip". */
+    trackFoodEvent("food_pantry_chip_tapped", {
+      favouriteId: meal.favouriteId,
+    });
     setQuickAdding(meal.name);
     try {
       await addDoc(collection(db, "users", user.uid, "meals"), {
@@ -1340,14 +1463,38 @@ export default function Food() {
       )}
 
       {/* Quick Add — merged favourites + recents row, extracted to
-          components/food/FoodQuickAddRow.tsx. */}
+          components/food/FoodQuickAddRow.tsx. Coachmark wraps the
+          row container on first graduation; anchor at the row level
+          (not a specific chip) because the user's newest graduated
+          chip may scroll off-screen inside the carousel, leaving an
+          arrow pointing at empty space. */}
       <motion.div variants={itemVariant} className="mt-3.5">
-        <FoodQuickAddRow
-          ref={quickAddScrollRef}
-          meals={quickMeals}
-          adding={quickAdding}
-          onAdd={handleQuickMealAdd}
-        />
+        {coachmarkActive ? (
+          <Coachmark
+            storageKey="quickAdd-firstGraduation-v1"
+            content="Tap a chip to log instantly. Long-press to remove."
+            placement="top"
+            onDismiss={() => setCoachmarkActive(false)}
+          >
+            <div>
+              <FoodQuickAddRow
+                ref={quickAddScrollRef}
+                meals={quickMeals}
+                adding={quickAdding}
+                onAdd={handleQuickMealAdd}
+                onRemoveFavourite={handleRemoveFavourite}
+              />
+            </div>
+          </Coachmark>
+        ) : (
+          <FoodQuickAddRow
+            ref={quickAddScrollRef}
+            meals={quickMeals}
+            adding={quickAdding}
+            onAdd={handleQuickMealAdd}
+            onRemoveFavourite={handleRemoveFavourite}
+          />
+        )}
       </motion.div>
 
 
