@@ -11,11 +11,13 @@ import {
   getDocs,
   setDoc,
   serverTimestamp,
+  runTransaction,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
+import { validateFoodEntry } from "@/lib/foodValidation";
 import { logger } from "@/lib/logger";
 
 export interface MealItem {
@@ -57,6 +59,39 @@ export interface Meal {
    *  would miss docs that predate the field; lazy migration via
    *  `parseMealDoc` reads missing → null). */
   deletedAt?: unknown;
+  /** F5b — bumped on every write to the meal doc (any source). Lazy-
+   *  migration default is the doc's createdAt for docs predating
+   *  this field. */
+  updatedAt?: unknown;
+  /** F5b — total write count for the meal (any source, internal /
+   *  debug). Lazy-migration default is 0 at READ time (via
+   *  parseMealDoc); the field is typed as optional so legacy test
+   *  fixtures + alternative construction paths don't need to know
+   *  the F5b contract. Treat as 0 when missing. */
+  revisionCount?: number;
+  /** F5b — count of MANUAL user edits via `editMeal()`. Drives the
+   *  "Edited" pill UI in Food6 ci7. AI-refinement writes bump
+   *  `revisionCount` but NOT `userEditCount` so the pill reads as
+   *  "the user edited this" rather than "anything has touched this
+   *  doc". Lazy-migration default is 0 at read time; optional in
+   *  the type for the same reason as revisionCount above. */
+  userEditCount?: number;
+}
+
+/** F5a: payload accepted by `editMeal`. All fields optional — partial
+ *  updates are valid (e.g. user only renames the foodName). Macro
+ *  totals are validated against `foodValidation.ts` when present;
+ *  values that trip the BLOCKED tier throw and the doc is not
+ *  written. The WARN tier doesn't throw — UI surfaces the warning
+ *  via its own confirmation flow, same as the create path. */
+export interface EditMealUpdates {
+  foodName?: string;
+  items?: MealItem[];
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
+  meal?: "breakfast" | "lunch" | "snacks" | "dinner";
 }
 
 /** Coerce a value to a finite number, defaulting to 0 */
@@ -96,6 +131,15 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
     // F5c: missing field is interpreted as active (null). Restored
     // meals also carry deletedAt: null after the restore write.
     deletedAt: raw.deletedAt ?? null,
+    // F5b: lazy migration. Docs predating the field get sensible
+    // defaults at read time so the UI doesn't need to branch on
+    // "field missing" anywhere downstream — only on the counter
+    // value itself. updatedAt defaults to createdAt so "last
+    // modified" comparisons work for unmigrated docs without a
+    // separate flag check.
+    updatedAt: raw.updatedAt ?? raw.createdAt,
+    revisionCount: typeof raw.revisionCount === 'number' ? raw.revisionCount : 0,
+    userEditCount: typeof raw.userEditCount === 'number' ? raw.userEditCount : 0,
   };
 }
 
@@ -200,6 +244,61 @@ export function useMeals() {
     [user],
   );
 
+  /**
+   * F5a — partial update for a single meal doc. Atomic via Firestore
+   * transaction so the counter bumps and field updates land together
+   * even under concurrent writes. Bumps BOTH `revisionCount` (any
+   * write) AND `userEditCount` (manual edit signal that drives the
+   * Food6 ci7 "Edited" pill); AI-refinement code paths bump only
+   * `revisionCount` and should NOT call through this function.
+   *
+   * Validates macro totals against the same `validateFoodEntry` floor
+   * the create path uses — BLOCKED-tier values throw and the doc
+   * is not written. WARN-tier values are returned to the caller via
+   * the result so the UI can run its own confirmation flow before
+   * retrying with `force=true` (mirrors the NL parse pattern).
+   *
+   * Lazy migration: if the doc predates the F5b counters (missing
+   * `revisionCount` / `userEditCount`), the transaction reads them
+   * as 0 and writes back 1.
+   */
+  const editMeal = useCallback(
+    async (mealId: string, updates: EditMealUpdates): Promise<void> => {
+      if (!user) throw new Error("Not authenticated");
+
+      // Validate against the create-path floor when macros are
+      // present. We only block on the hard ceiling; WARN-tier values
+      // are out of scope for this hook (UI flow handles them).
+      const validation = validateFoodEntry({
+        calories: updates.totalCalories,
+        protein: updates.totalProtein,
+        carbs: updates.totalCarbs,
+        fat: updates.totalFat,
+      });
+      if (validation.kind === "blocked") {
+        throw new Error(validation.reason);
+      }
+
+      const ref = doc(db, "users", user.uid, "meals", mealId);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) throw new Error("Meal not found");
+        const current = snap.data() as Record<string, unknown>;
+        const currentRevision =
+          typeof current.revisionCount === "number" ? current.revisionCount : 0;
+        const currentUserEdit =
+          typeof current.userEditCount === "number" ? current.userEditCount : 0;
+        tx.update(ref, {
+          ...updates,
+          updatedAt: serverTimestamp(),
+          revisionCount: currentRevision + 1,
+          userEditCount: currentUserEdit + 1,
+        });
+      });
+    },
+    [user],
+  );
+
   /** Hard-delete — bypasses the soft-delete window. Reserved for the
    *  Settings recently-deleted page's "Delete permanently" action;
    *  callers OUTSIDE that surface should call `deleteMeal` instead. */
@@ -236,6 +335,7 @@ export function useMeals() {
     deleteMeal,
     restoreMeal,
     hardDeleteMeal,
+    editMeal,
     getMealsForDate,
     getDailyTotals,
   };
