@@ -4,6 +4,7 @@ import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
+import { useSuggestedCrews } from '../hooks/useSuggestedCrews';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -181,6 +182,14 @@ export default function Social() {
 
   // Crews
   const { crews, currentCrew, joinCrew, leaveCrew, createCrew, refresh: refreshCrews } = useCrews();
+  // Soc5d Phase 2: Suggested Crews — friend-of-friend (≥2 follows in
+  // the same crew). Lazy-active on the Crews tab to skip the read
+  // cost when the user is browsing Feed or Find.
+  const {
+    crews: suggestedCrews,
+    refresh: refreshSuggestedCrews,
+    dismiss: dismissSuggestedCrew,
+  } = useSuggestedCrews(tab === 'crews', crews);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
@@ -319,7 +328,10 @@ export default function Social() {
         if (tab === 'feed') {
           await activeFeed.refresh();
         } else if (tab === 'crews') {
-          await refreshCrews();
+          // Soc5 cross-cutting pin: single pull-to-refresh re-fetches
+          // BOTH the crew list AND friend-of-friend suggestions so
+          // the user gets a consistent fresh state.
+          await Promise.all([refreshCrews(), refreshSuggestedCrews()]);
         }
         // Find tab: search results are user-driven; no refresh action.
       } finally {
@@ -665,6 +677,76 @@ export default function Social() {
             >
               Create a Crew
             </button>
+          )}
+
+          {/* Soc5d Phase 2: Suggested Crews section — friend-of-friend
+              picks where ≥2 of the user's follows are members. Section
+              hides entirely when no qualifying suggestions exist
+              (zero-state on follows, all dismissed, no overlaps), so
+              users without a social network don't see a sad empty
+              section. Each card has a dismiss X that persists to
+              localStorage. */}
+          {suggestedCrews.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Suggested for you
+              </p>
+              <div className="space-y-2">
+                {suggestedCrews.slice(0, 3).map((crew) => {
+                  const IconComp = ICON_MAP[crew.icon];
+                  const isJoiningThis = joiningCrewId === crew.id;
+                  return (
+                    <div
+                      key={crew.id}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: `${THEME.brand}14` }}
+                      >
+                        {IconComp && <IconComp size={18} className="text-primary shrink-0" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {crew.name}
+                        </p>
+                        <p className="text-[12px] text-muted-foreground truncate">
+                          {crew.matchedFollows} of your follows
+                          {crew.matchedFollows === 1 ? ' is' : ' are'} here
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setJoiningCrewId(crew.id);
+                          try {
+                            await joinCrew(crew.id);
+                            toast.success(`Joined ${crew.name}`);
+                          } catch {
+                            toast.error('Failed to join crew');
+                          } finally {
+                            setJoiningCrewId(null);
+                          }
+                        }}
+                        disabled={isJoiningThis}
+                        className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold disabled:opacity-60 active:scale-[0.96] transition-transform"
+                        style={{ background: THEME.brandStrong }}
+                      >
+                        {isJoiningThis ? 'Joining…' : 'Join'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => dismissSuggestedCrew(crew.id)}
+                        aria-label={`Dismiss suggestion: ${crew.name}`}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-90 transition-all"
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Crews list */}
