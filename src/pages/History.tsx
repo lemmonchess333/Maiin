@@ -18,6 +18,7 @@ import PRBadge from "@/components/analytics/PRBadge";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
+import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
@@ -40,6 +41,13 @@ const VALID_TABS: FilterTab[] = [
   "badges",
   "performance",
 ];
+
+// Module-level so the useCallback consuming it has a stable
+// reference across renders (the exhaustive-deps lint rule rightly
+// flags an in-component const). Mirrors TimeRangePills' default
+// options.
+const VALID_RANGES = ["1W", "1M", "3M", "6M", "1Y"] as const;
+type ValidRange = typeof VALID_RANGES[number];
 
 function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: FilterTab) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -135,8 +143,12 @@ export default function History() {
 
   useEffect(() => {
     if (searchParams.has("tab")) {
-      const clear = () => { setSearchParams({}, { replace: true }); };
-      clear();
+      // Strip only the `tab` param — preserving `?range=` and any
+      // other future query params landed by deep links. Pre-Hist4
+      // this called setSearchParams({}, ...) which nuked everything.
+      const next = new URLSearchParams(searchParams);
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
     }
     // One-shot consume: clear the sessionStorage hint once we've applied
     // it so refreshing History doesn't silently force a tab the user may
@@ -148,7 +160,36 @@ export default function History() {
     }
   }, [searchParams, setSearchParams]);
 
-  const [timeRange, setTimeRange] = useState("1M");
+  // Hist4: range persisted via URL `?range=` per the lock's "Tab +
+  // range persistence via URL search params" pin. Default '1M'
+  // remains the URL-clean state — when the user is on the default
+  // we strip the param so /history reads cleanly. Matches the
+  // pattern landed for Food6 ci5 (`?date=`) and Soc5 (`?tab=`).
+  const rangeFromUrl = searchParams.get("range");
+  const timeRange: ValidRange = (VALID_RANGES as readonly string[]).includes(rangeFromUrl ?? "")
+    ? (rangeFromUrl as ValidRange)
+    : "1M";
+  const setTimeRange = useCallback(
+    (next: string) => {
+      // Defensive: TimeRangePills passes a string. Reject unknown
+      // values rather than letting them silently land in the URL.
+      if (!(VALID_RANGES as readonly string[]).includes(next)) return;
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (next === "1M") updated.delete("range");
+          else updated.set("range", next);
+          return updated;
+        },
+        { replace: true },
+      );
+      trackHistoryEvent("history_range_changed", {
+        range: next as HistoryRange,
+        rangeType: "pill",
+      });
+    },
+    [setSearchParams],
+  );
   const rangeDays =
     timeRange === "1W"
       ? 7
@@ -166,6 +207,25 @@ export default function History() {
   const lifetimeRuns = useLifetimeRunStats();
   const { profile } = useAuth();
   const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+
+  // Hist4 perf telemetry. renderStartRef takes its timestamp from the
+  // post-mount effect (rather than lazy useState which would trip
+  // react-hooks/purity for performance.now() in render). Fires once
+  // when dataLoading transitions to false — the moment the user sees
+  // real content instead of skeleton state. Target: <500ms p95 per
+  // Hist4 cross-cutting performance pin. Same shape as food / social.
+  const renderStartRef = useRef<number>(0);
+  const renderReportedRef = useRef(false);
+  useEffect(() => {
+    renderStartRef.current = performance.now();
+  }, []);
+  useEffect(() => {
+    if (dataLoading || renderReportedRef.current) return;
+    if (renderStartRef.current === 0) return;
+    const ms = performance.now() - renderStartRef.current;
+    trackHistoryEvent("history_initial_render_ms", { durationMs: Math.round(ms) });
+    renderReportedRef.current = true;
+  }, [dataLoading]);
 
   // Goal-aware sentiment for nutrition deltas. On a cut, eating more is
   // off-plan (red), eating less is on-plan (green). On a lean bulk it
@@ -570,7 +630,13 @@ export default function History() {
       </motion.header>
 
       <motion.div variants={itemVariant}>
-        <FilterPills filter={filter} setFilter={setFilter} />
+        <FilterPills
+          filter={filter}
+          setFilter={(next) => {
+            setFilter(next);
+            trackHistoryEvent("history_tab_selected", { tab: next as HistoryTab });
+          }}
+        />
       </motion.div>
 
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
