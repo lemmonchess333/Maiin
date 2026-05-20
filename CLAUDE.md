@@ -172,7 +172,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 `useGPS`, `useRunTimer`, `useRunningStats`, `useGuidedRun`, `useIntervalWorkout`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useCrews`, `useGroups`, `useUnreadCount`, `useBlockedUsers`
+`useSocialFeed`, `useDiscoverFeed`, `useCrews`, `useUnreadCount`, `useBlockedUsers`
 
 **Performance & Analytics:**
 `usePerformance`
