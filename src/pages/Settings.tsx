@@ -28,6 +28,7 @@ import ShoesSection from "@/components/settings/ShoesSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
+import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
 
@@ -163,16 +164,18 @@ export default function Settings() {
       </motion.header>
 
       {/* 1. Profile */}
-      <ProfileInfoSection
-        profile={profile}
-        name={name}
-        setName={setName}
-        weightKg={weightKg}
-        setWeightKg={setWeightKg}
-        heightCm={heightCm}
-        setHeightCm={setHeightCm}
-        updateProfile={updateProfile}
-      />
+      <TrackSettingsSectionView section="profile_info">
+        <ProfileInfoSection
+          profile={profile}
+          name={name}
+          setName={setName}
+          weightKg={weightKg}
+          setWeightKg={setWeightKg}
+          heightCm={heightCm}
+          setHeightCm={setHeightCm}
+          updateProfile={updateProfile}
+        />
+      </TrackSettingsSectionView>
 
       {/* 2. Training — PR-2: link-only. Programme owns the weekly
           layout editor, run-mode picker, race-goal flow, per-day
@@ -183,117 +186,135 @@ export default function Settings() {
           AccordionSection (the new /settings/training nested page
           renders it inline). The legacy flat page composes the
           accordion chrome here so the visual stays unchanged. */}
-      <AccordionSection
-        icon={<Target className="w-5 h-5 text-primary" />}
-        title="Training"
-        subtitle="Plan structure"
-      >
-        <TrainingSection
-          profile={profile}
-          updateProfile={updateProfile}
-          navigate={navigate}
-        />
-      </AccordionSection>
+      <TrackSettingsSectionView section="training">
+        <AccordionSection
+          icon={<Target className="w-5 h-5 text-primary" />}
+          title="Training"
+          subtitle="Plan structure"
+        >
+          <TrainingSection
+            profile={profile}
+            updateProfile={updateProfile}
+            navigate={navigate}
+          />
+        </AccordionSection>
+      </TrackSettingsSectionView>
 
       {/* 3. Nutrition */}
-      <NutritionSection
-        profile={profile}
-        age={age}
-        setAge={setAge}
-        activityLevel={activityLevel}
-        setActivityLevel={setActivityLevel}
-        trainingPhase={trainingPhase}
-        setTrainingPhase={setTrainingPhase}
-        mealsTarget={mealsTarget}
-        setMealsTarget={setMealsTarget}
-        tdee={tdee}
-        updateProfile={updateProfile}
-        onPhaseChange={handlePhaseChange}
-      />
+      <TrackSettingsSectionView section="nutrition">
+        <NutritionSection
+          profile={profile}
+          age={age}
+          setAge={setAge}
+          activityLevel={activityLevel}
+          setActivityLevel={setActivityLevel}
+          trainingPhase={trainingPhase}
+          setTrainingPhase={setTrainingPhase}
+          mealsTarget={mealsTarget}
+          setMealsTarget={setMealsTarget}
+          tdee={tdee}
+          updateProfile={updateProfile}
+          onPhaseChange={handlePhaseChange}
+        />
+      </TrackSettingsSectionView>
 
       {/* 4. Workout Preferences */}
-      <WorkoutPrefsSection
-        autoRestTimer={autoRestTimer}
-        setAutoRestTimer={setAutoRestTimer}
-        defaultRestSeconds={defaultRestSeconds}
-        setDefaultRestSeconds={setDefaultRestSeconds}
-        audioCues={audioCues}
-        setAudioCues={setAudioCues}
-        updateProfile={updateProfile}
-      />
+      <TrackSettingsSectionView section="workout_prefs">
+        <WorkoutPrefsSection
+          autoRestTimer={autoRestTimer}
+          setAutoRestTimer={setAutoRestTimer}
+          defaultRestSeconds={defaultRestSeconds}
+          setDefaultRestSeconds={setDefaultRestSeconds}
+          audioCues={audioCues}
+          setAudioCues={setAudioCues}
+          updateProfile={updateProfile}
+        />
+      </TrackSettingsSectionView>
 
       {/* 5. Units & Appearance */}
-      <UnitsAppearanceSection
-        profile={profile}
-        toggleUnit={toggleUnit}
-        toggleDark={toggleDark}
-      />
+      <TrackSettingsSectionView section="units_appearance">
+        <UnitsAppearanceSection
+          profile={profile}
+          toggleUnit={toggleUnit}
+          toggleDark={toggleDark}
+        />
+      </TrackSettingsSectionView>
 
       {/* 6. Social & Privacy */}
-      <PrivacySection
-        user={user}
-        updateProfile={updateProfile}
-        defaultVisibility={defaultVisibility}
-        setDefaultVisibility={setDefaultVisibility}
-        autoPostRuns={autoPostRuns}
-        setAutoPostRuns={setAutoPostRuns}
-        autoPostWorkouts={autoPostWorkouts}
-        setAutoPostWorkouts={setAutoPostWorkouts}
-        privacyZones={privacyZones}
-        addZone={addZone}
-        removeZone={removeZone}
-        newZoneName={newZoneName}
-        setNewZoneName={setNewZoneName}
-        newZoneRadius={newZoneRadius}
-        setNewZoneRadius={setNewZoneRadius}
-        defaultCrews={defaultCrews}
-        currentCrew={currentCrew}
-        joinCrew={joinCrew}
-        leaveCrew={leaveCrew}
-      />
+      <TrackSettingsSectionView section="privacy">
+        <PrivacySection
+          user={user}
+          updateProfile={updateProfile}
+          defaultVisibility={defaultVisibility}
+          setDefaultVisibility={setDefaultVisibility}
+          autoPostRuns={autoPostRuns}
+          setAutoPostRuns={setAutoPostRuns}
+          autoPostWorkouts={autoPostWorkouts}
+          setAutoPostWorkouts={setAutoPostWorkouts}
+          privacyZones={privacyZones}
+          addZone={addZone}
+          removeZone={removeZone}
+          newZoneName={newZoneName}
+          setNewZoneName={setNewZoneName}
+          newZoneRadius={newZoneRadius}
+          setNewZoneRadius={setNewZoneRadius}
+          defaultCrews={defaultCrews}
+          currentCrew={currentCrew}
+          joinCrew={joinCrew}
+          leaveCrew={leaveCrew}
+        />
+      </TrackSettingsSectionView>
 
       {/* 7. My Shoes */}
-      <ShoesSection />
+      <TrackSettingsSectionView section="shoes">
+        <ShoesSection />
+      </TrackSettingsSectionView>
 
       {/* 8. Notifications */}
-      <NotificationsSection
-        mealReminders={mealReminders}
-        updateMealReminders={updateMealReminders}
-        workoutReminders={workoutReminders}
-        updateWorkoutReminders={updateWorkoutReminders}
-        streakReminder={streakReminder}
-        updateStreakReminder={updateStreakReminder}
-      />
+      <TrackSettingsSectionView section="notifications">
+        <NotificationsSection
+          mealReminders={mealReminders}
+          updateMealReminders={updateMealReminders}
+          workoutReminders={workoutReminders}
+          updateWorkoutReminders={updateWorkoutReminders}
+          streakReminder={streakReminder}
+          updateStreakReminder={updateStreakReminder}
+        />
+      </TrackSettingsSectionView>
 
       {/* 9. Subscription — navigation row, not accordion */}
-      <button
-        onClick={() => navigate("/upgrade")}
-        className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
-      >
-        <div className="flex items-center gap-3">
-          <Crown className="w-5 h-5 text-primary" />
-          <div className="text-left">
-            <p className="text-sm font-medium text-foreground">Subscription</p>
-            <p className="text-xs text-muted-foreground">
-              {tier === "pro"
-                ? "Pro — Full access"
-                : isInTrial
-                  ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
-                  : "Free — Upgrade"}
-            </p>
+      <TrackSettingsSectionView section="subscription">
+        <button
+          onClick={() => navigate("/upgrade")}
+          className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
+        >
+          <div className="flex items-center gap-3">
+            <Crown className="w-5 h-5 text-primary" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-foreground">Subscription</p>
+              <p className="text-xs text-muted-foreground">
+                {tier === "pro"
+                  ? "Pro — Full access"
+                  : isInTrial
+                    ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
+                    : "Free — Upgrade"}
+              </p>
+            </div>
           </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-      </button>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </TrackSettingsSectionView>
 
       {/* 10. Support & Legal */}
       <SupportLegalSection />
 
       {/* 11. Account */}
-      <AccountSection
-        user={user}
-        signOut={signOut}
-      />
+      <TrackSettingsSectionView section="account">
+        <AccountSection
+          user={user}
+          signOut={signOut}
+        />
+      </TrackSettingsSectionView>
 
       {/* Footer */}
       <p className="text-center text-xs text-muted-foreground">
