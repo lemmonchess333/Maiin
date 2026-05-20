@@ -580,12 +580,18 @@ export default function Social() {
           {!activeFeed.loading && activeFeed.items.length === 0 && !(feedSubTab === 'explore' && exploreFeed.error) && (
             <div className="mt-6" aria-live="polite">
               {feedSubTab === 'explore' ? (
+                /* Soc5 locked Explore empty-state copy. Explore is a
+                   consume-others'-content surface — Tropos's
+                   positioning is calm/honest about a small network
+                   rather than pushing the user to create content
+                   themselves (which is what the Following empty
+                   state implicitly does via "find people"). No
+                   action CTA per the lock. */
                 <EmptyState
                   icon={<Globe size={32} />}
-                  title="Be the first to share"
-                  description="Complete a workout or run and it'll appear here for the community"
+                  title="Tropos is quiet right now"
+                  description="Check back later"
                   accentColor={THEME.brand}
-                  action={{ label: 'Start a workout', href: '/program' }}
                 />
               ) : (
                 /* Inline prompt — sits as a supporting element under
@@ -604,8 +610,13 @@ export default function Social() {
                     >
                       <Users size={16} style={{ color: THEME.brand }} />
                     </div>
+                    {/* Soc5 locked Following empty-state copy. The
+                        "or join crews" addition is the key delta vs
+                        the prior copy — surfaces both growth paths
+                        (1:1 follow OR group membership) rather than
+                        only following. */}
                     <p className="text-[13px] text-muted-foreground leading-snug">
-                      Follow athletes to see their workouts, runs and challenge progress here
+                      Your feed is empty · Follow people or join crews to see their activities
                     </p>
                   </div>
                   <button
