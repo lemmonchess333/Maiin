@@ -2,6 +2,7 @@ import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { Footprints, Play, PersonStanding, Zap, RefreshCw, Wind, Route, Flag } from "lucide-react";
 import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import { getScheduledRunStatus, isScheduledRunStartable } from "@/lib/scheduledRunStatus";
@@ -36,7 +37,11 @@ export default function RunCTACard({ todayRun, navigate }: {
 
   return (
     <motion.button whileTap={{ scale: 0.97 }}
-      onClick={function() { haptic(); navigate("/run" + queryString); }}
+      onClick={function() {
+        haptic();
+        trackHomeEvent("home_card_tapped", { card: "today_run" });
+        navigate("/run" + queryString);
+      }}
       className="w-full rounded-xl bg-card text-left p-4"
       style={{ backgroundColor: THEME.running + "14" }}>
       <div className="flex items-center gap-3">

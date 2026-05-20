@@ -2,6 +2,7 @@ import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { Dumbbell, Play } from "lucide-react";
 import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function LiftCTACard({ nextWorkout, navigate, muscleGroups }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] };
@@ -10,7 +11,11 @@ export default function LiftCTACard({ nextWorkout, navigate, muscleGroups }: {
 }) {
   return (
     <motion.button whileTap={{ scale: 0.97 }}
-      onClick={function() { haptic(); navigate("/program"); }}
+      onClick={function() {
+        haptic();
+        trackHomeEvent("home_card_tapped", { card: "today_workout" });
+        navigate("/program");
+      }}
       className="w-full rounded-xl bg-card text-left p-4"
       style={{ backgroundColor: THEME.lifting + "14" }}>
       <div className="flex items-center gap-3">

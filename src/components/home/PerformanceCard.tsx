@@ -26,6 +26,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { buildPerformanceInsight } from "@/lib/performanceInsights";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 
 interface PerformanceCardProps {
@@ -59,6 +60,7 @@ export default function PerformanceCard({
 
   function handleTap() {
     haptic();
+    trackHomeEvent("home_card_tapped", { card: "performance" });
     // Hash fragment is the canonical deep-link target per P2c pin 6.
     // PerformanceTab listens for it and scrolls to the section.
     navigate("/history#performance");
