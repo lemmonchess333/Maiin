@@ -60,6 +60,11 @@ interface FoodComposerCardProps {
   scanOverrides: ScanOverrides;
   onUpgrade: () => void;
   onManualOpen: () => void;
+  /** F1 privacy: when false the user has opted out of Gemini-backed
+   *  food analysis (Settings → Privacy → AI food analysis). The
+   *  ScanMealButton hides because tapping it would invoke image AI;
+   *  manual + barcode paths stay available. */
+  aiAnalysisEnabled?: boolean;
 }
 
 /**
@@ -107,6 +112,7 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
       scanOverrides,
       onUpgrade,
       onManualOpen,
+      aiAnalysisEnabled = true,
     },
     suggestionsRef,
   ) {
@@ -253,27 +259,35 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
           })}
         </div>
         <div className="mt-3">
-          <ScanMealButton
-            onClick={() => {
-              haptic();
-              scanOverrides.onClick();
-            }}
-            ariaLabel={
-              scanUsage.isUnlimited || scanUsage.remaining > 0
-                ? "Scan your meal"
-                : "Upgrade to scan your meal"
-            }
-            styleOverride={scanOverrides.style}
-            statusIcon={scanOverrides.icon}
-          />
-          {!scanUsage.isUnlimited && !scanUsage.loading && (
-            <div className="mt-2">
-              <ScanQuotaIndicator
-                remaining={scanUsage.remaining}
-                resetDate={scanUsage.resetDate}
-                onUpgrade={onUpgrade}
+          {/* F1: hide the scan / camera CTA when the user opted out
+              of AI food analysis. Image AI is the primary workload
+              behind this button — without the AI call the button
+              has no useful action. Manual log stays below. */}
+          {aiAnalysisEnabled && (
+            <>
+              <ScanMealButton
+                onClick={() => {
+                  haptic();
+                  scanOverrides.onClick();
+                }}
+                ariaLabel={
+                  scanUsage.isUnlimited || scanUsage.remaining > 0
+                    ? "Scan your meal"
+                    : "Upgrade to scan your meal"
+                }
+                styleOverride={scanOverrides.style}
+                statusIcon={scanOverrides.icon}
               />
-            </div>
+              {!scanUsage.isUnlimited && !scanUsage.loading && (
+                <div className="mt-2">
+                  <ScanQuotaIndicator
+                remaining={scanUsage.remaining}
+                  resetDate={scanUsage.resetDate}
+                  onUpgrade={onUpgrade}
+                />
+                </div>
+              )}
+            </>
           )}
           {/* Manual logging fallback. Centered text-only so it
               doesn't compete with Scan or the NL composer. The

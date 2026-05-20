@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 
 const FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFood";
@@ -28,8 +29,18 @@ export function useFoodAnalysis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<FoodAnalysis | null>(null);
+  const { profile } = useAuth();
+  // F1 privacy gate. undefined / true = enabled (default); explicit
+  // false = user opted out via Settings → Privacy. Defense in depth —
+  // CTAs that invoke these are also hidden when disabled, but a
+  // direct programmatic call still refuses.
+  const aiEnabled = profile?.aiAnalysisEnabled !== false;
 
   const analyzeFood = async (imageBase64: string) => {
+    if (!aiEnabled) {
+      setError("AI food analysis is disabled in Settings → Privacy");
+      return null;
+    }
     setLoading(true);
     setError(null);
     setResult(null);
@@ -67,6 +78,10 @@ export function useFoodAnalysis() {
   };
 
   const analyzeFoodText = async (text: string): Promise<FoodAnalysis | null> => {
+    if (!aiEnabled) {
+      logger.log("[analyzeFoodText] skipped — AI disabled by user");
+      return null;
+    }
     try {
       const user = auth.currentUser;
       if (!user) return null;
@@ -97,5 +112,5 @@ export function useFoodAnalysis() {
     setError(null);
   };
 
-  return { analyzeFood, analyzeFoodText, loading, error, result, reset };
+  return { analyzeFood, analyzeFoodText, loading, error, result, reset, aiEnabled };
 }

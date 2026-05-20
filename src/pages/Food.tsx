@@ -165,7 +165,7 @@ export default function Food() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const { addFavourite, getTimeRelevant } = useFoodFavourites();
   const { isPro } = useSubscription();
-  const { analyzeFoodText } = useFoodAnalysis();
+  const { analyzeFoodText, aiEnabled: aiAnalysisEnabled } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const quickAddScrollRef = useRef<HTMLDivElement>(null);
   /* Stable per-date order cache. The frequency map underneath
@@ -1265,6 +1265,7 @@ export default function Food() {
           scanOverrides={scanOverrides}
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
+          aiAnalysisEnabled={aiAnalysisEnabled}
         />
       </motion.div>
 
