@@ -19,7 +19,12 @@ export type FoodEvent =
   | "food_meal_slot_tapped"
   | "food_date_navigated"
   | "food_composer_focused"
-  | "food_initial_render_ms";
+  | "food_initial_render_ms"
+  | "food_pantry_eviction"
+  | "food_pantry_graduated"
+  | "food_pantry_chip_tapped"
+  | "food_pantry_chip_removed"
+  | "food_pantry_typeahead_selected";
 
 export interface FoodEventMetadata {
   /** food_meal_slot_tapped: which slot ("breakfast" | "lunch" | "snacks" | "dinner"). */
@@ -30,6 +35,21 @@ export interface FoodEventMetadata {
    *  render. Captures the Food page's perceived initial-render budget
    *  (target: <500ms p95 per Food6 cross-cutting performance pin). */
   durationMs?: number;
+  /** food_pantry_*: the doc id of the favourite involved. */
+  favouriteId?: string;
+  /** food_pantry_eviction / _graduated / _chip_tapped: useCount of
+   *  the favourite. On eviction this distinguishes fossil-prunes
+   *  (useCount=1) from heavier evictions. On graduation this is
+   *  always >= 2. On chip-tap this is the pre-increment count. */
+  useCount?: number;
+  /** food_pantry_eviction: total favourites before the eviction
+   *  fired — useful for confirming the SOFT_CAP threshold lines
+   *  up with observed prune patterns. */
+  totalBefore?: number;
+  /** food_pantry_graduated / _chip_tapped: originating source
+   *  ("manual" | "photo" | "barcode" | "search" | "nl") so the
+   *  graduation funnel can be split by entry path. */
+  source?: string;
 }
 
 export function track(event: FoodEvent, metadata: FoodEventMetadata = {}): void {

@@ -1,8 +1,24 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
+
+/** Subset of FoodFavourite used by the typeahead pantry section.
+ *  Only the fields the dropdown needs to display + hand back to the
+ *  parent on selection — no need to pull the full Firestore doc
+ *  shape through the dropdown's contract. */
+export interface PantrySuggestion {
+  id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: string;
+  useCount: number;
+  source: "manual" | "photo" | "barcode" | "search" | "nl";
+}
 
 export interface OFFResult {
   name: string;
@@ -24,6 +40,11 @@ export interface OFFResult {
 interface FoodSuggestionsDropdownProps {
   suggestions: FoodSuggestion[];
   offResults: OFFResult[];
+  /** F2d PR 4: matches from the user's own pantry (favourites). Renders
+   *  at the TOP of the dropdown above local DB + OFF — when the user
+   *  types a food they've eaten before, the one-tap log lands first.
+   *  Header is omitted entirely when the array is empty. */
+  pantryResults: PantrySuggestion[];
   /** True only when the OFF API completed with zero matches AND
    *  there are also no local suggestions. Drives the "No matches"
    *  fallback row that surfaces the manual-log escape hatch. */
@@ -35,6 +56,7 @@ interface FoodSuggestionsDropdownProps {
   offSearchQuery: string | null;
   onSelectSuggestion: (s: FoodSuggestion) => void;
   onSelectOff: (food: OFFResult) => void;
+  onSelectPantry: (p: PantrySuggestion) => void;
   onLogManually: () => void;
 }
 
@@ -63,10 +85,12 @@ const FoodSuggestionsDropdown = forwardRef<
   {
     suggestions,
     offResults,
+    pantryResults,
     offEmpty,
     offSearchQuery,
     onSelectSuggestion,
     onSelectOff,
+    onSelectPantry,
     onLogManually,
   },
   ref,
@@ -76,6 +100,42 @@ const FoodSuggestionsDropdown = forwardRef<
       ref={ref}
       className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
     >
+      {pantryResults.length > 0 && (
+        <div>
+          {/* Section header — only renders when there are matches.
+              The header sits inline (not as a sticky banner) so the
+              dropdown stays scannable as one continuous list when
+              local DB + OFF results follow. */}
+          <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
+            <Star
+              aria-hidden="true"
+              className="w-3 h-3 text-amber-500"
+            />
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+              Your pantry
+            </span>
+          </div>
+          {pantryResults.map((p) => (
+            <button
+              key={`pantry-${p.id}`}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onSelectPantry(p)}
+              className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+            >
+              <span className="text-sm font-medium text-foreground truncate min-w-0">
+                {p.name}
+                <span className="text-muted-foreground font-normal ml-1.5">
+                  · {p.servingSize}
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                {Math.round(p.calories)} cal · P{Math.round(p.protein)}g · C
+                {Math.round(p.carbs)}g · F{Math.round(p.fat)}g
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
       {suggestions.length > 0 && (
         <div>
           {suggestions.map((s, i) => (

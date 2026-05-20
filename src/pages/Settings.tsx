@@ -28,7 +28,6 @@ import ShoesSection from "@/components/settings/ShoesSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
-import SettingsPantrySection from "@/components/settings/SettingsPantrySection";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
@@ -217,15 +216,6 @@ export default function Settings() {
           updateProfile={updateProfile}
           onPhaseChange={handlePhaseChange}
         />
-      </TrackSettingsSectionView>
-
-      {/* 3b. My pantry — F2d. Management surface for the same
-          foodFavourites collection the Food page surfaces as Quick
-          Add chips. Lets users prune accumulated entries (auto-add
-          on every meal log can drift toward typos / one-offs over
-          time). */}
-      <TrackSettingsSectionView section="pantry">
-        <SettingsPantrySection />
       </TrackSettingsSectionView>
 
       {/* 4. Workout Preferences */}

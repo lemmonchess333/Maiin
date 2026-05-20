@@ -38,6 +38,12 @@ export interface QuickAddItem {
   carb: number;
   fat: number;
   portionSize: string;
+  /** Set when the chip originates from the user's favourites pool
+   *  (useFoodFavourites). Long-press → remove fires only on chips
+   *  with a favouriteId; recents / seeded-defaults stay
+   *  non-removable because removing them has no persistent
+   *  meaning (they re-derive from meal history each render). */
+  favouriteId?: string;
 }
 
 /**
