@@ -24,6 +24,7 @@ import { THEME } from '../lib/theme';
 import { EmptyState } from '../components/EmptyState';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import Coachmark from '@/components/ui/Coachmark';
 
 /* "discover" used to mean two different things: a top-level tab AND
    a feed sub-tab. The top-level tab is now `find` (search + invite +
@@ -124,6 +125,14 @@ export default function Social() {
       setTab('find');
     }
   }, [tabFromUrl, followingCount, profileCrewId, setTab]);
+
+  // Soc5c: "new user" signal drives the first-launch coachmark on
+  // the Find tab. Same definition as the smart default (zero follows
+  // + zero crew). While followingCount is still resolving we treat
+  // the user as established — that way an existing user with a slow
+  // network never sees a flash of the new-user coachmark.
+  const isNewUser = followingCount === 0 && !profileCrewId;
+
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
@@ -1055,13 +1064,29 @@ export default function Social() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleShareInvite}
-              className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
-              style={{ background: THEME.brandStrong }}
-            >
-              Share invite link
-            </button>
+            {isNewUser ? (
+              <Coachmark
+                storageKey="social-find-invite"
+                placement="top"
+                content="Share your profile link to get started"
+              >
+                <button
+                  onClick={handleShareInvite}
+                  className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
+                  style={{ background: THEME.brandStrong }}
+                >
+                  Share invite link
+                </button>
+              </Coachmark>
+            ) : (
+              <button
+                onClick={handleShareInvite}
+                className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
+                style={{ background: THEME.brandStrong }}
+              >
+                Share invite link
+              </button>
+            )}
           </div>
           </div>
 
