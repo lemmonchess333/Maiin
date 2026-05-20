@@ -33,6 +33,7 @@ import FoodHeroCard from "@/components/food/FoodHeroCard";
 import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
 import FoodMealSection from "@/components/food/FoodMealSection";
 import FoodDateBar from "@/components/food/FoodDateBar";
+import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
@@ -1128,6 +1129,11 @@ export default function Food() {
         maxDate={todayStr}
         itemVariant={itemVariant}
       />
+
+      {/* Food6 cc2: sustained-offline notice (30s threshold). Adds
+          Food-specific context (image AI + barcode unavailable) on
+          top of the global Layout banner. */}
+      <FoodOfflineBanner />
 
       {/* Header */}
       <motion.div variants={itemVariant}>
