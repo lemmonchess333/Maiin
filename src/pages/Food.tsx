@@ -238,7 +238,27 @@ export default function Food() {
     () => { haptic(); setScanOpen(!scanOpen); },
   );
 
-  const { meals, getMealsForDate, getDailyTotals, deleteMeal } = useMeals();
+  const { meals, getMealsForDate, getDailyTotals, deleteMeal, loading: mealsLoading } = useMeals();
+
+  // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
+  // takes its first-paint timestamp from the post-mount effect (rather
+  // than lazy useState which would trip the react-hooks/purity rule
+  // for the impure `performance.now()` call inside render). The second
+  // effect fires the telemetry once when `mealsLoading` transitions to
+  // false — that's the moment the user sees real diary content rather
+  // than skeleton state. Reported once per session via the ref guard.
+  const renderStartRef = useRef<number>(0);
+  const renderReportedRef = useRef(false);
+  useEffect(() => {
+    renderStartRef.current = performance.now();
+  }, []);
+  useEffect(() => {
+    if (mealsLoading || renderReportedRef.current) return;
+    if (renderStartRef.current === 0) return;
+    const ms = performance.now() - renderStartRef.current;
+    trackFoodEvent("food_initial_render_ms", { durationMs: Math.round(ms) });
+    renderReportedRef.current = true;
+  }, [mealsLoading]);
   const todaysMeals = getMealsForDate(selectedDate);
   const rawDailyTotals = getDailyTotals(selectedDate);
 
