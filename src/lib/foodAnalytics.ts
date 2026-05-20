@@ -18,13 +18,18 @@ import type { MealKey } from "@/components/food/mealConstants";
 export type FoodEvent =
   | "food_meal_slot_tapped"
   | "food_date_navigated"
-  | "food_composer_focused";
+  | "food_composer_focused"
+  | "food_initial_render_ms";
 
 export interface FoodEventMetadata {
   /** food_meal_slot_tapped: which slot ("breakfast" | "lunch" | "snacks" | "dinner"). */
   slot?: MealKey;
   /** food_date_navigated: direction of navigation. */
   direction?: "prev" | "next" | "pick";
+  /** food_initial_render_ms: rounded ms from mount to first non-loading
+   *  render. Captures the Food page's perceived initial-render budget
+   *  (target: <500ms p95 per Food6 cross-cutting performance pin). */
+  durationMs?: number;
 }
 
 export function track(event: FoodEvent, metadata: FoodEventMetadata = {}): void {
