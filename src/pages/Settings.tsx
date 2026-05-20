@@ -244,6 +244,7 @@ export default function Settings() {
       <TrackSettingsSectionView section="privacy">
         <PrivacySection
           user={user}
+          profile={profile}
           updateProfile={updateProfile}
           defaultVisibility={defaultVisibility}
           setDefaultVisibility={setDefaultVisibility}

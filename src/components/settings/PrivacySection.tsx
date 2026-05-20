@@ -23,6 +23,10 @@ import type { Crew } from "@/hooks/useCrews";
 
 interface PrivacySectionProps {
   user: User | null;
+  /** Subset of the profile fields read by this section. Required for
+   *  F1's aiAnalysisEnabled toggle which renders the switch in its
+   *  current state. */
+  profile: Pick<UserProfile, "aiAnalysisEnabled"> | null;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
   defaultVisibility: "public" | "followers" | "private";
   setDefaultVisibility: (v: "public" | "followers" | "private") => void;
@@ -46,6 +50,7 @@ interface PrivacySectionProps {
 
 export default function PrivacySection({
   user,
+  profile,
   updateProfile,
   defaultVisibility,
   setDefaultVisibility,
@@ -183,6 +188,52 @@ export default function PrivacySection({
           className={cn("w-10 h-6 rounded-full transition-colors relative", autoPostWorkouts ? "bg-primary" : "bg-muted border border-border")}
         >
           <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoPostWorkouts ? "translate-x-5" : "translate-x-1")} />
+        </button>
+      </div>
+
+      {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
+          false = user opted out. Toggling off hides the AI CTAs and
+          refuses the underlying Gemini calls (gate lives downstream
+          in useFoodAnalysis — wired separately so the call-site
+          changes can be reviewed independently). */}
+      <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+        <div className="flex-1 mr-3">
+          <p className="text-sm font-medium text-foreground">AI food analysis</p>
+          <p className="text-xs text-muted-foreground">
+            Allow Gemini to analyse food photos and refine text entries
+          </p>
+        </div>
+        <button
+          onClick={async () => {
+            haptic("light");
+            // The field is undefined-default-on: treat any non-false
+            // current value as "currently enabled" and flip to false.
+            // Subsequent flips toggle between true / false explicitly
+            // so the user can re-opt-in via the same control.
+            const currentlyEnabled = profile?.aiAnalysisEnabled !== false;
+            const next = !currentlyEnabled;
+            trackSettingsEvent("settings_toggle_changed", {
+              toggle: "ai_analysis_enabled",
+              value: next,
+            });
+            await updateProfile({ aiAnalysisEnabled: next });
+          }}
+          role="switch"
+          aria-checked={profile?.aiAnalysisEnabled !== false}
+          aria-label="Toggle AI food analysis"
+          className={cn(
+            "w-10 h-6 rounded-full transition-colors relative shrink-0",
+            profile?.aiAnalysisEnabled !== false
+              ? "bg-primary"
+              : "bg-muted border border-border",
+          )}
+        >
+          <div
+            className={cn(
+              "w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+              profile?.aiAnalysisEnabled !== false ? "translate-x-5" : "translate-x-1",
+            )}
+          />
         </button>
       </div>
 
