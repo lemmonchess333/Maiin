@@ -76,6 +76,16 @@ export interface Meal {
    *  doc". Lazy-migration default is 0 at read time; optional in
    *  the type for the same reason as revisionCount above. */
   userEditCount?: number;
+  /** F1d — per-field edit lock. Each time the user manually edits a
+   *  field via editMeal(), that field's key is added to this array
+   *  (deduped). Future AI-refinement code paths SHOULD skip any key
+   *  in this set — the user has explicitly set the value and an
+   *  automated refinement overwriting it would feel like a bug.
+   *  Lazy-migration default is an empty array at read time. No
+   *  consumer enforces this yet (no AI-refinement path exists);
+   *  the field is populated now so when the consumer lands it can
+   *  immediately gate on this array without a backfill. */
+  userEditedFields?: string[];
 }
 
 /** F5a: payload accepted by `editMeal`. All fields optional — partial
@@ -140,6 +150,15 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
     updatedAt: raw.updatedAt ?? raw.createdAt,
     revisionCount: typeof raw.revisionCount === 'number' ? raw.revisionCount : 0,
     userEditCount: typeof raw.userEditCount === 'number' ? raw.userEditCount : 0,
+    // F1d: defensive read — field is an array of strings (field keys
+    // the user has manually edited). Anything else (missing, wrong
+    // type, non-string entries) defaults to an empty array so
+    // downstream consumers can iterate without guards.
+    userEditedFields: Array.isArray(raw.userEditedFields)
+      ? (raw.userEditedFields as unknown[]).filter(
+          (k): k is string => typeof k === 'string',
+        )
+      : [],
   };
 }
 
@@ -288,11 +307,24 @@ export function useMeals() {
           typeof current.revisionCount === "number" ? current.revisionCount : 0;
         const currentUserEdit =
           typeof current.userEditCount === "number" ? current.userEditCount : 0;
+        // F1d: union of existing locks + the keys of THIS update.
+        // Deduped via Set. Defensive on the existing value: anything
+        // not an array of strings is treated as empty so a corrupted
+        // doc doesn't propagate junk.
+        const currentLocks = Array.isArray(current.userEditedFields)
+          ? (current.userEditedFields as unknown[]).filter(
+              (k): k is string => typeof k === "string",
+            )
+          : [];
+        const nextLocks = Array.from(
+          new Set<string>([...currentLocks, ...Object.keys(updates)]),
+        );
         tx.update(ref, {
           ...updates,
           updatedAt: serverTimestamp(),
           revisionCount: currentRevision + 1,
           userEditCount: currentUserEdit + 1,
+          userEditedFields: nextLocks,
         });
       });
     },

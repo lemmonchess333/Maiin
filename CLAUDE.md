@@ -398,13 +398,15 @@ Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plu
 
 Note: the Nutrition HealthScore wire-up (`nutrition/HealthScoreCard.tsx`) was removed by PI2 (Performance arc consolidation) — that surface no longer exists.
 
+PR #606 added automated coverage for the items marked [x] below; the [ ] items remain genuine manual / device-level checks.
+
 - [ ] Light + dark mode visibility on all 3 wire-ups — tooltip body and arrow must register in both themes
-- [ ] 375px viewport — body wraps at `max-w-[280px]`, never overflows the screen
-- [ ] Open a vaul drawer while a tooltip is showing — the drawer should occlude (z-50 > z-40)
-- [ ] VoiceOver: body content is announced when the anchor receives focus (via `aria-describedby`)
-- [ ] Keyboard flow: Tab to anchor → Enter opens → Escape closes → focus returns to anchor
+- [x] 375px viewport — body wraps at `max-w-[280px]`, never overflows the screen — PR #606 pins the class
+- [ ] Open a vaul drawer while a tooltip is showing — the drawer should occlude (z-50 > z-40). PR #606 pins the z-40 class but real occlusion needs the drawer mounted together with the tooltip in a real DOM.
+- [x] VoiceOver: body content is announced when the anchor receives focus (via `aria-describedby`) — PR #606 pins the wiring (screen-reader announcement itself stays manual)
+- [x] Keyboard flow: Tab to anchor → Enter opens → Escape closes → focus returns to anchor — PR #606
 - [ ] iOS Safari + Capacitor build: rubber-band scroll doesn't drift the portal
-- [ ] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays
+- [x] `prefers-reduced-motion: reduce` set at OS level — the slide animation is suppressed; fade still plays — PR #606
 - [ ] First-use Coachmark on the Programme page running icon dismisses correctly via all paths (anchor tap, outside tap, Escape, 6s timeout) and persists across reloads
 
 ## Agent skills
