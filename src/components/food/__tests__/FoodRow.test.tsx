@@ -148,4 +148,31 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
     );
     expect(screen.getByText("×2")).toBeInTheDocument();
   });
+
+  it("renders the Edited pill when wasEdited is true (Food6 ci7)", function() {
+    render(
+      <FoodRow
+        group={{ ...baseGroup, wasEdited: true }}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+      />,
+    );
+    /* Use aria-label so the pill stays findable even if the visible
+       text changes (icon + label is the design; the label is the
+       a11y contract). */
+    expect(screen.getByLabelText("Edited")).toBeInTheDocument();
+  });
+
+  it("does NOT render the Edited pill when wasEdited is false / absent", function() {
+    render(
+      <FoodRow
+        group={baseGroup}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+      />,
+    );
+    expect(screen.queryByLabelText("Edited")).toBeNull();
+  });
 });

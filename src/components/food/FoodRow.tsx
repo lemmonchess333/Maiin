@@ -18,6 +18,12 @@ export interface FoodRowGroup {
   totalPro: number;
   totalCarb: number;
   totalFat: number;
+  /** Food6 ci7 / F5b — true when any meal in the group has been
+   *  manually edited via useMeals.editMeal (userEditCount > 0).
+   *  AI-refinement writes bump revisionCount but NOT userEditCount,
+   *  so the pill reads as "the user touched this" rather than
+   *  "anything has touched this doc". */
+  wasEdited?: boolean;
 }
 
 interface FoodRowProps {
@@ -158,6 +164,16 @@ export default function FoodRow({
               {quantityLabel}
             </span>
           )}
+          {group.wasEdited && (
+            <span
+              className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+              aria-label="Edited"
+              title="Edited"
+            >
+              <Pencil className="w-2.5 h-2.5" aria-hidden="true" />
+              Edited
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <span className="text-xs font-mono tabular-nums text-muted-foreground mr-1">
@@ -250,6 +266,16 @@ export default function FoodRow({
                 className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums"
               >
                 {quantityLabel}
+              </span>
+            )}
+            {group.wasEdited && (
+              <span
+                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+                aria-label="Edited"
+                title="Edited"
+              >
+                <Pencil className="w-2.5 h-2.5" aria-hidden="true" />
+                Edited
               </span>
             )}
           </div>

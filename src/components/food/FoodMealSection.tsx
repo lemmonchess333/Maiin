@@ -184,6 +184,13 @@ export default function FoodMealSection({
                 totalPro: group.totalPro,
                 totalCarb: group.totalCarb,
                 totalFat: group.totalFat,
+                // Food6 ci7: any underlying meal manually edited via
+                // useMeals.editMeal flips the pill on. AI-refinement
+                // writes bump revisionCount but NOT userEditCount, so
+                // a refined-only group reads as un-edited (correct).
+                wasEdited: group.meals.some(
+                  (m) => (m.userEditCount ?? 0) > 0,
+                ),
               };
               return (
                 <FoodRow
