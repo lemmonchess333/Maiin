@@ -25,6 +25,10 @@ export interface EditServingsChanges {
    *  picks a different slot, parent maps this through the F5a
    *  editMeal API to each underlying doc in the group. */
   targetMeal: MealKey | null;
+  /** F5a: trimmed new name. Null = unchanged from the source's
+   *  foodName. Empty / whitespace-only input is treated as a no-op
+   *  and never propagated. */
+  targetName: string | null;
 }
 
 interface EditServingsSheetProps {
@@ -69,6 +73,12 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   const [pickedMeal, setPickedMeal] = useState<MealKey | null>(
     source?.currentMeal ?? null,
   );
+  // F5a: rename. Input is uncontrolled-ish — initialised from the
+  // source's foodName once. The "changed" check compares trimmed
+  // values so trailing whitespace doesn't count as an edit and
+  // empty / whitespace-only input is treated as no-op (never
+  // propagated to editMeal — empty foodName has no useful meaning).
+  const [pickedName, setPickedName] = useState<string>(source?.foodName ?? "");
   const [saving, setSaving] = useState(false);
 
   if (!source) return null;
@@ -78,7 +88,9 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   const previewCal = Math.round(perServingCal * target);
   const countDelta = target - currentCount;
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
-  const unchanged = countDelta === 0 && !mealChanged;
+  const trimmedName = pickedName.trim();
+  const nameChanged = trimmedName.length > 0 && trimmedName !== foodName.trim();
+  const unchanged = countDelta === 0 && !mealChanged && !nameChanged;
 
   const handleSave = async () => {
     if (unchanged || saving) return;
@@ -87,6 +99,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
       await onSave({
         targetCount: target,
         targetMeal: mealChanged ? pickedMeal : null,
+        targetName: nameChanged ? trimmedName : null,
       });
     } finally {
       setSaving(false);
@@ -108,7 +121,29 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
       >
         <div className="w-10 h-1 rounded-full bg-border mx-auto" />
         <div className="text-center space-y-1">
-          <p className="text-base font-semibold text-foreground">{foodName}</p>
+          {/* F5a rename input. Styled to look like the static heading
+              it replaced (centered, semibold, base size) so the sheet
+              reads as "same shape, but editable" rather than gaining a
+              form-row. Focus border + light bg only appear on focus
+              so the affordance is discoverable on tap. */}
+          <label className="sr-only" htmlFor="edit-meal-name">
+            Edit name
+          </label>
+          <input
+            id="edit-meal-name"
+            type="text"
+            value={pickedName}
+            onChange={(e) => setPickedName(e.target.value)}
+            disabled={saving}
+            aria-label="Edit name"
+            placeholder="Name"
+            className={cn(
+              "w-full text-center text-base font-semibold text-foreground bg-transparent",
+              "rounded-lg px-3 py-1.5 border border-transparent",
+              "focus:outline-none focus:border-border focus:bg-muted/50 transition-colors",
+              "disabled:opacity-60",
+            )}
+          />
           <p className="text-xs text-muted-foreground">
             {currentCount} {currentCount === 1 ? "serving" : "servings"} logged
           </p>
@@ -201,6 +236,9 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
                 <span className="ml-2 text-primary">
                   → {MEAL_LABELS[pickedMeal]}
                 </span>
+              )}
+              {nameChanged && (
+                <span className="ml-2 text-primary">renamed</span>
               )}
             </span>
           )}
