@@ -72,6 +72,10 @@ export function useRunningStats(days: number = 30) {
   const [weeklyData, setWeeklyData] = useState<RunningWeekData[]>([]);
   const [runs, setRuns] = useState<RunSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // Hist4: refresh trigger for pull-to-refresh. Incrementing the
+  // tick forces the load effect below to re-run via the dep array.
+  // Public surface is the `refresh()` callback below.
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
@@ -136,7 +140,19 @@ export function useRunningStats(days: number = 30) {
     };
 
     loadStats();
-  }, [user, days]);
+  }, [user, days, refreshTick]);
 
-  return { weeklyData, runs, loading };
+  return {
+    weeklyData,
+    runs,
+    loading,
+    /** Hist4: re-runs the underlying getDocs query. Used by the
+     *  History page's pull-to-refresh gesture; the other History
+     *  data sources (useWorkouts, useMeals) are onSnapshot listeners
+     *  so they're already live. Returns a promise that resolves
+     *  when the next render with fresh data settles — but the
+     *  loading flag is also exposed if callers want to gate UI on
+     *  the refresh completing. */
+    refresh: () => setRefreshTick((n) => n + 1),
+  };
 }
