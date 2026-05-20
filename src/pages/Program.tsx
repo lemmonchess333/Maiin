@@ -51,6 +51,8 @@ import ExercisePicker from "@/components/program/ExercisePicker";
 import { Spinner } from "@/components/ui/Spinner";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
+import DeloadBanner from "@/components/program/DeloadBanner";
+import { usePerformanceWeeks } from "@/hooks/usePerformance";
 
 /**
  * IMPORTANT:
@@ -101,6 +103,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     skipRecoveryEarly,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
+  // Pgm3: deload banner data source. usePerformanceWeeks reads the
+  // server-side performance rollup; the `deloadRecommended` flag on
+  // the current week is the spec's banner trigger. Lazy — at most 2
+  // weeks fetched (current + previous) since the banner only consults
+  // the current.
+  const { currentWeek: perfWeek } = usePerformanceWeeks(2);
   const runsTarget = getWeeklyRunTarget(profile);
   const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
@@ -625,6 +633,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               only renders when the user explicitly switches to it. */}
         {activeTab === "lift" && (
           <>
+            {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
+                it's visible regardless of which day the user is
+                inspecting — deload is a week-level signal. Per-week
+                dismissal lives in localStorage; the banner stays
+                shown across day navigation within the same week, and
+                reopens on a new week if the signal still applies. */}
+            <TrackProgrammeSectionView section="deload_banner">
+              <DeloadBanner
+                visible={!!perfWeek?.flags?.deloadRecommended}
+                weekKey={`w${displayWeekNumber}`}
+              />
+            </TrackProgrammeSectionView>
+
             <TrackProgrammeSectionView section="week_phase_row">
               <div>
                 <WeekPhaseRow
