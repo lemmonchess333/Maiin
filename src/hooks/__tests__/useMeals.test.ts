@@ -164,6 +164,7 @@ describe("useMeals", () => {
         updatedAt: "__SERVER_TIMESTAMP__",
         revisionCount: 5,
         userEditCount: 2,
+        userEditedFields: ["foodName"],
       });
     });
 
@@ -211,6 +212,96 @@ describe("useMeals", () => {
       await expect(
         result.current.editMeal("missing-meal", { foodName: "x" }),
       ).rejects.toThrow(/not found/i);
+    });
+  });
+
+  describe("F1d userEditedFields (per-field edit locks)", () => {
+    it("parseMealDoc defaults missing userEditedFields to an empty array", async () => {
+      const { result } = renderHook(() => useMeals());
+      act(() => {
+        pumpSnapshot([
+          {
+            id: "pre-f1d",
+            data: {
+              date: "2026-05-20",
+              foodName: "Eggs",
+              items: [],
+              totalCalories: 200,
+              totalProtein: 12,
+              totalCarbs: 1,
+              totalFat: 14,
+              confidence: "high",
+              createdAt: "__T1__",
+              // No userEditedFields — predates F1d
+            },
+          },
+        ]);
+      });
+      await waitFor(() => expect(result.current.meals).toHaveLength(1));
+      expect(result.current.meals[0].userEditedFields).toEqual([]);
+    });
+
+    it("parseMealDoc filters non-string entries out of userEditedFields", async () => {
+      const { result } = renderHook(() => useMeals());
+      act(() => {
+        pumpSnapshot([
+          {
+            id: "corrupt",
+            data: {
+              date: "2026-05-20",
+              foodName: "Eggs",
+              items: [],
+              totalCalories: 0,
+              totalProtein: 0,
+              totalCarbs: 0,
+              totalFat: 0,
+              confidence: "low",
+              createdAt: "__T1__",
+              // Mixed array — only string keys survive
+              userEditedFields: ["foodName", 42, null, "totalCalories", undefined],
+            },
+          },
+        ]);
+      });
+      await waitFor(() => expect(result.current.meals).toHaveLength(1));
+      expect(result.current.meals[0].userEditedFields).toEqual(["foodName", "totalCalories"]);
+    });
+
+    it("editMeal adds edited keys to userEditedFields, deduped, union with existing", async () => {
+      mockDocState["meal-1"] = {
+        revisionCount: 1,
+        userEditCount: 1,
+        userEditedFields: ["foodName"],
+      };
+      const { result } = renderHook(() => useMeals());
+      act(() => {
+        pumpSnapshot([]);
+      });
+      await act(async () => {
+        await result.current.editMeal("meal-1", {
+          foodName: "Boiled eggs",
+          totalCalories: 80,
+        });
+      });
+      const writtenLocks = transactionCalls[0].update?.userEditedFields as string[];
+      // Existing 'foodName' lock retained, new 'foodName' deduped,
+      // 'totalCalories' added. Set ordering: existing then new.
+      expect(writtenLocks).toEqual(
+        expect.arrayContaining(["foodName", "totalCalories"]),
+      );
+      expect(writtenLocks).toHaveLength(2);
+    });
+
+    it("editMeal initialises userEditedFields from empty when the doc predates F1d", async () => {
+      mockDocState["meal-old"] = { foodName: "Toast" };
+      const { result } = renderHook(() => useMeals());
+      act(() => {
+        pumpSnapshot([]);
+      });
+      await act(async () => {
+        await result.current.editMeal("meal-old", { totalProtein: 10 });
+      });
+      expect(transactionCalls[0].update?.userEditedFields).toEqual(["totalProtein"]);
     });
   });
 });
