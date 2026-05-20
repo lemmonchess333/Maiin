@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   query,
@@ -13,6 +13,8 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 
 export interface FoodFavourite {
   id: string;
@@ -28,8 +30,22 @@ export interface FoodFavourite {
   lastUsed: Timestamp;
   useCount: number;
   timeOfDay: "morning" | "midday" | "evening" | "any";
-  source: "manual" | "photo" | "barcode" | "search";
+  source: "manual" | "photo" | "barcode" | "search" | "nl";
 }
+
+/** Pantry collection ceiling. Once the user has accumulated >50
+ *  distinct favourited foods, snapshot-driven eviction prunes back
+ *  to 50 by selecting the lowest-useCount entry (oldest-lastUsed
+ *  tie-break). The lowest-useCount-first sort naturally targets
+ *  useCount=1 "fossil" entries before pruning higher-tier items,
+ *  so a single sort rule handles both the soft ceiling and the
+ *  fossil prune the round-3 grill specced separately. */
+const SOFT_CAP = 50;
+
+/** Eviction debounce. Avoids burst-deletes during high-volume
+ *  meal-log sessions — multiple addFavourite calls within 500ms
+ *  collapse to a single eviction pass after the snapshot settles. */
+const EVICTION_DEBOUNCE_MS = 500;
 
 /** Minimum useCount required for a favourite to surface as a Quick
  *  Add chip. Locked in the F2d grill: graduation gate of 2 prevents
@@ -68,7 +84,9 @@ function parseFavouriteDoc(id: string, raw: Record<string, unknown>): FoodFavour
       : "any";
   const src = raw.source;
   const source: FoodFavourite["source"] =
-    src === "photo" || src === "barcode" || src === "search" ? src : "manual";
+    src === "photo" || src === "barcode" || src === "search" || src === "nl"
+      ? src
+      : "manual";
   return {
     id,
     name: typeof raw.name === "string" ? raw.name : "",
@@ -89,8 +107,15 @@ function parseFavouriteDoc(id: string, raw: Record<string, unknown>): FoodFavour
 
 export function useFoodFavourites() {
   const { user } = useAuth();
+  const { isOnline } = useOnlineStatus();
   const [favourites, setFavourites] = useState<FoodFavourite[]>([]);
   const [loading, setLoading] = useState(true);
+  /** Re-entrancy guard for eviction. The snapshot can re-fire while
+   *  a deleteDoc is in flight — without the guard, the effect would
+   *  pick the same target (still present in the cached snapshot) and
+   *  fire a second delete on the same id. Flipped true on schedule,
+   *  cleared in the delete's finally. */
+  const evictingRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -133,6 +158,58 @@ export function useFoodFavourites() {
 
     return unsub;
   }, [user]);
+
+  /** Snapshot-driven eviction. Runs when the favourites snapshot
+   *  delivers >SOFT_CAP entries, debounced to merge bursts. Lives
+   *  here (not inside addFavourite) for two reasons:
+   *    1. The post-increment snapshot reflects server-authoritative
+   *       useCount values; picking an eviction target from local
+   *       state inside addFavourite reads a stale view and can
+   *       delete a doc that just graduated.
+   *    2. Eviction is housekeeping, not user-critical. Decoupling
+   *       it from the write path means an eviction failure can't
+   *       bubble into the meal-save UX.
+   *
+   *  Online-only — when offline the local Firestore cache lags the
+   *  server (pending increments not yet ack'd), and an eviction
+   *  pick from stale data risks deleting the wrong doc. Eviction
+   *  catches up when connectivity restores and the next snapshot
+   *  delivers fresh state. */
+  useEffect(() => {
+    if (!user) return;
+    if (!isOnline) return;
+    if (evictingRef.current) return;
+    if (favourites.length <= SOFT_CAP) return;
+
+    // Lowest useCount first; tie-break by oldest lastUsed. Selects
+    // useCount=1 "fossils" before higher-tier items naturally, so
+    // no separate fossil-prune pass is needed.
+    const sorted = [...favourites].sort((a, b) => {
+      if (a.useCount !== b.useCount) return a.useCount - b.useCount;
+      return a.lastUsed.toMillis() - b.lastUsed.toMillis();
+    });
+    const target = sorted[0];
+
+    const timer = setTimeout(async () => {
+      evictingRef.current = true;
+      try {
+        await deleteDoc(
+          doc(db, "users", user.uid, "foodFavourites", target.id),
+        );
+        trackFoodEvent("food_pantry_eviction", {
+          favouriteId: target.id,
+          useCount: target.useCount,
+          totalBefore: favourites.length,
+        });
+      } catch (err) {
+        logger.error("[useFoodFavourites] eviction delete failed", err);
+      } finally {
+        evictingRef.current = false;
+      }
+    }, EVICTION_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [favourites, isOnline, user]);
 
   /** Returns favourites filtered to time-of-day relevance, capped at
    *  `limit`. Two-tier ordering inside the cap:

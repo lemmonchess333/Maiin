@@ -19,7 +19,8 @@ export type FoodEvent =
   | "food_meal_slot_tapped"
   | "food_date_navigated"
   | "food_composer_focused"
-  | "food_initial_render_ms";
+  | "food_initial_render_ms"
+  | "food_pantry_eviction";
 
 export interface FoodEventMetadata {
   /** food_meal_slot_tapped: which slot ("breakfast" | "lunch" | "snacks" | "dinner"). */
@@ -30,6 +31,16 @@ export interface FoodEventMetadata {
    *  render. Captures the Food page's perceived initial-render budget
    *  (target: <500ms p95 per Food6 cross-cutting performance pin). */
   durationMs?: number;
+  /** food_pantry_eviction: the doc id of the evicted favourite. */
+  favouriteId?: string;
+  /** food_pantry_eviction: useCount of the evicted favourite, so
+   *  dashboards can tell fossil-prunes (useCount=1) from heavier
+   *  evictions (useCount>=2) without re-deriving from logs. */
+  useCount?: number;
+  /** food_pantry_eviction: total favourites before the eviction
+   *  fired — useful for confirming the SOFT_CAP threshold lines
+   *  up with observed prune patterns. */
+  totalBefore?: number;
 }
 
 export function track(event: FoodEvent, metadata: FoodEventMetadata = {}): void {

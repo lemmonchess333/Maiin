@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { validateFoodEntry } from "@/lib/foodValidation";
+import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
 interface FoodEntry {
   name: string;
@@ -32,6 +33,7 @@ interface Props {
 
 export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const { user } = useAuth();
+  const { addFavourite } = useFoodFavourites();
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -69,6 +71,20 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
       setSaved(true);
       toast.success("Logged manually", { id: "food-manual-success" });
+
+      /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget;
+         the favourites collection is a best-effort cache (see
+         addFavourite's internal error handling) and the meal doc
+         is already written, so a favourites-write failure should
+         not bubble back to the user as a save error. */
+      void addFavourite({
+        name: entry.name,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        source: "manual",
+      });
 
       setTimeout(() => {
         setSaved(false);

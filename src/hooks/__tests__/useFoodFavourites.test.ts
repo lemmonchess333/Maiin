@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 
 vi.mock("@/lib/auth", () => ({
@@ -7,6 +7,18 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
+}));
+
+const onlineState = { isOnline: true };
+vi.mock("@/hooks/useOnlineStatus", () => ({
+  useOnlineStatus: () => onlineState,
+}));
+
+const trackedEvents: Array<{ event: string; metadata: Record<string, unknown> }> = [];
+vi.mock("@/lib/foodAnalytics", () => ({
+  track: vi.fn((event: string, metadata: Record<string, unknown>) => {
+    trackedEvents.push({ event, metadata });
+  }),
 }));
 
 // vi.mock factories are hoisted — anything they reference must come
@@ -117,6 +129,8 @@ describe("useFoodFavourites", () => {
     snapshotListeners.length = 0;
     setDocCalls.length = 0;
     deleteDocCalls.length = 0;
+    trackedEvents.length = 0;
+    onlineState.isOnline = true;
   });
 
   describe("snapshot parsing", () => {
@@ -349,6 +363,123 @@ describe("useFoodFavourites", () => {
         });
       });
       expect(res?.isNew).toBe(false);
+    });
+  });
+
+  describe("eviction (snapshot-driven, debounced)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function makeManyDocs(n: number, ages: number[] = []) {
+      // useCount monotonically increases with id so we can predict
+      // which docs sort to the "lowest useCount" front of the queue.
+      return Array.from({ length: n }, (_, i) => ({
+        id: `fav-${i}`,
+        data: {
+          name: `Food ${i}`,
+          calories: 100,
+          protein: 10,
+          carbs: 10,
+          fat: 5,
+          servingSize: "1 serving",
+          useCount: i + 1,
+          timeOfDay: "any",
+          source: "manual",
+          lastUsed: new FakeTimestamp(ages[i] ?? i * 1000),
+        },
+      }));
+    }
+
+    it("does NOT evict when length is at or below the cap", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(50));
+      });
+      expect(result.current.favourites).toHaveLength(50);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(deleteDocCalls).toHaveLength(0);
+    });
+
+    it("evicts the lowest-useCount entry after the debounce when over cap", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      // 51 docs — index 0 has useCount=1 (the fossil), index 50 has 51.
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(51));
+      });
+      expect(result.current.favourites).toHaveLength(51);
+      // Before the debounce — no eviction yet.
+      expect(deleteDocCalls).toHaveLength(0);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      expect(deleteDocCalls).toHaveLength(1);
+      expect(deleteDocCalls[0].ref.id).toBe("fav-0");
+    });
+
+    it("tie-breaks equal useCount by oldest lastUsed", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      // 51 docs, all useCount=1, varied lastUsed timestamps. The
+      // doc with the smallest lastUsed (`fav-0` at ms=0) is the
+      // eviction target.
+      const docs = Array.from({ length: 51 }, (_, i) => ({
+        id: `fav-${i}`,
+        data: {
+          name: `Food ${i}`,
+          calories: 100,
+          protein: 10,
+          carbs: 10,
+          fat: 5,
+          servingSize: "1 serving",
+          useCount: 1,
+          timeOfDay: "any",
+          source: "manual",
+          lastUsed: new FakeTimestamp(i * 1000),
+        },
+      }));
+      await act(async () => {
+        pumpSnapshot(docs);
+      });
+      expect(result.current.favourites).toHaveLength(51);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      expect(deleteDocCalls).toHaveLength(1);
+      expect(deleteDocCalls[0].ref.id).toBe("fav-0");
+    });
+
+    it("does NOT evict while offline", async () => {
+      onlineState.isOnline = false;
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(60));
+      });
+      expect(result.current.favourites).toHaveLength(60);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(deleteDocCalls).toHaveLength(0);
+    });
+
+    it("emits food_pantry_eviction analytics with id + useCount + totalBefore", async () => {
+      const { result } = renderHook(() => useFoodFavourites());
+      await act(async () => {
+        pumpSnapshot(makeManyDocs(51));
+      });
+      expect(result.current.favourites).toHaveLength(51);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+      const ev = trackedEvents.find((e) => e.event === "food_pantry_eviction");
+      expect(ev).toBeDefined();
+      expect(ev?.metadata.favouriteId).toBe("fav-0");
+      expect(ev?.metadata.useCount).toBe(1);
+      expect(ev?.metadata.totalBefore).toBe(51);
     });
   });
 

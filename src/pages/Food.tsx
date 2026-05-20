@@ -758,6 +758,27 @@ export default function Food() {
         } else {
           toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, { id: "food-nl-success" });
         }
+
+        /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget
+           per item: the favourites write is best-effort cache (see
+           addFavourite error-handling) and must not block the meal-
+           save UX. Source is the parser origin so analytics can
+           split graduation funnels by entry path; AI parses go in
+           as "search" since the upstream union has no "ai" value
+           and AI hits more closely resemble OFF database picks than
+           free-text typing. */
+        const favouriteSource = confidence === "ai-parse" ? "search" : "nl";
+        for (const item of items) {
+          void addFavourite({
+            name: item.name,
+            calories: item.calories,
+            protein: item.protein,
+            carbs: item.carbs,
+            fat: item.fat,
+            servingSize: item.portionLabel,
+            source: favouriteSource,
+          });
+        }
       } catch {
         toast.error("Failed to save. Please try again.", { id: "food-save-error" });
       }
