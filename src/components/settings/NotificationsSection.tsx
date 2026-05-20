@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
 import {
   getNotificationPermissionState,
@@ -169,6 +170,7 @@ export default function NotificationsSection({
             onClick={async () => {
               haptic("light");
               const next = !mealReminders.enabled;
+              trackSettingsEvent("settings_toggle_changed", { toggle: "meal_reminders", value: next });
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
                 refreshPermission();
@@ -230,6 +232,7 @@ export default function NotificationsSection({
             onClick={async () => {
               haptic("light");
               const next = !workoutReminders.enabled;
+              trackSettingsEvent("settings_toggle_changed", { toggle: "workout_reminders", value: next });
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
                 refreshPermission();
@@ -286,6 +289,7 @@ export default function NotificationsSection({
             onClick={async () => {
               haptic("light");
               const next = !streakReminder.enabled;
+              trackSettingsEvent("settings_toggle_changed", { toggle: "streak_reminder", value: next });
               if (next && 'Notification' in window && Notification.permission === 'default') {
                 await Notification.requestPermission();
                 refreshPermission();

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { haptic } from "@/lib/haptic";
+import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import {
   Users,
   Check,
@@ -154,6 +155,7 @@ export default function PrivacySection({
             const prev = autoPostRuns;
             const next = !autoPostRuns;
             setAutoPostRuns(next);
+            trackSettingsEvent("settings_toggle_changed", { toggle: "auto_post_runs", value: next });
             const result = await updateProfile({ autoPostRuns: next });
             if (!result.ok) setAutoPostRuns(prev);
           }}
@@ -174,6 +176,7 @@ export default function PrivacySection({
             const prev = autoPostWorkouts;
             const next = !autoPostWorkouts;
             setAutoPostWorkouts(next);
+            trackSettingsEvent("settings_toggle_changed", { toggle: "auto_post_workouts", value: next });
             const result = await updateProfile({ autoPostWorkouts: next });
             if (!result.ok) setAutoPostWorkouts(prev);
           }}
