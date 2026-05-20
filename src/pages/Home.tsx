@@ -47,6 +47,7 @@ import TodayEnergy from "@/components/home/TodayEnergy";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { analyzeNutritionPatterns, type MealEntry } from "@/lib/nutritionInsights";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -73,6 +74,26 @@ export default function Home() {
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const { glasses: waterGlasses, target: waterTarget, logWater, setWaterAmount } = useWaterLog();
   const [prevHealthScore, setPrevHealthScore] = useState<number | null>(null);
+
+  // Home2 perf telemetry. renderStartRef takes its timestamp from
+  // the post-mount effect (rather than lazy useState — that would
+  // trip react-hooks/purity for performance.now() in render). Fires
+  // once when the primary data sources (meals + program) finish
+  // loading — that's the moment the user sees real content rather
+  // than skeleton state. Target: <500ms p95 per Home2 cross-cutting
+  // performance pin. Same shape as food / social / history.
+  const homeRenderStartRef = useRef<number>(0);
+  const homeRenderReportedRef = useRef(false);
+  useEffect(function() {
+    homeRenderStartRef.current = performance.now();
+  }, []);
+  useEffect(function() {
+    if (mealsLoading || programLoading || homeRenderReportedRef.current) return;
+    if (homeRenderStartRef.current === 0) return;
+    const ms = performance.now() - homeRenderStartRef.current;
+    trackHomeEvent("home_initial_render_ms", { durationMs: Math.round(ms) });
+    homeRenderReportedRef.current = true;
+  }, [mealsLoading, programLoading]);
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
