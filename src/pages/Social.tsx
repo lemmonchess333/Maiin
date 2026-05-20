@@ -5,7 +5,7 @@ import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { searchUsers, getBoundedFollowingCount } from '../lib/socialApi';
 import ActivityCard from '../components/social/ActivityCard';
@@ -48,7 +48,34 @@ export default function Social() {
   // users. Local-only (localStorage) per device; spec defers cross-
   // device sync until demand emerges.
   const { hidden: hiddenActivityIds } = useHiddenActivities();
-  const [tab, setTab] = useState<SocialTab>('feed');
+
+  // Soc5: top-level tab persisted via URL search param. Lets external
+  // links (notifications, share cards, the bottom-nav re-tap pattern)
+  // deep-link directly to a tab and means browser back/forward
+  // navigates between tabs naturally. URL writes are {replace:true}
+  // so each tab tap doesn't accumulate browser history entries.
+  // Default 'feed' is the URL-clean state (`?tab=` is stripped when
+  // on feed). The Soc5c smart-default below may rewrite the URL to
+  // 'find' for genuine new users (zero follows + zero crew).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const tab: SocialTab =
+    tabFromUrl === 'crews' || tabFromUrl === 'find' ? tabFromUrl : 'feed';
+  const setTab = useCallback(
+    (next: SocialTab) => {
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          if (next === 'feed') updated.delete('tab');
+          else updated.set('tab', next);
+          return updated;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   /**
    * Smart default: new / zero-follow users land on Discover; users
    * with any follows land on Following. One cheap limit(2) read
@@ -76,6 +103,27 @@ export default function Social() {
       });
     return () => { cancelled = true; };
   }, [user, followingCount]);
+
+  // Soc5c smart default — only fires when there's NO URL `?tab=` AND
+  // the user is genuinely brand-new (zero follows + zero crew). Once
+  // applied, the guard ref ensures the smart default never overrides
+  // subsequent user navigation, even if the user un-follows everyone
+  // / leaves their crew during the session.
+  const smartDefaultAppliedRef = useRef(false);
+  const profileCrewId = profile?.crewId;
+  useEffect(() => {
+    if (smartDefaultAppliedRef.current) return;
+    if (tabFromUrl) {
+      // URL already specifies a tab → honour it; never override.
+      smartDefaultAppliedRef.current = true;
+      return;
+    }
+    if (followingCount === null) return; // await async resolution
+    smartDefaultAppliedRef.current = true;
+    if (followingCount === 0 && !profileCrewId) {
+      setTab('find');
+    }
+  }, [tabFromUrl, followingCount, profileCrewId, setTab]);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
   // Crew banner dismiss state
