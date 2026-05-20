@@ -704,7 +704,7 @@ export default function Social() {
                         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                         style={{ background: `${THEME.brand}14` }}
                       >
-                        {IconComp && <IconComp size={18} style={{ color: THEME.brand }} />}
+                        {IconComp && <IconComp size={18} className="text-primary shrink-0" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground truncate">
