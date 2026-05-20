@@ -771,25 +771,27 @@ export default function Food() {
   // open and persists the change when the user taps Save.
   const [editingGroup, setEditingGroup] = useState<{ id: string; foodName: string; meals: Meal[] } | null>(null);
 
-  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null; targetName: string | null }) => {
+  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null; targetName: string | null; targetMacros: { totalCalories?: number; totalProtein?: number; totalCarbs?: number; totalFat?: number } | null }) => {
     if (!user || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
-    const { targetCount, targetMeal, targetName } = changes;
+    const { targetCount, targetMeal, targetName, targetMacros } = changes;
 
-    // F5a: meal-slot AND rename changes both fan out to one editMeal
-    // per doc in the group. We combine them into a single editMeal
-    // call per doc when both are set so we don't double-bump
-    // userEditCount on the same write. Errors surface via toast but
-    // don't abort the count branch below — these three are
-    // independently meaningful changes.
-    if (targetMeal || targetName) {
+    // F5a: slot + rename + macro changes ALL fan out to one editMeal
+    // per doc in the group. Combine them into a SINGLE editMeal call
+    // per doc when multiple fire so userEditCount doesn't double- /
+    // triple-bump on the same logical write. macros land as per-doc
+    // totals (per-serving values were already computed in the sheet
+    // — passing them through to editMeal sets each doc's total to the
+    // per-serving figure, which makes the group total = N × value).
+    if (targetMeal || targetName || targetMacros) {
       try {
         await Promise.all(
           groupMeals.map((m) =>
             editMeal(m.id, {
               ...(targetMeal ? { meal: targetMeal } : {}),
               ...(targetName ? { foodName: targetName } : {}),
+              ...(targetMacros ?? {}),
             }),
           ),
         );
@@ -800,9 +802,9 @@ export default function Food() {
     }
     if (targetCount === currentCount || targetCount < 1) {
       // Confirmation copy. Prefer the most specific signal — rename
-      // is rarer + more deliberate than a slot move, so when both
-      // fire we lead with the rename. Slot-only and rename-only land
-      // their own messages. Count branch below has its own toast.
+      // is rarer + more deliberate than slot or macros, so when
+      // multiple fire we lead with rename. Each axis lands its own
+      // single-axis message. Count branch below has its own toast.
       if (targetName) {
         toast.success(`Renamed to ${targetName}`, {
           id: `food-rename-${editingGroup.id}`,
@@ -810,6 +812,10 @@ export default function Food() {
       } else if (targetMeal) {
         toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
           id: `food-slot-${foodName}`,
+        });
+      } else if (targetMacros) {
+        toast.success(`Updated ${foodName}`, {
+          id: `food-macros-${editingGroup.id}`,
         });
       }
       setEditingGroup(null);
@@ -1395,6 +1401,9 @@ export default function Food() {
             foodName: editingGroup.foodName,
             currentCount: editingGroup.meals.length,
             currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
+            currentTotalProtein: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalProtein), 0),
+            currentTotalCarbs: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0),
+            currentTotalFat: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalFat), 0),
             // F5a: if all docs in the group share one slot, that's
             // the current. Mixed-state groups (rare, e.g. user moved
             // one of two duplicates) get null so the picker renders
