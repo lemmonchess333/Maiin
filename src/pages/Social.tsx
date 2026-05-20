@@ -616,6 +616,25 @@ export default function Social() {
               users have a clear path to find people to challenge. */}
           <ChallengeList onFindFriends={() => setTab('find')} />
 
+          {/* Soc5d: prominent Create-Crew CTA, shown ONLY when the
+              user isn't currently in any crew. Per the locked spec,
+              users with a crew see a smaller muted CTA below the
+              crew list instead. The visual prominence here mirrors
+              the gradient pill used elsewhere for primary growth
+              actions (eg. Pro upgrade). */}
+          {!profileCrewId && (
+            <button
+              onClick={() => {
+                setShowCreateGroup(true);
+                trackSocialEvent('social_create_crew_tapped');
+              }}
+              className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm active:scale-[0.98] transition-transform shadow-sm"
+              style={{ background: THEME.brandStrong }}
+            >
+              Create a Crew
+            </button>
+          )}
+
           {/* Crews list */}
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
@@ -731,10 +750,21 @@ export default function Social() {
               })}
             </div>
 
-            <button onClick={() => setShowCreateGroup(true)}
-              className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              + Create a Crew
-            </button>
+            {/* Soc5d: muted bottom CTA shown only when the user
+                already has a crew (the prominent top CTA covers the
+                no-crew case). Bottom placement keeps the entry low-
+                friction without competing visually with the user's
+                existing crew row above. */}
+            {profileCrewId && (
+              <button
+                onClick={() => {
+                  setShowCreateGroup(true);
+                  trackSocialEvent('social_create_crew_tapped');
+                }}
+                className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                + Create a Crew
+              </button>
+            )}
           </div>
 
           {/* Leave Crew Confirmation Modal */}
