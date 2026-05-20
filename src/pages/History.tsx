@@ -19,6 +19,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
+import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
@@ -201,7 +202,7 @@ export default function History() {
             ? 180
             : 365;
 
-  const { weeklyData, runs, loading: runsLoading } = useRunningStats(rangeDays);
+  const { weeklyData, runs, loading: runsLoading, refresh: refreshRuns } = useRunningStats(rangeDays);
   const { workouts, loading: workoutsLoading } = useWorkouts();
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
@@ -226,6 +227,51 @@ export default function History() {
     trackHistoryEvent("history_initial_render_ms", { durationMs: Math.round(ms) });
     renderReportedRef.current = true;
   }, [dataLoading]);
+
+  // Hist4: pull-to-refresh re-fetches the data source that actually
+  // benefits from a re-pull (useRunningStats is a one-shot getDocs;
+  // useWorkouts + useMeals are onSnapshot listeners already live).
+  // Same touch-handler shape as Social.tsx — ref on the outer
+  // motion.div so it attaches once and survives tab switches.
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const pullStartY = useRef(0);
+  const isSwiping = useRef(false);
+  const pullContainerRef = useRef<HTMLDivElement>(null);
+
+  const handlePullStart = (e: React.TouchEvent) => {
+    pullStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  };
+
+  useEffect(() => {
+    const el = pullContainerRef.current;
+    if (!el) return;
+    const handler = (e: TouchEvent) => {
+      const diff = e.touches[0].clientY - pullStartY.current;
+      if (diff > 0 && window.scrollY <= 0) {
+        isSwiping.current = true;
+        e.preventDefault();
+      }
+    };
+    el.addEventListener("touchmove", handler, { passive: false });
+    return () => el.removeEventListener("touchmove", handler);
+  }, []);
+
+  const handlePullEnd = (e: React.TouchEvent) => {
+    const diff = e.changedTouches[0].clientY - pullStartY.current;
+    if (diff > 80 && isSwiping.current && !pullRefreshing) {
+      setPullRefreshing(true);
+      refreshRuns();
+      // useRunningStats.refresh kicks off a load — the loading flag
+      // will flip and back. Settle the spinner on the next paint via
+      // a short timeout; the more precise alternative would be to
+      // watch runsLoading directly, but that introduces a render
+      // dependency loop here. 600ms is enough to feel like
+      // confirmation without making the gesture feel stuck.
+      window.setTimeout(() => setPullRefreshing(false), 600);
+    }
+    isSwiping.current = false;
+  };
 
   // Goal-aware sentiment for nutrition deltas. On a cut, eating more is
   // off-plan (red), eating less is on-plan (green). On a lean bulk it
@@ -623,11 +669,36 @@ export default function History() {
   })();
 
   return (
-    <motion.div className="space-y-4 pt-2" initial="hidden" animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
+    <motion.div
+      ref={pullContainerRef}
+      onTouchStart={handlePullStart}
+      onTouchEnd={handlePullEnd}
+      className="space-y-4 pt-2"
+      initial="hidden"
+      animate="visible"
+      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+    >
       <motion.header variants={itemVariant}>
         <h1 className="text-lg font-extrabold text-foreground">History</h1>
       </motion.header>
+
+      {/* Hist4: small refresh indicator while the pull-to-refresh
+          gesture is in flight. aria-live polite so screen readers
+          announce the transient state without interrupting. */}
+      {pullRefreshing && (
+        <div
+          className="flex justify-center py-1 text-xs text-muted-foreground"
+          aria-live="polite"
+        >
+          Refreshing…
+        </div>
+      )}
+
+      {/* Hist4: sustained-offline notice (30s threshold). Additive to
+          the global Layout banner — surfaces only after the disconnect
+          has lasted 30s and clarifies that History reads from the
+          Firestore local cache while offline. */}
+      <HistoryOfflineBanner />
 
       <motion.div variants={itemVariant}>
         <FilterPills
