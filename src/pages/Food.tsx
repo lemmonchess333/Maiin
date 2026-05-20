@@ -771,32 +771,43 @@ export default function Food() {
   // open and persists the change when the user taps Save.
   const [editingGroup, setEditingGroup] = useState<{ id: string; foodName: string; meals: Meal[] } | null>(null);
 
-  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null }) => {
+  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null; targetName: string | null }) => {
     if (!user || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
-    const { targetCount, targetMeal } = changes;
+    const { targetCount, targetMeal, targetName } = changes;
 
-    // F5a: meal-slot change runs first (independent of count). One
-    // editMeal per doc — bumps userEditCount so the F5b "Edited" pill
-    // surfaces this as a user touch on each affected row. Errors here
-    // surface to the user via toast but don't abort the count branch
-    // below — slot and count are independently meaningful changes.
-    if (targetMeal) {
+    // F5a: meal-slot AND rename changes both fan out to one editMeal
+    // per doc in the group. We combine them into a single editMeal
+    // call per doc when both are set so we don't double-bump
+    // userEditCount on the same write. Errors surface via toast but
+    // don't abort the count branch below — these three are
+    // independently meaningful changes.
+    if (targetMeal || targetName) {
       try {
         await Promise.all(
-          groupMeals.map((m) => editMeal(m.id, { meal: targetMeal })),
+          groupMeals.map((m) =>
+            editMeal(m.id, {
+              ...(targetMeal ? { meal: targetMeal } : {}),
+              ...(targetName ? { foodName: targetName } : {}),
+            }),
+          ),
         );
       } catch (err) {
-        logger.error('[Food] meal-slot edit failed', err);
-        toast.error('Could not change meal slot');
+        logger.error('[Food] meal edit failed', err);
+        toast.error('Could not save changes');
       }
     }
     if (targetCount === currentCount || targetCount < 1) {
-      if (targetMeal) {
-        // Slot-only change — surface a confirmation so the action
-        // doesn't feel silently no-op'd. Count branch below has its
-        // own toast for the count case.
+      // Confirmation copy. Prefer the most specific signal — rename
+      // is rarer + more deliberate than a slot move, so when both
+      // fire we lead with the rename. Slot-only and rename-only land
+      // their own messages. Count branch below has its own toast.
+      if (targetName) {
+        toast.success(`Renamed to ${targetName}`, {
+          id: `food-rename-${editingGroup.id}`,
+        });
+      } else if (targetMeal) {
         toast.success(`Moved ${foodName} to ${MEAL_LABELS[targetMeal]}`, {
           id: `food-slot-${foodName}`,
         });

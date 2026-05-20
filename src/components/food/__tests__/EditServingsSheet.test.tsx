@@ -82,7 +82,7 @@ describe("EditServingsSheet", function() {
     fireEvent.click(screen.getByLabelText("Increase servings"));
     fireEvent.click(screen.getByLabelText("Increase servings"));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith({ targetCount: 4, targetMeal: null });
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 4, targetMeal: null, targetName: null });
   });
 
   it("calls onCancel when Cancel is tapped", function() {
@@ -143,7 +143,7 @@ describe("EditServingsSheet", function() {
     });
     fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith({ targetCount: 1, targetMeal: "snacks" });
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 1, targetMeal: "snacks", targetName: null });
   });
 
   it("calls onSave with both targetCount and targetMeal when both changed", async function() {
@@ -155,7 +155,7 @@ describe("EditServingsSheet", function() {
     fireEvent.click(screen.getByLabelText("Increase servings"));
     fireEvent.click(screen.getByRole("button", { name: "Dinner" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: "dinner" });
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: "dinner", targetName: null });
   });
 
   it("treats re-picking the original slot as no-change (targetMeal=null on Save)", async function() {
@@ -170,6 +170,65 @@ describe("EditServingsSheet", function() {
     fireEvent.click(screen.getByRole("button", { name: "Lunch" }));
     fireEvent.click(screen.getByRole("button", { name: "Breakfast" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: null });
+    expect(onSave).toHaveBeenCalledWith({ targetCount: 2, targetMeal: null, targetName: null });
+  });
+
+  /* F5a — rename. Input replaces the static heading. The "changed"
+     check compares trimmed values; empty / whitespace-only input is
+     treated as no-op and never propagated. */
+
+  it("enables Save when the name input differs from the source name", function() {
+    renderSheet();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    const input = screen.getByLabelText("Edit name");
+    fireEvent.change(input, { target: { value: "Boiled eggs" } });
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+  });
+
+  it("calls onSave with the trimmed targetName when ONLY the name changed", async function() {
+    const onSave = vi.fn();
+    renderSheet({ onSave });
+    const input = screen.getByLabelText("Edit name");
+    fireEvent.change(input, { target: { value: "  Boiled eggs  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 2,
+      targetMeal: null,
+      targetName: "Boiled eggs",
+    });
+  });
+
+  it("treats whitespace-only rename as no-change (Save stays disabled)", function() {
+    renderSheet();
+    const input = screen.getByLabelText("Edit name");
+    fireEvent.change(input, { target: { value: "   " } });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("ignores trailing-whitespace-only diffs (trimmed compare matches source)", function() {
+    renderSheet();
+    const input = screen.getByLabelText("Edit name");
+    fireEvent.change(input, { target: { value: "Boiled egg   " } });
+    // Trimmed value matches the source's "Boiled egg" — no propagation
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("propagates all three changes when name, slot, and count all change", async function() {
+    const onSave = vi.fn();
+    renderSheet({
+      source: { foodName: "Yoghurt", currentCount: 1, currentTotalCalories: 120, currentMeal: "breakfast" },
+      onSave,
+    });
+    fireEvent.change(screen.getByLabelText("Edit name"), {
+      target: { value: "Greek yoghurt" },
+    });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.click(screen.getByRole("button", { name: "Snacks" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 2,
+      targetMeal: "snacks",
+      targetName: "Greek yoghurt",
+    });
   });
 });
