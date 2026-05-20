@@ -78,6 +78,10 @@ interface OFFResult {
   carbs: number;
   fat: number;
   servingSize: string;
+  /** F2: signal from the OFF mapper. See the OFFResult export in
+   *  FoodSuggestionsDropdown.tsx for the contract — the two type
+   *  defs stay aligned. */
+  unitConfidence?: "high" | "low";
 }
 
 export default function Food() {
@@ -548,6 +552,13 @@ export default function Food() {
               carbs: Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
               fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
               servingSize: p.serving_size || "100g",
+              // F2: macro nutrients above all come from the
+              // *_100g fields. When a real serving_size string is
+              // missing, we fall through to "100g" and the macro
+              // numbers ARE actually per-100g, not per-serving —
+              // that's a low-confidence unit signal the user needs
+              // to confirm via the ServingSizeDrawer.
+              unitConfidence: p.serving_size ? "high" : "low",
             })
           );
         setOffResults(products);

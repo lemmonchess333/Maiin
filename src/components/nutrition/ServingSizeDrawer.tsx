@@ -1,11 +1,26 @@
 import { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
 interface Props {
-  food: { name: string; brand: string; calories: number; protein: number; carbs: number; fat: number; servingSize: string } | null;
+  food:
+    | {
+        name: string;
+        brand: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        servingSize: string;
+        /** F2: when 'low', the macro numbers are per-100g (the OFF
+         *  product had no real serving_size string and we fell back
+         *  to "100g"). Renders the warning banner so the user knows
+         *  to confirm their actual portion before confirming. */
+        unitConfidence?: "high" | "low";
+      }
+    | null;
   open: boolean;
   onClose: () => void;
   onConfirm: (servings: number) => void;
@@ -49,6 +64,27 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
           {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
           <p className="text-xs text-muted-foreground mt-0.5">per {food.servingSize}</p>
         </div>
+
+        {/* F2 low-confidence banner. OFF responses without a real
+            serving_size field fall back to per-100g macro values —
+            the numbers above are then per 100g of the product, not
+            per a typical serving. Surface this explicitly so users
+            don't unknowingly log 100g as a serving. */}
+        {food.unitConfidence === "low" && (
+          <div
+            className="mb-4 flex items-start gap-2 px-3 py-2 rounded-lg text-xs leading-snug"
+            style={{ background: `${THEME.warning}14`, color: THEME.warning }}
+            role="status"
+          >
+            <AlertTriangle aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <p>
+              <span className="font-semibold">Per-100g data only.</span>{" "}
+              <span className="text-foreground/80">
+                Confirm your actual serving size before saving.
+              </span>
+            </p>
+          </div>
+        )}
 
         {/* Macro grid */}
         <div className="grid grid-cols-4 gap-2 text-center">
