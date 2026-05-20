@@ -38,6 +38,7 @@ import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
+import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -435,6 +436,7 @@ export default function Food() {
     const next = format(addDays(d, delta), "yyyy-MM-dd");
     if (next < minDateStr || next > todayStr) return;
     setSelectedDate(next);
+    trackFoodEvent("food_date_navigated", { direction: delta < 0 ? "prev" : "next" });
   };
 
   const isToday = selectedDate === todayStr;
@@ -885,6 +887,7 @@ export default function Food() {
       return;
     }
     setTargetMeal(mealKey);
+    trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
     // Scroll input into view then focus
     setTimeout(() => {
       inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1112,6 +1115,7 @@ export default function Food() {
         onPick={(next) => {
           if (next < minDateStr || next > todayStr) return;
           setSelectedDate(next);
+          trackFoodEvent("food_date_navigated", { direction: "pick" });
         }}
         canGoBack={canGoBack}
         canGoForward={canGoForward}
@@ -1152,7 +1156,10 @@ export default function Food() {
           setNlInput={setNlInput}
           nlParsing={nlParsing}
           inputFocused={inputFocused}
-          setInputFocused={setInputFocused}
+          setInputFocused={(v) => {
+            if (v && !inputFocused) trackFoodEvent("food_composer_focused");
+            setInputFocused(v);
+          }}
           setSuggestionsActive={setSuggestionsActive}
           placeholderPrompt={NL_EXAMPLE_PROMPTS[placeholderIdx]}
           onParse={handleNLParse}
