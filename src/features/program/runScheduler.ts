@@ -123,15 +123,54 @@ const RACE_CONFIGS: Record<string, RaceConfig> = {
   marathon: { peakLongKm: 32, baseLongKm: 14, minWeeks: 12 },
 };
 
+/**
+ * PR-K Q9b — distance-aware hard cap on taper duration.
+ *
+ * Replaces the prior 25%-of-plan rule which mis-scaled at the short
+ * end (a full-length 5K plan landed on 2 weeks of taper — too much
+ * for a 5K). Each entry counts taper weeks IMMEDIATELY BEFORE the
+ * final race week (which keeps its own "race" phase classification).
+ *
+ *   5K       → 1 taper week
+ *   10K      → 1 taper week
+ *   half     → 2 taper weeks
+ *   marathon → 3 taper weeks
+ *
+ * Hard cap: taper phase begins at `totalWeeks - taperWeeks - 1`
+ * (the -1 leaves room for the trailing race week). For plans whose
+ * `totalWeeks` is shorter than `taperWeeks + base + build` (eg. a
+ * compressed 4-week marathon plan), taper still respects the cap
+ * but the build phase collapses first. Base phase is then whatever
+ * remains, never negative.
+ */
+const TAPER_WEEKS_BY_DISTANCE: Record<
+  "5k" | "10k" | "half" | "marathon",
+  number
+> = {
+  "5k": 1,
+  "10k": 1,
+  half: 2,
+  marathon: 3,
+};
+
 function getPhaseForWeek(
   weekIndex: number,
-  totalWeeks: number
+  totalWeeks: number,
+  distance: "5k" | "10k" | "half" | "marathon"
 ): "base" | "build" | "taper" | "race" {
   if (weekIndex >= totalWeeks - 1) return "race";
-  const pct = weekIndex / totalWeeks;
-  if (pct < 0.4) return "base";
-  if (pct < 0.75) return "build";
-  return "taper";
+  const taperWeeks = TAPER_WEEKS_BY_DISTANCE[distance];
+  /* Taper occupies the `taperWeeks` immediately before the final
+     race week. For a 12-week marathon (taperWeeks=3): race=11,
+     taper=8/9/10, build/base split the remainder. */
+  if (weekIndex >= totalWeeks - 1 - taperWeeks) return "taper";
+  /* Base/build split on the remaining weeks. 0.4 of the remaining
+     pre-taper window goes to base, the rest is build. Keeps the
+     historical "longer plans get a proper base block" behaviour
+     without leaking into the now-distance-aware taper. */
+  const preTaperWeeks = Math.max(1, totalWeeks - 1 - taperWeeks);
+  if (weekIndex < preTaperWeeks * 0.4) return "base";
+  return "build";
 }
 
 export function generateRacePlan(
@@ -171,7 +210,7 @@ export function generateRacePlan(
   const weeks: ScheduledRunDay[][] = [];
 
   for (let w = 0; w < totalWeeks; w++) {
-    const phase = getPhaseForWeek(w, totalWeeks);
+    const phase = getPhaseForWeek(w, totalWeeks, distance);
     const week: ScheduledRunDay[] = [];
 
     const longSlot = slots.find((d) => d === 0 || d === 6) ?? slots[0];
@@ -263,9 +302,27 @@ export function getCurrentRaceWeek(totalWeeks: number, targetDate: string): numb
   return Math.max(0, Math.min(totalWeeks - 1, totalWeeks - weeksLeft));
 }
 
-export function getRacePhaseLabel(weekIndex: number, totalWeeks: number): string {
-  const phase = getPhaseForWeek(weekIndex, totalWeeks);
+export function getRacePhaseLabel(
+  weekIndex: number,
+  totalWeeks: number,
+  distance: "5k" | "10k" | "half" | "marathon",
+): string {
+  const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
   return phase.charAt(0).toUpperCase() + phase.slice(1);
+}
+
+/**
+ * Convenience predicate for surfacing UI affordances (PR-K Q9d):
+ * is the current week IN the taper phase for this race plan? Returns
+ * false for non-race-prep modes (no totalWeeks / distance available).
+ */
+export function isCurrentWeekInTaper(
+  currentWeek: number | undefined,
+  totalWeeks: number | undefined,
+  distance: "5k" | "10k" | "half" | "marathon" | undefined,
+): boolean {
+  if (currentWeek == null || totalWeeks == null || !distance) return false;
+  return getPhaseForWeek(currentWeek, totalWeeks, distance) === "taper";
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -513,7 +570,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const weeks: ScheduledRunDay[][] = [];
 
   for (let w = 0; w < totalWeeks; w++) {
-    const phase = getPhaseForWeek(w, totalWeeks);
+    const phase = getPhaseForWeek(w, totalWeeks, input.raceGoal.distance);
     // Each week's start advances by 7 days from week 0
     const weekStart = addLocalDays(weekStartDate, w * 7);
     const week: ScheduledRunDay[] = [];

@@ -55,7 +55,7 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { getRacePhaseLabel } from "@/features/program/runScheduler";
+import { getRacePhaseLabel, isCurrentWeekInTaper } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
@@ -914,6 +914,56 @@ export default function ProgrammeRunSection({
           · Edit ›" — single text run, muted-gray Edit link with
           chevron (Q2 navigation discipline: no coral on Edit). Week
           progress row stays as separate content underneath. */}
+      {/* PR-K Q9d — TAPER WEEK section label. Surfaces the taper
+          context on the race_prep operational hero when the current
+          plan week falls in the taper phase. 10px uppercase tracking
+          matches Run7's section-label convention; pairs with a "race
+          in N days" countdown so the user reads the label as a
+          calendar anchor, not a generic phase tag. The Week N/M row
+          inside the operational card below still shows "Taper" as the
+          phase label — this header acts as the prominent surface
+          callout, the row stays as the at-a-glance week marker. */}
+      {currentMode === "race_prep" && raceGoal && !raceElapsed && !showRaceForm
+        && isCurrentWeekInTaper(
+          programState?.runPlan?.currentWeek,
+          programState?.runPlan?.totalWeeks,
+          raceGoal.distance as RaceDistance,
+        ) && (() => {
+          const daysToRace = (() => {
+            try {
+              const target = parseLocalDate(raceGoal.targetDate);
+              const today = parseLocalDate(todayKeyDerivation);
+              return Math.max(
+                0,
+                Math.round(
+                  (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+                ),
+              );
+            } catch {
+              return null;
+            }
+          })();
+          return (
+            <p
+              className="text-[10px] font-semibold uppercase tracking-wider"
+              style={{ color: THEME.running }}
+              aria-label={
+                daysToRace != null
+                  ? `Taper week, race in ${daysToRace} day${daysToRace === 1 ? "" : "s"}`
+                  : "Taper week"
+              }
+            >
+              Taper week
+              {daysToRace != null && (
+                <>
+                  {" · "}
+                  race in {daysToRace} day{daysToRace === 1 ? "" : "s"}
+                </>
+              )}
+            </p>
+          );
+        })()}
+
       {currentMode === "race_prep" && raceGoal && !raceElapsed && !showRaceForm && (
         <div className="p-3 rounded-xl bg-card space-y-2">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -948,7 +998,11 @@ export default function ProgrammeRunSection({
                 <span className="text-sm font-medium text-foreground">
                   {programState.runPlan.currentWeek + 1} / {programState.runPlan.totalWeeks}
                   {" · "}
-                  {getRacePhaseLabel(programState.runPlan.currentWeek, programState.runPlan.totalWeeks)}
+                  {getRacePhaseLabel(
+                    programState.runPlan.currentWeek,
+                    programState.runPlan.totalWeeks,
+                    programState.runPlan.raceGoal!.distance as RaceDistance,
+                  )}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
