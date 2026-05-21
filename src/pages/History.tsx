@@ -1111,7 +1111,14 @@ export default function History() {
                   </div>
                 );
               })()}
-              {nutrition.adherence < 50 && (
+              {/* Hist5c pin 9 — sample-size guard. The warning misfires at
+                  extreme sparsity: at 1W with 2/7 days logged (28%) the
+                  warning fires AND the user is in cold-start mode where
+                  the meta-warning adds noise rather than signal. Require
+                  ≥5 logged days before the "too few logged days" message
+                  appears — below that, the user already understands they
+                  haven't logged much. */}
+              {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
                 <p className="text-[11px] text-amber-600 -mt-1 italic">
                   Averages below are based on too few logged days to be reliable.
                 </p>
