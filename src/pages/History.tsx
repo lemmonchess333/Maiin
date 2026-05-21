@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
-import WeeklyOverview from "@/components/analytics/WeeklyOverview";
+import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import PRCard from "@/components/analytics/PRCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
@@ -775,7 +775,7 @@ export default function History() {
                 </div>
               </div>
             ) : (
-              <WeeklyOverview
+              <PeriodOverview
                 runCount={runningTotals.runCount}
                 runDistance={runningTotals.runDistance}
                 liftCount={liftingData.liftCount}
