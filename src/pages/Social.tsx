@@ -5,6 +5,7 @@ import { useCrews } from '../hooks/useCrews';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useSuggestedPeople } from '../hooks/useSuggestedPeople';
 import { useSuggestedCrews } from '../hooks/useSuggestedCrews';
+import { useFeedSubTabFreshness } from '@/hooks/useFeedSubTabFreshness';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -155,6 +156,17 @@ export default function Social() {
   const followingFeed = useSocialFeed(false, blockedUsers, tab === 'feed' && feedSubTab === 'following', hiddenActivityIds);
   const exploreFeed = useDiscoverFeed(feedSubTab === 'explore', blockedUsers);
   const activeFeed = feedSubTab === 'following' ? followingFeed : exploreFeed;
+
+  /* Soc5b pin (3): subtle new-content dot on inactive Feed sub-tab.
+     Compares each sub-tab's newest visible item createdAt against the
+     timestamp last seen by the user (persisted in localStorage per
+     sub-tab). Dot never renders on the active sub-tab — content is
+     visible directly there. */
+  const { followingHasNew, exploreHasNew } = useFeedSubTabFreshness({
+    activeSubTab: feedSubTab,
+    followingNewestCreatedAt: followingFeed.items[0]?.createdAt,
+    exploreNewestCreatedAt: exploreFeed.items[0]?.createdAt,
+  });
 
   // Soc5: capture initial-render duration. renderStartRef takes its
   // timestamp from the post-mount effect (rather than lazy useState
@@ -341,6 +353,29 @@ export default function Social() {
     isSwiping.current = false;
   };
 
+  /* Soc5 cross-cutting pin (3): listen for the bottom-nav retap event
+     dispatched by Layout.tsx when the user taps the already-active
+     Social tab. Re-uses the same per-tab refresh logic as pull-to-
+     refresh so behaviour stays consistent across the two entry points.
+     The actual scroll-to-top happens in Layout.tsx before the dispatch. */
+  useEffect(() => {
+    const onRetap = async () => {
+      if (pullRefreshing) return;
+      setPullRefreshing(true);
+      try {
+        if (tab === 'feed') {
+          await activeFeed.refresh();
+        } else if (tab === 'crews') {
+          await Promise.all([refreshCrews(), refreshSuggestedCrews()]);
+        }
+      } finally {
+        setPullRefreshing(false);
+      }
+    };
+    window.addEventListener("tropos:social-tab-retap", onRetap);
+    return () => window.removeEventListener("tropos:social-tab-retap", onRetap);
+  }, [tab, activeFeed, refreshCrews, refreshSuggestedCrews, pullRefreshing]);
+
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
   const feedLoadMoreRef = useRef(activeFeed.loadMore);
@@ -447,19 +482,37 @@ export default function Social() {
         <div className="!mt-3">
           {/* Feed sub-tabs: Following | Explore */}
           <div className="flex gap-2">
-            {(['following', 'explore'] as FeedSubTab[]).map(st => (
-              <button key={st} onClick={() => {
-                setFeedSubTab(st);
-                trackSocialEvent('social_feed_subtab_changed', { subTab: st });
-              }}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  feedSubTab === st
-                    ? 'bg-primary-strong text-white'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                {st === 'following' ? 'Following' : 'Explore'}
-              </button>
-            ))}
+            {(['following', 'explore'] as FeedSubTab[]).map(st => {
+              const hasNew = st === 'following' ? followingHasNew : exploreHasNew;
+              return (
+                <button key={st} onClick={() => {
+                  setFeedSubTab(st);
+                  trackSocialEvent('social_feed_subtab_changed', { subTab: st });
+                }}
+                  className={`relative px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    feedSubTab === st
+                      ? 'bg-primary-strong text-white'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                  aria-label={
+                    hasNew
+                      ? `${st === 'following' ? 'Following' : 'Explore'} (new content)`
+                      : undefined
+                  }
+                >
+                  {st === 'following' ? 'Following' : 'Explore'}
+                  {/* Soc5b pin (3): subtle dot indicator — not a count
+                      badge. Coral brand colour matches semantic-positive
+                      for new-content; suppressed on the active sub-tab. */}
+                  {hasNew && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary"
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {feedSubTab === 'following' && (
@@ -870,14 +923,27 @@ export default function Social() {
                 friction without competing visually with the user's
                 existing crew row above. */}
             {profileCrewId && (
-              <button
-                onClick={() => {
-                  setShowCreateGroup(true);
-                  trackSocialEvent('social_create_crew_tapped');
-                }}
-                className="w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                + Create a Crew
-              </button>
+              /* Soc5d pin (2): dim further when user already belongs to
+                 ≥5 crews. Tropos's positioning is small private groups —
+                 the CTA stays available but its visual weight de-
+                 emphasises crew collecting. Half-width + reduced
+                 padding + opacity-60 stacks "smaller AND less prominent"
+                 per the locked copy. */
+              <div className={crews.length >= 5 ? "flex justify-center" : ""}>
+                <button
+                  onClick={() => {
+                    setShowCreateGroup(true);
+                    trackSocialEvent('social_create_crew_tapped');
+                  }}
+                  className={
+                    crews.length >= 5
+                      ? "py-2 px-4 rounded-xl bg-card border border-border/50 text-xs font-medium text-muted-foreground/70 hover:text-foreground/80 transition-colors"
+                      : "w-full py-3 rounded-xl bg-card border border-border/50 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  }
+                >
+                  + Create a Crew
+                </button>
+              </div>
             )}
           </div>
 

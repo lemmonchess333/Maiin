@@ -169,7 +169,23 @@ export default function Layout() {
                 to={tab.to}
                 end={tab.to === "/"}
                 aria-label={tab.label}
-                onClick={() => { haptic('light'); if (tab.to === "/social") markSeen(); }}
+                onClick={() => {
+                  haptic('light');
+                  if (tab.to === "/social") markSeen();
+                  /* Soc5 cross-cutting pin (3): tap on already-active
+                     Social tab → scroll-to-top + dispatch a retap event
+                     so the visible feed refreshes. Standard iOS pattern
+                     (Twitter/X). Scoped to /social by the lock — other
+                     tabs keep their default Link behaviour. */
+                  if (tab.to === "/social" && location.pathname === "/social") {
+                    try {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    } catch {
+                      window.scrollTo(0, 0);
+                    }
+                    window.dispatchEvent(new CustomEvent("tropos:social-tab-retap"));
+                  }
+                }}
                 className={({ isActive }) =>
                   cn(
                     // `min-w-0` lets flex-1 actually shrink the cells
