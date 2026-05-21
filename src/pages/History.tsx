@@ -11,10 +11,8 @@ import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
-import PRCard from "@/components/analytics/PRCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
-import { Footprints, Trophy, UtensilsCrossed, ChevronRight } from "lucide-react";
-import PRBadge from "@/components/analytics/PRBadge";
+import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
@@ -37,21 +35,23 @@ const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSectio
    removed; deep-links to /history#performance route to the section
    anchor inside Analytics. */
 const PerformanceSection = lazy(() => import("@/components/analytics/PerformanceSection"));
+const PRsTab = lazy(() => import("@/components/analytics/PRsTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
 const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
-/* Hist5b pin 1 + 3 — tab consolidation 6→2 after the Performance
-   fold. Sport-filtered tabs (running/lifting/nutrition) were
-   dropped in PR 5a; the Performance tab folds into Analytics as an
-   inline-accordion section in PR 6. Performance + sport sections
-   are scroll-anchor targets under the Analytics tab now. The "all"
-   tab is renamed "analytics" to match the page's frame commitment
-   (Hist5a). PR 7 introduces the PRs tab. */
-type FilterTab = "analytics" | "badges";
+/* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
+   Performance fold (PR 6) + PRs tab introduction (PR 7a).
+   Sport-filtered tabs were dropped in PR 5a; the Performance tab
+   folded into Analytics in PR 6. Tabs now: Analytics + PRs +
+   Badges — three semantically-distinct roles (window-scoped
+   current state / lifetime achievements / progress milestones).
+   "All" was renamed "analytics" to match the page's frame
+   commitment (Hist5a). */
+type FilterTab = "analytics" | "prs" | "badges";
 
-const VALID_TABS: FilterTab[] = ["analytics", "badges"];
+const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
@@ -115,7 +115,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
               ].join(" ")}
               style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
             >
-              {f === "analytics" ? "Analytics" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           );
         })}
@@ -678,7 +678,53 @@ export default function History() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 8);
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
+    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab.
+       Distinct from prTimeline above (which is a rolling 7-day
+       view scheduled for removal when the PRs tab fully takes
+       over). For each exercise, find the single set with the
+       highest e1rm-equivalent score across all logged workouts.
+       Bodyweight exercises score on reps (weight=0); weighted
+       exercises score on weight × (1 + reps/30). */
+    const lifetimeBestSet: Record<
+      string,
+      { weight: number; reps: number; date: string; score: number }
+    > = {};
+    workouts.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        const name = ex.exerciseName;
+        const exInfo = EXERCISES.find((e) => e.name === name);
+        const isBWExercise = exInfo?.equipment === "Bodyweight";
+        ex.sets?.forEach((set) => {
+          if (!isBWExercise && set.weightKg <= 0) return;
+          const e1rm = set.weightKg * (1 + set.reps / 30);
+          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
+          const prev = lifetimeBestSet[name];
+          if (!prev || score > prev.score) {
+            lifetimeBestSet[name] = {
+              weight: set.weightKg,
+              reps: set.reps,
+              date: w.date,
+              score,
+            };
+          }
+        });
+      });
+    });
+    const lifetimePRs = Object.entries(lifetimeBestSet)
+      .map(([name, data]) => ({
+        name,
+        weight: data.weight,
+        reps: data.reps,
+        date: data.date,
+      }))
+      .sort((a, b) => {
+        /* Sort by date desc (most-recently-set PR first). Provides
+           a sense of momentum on the PRs tab — the lifts the user
+           has been pushing most recently float to the top. */
+        return b.date.localeCompare(a.date);
+      });
+
+    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, lifetimePRs, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -910,6 +956,13 @@ export default function History() {
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
         <BadgeGrid />
+      ) : filter === "prs" ? (
+        <PRsTab
+          runningPRs={runningPRs}
+          lifetimePRs={liftingData.lifetimePRs}
+          hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
+          hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
+        />
       ) : (
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
@@ -1011,12 +1064,10 @@ export default function History() {
                       accentColor={THEME.running}
                     />
                   </div>
-                  <PRCard
-                    title="Running PRs"
-                    subtitle="Outdoor GPS only"
-                    prs={runningPRs}
-                    accentColor={THEME.running}
-                  />
+                  {/* Hist5b PR 7a — Running PRs migrated off Analytics
+                      to the dedicated PRs tab (Tier 2 lifetime
+                      contract). Tap the PRs tab in the top filter
+                      to access them. */}
                   <ShoeMileageSection />
                   <RunningHistorySection />
                 </>
@@ -1086,67 +1137,13 @@ export default function History() {
                 data={liftingData.muscleData}
                 accentColor={THEME.lifting}
               />
-              <div className="rounded-2xl bg-card overflow-hidden"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-                  <Trophy size={16} className="text-amber-500" />
-                  <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
-                  <span className="text-xs text-muted-foreground">Last 7 days</span>
-                </div>
-                {liftingData.prTimeline.length > 0 ? (
-                  <div className="divide-y divide-border/20">
-                    {liftingData.prTimeline.map((pr) => {
-                      const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
-                      const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-                      const exercise = EXERCISES.find(e => e.name === pr.name);
-                      const isBW = exercise?.equipment === "Bodyweight";
-                      return (
-                        <Link
-                          key={pr.name}
-                          to={`/history/exercise/${encodeURIComponent(pr.name)}`}
-                          className="flex items-center justify-between px-4 py-3 active:bg-muted/40 transition-colors"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              {pr.isAllTimeBest && (
-                                <>
-                                  <PRBadge isNew={pr.isAllTimeBest} />
-                                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                                    style={{ background: THEME.semantic.nutrition, color: 'white' }}>
-                                    NEW
-                                  </span>
-                                  <span className="text-xs text-muted-foreground ml-1">{pr.reps}RM</span>
-                                </>
-                              )}
-                              <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
-                            <div>
-                              <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                                {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
-                              </p>
-                              {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-                                <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
-                              ) : null}
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="px-4 py-8 text-center space-y-2">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto" style={{ background: `${THEME.lifting}15` }}>
-                      <Trophy size={20} style={{ color: THEME.lifting }} />
-                    </div>
-                    <p className="text-xs font-medium text-foreground">No lifts logged this week</p>
-                    <p className="text-xs text-muted-foreground">Keep pushing — your best lifts will show here</p>
-                  </div>
-                )}
-              </div>
+              {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
+                  dedicated PRs tab (Tier 2 lifetime contract). The
+                  prior surface was a 7-day-hardcoded view that
+                  disagreed with the section's TimeRange-scoped
+                  framing; the new home gives PRs their true
+                  lifetime semantics. Tap the PRs tab in the top
+                  filter to access them. */}
               </>
               )}
             </section>
