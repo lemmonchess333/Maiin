@@ -713,6 +713,38 @@ export default function History() {
     }
   })();
 
+  /* Hist5d cross-cut + Hist5 grill Q2 Stress 6 — section auto-hide
+     two-tier rule. Only applies on the "all" filter; per-sport
+     filtered tabs always render their section (the user explicitly
+     chose that sport, so CTA + empty-state belong there).
+
+       Tier 1: lifetime=0 AND window=0 → suppress entire section
+                (silent for users who don't use this sport)
+       Tier 2: lifetime>0 AND window=0 → section header + inline
+                "No X in this period" note (returning user, dormant
+                this window)
+       Tier 3: window>0 → full content (unchanged) */
+  const runningHasLifetime = lifetimeTotals.runCount > 0;
+  const runningHasWindow = runs.length > 0;
+  const liftingHasLifetime = lifetimeTotals.liftCount > 0;
+  const liftingHasWindow = liftingData.liftCount > 0;
+  const nutritionHasLifetime = lifetimeTotals.daysLogged > 0;
+  const nutritionHasWindow = nutrition.avgCalories > 0;
+
+  const showRunningSection =
+    filter !== "all" || runningHasLifetime || runningHasWindow;
+  const showLiftingSection =
+    filter !== "all" || liftingHasLifetime || liftingHasWindow;
+  const showNutritionSection =
+    filter !== "all" || nutritionHasLifetime || nutritionHasWindow;
+
+  const renderRunningEmptyNote =
+    filter === "all" && runningHasLifetime && !runningHasWindow;
+  const renderLiftingEmptyNote =
+    filter === "all" && liftingHasLifetime && !liftingHasWindow;
+  const renderNutritionEmptyNote =
+    filter === "all" && nutritionHasLifetime && !nutritionHasWindow;
+
   return (
     <motion.div
       ref={pullContainerRef}
@@ -788,7 +820,7 @@ export default function History() {
             )
           )}
 
-          {(filter === "all" || filter === "running") && (
+          {showRunningSection && (filter === "all" || filter === "running") && (
             <section aria-label="Running analytics">
               {filter === "all" && (
                 <p
@@ -803,6 +835,10 @@ export default function History() {
                   <Skeleton className="h-24 w-full rounded-xl" />
                   <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
+              ) : renderRunningEmptyNote ? (
+                <p className="text-xs text-muted-foreground italic px-1">
+                  No runs in this period
+                </p>
               ) : runs.length === 0 ? (
                 <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
                   <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
@@ -854,7 +890,7 @@ export default function History() {
             </section>
           )}
 
-          {(filter === "all" || filter === "lifting") && (
+          {showLiftingSection && (filter === "all" || filter === "lifting") && (
             <section aria-label="Lifting analytics">
               {filter === "all" && (
                 <p
@@ -872,6 +908,10 @@ export default function History() {
                   </div>
                   <ChartSkeleton />
                 </div>
+              ) : renderLiftingEmptyNote ? (
+                <p className="text-xs text-muted-foreground italic px-1">
+                  No workouts in this period
+                </p>
               ) : liftingData.liftCount === 0 ? (
                 <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
                   <Trophy className="w-5 h-5 shrink-0" style={{ color: THEME.lifting }} />
@@ -980,7 +1020,7 @@ export default function History() {
             </section>
           )}
 
-          {(filter === "all" || filter === "nutrition") && (
+          {showNutritionSection && (filter === "all" || filter === "nutrition") && (
             <section aria-label="Nutrition analytics">
               {filter === "all" && (
                 <p
@@ -998,6 +1038,19 @@ export default function History() {
                   </div>
                   <ChartSkeleton />
                 </div>
+              ) : renderNutritionEmptyNote ? (
+                <>
+                  <p className="text-xs text-muted-foreground italic px-1">
+                    No meals logged in this period
+                  </p>
+                  {/* TrendWeight stays visible — weight is independent
+                      of meal logging. Returning users get their weight
+                      chart even when nutrition is dormant for the
+                      selected window. */}
+                  <SectionErrorBoundary sectionName="trend-weight">
+                    <TrendWeight />
+                  </SectionErrorBoundary>
+                </>
               ) : nutrition.avgCalories === 0 ? (
                 <>
                   <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
