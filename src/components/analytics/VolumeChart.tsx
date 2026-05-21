@@ -1,11 +1,19 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
+import { formatBinLabel, type ChartGranularity } from '@/lib/chartGranularity';
 
 interface VolumeChartProps {
   data: { week: string; volume: number }[];
   accentColor?: string;
+  /** Hist5c pin 7 — drives X-axis label formatting. Defaults to
+   *  weekly for backwards compatibility with any legacy callers. */
+  granularity?: ChartGranularity;
 }
 
-export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeChartProps) {
+export default function VolumeChart({
+  data,
+  accentColor = '#6B74E0',
+  granularity = 'weekly',
+}: VolumeChartProps) {
   return (
     <div className="p-4 rounded-2xl bg-card">
       {/* No "Weekly Volume" heading here — the StatCard directly above
@@ -30,7 +38,7 @@ export default function VolumeChart({ data, accentColor = '#6B74E0' }: VolumeCha
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
           <XAxis dataKey="week" tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.3 }}
             axisLine={false} tickLine={false}
-            tickFormatter={(v) => { const d = new Date(v); return `${d.getDate()}/${d.getMonth()+1}`; }} />
+            tickFormatter={(v) => formatBinLabel(String(v), granularity)} />
           <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.2 }} axisLine={false} tickLine={false} width={35}
             tickFormatter={(v) => Number(v) >= 1000 ? `${(Number(v)/1000).toFixed(0)}k` : String(v)} />
           <Bar dataKey="volume" radius={[4, 4, 0, 0]} minPointSize={2}>
