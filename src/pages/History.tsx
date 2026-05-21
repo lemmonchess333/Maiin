@@ -20,6 +20,10 @@ import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
+import AnalyticsAnchorChips, {
+  ANCHOR_CHIP_COLORS,
+  type AnchorChip,
+} from "@/components/analytics/AnalyticsAnchorChips";
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
@@ -785,6 +789,36 @@ export default function History() {
   const renderLiftingEmptyNote = liftingHasLifetime && !liftingHasWindow;
   const renderNutritionEmptyNote = nutritionHasLifetime && !nutritionHasWindow;
 
+  /* Hist5b pin 1 — chip list mirrors the currently-visible sections.
+     Tier-1 suppressed sections (no lifetime + no window data) don't
+     appear in the chip menu — there's nothing to jump to. Lifetime
+     gets its own chip when the lifetime section renders. */
+  const anchorChips: AnchorChip[] = useMemo(() => {
+    const chips: AnchorChip[] = [];
+    if (showRunningSection) {
+      chips.push({ id: "analytics-running", label: "Running", color: ANCHOR_CHIP_COLORS.running });
+    }
+    if (showLiftingSection) {
+      chips.push({ id: "analytics-lifting", label: "Lifting", color: ANCHOR_CHIP_COLORS.lifting });
+    }
+    if (showNutritionSection) {
+      chips.push({ id: "analytics-nutrition", label: "Nutrition", color: ANCHOR_CHIP_COLORS.nutrition });
+    }
+    const hasLifetimeData =
+      lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0;
+    if (hasLifetimeData) {
+      chips.push({ id: "analytics-lifetime", label: "Lifetime", color: ANCHOR_CHIP_COLORS.lifetime });
+    }
+    return chips;
+  }, [
+    showRunningSection,
+    showLiftingSection,
+    showNutritionSection,
+    lifetimeTotals.runCount,
+    lifetimeTotals.liftCount,
+    lifetimeTotals.daysLogged,
+  ]);
+
   return (
     <motion.div
       ref={pullContainerRef}
@@ -835,6 +869,14 @@ export default function History() {
       ) : (
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+
+          {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
+              the Analytics tab AND only when there are 2+ sections
+              to jump between (single-section users don't need an
+              anchor menu — they ARE always on the only chip). */}
+          {filter === "analytics" && anchorChips.length >= 2 && (
+            <AnalyticsAnchorChips chips={anchorChips} />
+          )}
 
           {filter === "analytics" && (
             dataLoading ? (
