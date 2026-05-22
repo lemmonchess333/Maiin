@@ -6,6 +6,11 @@ on:
       - main
     paths:
       - 'functions/**'
+  # Manual re-deploy escape hatch. If a deploy ever appears to have
+  # gone green but didn't actually upload (the silent-stranded-deploy
+  # bug from #655's root cause), `workflow_dispatch` lets an operator
+  # force a fresh run without pushing a no-op commit.
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -28,6 +33,26 @@ jobs:
       - name: Install function dependencies
         run: cd functions && npm install
 
+      # Inject the commit SHA + timestamp into functions/index.js
+      # right before deploy. firebase-tools deduplicates uploads
+      # against the deployed bundle hash; if no .js files changed in
+      # this PR's diff vs the previous deploy, it skips the upload
+      # and reports success even though production isn't updated.
+      # That exact bug stranded R1A code (#648 / #652 / #653) in
+      # main for 6 days while every CI run reported green — see
+      # #655 for the forensic write-up.
+      #
+      # Prepending a per-commit unique marker line guarantees the
+      # bundle hash differs from whatever's deployed, forcing
+      # firebase-tools to upload a fresh bundle every time. The
+      # marker is a single comment line; zero runtime impact.
+      - name: Force unique bundle hash (prevent silent-stranded-deploys)
+        run: |
+          BUILD_SHA="${{ github.sha }}"
+          BUILD_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          sed -i "1i// CI build: ${BUILD_SHA} @ ${BUILD_TS}" functions/index.js
+          echo "Injected build marker:"
+          head -2 functions/index.js
+
       - name: Deploy functions
         run:  firebase deploy --only functions --project adaptive-fitness-af8bb --force
-
