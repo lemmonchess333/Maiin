@@ -565,6 +565,19 @@ export default function RunSummary() {
       );
       setSavedRunId(savedDocRef.id);
 
+      /* Hist5d Stress 19 / PR 7b — return-link toast closes the
+         PRs-tab cold-start loop. Only fires on saves that could
+         plausibly have set a PR — invalid 0km / 0:00 runs (the
+         "Save anyway" exits) shouldn't tease a PR celebration. */
+      if (!isInvalid) {
+        toast.success("Run saved", {
+          action: {
+            label: "View PRs",
+            onClick: () => navigate("/history?tab=prs"),
+          },
+        });
+      }
+
       /* Skip the share-composer for invalid runs. The user chose
          "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
          we keep the record on their account but a 0km run has no

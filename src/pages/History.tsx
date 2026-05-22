@@ -12,6 +12,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
@@ -493,6 +494,12 @@ export default function History() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    /* Hist5b pin 4 / PR 7b — rolling 30-day window for the
+       "Recent bests" PRs subsection (sublabeled inside the PRs
+       tab). Distinct from the lifetime PRs computed below. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const formatPace = (secPerKm: number) => {
       const m = Math.floor(secPerKm / 60);
       const s = Math.round(secPerKm % 60);
@@ -508,45 +515,84 @@ export default function History() {
        GPS-verified, so it can't set a distance PR. */
     const paceEligible = runs.filter((r) => isPaceEligible(r));
 
-    const runs1k = paceEligible.filter((r) => r.distance >= 1000);
-    const best1k = runs1k.length
-      ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-      : null;
-
-    const runs5k = paceEligible.filter((r) => r.distance >= 5000);
-    const best5k = runs5k.length
-      ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-      : null;
-
-    const longestRun = paceEligible.length
-      ? paceEligible.reduce((best, r) => (r.distance > best.distance ? r : best))
-      : null;
+    /* Hist5 grill Q3 Stress 3 round 1 + Hist5b pin 5 — Indoor PRs
+       tracked separately for users who run primarily on a
+       treadmill or who enter manual distances. Same fastest-pace
+       logic, different eligibility filter: must be treadmill/
+       manual + valid + finite-positive avgPace + above volume
+       floor. Sublabeled distinctly so the user doesn't conflate
+       indoor pace (user-entered distance) with outdoor pace
+       (GPS-verified). */
+    const indoorEligible = runs.filter(
+      (r) =>
+        requiresManualDistance(r.activityType as Parameters<typeof requiresManualDistance>[0])
+        && Number.isFinite(r.avgPace)
+        && r.avgPace > 0
+        && r.distance >= 500,
+    );
 
     const fmtDate = (d: Date) =>
       d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
-    return [
-      {
-        label: "Fastest 1K",
-        value: best1k ? formatPace(best1k.avgPace) : "--",
-        date: best1k ? fmtDate(best1k.completedAt) : "",
-        isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
-      },
-      {
-        label: "Fastest 5K",
-        value: best5k ? formatPace(best5k.avgPace) : "--",
-        date: best5k ? fmtDate(best5k.completedAt) : "",
-        isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
-      },
-      {
-        label: "Longest Run",
-        value: longestRun
-          ? (longestRun.distance / 1000).toFixed(1) + " km"
-          : "--",
-        date: longestRun ? fmtDate(longestRun.completedAt) : "",
-        isNew: longestRun ? longestRun.completedAt >= sevenDaysAgo : false,
-      },
-    ];
+    /* Compute best 1K / 5K / Longest from a run pool. Shared shape
+       between Lifetime / Recent / Indoor buckets — only the input
+       filter changes. Returns the same UI-ready array shape as
+       before. */
+    const buildPRBucket = (
+      pool: typeof paceEligible,
+      includeLongest: boolean,
+    ) => {
+      const runs1k = pool.filter((r) => r.distance >= 1000);
+      const best1k = runs1k.length
+        ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+        : null;
+
+      const runs5k = pool.filter((r) => r.distance >= 5000);
+      const best5k = runs5k.length
+        ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+        : null;
+
+      const longest = includeLongest && pool.length
+        ? pool.reduce((best, r) => (r.distance > best.distance ? r : best))
+        : null;
+
+      const cards: Array<{ label: string; value: string; date: string; isNew: boolean }> = [
+        {
+          label: "Fastest 1K",
+          value: best1k ? formatPace(best1k.avgPace) : "--",
+          date: best1k ? fmtDate(best1k.completedAt) : "",
+          isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
+        },
+        {
+          label: "Fastest 5K",
+          value: best5k ? formatPace(best5k.avgPace) : "--",
+          date: best5k ? fmtDate(best5k.completedAt) : "",
+          isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
+        },
+      ];
+      if (includeLongest) {
+        cards.push({
+          label: "Longest Run",
+          value: longest
+            ? (longest.distance / 1000).toFixed(1) + " km"
+            : "--",
+          date: longest ? fmtDate(longest.completedAt) : "",
+          isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
+        });
+      }
+      return cards;
+    };
+
+    return {
+      lifetime: buildPRBucket(paceEligible, /* includeLongest */ true),
+      recent30d: buildPRBucket(
+        paceEligible.filter((r) => r.completedAt >= thirtyDaysAgo),
+        /* includeLongest */ true,
+      ),
+      indoor: buildPRBucket(indoorEligible, /* includeLongest */ false),
+      hasAnyIndoor: indoorEligible.length > 0,
+      hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
+    };
   }, [runs]);
 
   const liftingData = useMemo(() => {
@@ -724,7 +770,53 @@ export default function History() {
         return b.date.localeCompare(a.date);
       });
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, lifetimePRs, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
+    /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
+       days). Same per-exercise top-set logic as lifetimePRs but
+       constrained to the last 30 days. Distinct from prTimeline
+       (last 7 days, used by the prior Analytics card we just
+       deleted). Lives in the PRs tab as a sublabeled subsection
+       so the user reads "Lifetime" vs "Last 30 days" as two
+       different scopes. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoKey = thirtyDaysAgo.toISOString().split("T")[0];
+    const recentBestSet: Record<
+      string,
+      { weight: number; reps: number; date: string; score: number }
+    > = {};
+    workouts
+      .filter((w) => w.date >= thirtyDaysAgoKey)
+      .forEach((w) => {
+        w.exercises?.forEach((ex) => {
+          const name = ex.exerciseName;
+          const exInfo = EXERCISES.find((e) => e.name === name);
+          const isBWExercise = exInfo?.equipment === "Bodyweight";
+          ex.sets?.forEach((set) => {
+            if (!isBWExercise && set.weightKg <= 0) return;
+            const e1rm = set.weightKg * (1 + set.reps / 30);
+            const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
+            const prev = recentBestSet[name];
+            if (!prev || score > prev.score) {
+              recentBestSet[name] = {
+                weight: set.weightKg,
+                reps: set.reps,
+                date: w.date,
+                score,
+              };
+            }
+          });
+        });
+      });
+    const recentLiftPRs = Object.entries(recentBestSet)
+      .map(([name, data]) => ({
+        name,
+        weight: data.weight,
+        reps: data.reps,
+        date: data.date,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, lifetimePRs, recentLiftPRs, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -960,6 +1052,7 @@ export default function History() {
         <PRsTab
           runningPRs={runningPRs}
           lifetimePRs={liftingData.lifetimePRs}
+          recentLiftPRs={liftingData.recentLiftPRs}
           hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
           hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
         />
