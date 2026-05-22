@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { isCountableRun } from "@/lib/runGuards";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { toast } from "sonner";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { format } from "date-fns";
@@ -338,7 +338,7 @@ function useStreaksInternal() {
          saved-anyway 0:02 record shouldn't credit a streak day. */
       const rows: RunRow[] = snap.docs.flatMap((d) => {
         const raw = d.data() as { completedAt?: unknown; isInvalid?: boolean; distance?: number };
-        if (!isCountableRun(raw)) return [];
+        if (!isVolumeEligible(raw)) return [];
         const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
         return [{ completedAt: ts, isInvalid: raw.isInvalid, distance: raw.distance }];
       });

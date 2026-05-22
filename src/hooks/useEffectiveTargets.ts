@@ -21,7 +21,7 @@ import {
 } from "@/lib/captionBuilder";
 import { computeEffectiveBonus } from "@/lib/effectiveTargets";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
-import { isCountableRun } from "@/lib/runGuards";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import {
   generateSchedule,
   getWeeklyRunTarget,
@@ -253,7 +253,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
             distance?: number;
             duration?: number;
           };
-          if (!isCountableRun(raw)) return null;
+          if (!isVolumeEligible(raw)) return null;
           const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
           return {
             completedAt: ts,

@@ -1,5 +1,4 @@
 import type { ActivityType } from '@/types/run';
-import { isVolumeEligible } from './runStatsEligibility';
 
 export const MIN_RUN_DURATION_SECONDS = 30;
 export const MIN_OUTDOOR_DISTANCE_KM = 0.05;
@@ -137,20 +136,4 @@ export function canShowDone(args: { saveStatus: SaveStatus }): boolean {
 // Retry banner: only on error.
 export function canShowRetrySave(args: { saveStatus: SaveStatus }): boolean {
   return args.saveStatus === 'error';
-}
-
-/**
- * Volume-eligibility predicate. Thin alias over `isVolumeEligible`
- * in `src/lib/runStatsEligibility.ts` — kept here so the existing
- * imports across hooks/lib don't have to churn. The stricter
- * matrix introduced by Sprint 1 (savedAnyway flag + duration
- * floor) applies through that delegation.
- *
- * For pace / Best Pace / Fastest-K / Longest Run computations
- * use `isPaceEligible` from `runStatsEligibility.ts` — that
- * additionally constrains to outdoor GPS sources so a treadmill
- * 2km / 5:17 record can't masquerade as a Fastest 1K.
- */
-export function isCountableRun(data: { isInvalid?: boolean; savedAnyway?: boolean; distance?: number; duration?: number }): boolean {
-  return isVolumeEligible(data);
 }

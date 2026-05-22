@@ -1,22 +1,16 @@
 /**
  * Pace Trend Badges — compare runs within 20% distance to detect improvement trends.
  *
- * Source eligibility: pace trends only consider runs that would be
- * pace-eligible under the Sprint 1 matrix — outdoor GPS, not
- * invalid, not savedAnyway. Treadmill / manual records would
- * compare against outdoor runs at face value (a treadmill 2:38/km
- * would falsely register as a PR), so they're excluded both as
- * the candidate (returns 'no-data') and as comparables.
- *
- * Legacy compat: `activityType` is optional on `RunForTrend` and
- * defaults to outdoor when missing — pre-Sprint-1 callers
- * (existing tests, older code paths) continue to work without
- * explicit fields. New callers from `useRunningStats` /
- * `RunSummary` plumb the full set so the filter actually fires.
+ * Source eligibility lives in {@link isPaceTrendEligible} in
+ * runStatsEligibility.ts — that module documents the policy
+ * divergence from `isPaceEligible` (strict outdoor-PR eligibility)
+ * in one place. Trend uses the LENIENT policy: missing `activityType`
+ * is treated as outdoor for legacy compat so pre-Sprint-1 docs keep
+ * their trend visibility.
  */
 
-import { isOutdoorGpsRun } from './runGuards';
 import type { ActivityType } from '@/types/run';
+import { isPaceTrendEligible } from './runStatsEligibility';
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
 
@@ -40,24 +34,6 @@ const MIN_COMPARABLE_RUNS = 8;
 const DISTANCE_TOLERANCE = 0.2; // 20%
 const IMPROVING_THRESHOLD = 0.98; // 2% faster than recent average
 const CONSISTENT_THRESHOLD = 1.02; // within 2% of recent average
-
-/* Pace-trend eligibility. Mirrors `isPaceEligible` but tailored to
-   paceTrends's input shape (no duration field required — the
-   existing `avgPace > 0 && distance > 0` floor in this module is
-   sufficient for the misclick zombie case at this layer). */
-function isPaceTrendEligible(r: RunForTrend): boolean {
-  if (r.isInvalid === true) return false;
-  if (r.savedAnyway === true) return false;
-  if (r.avgPace <= 0 || r.distance <= 0) return false;
-  /* Missing activityType is treated as outdoor for legacy compat —
-     pre-Sprint-1 docs and existing tests don't carry the field
-     and excluding them blanketly would erase historical trend
-     data. New callers always pass it. */
-  if (r.activityType !== undefined && !isOutdoorGpsRun(r.activityType as ActivityType)) {
-    return false;
-  }
-  return true;
-}
 
 export function calculatePaceTrend(
   currentRun: RunForTrend,

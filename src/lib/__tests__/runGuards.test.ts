@@ -241,8 +241,3 @@ describe('action-visibility guards', () => {
   });
 });
 
-/* `isCountableRun` is now a back-compat alias of `isVolumeEligible`
- * (see `src/lib/runStatsEligibility.ts`). Its full test surface
- * lives in `runStatsEligibility.test.ts` — that suite covers the
- * complete matrix (volume + pace) including the back-compat
- * agreement check. Not duplicating cases here. */

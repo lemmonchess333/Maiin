@@ -4,7 +4,6 @@ import {
   isPaceEligible,
   type RunRecord,
 } from '../runStatsEligibility';
-import { isCountableRun } from '../runGuards';
 
 /* The Sprint 1 metric/source matrix. Volume includes treadmill +
  * manual; pace metrics (Best Pace, Fastest 1K, Fastest 5K, Longest
@@ -138,23 +137,3 @@ describe('screenshot acceptance case — treadmill-only account', () => {
   });
 });
 
-describe('isCountableRun back-compat alias', () => {
-  /* Existing call sites (useLifetimeRunStats, useStreaks,
-     personalTrajectory, leaderboard) all import `isCountableRun`
-     and expect volume semantics — this pins the alias so a future
-     refactor doesn't drift. */
-  it('agrees with isVolumeEligible across the matrix', () => {
-    const cases: RunRecord[] = [
-      validOutdoor,
-      { ...validOutdoor, isInvalid: true },
-      { ...validOutdoor, savedAnyway: true },
-      { ...validOutdoor, distance: 0 },
-      { ...validOutdoor, duration: 5 },
-      { ...validOutdoor, activityType: 'treadmill' },
-      { ...validOutdoor, activityType: 'manual' },
-    ];
-    for (const c of cases) {
-      expect(isCountableRun(c)).toBe(isVolumeEligible(c));
-    }
-  });
-});
