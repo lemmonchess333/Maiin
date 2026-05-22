@@ -25,6 +25,18 @@ Update when a /grill-me session crystallises new vocabulary, when we adopt or re
 - **workouts** — array of prescribed lift sessions on programState. Each has `dayIndex`, `dayName`, `exercises[]`, `completed`, `skipped`.
 - **weekHistory** — array of archived past weeks, currently storing `{ workouts, weekNumber }`. Proposed extension (Q6): also store `runDays`.
 
+### Nutrition (daily targets)
+
+Calorie + macro target for a given date. The single source of truth is `useEffectiveTargets(date)`; every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet) reads from there.
+
+- **baseTarget** — the user's stored daily calorie target (from `profile.targetCalories`). The TDEE + phase + goal output of onboarding / Settings, before any per-day adjustment.
+- **dayType** — `"lift" | "run" | "both" | "rest"`. Derived from the user's weekly schedule (`profile.weekSchedule`, or `generateSchedule(...)` if absent) on the date's day-of-week. The "planned" day type, before observing actual activity.
+- **strategicBonus** — the program's prescribed calorie adjustment for the day type. Phase-aware (`strength` lift day = +400 hypertrophy over-feed; `cut` lift day = +150; rest day = 0). Returned by `phaseNutrition.getDayAdjustment`.
+- **actualBurn** — sum of `totalCalories` from completed workouts + `calories` from completed runs on the date. Runs are filtered through `isCountableRun` before summing (drops "too-fast" mis-saves that would otherwise lower the target). Lift and run burn are also exposed separately as `actualLiftBurn` / `actualRunBurn` for source-detection toasts.
+- **effectiveDayType** — the day type after observing actual activity. May differ from the planned `dayType` (e.g. user did a lift on what was scheduled as a rest day). Derived in `effectiveTargets.deriveEffectiveDayType`.
+- **effectiveBonus** — `max(strategicBonus, actualBurn)`. The `max` rule (not add, not replace) preserves strategic over-feeds when actual burn is smaller, rewards over-performance when actual burn exceeds strategy, and never under-fuels. The user's `profile.adjustCaloriesForTraining = false` toggle short-circuits this to `strategicBonus` only (no Firestore subscriptions opened).
+- **finalTarget** — `baseTarget + effectiveBonus`. The number the user sees as "today's calorie target."
+
 ---
 
 ## Reference-app patterns
