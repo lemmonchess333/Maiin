@@ -14,6 +14,50 @@ import { IconButton } from "@/components/ui/IconButton";
 // and the others stay disabled.
 type LoadingAction = "email" | "google" | "apple" | null;
 
+/**
+ * Translate Firebase Auth error messages into user-facing copy.
+ * Three handlers (email, Google, Apple) need the same mapping so
+ * one place owns the contract. Raw Firebase strings like
+ * "Firebase: Error (auth/invalid-credential)." used to leak to
+ * the UI before this — surfaced during the post-deletion recovery
+ * scenario where the user hit invalid-credential, network-request
+ * -failed, and internal-error in quick succession.
+ */
+function friendlyAuthError(message: string): string {
+  if (
+    message.includes("user-not-found") ||
+    message.includes("wrong-password") ||
+    message.includes("invalid-credential")
+  ) {
+    return "Invalid email or password";
+  }
+  if (message.includes("email-already-in-use")) {
+    return "An account with this email already exists";
+  }
+  if (message.includes("weak-password")) {
+    return "Password must be at least 6 characters";
+  }
+  if (message.includes("invalid-email")) {
+    return "Please enter a valid email address";
+  }
+  if (message.includes("network-request-failed")) {
+    return "Network issue — check your connection and try again";
+  }
+  if (message.includes("too-many-requests")) {
+    return "Too many attempts. Wait a moment and try again";
+  }
+  if (message.includes("internal-error")) {
+    return "Sign-in is temporarily unavailable. Try again in a moment";
+  }
+  if (message.includes("account-exists-with-different-credential")) {
+    return "An account with this email already exists. Try signing in with the original provider";
+  }
+  if (message.includes("user-disabled")) {
+    return "This account has been disabled. Contact support";
+  }
+  return message;
+}
+
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -38,17 +82,7 @@ export default function Login() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
-      if (message.includes("user-not-found") || message.includes("wrong-password")) {
-        setError("Invalid email or password");
-      } else if (message.includes("email-already-in-use")) {
-        setError("An account with this email already exists");
-      } else if (message.includes("weak-password")) {
-        setError("Password must be at least 6 characters");
-      } else if (message.includes("invalid-email")) {
-        setError("Please enter a valid email address");
-      } else {
-        setError(message);
-      }
+      setError(friendlyAuthError(message));
     } finally {
       setLoadingAction(null);
     }
@@ -62,8 +96,9 @@ export default function Login() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
+      /* popup-closed = user cancelled. Silent, no error toast. */
       if (!message.includes("popup-closed")) {
-        setError(message);
+        setError(friendlyAuthError(message));
       }
     } finally {
       setLoadingAction(null);
@@ -79,7 +114,7 @@ export default function Login() {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
       if (!message.includes("popup-closed")) {
-        setError(message);
+        setError(friendlyAuthError(message));
       }
     } finally {
       setLoadingAction(null);
