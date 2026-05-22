@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
 import { THEME } from "@/lib/theme";
 import {
-  T3_PROJECTION_MIN_WINDOW_DAYS,
+  computeDataConfidence,
   T3_PROJECTION_MIN_POINTS,
 } from "@/lib/dataConfidence";
 import {
@@ -127,15 +127,24 @@ export function TrendWeight() {
       ? (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
       : 0;
 
-  // Hist5d pin 3 / PR 3 — T3 projection gate. Replaces the prior
-  // 14-day / 2-point threshold which let TrendWeight emit a goal
-  // projection ("goal by 24 Jul") fitted to 3-4 noisy points across
-  // a short window — pure noise pretending to be signal. New gate
-  // matches the unified data-confidence policy in dataConfidence.ts
-  // (≥30 days AND ≥5 distinct points).
-  const hasEnoughForProjection =
-    data.length >= T3_PROJECTION_MIN_POINTS
-    && daysSpan >= T3_PROJECTION_MIN_WINDOW_DAYS;
+  /* Hist5d pin 3 / PR 3 — T3 projection gate, via the unified
+     `computeDataConfidence` util. Single source of truth for the
+     threshold across every surface that could lie about thin data.
+     Replaces the prior 14-day / 2-point threshold which let
+     TrendWeight emit a goal projection ("goal by 24 Jul") fitted to
+     3-4 noisy points across a short window. Confidence input here
+     uses weight data points as the unit (per-metric correct unit
+     pattern from Hist5d pin 2) — distinct from the sport-day or
+     logged-day units used by Running/Lifting/Nutrition surfaces.
+     Plain function call (not useMemo) because the early returns
+     above would shift hook order. The util is O(1) pure — fine to
+     recompute per render. */
+  const dataConfidence = computeDataConfidence({
+    pointsInWindow: data.length,
+    pointsInPriorWindow: 0,
+    windowDays: daysSpan,
+  });
+  const hasEnoughForProjection = dataConfidence.hasProjection;
 
   // Projected goal-reach date. Linear extrapolation from the current
   // trend slope — not a prediction engine, just a motivational
