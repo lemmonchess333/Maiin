@@ -223,7 +223,18 @@ export default function Routine() {
           }
         }
 
-        toast.success("Workout saved");
+        /* Hist5d Stress 19 / PR 7b — return-link toast closes the
+           PRs-tab cold-start loop. Any saved workout may have set
+           a per-exercise lifetime or recent-bests PR, so we surface
+           a quick way back to the PRs tab without forcing the user
+           to remember to navigate. Sonner auto-dismisses in 4s;
+           tap "View PRs" → /history?tab=prs. */
+        toast.success("Workout saved", {
+          action: {
+            label: "View PRs",
+            onClick: () => navigate("/history?tab=prs"),
+          },
+        });
         navigate("/program");
       } catch (err) {
         logger.error("[Routine] complete failed:", err);
