@@ -14,6 +14,13 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+// R1A-Deletion Chunk 2 — lock helpers. The actor lock fires at
+// callable entry; the system-writer guard fires immediately before
+// each per-uid write commit in webhooks / scheduled / triggered
+// functions.
+const accountDeletionAuth = require("./lib/accountDeletionAuth");
+const accountDeletionLocks = require("./lib/accountDeletionLocks");
+
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
@@ -98,6 +105,20 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
+  }
+  // R1A-Deletion Chunk 2 — server-side recent-auth check. Closes the
+  // security gap where Admin SDK Auth deletion bypasses the client
+  // requires-recent-login check; getIdToken(true) refreshes the token
+  // but does NOT update auth_time. A stale session token must be
+  // rejected here before any deletion work begins.
+  try {
+    accountDeletionAuth.assertRecentAuth(context);
+  } catch (err) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      err.message,
+      { errorCode: err.errorCode || "requires-recent-auth" },
+    );
   }
   const uid = context.auth.uid;
 
@@ -285,6 +306,9 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: callable-actor lock — deleting accounts cannot
+  // (re-)onboard. The user doc would otherwise be recreated mid-cascade.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
 
   // Rate limit: 5 onboarding attempts per 10 minutes
   const limited = await isRateLimited(uid, "onboarding", 5, 600_000);
@@ -543,6 +567,22 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
         return;
       }
 
+      // R1A-Deletion: actor lock. analyzeFood writes scanUsage/{uid}
+      // and rateLimits/{uid}_analyzeFood (server-only, system-writer
+      // class), so a deleting account must be rejected before any
+      // write. HTTPS response uses 409 Conflict to distinguish from
+      // auth/quota errors.
+      try {
+        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), authUser.uid);
+      } catch (err) {
+        if (err.details && err.details.errorCode) {
+          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
+        } else {
+          throw err;
+        }
+        return;
+      }
+
       // Remote kill switch — operators flip `geminiEnabled=false` in
       // config/flags to cut off scans instantly if costs spike or
       // Vertex AI is returning bad data. Checked before rate limit so
@@ -662,6 +702,19 @@ exports.analyzeFoodText = functions.https.onRequest((req, res) => {
         return;
       }
 
+      // R1A-Deletion: actor lock. analyzeFoodText writes the same
+      // per-uid quota/rate-limit docs as analyzeFood.
+      try {
+        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), authUser.uid);
+      } catch (err) {
+        if (err.details && err.details.errorCode) {
+          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
+        } else {
+          throw err;
+        }
+        return;
+      }
+
       // Remote kill switch — shared flag with analyzeFood. One toggle
       // disables both modalities so scan pricing stays predictable.
       if (!(await isFlagEnabled("geminiEnabled"))) {
@@ -765,6 +818,8 @@ exports.askGeminiText = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. askGeminiText writes rateLimits/{uid}_askGemini.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
 
   // Rate limit: 5 calls per 60 seconds per user
   const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
@@ -956,6 +1011,18 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         res.status(400).json({ error: "Unknown plan." });
         return;
       }
+      // R1A-Deletion: actor lock. createCheckoutSession writes
+      // users/{uid}.stripeCustomerId — deleting accounts cannot start
+      // a new checkout that would recreate the user doc.
+      try {
+        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
+      } catch (err) {
+        if (err.details && err.details.errorCode) {
+          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
+          return;
+        }
+        throw err;
+      }
 
       // Rate limit: 5 checkout attempts per 10 minutes
       const limited = await isRateLimited(authUser.uid, "checkout", 5, 600_000);
@@ -1103,6 +1170,20 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
           break;
         }
 
+        // R1A-Deletion: system-writer guard. If the uid is mid-deletion
+        // or tombstoned, do NOT recreate users/{uid} — log a minimised
+        // event to paymentEventsPostDeletion for operator review.
+        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, firebaseUid, "stripeWebhook:checkout.session.completed"))) {
+          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+            provider: "stripe",
+            externalTxnId: session.id,
+            providerEventId: event.id, // Stripe-native idempotency key
+            eventType: "checkout.session.completed",
+            uid: firebaseUid,
+          });
+          break;
+        }
+
         const update = {
           subscriptionTier: "pro",
           stripeCustomerId: session.customer,
@@ -1142,6 +1223,22 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const userDoc = usersSnap.docs[0];
+
+        // R1A-Deletion: per-write tombstone guard runs FIRST. If the
+        // resolved uid is mid-deletion or tombstoned, log the event
+        // to paymentEventsPostDeletion and stop — no further checks
+        // are meaningful for an account that no longer exists.
+        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, userDoc.id, "stripeWebhook:subscription.updated"))) {
+          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+            provider: "stripe",
+            externalTxnId: subscription.id,
+            providerEventId: event.id,
+            eventType: "customer.subscription.updated",
+            uid: userDoc.id,
+          });
+          break;
+        }
+
         const userData = userDoc.data();
 
         // PR D: out-of-order guard. If a newer event has already
@@ -1192,6 +1289,19 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         }
 
         const userDoc = usersSnap.docs[0];
+
+        // R1A-Deletion: per-write tombstone guard runs FIRST.
+        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, userDoc.id, "stripeWebhook:subscription.deleted"))) {
+          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+            provider: "stripe",
+            externalTxnId: subscription.id,
+            providerEventId: event.id,
+            eventType: "customer.subscription.deleted",
+            uid: userDoc.id,
+          });
+          break;
+        }
+
         const userData = userDoc.data();
 
         // PR D: out-of-order + subscription-id-match + lifetime
@@ -1278,6 +1388,8 @@ exports.computePerformanceWeek = functions.https.onCall(async (data, context) =>
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. Writes users/{uid}/performance.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
 
   // Rate limit: 10 manual computes per 10 minutes
   const limited = await isRateLimited(uid, "computePerformance", 10, 600_000);
@@ -1328,6 +1440,14 @@ exports.weeklyPerformanceRollup = functions.pubsub
         await Promise.all(
           batch.map(async (uid) => {
             try {
+              // R1A-Deletion: per-uid tombstone guard. The function
+              // read the active-users list seconds-to-minutes ago; a
+              // user may have started deletion since. Per spec
+              // systemWriterCheckTiming: check immediately before each
+              // per-uid write, not only at function entry.
+              if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "weeklyPerformanceRollup"))) {
+                return;
+              }
               await computeAndWritePerformanceForUser(uid, null);
             } catch (err) {
               console.error(`weeklyPerformanceRollup: failed for ${uid}:`, err.message);
@@ -1374,6 +1494,11 @@ exports.dailyPerformanceRefresh = functions.pubsub
         await Promise.all(
           batch.map(async (uid) => {
             try {
+              // R1A-Deletion: per-uid tombstone guard (same rationale
+              // as weeklyPerformanceRollup).
+              if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "dailyPerformanceRefresh"))) {
+                return;
+              }
               await computeAndWritePerformanceForUser(uid, null);
             } catch (err) {
               console.error(`dailyPerformanceRefresh: failed for ${uid}:`, err.message);
@@ -1493,6 +1618,23 @@ exports.onWorkoutCreated = functions.firestore
   .document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
+    // R1A-Deletion: system-writer guard + compensating delete.
+    // Triggers fire AFTER the source write commits — they cannot
+    // pre-block the original write. Pattern per Blocker 6 trigger
+    // semantics: if the user is tombstoned or mid-deletion, delete
+    // the just-written source doc as defence-in-depth and skip all
+    // downstream writes (lastActiveAt, challenge syncs, performance).
+    // Chunk 3's post-cleanup verification also sweeps these paths;
+    // compensating delete shrinks the orphan-doc window from "until
+    // next sweep" to "trigger latency".
+    if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onWorkoutCreated"))) {
+      try {
+        await snap.ref.delete();
+      } catch (err) {
+        console.warn(`onWorkoutCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+      }
+      return;
+    }
     try {
       const data = snap.data();
 
@@ -1545,6 +1687,18 @@ exports.onRunCreated = functions.firestore
   .document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
+    // R1A-Deletion: system-writer guard + compensating delete. Same
+    // Blocker 6 trigger pattern as onWorkoutCreated — delete the
+    // source run doc and skip downstream writes if the user is
+    // tombstoned/mid-deletion.
+    if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onRunCreated"))) {
+      try {
+        await snap.ref.delete();
+      } catch (err) {
+        console.warn(`onRunCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+      }
+      return;
+    }
     try {
       const data = snap.data();
 
@@ -1787,6 +1941,17 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
           for (const memberDoc of membersSnap.docs) {
             const uid = memberDoc.id;
             const memberData = memberDoc.data();
+            // R1A-Deletion: per-UID tombstone guard inside the iteration.
+            // Re-embedding a deleted user in the crew leaderboard array
+            // would surface stale displayName + uid to other crew
+            // members. Skipping the member here keeps them out of the
+            // rebuilt top-N. Chunk 3's crewMemberships cleanup will
+            // remove the member doc itself; this guard handles the
+            // window between deletion-status flip and member-doc
+            // removal.
+            if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "crewWeeklyLeaderboardRollup"))) {
+              continue;
+            }
             try {
               const totals = await _computeMemberWeekTotals(uid, weekStartTs, weekStartKey);
               standings.push({

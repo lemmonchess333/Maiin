@@ -267,16 +267,25 @@ describe("excluded entries — required fields and allowed values", () => {
     ).toContain("HMAC");
   });
 
-  it("commentsAuthoredByMe defines the interim 'Comment deleted' visible-text policy and renderSafetyAudit", () => {
+  it("commentsAuthoredByMe defines Option C interim: visible 'Comment deleted' + server-only originalText for moderation reversibility", () => {
     const comments = (inventory.excluded as ExcludedEntry[]).find((e) => e.key === "commentsAuthoredByMe");
     expect(comments!.strategy).toBe("anonymiseAndOverwriteContent");
     const anonFields = (comments as unknown as { anonymiseFields: Record<string, string | null> }).anonymiseFields;
     expect(anonFields.text).toBe("Comment deleted");
     expect(anonFields.authorId).toBe(null);
-    const renderAudit = (comments as unknown as { renderSafetyAudit: { verdict: string; renderers: unknown[] } }).renderSafetyAudit;
+    const renderAudit = (comments as unknown as { renderSafetyAudit: { verdict: string; renderers: unknown[]; originalTextLeakageAudit: string } }).renderSafetyAudit;
     expect(renderAudit.verdict).toContain("safely");
     expect(Array.isArray(renderAudit.renderers)).toBe(true);
     expect(renderAudit.renderers.length).toBeGreaterThan(0);
+    expect(renderAudit.originalTextLeakageAudit).toBeTruthy();
+    // Option C interim: originalText preserved server-side with 365d retention
+    const preserved = (comments as unknown as { preservedOriginalFields: { policy: string; fields: { name: string; retentionWindow: string; readAccess: string }[] } }).preservedOriginalFields;
+    expect(preserved.policy).toContain("Option C");
+    expect(preserved.fields.length).toBeGreaterThan(0);
+    const originalText = preserved.fields.find((f) => f.name === "originalText");
+    expect(originalText, "originalText must be in preservedOriginalFields per Option C").toBeTruthy();
+    expect(originalText!.retentionWindow).toContain("365 days");
+    expect(originalText!.readAccess).toContain("server-only");
   });
 
   it("paymentEventsPostDeletion is NOT marked as indefinite default retention", () => {

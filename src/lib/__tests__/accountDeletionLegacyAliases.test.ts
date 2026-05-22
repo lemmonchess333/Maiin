@@ -121,11 +121,11 @@ describe("executor contract: missing legacy alias is success", () => {
     // Verify the alias path is well-formed (so deletion would succeed-no-op
     // rather than throw a malformed-path error).
     const entry = findEntry("userBodyweightLogs");
-    const paths = expandUserSubcollectionPaths(entry, "uid-with-special-chars-_123");
+    const paths: string[] = expandUserSubcollectionPaths(entry, "uid-with-special-chars-_123");
     for (const path of paths) {
       // Each path is parseable as a Firestore collection ref shape:
       // segments separated by /, no double slashes, at least 2 segments.
-      const segments = path.split("/");
+      const segments: string[] = path.split("/");
       expect(segments.length).toBeGreaterThanOrEqual(2);
       expect(segments.every((s: string) => s !== "")).toBe(true);
       expect(path).not.toContain("//");

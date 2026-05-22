@@ -19,6 +19,48 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    // ========================================
+    // R1A-Deletion write-freeze
+    //
+    // While accountDeletionRequests/{uid}.status is in the active set
+    // (running / failed_cleanup / pending_cleanup / pending_auth_deletion /
+    // operator_review), the user cannot create or update normal app data.
+    // Reads remain allowed so the client can render UI during deletion.
+    //
+    // Status values exempt from the freeze (writes still allowed):
+    //   - 'requested': lock not yet acquired by the executor
+    //   - 'completed': cascade finished
+    //   - 'cancelled': user backed out (the cancel callable bypasses
+    //                  this freeze for the single status-write that
+    //                  transitions out of the active set)
+    //
+    // Cost: each isDeleting() call performs one exists() + one get()
+    // against accountDeletionRequests/{uid} — 2 of the 10-read
+    // per-evaluation budget. Acceptable; the rule is applied at the
+    // single write-rule level per match block.
+    //
+    // The Admin SDK bypasses these rules entirely, so the deletion
+    // executor (deleteMyAccount + cancelDeletionRequest) still operates
+    // normally during the freeze.
+    // ========================================
+    function isDeleting(uid) {
+      let path = /databases/$(database)/documents/accountDeletionRequests/$(uid);
+      return exists(path)
+        && get(path).data.status in [
+          'running',
+          'failed_cleanup',
+          'pending_cleanup',
+          'pending_auth_deletion',
+          'operator_review'
+        ];
+    }
+
+    // Convenience for owner-write paths: caller is the owner AND has
+    // no active deletion. Used by user-owned subcollection match blocks.
+    function isOwnerAndNotDeleting(uid) {
+      return isOwner(uid) && !isDeleting(uid);
+    }
+
     function subscriptionFieldsUnchanged() {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
@@ -57,55 +99,62 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
+        && !isDeleting(uid)
         && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free';
       allow update: if isOwner(uid)
+        && !isDeleting(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged();
       allow delete: if isOwner(uid);
     }
 
     // User subcollections — meals, workouts, runs, weights, water, bodyweight
+    // R1A-Deletion: writes frozen while accountDeletionRequests/{uid} is active.
+    // Reads remain allowed so the deletion-in-progress UI can render.
     match /users/{uid}/meals/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
-    // Saved routines — workouts the user copied from the social feed
-    // via PR 4's "Save as routine". Owner-only, identical posture to
-    // workouts/runs/etc.
     match /users/{uid}/savedRoutines/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/workouts/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/runs/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/weights/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
-    // Reminder / notification prefs — useMealReminders, useWorkoutReminders,
-    // useStreakReminder all write here. Without this rule, setDoc was
-    // silently failing (permission denied) and the priming modal re-fired
-    // on every app load because the `primingShown` flag never persisted.
     match /users/{uid}/settings/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
-    // Food page "Quick add" saved items — useFoodFavourites.
     match /users/{uid}/foodFavourites/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/waterLog/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/bodyweightLogs/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/programState/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/streaks/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes
@@ -121,16 +170,19 @@ service cloud.firestore {
     }
 
     // ========================================
-    // Latent subcollections — owner-only, match existing pattern
+    // Latent subcollections — owner-only, write-frozen during deletion
     // ========================================
     match /users/{uid}/shoes/{shoeId} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/logs/{date} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
     match /users/{uid}/stats/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================
@@ -145,7 +197,7 @@ service cloud.firestore {
     // ========================================
     match /users/{uid}/public/{doc} {
       allow read: if request.auth != null;
-      allow write: if isOwner(uid)
+      allow write: if isOwnerAndNotDeleting(uid)
         && request.resource.data.keys().hasOnly([
           'uid',
           'displayName',
@@ -301,8 +353,16 @@ service cloud.firestore {
     // ========================================
     match /feeds/{uid}/items/{doc} {
       allow read: if isOwner(uid);
+      // R1A-Deletion: feed-item creation freezes when EITHER the feed
+      // owner (recipient) OR the writer (poster) is being deleted —
+      // the rule already enforces writer = authorId, so checking
+      // !isDeleting(uid) (feed owner) AND !isDeleting(request.auth.uid)
+      // (poster) covers both. Self-fan-out (writer == owner) is also
+      // gated.
       allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid;
+        && request.resource.data.authorId == request.auth.uid
+        && !isDeleting(uid)
+        && !isDeleting(request.auth.uid);
       allow delete: if isOwner(uid);
     }
 
@@ -341,14 +401,23 @@ service cloud.firestore {
     // ========================================
     match /following/{uid}/users/{targetUid} {
       allow read: if request.auth != null;
-      allow create, delete: if isOwner(uid);
+      // R1A-Deletion: freeze writes when either side is deleting.
+      // Owner (uid) is the user managing their own follow list;
+      // targetUid is the user being followed/unfollowed — both must
+      // be writable.
+      allow create, delete: if isOwnerAndNotDeleting(uid)
+        && !isDeleting(targetUid);
     }
 
     match /followers/{uid}/users/{followerUid} {
       allow read: if request.auth != null;
-      // Follower doc is written by the person doing the following
+      // Follower doc is written by the person doing the following.
+      // R1A-Deletion: writer (followerUid) and recipient (uid) both
+      // must be writable.
       allow create, delete: if request.auth != null
-        && request.auth.uid == followerUid;
+        && request.auth.uid == followerUid
+        && !isDeleting(followerUid)
+        && !isDeleting(uid);
     }
 
     // ========================================
@@ -367,23 +436,36 @@ service cloud.firestore {
     // ========================================
     match /notifications/{uid}/items/{doc} {
       allow read, delete: if isOwner(uid);
+      // R1A-Deletion: freeze writes when either fromUserId (writer)
+      // or uid (recipient) is being deleted.
       allow create: if request.auth != null
-        && request.resource.data.fromUserId == request.auth.uid;
+        && request.resource.data.fromUserId == request.auth.uid
+        && !isDeleting(request.auth.uid)
+        && !isDeleting(uid);
     }
 
     // ========================================
     // Social: Blocks — owner manages their own block list
     // ========================================
     match /blocks/{uid}/users/{targetUid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      // R1A-Deletion: writes frozen during owner's deletion. targetUid
+      // deletion is NOT a freeze condition — a user can still block /
+      // unblock someone whose account is mid-deletion (locally
+      // applied, the executor cleans the doc).
+      allow write: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================
     // Reports — any authenticated user can create, no client reads
     // ========================================
     match /reports/{reportId} {
+      // R1A-Deletion: deleting users cannot file new reports. Existing
+      // reports they filed are anonymised by the executor; in-flight
+      // reports during the deletion window are blocked here.
       allow create: if request.auth != null
-        && request.resource.data.reporterId == request.auth.uid;
+        && request.resource.data.reporterId == request.auth.uid
+        && !isDeleting(request.auth.uid);
       allow read, update, delete: if false;
     }
 
@@ -407,26 +489,40 @@ service cloud.firestore {
     // ========================================
     match /groups/{crewId} {
       allow read: if request.auth != null;
+      // R1A-Deletion: deleting users cannot create new crews. Updates
+      // (including memberCount bumps) are also frozen for the actor
+      // when they're being deleted — the executor handles cleanup
+      // including memberCount decrement.
       allow create: if request.auth != null
-        && request.resource.data.createdBy == request.auth.uid;
-      allow update: if request.auth != null && (
-        // Creator can edit any field on the crew they made.
-        resource.data.createdBy == request.auth.uid
-        // Any authed user can bump memberCount (join/leave flow).
-        || request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['memberCount'])
-      );
+        && request.resource.data.createdBy == request.auth.uid
+        && !isDeleting(request.auth.uid);
+      allow update: if request.auth != null
+        && !isDeleting(request.auth.uid)
+        && (
+          // Creator can edit any field on the crew they made.
+          resource.data.createdBy == request.auth.uid
+          // Any authed user can bump memberCount (join/leave flow).
+          || request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['memberCount'])
+        );
       allow delete: if request.auth != null
         && resource.data.createdBy == request.auth.uid;
     }
 
     // ========================================
-    // Crew members — authenticated read, self-write
+    // Crew members — authenticated read, self-write, write-frozen during deletion
     // ========================================
     match /groups/{crewId}/members/{userId} {
       allow read: if request.auth != null;
+      // R1A-Deletion: a deleting user cannot join new crews. Leaving
+      // a crew (delete) remains allowed even during deletion so the
+      // executor's per-member cleanup can use the same delete path.
+      // However the executor uses Admin SDK which bypasses rules
+      // entirely; the rule here protects against client-driven
+      // races mid-deletion.
       allow create, update: if request.auth != null
-        && request.auth.uid == userId;
+        && request.auth.uid == userId
+        && !isDeleting(userId);
       allow delete: if request.auth != null
         && (request.auth.uid == userId
             || get(/databases/$(database)/documents/groups/$(crewId)).data.createdBy == request.auth.uid);
@@ -436,16 +532,14 @@ service cloud.firestore {
     // User subcollection: Progress photos — owner-only
     // ========================================
     match /users/{uid}/progressPhotos/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
 
-    // User subcollection: GPS privacy zones — owner-only.
-    // Used by usePrivacyZones to redact run start/end points near
-    // home/work etc. Without this rule the catch-all denied reads
-    // and the privacy-zone feature silently produced empty arrays
-    // every session.
+    // User subcollection: GPS privacy zones — owner-only, write-frozen during deletion.
     match /users/{uid}/privacyZones/{doc} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================
@@ -472,7 +566,7 @@ service cloud.firestore {
     // reserved for Admin-SDK support tooling.
     // ========================================
     match /users/{uid}/errors/{doc} {
-      allow create: if isOwner(uid);
+      allow create: if isOwnerAndNotDeleting(uid);
       allow read, update, delete: if false;
     }
 
@@ -491,6 +585,7 @@ service cloud.firestore {
     }
 
     // ========================================
+    // ========================================
     // Audit: successful Stripe Checkout session creations
     //
     // Written exclusively by the createCheckoutSession Cloud Function
@@ -504,6 +599,37 @@ service cloud.firestore {
     // CHECKOUT_AUDIT_COLLECTION / buildCheckoutAuditEntry.
     // ========================================
     match /audit_checkout_sessions/{doc} {
+      allow read, write: if false;
+    }
+
+    // ========================================
+    // R1A-Deletion operational collections
+    //
+    // Server-written via Admin SDK only. Clients can read their own
+    // ledger doc so the AccountSection UI can render the in-progress
+    // / failed / pending state durably (the Chunk 4 reauth UX depends
+    // on this read path). All other collections are server-only.
+    // ========================================
+    match /accountDeletionRequests/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /deletedAccounts/{uid} {
+      // Tombstone is for system-writer guards (Admin SDK reads only).
+      // Clients have no legitimate need to read or write this.
+      allow read, write: if false;
+    }
+
+    match /deletedBillingIdentities/{identifierHash} {
+      // Hashed billing-identifier tombstone for webhook guards.
+      // Server-only.
+      allow read, write: if false;
+    }
+
+    match /paymentEventsPostDeletion/{eventId} {
+      // Webhook log for payment events targeting tombstoned accounts.
+      // Operator review only; Admin SDK reads.
       allow read, write: if false;
     }
   }
