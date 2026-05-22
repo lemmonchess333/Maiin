@@ -121,7 +121,20 @@ export default function AccountSection({
                   setDeleting(true);
                   try {
                     await deleteAccount(user.uid);
-                    toast.success("Account deleted successfully.");
+                    /* On success the server has already deleted the
+                       Auth user, but Firebase Auth's client SDK won't
+                       know until the next token refresh (which may
+                       not fire for minutes). Programmatically sign out
+                       so client state immediately matches server state
+                       — user lands on the login screen instead of
+                       sitting in a half-broken authenticated session
+                       with an orphan token. Mirrors the pattern from
+                       the no-user-record and requires-recent-login
+                       error paths. */
+                    toast.success("Account deleted. Signing you out…", {
+                      duration: 4000,
+                    });
+                    signOut();
                   } catch (err) {
                     /* Branch on the typed Firebase callable error shape
                        (`code` + `details`) for sentinels we control on the
