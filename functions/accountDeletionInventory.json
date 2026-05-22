@@ -760,11 +760,19 @@
         "text": "Comment deleted"
       },
       "preservedOriginalFields": {
-        "policy": "INTERIM — until founder decision on comment body policy lands, the original comment text is NOT preserved server-side. If founder approves moderation-reversibility retention, add originalText field with strict server-only read rules and bounded retention window.",
-        "fields": []
+        "policy": "DECIDED Option C interim (see functions/R1A-DECISION-LOG.md#1). Original comment text retained server-side in `originalText` field for moderation reversibility with bounded 365-day retention aligned to reportsAboutMe. Client renderers MUST NOT display originalText — visible text always reads from the public `text` field (now 'Comment deleted'). Moderation read paths require server-only access via the Admin SDK.",
+        "fields": [
+          {
+            "name": "originalText",
+            "containsPersonalData": true,
+            "retentionWindow": "365 days post-deletion",
+            "readAccess": "server-only via Admin SDK; firestore.rules denies all client reads of this field",
+            "reason": "Reversibility preservation: founder may later choose to restore original visible text under Option B without data already destroyed by interim Option A. 365d matches reportsAboutMe so a deleted-user comment that triggered a moderation report has aligned retention with the report itself."
+          }
+        ]
       },
-      "retentionWindow": "indefinite (after anonymisation)",
-      "reviewedBy": "R1A-Deletion-Chunk1.1",
+      "retentionWindow": "anonymisation indefinite; originalText 365 days post-deletion",
+      "reviewedBy": "R1A-Deletion-Chunk2 (founder decided Option C interim 2026-05-11)",
       "renderSafetyAudit": {
         "renderers": [
           { "file": "src/components/social/CommentSheet.tsx", "line": "139-144", "verdict": "safe — uses BlockAwareAvatar which handles null uid + null photoURL; displayName 'Deleted user' renders normally; text 'Comment deleted' renders normally" },
@@ -772,9 +780,10 @@
           { "file": "src/components/social/BlockAwareAvatar.tsx", "line": "44-60", "verdict": "safe — accepts null/undefined uid and null photoURL by design; falls back to initials from displayName" }
         ],
         "tapToProfileSafety": "No tap-to-profile route on comment author in CommentSheet.tsx or CommentSection.tsx — authorId is not wrapped in a Link or click handler. Deleted-user comments cannot route to /profile/null.",
-        "verdict": "Anonymisation strategy {authorId:null, authorName:'Deleted user', authorPhotoURL:null, text:'Comment deleted'} renders safely with no Chunk 4 render guard required."
+        "originalTextLeakageAudit": "Renderers read only c.text / c.authorName / c.authorId / c.authorPhotoURL — no client reader accesses originalText. firestore.rules denies client reads of originalText (Chunk 2 rule update).",
+        "verdict": "Anonymisation strategy {authorId:null, authorName:'Deleted user', authorPhotoURL:null, text:'Comment deleted'} + server-only originalText retention renders safely with no Chunk 4 render guard required."
       },
-      "reason": "Comments this user posted on other users' activities. Founder decision PENDING on whether visible text should remain (anonymised authorship) or be replaced with 'Comment deleted' tombstone. Interim DESIGN-ONLY default: text becomes 'Comment deleted' (preserves thread structure, removes PII from visible body). Original text NOT preserved server-side in interim — adding moderation-reversibility retention requires founder approval. Anonymisation removes PII linkage to deleted account in both authorship metadata and visible text body."
+      "reason": "Comments this user posted on other users' activities. Decided Option C interim: visible text becomes 'Comment deleted', authorship anonymised, original body retained server-side in originalText for moderation reversibility (365d retention, server-only read). Preserves thread structure + removes PII from visible body + keeps optionality to switch to Option B (preserve substance) later without data loss."
     },
     {
       "key": "reportsAboutMe",

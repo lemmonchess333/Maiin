@@ -5,6 +5,9 @@ const { X509Certificate } = require("crypto");
 const { SignedDataVerifier, Environment } = require("@apple/app-store-server-library");
 const applePurchase = require("./applePurchase");
 
+// R1A-Deletion Chunk 2 — lock helpers for IAP / Apple webhook paths.
+const accountDeletionLocks = require("./lib/accountDeletionLocks");
+
 const BUNDLE_ID = applePurchase.BUNDLE_ID;
 
 /**
@@ -185,6 +188,10 @@ exports.verifyApplePurchase = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. verifyApplePurchase writes users/{uid}
+  // subscription fields via applySubscriptionToUser → cannot run for
+  // a deleting account.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
   const signedTransactionInfo = data && data.signedTransactionInfo;
   if (!signedTransactionInfo || typeof signedTransactionInfo !== "string") {
     throw new functions.https.HttpsError("invalid-argument", "signedTransactionInfo required.");
@@ -279,6 +286,42 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const uid = usersSnap.docs[0].id;
+
+    // R1A-Deletion: system-writer guard. If the resolved uid is mid-
+    // deletion or tombstoned, do NOT recreate the user doc via
+    // applySubscriptionToUser — log a minimised event to
+    // paymentEventsPostDeletion for operator review, dedup-record
+    // the notification so it's never reprocessed, and return 200 so
+    // Apple stops retrying.
+    if (!(await accountDeletionLocks.shouldSystemWriteProceed(admin.firestore(), uid, "appleIAPWebhook"))) {
+      await accountDeletionLocks.recordPaymentEventPostDeletion(admin.firestore(), {
+        provider: "apple",
+        externalTxnId: originalTransactionId,
+        providerEventId: payload.notificationUUID, // Apple-native idempotency key
+        eventType: notificationType,
+        uid,
+      });
+      if (notificationUUID) {
+        try {
+          await admin
+            .firestore()
+            .collection("appleNotifications")
+            .doc(notificationUUID)
+            .set({
+              type: notificationType,
+              originalTransactionId,
+              uid,
+              processedAt: admin.firestore.FieldValue.serverTimestamp(),
+              result: "skipped_account_deleted",
+            });
+        } catch (err) {
+          console.error(`appleIAPWebhook: failed to record post-deletion notification ${notificationUUID}:`, err.message);
+        }
+      }
+      res.status(200).json({ ok: true });
+      return;
+    }
+
     const applied = await applySubscriptionToUser(uid, signedTransactionInfo);
 
     // PR D: finalise dedup record after successful processing.
@@ -314,9 +357,110 @@ exports.restoreApplePurchases = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
   const uid = context.auth.uid;
+  // R1A-Deletion: actor lock. restoreApplePurchases writes users/{uid}
+  // subscription fields → cannot run for a deleting account.
+  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
   const originalTransactionId = data && data.originalTransactionId;
   if (!originalTransactionId) {
     throw new functions.https.HttpsError("invalid-argument", "originalTransactionId required.");
+  }
+  // R1A-Deletion founder decision #3 (A/a2 support-assisted) +
+  // Chunk 2.C Blocker D3 leak fix + Chunk 2.D-billing HMAC switch:
+  //
+  // The original Chunk 2 implementation returned a distinct
+  // `restore-requires-support` errorCode when the originalTransactionId
+  // matched a billing tombstone. An authenticated user A could submit
+  // user B's originalTransactionId (acquired out-of-band) and learn
+  // from the response whether user B previously had a deleted Tropos
+  // account. That's a tombstone-state leak across authenticated
+  // accounts.
+  //
+  // Fix: collapse the tombstoned, not-yours, and not-found outcomes
+  // into one generic `restore-unavailable` errorCode. The client
+  // surface shows identical support copy regardless. The server logs
+  // the actual reason (tombstone vs not-yours vs not-found) via
+  // structured Cloud Logging for operator triage without exposing
+  // the distinction to the caller.
+  //
+  // Note on residual exposure: even with collapsed errors, response-
+  // time differences may differ measurably between tombstone-hit and
+  // not-found branches (tombstone lookup is one Firestore read;
+  // not-found is one Apple API call). The timing-leakage assessment
+  // in R1A-CHUNK2C-EVIDENCE.md §11 documents this as below the
+  // threat model for a consumer fitness app — authenticated users
+  // can't enumerate originalTransactionIds at meaningful scale, and
+  // billing identifiers are not enumerable from public surfaces.
+  //
+  // Full Chunk 4 fix: deprecate the raw-originalTransactionId input
+  // and accept signedTransactionInfo (StoreKit-issued JWS that Apple
+  // verifies belongs to the device user). Tracked in decision-log #3
+  // revisit conditions.
+  //
+  // Chunk 2.D billing HMAC: tombstone key is HMAC-SHA256 with
+  // billing.hmac_secret, NOT plain SHA-256. The previous plain-SHA
+  // reasoning was online-probe-only and ignored offline hash-cracking
+  // after a Firestore export or backup leak. HMAC defeats offline
+  // brute-force without requiring more entropy from the provider IDs.
+  // See R1A-DECISION-LOG.md #4 for full rationale.
+  const billingIdentityHash = require("./lib/billingIdentityHash");
+  let billingTombstoned = false;
+  try {
+    const lookupHashes = billingIdentityHash.billingIdentityLookupHashes(
+      "apple",
+      originalTransactionId,
+    );
+    for (const hash of lookupHashes) {
+      // Rotation-aware: check active and previous-secret hashes.
+      // Any hit means a tombstone exists under either secret.
+      // eslint-disable-next-line no-await-in-loop
+      const billingTombstoneSnap = await admin
+        .firestore()
+        .collection("deletedBillingIdentities")
+        .doc(hash)
+        .get();
+      if (billingTombstoneSnap.exists) {
+        billingTombstoned = true;
+        break;
+      }
+    }
+  } catch (err) {
+    if (err && err.errorCode === "billing-hmac-secret-missing") {
+      // Deploy-time misconfiguration. Log structured warning so
+      // operator notices in Cloud Logging, then fall through to the
+      // collapsed restore-unavailable error. We do NOT proceed with
+      // the restore — fail-closed is safer than recreating user data
+      // for a potentially-tombstoned identity.
+      console.warn(JSON.stringify({
+        r1aEvent: "billing_hmac_secret_missing",
+        uid,
+        provider: "apple",
+      }));
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Restore is currently unavailable for this subscription. Contact support if you need help.",
+        { errorCode: "restore-unavailable" },
+      );
+    }
+    console.error(`restoreApplePurchases: tombstone lookup failed for uid=${uid}`, err);
+    // Treat lookup failure as conservative: don't reveal anything.
+    // Fall through to the collapsed error below.
+  }
+  if (billingTombstoned) {
+    // Structured Cloud Logging — operator sees the real reason via
+    // jsonPayload filters without it appearing in the client response.
+    console.warn(JSON.stringify({
+      r1aEvent: "restore_blocked_by_tombstone",
+      uid,
+      provider: "apple",
+      // Do NOT log the raw originalTransactionId — that's the
+      // probable input parameter and logging it would defeat the
+      // collapse.
+    }));
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Restore is currently unavailable for this subscription. Contact support if you need help.",
+      { errorCode: "restore-unavailable" },
+    );
   }
   try {
     const status = await fetchSubscriptionStatus(originalTransactionId);
@@ -324,7 +468,13 @@ exports.restoreApplePurchases = functions.https.onCall(async (data, context) => 
     const latest = group && group.lastTransactions && group.lastTransactions[0];
     const signedTransactionInfo = latest && latest.signedTransactionInfo;
     if (!signedTransactionInfo) {
-      throw new functions.https.HttpsError("not-found", "No subscription found.");
+      // Collapse not-found into the same error code as tombstoned.
+      // Client renders the same support copy.
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Restore is currently unavailable for this subscription. Contact support if you need help.",
+        { errorCode: "restore-unavailable" },
+      );
     }
     return await applySubscriptionToUser(uid, signedTransactionInfo);
   } catch (err) {

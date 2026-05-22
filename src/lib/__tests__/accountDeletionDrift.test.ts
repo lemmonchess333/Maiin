@@ -442,3 +442,83 @@ describe("accountDeletionDrift — every detected user-keyed write is classified
     expect(unclassified).toEqual([]);
   });
 });
+
+/**
+ * R1A-Deletion Chunk 2.C — testCoverageStatus implementation guard
+ * (decision-log #8 + Chunk 2.C prerequisite item 4).
+ *
+ * Before Chunk 3 marks any inventory entry as
+ * `testCoverageStatus: "implemented"`, this test verifies that the
+ * corresponding `testCoverageKey` appears as a literal substring in at
+ * least one test file under src/lib/__tests__/ (or, in future,
+ * functions/__tests__/ when that test directory exists).
+ *
+ * If the key has no match, the entry is silently overclaiming coverage.
+ * The test fails fast and the implementer must either:
+ *   a) Add a real test that contains the testCoverageKey string in
+ *      a describe/it/comment/import — anywhere in the test source.
+ *   b) Revert the testCoverageStatus to "planned" until the real
+ *      test lands.
+ *
+ * Currently all 40 inventory entries are testCoverageStatus="planned".
+ * The test is a no-op until Chunk 3 starts flipping entries to
+ * "implemented" — but it guards against the silent overclaim.
+ */
+describe("testCoverageStatus=implemented entries map to real test files", () => {
+  const testRoot = resolve(repoRoot, "src/lib/__tests__");
+  const testFiles = walk(testRoot).filter(
+    (f) => f.endsWith(".test.ts") || f.endsWith(".test.tsx"),
+  );
+  // Read every test file once. The check is a substring match — cheap.
+  const allTestSources = testFiles
+    .map((f) => readFileSync(f, "utf8"))
+    .join("\n");
+
+  // Build the list of entries that claim "implemented" coverage.
+  interface CoverageEntry {
+    key: string;
+    testCoverageKey: string;
+    testCoverageStatus: string;
+  }
+  const allEntries: CoverageEntry[] = [
+    ...inventory.included,
+    ...inventory.excluded,
+  ].filter((e: CoverageEntry) => typeof e.testCoverageKey === "string");
+
+  const implementedEntries = allEntries.filter(
+    (e) => e.testCoverageStatus === "implemented",
+  );
+
+  it("the guard exists (sanity)", () => {
+    // This test runs even when zero entries are implemented. The
+    // assertion below is a no-op in that case but the test body
+    // still executes the scan, so a regression that breaks the
+    // file-walker surfaces here.
+    expect(testFiles.length).toBeGreaterThan(0);
+  });
+
+  it("every implemented entry has its testCoverageKey present in a test file", () => {
+    const overclaiming: Array<{ key: string; testCoverageKey: string }> = [];
+    for (const entry of implementedEntries) {
+      if (!allTestSources.includes(entry.testCoverageKey)) {
+        overclaiming.push({ key: entry.key, testCoverageKey: entry.testCoverageKey });
+      }
+    }
+    if (overclaiming.length > 0) {
+      const detail = overclaiming
+        .map((o) => `  ${o.key} claims '${o.testCoverageKey}' — no test file contains that string`)
+        .join("\n");
+      throw new Error(
+        `R1A-Deletion testCoverageStatus overclaim — ${overclaiming.length} entry(ies) claim 'implemented' coverage with no matching test:\n${detail}\n\nFix by adding a test that contains the testCoverageKey string, or revert testCoverageStatus to 'planned'.`,
+      );
+    }
+    expect(overclaiming).toEqual([]);
+  });
+
+  it("at least one entry exists with testCoverageStatus=planned (sanity — until Chunk 3 starts flipping to implemented)", () => {
+    const plannedCount = allEntries.filter((e) => e.testCoverageStatus === "planned").length;
+    // Pre-Chunk-3 expectation: all 40 included entries are planned.
+    // This will tighten as Chunk 3/4 land smoke tests.
+    expect(plannedCount).toBeGreaterThan(0);
+  });
+});
