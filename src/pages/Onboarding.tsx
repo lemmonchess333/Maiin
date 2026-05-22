@@ -633,6 +633,21 @@ export default function Onboarding() {
         toast.error("Connection issue — check your internet and tap Continue again.");
       } else if (code === "unauthenticated" || code === "permission-denied") {
         toast.error("Please sign in again to finish setting up your account.");
+      } else if (code === "resource-exhausted") {
+        /* Server's rate limiter (functions/index.js) returns this
+           after ~5 attempts in a short window. The msg is already
+           user-friendly ("Too many attempts. Please wait."), so
+           surface it verbatim. Falling through to the generic
+           "Something went wrong" — which is what happened on
+           Tropos's first lived recovery scenario — leads users
+           to keep tapping, which compounds the rate-limit hit. */
+        toast.error(msg || "You're trying too fast — wait a minute and try Continue again.");
+      } else if (code === "invalid-argument") {
+        /* Validation failures from the Cloud Function — missing
+           profileData / programState fields, malformed payload,
+           etc. The server msg is specific enough to act on
+           ("Missing required field: weightKg"). */
+        toast.error(msg || "Some setup details are missing — go back and check your inputs.");
       } else {
         toast.error("Something went wrong. Tap Continue to try again, or contact support if it keeps happening.");
       }
