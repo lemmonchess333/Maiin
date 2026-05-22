@@ -90,6 +90,14 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 // ACCOUNT DELETION — server-side, auth-user last
 // ══════════════════════════════════════════════
 //
+// Redeploy marker: forces firebase-tools to rebuild this function's
+// bundle so the R1A kill-switch (#648), Chunk 1 foundation (#652),
+// and Chunk 2 runtime (#653) actually ship to production. Run #58
+// went green but skipped the function upload because the Chunk 3
+// docs PR didn't touch any .js files, so firebase-tools deduped
+// against the stale (pre-#648) deployed bundle from Run #51. This
+// comment forces the bundle hash to differ from production.
+//
 // Pre-W1f deletion ran client-side and deleted the Firebase Auth
 // user FIRST, then tried to clean up Firestore subcollections. As
 // soon as the auth user was gone, subsequent Firestore writes ran
