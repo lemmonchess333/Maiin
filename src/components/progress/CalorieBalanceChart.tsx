@@ -15,7 +15,13 @@ import {
   Cell,
   Tooltip,
 } from "recharts";
-import { estimateBMR, calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
+import { AlertTriangle } from "lucide-react";
+import {
+  estimateBMR,
+  calcDayBalance,
+  getBalanceColor,
+  getPhaseAlignment,
+} from "@/utils/calorieBalance";
 
 export default function CalorieBalanceChart() {
   const { meals } = useMeals();
@@ -207,15 +213,55 @@ export default function CalorieBalanceChart() {
         </div>
       </div>
 
-      {(goal === "lean bulk" || goal === "cut" || goal === "recomp") && (
-        <p className="text-xs font-medium text-center pt-1" style={{ color: getBalanceColor(avgBalance, goal) }}>
-          {goal === "lean bulk"
-            ? avgBalance > 0 ? "Currently in deficit" : "On track for surplus"
-            : goal === "cut"
-              ? avgBalance > 0 ? "On track for deficit" : "Currently in surplus"
-              : Math.abs(avgBalance) <= 200 ? "Eating near maintenance" : avgBalance > 0 ? "Slight deficit" : "Slight surplus"}
-        </p>
-      )}
+      {/* Hist5c pin 5 (audit E1) — phase-aware framing. Reconciles
+          the user's chosen phase (Bulk / Cut / Recomp) with their
+          actual 14-day balance. At-odds states (Bulk+deficit,
+          Cut+surplus) surface as an amber warning so the user
+          reads the conflict explicitly instead of synthesising it
+          from two raw lines. On-track / maintaining states stay as
+          quiet centered text — the chart already tells that story.
+          Replaces the prior "Currently in deficit" line that
+          contradicted the Bulk chip without flagging the conflict. */}
+      {(() => {
+        const alignment = getPhaseAlignment(goal, avgBalance);
+        if (!alignment) return null;
+
+        if (alignment.state === "at-odds") {
+          return (
+            <div
+              role="alert"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{ background: THEME.amber + "1A" }}
+            >
+              <AlertTriangle
+                className="w-3.5 h-3.5 shrink-0"
+                style={{ color: THEME.amber }}
+                aria-hidden="true"
+              />
+              <p
+                className="text-xs font-medium"
+                style={{ color: THEME.amber }}
+              >
+                {alignment.message}
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <p
+            className="text-xs font-medium text-center pt-1"
+            style={{
+              color:
+                alignment.state === "on-track"
+                  ? getBalanceColor(avgBalance, goal)
+                  : "hsl(var(--muted-foreground))",
+            }}
+          >
+            {alignment.message}
+          </p>
+        );
+      })()}
 
       {/* Projected weekly weight change — rule-of-thumb 7700 cal ≈ 1 kg.
           Suppressed under ±100 cal/day because the "projection" becomes
