@@ -165,6 +165,20 @@ export default function AccountSection({
                       );
                     } else if (msg.includes("executor-disabled")) {
                       toast.error("Account deletion is temporarily paused. Please try again later.");
+                    } else if (
+                      msg.includes("no user record") ||
+                      msg.includes("auth/user-not-found")
+                    ) {
+                      /* Double-tap or stale-token retry path: the first
+                         deletion succeeded, then a second call hit
+                         admin.auth().deleteUser(uid) against an already-
+                         gone user. The user's actually deleted at this
+                         point — sign them out so the client state matches
+                         server state, then take them to login. */
+                      toast.success("Account already deleted. Signing you out…", {
+                        duration: 4000,
+                      });
+                      signOut();
                     } else {
                       toast.error(msg);
                     }
