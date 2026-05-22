@@ -123,9 +123,29 @@ export default function AccountSection({
                     await deleteAccount(user.uid);
                     toast.success("Account deleted successfully.");
                   } catch (err) {
+                    /* Branch on the typed Firebase callable error shape
+                       (`code` + `details`) for sentinels we control on the
+                       server. Fall back to message substring matching for
+                       sentinels surfaced by the Firebase Auth SDK itself
+                       (e.g. `requires-recent-login`), which we don't get
+                       to reshape. The substring branch for `executor-disabled`
+                       below is a defence against older clients or unexpected
+                       wrap paths where `details` was dropped — newer code
+                       paths hit the typed branch above. */
+                    const fe = err as {
+                      code?: string;
+                      details?: { reason?: string };
+                    } | null;
                     const msg = err instanceof Error ? err.message : "Failed to delete account";
-                    if (msg.includes("requires-recent-login")) {
+                    if (
+                      fe?.code === "functions/failed-precondition" &&
+                      fe?.details?.reason === "executor-disabled"
+                    ) {
+                      toast.error("Account deletion is temporarily paused. Please try again later.");
+                    } else if (msg.includes("requires-recent-login")) {
                       toast.error("Please sign out and sign back in, then try again.");
+                    } else if (msg.includes("executor-disabled")) {
+                      toast.error("Account deletion is temporarily paused. Please try again later.");
                     } else {
                       toast.error(msg);
                     }

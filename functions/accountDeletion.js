@@ -98,6 +98,63 @@ async function deleteAccount({
   uid,
   logger = console,
 }) {
+  /* R1A Stress 7 kill-switch — operator-controlled emergency stop
+     via `system/config.deletionExecutorEnabled`. Read at start; if
+     strictly === false, abort before any deletion step.
+     Fail-open invariants (lock-out defence):
+       - Missing doc → ENABLED
+       - Missing field → ENABLED
+       - Field set to non-boolean (`"false"` string, `null`, `0`) →
+         ENABLED, with a `kill_switch_malformed` warning so the
+         operator sees that their write didn't take effect (most
+         common cause: Firebase Console renders the value as a
+         string when the field type wasn't pre-set).
+       - Firestore read error → ENABLED (matches the `isFlagEnabled`
+         helper in index.js; a transient Firestore blip on this read
+         must not disable the entire deletion fleet).
+     TOCTOU note: the switch is read once at the start of an
+     invocation. Flipping the flag mid-flight does NOT stop an
+     in-progress deletion; it only prevents new ones. Operators
+     should treat the switch as "stop accepting new requests"
+     rather than "abort all in-flight work". For "rogue executor"
+     incidents (something is calling deleteMyAccount maliciously)
+     the kill-switch alone is insufficient — disable the function
+     directly or rotate the service account.
+     The thrown error carries `code: "executor-disabled"` AND a
+     `details: { reason }` payload so the callable wrapper in
+     index.js can build a typed HttpsError("failed-precondition")
+     with structured `details` for the client to branch on. Log
+     lines use dotted event names (`deleteAccount.kill_switch_*`)
+     for Cloud Logging filtering. */
+  let killSwitchActive = false;
+  try {
+    const configSnap = await firestore.doc("system/config").get();
+    if (configSnap.exists) {
+      const value = configSnap.data()?.deletionExecutorEnabled;
+      if (value === false) {
+        killSwitchActive = true;
+      } else if (value !== undefined && typeof value !== "boolean") {
+        logger.warn("deleteAccount.kill_switch_malformed", {
+          uid,
+          valueType: typeof value,
+          value: String(value),
+        });
+      }
+    }
+  } catch (err) {
+    logger.warn("deleteAccount.kill_switch_read_failed", {
+      uid,
+      error: err.message,
+    });
+  }
+  if (killSwitchActive) {
+    logger.warn("deleteAccount.kill_switch_trip", { uid });
+    const killSwitchError = new Error("executor-disabled");
+    killSwitchError.code = "executor-disabled";
+    killSwitchError.details = { reason: "executor-disabled" };
+    throw killSwitchError;
+  }
+
   // 1. User's own subcollections
   for (const sub of USER_SUBCOLLECTIONS) {
     const snap = await firestore.collection("users").doc(uid).collection(sub).get();
