@@ -242,6 +242,24 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **deploy-firestore.yml:** Deploys Firestore security rules
 - **Firebase project:** `adaptive-fitness-af8bb`
 
+### Cloud Functions deploy — known gotchas
+
+These lessons cost a full day to find. Read before changing the deploy pipeline.
+
+- **firebase-tools deduplicates uploads against the deployed bundle hash.** If a `functions/**` PR doesn't change any `.js` files (e.g. a docs-only PR like a CHANGELOG, README, or new markdown), the workflow triggers but `firebase deploy --only functions` will skip the actual upload and report success. Production stays on the previous bundle — but CI is green and nothing surfaces the drift. **deploy-functions.yml has a `Force unique bundle hash` step** that prepends a per-commit comment marker to `functions/index.js` before deploy, defeating the dedup. Do not remove that step; if you must, add a different mechanism that guarantees a fresh bundle hash per workflow run.
+- **A cascade of failed deploys followed by one docs-only success is the worst case.** If billing or auth issues cause N consecutive deploys to fail at the deploy step, then the next PR happens to be docs-only and the dedup logic kicks in, the workflow reports success but production has been stranded for the entire N-day window. The build-marker step prevents this scenario, but the **`workflow_dispatch` trigger** is the escape hatch — re-run the workflow manually from the Actions UI without pushing a new commit.
+- **Blaze plan is required for any Cloud Functions deploy.** Scheduled functions (Pub/Sub), Apple/Stripe webhook secrets, and the build-step machinery all live behind Blaze. If billing is detached (card expiry, manual unlink, etc.), every functions/-touching PR fails with `Extensions require the Blaze plan` — which is misleading; Tropos has no extensions, the error is firebase-tools' generic guard for any Blaze-only feature.
+- **`maxInstances` is mandatory on every HTTP and Firestore-trigger function.** Cloud Functions v1 has NO default cap; a runaway client / DDoS / accidental call-in-render loop can spin up thousands of containers and rack up hundreds of pounds in hours. `functions/index.js` declares three tiers (`DEFAULT_HTTP_CAP = 100`, `ADMIN_HTTP_CAP = 10`, `TRIGGER_CAP = 50`) and uses `functions.runWith({...})` on each export. Don't add a new HTTP/trigger function without one of those caps.
+- **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a *necessary but not sufficient* signal — see the dedup gotcha above. After a deploy that touches `functions/`, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
+
+### Account-deletion safety rails
+
+The deletion executor (`functions/accountDeletion.js`) is irreversible by design. Several rails exist; understand them before changing this code:
+
+- **Kill-switch:** `system/config.deletionExecutorEnabled = false` in Firestore halts all new deletions before any side effect. The executor reads this on every invocation and throws `executor-disabled` if explicitly false. Missing field / missing doc / read failure all default to ENABLED (lock-out defence). To pause deletions in an incident, write that field as a **boolean** (Firebase Console renders `"false"` as a string by default — the malformed-type case logs `deleteAccount.kill_switch_malformed` and fails open).
+- **Step ordering invariant:** Firestore + Storage first, Auth user LAST. The pre-W1f client-side deletion ran `auth.deleteUser` first, then orphaned Firestore writes ran as anon and either hit permission-denied or partially succeeded — leaving "ghost user with orphan data". The current executor preserves the inverse: any throw before step 7 leaves the user with valid credentials so they can retry.
+- **Client-side recovery paths:** `AccountSection.tsx` handles four post-call states explicitly — `executor-disabled` (kill-switch active), `requires-recent-login` (with a one-tap Sign Out action in the toast), `auth/user-not-found` (already-deleted, auto-signs-out), and successful deletion (also auto-signs-out so client state matches server state). Do not collapse these into a single generic toast — each state has a different recovery action.
+
 ## Design for the user base, not the current state
 
 Tropos is pre-launch with one user. That is a temporary condition. Every UX, engineering, and architecture decision must be made for the eventual user base (1000+ users), not for the convenience of the current single-user reality.
