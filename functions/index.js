@@ -107,22 +107,29 @@ exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
       auth: admin.auth(),
       storageBucket: admin.storage().bucket(),
       uid,
-      logger: { warn: (...args) => console.warn(...args) },
+      // functions.logger emits structured Cloud Logging payloads so
+      // the dotted event names (`deleteAccount.kill_switch_*`)
+      // become queryable jsonPayload fields, not opaque textPayload.
+      logger: functions.logger,
     });
     return { ok: true };
   } catch (err) {
-    console.error(`deleteMyAccount: uid=${uid}`, err);
     // Kill-switch trip is an intentional operator-controlled abort,
-    // not an internal failure. Surface as `failed-precondition` so
-    // the client can branch on `err.code` and show actionable copy
-    // ("temporarily paused, try again later") rather than a generic
-    // error toast.
+    // not an internal failure. Surface as `failed-precondition` with
+    // a structured `details.reason` so the client can branch on a
+    // typed code instead of substring-matching the message.
     if (err && err.code === "executor-disabled") {
+      functions.logger.warn("deleteMyAccount.kill_switch_trip", { uid });
       throw new functions.https.HttpsError(
         "failed-precondition",
-        "executor-disabled",
+        "Account deletion is temporarily paused. Please try again later.",
+        { reason: "executor-disabled" },
       );
     }
+    functions.logger.error("deleteMyAccount.error", {
+      uid,
+      message: err && err.message,
+    });
     throw new functions.https.HttpsError("internal", err.message);
   }
 });

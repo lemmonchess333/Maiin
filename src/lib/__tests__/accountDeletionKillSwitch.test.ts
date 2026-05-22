@@ -213,6 +213,27 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
     ).rejects.toMatchObject({ code: "executor-disabled" });
   });
 
+  it("error carries `details.reason='executor-disabled'` for the HttpsError wrapper", async () => {
+    /* The callable wrapper rebuilds the error as
+       HttpsError("failed-precondition", "...", { reason: "executor-disabled" }).
+       The wrapper needs to read `details` off the rethrown error;
+       pin the shape so a future refactor that drops the field is
+       caught here, not by client-side regressions. */
+    const { firestore, auth, storage } = buildStubs({
+      configDoc: { deletionExecutorEnabled: false },
+    });
+
+    await expect(
+      deleteAccount({
+        firestore,
+        auth,
+        storageBucket: storage,
+        uid: UID,
+        logger: silentLogger,
+      }),
+    ).rejects.toMatchObject({ details: { reason: "executor-disabled" } });
+  });
+
   it("proceeds (fail-open) when the system/config read itself throws", async () => {
     /* Lock-out defence — transient Firestore failure on the config
        read must NOT disable the entire deletion fleet. Matches the
@@ -233,5 +254,122 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
     });
 
     expect(auth.deleteUser).toHaveBeenCalledWith(UID);
+  });
+
+  /* Malformed-shape coverage — Stress 7 ultra-review gap.
+     A kill-switch that silently fails open on `"false"` (string)
+     is worse than no kill-switch, because the operator sees their
+     write land in the Console and assumes the function honoured it.
+     The impl treats non-boolean values as ENABLED (fail-open) but
+     emits a `kill_switch_malformed` warn so the operator gets a
+     log signal that their write didn't take effect. These tests
+     pin both halves — proceed AND warn. */
+  describe("malformed deletionExecutorEnabled values (fail-open + warn)", () => {
+    const cases: Array<[string, unknown]> = [
+      ['string "false"', "false"],
+      ["null", null],
+      ["number 0", 0],
+      ["string 'true'", "true"],
+    ];
+    for (const [label, value] of cases) {
+      it(`proceeds and warns on malformed shape: ${label}`, async () => {
+        const warn = vi.fn();
+        const logger = { warn, error: () => {}, info: () => {} };
+        const { firestore, auth, storage } = buildStubs({
+          configDoc: { deletionExecutorEnabled: value },
+        });
+
+        await deleteAccount({
+          firestore,
+          auth,
+          storageBucket: storage,
+          uid: UID,
+          logger,
+        });
+
+        expect(auth.deleteUser).toHaveBeenCalledWith(UID);
+        expect(warn).toHaveBeenCalledWith(
+          "deleteAccount.kill_switch_malformed",
+          expect.objectContaining({ uid: UID }),
+        );
+      });
+    }
+
+    it("proceeds WITHOUT a malformed warn when the field is simply missing (vs wrong-typed)", async () => {
+      /* A missing field is the legitimate default-on case, not an
+         operator mistake — distinguish it from malformed values so
+         the warn-rate metric isn't polluted by every deletion. */
+      const warn = vi.fn();
+      const logger = { warn, error: () => {}, info: () => {} };
+      const { firestore, auth, storage } = buildStubs({
+        configDoc: { someOtherField: "value" },
+      });
+
+      await deleteAccount({
+        firestore,
+        auth,
+        storageBucket: storage,
+        uid: UID,
+        logger,
+      });
+
+      expect(auth.deleteUser).toHaveBeenCalledWith(UID);
+      expect(warn).not.toHaveBeenCalledWith(
+        "deleteAccount.kill_switch_malformed",
+        expect.anything(),
+      );
+    });
+  });
+
+  it("emits structured trip event `deleteAccount.kill_switch_trip` with uid (pinned for log-based metric)", async () => {
+    /* The dotted event name is the grep target for the Cloud Logging
+       log-based metric and on-call runbook. Pinning it here couples
+       the runbook's filter to the test suite — change the event name,
+       this test fails, the runbook gets updated in the same PR. */
+    const warn = vi.fn();
+    const logger = { warn, error: () => {}, info: () => {} };
+    const { firestore, auth, storage } = buildStubs({
+      configDoc: { deletionExecutorEnabled: false },
+    });
+
+    await expect(
+      deleteAccount({
+        firestore,
+        auth,
+        storageBucket: storage,
+        uid: UID,
+        logger,
+      }),
+    ).rejects.toThrow("executor-disabled");
+
+    expect(warn).toHaveBeenCalledWith(
+      "deleteAccount.kill_switch_trip",
+      expect.objectContaining({ uid: UID }),
+    );
+  });
+
+  it("emits structured read-failed event when the config read throws (no false alarm as a trip)", async () => {
+    const warn = vi.fn();
+    const logger = { warn, error: () => {}, info: () => {} };
+    const { firestore, auth, storage } = buildStubs({
+      configReadError: new Error("firestore-unavailable"),
+    });
+
+    await deleteAccount({
+      firestore,
+      auth,
+      storageBucket: storage,
+      uid: UID,
+      logger,
+    });
+
+    expect(warn).toHaveBeenCalledWith(
+      "deleteAccount.kill_switch_read_failed",
+      expect.objectContaining({ uid: UID, error: "firestore-unavailable" }),
+    );
+    expect(warn).not.toHaveBeenCalledWith(
+      "deleteAccount.kill_switch_trip",
+      expect.anything(),
+    );
   });
 });
