@@ -9,7 +9,7 @@
  * through it without touching the call sites.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type HomeEvent =
   | "home_initial_render_ms"
@@ -48,9 +48,5 @@ export interface HomeEventMetadata {
 }
 
 export function track(event: HomeEvent, metadata: HomeEventMetadata = {}): void {
-  try {
-    logger.log(`[home] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[home] track failed", { event, err: String(err) });
-  }
+  emit("home", event, metadata as Record<string, unknown>);
 }

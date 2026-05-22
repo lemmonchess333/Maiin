@@ -10,7 +10,7 @@
  * the call sites.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type ProgrammeEvent =
   | "programme_section_viewed"
@@ -47,9 +47,5 @@ export function track(
   event: ProgrammeEvent,
   metadata: ProgrammeEventMetadata = {},
 ): void {
-  try {
-    logger.log(`[programme] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[programme] track failed", { event, err: String(err) });
-  }
+  emit("programme", event, metadata as Record<string, unknown>);
 }

@@ -12,7 +12,7 @@
  * grepping free-form log strings.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 import type { MealKey } from "@/components/food/mealConstants";
 
 export type FoodEvent =
@@ -53,9 +53,5 @@ export interface FoodEventMetadata {
 }
 
 export function track(event: FoodEvent, metadata: FoodEventMetadata = {}): void {
-  try {
-    logger.log(`[food] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[food] track failed", { event, err: String(err) });
-  }
+  emit("food", event, metadata as Record<string, unknown>);
 }
