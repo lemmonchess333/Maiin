@@ -98,6 +98,17 @@ async function deleteAccount({
   uid,
   logger = console,
 }) {
+  /* R1A Stress 7 kill-switch — operator-controlled emergency stop
+     via `system/config.deletionExecutorEnabled`. Read at start; if
+     explicitly false, abort before any deletion step. Missing doc
+     OR missing field defaults to ENABLED so the operator can't
+     accidentally lock themselves out by forgetting to provision
+     config. */
+  const configSnap = await firestore.doc("system/config").get();
+  if (configSnap.exists && configSnap.data()?.deletionExecutorEnabled === false) {
+    throw new Error("executor-disabled");
+  }
+
   // 1. User's own subcollections
   for (const sub of USER_SUBCOLLECTIONS) {
     const snap = await firestore.collection("users").doc(uid).collection(sub).get();
