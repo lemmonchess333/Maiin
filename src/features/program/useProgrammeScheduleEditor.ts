@@ -57,6 +57,20 @@ import {
 import { chooseSplit } from "./programEngine";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
+/* Restructure-failure copy. The two realistic shapes here are a
+   Firestore write failure (permission-denied / unavailable /
+   unauthenticated / deadline-exceeded) and a regenerateProgram bug
+   that bubbles out. Surface what the user can do about it instead
+   of a flat "Something went wrong". */
+function friendlyRestructureError(error: unknown): string {
+  const code = (error as { code?: string })?.code;
+  if (code === "permission-denied") return "You don't have permission to change this schedule.";
+  if (code === "unauthenticated") return "Please sign in again to save changes.";
+  if (code === "unavailable") return "You're offline — changes will save when you reconnect.";
+  if (code === "deadline-exceeded") return "Saving took too long. Please try again.";
+  return "Couldn't rebuild your programme. Please try again.";
+}
+
 export interface UseProgrammeScheduleEditorArgs {
   profile: UserProfile | null;
   updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
@@ -222,7 +236,7 @@ export function useProgrammeScheduleEditor(
       void newSplit;
     } catch (error) {
       logger.error("handleConfirmRestructure failed:", error);
-      toast.error("Something went wrong. Please try again.");
+      toast.error(friendlyRestructureError(error));
     } finally {
       setRestructuring(false);
     }
