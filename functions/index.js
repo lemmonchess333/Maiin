@@ -87,6 +87,27 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 }
 
 // ══════════════════════════════════════════════
+// COST-RUNAWAY CAPS — maxInstances on every function
+// ══════════════════════════════════════════════
+//
+// Firebase Cloud Functions v1 has NO default cap on concurrent
+// instances — a misbehaving client (or DDoS, or accidental loop)
+// can fan out to thousands of containers and burn hundreds of
+// pounds in hours. These three tiers cap that blast radius.
+//
+// Numbers picked for current scale (pre-launch through ~1000
+// active users). At 1000 users:
+//   - HTTP callables peak ~10-20 concurrent across all functions
+//   - Firestore triggers fan out per write (cap protects against
+//     a runaway write loop, not normal usage)
+//   - Admin endpoints are operator-only, almost never invoked
+//
+// Re-tune at scale once real cost-per-user data is available.
+const DEFAULT_HTTP_CAP = { maxInstances: 100 };
+const ADMIN_HTTP_CAP = { maxInstances: 10 };
+const TRIGGER_CAP = { maxInstances: 50 };
+
+// ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
 // ══════════════════════════════════════════════
 //
@@ -110,7 +131,7 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 // subcollection + author-keyed top-level collection, then deletes
 // the Auth user as the final step. Partial failure leaves the user
 // logged in and retryable rather than stranded.
-exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
+exports.deleteMyAccount = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
@@ -309,7 +330,7 @@ async function isFlagEnabled(key) {
 
 const { validatePlanPayload } = require("./lib/validatePlanPayload");
 
-exports.completeOnboarding = functions.https.onCall(async (data, context) => {
+exports.completeOnboarding = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -471,7 +492,7 @@ exports.completeOnboarding = functions.https.onCall(async (data, context) => {
 // `planBuilder().profileUpdates`), not a full profile — Configure
 // Plan is an edit operation, not a create. Existing fields on
 // `users/{uid}` outside the patch are preserved via `merge: true`.
-exports.configurePlan = functions.https.onCall(async (data, context) => {
+exports.configurePlan = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -559,7 +580,7 @@ exports.configurePlan = functions.https.onCall(async (data, context) => {
 // EXISTING — analyzeFood (untouched)
 // ══════════════════════════════════════════════
 
-exports.analyzeFood = functions.https.onRequest((req, res) => {
+exports.analyzeFood = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
       if (req.method !== "POST") {
@@ -694,7 +715,7 @@ exports.analyzeFood = functions.https.onRequest((req, res) => {
 // AI TEXT FOOD PARSING (Pro feature)
 // ══════════════════════════════════════════════
 
-exports.analyzeFoodText = functions.https.onRequest((req, res) => {
+exports.analyzeFoodText = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
       if (req.method !== "POST") {
@@ -821,7 +842,7 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
 // GEMINI TEXT PROXY — keeps API key server-side
 // ══════════════════════════════════════════════
 
-exports.askGeminiText = functions.https.onCall(async (data, context) => {
+exports.askGeminiText = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -918,7 +939,7 @@ const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 // FOLLOWUP(payment-security): tighten per-uid rate limiting on
 //   createCheckoutSession; the existing 5/10min check uses body.uid
 //   pre-reorder semantics and should re-key on authUser.uid.
-exports.createCheckoutSession = functions.https.onRequest((req, res) => {
+exports.createCheckoutSession = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
   corsForPayments(req, res, async () => {
     try {
       if (req.method !== "POST") {
@@ -1118,7 +1139,7 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+exports.stripeWebhook = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest(async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
     return;
@@ -1391,7 +1412,7 @@ const db = admin.firestore();
 
 // ── 1) Callable: manual / on-demand compute ──
 
-exports.computePerformanceWeek = functions.https.onCall(async (data, context) => {
+exports.computePerformanceWeek = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -1622,7 +1643,7 @@ async function syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeco
 
 // ── 4) Trigger: instant recompute on new workout ──
 
-exports.onWorkoutCreated = functions.firestore
+exports.onWorkoutCreated = functions.runWith(TRIGGER_CAP).firestore
   .document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
@@ -1691,7 +1712,7 @@ exports.onWorkoutCreated = functions.firestore
 
 // ── 5) Trigger: instant recompute on new run ──
 
-exports.onRunCreated = functions.firestore
+exports.onRunCreated = functions.runWith(TRIGGER_CAP).firestore
   .document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
@@ -2003,7 +2024,7 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
 // pull-to-refresh-like fallback when you've just logged something
 // and want the standings to reflect it). Only the user's primary
 // crewId is allowed — no arbitrary crew computes from the client.
-exports.refreshMyCrewLeaderboard = functions.https.onCall(async (data, context) => {
+exports.refreshMyCrewLeaderboard = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -2107,7 +2128,7 @@ function _inferCategoryForBackfill(name, exerciseId) {
   return "core";
 }
 
-exports.backfillMyActivityCategories = functions.https.onCall(async (data, context) => {
+exports.backfillMyActivityCategories = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -2197,7 +2218,7 @@ exports.backfillMyActivityCategories = functions.https.onCall(async (data, conte
  * feed fan-out, but leaves the doc intact so the author can
  * appeal and a moderator can review.
  */
-exports.onActivityCreated = functions.firestore
+exports.onActivityCreated = functions.runWith(TRIGGER_CAP).firestore
   .document("activities/{activityId}")
   .onCreate(async (snap, context) => {
     try {
@@ -2245,7 +2266,7 @@ exports.onActivityCreated = functions.firestore
  * Stores a redacted record under /commentModeration/{auto-id}
  * so the report queue can audit deletion volume.
  */
-exports.onCommentCreated = functions.firestore
+exports.onCommentCreated = functions.runWith(TRIGGER_CAP).firestore
   .document("comments/{activityId}/items/{commentId}")
   .onCreate(async (snap, context) => {
     try {
@@ -2306,7 +2327,7 @@ exports.onCommentCreated = functions.firestore
  * a runaway list of pending reports means we need to add
  * pagination + filtering, not return 10k docs to the client.
  */
-exports.listPendingReports = functions.https.onCall(async (data, context) => {
+exports.listPendingReports = functions.runWith(ADMIN_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
@@ -2402,7 +2423,7 @@ exports.listPendingReports = functions.https.onCall(async (data, context) => {
  * visibility: 'private'` in the same call so a moderator can
  * dismiss + hide in one click.
  */
-exports.resolveReport = functions.https.onCall(async (data, context) => {
+exports.resolveReport = functions.runWith(ADMIN_HTTP_CAP).https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
   }
