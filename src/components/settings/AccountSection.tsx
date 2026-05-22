@@ -143,7 +143,26 @@ export default function AccountSection({
                     ) {
                       toast.error("Account deletion is temporarily paused. Please try again later.");
                     } else if (msg.includes("requires-recent-login")) {
-                      toast.error("Please sign out and sign back in, then try again.");
+                      /* Chunk 4 lite: one-tap sign-out from the toast so the
+                         user doesn't have to scroll back to the Sign Out
+                         button. After signing out + signing back in, the
+                         server's recent-auth gate (Chunk 2) will be
+                         satisfied on the next deletion attempt. Full inline
+                         reauth (Email/Password / Google / Apple via
+                         reauthenticateWithCredential / reauthenticateWithPopup)
+                         lives in the proper Chunk 4 implementation — this
+                         is the smaller in-between that ships value tonight
+                         without locking in the multi-provider design. */
+                      toast.error(
+                        "Sign in again to delete your account.",
+                        {
+                          action: {
+                            label: "Sign out",
+                            onClick: () => { signOut(); },
+                          },
+                          duration: 10000,
+                        },
+                      );
                     } else if (msg.includes("executor-disabled")) {
                       toast.error("Account deletion is temporarily paused. Please try again later.");
                     } else {
