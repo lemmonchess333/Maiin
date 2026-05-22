@@ -20,6 +20,7 @@ import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
+import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
@@ -510,10 +511,14 @@ export default function History() {
 
     const weekMap: Record<string, number> = {};
     const sessionWeekMap: Record<string, number> = {};
+    /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
+       daily; at 3M we bin weekly (Sunday-anchored, the prior
+       universal behaviour); at 6M/1Y we bin monthly. Avoids the
+       52-bar unreadable mess at long windows. */
+    const granularity = granularityForRange(rangeDays);
     filtered.forEach((w) => {
       const d = new Date(w.date);
-      d.setDate(d.getDate() - d.getDay());
-      const key = d.toISOString().split('T')[0];
+      const key = binKeyForDate(d, granularity);
       const vol = w.exercises.reduce(
         (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
       );
@@ -586,7 +591,7 @@ export default function History() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 8);
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
+    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -902,6 +907,7 @@ export default function History() {
                 <VolumeChart
                   data={liftingData.weeklyVolume}
                   accentColor={THEME.lifting}
+                  granularity={liftingData.weeklyVolumeGranularity}
                 />
               </SectionErrorBoundary>
               <MuscleHeatMap

@@ -3,6 +3,10 @@ import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
 import { THEME } from "@/lib/theme";
 import {
+  T3_PROJECTION_MIN_WINDOW_DAYS,
+  T3_PROJECTION_MIN_POINTS,
+} from "@/lib/dataConfidence";
+import {
   ResponsiveContainer,
   ComposedChart,
   Line,
@@ -113,20 +117,36 @@ export function TrendWeight() {
     ? convert(Math.abs(currentTrend - goalWeight))
     : null;
 
+  // Span the dataset covers. Used both by the projection gate
+  // below AND by the Hist5d T3 thin-data check (≥1M window AND
+  // ≥5 points OR the projection lies — see hasEnoughForProjection).
+  const firstDate = data.length > 0 ? new Date(data[0].date) : null;
+  const lastDate = data.length > 0 ? new Date(data[data.length - 1].date) : null;
+  const daysSpan =
+    firstDate && lastDate
+      ? (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+      : 0;
+
+  // Hist5d pin 3 / PR 3 — T3 projection gate. Replaces the prior
+  // 14-day / 2-point threshold which let TrendWeight emit a goal
+  // projection ("goal by 24 Jul") fitted to 3-4 noisy points across
+  // a short window — pure noise pretending to be signal. New gate
+  // matches the unified data-confidence policy in dataConfidence.ts
+  // (≥30 days AND ≥5 distinct points).
+  const hasEnoughForProjection =
+    data.length >= T3_PROJECTION_MIN_POINTS
+    && daysSpan >= T3_PROJECTION_MIN_WINDOW_DAYS;
+
   // Projected goal-reach date. Linear extrapolation from the current
   // trend slope — not a prediction engine, just a motivational
   // "at this rate, about X weeks away." Only shown when:
-  //   1. The data spans at least 14 days (slope is too noisy under that),
+  //   1. hasEnoughForProjection (T3 gate above),
   //   2. The trend is moving in the direction of the goal, and
   //   3. The projected ETA is under ~2 years (otherwise it becomes
   //      demotivating noise — "your goal is 847 days away").
   const projectedGoal: { date: string; weeks: number } | null = (() => {
     if (!goalWeight || !Number.isFinite(goalWeight)) return null;
-    if (data.length < 2) return null;
-    const firstDate = new Date(data[0].date);
-    const lastDate = new Date(data[data.length - 1].date);
-    const daysSpan = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSpan < 14) return null;
+    if (!hasEnoughForProjection) return null;
     const slope = (data[data.length - 1].trend - data[0].trend) / daysSpan; // kg/day
     const remaining = goalWeight - currentTrend; // +ve if goal is higher, -ve if lower
     // Directions mismatch → not on track for goal, suppress.
@@ -304,6 +324,19 @@ export function TrendWeight() {
           At this rate, goal by{" "}
           <span className="text-foreground font-medium">{projectedGoal.date}</span>
           {" · "}~{projectedGoal.weeks} {projectedGoal.weeks === 1 ? "week" : "weeks"}
+        </p>
+      )}
+      {/* Hist5d pin 3 — surface the thin-data reason when the user
+          has a goal set but we suppressed the projection. Silent for
+          goal-not-set users (no projection promised) and silent for
+          on-track users (projection rendered above). Only fires when
+          the user has a goal AND we're holding back because the data
+          isn't yet trustworthy. */}
+      {!projectedGoal && goalWeight && Number.isFinite(goalWeight) && !hasEnoughForProjection && (
+        <p className="text-xs text-muted-foreground text-center pt-1">
+          Building trend · log {T3_PROJECTION_MIN_POINTS - data.length > 0
+            ? `${T3_PROJECTION_MIN_POINTS - data.length} more`
+            : "more"} for projection
         </p>
       )}
     </div>
