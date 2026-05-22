@@ -149,11 +149,27 @@ export function normalisePerformanceDoc(
       recoveryScore: safeNum(data.recoveryScore),
       adherenceScore: safeNum(data.adherenceScore),
     };
+  /* PR 7b follow-up — multipliers defensive default. Pre-PI1a docs
+     (and any future schema drift) may not include this field;
+     PerformanceTab reads `m.liftProgression` / `m.runVolume` /
+     `m.runPaceAdjustmentPct` directly, so an undefined `multipliers`
+     would crash the entire Performance accordion (RouteErrorBoundary
+     fallback observed by the user). Fall back to the legacy
+     individual fields with safeNum so render is always defensive.
+     Multipliers default to 1.0 (no-effect) since their tooltip copy
+     reads them as ratios above/below baseline. */
+  const multipliers =
+    (data.multipliers as PerformanceWeekDoc["multipliers"] | undefined) ?? {
+      liftProgression: safeNum(data.liftProgression) || 1,
+      runVolume: safeNum(data.runVolume) || 1,
+      runPaceAdjustmentPct: safeNum(data.runPaceAdjustmentPct),
+    };
   const signals = normaliseSignals(weekKey, data.signals);
   return {
     ...data,
     weekKey,
     breakdown,
+    multipliers,
     signals,
   } as PerformanceWeekDoc;
 }
