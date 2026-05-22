@@ -19,10 +19,8 @@ import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
-import AnalyticsAnchorChips, {
-  ANCHOR_CHIP_COLORS,
-  type AnchorChip,
-} from "@/components/analytics/AnalyticsAnchorChips";
+/* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
+   below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
@@ -969,40 +967,6 @@ export default function History() {
   const renderLiftingEmptyNote = liftingHasLifetime && !liftingHasWindow;
   const renderNutritionEmptyNote = nutritionHasLifetime && !nutritionHasWindow;
 
-  /* Hist5b pin 1 — chip list mirrors the currently-visible sections.
-     Tier-1 suppressed sections (no lifetime + no window data) don't
-     appear in the chip menu — there's nothing to jump to. Lifetime
-     gets its own chip when the lifetime section renders.
-     Performance is always present on Analytics (PR 6) since PI is
-     a system-level metric, not a sport. */
-  const anchorChips: AnchorChip[] = useMemo(() => {
-    const chips: AnchorChip[] = [
-      { id: "analytics-performance", label: "Performance", color: THEME.brand },
-    ];
-    if (showRunningSection) {
-      chips.push({ id: "analytics-running", label: "Running", color: ANCHOR_CHIP_COLORS.running });
-    }
-    if (showLiftingSection) {
-      chips.push({ id: "analytics-lifting", label: "Lifting", color: ANCHOR_CHIP_COLORS.lifting });
-    }
-    if (showNutritionSection) {
-      chips.push({ id: "analytics-nutrition", label: "Nutrition", color: ANCHOR_CHIP_COLORS.nutrition });
-    }
-    const hasLifetimeData =
-      lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0;
-    if (hasLifetimeData) {
-      chips.push({ id: "analytics-lifetime", label: "Lifetime", color: ANCHOR_CHIP_COLORS.lifetime });
-    }
-    return chips;
-  }, [
-    showRunningSection,
-    showLiftingSection,
-    showNutritionSection,
-    lifetimeTotals.runCount,
-    lifetimeTotals.liftCount,
-    lifetimeTotals.daysLogged,
-  ]);
-
   return (
     <motion.div
       ref={pullContainerRef}
@@ -1066,11 +1030,17 @@ export default function History() {
               the Analytics tab AND only when there are 2+ sections
               to jump between (single-section users don't need an
               anchor menu — they ARE always on the only chip). */}
-          {filter === "analytics" && anchorChips.length >= 2 && (
-            <SectionErrorBoundary sectionName="analytics-anchor-chips">
-              <AnalyticsAnchorChips chips={anchorChips} />
-            </SectionErrorBoundary>
-          )}
+          {/* Hist5 PR 7b follow-up: removed the sticky AnalyticsAnchorChips
+              row. Three pill rows stacked above the content (Tabs +
+              TimeRange + sticky chips) read as chrome-heavy on iPhone,
+              AND the chip row's `backdrop-blur-md` + `position:
+              sticky` inside framer-motion's transformed motion.div was
+              choking iOS Safari scroll. Reference apps (Strava Stats,
+              Hevy Stats, NRC) navigate analytics by single scroll,
+              not by anchor chips. The chip set was a recovery of
+              affordance lost when sport-filtered tabs dropped — users
+              who navigated by sport can still see each section's
+              sport-coded header inline as they scroll. */}
 
           {filter === "analytics" && (
             dataLoading ? (
