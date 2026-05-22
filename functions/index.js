@@ -112,6 +112,17 @@ exports.deleteMyAccount = functions.https.onCall(async (data, context) => {
     return { ok: true };
   } catch (err) {
     console.error(`deleteMyAccount: uid=${uid}`, err);
+    // Kill-switch trip is an intentional operator-controlled abort,
+    // not an internal failure. Surface as `failed-precondition` so
+    // the client can branch on `err.code` and show actionable copy
+    // ("temporarily paused, try again later") rather than a generic
+    // error toast.
+    if (err && err.code === "executor-disabled") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "executor-disabled",
+      );
+    }
     throw new functions.https.HttpsError("internal", err.message);
   }
 });

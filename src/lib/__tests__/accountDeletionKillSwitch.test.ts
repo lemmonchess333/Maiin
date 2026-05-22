@@ -15,28 +15,40 @@ const accountDeletion = require("../../../functions/accountDeletion.js");
 const { deleteAccount } = accountDeletion;
 
 /* Stub trio that records calls. Tests check behaviour via the
-   public interface — they don't peek at internal state. */
-function buildStubs({ configDoc } = {}) {
+   public interface — they don't peek at internal state.
+
+   `configReadError`: when truthy, the `system/config` `.get()`
+   rejects with this error so we can pin the fail-open contract
+   (transient Firestore blip on the config read must not disable
+   the deletion fleet). */
+function buildStubs({ configDoc, configReadError } = {}) {
   const mockEmptySnap = { empty: true, docs: [] };
   const mockBatch = {
     delete: vi.fn(),
     commit: vi.fn().mockResolvedValue(undefined),
   };
+  const mockUserDocDelete = vi.fn().mockResolvedValue(undefined);
+  const mockProfileDocDelete = vi.fn().mockResolvedValue(undefined);
 
   const firestore = {
     doc: vi.fn((path) => ({
-      get: vi.fn().mockResolvedValue({
-        exists: configDoc != null && path === "system/config",
-        data: () => (path === "system/config" ? configDoc : undefined),
+      get: vi.fn().mockImplementation(() => {
+        if (path === "system/config" && configReadError) {
+          return Promise.reject(configReadError);
+        }
+        return Promise.resolve({
+          exists: configDoc != null && path === "system/config",
+          data: () => (path === "system/config" ? configDoc : undefined),
+        });
       }),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: path === "system/config" ? vi.fn() : mockProfileDocDelete,
     })),
     collection: vi.fn(() => ({
       doc: vi.fn(() => ({
         collection: vi.fn(() => ({
           get: vi.fn().mockResolvedValue(mockEmptySnap),
         })),
-        delete: vi.fn().mockResolvedValue(undefined),
+        delete: mockUserDocDelete,
         get: vi.fn().mockResolvedValue({ exists: false, data: () => undefined }),
       })),
       where: vi.fn(() => ({ get: vi.fn().mockResolvedValue(mockEmptySnap) })),
@@ -52,7 +64,14 @@ function buildStubs({ configDoc } = {}) {
     deleteFiles: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { firestore, auth, storage };
+  return {
+    firestore,
+    auth,
+    storage,
+    mockBatch,
+    mockUserDocDelete,
+    mockProfileDocDelete,
+  };
 }
 
 describe("deleteAccount — kill-switch (Stress 7)", () => {
@@ -131,14 +150,78 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
     expect(auth.deleteUser).toHaveBeenCalledWith(UID);
   });
 
-  it("does not delete the Auth user when kill-switch is false", async () => {
-    /* Behavioural assertion: the kill-switch must abort BEFORE the
-       final auth.deleteUser step, not after. Otherwise the kill-
-       switch would still complete Firestore cleanup while only
-       preserving the Auth user — partial-deletion is worse than
-       no deletion. */
+  it("does NO deletion work when kill-switch is false (aborts before step 1, not just before step 7)", async () => {
+    /* Behavioural assertion: the kill-switch must abort BEFORE any
+       deletion step, not just before the final auth.deleteUser.
+       Otherwise the switch would still tear down Firestore data
+       while only preserving the Auth user — partial-deletion is
+       worse than no deletion (the exact "ghost user with orphan
+       data" failure mode the executor docstring at
+       accountDeletion.js:8-15 is designed to prevent). */
+    const {
+      firestore,
+      auth,
+      storage,
+      mockBatch,
+      mockUserDocDelete,
+      mockProfileDocDelete,
+    } = buildStubs({
+      configDoc: { deletionExecutorEnabled: false },
+    });
+
+    await expect(
+      deleteAccount({
+        firestore,
+        auth,
+        storageBucket: storage,
+        uid: UID,
+        logger: silentLogger,
+      }),
+    ).rejects.toThrow("executor-disabled");
+
+    /* Pin EVERY observable side effect, not just step 7. A regression
+       that moves the kill-switch check after step 1 would still skip
+       auth.deleteUser but leave the user with shredded subcollections
+       and a live login — exactly the partial-deletion case. */
+    expect(auth.deleteUser).not.toHaveBeenCalled();
+    expect(mockBatch.commit).not.toHaveBeenCalled();
+    expect(mockBatch.delete).not.toHaveBeenCalled();
+    expect(mockUserDocDelete).not.toHaveBeenCalled();
+    expect(mockProfileDocDelete).not.toHaveBeenCalled();
+    expect(storage.deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it("throws an error tagged with code='executor-disabled' (callable wrapper maps it to HttpsError 'failed-precondition')", async () => {
+    /* Stringly-typed `err.message === 'executor-disabled'` is fragile
+       under wrappers that prefix or rewrap (e.g. retry logic). The
+       executor MUST attach a stable `code` field so the callable
+       wrapper in functions/index.js can branch reliably and emit
+       HttpsError('failed-precondition', ...) instead of leaking it
+       through the generic 'internal' path. */
     const { firestore, auth, storage } = buildStubs({
       configDoc: { deletionExecutorEnabled: false },
+    });
+
+    await expect(
+      deleteAccount({
+        firestore,
+        auth,
+        storageBucket: storage,
+        uid: UID,
+        logger: silentLogger,
+      }),
+    ).rejects.toMatchObject({ code: "executor-disabled" });
+  });
+
+  it("proceeds (fail-open) when the system/config read itself throws", async () => {
+    /* Lock-out defence — transient Firestore failure on the config
+       read must NOT disable the entire deletion fleet. Matches the
+       fail-open semantics of `isFlagEnabled` in functions/index.js
+       (cache + try/catch + default true) — applied here without the
+       cache because the deletion path is far less hot than the
+       feature-flag path. */
+    const { firestore, auth, storage } = buildStubs({
+      configReadError: new Error("firestore-unavailable"),
     });
 
     await deleteAccount({
@@ -147,10 +230,8 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
       storageBucket: storage,
       uid: UID,
       logger: silentLogger,
-    }).catch(() => {
-      /* expected throw — assertion is about side effects */
     });
 
-    expect(auth.deleteUser).not.toHaveBeenCalled();
+    expect(auth.deleteUser).toHaveBeenCalledWith(UID);
   });
 });

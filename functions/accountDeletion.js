@@ -100,13 +100,37 @@ async function deleteAccount({
 }) {
   /* R1A Stress 7 kill-switch — operator-controlled emergency stop
      via `system/config.deletionExecutorEnabled`. Read at start; if
-     explicitly false, abort before any deletion step. Missing doc
-     OR missing field defaults to ENABLED so the operator can't
-     accidentally lock themselves out by forgetting to provision
-     config. */
-  const configSnap = await firestore.doc("system/config").get();
-  if (configSnap.exists && configSnap.data()?.deletionExecutorEnabled === false) {
-    throw new Error("executor-disabled");
+     explicitly false, abort before any deletion step.
+     Fail-open invariants (lock-out defence):
+       - Missing doc → ENABLED
+       - Missing field → ENABLED
+       - Firestore read error → ENABLED (matches the `isFlagEnabled`
+         helper in index.js; a transient Firestore blip on this read
+         must not disable the entire deletion fleet).
+     TOCTOU note: the switch is read once at the start of an
+     invocation. Flipping the flag mid-flight does NOT stop an
+     in-progress deletion; it only prevents new ones. Operators
+     should treat the switch as "stop accepting new requests"
+     rather than "abort all in-flight work".
+     The thrown error carries `code: "executor-disabled"` so the
+     callable wrapper in index.js can map it to a typed HttpsError
+     (`failed-precondition`) instead of leaking it through the
+     generic `internal` path. */
+  let killSwitchActive = false;
+  try {
+    const configSnap = await firestore.doc("system/config").get();
+    killSwitchActive =
+      configSnap.exists && configSnap.data()?.deletionExecutorEnabled === false;
+  } catch (err) {
+    logger.warn(
+      `deleteAccount: kill-switch read failed, defaulting to ENABLED — ${err.message}`,
+    );
+  }
+  if (killSwitchActive) {
+    logger.warn(`deleteAccount: kill-switch active, aborting`, { uid });
+    const killSwitchError = new Error("executor-disabled");
+    killSwitchError.code = "executor-disabled";
+    throw killSwitchError;
   }
 
   // 1. User's own subcollections

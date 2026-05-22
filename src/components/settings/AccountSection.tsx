@@ -126,6 +126,12 @@ export default function AccountSection({
                     const msg = err instanceof Error ? err.message : "Failed to delete account";
                     if (msg.includes("requires-recent-login")) {
                       toast.error("Please sign out and sign back in, then try again.");
+                    } else if (msg.includes("executor-disabled")) {
+                      // R1A kill-switch tripped server-side. Operator
+                      // has temporarily paused deletions (post-launch
+                      // incident response). Tell the user to retry
+                      // later rather than surfacing the raw sentinel.
+                      toast.error("Account deletion is temporarily paused. Please try again later.");
                     } else {
                       toast.error(msg);
                     }
