@@ -1,9 +1,19 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import PRBadge from "@/components/analytics/PRBadge";
 import PRCard from "@/components/analytics/PRCard";
+
+/* PR 7b follow-up — collapse the lifetime Lift PRs list to the
+   most-recently-set N entries by default. A serious lifter logs
+   30-60+ distinct exercises over time; rendering all of them
+   produces a wall of rows that's not glanceable. Default N shows
+   the lifts with momentum (recent date); a "Show all" tap expands
+   the rest. Recent-bests (rolling 30d) already has its own scope
+   limit so isn't affected. */
+const LIFT_PR_DEFAULT_LIMIT = 8;
 
 /* Hist5b pin 4 + 5 — dedicated PRs tab body. Two sport-coded
    sections (Running + Lifting), each with up to three sublabeled
@@ -114,12 +124,24 @@ function LiftPRList({
   title,
   subtitle,
   emptyText,
+  /** Optional cap on visible rows. When the list exceeds the cap,
+   *  shows a "Show all (N)" toggle that expands the rest. Recent-
+   *  bests doesn't pass this (lists are bounded by their 30-day
+   *  scope); Lifetime does (a serious lifter accumulates dozens
+   *  of distinct exercises). */
+  collapseAfter,
 }: {
   prs: LiftPR[];
   title: string;
   subtitle: string;
   emptyText?: string;
+  collapseAfter?: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const collapsed = collapseAfter != null && !expanded && prs.length > collapseAfter;
+  const visible = collapsed ? prs.slice(0, collapseAfter) : prs;
+  const hiddenCount = prs.length - visible.length;
+
   return (
     <div
       className="rounded-2xl bg-card overflow-hidden"
@@ -131,9 +153,30 @@ function LiftPRList({
         <span className="text-xs text-muted-foreground">{subtitle}</span>
       </div>
       {prs.length > 0 ? (
-        <div className="divide-y divide-border/20">
-          {prs.map((pr) => <LiftPRRow key={pr.name} pr={pr} />)}
-        </div>
+        <>
+          <div className="divide-y divide-border/20">
+            {visible.map((pr) => <LiftPRRow key={pr.name} pr={pr} />)}
+          </div>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors"
+              style={{ color: THEME.lifting }}
+            >
+              Show all ({prs.length})
+            </button>
+          )}
+          {expanded && prs.length > (collapseAfter ?? Infinity) && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="w-full px-4 py-3 text-xs font-medium text-muted-foreground border-t border-border/20 active:bg-muted/40 transition-colors"
+            >
+              Show fewer
+            </button>
+          )}
+        </>
       ) : emptyText ? (
         <div className="px-4 py-6 text-center">
           <p className="text-xs text-muted-foreground">{emptyText}</p>
@@ -255,6 +298,7 @@ export default function PRsTab({
             title="Lift PRs"
             subtitle="All-time"
             emptyText="Log your first workout to set your starting PRs."
+            collapseAfter={LIFT_PR_DEFAULT_LIMIT}
           />
           {recentLiftPRs.length > 0 && (
             <LiftPRList
