@@ -5,6 +5,19 @@ import { logger } from "@/lib/logger";
 const FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFood";
 const TEXT_FUNCTION_URL = "https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/analyzeFoodText";
 
+/* Map the HTTP status returned by the analyzeFood callable into copy
+   the user can act on. The server message is preferred when present
+   (e.g. validation failures carry useful text); otherwise we fall
+   back to status-based phrasing so the toast never shows "[object
+   Object]" or a raw "Analysis failed". */
+function friendlyFoodAnalysisError(status: number, serverMessage?: string): string {
+  if (serverMessage) return serverMessage;
+  if (status === 401 || status === 403) return "Please sign in again to log food.";
+  if (status === 429) return "Too many photos analysed. Please wait a moment.";
+  if (status >= 500) return "Food analysis is temporarily unavailable. Please try again.";
+  return "Couldn't analyse this photo. Please try again.";
+}
+
 export interface FoodItem {
   name: string;
   portionSize: string;
@@ -51,14 +64,16 @@ export function useFoodAnalysis() {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.message || errorBody?.error || "Analysis failed");
+        throw new Error(
+          friendlyFoodAnalysisError(response.status, errorBody?.message || errorBody?.error),
+        );
       }
 
       const data = await response.json();
       setResult(data);
       return data;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message = err instanceof Error ? err.message : "Couldn't analyse this photo. Please try again.";
       setError(message);
       return null;
     } finally {
