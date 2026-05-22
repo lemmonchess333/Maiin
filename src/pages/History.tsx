@@ -20,6 +20,10 @@ import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
+import AnalyticsAnchorChips, {
+  ANCHOR_CHIP_COLORS,
+  type AnchorChip,
+} from "@/components/analytics/AnalyticsAnchorChips";
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
@@ -33,16 +37,32 @@ const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(
 const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
-type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
+/* Hist5b pin 1 — tab consolidation 6→3. Sport-filtered tabs
+   (running / lifting / nutrition) were pure noise filters and have
+   been dropped; their content lives as scroll-anchor sections inside
+   the Analytics tab now. The "all" tab is renamed "analytics" to
+   match the page's frame commitment (Hist5a). Performance + Badges
+   stay as peer tabs for now — PR 6 folds Performance into Analytics
+   as a section, PR 7 introduces the PRs tab. */
+type FilterTab = "analytics" | "performance" | "badges";
 
 const VALID_TABS: FilterTab[] = [
-  "all",
-  "running",
-  "lifting",
-  "nutrition",
+  "analytics",
   "badges",
   "performance",
 ];
+
+/* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
+   share-cards, bookmarks, and pre-Hist5 deep-links continue to
+   work. The four sport-filtered values + the old "all" value all
+   redirect to "analytics" (the unified scroll page). Performance +
+   badges pass through unchanged. */
+const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
+  all: "analytics",
+  running: "analytics",
+  lifting: "analytics",
+  nutrition: "analytics",
+};
 
 // Module-level so the useCallback consuming it has a stable
 // reference across renders (the exhaustive-deps lint rule rightly
@@ -71,11 +91,8 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
       >
         {VALID_TABS.map((f) => {
           const active = filter === f;
-          const tabColor = f === "running" ? THEME.running
-            : f === "lifting" ? THEME.lifting
-            : f === "nutrition" ? THEME.success
-            : f === "performance" ? THEME.brand
-            : THEME.brand;
+          const tabColor =
+            f === "performance" ? THEME.brand : THEME.brand;
           return (
             <button
               key={f}
@@ -86,7 +103,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
               ].join(" ")}
               style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
             >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "analytics" ? "Analytics" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           );
         })}
@@ -132,16 +149,24 @@ export default function History() {
   //      mount)
   //   4. "all"
   const tabFromUrl = searchParams.get("tab");
-  const filter: FilterTab =
-    tabFromUrl && VALID_TABS.includes(tabFromUrl as FilterTab)
-      ? (tabFromUrl as FilterTab)
-      : "all";
+  /* Resolve filter from URL with legacy-redirect awareness: legacy
+     `?tab=running|lifting|nutrition|all` values map to "analytics"
+     (the unified scroll page). The actual URL rewrite happens in
+     the reconciliation effect below; this derivation makes the
+     current render correct even before the rewrite lands. */
+  const filter: FilterTab = (() => {
+    if (!tabFromUrl) return "analytics";
+    if (VALID_TABS.includes(tabFromUrl as FilterTab)) return tabFromUrl as FilterTab;
+    const redirected = LEGACY_TAB_REDIRECTS[tabFromUrl];
+    if (redirected) return redirected;
+    return "analytics";
+  })();
   const setFilter = useCallback(
     (next: FilterTab) => {
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
-          if (next === "all") updated.delete("tab");
+          if (next === "analytics") updated.delete("tab");
           else updated.set("tab", next);
           return updated;
         },
@@ -162,22 +187,42 @@ export default function History() {
     if (reconciledRef.current) return;
     reconciledRef.current = true;
 
+    /* Hist5c pin 11 — rewrite any legacy `?tab=` value to the
+       canonical Hist5 value on first mount. Share-cards / push
+       notifications / bookmarks from before the tab consolidation
+       still land on the right surface; the URL bar reflects the
+       new contract once they arrive. */
+    if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
+      setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
+    }
+
     let hintedTab: FilterTab | null = null;
     if (typeof window !== "undefined") {
-      const hashRaw = window.location.hash.replace(/^#/, "") as FilterTab;
-      if (VALID_TABS.includes(hashRaw)) hintedTab = hashRaw;
+      const hashRaw = window.location.hash.replace(/^#/, "");
+      if (VALID_TABS.includes(hashRaw as FilterTab)) {
+        hintedTab = hashRaw as FilterTab;
+      } else if (LEGACY_TAB_REDIRECTS[hashRaw]) {
+        // #running / #lifting etc. legacy hash deep-links also redirect.
+        hintedTab = LEGACY_TAB_REDIRECTS[hashRaw];
+      }
     }
     if (!hintedTab) {
       try {
-        const stashed = sessionStorage.getItem("history-tab") as FilterTab | null;
-        if (stashed && VALID_TABS.includes(stashed)) hintedTab = stashed;
+        const stashedRaw = sessionStorage.getItem("history-tab");
+        if (stashedRaw) {
+          if (VALID_TABS.includes(stashedRaw as FilterTab)) {
+            hintedTab = stashedRaw as FilterTab;
+          } else if (LEGACY_TAB_REDIRECTS[stashedRaw]) {
+            hintedTab = LEGACY_TAB_REDIRECTS[stashedRaw];
+          }
+        }
       } catch {
         /* private mode — nothing to read */
       }
     }
     // Promote to URL only if URL doesn't already have a tab and
-    // the hint isn't "all" (which is the URL-clean state).
-    if (!tabFromUrl && hintedTab && hintedTab !== "all") {
+    // the hint isn't "analytics" (which is the URL-clean state).
+    if (!tabFromUrl && hintedTab && hintedTab !== "analytics") {
       setFilter(hintedTab);
     }
     // Clear the side-channel hints regardless — URL now owns the
@@ -731,19 +776,48 @@ export default function History() {
   const nutritionHasLifetime = lifetimeTotals.daysLogged > 0;
   const nutritionHasWindow = nutrition.avgCalories > 0;
 
-  const showRunningSection =
-    filter !== "all" || runningHasLifetime || runningHasWindow;
-  const showLiftingSection =
-    filter !== "all" || liftingHasLifetime || liftingHasWindow;
-  const showNutritionSection =
-    filter !== "all" || nutritionHasLifetime || nutritionHasWindow;
+  /* Hist5b — sport-filtered tabs dropped; sections live as scroll
+     anchors inside the Analytics tab now. Tier-1 suppression
+     applies when the user is on Analytics (it never applied to
+     dedicated sport tabs even before — those got dropped, not
+     re-routed). */
+  const showRunningSection = runningHasLifetime || runningHasWindow;
+  const showLiftingSection = liftingHasLifetime || liftingHasWindow;
+  const showNutritionSection = nutritionHasLifetime || nutritionHasWindow;
 
-  const renderRunningEmptyNote =
-    filter === "all" && runningHasLifetime && !runningHasWindow;
-  const renderLiftingEmptyNote =
-    filter === "all" && liftingHasLifetime && !liftingHasWindow;
-  const renderNutritionEmptyNote =
-    filter === "all" && nutritionHasLifetime && !nutritionHasWindow;
+  const renderRunningEmptyNote = runningHasLifetime && !runningHasWindow;
+  const renderLiftingEmptyNote = liftingHasLifetime && !liftingHasWindow;
+  const renderNutritionEmptyNote = nutritionHasLifetime && !nutritionHasWindow;
+
+  /* Hist5b pin 1 — chip list mirrors the currently-visible sections.
+     Tier-1 suppressed sections (no lifetime + no window data) don't
+     appear in the chip menu — there's nothing to jump to. Lifetime
+     gets its own chip when the lifetime section renders. */
+  const anchorChips: AnchorChip[] = useMemo(() => {
+    const chips: AnchorChip[] = [];
+    if (showRunningSection) {
+      chips.push({ id: "analytics-running", label: "Running", color: ANCHOR_CHIP_COLORS.running });
+    }
+    if (showLiftingSection) {
+      chips.push({ id: "analytics-lifting", label: "Lifting", color: ANCHOR_CHIP_COLORS.lifting });
+    }
+    if (showNutritionSection) {
+      chips.push({ id: "analytics-nutrition", label: "Nutrition", color: ANCHOR_CHIP_COLORS.nutrition });
+    }
+    const hasLifetimeData =
+      lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0;
+    if (hasLifetimeData) {
+      chips.push({ id: "analytics-lifetime", label: "Lifetime", color: ANCHOR_CHIP_COLORS.lifetime });
+    }
+    return chips;
+  }, [
+    showRunningSection,
+    showLiftingSection,
+    showNutritionSection,
+    lifetimeTotals.runCount,
+    lifetimeTotals.liftCount,
+    lifetimeTotals.daysLogged,
+  ]);
 
   return (
     <motion.div
@@ -756,7 +830,7 @@ export default function History() {
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
     >
       <motion.header variants={itemVariant}>
-        <h1 className="text-lg font-extrabold text-foreground">History</h1>
+        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
       </motion.header>
 
       {/* Hist4: small refresh indicator while the pull-to-refresh
@@ -796,7 +870,15 @@ export default function History() {
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
-          {filter === "all" && (
+          {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
+              the Analytics tab AND only when there are 2+ sections
+              to jump between (single-section users don't need an
+              anchor menu — they ARE always on the only chip). */}
+          {filter === "analytics" && anchorChips.length >= 2 && (
+            <AnalyticsAnchorChips chips={anchorChips} />
+          )}
+
+          {filter === "analytics" && (
             dataLoading ? (
               <div className="p-4 rounded-2xl bg-card space-y-3">
                 <Skeleton className="h-3 w-20" />
@@ -820,16 +902,14 @@ export default function History() {
             )
           )}
 
-          {showRunningSection && (filter === "all" || filter === "running") && (
-            <section aria-label="Running analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.running }}
-                >
-                  Running
-                </p>
-              )}
+          {showRunningSection && filter === "analytics" && (
+            <section id="analytics-running" aria-label="Running analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.running }}
+              >
+                Running
+              </p>
               {dataLoading ? (
                 <div className="grid grid-cols-2 gap-2">
                   <Skeleton className="h-24 w-full rounded-xl" />
@@ -890,16 +970,14 @@ export default function History() {
             </section>
           )}
 
-          {showLiftingSection && (filter === "all" || filter === "lifting") && (
-            <section aria-label="Lifting analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.lifting }}
-                >
-                  Lifting
-                </p>
-              )}
+          {showLiftingSection && filter === "analytics" && (
+            <section id="analytics-lifting" aria-label="Lifting analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.lifting }}
+              >
+                Lifting
+              </p>
               {dataLoading ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -1020,16 +1098,14 @@ export default function History() {
             </section>
           )}
 
-          {showNutritionSection && (filter === "all" || filter === "nutrition") && (
-            <section aria-label="Nutrition analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.success }}
-                >
-                  Nutrition
-                </p>
-              )}
+          {showNutritionSection && filter === "analytics" && (
+            <section id="analytics-nutrition" aria-label="Nutrition analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.success }}
+              >
+                Nutrition
+              </p>
               {dataLoading ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -1188,10 +1264,10 @@ export default function History() {
             </section>
           )}
 
-          {filter === "all" && !dataLoading && (
+          {filter === "analytics" && !dataLoading && (
             lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0
           ) && (
-            <section aria-label="Lifetime totals">
+            <section id="analytics-lifetime" aria-label="Lifetime totals">
               <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
                 Lifetime
               </p>
