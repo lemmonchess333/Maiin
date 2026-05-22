@@ -12,7 +12,7 @@
  * of grepping free-form log strings.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type SocialEvent =
   | "social_tab_selected"
@@ -38,9 +38,5 @@ export interface SocialEventMetadata {
 }
 
 export function track(event: SocialEvent, metadata: SocialEventMetadata = {}): void {
-  try {
-    logger.log(`[social] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[social] track failed", { event, err: String(err) });
-  }
+  emit("social", event, metadata as Record<string, unknown>);
 }

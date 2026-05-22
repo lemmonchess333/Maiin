@@ -13,7 +13,7 @@
  * of grepping free-form log strings.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type HistoryEvent =
   | "history_tab_selected"
@@ -50,9 +50,5 @@ export interface HistoryEventMetadata {
 }
 
 export function track(event: HistoryEvent, metadata: HistoryEventMetadata = {}): void {
-  try {
-    logger.log(`[history] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[history] track failed", { event, err: String(err) });
-  }
+  emit("history", event, metadata as Record<string, unknown>);
 }

@@ -10,7 +10,7 @@
  * without touching the call sites.
  */
 
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type SettingsEvent =
   | "settings_section_viewed"
@@ -66,9 +66,5 @@ export function track(
   event: SettingsEvent,
   metadata: SettingsEventMetadata = {},
 ): void {
-  try {
-    logger.log(`[settings] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    logger.warn("[settings] track failed", { event, err: String(err) });
-  }
+  emit("settings", event, metadata as Record<string, unknown>);
 }

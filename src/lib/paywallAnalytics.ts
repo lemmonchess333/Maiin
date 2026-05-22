@@ -21,7 +21,7 @@
 
 import type { ProFeatureKey } from "./proFeatures";
 import type { PlanId } from "./proPlans";
-import { logger } from "./logger";
+import { emit } from "./analyticsClient";
 
 export type PaywallEvent =
   | "paywall_viewed"
@@ -50,26 +50,14 @@ export interface PaywallEventMetadata {
 }
 
 /**
- * Emit a paywall event. No-op safe: any provider failure is caught
- * and logged via `logger.warn` (which routes to the existing
- * structured logger; no console noise in production). The promise
- * surface is intentional — when a real provider lands, async sends
- * can be awaited from tests.
+ * Emit a paywall event. No-op safe — the try/catch + provider-failure
+ * fallback lives in `analyticsClient.emit`, which every per-surface
+ * `track()` delegates through. When a real provider is wired, edit
+ * `analyticsClient.ts` once and every surface gets it.
  */
 export function track(
   event: PaywallEvent,
   metadata: PaywallEventMetadata = {},
 ): void {
-  try {
-    // No-op delivery today. Replace the body of this try with the
-    // provider's send() when one is wired. The shape is what the
-    // call sites already pass. Logger.log only surfaces in dev so
-    // production builds carry zero analytics weight until a real
-    // provider is connected.
-    logger.log(`[paywall] ${event}`, metadata as Record<string, unknown>);
-  } catch (err) {
-    // Defensive: never let analytics surface a runtime exception
-    // into the checkout flow.
-    logger.warn("[paywall] track failed", { event, err: String(err) });
-  }
+  emit("paywall", event, metadata as Record<string, unknown>);
 }
