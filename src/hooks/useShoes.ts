@@ -12,7 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { isCountableRun } from "@/lib/runGuards";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 export interface Shoe {
   id: string;
@@ -166,7 +166,7 @@ export function useShoes() {
       // gated on `distance > 0`, which let a fat-fingered
       // 20km/0:08 "too-fast" save inflate the shoe by 20km and
       // trigger the replacement-prompt at 85%/100% prematurely.
-      if (!isCountableRun(data)) continue;
+      if (!isVolumeEligible(data)) continue;
       const distanceMeters = typeof data.distance === "number" ? data.distance : 0;
       if (distanceMeters <= 0) continue;
 

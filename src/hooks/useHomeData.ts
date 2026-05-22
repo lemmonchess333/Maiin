@@ -7,7 +7,7 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
-import { isCountableRun } from "@/lib/runGuards";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 interface WeightInfo {
   weight: string;
@@ -123,7 +123,7 @@ export function useHomeData(
         const weightKg = profile?.weightKg || 70;
         results[1].value.docs.forEach(function (d) {
           const data = d.data();
-          if (!isCountableRun(data)) return;
+          if (!isVolumeEligible(data)) return;
           const distKm = (data.distance || 0) / 1000;
           rCals += Math.round(weightKg * distKm * 1.036);
         });
