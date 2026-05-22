@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { friendlyAuthError } from "@/lib/authErrors";
 import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -13,50 +14,6 @@ import { IconButton } from "@/components/ui/IconButton";
 // LoadingAction value here so exactly one button shows the spinner
 // and the others stay disabled.
 type LoadingAction = "email" | "google" | "apple" | null;
-
-/**
- * Translate Firebase Auth error messages into user-facing copy.
- * Three handlers (email, Google, Apple) need the same mapping so
- * one place owns the contract. Raw Firebase strings like
- * "Firebase: Error (auth/invalid-credential)." used to leak to
- * the UI before this — surfaced during the post-deletion recovery
- * scenario where the user hit invalid-credential, network-request
- * -failed, and internal-error in quick succession.
- */
-function friendlyAuthError(message: string): string {
-  if (
-    message.includes("user-not-found") ||
-    message.includes("wrong-password") ||
-    message.includes("invalid-credential")
-  ) {
-    return "Invalid email or password";
-  }
-  if (message.includes("email-already-in-use")) {
-    return "An account with this email already exists";
-  }
-  if (message.includes("weak-password")) {
-    return "Password must be at least 6 characters";
-  }
-  if (message.includes("invalid-email")) {
-    return "Please enter a valid email address";
-  }
-  if (message.includes("network-request-failed")) {
-    return "Network issue — check your connection and try again";
-  }
-  if (message.includes("too-many-requests")) {
-    return "Too many attempts. Wait a moment and try again";
-  }
-  if (message.includes("internal-error")) {
-    return "Sign-in is temporarily unavailable. Try again in a moment";
-  }
-  if (message.includes("account-exists-with-different-credential")) {
-    return "An account with this email already exists. Try signing in with the original provider";
-  }
-  if (message.includes("user-disabled")) {
-    return "This account has been disabled. Contact support";
-  }
-  return message;
-}
 
 export default function Login() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
