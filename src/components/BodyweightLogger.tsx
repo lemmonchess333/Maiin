@@ -117,7 +117,7 @@ export default function BodyweightLogger() {
     } catch (error) {
       logger.error("Error saving weight:", error);
       const { toast } = await import("sonner");
-      toast.error("Failed to save weight");
+      toast.error("Couldn't save your weight. Please try again.");
     }
     setSaving(false);
   }
