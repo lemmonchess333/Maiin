@@ -2,7 +2,7 @@ import { THEME } from '@/lib/theme';
 import { Footprints, Dumbbell, UtensilsCrossed } from 'lucide-react';
 import { formatVolumeSub } from '@/utils/formatters';
 
-interface WeeklyOverviewProps {
+interface PeriodOverviewProps {
   runCount: number;
   runDistance: number;
   liftCount: number;
@@ -32,9 +32,16 @@ function Ring({ value, max, color, size = 44 }: { value: number; max: number; co
   );
 }
 
-export default function WeeklyOverview({
+/**
+ * Hist5c pin 2 — renamed from WeeklyOverview. Hero is used at every
+ * TimeRange (1W → 1Y), not just "this week". The `rangeLabel`
+ * already derives from timeRange below — only the component name
+ * is changing here. Future PRs may also fold in the 4th ring
+ * (Performance Index compact strip) per Hist5b's Performance fold.
+ */
+export default function PeriodOverview({
   runCount, runDistance, liftCount, liftVolume, avgCalories, nutritionAdherence, timeRange, rangeDays,
-}: WeeklyOverviewProps) {
+}: PeriodOverviewProps) {
   const rangeLabel = timeRange === "1W" ? "This Week"
     : timeRange === "1M" ? "This Month"
     : timeRange === "3M" ? "Last 3 Months"

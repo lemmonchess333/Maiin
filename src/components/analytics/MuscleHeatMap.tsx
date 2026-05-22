@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
+import { getShareTier, getFrequencyForShare } from "./muscleShare";
 
 interface MuscleData {
   [group: string]: number;
@@ -57,9 +58,14 @@ const LOW_COLOR = THEME.liftingLight;
 const MID_COLOR = THEME.lifting;
 const HIGH_COLOR = "#6560C8"; // darker lifting shade
 
-function getLegendDotColor(sets: number): string {
-  if (sets <= 30) return LOW_COLOR;
-  if (sets <= 70) return MID_COLOR;
+/* Hist5c pin 8 — relative-volume share thresholds in ./muscleShare.
+   Replaces the previous absolute set-count buckets which saturated
+   the body diagram uniformly purple at long windows. */
+
+function getLegendDotColor(sets: number, totalSets: number): string {
+  const tier = getShareTier(sets, totalSets);
+  if (tier === "low") return LOW_COLOR;
+  if (tier === "mid") return MID_COLOR;
   return HIGH_COLOR;
 }
 
@@ -99,6 +105,15 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
     return result;
   }, [data]);
 
+  /* Hist5c pin 8 — compute total sets ACROSS muscle groups so the
+     frequency tier is a relative share of THIS window's training.
+     A chest at 22% of total volume reads "high" whether the window
+     is 1W with 50 total sets or 1Y with 2,500 total sets. */
+  const totalSets = useMemo(
+    () => Object.values(normalizedData).reduce((sum, n) => sum + n, 0),
+    [normalizedData],
+  );
+
   // Build exercise data for react-body-highlighter
   const exerciseData: IExerciseData[] = useMemo(() => {
     return Object.entries(normalizedData)
@@ -106,9 +121,9 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
       .map(([group, sets]) => ({
         name: group,
         muscles: MUSCLE_MAP[group] ?? [],
-        frequency: sets > 60 ? 3 : sets > 25 ? 2 : 1,
+        frequency: getFrequencyForShare(sets, totalSets),
       }));
-  }, [normalizedData]);
+  }, [normalizedData, totalSets]);
 
   // Only show trained muscle groups, sorted descending
   const trainedGroups = useMemo(() => {
@@ -149,7 +164,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
               <div key={group} className="flex items-center gap-1.5">
                 <div
                   className="w-2 h-2 rounded-full"
-                  style={{ background: getLegendDotColor(sets) }}
+                  style={{ background: getLegendDotColor(sets, totalSets) }}
                 />
                 <span className="text-xs text-muted-foreground font-medium">
                   {group}

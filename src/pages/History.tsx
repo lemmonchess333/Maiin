@@ -9,39 +9,74 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
-import WeeklyOverview from "@/components/analytics/WeeklyOverview";
+import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
-import PRCard from "@/components/analytics/PRCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
-import { Footprints, Trophy, UtensilsCrossed, ChevronRight } from "lucide-react";
-import PRBadge from "@/components/analytics/PRBadge";
+import { requiresManualDistance } from "@/lib/runGuards";
+import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
 import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
+import AnalyticsAnchorChips, {
+  ANCHOR_CHIP_COLORS,
+  type AnchorChip,
+} from "@/components/analytics/AnalyticsAnchorChips";
+import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
 const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
 const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
 const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSection"));
-const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
+/* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
+   PerformanceSection (the inline accordion's expanded body), not
+   rendered as a top-level tab. The dedicated `performance` tab was
+   removed; deep-links to /history#performance route to the section
+   anchor inside Analytics. */
+const PerformanceSection = lazy(() => import("@/components/analytics/PerformanceSection"));
+const PRsTab = lazy(() => import("@/components/analytics/PRsTab"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
 const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
-type FilterTab = "all" | "running" | "lifting" | "nutrition" | "performance" | "badges";
+/* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
+   Performance fold (PR 6) + PRs tab introduction (PR 7a).
+   Sport-filtered tabs were dropped in PR 5a; the Performance tab
+   folded into Analytics in PR 6. Tabs now: Analytics + PRs +
+   Badges — three semantically-distinct roles (window-scoped
+   current state / lifetime achievements / progress milestones).
+   "All" was renamed "analytics" to match the page's frame
+   commitment (Hist5a). */
+type FilterTab = "analytics" | "prs" | "badges";
 
-const VALID_TABS: FilterTab[] = [
-  "all",
-  "running",
-  "lifting",
-  "nutrition",
-  "badges",
-  "performance",
-];
+const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
+
+/* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
+   share-cards, bookmarks, and pre-Hist5 deep-links continue to
+   work. The four sport-filtered values + the old "all" value all
+   redirect to "analytics" (the unified scroll page). Performance
+   redirects too — PR 6 folded it into Analytics with a hash anchor
+   target (`#performance`); the reconciliation effect promotes the
+   hash alongside the tab rewrite for direct deep-link continuity. */
+const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
+  all: "analytics",
+  running: "analytics",
+  lifting: "analytics",
+  nutrition: "analytics",
+  performance: "analytics",
+};
+
+/* Tab values that, in addition to a `?tab=` rewrite, also force a
+   hash anchor to scroll to a specific section on the redirected
+   tab. Currently only `performance` — clicking on Home's PI hero
+   card (which deep-links to /history#performance per PR #635)
+   should land on the Performance section inside Analytics. */
+const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
+  performance: "performance",
+};
 
 // Module-level so the useCallback consuming it has a stable
 // reference across renders (the exhaustive-deps lint rule rightly
@@ -70,11 +105,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
       >
         {VALID_TABS.map((f) => {
           const active = filter === f;
-          const tabColor = f === "running" ? THEME.running
-            : f === "lifting" ? THEME.lifting
-            : f === "nutrition" ? THEME.success
-            : f === "performance" ? THEME.brand
-            : THEME.brand;
+          const tabColor = THEME.brand;
           return (
             <button
               key={f}
@@ -85,7 +116,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
               ].join(" ")}
               style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
             >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           );
         })}
@@ -131,16 +162,24 @@ export default function History() {
   //      mount)
   //   4. "all"
   const tabFromUrl = searchParams.get("tab");
-  const filter: FilterTab =
-    tabFromUrl && VALID_TABS.includes(tabFromUrl as FilterTab)
-      ? (tabFromUrl as FilterTab)
-      : "all";
+  /* Resolve filter from URL with legacy-redirect awareness: legacy
+     `?tab=running|lifting|nutrition|all` values map to "analytics"
+     (the unified scroll page). The actual URL rewrite happens in
+     the reconciliation effect below; this derivation makes the
+     current render correct even before the rewrite lands. */
+  const filter: FilterTab = (() => {
+    if (!tabFromUrl) return "analytics";
+    if (VALID_TABS.includes(tabFromUrl as FilterTab)) return tabFromUrl as FilterTab;
+    const redirected = LEGACY_TAB_REDIRECTS[tabFromUrl];
+    if (redirected) return redirected;
+    return "analytics";
+  })();
   const setFilter = useCallback(
     (next: FilterTab) => {
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
-          if (next === "all") updated.delete("tab");
+          if (next === "analytics") updated.delete("tab");
           else updated.set("tab", next);
           return updated;
         },
@@ -161,22 +200,58 @@ export default function History() {
     if (reconciledRef.current) return;
     reconciledRef.current = true;
 
+    /* Hist5c pin 11 — rewrite any legacy `?tab=` value to the
+       canonical Hist5 value on first mount. Share-cards / push
+       notifications / bookmarks from before the tab consolidation
+       still land on the right surface; the URL bar reflects the
+       new contract once they arrive.
+       Tab values that need to also preserve their identity via
+       a section anchor (LEGACY_TAB_TO_HASH) get the hash set
+       alongside the rewrite — so /history?tab=performance becomes
+       /history#performance and scrolls to the Performance section
+       inside Analytics. */
+    if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
+      setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      const hashTarget = LEGACY_TAB_TO_HASH[tabFromUrl];
+      if (hashTarget && typeof window !== "undefined") {
+        /* Set the hash WITHOUT scrolling here — the anchor scroll
+           happens in the post-reconciliation effect below (after the
+           filter update has propagated through render). */
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search + "#" + hashTarget,
+        );
+      }
+    }
+
     let hintedTab: FilterTab | null = null;
     if (typeof window !== "undefined") {
-      const hashRaw = window.location.hash.replace(/^#/, "") as FilterTab;
-      if (VALID_TABS.includes(hashRaw)) hintedTab = hashRaw;
+      const hashRaw = window.location.hash.replace(/^#/, "");
+      if (VALID_TABS.includes(hashRaw as FilterTab)) {
+        hintedTab = hashRaw as FilterTab;
+      } else if (LEGACY_TAB_REDIRECTS[hashRaw]) {
+        // #running / #lifting etc. legacy hash deep-links also redirect.
+        hintedTab = LEGACY_TAB_REDIRECTS[hashRaw];
+      }
     }
     if (!hintedTab) {
       try {
-        const stashed = sessionStorage.getItem("history-tab") as FilterTab | null;
-        if (stashed && VALID_TABS.includes(stashed)) hintedTab = stashed;
+        const stashedRaw = sessionStorage.getItem("history-tab");
+        if (stashedRaw) {
+          if (VALID_TABS.includes(stashedRaw as FilterTab)) {
+            hintedTab = stashedRaw as FilterTab;
+          } else if (LEGACY_TAB_REDIRECTS[stashedRaw]) {
+            hintedTab = LEGACY_TAB_REDIRECTS[stashedRaw];
+          }
+        }
       } catch {
         /* private mode — nothing to read */
       }
     }
     // Promote to URL only if URL doesn't already have a tab and
-    // the hint isn't "all" (which is the URL-clean state).
-    if (!tabFromUrl && hintedTab && hintedTab !== "all") {
+    // the hint isn't "analytics" (which is the URL-clean state).
+    if (!tabFromUrl && hintedTab && hintedTab !== "analytics") {
       setFilter(hintedTab);
     }
     // Clear the side-channel hints regardless — URL now owns the
@@ -187,13 +262,27 @@ export default function History() {
       /* private mode */
     }
     if (typeof window !== "undefined" && window.location.hash) {
-      // Strip the hash without scrolling. Replacing state keeps
-      // the back-button history short.
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
+      /* PR 6 — preserve section-anchor hashes. `#performance` (the
+         Home PI hero deep-link target, per PR #635) AND
+         `#performance-expanded` (PerformanceSection's expanded-state
+         persistence, Hist5b pin 3) are not tab hints — they're
+         scroll-anchor + accordion-state markers. Leave them in the
+         URL; the section's own useEffect handles the scroll. Strip
+         only the now-irrelevant legacy tab hashes. */
+      const currentHash = window.location.hash.replace(/^#/, "");
+      const SECTION_ANCHOR_HASHES = new Set([
+        "performance",
+        "performance-expanded",
+        "analytics-performance",
+        "analytics-performance-detail",
+      ]);
+      if (!SECTION_ANCHOR_HASHES.has(currentHash)) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      }
     }
     // Intentionally only on mount — the ref guard ensures this
     // runs once per page load even if React renders the effect
@@ -405,6 +494,12 @@ export default function History() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    /* Hist5b pin 4 / PR 7b — rolling 30-day window for the
+       "Recent bests" PRs subsection (sublabeled inside the PRs
+       tab). Distinct from the lifetime PRs computed below. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const formatPace = (secPerKm: number) => {
       const m = Math.floor(secPerKm / 60);
       const s = Math.round(secPerKm % 60);
@@ -420,45 +515,84 @@ export default function History() {
        GPS-verified, so it can't set a distance PR. */
     const paceEligible = runs.filter((r) => isPaceEligible(r));
 
-    const runs1k = paceEligible.filter((r) => r.distance >= 1000);
-    const best1k = runs1k.length
-      ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-      : null;
-
-    const runs5k = paceEligible.filter((r) => r.distance >= 5000);
-    const best5k = runs5k.length
-      ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-      : null;
-
-    const longestRun = paceEligible.length
-      ? paceEligible.reduce((best, r) => (r.distance > best.distance ? r : best))
-      : null;
+    /* Hist5 grill Q3 Stress 3 round 1 + Hist5b pin 5 — Indoor PRs
+       tracked separately for users who run primarily on a
+       treadmill or who enter manual distances. Same fastest-pace
+       logic, different eligibility filter: must be treadmill/
+       manual + valid + finite-positive avgPace + above volume
+       floor. Sublabeled distinctly so the user doesn't conflate
+       indoor pace (user-entered distance) with outdoor pace
+       (GPS-verified). */
+    const indoorEligible = runs.filter(
+      (r) =>
+        requiresManualDistance(r.activityType as Parameters<typeof requiresManualDistance>[0])
+        && Number.isFinite(r.avgPace)
+        && r.avgPace > 0
+        && r.distance >= 500,
+    );
 
     const fmtDate = (d: Date) =>
       d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
-    return [
-      {
-        label: "Fastest 1K",
-        value: best1k ? formatPace(best1k.avgPace) : "--",
-        date: best1k ? fmtDate(best1k.completedAt) : "",
-        isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
-      },
-      {
-        label: "Fastest 5K",
-        value: best5k ? formatPace(best5k.avgPace) : "--",
-        date: best5k ? fmtDate(best5k.completedAt) : "",
-        isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
-      },
-      {
-        label: "Longest Run",
-        value: longestRun
-          ? (longestRun.distance / 1000).toFixed(1) + " km"
-          : "--",
-        date: longestRun ? fmtDate(longestRun.completedAt) : "",
-        isNew: longestRun ? longestRun.completedAt >= sevenDaysAgo : false,
-      },
-    ];
+    /* Compute best 1K / 5K / Longest from a run pool. Shared shape
+       between Lifetime / Recent / Indoor buckets — only the input
+       filter changes. Returns the same UI-ready array shape as
+       before. */
+    const buildPRBucket = (
+      pool: typeof paceEligible,
+      includeLongest: boolean,
+    ) => {
+      const runs1k = pool.filter((r) => r.distance >= 1000);
+      const best1k = runs1k.length
+        ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+        : null;
+
+      const runs5k = pool.filter((r) => r.distance >= 5000);
+      const best5k = runs5k.length
+        ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
+        : null;
+
+      const longest = includeLongest && pool.length
+        ? pool.reduce((best, r) => (r.distance > best.distance ? r : best))
+        : null;
+
+      const cards: Array<{ label: string; value: string; date: string; isNew: boolean }> = [
+        {
+          label: "Fastest 1K",
+          value: best1k ? formatPace(best1k.avgPace) : "--",
+          date: best1k ? fmtDate(best1k.completedAt) : "",
+          isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
+        },
+        {
+          label: "Fastest 5K",
+          value: best5k ? formatPace(best5k.avgPace) : "--",
+          date: best5k ? fmtDate(best5k.completedAt) : "",
+          isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
+        },
+      ];
+      if (includeLongest) {
+        cards.push({
+          label: "Longest Run",
+          value: longest
+            ? (longest.distance / 1000).toFixed(1) + " km"
+            : "--",
+          date: longest ? fmtDate(longest.completedAt) : "",
+          isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
+        });
+      }
+      return cards;
+    };
+
+    return {
+      lifetime: buildPRBucket(paceEligible, /* includeLongest */ true),
+      recent30d: buildPRBucket(
+        paceEligible.filter((r) => r.completedAt >= thirtyDaysAgo),
+        /* includeLongest */ true,
+      ),
+      indoor: buildPRBucket(indoorEligible, /* includeLongest */ false),
+      hasAnyIndoor: indoorEligible.length > 0,
+      hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
+    };
   }, [runs]);
 
   const liftingData = useMemo(() => {
@@ -510,10 +644,14 @@ export default function History() {
 
     const weekMap: Record<string, number> = {};
     const sessionWeekMap: Record<string, number> = {};
+    /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
+       daily; at 3M we bin weekly (Sunday-anchored, the prior
+       universal behaviour); at 6M/1Y we bin monthly. Avoids the
+       52-bar unreadable mess at long windows. */
+    const granularity = granularityForRange(rangeDays);
     filtered.forEach((w) => {
       const d = new Date(w.date);
-      d.setDate(d.getDate() - d.getDay());
-      const key = d.toISOString().split('T')[0];
+      const key = binKeyForDate(d, granularity);
       const vol = w.exercises.reduce(
         (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
       );
@@ -586,7 +724,99 @@ export default function History() {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, 8);
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, prTimeline, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
+    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab.
+       Distinct from prTimeline above (which is a rolling 7-day
+       view scheduled for removal when the PRs tab fully takes
+       over). For each exercise, find the single set with the
+       highest e1rm-equivalent score across all logged workouts.
+       Bodyweight exercises score on reps (weight=0); weighted
+       exercises score on weight × (1 + reps/30). */
+    const lifetimeBestSet: Record<
+      string,
+      { weight: number; reps: number; date: string; score: number }
+    > = {};
+    workouts.forEach((w) => {
+      w.exercises?.forEach((ex) => {
+        const name = ex.exerciseName;
+        const exInfo = EXERCISES.find((e) => e.name === name);
+        const isBWExercise = exInfo?.equipment === "Bodyweight";
+        ex.sets?.forEach((set) => {
+          if (!isBWExercise && set.weightKg <= 0) return;
+          const e1rm = set.weightKg * (1 + set.reps / 30);
+          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
+          const prev = lifetimeBestSet[name];
+          if (!prev || score > prev.score) {
+            lifetimeBestSet[name] = {
+              weight: set.weightKg,
+              reps: set.reps,
+              date: w.date,
+              score,
+            };
+          }
+        });
+      });
+    });
+    const lifetimePRs = Object.entries(lifetimeBestSet)
+      .map(([name, data]) => ({
+        name,
+        weight: data.weight,
+        reps: data.reps,
+        date: data.date,
+      }))
+      .sort((a, b) => {
+        /* Sort by date desc (most-recently-set PR first). Provides
+           a sense of momentum on the PRs tab — the lifts the user
+           has been pushing most recently float to the top. */
+        return b.date.localeCompare(a.date);
+      });
+
+    /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
+       days). Same per-exercise top-set logic as lifetimePRs but
+       constrained to the last 30 days. Distinct from prTimeline
+       (last 7 days, used by the prior Analytics card we just
+       deleted). Lives in the PRs tab as a sublabeled subsection
+       so the user reads "Lifetime" vs "Last 30 days" as two
+       different scopes. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoKey = thirtyDaysAgo.toISOString().split("T")[0];
+    const recentBestSet: Record<
+      string,
+      { weight: number; reps: number; date: string; score: number }
+    > = {};
+    workouts
+      .filter((w) => w.date >= thirtyDaysAgoKey)
+      .forEach((w) => {
+        w.exercises?.forEach((ex) => {
+          const name = ex.exerciseName;
+          const exInfo = EXERCISES.find((e) => e.name === name);
+          const isBWExercise = exInfo?.equipment === "Bodyweight";
+          ex.sets?.forEach((set) => {
+            if (!isBWExercise && set.weightKg <= 0) return;
+            const e1rm = set.weightKg * (1 + set.reps / 30);
+            const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
+            const prev = recentBestSet[name];
+            if (!prev || score > prev.score) {
+              recentBestSet[name] = {
+                weight: set.weightKg,
+                reps: set.reps,
+                date: w.date,
+                score,
+              };
+            }
+          });
+        });
+      });
+    const recentLiftPRs = Object.entries(recentBestSet)
+      .map(([name, data]) => ({
+        name,
+        weight: data.weight,
+        reps: data.reps,
+        date: data.date,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, lifetimePRs, recentLiftPRs, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -708,6 +938,71 @@ export default function History() {
     }
   })();
 
+  /* Hist5d cross-cut + Hist5 grill Q2 Stress 6 — section auto-hide
+     two-tier rule. Only applies on the "all" filter; per-sport
+     filtered tabs always render their section (the user explicitly
+     chose that sport, so CTA + empty-state belong there).
+
+       Tier 1: lifetime=0 AND window=0 → suppress entire section
+                (silent for users who don't use this sport)
+       Tier 2: lifetime>0 AND window=0 → section header + inline
+                "No X in this period" note (returning user, dormant
+                this window)
+       Tier 3: window>0 → full content (unchanged) */
+  const runningHasLifetime = lifetimeTotals.runCount > 0;
+  const runningHasWindow = runs.length > 0;
+  const liftingHasLifetime = lifetimeTotals.liftCount > 0;
+  const liftingHasWindow = liftingData.liftCount > 0;
+  const nutritionHasLifetime = lifetimeTotals.daysLogged > 0;
+  const nutritionHasWindow = nutrition.avgCalories > 0;
+
+  /* Hist5b — sport-filtered tabs dropped; sections live as scroll
+     anchors inside the Analytics tab now. Tier-1 suppression
+     applies when the user is on Analytics (it never applied to
+     dedicated sport tabs even before — those got dropped, not
+     re-routed). */
+  const showRunningSection = runningHasLifetime || runningHasWindow;
+  const showLiftingSection = liftingHasLifetime || liftingHasWindow;
+  const showNutritionSection = nutritionHasLifetime || nutritionHasWindow;
+
+  const renderRunningEmptyNote = runningHasLifetime && !runningHasWindow;
+  const renderLiftingEmptyNote = liftingHasLifetime && !liftingHasWindow;
+  const renderNutritionEmptyNote = nutritionHasLifetime && !nutritionHasWindow;
+
+  /* Hist5b pin 1 — chip list mirrors the currently-visible sections.
+     Tier-1 suppressed sections (no lifetime + no window data) don't
+     appear in the chip menu — there's nothing to jump to. Lifetime
+     gets its own chip when the lifetime section renders.
+     Performance is always present on Analytics (PR 6) since PI is
+     a system-level metric, not a sport. */
+  const anchorChips: AnchorChip[] = useMemo(() => {
+    const chips: AnchorChip[] = [
+      { id: "analytics-performance", label: "Performance", color: THEME.brand },
+    ];
+    if (showRunningSection) {
+      chips.push({ id: "analytics-running", label: "Running", color: ANCHOR_CHIP_COLORS.running });
+    }
+    if (showLiftingSection) {
+      chips.push({ id: "analytics-lifting", label: "Lifting", color: ANCHOR_CHIP_COLORS.lifting });
+    }
+    if (showNutritionSection) {
+      chips.push({ id: "analytics-nutrition", label: "Nutrition", color: ANCHOR_CHIP_COLORS.nutrition });
+    }
+    const hasLifetimeData =
+      lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0;
+    if (hasLifetimeData) {
+      chips.push({ id: "analytics-lifetime", label: "Lifetime", color: ANCHOR_CHIP_COLORS.lifetime });
+    }
+    return chips;
+  }, [
+    showRunningSection,
+    showLiftingSection,
+    showNutritionSection,
+    lifetimeTotals.runCount,
+    lifetimeTotals.liftCount,
+    lifetimeTotals.daysLogged,
+  ]);
+
   return (
     <motion.div
       ref={pullContainerRef}
@@ -719,7 +1014,7 @@ export default function History() {
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
     >
       <motion.header variants={itemVariant}>
-        <h1 className="text-lg font-extrabold text-foreground">History</h1>
+        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
       </motion.header>
 
       {/* Hist4: small refresh indicator while the pull-to-refresh
@@ -753,13 +1048,31 @@ export default function History() {
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
         <BadgeGrid />
-      ) : filter === "performance" ? (
-        <PerformanceTab />
+      ) : filter === "prs" ? (
+        <SectionErrorBoundary sectionName="prs-tab">
+          <PRsTab
+            runningPRs={runningPRs}
+            lifetimePRs={liftingData.lifetimePRs}
+            recentLiftPRs={liftingData.recentLiftPRs}
+            hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
+            hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
+          />
+        </SectionErrorBoundary>
       ) : (
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
-          {filter === "all" && (
+          {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
+              the Analytics tab AND only when there are 2+ sections
+              to jump between (single-section users don't need an
+              anchor menu — they ARE always on the only chip). */}
+          {filter === "analytics" && anchorChips.length >= 2 && (
+            <SectionErrorBoundary sectionName="analytics-anchor-chips">
+              <AnalyticsAnchorChips chips={anchorChips} />
+            </SectionErrorBoundary>
+          )}
+
+          {filter === "analytics" && (
             dataLoading ? (
               <div className="p-4 rounded-2xl bg-card space-y-3">
                 <Skeleton className="h-3 w-20" />
@@ -770,7 +1083,7 @@ export default function History() {
                 </div>
               </div>
             ) : (
-              <WeeklyOverview
+              <PeriodOverview
                 runCount={runningTotals.runCount}
                 runDistance={runningTotals.runDistance}
                 liftCount={liftingData.liftCount}
@@ -783,21 +1096,33 @@ export default function History() {
             )
           )}
 
-          {(filter === "all" || filter === "running") && (
-            <section aria-label="Running analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.running }}
-                >
-                  Running
-                </p>
-              )}
+          {/* Hist5b pin 3 — Performance fold. Compact PI strip with
+              inline-accordion expansion. Replaces the dedicated
+              Performance tab; deep-links to /history#performance
+              scroll to this section's anchor. */}
+          {filter === "analytics" && (
+            <SectionErrorBoundary sectionName="performance-section">
+              <PerformanceSection />
+            </SectionErrorBoundary>
+          )}
+
+          {showRunningSection && filter === "analytics" && (
+            <section id="analytics-running" aria-label="Running analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.running }}
+              >
+                Running
+              </p>
               {dataLoading ? (
                 <div className="grid grid-cols-2 gap-2">
                   <Skeleton className="h-24 w-full rounded-xl" />
                   <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
+              ) : renderRunningEmptyNote ? (
+                <p className="text-xs text-muted-foreground italic px-1">
+                  No runs in this period
+                </p>
               ) : runs.length === 0 ? (
                 <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
                   <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
@@ -836,12 +1161,10 @@ export default function History() {
                       accentColor={THEME.running}
                     />
                   </div>
-                  <PRCard
-                    title="Running PRs"
-                    subtitle="Outdoor GPS only"
-                    prs={runningPRs}
-                    accentColor={THEME.running}
-                  />
+                  {/* Hist5b PR 7a — Running PRs migrated off Analytics
+                      to the dedicated PRs tab (Tier 2 lifetime
+                      contract). Tap the PRs tab in the top filter
+                      to access them. */}
                   <ShoeMileageSection />
                   <RunningHistorySection />
                 </>
@@ -849,16 +1172,14 @@ export default function History() {
             </section>
           )}
 
-          {(filter === "all" || filter === "lifting") && (
-            <section aria-label="Lifting analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.lifting }}
-                >
-                  Lifting
-                </p>
-              )}
+          {showLiftingSection && filter === "analytics" && (
+            <section id="analytics-lifting" aria-label="Lifting analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.lifting }}
+              >
+                Lifting
+              </p>
               {dataLoading ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -867,6 +1188,10 @@ export default function History() {
                   </div>
                   <ChartSkeleton />
                 </div>
+              ) : renderLiftingEmptyNote ? (
+                <p className="text-xs text-muted-foreground italic px-1">
+                  No workouts in this period
+                </p>
               ) : liftingData.liftCount === 0 ? (
                 <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
                   <Trophy className="w-5 h-5 shrink-0" style={{ color: THEME.lifting }} />
@@ -902,88 +1227,35 @@ export default function History() {
                 <VolumeChart
                   data={liftingData.weeklyVolume}
                   accentColor={THEME.lifting}
+                  granularity={liftingData.weeklyVolumeGranularity}
                 />
               </SectionErrorBoundary>
-              <MuscleHeatMap
-                data={liftingData.muscleData}
-                accentColor={THEME.lifting}
-              />
-              <div className="rounded-2xl bg-card overflow-hidden"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
-                  <Trophy size={16} className="text-amber-500" />
-                  <h3 className="text-sm font-semibold text-foreground flex-1">Lift PRs</h3>
-                  <span className="text-xs text-muted-foreground">Last 7 days</span>
-                </div>
-                {liftingData.prTimeline.length > 0 ? (
-                  <div className="divide-y divide-border/20">
-                    {liftingData.prTimeline.map((pr) => {
-                      const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
-                      const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-                      const exercise = EXERCISES.find(e => e.name === pr.name);
-                      const isBW = exercise?.equipment === "Bodyweight";
-                      return (
-                        <Link
-                          key={pr.name}
-                          to={`/history/exercise/${encodeURIComponent(pr.name)}`}
-                          className="flex items-center justify-between px-4 py-3 active:bg-muted/40 transition-colors"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              {pr.isAllTimeBest && (
-                                <>
-                                  <PRBadge isNew={pr.isAllTimeBest} />
-                                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                                    style={{ background: THEME.semantic.nutrition, color: 'white' }}>
-                                    NEW
-                                  </span>
-                                  <span className="text-xs text-muted-foreground ml-1">{pr.reps}RM</span>
-                                </>
-                              )}
-                              <p className="text-xs font-medium text-foreground truncate">{pr.name}</p>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
-                            <div>
-                              <p className="text-sm font-bold font-mono tabular-nums" style={{ color: THEME.lifting }}>
-                                {isBW && pr.weight === 0 ? "BW" : isBW && pr.weight > 0 ? `+${pr.weight} kg` : pr.weight > 0 ? `${pr.weight} kg` : <span className="text-muted-foreground">&mdash; kg</span>} &times; {pr.reps}
-                              </p>
-                              {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-                                <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
-                              ) : null}
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" aria-hidden="true" />
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="px-4 py-8 text-center space-y-2">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto" style={{ background: `${THEME.lifting}15` }}>
-                      <Trophy size={20} style={{ color: THEME.lifting }} />
-                    </div>
-                    <p className="text-xs font-medium text-foreground">No lifts logged this week</p>
-                    <p className="text-xs text-muted-foreground">Keep pushing — your best lifts will show here</p>
-                  </div>
-                )}
-              </div>
+              <SectionErrorBoundary sectionName="muscle-heatmap">
+                <MuscleHeatMap
+                  data={liftingData.muscleData}
+                  accentColor={THEME.lifting}
+                />
+              </SectionErrorBoundary>
+              {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
+                  dedicated PRs tab (Tier 2 lifetime contract). The
+                  prior surface was a 7-day-hardcoded view that
+                  disagreed with the section's TimeRange-scoped
+                  framing; the new home gives PRs their true
+                  lifetime semantics. Tap the PRs tab in the top
+                  filter to access them. */}
               </>
               )}
             </section>
           )}
 
-          {(filter === "all" || filter === "nutrition") && (
-            <section aria-label="Nutrition analytics">
-              {filter === "all" && (
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.success }}
-                >
-                  Nutrition
-                </p>
-              )}
+          {showNutritionSection && filter === "analytics" && (
+            <section id="analytics-nutrition" aria-label="Nutrition analytics">
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                style={{ color: THEME.success }}
+              >
+                Nutrition
+              </p>
               {dataLoading ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -992,6 +1264,19 @@ export default function History() {
                   </div>
                   <ChartSkeleton />
                 </div>
+              ) : renderNutritionEmptyNote ? (
+                <>
+                  <p className="text-xs text-muted-foreground italic px-1">
+                    No meals logged in this period
+                  </p>
+                  {/* TrendWeight stays visible — weight is independent
+                      of meal logging. Returning users get their weight
+                      chart even when nutrition is dormant for the
+                      selected window. */}
+                  <SectionErrorBoundary sectionName="trend-weight">
+                    <TrendWeight />
+                  </SectionErrorBoundary>
+                </>
               ) : nutrition.avgCalories === 0 ? (
                 <>
                   <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
@@ -1052,7 +1337,14 @@ export default function History() {
                   </div>
                 );
               })()}
-              {nutrition.adherence < 50 && (
+              {/* Hist5c pin 9 — sample-size guard. The warning misfires at
+                  extreme sparsity: at 1W with 2/7 days logged (28%) the
+                  warning fires AND the user is in cold-start mode where
+                  the meta-warning adds noise rather than signal. Require
+                  ≥5 logged days before the "too few logged days" message
+                  appears — below that, the user already understands they
+                  haven't logged much. */}
+              {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
                 <p className="text-[11px] text-amber-600 -mt-1 italic">
                   Averages below are based on too few logged days to be reliable.
                 </p>
@@ -1122,10 +1414,10 @@ export default function History() {
             </section>
           )}
 
-          {filter === "all" && !dataLoading && (
+          {filter === "analytics" && !dataLoading && (
             lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0
           ) && (
-            <section aria-label="Lifetime totals">
+            <section id="analytics-lifetime" aria-label="Lifetime totals">
               <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
                 Lifetime
               </p>
