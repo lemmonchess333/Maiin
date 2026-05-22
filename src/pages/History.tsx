@@ -1049,13 +1049,15 @@ export default function History() {
       {filter === "badges" ? (
         <BadgeGrid />
       ) : filter === "prs" ? (
-        <PRsTab
-          runningPRs={runningPRs}
-          lifetimePRs={liftingData.lifetimePRs}
-          recentLiftPRs={liftingData.recentLiftPRs}
-          hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
-          hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
-        />
+        <SectionErrorBoundary sectionName="prs-tab">
+          <PRsTab
+            runningPRs={runningPRs}
+            lifetimePRs={liftingData.lifetimePRs}
+            recentLiftPRs={liftingData.recentLiftPRs}
+            hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
+            hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
+          />
+        </SectionErrorBoundary>
       ) : (
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
@@ -1065,7 +1067,9 @@ export default function History() {
               to jump between (single-section users don't need an
               anchor menu — they ARE always on the only chip). */}
           {filter === "analytics" && anchorChips.length >= 2 && (
-            <AnalyticsAnchorChips chips={anchorChips} />
+            <SectionErrorBoundary sectionName="analytics-anchor-chips">
+              <AnalyticsAnchorChips chips={anchorChips} />
+            </SectionErrorBoundary>
           )}
 
           {filter === "analytics" && (
@@ -1226,10 +1230,12 @@ export default function History() {
                   granularity={liftingData.weeklyVolumeGranularity}
                 />
               </SectionErrorBoundary>
-              <MuscleHeatMap
-                data={liftingData.muscleData}
-                accentColor={THEME.lifting}
-              />
+              <SectionErrorBoundary sectionName="muscle-heatmap">
+                <MuscleHeatMap
+                  data={liftingData.muscleData}
+                  accentColor={THEME.lifting}
+                />
+              </SectionErrorBoundary>
               {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
                   dedicated PRs tab (Tier 2 lifetime contract). The
                   prior surface was a 7-day-hardcoded view that

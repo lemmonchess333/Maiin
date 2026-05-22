@@ -7,6 +7,7 @@ import { getCardColour } from "@/lib/performanceColour";
 import { getVerb } from "@/lib/performanceLine";
 import type { LoadBand } from "@/lib/performanceTypes";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 
 /* Hist5b pin 3 — Performance fold. PerformanceTab's content
    (semicircle gauge + sub-score cards + 12-week chart) lives inline
@@ -202,13 +203,15 @@ export default function PerformanceSection() {
             style={{ overflow: "hidden" }}
             className="mt-3"
           >
-            <Suspense
-              fallback={
-                <div className="p-4 rounded-2xl bg-card animate-pulse h-48" />
-              }
-            >
-              <PerformanceTab />
-            </Suspense>
+            <SectionErrorBoundary sectionName="performance-tab-body">
+              <Suspense
+                fallback={
+                  <div className="p-4 rounded-2xl bg-card animate-pulse h-48" />
+                }
+              >
+                <PerformanceTab />
+              </Suspense>
+            </SectionErrorBoundary>
           </motion.div>
         )}
       </AnimatePresence>
