@@ -18,6 +18,10 @@ import {
   type SupportedReauthProviderId,
 } from "@/lib/reauth";
 import { friendlyAuthError } from "@/lib/authErrors";
+import {
+  modalReducer,
+  initialModalState,
+} from "./accountDeletionReducer";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -27,75 +31,6 @@ interface AccountSectionProps {
   user: User | null;
   signOut: () => Promise<void>;
   inline?: boolean;
-}
-
-/* ════════════════════════════════════════════════════════════════
-   Deletion-modal state machine
-   ════════════════════════════════════════════════════════════════
-
-   Phases:
-     'confirm'           — initial state when modal is open; user
-                           types DELETE.
-     'deleting'          — first deletion call in flight.
-     'needs-reauth'      — recent-auth gate (R1A Chunk 2) rejected
-                           the deletion; user picks a provider to
-                           reauth with. Tracks failedAttempts for
-                           the 3-strike fallback.
-     'reauthenticating'  — provider tap in flight (OAuth popup
-                           open, or password being submitted).
-     'retrying'          — auto-retry deletion after successful
-                           reauth. Different label from 'deleting'
-                           so users see the implicit retry as a
-                           distinct step.
-     (success closes the modal entirely.)
-
-   Cancel from any phase returns to 'confirm' with the DELETE word
-   reset — the user has to type it again before another attempt.
-   This is intentional friction: the destructive confirmation
-   shouldn't be replayed implicitly. */
-type ModalPhase =
-  | { phase: "confirm" }
-  | { phase: "deleting" }
-  | { phase: "needs-reauth"; failedAttempts: 0 | 1 | 2 }
-  | { phase: "reauthenticating"; provider: SupportedReauthProviderId; failedAttempts: 0 | 1 | 2 }
-  | { phase: "retrying" };
-
-type ModalAction =
-  | { type: "DELETE_START" }
-  | { type: "REQUIRE_REAUTH" }
-  | { type: "REAUTH_START"; provider: SupportedReauthProviderId }
-  | { type: "REAUTH_FAIL" }
-  | { type: "REAUTH_SUCCESS" }
-  | { type: "CANCEL_REAUTH" };
-
-function modalReducer(state: ModalPhase, action: ModalAction): ModalPhase {
-  switch (action.type) {
-    case "DELETE_START":
-      return { phase: "deleting" };
-    case "REQUIRE_REAUTH":
-      return { phase: "needs-reauth", failedAttempts: 0 };
-    case "REAUTH_START":
-      if (state.phase !== "needs-reauth") return state;
-      return {
-        phase: "reauthenticating",
-        provider: action.provider,
-        failedAttempts: state.failedAttempts,
-      };
-    case "REAUTH_FAIL": {
-      if (state.phase !== "reauthenticating") return state;
-      /* Increment failed-attempt counter; clamp at 2 so the
-         caller can decide whether to surface the strikeout
-         fallback. */
-      const next = Math.min(state.failedAttempts + 1, 2) as 0 | 1 | 2;
-      return { phase: "needs-reauth", failedAttempts: next };
-    }
-    case "REAUTH_SUCCESS":
-      return { phase: "retrying" };
-    case "CANCEL_REAUTH":
-      return { phase: "confirm" };
-    default:
-      return state;
-  }
 }
 
 /**
@@ -152,7 +87,7 @@ export default function AccountSection({
   const [reauthError, setReauthError] = useState<string | null>(null);
   const [modalState, dispatchModal] = useReducer(
     modalReducer,
-    { phase: "confirm" } as ModalPhase,
+    initialModalState,
   );
   const deleteModalRef = useFocusTrap<HTMLDivElement>(showDeleteModal);
 
