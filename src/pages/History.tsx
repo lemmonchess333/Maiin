@@ -31,37 +31,50 @@ const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"))
 const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
 const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
 const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSection"));
-const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
+/* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
+   PerformanceSection (the inline accordion's expanded body), not
+   rendered as a top-level tab. The dedicated `performance` tab was
+   removed; deep-links to /history#performance route to the section
+   anchor inside Analytics. */
+const PerformanceSection = lazy(() => import("@/components/analytics/PerformanceSection"));
 const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
 const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
 const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
 
 
-/* Hist5b pin 1 — tab consolidation 6→3. Sport-filtered tabs
-   (running / lifting / nutrition) were pure noise filters and have
-   been dropped; their content lives as scroll-anchor sections inside
-   the Analytics tab now. The "all" tab is renamed "analytics" to
-   match the page's frame commitment (Hist5a). Performance + Badges
-   stay as peer tabs for now — PR 6 folds Performance into Analytics
-   as a section, PR 7 introduces the PRs tab. */
-type FilterTab = "analytics" | "performance" | "badges";
+/* Hist5b pin 1 + 3 — tab consolidation 6→2 after the Performance
+   fold. Sport-filtered tabs (running/lifting/nutrition) were
+   dropped in PR 5a; the Performance tab folds into Analytics as an
+   inline-accordion section in PR 6. Performance + sport sections
+   are scroll-anchor targets under the Analytics tab now. The "all"
+   tab is renamed "analytics" to match the page's frame commitment
+   (Hist5a). PR 7 introduces the PRs tab. */
+type FilterTab = "analytics" | "badges";
 
-const VALID_TABS: FilterTab[] = [
-  "analytics",
-  "badges",
-  "performance",
-];
+const VALID_TABS: FilterTab[] = ["analytics", "badges"];
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
    work. The four sport-filtered values + the old "all" value all
-   redirect to "analytics" (the unified scroll page). Performance +
-   badges pass through unchanged. */
+   redirect to "analytics" (the unified scroll page). Performance
+   redirects too — PR 6 folded it into Analytics with a hash anchor
+   target (`#performance`); the reconciliation effect promotes the
+   hash alongside the tab rewrite for direct deep-link continuity. */
 const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   all: "analytics",
   running: "analytics",
   lifting: "analytics",
   nutrition: "analytics",
+  performance: "analytics",
+};
+
+/* Tab values that, in addition to a `?tab=` rewrite, also force a
+   hash anchor to scroll to a specific section on the redirected
+   tab. Currently only `performance` — clicking on Home's PI hero
+   card (which deep-links to /history#performance per PR #635)
+   should land on the Performance section inside Analytics. */
+const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
+  performance: "performance",
 };
 
 // Module-level so the useCallback consuming it has a stable
@@ -91,8 +104,7 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
       >
         {VALID_TABS.map((f) => {
           const active = filter === f;
-          const tabColor =
-            f === "performance" ? THEME.brand : THEME.brand;
+          const tabColor = THEME.brand;
           return (
             <button
               key={f}
@@ -191,9 +203,25 @@ export default function History() {
        canonical Hist5 value on first mount. Share-cards / push
        notifications / bookmarks from before the tab consolidation
        still land on the right surface; the URL bar reflects the
-       new contract once they arrive. */
+       new contract once they arrive.
+       Tab values that need to also preserve their identity via
+       a section anchor (LEGACY_TAB_TO_HASH) get the hash set
+       alongside the rewrite — so /history?tab=performance becomes
+       /history#performance and scrolls to the Performance section
+       inside Analytics. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
       setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      const hashTarget = LEGACY_TAB_TO_HASH[tabFromUrl];
+      if (hashTarget && typeof window !== "undefined") {
+        /* Set the hash WITHOUT scrolling here — the anchor scroll
+           happens in the post-reconciliation effect below (after the
+           filter update has propagated through render). */
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search + "#" + hashTarget,
+        );
+      }
     }
 
     let hintedTab: FilterTab | null = null;
@@ -233,13 +261,27 @@ export default function History() {
       /* private mode */
     }
     if (typeof window !== "undefined" && window.location.hash) {
-      // Strip the hash without scrolling. Replacing state keeps
-      // the back-button history short.
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
+      /* PR 6 — preserve section-anchor hashes. `#performance` (the
+         Home PI hero deep-link target, per PR #635) AND
+         `#performance-expanded` (PerformanceSection's expanded-state
+         persistence, Hist5b pin 3) are not tab hints — they're
+         scroll-anchor + accordion-state markers. Leave them in the
+         URL; the section's own useEffect handles the scroll. Strip
+         only the now-irrelevant legacy tab hashes. */
+      const currentHash = window.location.hash.replace(/^#/, "");
+      const SECTION_ANCHOR_HASHES = new Set([
+        "performance",
+        "performance-expanded",
+        "analytics-performance",
+        "analytics-performance-detail",
+      ]);
+      if (!SECTION_ANCHOR_HASHES.has(currentHash)) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      }
     }
     // Intentionally only on mount — the ref guard ensures this
     // runs once per page load even if React renders the effect
@@ -792,9 +834,13 @@ export default function History() {
   /* Hist5b pin 1 — chip list mirrors the currently-visible sections.
      Tier-1 suppressed sections (no lifetime + no window data) don't
      appear in the chip menu — there's nothing to jump to. Lifetime
-     gets its own chip when the lifetime section renders. */
+     gets its own chip when the lifetime section renders.
+     Performance is always present on Analytics (PR 6) since PI is
+     a system-level metric, not a sport. */
   const anchorChips: AnchorChip[] = useMemo(() => {
-    const chips: AnchorChip[] = [];
+    const chips: AnchorChip[] = [
+      { id: "analytics-performance", label: "Performance", color: THEME.brand },
+    ];
     if (showRunningSection) {
       chips.push({ id: "analytics-running", label: "Running", color: ANCHOR_CHIP_COLORS.running });
     }
@@ -864,8 +910,6 @@ export default function History() {
       <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
       {filter === "badges" ? (
         <BadgeGrid />
-      ) : filter === "performance" ? (
-        <PerformanceTab />
       ) : (
         <>
           <TimeRangePills selected={timeRange} onChange={setTimeRange} />
@@ -900,6 +944,16 @@ export default function History() {
                 rangeDays={rangeDays}
               />
             )
+          )}
+
+          {/* Hist5b pin 3 — Performance fold. Compact PI strip with
+              inline-accordion expansion. Replaces the dedicated
+              Performance tab; deep-links to /history#performance
+              scroll to this section's anchor. */}
+          {filter === "analytics" && (
+            <SectionErrorBoundary sectionName="performance-section">
+              <PerformanceSection />
+            </SectionErrorBoundary>
           )}
 
           {showRunningSection && filter === "analytics" && (
