@@ -21,7 +21,11 @@ const { deleteAccount } = accountDeletion;
    rejects with this error so we can pin the fail-open contract
    (transient Firestore blip on the config read must not disable
    the deletion fleet). */
-function buildStubs({ configDoc, configReadError } = {}) {
+interface BuildStubsOpts {
+  configDoc?: Record<string, unknown>;
+  configReadError?: Error;
+}
+function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
   const mockEmptySnap = { empty: true, docs: [] };
   const mockBatch = {
     delete: vi.fn(),
