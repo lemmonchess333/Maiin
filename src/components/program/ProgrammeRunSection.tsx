@@ -501,7 +501,7 @@ export default function ProgrammeRunSection({
       setShowRaceForm(false);
     } catch (e) {
       logger.error("[handleSaveRaceGoal] updateProfile failed", e);
-      toast.error("Failed to save race goal", { id: "race-goal" });
+      toast.error("Couldn't save your race goal. Please try again.", { id: "race-goal" });
     } finally {
       setSavingRaceGoal(false);
     }

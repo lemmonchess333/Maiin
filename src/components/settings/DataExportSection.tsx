@@ -32,7 +32,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
               downloadCSV(csv, `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`);
               toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
             } catch (err) {
-              toast.error("Export failed");
+              toast.error("Couldn't export your data. Please try again.");
               logger.error(err);
             }
             setExporting(null);
