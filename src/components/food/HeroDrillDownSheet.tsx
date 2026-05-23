@@ -1,6 +1,7 @@
 import BottomSheet from "@/components/ui/BottomSheet";
 import { THEME } from "@/lib/theme";
 import { formatCalories, formatMacro, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { clampPct } from "@/lib/percentageHelpers";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
 interface DailyTotals {
@@ -17,11 +18,6 @@ interface HeroDrillDownSheetProps {
   isToday: boolean;
   dailyTotals: DailyTotals;
   dailyTargets: EffectiveTargets;
-}
-
-function clampPct(consumed: number, target: number): number {
-  if (target <= 0) return 0;
-  return Math.min(100, Math.max(0, Math.round((consumed / target) * 100)));
 }
 
 interface MacroRowProps {
