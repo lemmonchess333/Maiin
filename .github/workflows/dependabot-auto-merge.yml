@@ -1,0 +1,52 @@
+# Auto-merge Dependabot PRs that are minor or patch version bumps.
+#
+# How it works:
+#   1. Dependabot opens a PR (e.g. "Bump react from 19.1.0 to 19.1.1").
+#   2. This workflow fires on the PR open + every subsequent push to its
+#      branch.
+#   3. dependabot/fetch-metadata classifies the update type (major /
+#      minor / patch). For minor + patch, we call `gh pr merge --auto`
+#      which enables GitHub's auto-merge — the PR then merges
+#      automatically when the required emulator-tests check passes.
+#   4. Major bumps fall through with no auto-merge call; they sit in
+#      your queue for human review since they may carry breaking
+#      changes.
+#
+# Security model:
+#   - Uses `pull_request_target`, NOT `pull_request`, because Dependabot
+#     PRs run with a restricted token by default and can't enable
+#     auto-merge themselves. `pull_request_target` runs in the context
+#     of main with the full repo token.
+#   - The job runs ONLY when the actor is dependabot[bot] — third-party
+#     contributors can't trigger this path even if they craft a PR.
+#   - Only the `gh pr merge --auto` call runs; no code from the PR
+#     branch executes here.
+
+name: Dependabot auto-merge
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # Defence in depth — both the `if` and the metadata fetch require
+    # Dependabot. The fetch-metadata step itself errors out cleanly on
+    # non-Dependabot PRs, so this guard saves a wasted job.
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: Get Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Enable auto-merge for minor + patch bumps
+        if: ${{ steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor' }}
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
