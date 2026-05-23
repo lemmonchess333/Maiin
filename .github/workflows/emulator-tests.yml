@@ -75,7 +75,7 @@ jobs:
         run: |
           PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
           echo "version=$PW_VERSION" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
