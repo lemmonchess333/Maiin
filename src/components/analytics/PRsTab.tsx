@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
+import { epley1RM } from "@/lib/analytics";
 import PRBadge from "@/components/analytics/PRBadge";
 import PRCard from "@/components/analytics/PRCard";
 
@@ -67,7 +68,11 @@ interface PRsTabProps {
 }
 
 function LiftPRRow({ pr }: { pr: LiftPR }) {
-  const e1rm = Math.round(pr.weight * (1 + pr.reps / 30));
+  /* Use the shared epley1RM from lib/analytics so a future tweak
+     to the formula (e.g. swapping to Brzycki / Lombardi) lands in
+     one place. The shared helper also guards reps<=0 / weight<=0
+     which can't happen for a real PR but defends against bad data. */
+  const e1rm = epley1RM(pr.weight, pr.reps);
   const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString(
     "en-GB",
     { day: "numeric", month: "short" },
