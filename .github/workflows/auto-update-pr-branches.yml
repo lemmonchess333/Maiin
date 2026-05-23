@@ -1,0 +1,71 @@
+# Auto-update open PR branches with the latest main, so stale PRs
+# don't sit blocked behind a "merge conflict / branch out of date"
+# state after a merge wave.
+#
+# Trigger: every push to main (which is every PR merge).
+# For each open PR, calls `gh pr update-branch` — GitHub creates a
+# merge commit bringing main INTO the PR branch (not a rebase, so no
+# force-push, the PR's commit history is preserved). If there's a
+# genuine conflict, the API call fails for that PR and the user gets
+# notified via the PR conversation; we log + continue with the others.
+#
+# Caveat (worth knowing):
+#   The merge commit pushed by this Action is attributed to the
+#   workflow's GITHUB_TOKEN. GitHub's default behaviour is that pushes
+#   from GITHUB_TOKEN do not retrigger downstream workflows on the same
+#   repo (anti-loop policy). This means the PR's emulator-tests check
+#   may NOT auto re-run after the branch update, leaving the PR with
+#   stale check status.
+#
+#   Mitigations:
+#     - The required check is `emulator-tests`; if it was green on the
+#       PR's previous head, it stays green on the merge commit (the
+#       check status carries over).
+#     - If you want CI to definitively re-run, push a no-op commit to
+#       the PR branch manually OR replace `secrets.GITHUB_TOKEN` below
+#       with a PAT that bypasses the anti-loop guard.
+#
+# This workflow is intentionally tolerant — `|| true` on each
+# update-branch call so one failing PR doesn't abort the loop.
+
+name: Auto-update PR branches on main push
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Serialise the job so two main pushes in quick succession don't race.
+# We don't need to cancel — each run handles whichever PRs are open at
+# that moment, so queuing is correct.
+concurrency:
+  group: auto-update-pr-branches
+  cancel-in-progress: false
+
+jobs:
+  update-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update every open PR branch with main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # List all open PRs targeting main.
+          PR_NUMBERS=$(gh pr list --repo "$REPO" --base main --state open --json number --jq '.[].number')
+          if [ -z "$PR_NUMBERS" ]; then
+            echo "No open PRs to update."
+            exit 0
+          fi
+          echo "Open PRs to update: $PR_NUMBERS"
+          for pr in $PR_NUMBERS; do
+            echo ""
+            echo "→ Updating PR #$pr"
+            # `|| true` so a single PR with a conflict doesn't abort the
+            # whole job. The CLI prints a useful error per-PR; check the
+            # job log if a PR stays stale.
+            gh pr update-branch "$pr" --repo "$REPO" || echo "  (PR #$pr could not be updated — likely a conflict or already up-to-date)"
+          done

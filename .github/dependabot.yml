@@ -1,0 +1,74 @@
+# Dependabot config — watches three ecosystems and opens PRs against main
+# when a newer version is available.
+#
+# Companion to .github/workflows/dependabot-auto-merge.yml which enables
+# auto-merge on Dependabot PRs that are minor + patch version bumps. Major
+# bumps still wait for human review because they can carry breaking
+# changes.
+
+version: 2
+updates:
+  # Root npm package — the React + Vite frontend
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase"
+    labels:
+      - "dependencies"
+    groups:
+      # Bundle related Firebase + Capacitor + Recharts updates together so
+      # one PR carries the whole ecosystem update rather than five separate
+      # PRs that all need to land at the same time.
+      firebase:
+        patterns:
+          - "firebase*"
+          - "@firebase/*"
+      capacitor:
+        patterns:
+          - "@capacitor/*"
+      lint-and-format:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+          - "typescript-eslint*"
+          - "@typescript-eslint/*"
+      test-tooling:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "@playwright/*"
+          - "happy-dom"
+          - "jsdom"
+
+  # Cloud Functions package — plain JS / Node 20
+  - package-ecosystem: "npm"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 3
+    versioning-strategy: "increase"
+    labels:
+      - "dependencies"
+      - "functions"
+
+  # GitHub Actions versions — keeps actions/checkout@v4, etc, current
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/London"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"
