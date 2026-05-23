@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 /**
  * Strip a data URL prefix if present, returning the raw base64 payload.
  * Handles both "data:image/jpeg;base64,AAAA..." and plain "AAAA..." inputs.
@@ -42,7 +44,7 @@ export async function sharePhotoToLibrary(
 ): Promise<boolean> {
   // Guard against empty/missing input
   if (!base64 || typeof base64 !== "string") {
-    console.warn("[sharePhoto] No base64 provided");
+    logger.warn("[sharePhoto] No base64 provided");
     return false;
   }
 
@@ -63,7 +65,7 @@ export async function sharePhotoToLibrary(
     // Defensive — isPhotoShareSupported should have been called first,
     // but guard anyway
     if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
-      console.warn("[sharePhoto] Web Share API with files not supported");
+      logger.warn("[sharePhoto] Web Share API with files not supported");
       return false;
     }
 
@@ -76,7 +78,7 @@ export async function sharePhotoToLibrary(
     // User cancelled — not an error, return false silently
     if (err instanceof Error && err.name === "AbortError") return false;
     // Malformed base64 (atob throws InvalidCharacterError) or any other failure
-    console.error("[sharePhoto] Share failed:", err);
+    logger.error("[sharePhoto] Share failed:", err);
     return false;
   }
 }
