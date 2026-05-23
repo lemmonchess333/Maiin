@@ -44,14 +44,13 @@ import {
   runSessionReducer,
   initialRunPhase,
 } from '../features/run/runSessionReducer';
+import { haptic } from '../lib/haptic';
 
-function haptic(pattern: 'light' | 'medium' | 'heavy' | 'success') {
-  if (!navigator.vibrate) return;
-  if (pattern === 'light') navigator.vibrate(10);
-  if (pattern === 'medium') navigator.vibrate(30);
-  if (pattern === 'heavy') navigator.vibrate(50);
-  if (pattern === 'success') navigator.vibrate([30, 50, 30]);
-}
+/* haptic moved to the shared `../lib/haptic` implementation in
+   W1f, which routes through the Capacitor Haptics plugin on the
+   native iOS/Android shell. The old `navigator.vibrate`-only
+   inline was a no-op on iOS Safari (the Vibrate API has never
+   shipped on iOS), so the iOS path now fires correctly. */
 
 /* Live HUD chip for GPS state during an active run.
  *
