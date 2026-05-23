@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { processProfilePhoto, ProfilePhotoProcessingError } from "@/lib/profilePhotoProcessor";
 import { uploadProfilePhoto, removeProfilePhoto } from "@/lib/profilePhotoUpload";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 import Avatar from "@/components/Avatar";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -68,7 +69,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
              the error code so users can self-diagnose without us
              needing remote logs — Firebase errors carry a `code`
              field like 'storage/unauthorized' or 'permission-denied'. */
-          console.error("uploadProfilePhoto failed:", err);
+          logger.error("uploadProfilePhoto failed:", err);
           const code = (err as { code?: string } | null)?.code;
           if (code === "storage/unauthorized" || code === "permission-denied") {
             toast.error("Upload not permitted. Try again in a minute — the server may need to update.");
@@ -97,7 +98,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
       toast.success("Profile photo removed");
       setOpen(false);
     } catch (err) {
-      console.error("removeProfilePhoto failed:", err);
+      logger.error("removeProfilePhoto failed:", err);
       toast.error("Couldn't remove. Try again.");
     } finally {
       setBusy(null);

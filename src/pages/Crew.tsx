@@ -7,6 +7,7 @@ import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
+import { logger } from "../lib/logger";
 import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
 import { cn } from "../lib/utils";
 import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
@@ -470,7 +471,7 @@ export default function Crew() {
                       // Surface real failure modes to the console so
                       // network/region/auth issues are debuggable
                       // without re-instrumenting in prod.
-                      console.error("refreshMyCrewLeaderboard failed:", err);
+                      logger.error("refreshMyCrewLeaderboard failed:", err);
                       toast.error("Couldn't refresh. Try again.");
                     } finally {
                       setRefreshingLeaderboard(false);

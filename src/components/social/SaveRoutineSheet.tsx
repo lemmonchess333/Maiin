@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
 import { isBodyweightExerciseId } from "@/lib/exercises";
@@ -159,7 +160,7 @@ export default function SaveRoutineSheet({
         onClose();
       }, 650);
     } catch (err) {
-      console.error("saveRoutine failed:", err);
+      logger.error("saveRoutine failed:", err);
       toast.error("Couldn't save. Try again.");
       setSaving(false);
     }
