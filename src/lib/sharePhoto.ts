@@ -1,13 +1,5 @@
 import { logger } from "./logger";
-
-/**
- * Strip a data URL prefix if present, returning the raw base64 payload.
- * Handles both "data:image/jpeg;base64,AAAA..." and plain "AAAA..." inputs.
- */
-function stripDataUrlPrefix(input: string): string {
-  const match = input.match(/^data:[^;]+;base64,(.*)$/);
-  return match ? match[1] : input;
-}
+import { stripDataUrlPrefix } from "./base64Helpers";
 
 /**
  * Module-level cached support check. Computed once per session.

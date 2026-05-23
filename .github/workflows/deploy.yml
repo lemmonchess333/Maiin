@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -10,15 +10,21 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
-  # Queue concurrent deploys rather than cancel the in-progress one.
-  # GitHub Pages only allows one publish at a time per repo (the
-  # `pages` group enforces that), so without this flag a rapid merge
-  # cascade would cancel every interim deploy and only the last commit
-  # would actually land in production. With `false`, every commit's
-  # deploy runs to completion in order — slower under heavy merge
-  # rates but no intermediate version is silently skipped.
-  cancel-in-progress: false
+  group: "pages"
+  # Cancel the in-progress deploy when a new commit lands on main.
+  # GitHub Pages only allows one active deployment per environment;
+  # the `pages` concurrency group enforces that at the Actions
+  # layer. We tried `cancel-in-progress: false` to queue deploys
+  # (so every commit's bundle would visibly publish in order) but
+  # the Pages API rejected queued deployments with intermittent
+  # 401 "Bad credentials" errors — the queued OIDC tokens
+  # apparently don't survive the wait between job start and the
+  # Pages API call.
+  #
+  # Cancelling is the right behaviour for Pages: production always
+  # reflects the latest main commit, which is what users see. The
+  # cancelled interim runs are a UI artefact, not a real loss.
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -28,10 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm run lint
       - run: npm run test -- --run
@@ -55,7 +61,7 @@ jobs:
             echo "::error::dist/ contains E2E test build marker — refusing to deploy."
             exit 1
           fi
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
