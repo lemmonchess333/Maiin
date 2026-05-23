@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
 import { useAuth } from "@/lib/auth";
 import { DAY_LABELS, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
 import {
@@ -98,29 +99,6 @@ interface ProgrammeRunSectionProps {
    *  writes. The post-race card's "Skip recovery early" link calls
    *  this when the user wants to bail out of the soft window. */
   skipRecoveryEarly: () => Promise<void>;
-}
-
-function paceLabel(paceSec: number): string {
-  if (!paceSec || paceSec <= 0) return "—";
-  const m = Math.floor(paceSec / 60);
-  const s = Math.round(paceSec % 60);
-  return `${m}:${String(s).padStart(2, "0")}/km`;
-}
-
-function durationLabel(durationSec: number): string {
-  const m = Math.floor(durationSec / 60);
-  const s = Math.round(durationSec % 60);
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    const mm = m % 60;
-    return `${h}h ${String(mm).padStart(2, "0")}m`;
-  }
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function distanceLabel(distanceM: number): string {
-  if (!distanceM || distanceM <= 0) return "—";
-  return `${(distanceM / 1000).toFixed(1)} km`;
 }
 
 export default function ProgrammeRunSection({
