@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, useReducer } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGPS, type GPSSignalQuality } from '../hooks/useGPS';
@@ -40,8 +40,10 @@ import {
   type RunPlanMetadata,
 } from '../lib/runPlanMetadata';
 import { logger } from '../lib/logger';
-
-type RunPhase = 'waiting' | 'acquiring' | 'countdown' | 'active' | 'paused' | 'finished';
+import {
+  runSessionReducer,
+  initialRunPhase,
+} from '../features/run/runSessionReducer';
 
 function haptic(pattern: 'light' | 'medium' | 'heavy' | 'success') {
   if (!navigator.vibrate) return;
@@ -197,7 +199,7 @@ export default function Run() {
   const { programState, loading: programLoading } = useProgram();
   const profileRunMode = (profile?.runMode ?? 'freeform') as PlanMode;
   const isFreeformUser = profileRunMode === 'freeform';
-  const [phase, setPhase] = useState<RunPhase>('waiting');
+  const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
   const [locked, setLocked] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
@@ -412,12 +414,12 @@ export default function Run() {
     // the stored value (see handleResumeFromPrompt below).
     startedAtRef.current = Date.now();
     if (requiresManualDistance(finalConfig.activityType)) {
-      setPhase('active');
+      dispatch({ type: 'START_MANUAL' });
       timer.start();
       haptic('heavy');
       return;
     }
-    setPhase('acquiring');
+    dispatch({ type: 'START_GPS' });
     gps.preWarm();
     gps.start();
   };
@@ -498,7 +500,7 @@ export default function Run() {
     // would otherwise display "GPS recovering · last fix Xs ago"
     // using the stale lastFixAt from the restored trail.
     gapBannerSuppressUntilRef.current = Date.now() + 5000;
-    setPhase(resumePrompt.phase);
+    dispatch({ type: 'RESUME_SNAPSHOT', phase: resumePrompt.phase });
     setResumePrompt(null);
     // Restart GPS for outdoor runs that were active. Paused runs
     // get GPS back on user-driven Resume (handleResume below); we
@@ -526,7 +528,7 @@ export default function Run() {
   // Auto-start without GPS if permission denied or geolocation unavailable
   useEffect(() => {
     if (phase === 'acquiring' && gps.error) {
-      const transition = () => { setPhase('countdown'); setCountdown(3); };
+      const transition = () => { dispatch({ type: 'GPS_FAILED' }); setCountdown(3); };
       transition();
     }
   }, [phase, gps.error]);
@@ -541,7 +543,7 @@ export default function Run() {
   // Transition from acquiring to countdown when we get a GPS point
   useEffect(() => {
     if (phase === 'acquiring' && gps.points.length > 0) {
-      const transition = () => { setPhase('countdown'); setCountdown(3); };
+      const transition = () => { dispatch({ type: 'GPS_ACQUIRED' }); setCountdown(3); };
       transition();
     }
   }, [phase, gps.points.length]);
@@ -549,7 +551,7 @@ export default function Run() {
   useEffect(() => {
     if (phase !== 'countdown') return;
     if (countdown <= 0) {
-      const go = () => { setPhase('active'); timer.start(); audioCues.speak('Go!'); haptic('heavy'); };
+      const go = () => { dispatch({ type: 'COUNTDOWN_DONE' }); timer.start(); audioCues.speak('Go!'); haptic('heavy'); };
       go();
       return;
     }
@@ -618,7 +620,7 @@ export default function Run() {
     timer.pause();
     gps.stop();
     wakeLock.release();
-    setPhase('finished');
+    dispatch({ type: 'FINISH' });
     const finalDistance = distanceOverride ?? gps.distance;
     const points = gps.getPoints();
 
@@ -656,14 +658,14 @@ export default function Run() {
     haptic('medium');
     timer.pause();
     if (isOutdoorGpsRun(runConfig?.activityType)) gps.stop();
-    setPhase('paused');
+    dispatch({ type: 'PAUSE' });
   };
 
   const handleResume = () => {
     haptic('medium');
     if (isOutdoorGpsRun(runConfig?.activityType)) gps.start();
     timer.resume();
-    setPhase('active');
+    dispatch({ type: 'RESUME' });
   };
 
   const handleSwitchToManual = useCallback(() => {
@@ -686,7 +688,7 @@ export default function Run() {
        again. */
     gps.stop();
     setRunConfig((prev) => prev ? { ...prev, activityType: 'manual' } : prev);
-    setPhase('active');
+    dispatch({ type: 'MANUAL_FALLBACK' });
     timer.start();
     haptic('heavy');
   }, [gps, timer]);
@@ -836,7 +838,7 @@ export default function Run() {
                 </div>
               )}
               <button
-                onClick={() => { gps.stop(); setPhase('waiting'); }}
+                onClick={() => { gps.stop(); dispatch({ type: 'CANCEL_ACQUIRING' }); }}
                 className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 Cancel
               </button>
