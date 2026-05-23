@@ -320,14 +320,16 @@ export default function Food() {
     return isNaN(num) || value == null ? 0 : num;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getMealCategory = (item: any): string => {
+  const getMealCategory = (item: Meal | undefined): string => {
     // Check explicit meal field first (used by copied items and meal targeting)
     if (item?.meal && ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)) return item.meal;
     // Fall back to time-based derivation (snacks is never auto-assigned — use + button to target)
-    const createdAt = item?.createdAt || item;
-    if (!createdAt || !createdAt.toDate) return "lunch";
-    const hour = createdAt.toDate().getHours();
+    const createdAt = item?.createdAt;
+    /* `Meal.createdAt` is typed `unknown` because it round-trips
+       Firestore Timestamps — narrow defensively rather than trust
+       the type. */
+    if (!createdAt || typeof (createdAt as { toDate?: unknown }).toDate !== "function") return "lunch";
+    const hour = (createdAt as { toDate: () => Date }).toDate().getHours();
     if (hour < 11) return "breakfast";
     if (hour < 17) return "lunch";
     return "dinner";
