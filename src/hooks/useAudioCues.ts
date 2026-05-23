@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { haptic } from '@/lib/haptic';
 
 type CueFrequency = 'every_500m' | 'every_km' | 'every_5min' | 'off';
 
@@ -79,8 +80,9 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
 
       if (currentPaceSec > 0) splitPaces.current.push(currentPaceSec);
 
-      // Haptic burst for split milestone
-      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      /* Haptic burst for split milestone. lib/haptic routes through
+         Capacitor on iOS where navigator.vibrate is a no-op. */
+      haptic([60, 40, 60]);
 
       if (frequency === 'every_500m') {
         speak(`${(currentMark * 0.5).toFixed(1)} kilometres. Pace ${pace} per K.${comparison}`);
@@ -98,7 +100,7 @@ export function useAudioCues(enabled: boolean, frequency: CueFrequency, config?:
       const currentMark = Math.floor(elapsed / 300);
       if (currentMark > lastTimeCue.current && currentMark > 0) {
         lastTimeCue.current = currentMark;
-        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        haptic([60, 40, 60]);
         speak(`${currentMark * 5} minutes. Distance ${(distance / 1000).toFixed(1)} kilometres.`);
       }
     },
