@@ -7,6 +7,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
+import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
@@ -127,16 +128,10 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
 // Convert a "now vs. previous period" pair into the shape StatCard's
 // `delta` prop expects. Rule: prev === 0 → no delta (can't compute a
 // percent change from zero); abs-change < 1% → treated as no movement
-// and omitted so the UI doesn't shout about noise. Returns null to
-// match StatCard's `delta?: ... | null` contract.
-function buildDelta(current: number, previous: number): { value: string; positive: boolean } | null {
-  if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
-  if (previous <= 0) return null;
-  const pct = ((current - previous) / previous) * 100;
-  if (Math.abs(pct) < 1) return null;
-  const positive = pct >= 0;
-  return { value: `${Math.abs(Math.round(pct))}%`, positive };
-}
+/* buildDelta moved to `@/lib/deltaFormat` so the percentage-delta
+   contract (null on non-finite / non-positive previous / sub-1%
+   noise) can be reused by other "vs previous period" surfaces and
+   tested in isolation. */
 
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
