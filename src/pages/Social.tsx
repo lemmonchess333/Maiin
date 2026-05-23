@@ -7,7 +7,7 @@ import { useSuggestedPeople } from "../hooks/useSuggestedPeople";
 import { useSuggestedCrews } from "../hooks/useSuggestedCrews";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { searchUsers, getBoundedFollowingCount } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
@@ -89,9 +89,23 @@ export default function Social() {
   // on feed). The Soc5c smart-default below may rewrite the URL to
   // 'find' for genuine new users (zero follows + zero crew).
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const tabFromUrl = searchParams.get("tab");
   const tab: SocialTab =
     tabFromUrl === "crews" || tabFromUrl === "find" ? tabFromUrl : "feed";
+
+  /* Soc5 item 12: deep-link `/social?tab=crews&crewId=abc123` jumps
+     straight to the per-crew page. Non-members see Crew.tsx's
+     existing Join CTA — same path as tapping a crew row in the
+     list, just one fewer hop for users following an invite link.
+     replace:true so the transient Social URL doesn't show up in
+     browser history (back-button returns to whatever launched the
+     link, not to the redirect surface). */
+  const crewIdFromUrl = searchParams.get("crewId");
+  useEffect(() => {
+    if (!crewIdFromUrl) return;
+    navigate(`/crew/${crewIdFromUrl}`, { replace: true });
+  }, [crewIdFromUrl, navigate]);
   const setTab = useCallback(
     (next: SocialTab) => {
       setSearchParams(
