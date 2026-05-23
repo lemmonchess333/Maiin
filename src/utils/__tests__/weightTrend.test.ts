@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcWeightTrend } from "../weightTrend";
+import { calcWeightTrend, calculateEMA } from "../weightTrend";
 
 describe("calcWeightTrend", () => {
   it("returns null for empty entries", () => {
@@ -74,5 +74,95 @@ describe("calcWeightTrend", () => {
     const result = calcWeightTrend(entries)!;
     expect(result.current).toBe(81);
     expect(result.sparkline).toEqual([79, 80, 81]);
+  });
+});
+
+describe("calculateEMA", () => {
+  it("returns [] for empty input", () => {
+    expect(calculateEMA([])).toEqual([]);
+  });
+
+  it("returns one row per input entry", () => {
+    const entries = [
+      { date: "2026-03-13", weight: 80 },
+      { date: "2026-03-14", weight: 80.5 },
+      { date: "2026-03-15", weight: 81 },
+    ];
+    const result = calculateEMA(entries);
+    expect(result.length).toBe(3);
+  });
+
+  it("first row's trend equals the first input weight (seed)", () => {
+    /* The EMA seeds with the first sample — trend = w[0] +
+       factor * (w[0] - w[0]) = w[0]. */
+    const result = calculateEMA([{ date: "2026-03-13", weight: 80 }]);
+    expect(result[0].trend).toBe(80);
+    expect(result[0].actual).toBe(80);
+  });
+
+  it("smooths step changes — trend lags actual on a jump", () => {
+    /* Weight jumps from 80 → 85 between days. With factor 0.1, the
+       trend should move from 80 toward 85 slowly (80.5 first step). */
+    const result = calculateEMA([
+      { date: "2026-03-13", weight: 80 },
+      { date: "2026-03-14", weight: 85 },
+    ]);
+    expect(result[1].actual).toBe(85);
+    /* trend = 80 + 0.1 * (85 - 80) = 80.5. */
+    expect(result[1].trend).toBe(80.5);
+  });
+
+  it("rounds trend to one decimal place", () => {
+    /* Forced computation that would produce 80.45 — rounding to
+       one decimal gives 80.5 (banker's avoidance via Math.round). */
+    const result = calculateEMA(
+      [
+        { date: "2026-03-13", weight: 80 },
+        { date: "2026-03-14", weight: 84.5 },
+      ],
+      0.1,
+    );
+    /* trend = 80 + 0.1 * 4.5 = 80.45 → Math.round → 80.5. */
+    expect(result[1].trend).toBe(80.5);
+  });
+
+  it("respects a custom smoothing factor", () => {
+    /* With factor 1.0 the trend equals the actual every step (no
+       smoothing). With factor 0 it stays at the seed forever. */
+    const entries = [
+      { date: "2026-03-13", weight: 80 },
+      { date: "2026-03-14", weight: 85 },
+      { date: "2026-03-15", weight: 90 },
+    ];
+    const noSmoothing = calculateEMA(entries, 1.0);
+    expect(noSmoothing[2].trend).toBe(90);
+
+    const fullDamping = calculateEMA(entries, 0);
+    expect(fullDamping[2].trend).toBe(80);
+  });
+
+  it("sorts entries by date ascending in the result", () => {
+    const entries = [
+      { date: "2026-03-15", weight: 81 },
+      { date: "2026-03-13", weight: 79 },
+      { date: "2026-03-14", weight: 80 },
+    ];
+    const result = calculateEMA(entries);
+    expect(result.map((r) => r.date)).toEqual([
+      "2026-03-13",
+      "2026-03-14",
+      "2026-03-15",
+    ]);
+  });
+
+  it("trend value approaches actual over many same-value samples", () => {
+    /* 30 days of constant 80kg should pin trend at exactly 80
+       (seed stays at 80, every step adds 0). */
+    const entries = Array.from({ length: 30 }, (_, i) => ({
+      date: `2026-03-${String(i + 1).padStart(2, "0")}`,
+      weight: 80,
+    }));
+    const result = calculateEMA(entries);
+    expect(result[29].trend).toBe(80);
   });
 });
