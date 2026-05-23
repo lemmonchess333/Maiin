@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { THEME } from "@/lib/theme";
+import { haptic } from "@/lib/haptic";
 import { toast } from "sonner";
 
 export function WaterTracker() {
@@ -12,7 +13,9 @@ export function WaterTracker() {
   const handleAdd = async () => {
     await logWater(1);
     setRippleKey((k) => k + 1);
-    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(20);
+    /* lib/haptic routes through Capacitor on iOS where the
+       pure navigator.vibrate path was a no-op. */
+    haptic(20);
     if (glasses + 1 >= target) {
       toast.success("Water target hit! Stay hydrated!");
     }

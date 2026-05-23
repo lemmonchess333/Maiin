@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
+import { haptic } from "@/lib/haptic";
 import {
   Play,
   RotateCcw,
@@ -317,10 +318,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
   const totalSetsTotal = setLogs.flat().length;
 
-  // Haptic feedback helper
-  const haptic = useCallback((pattern: number | number[]) => {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  }, []);
+  /* haptic comes from `@/lib/haptic` which routes through
+     Capacitor's Haptics plugin in the iOS/Android shell. The
+     prior inline `navigator.vibrate(pattern)` was a no-op on iOS
+     Safari — the Vibrate API has never shipped there. */
 
   // Timer logic
   const startRest = useCallback(() => {
@@ -328,7 +329,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     setIsResting(true);
     chimeFiredRef.current = false;
     haptic(50);
-  }, [haptic]);
+  }, []);
 
   const stopRest = useCallback(() => {
     setIsResting(false);
@@ -357,7 +358,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       haptic([200, 100, 200]);
       playChime();
     }
-  }, [isResting, restSeconds, restTarget, haptic]);
+  }, [isResting, restSeconds, restTarget]);
 
   const setSetType = (exIdx: number, setIdx: number, type: SetType) => {
     setSetLogs((prev) => {

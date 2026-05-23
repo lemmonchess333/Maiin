@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { haptic } from "@/lib/haptic";
 
 interface PRBadgeProps {
   isNew?: boolean;
@@ -9,9 +10,10 @@ interface PRBadgeProps {
 
 export default function PRBadge({ isNew = false }: PRBadgeProps) {
   useEffect(() => {
-    if (isNew && typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(40);
-    }
+    /* lib/haptic routes through Capacitor on iOS where the pure
+       navigator.vibrate path was a no-op — the PR-celebration
+       buzz now fires on iPhone. */
+    if (isNew) haptic(40);
   }, [isNew]);
 
   if (!isNew) {
