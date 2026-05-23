@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
+import { calculateEMA } from "@/utils/weightTrend";
 import { THEME } from "@/lib/theme";
 import {
   computeDataConfidence,
@@ -16,27 +17,6 @@ import {
   ReferenceLine,
   Tooltip,
 } from "recharts";
-
-function calculateEMA(
-  weights: { date: string; weight: number }[],
-  factor = 0.1
-): { date: string; actual: number; trend: number }[] {
-  if (weights.length === 0) return [];
-
-  const sorted = [...weights].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  let trend = sorted[0].weight;
-  return sorted.map((w) => {
-    trend = trend + factor * (w.weight - trend);
-    return {
-      date: w.date,
-      actual: w.weight,
-      trend: Math.round(trend * 10) / 10,
-    };
-  });
-}
 
 export function TrendWeight() {
   const { user, profile } = useAuth();
