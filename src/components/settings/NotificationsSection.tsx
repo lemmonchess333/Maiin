@@ -6,6 +6,7 @@ import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
 import {
   getNotificationPermissionState,
+  requestNotificationPermission,
   getPendingNotifications,
   sendTestNotification,
   type NotificationPermissionState,
@@ -171,8 +172,12 @@ export default function NotificationsSection({
               haptic("light");
               const next = !mealReminders.enabled;
               trackSettingsEvent("settings_toggle_changed", { toggle: "meal_reminders", value: next });
-              if (next && 'Notification' in window && Notification.permission === 'default') {
-                await Notification.requestPermission();
+              if (next && permission === 'default') {
+                /* Route via lib/notifications.requestNotificationPermission
+                   so iOS Capacitor triggers a native LocalNotifications
+                   prompt rather than the WebView Notification API
+                   (which doesn't surface an iOS system prompt). */
+                await requestNotificationPermission();
                 refreshPermission();
               }
               await updateMealReminders({ enabled: next });
@@ -233,8 +238,12 @@ export default function NotificationsSection({
               haptic("light");
               const next = !workoutReminders.enabled;
               trackSettingsEvent("settings_toggle_changed", { toggle: "workout_reminders", value: next });
-              if (next && 'Notification' in window && Notification.permission === 'default') {
-                await Notification.requestPermission();
+              if (next && permission === 'default') {
+                /* Route via lib/notifications.requestNotificationPermission
+                   so iOS Capacitor triggers a native LocalNotifications
+                   prompt rather than the WebView Notification API
+                   (which doesn't surface an iOS system prompt). */
+                await requestNotificationPermission();
                 refreshPermission();
               }
               await updateWorkoutReminders({ enabled: next });
@@ -290,8 +299,12 @@ export default function NotificationsSection({
               haptic("light");
               const next = !streakReminder.enabled;
               trackSettingsEvent("settings_toggle_changed", { toggle: "streak_reminder", value: next });
-              if (next && 'Notification' in window && Notification.permission === 'default') {
-                await Notification.requestPermission();
+              if (next && permission === 'default') {
+                /* Route via lib/notifications.requestNotificationPermission
+                   so iOS Capacitor triggers a native LocalNotifications
+                   prompt rather than the WebView Notification API
+                   (which doesn't surface an iOS system prompt). */
+                await requestNotificationPermission();
                 refreshPermission();
               }
               // Toggling via Settings also counts as the user having
