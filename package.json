@@ -10,6 +10,7 @@
     "build:ios": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync ios",
     "build:android": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync android",
     "lint": "eslint .",
+    "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +18,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
-    "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts"
+    "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -76,7 +78,10 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "firebase-admin": "^13.8.0",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^28.1.0",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
