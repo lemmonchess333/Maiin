@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import { THEME } from '../../lib/theme';
+import { haptic } from '../../lib/haptic';
 import { calculatePace, rollingPace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
 import type { GPSPoint, Split } from '../../lib/gps';
 import { RunControlButton } from '@/components/ui/RunControlButton';
@@ -31,10 +32,10 @@ interface RunBottomSheetProps {
 // Sheet height as fraction of viewport: full, mid, compact
 const SNAPS: [number, number, number] = [0.13, 0.4, 0.91];
 
-function haptic(type: 'light' | 'medium' | 'heavy') {
-  if (!navigator.vibrate) return;
-  navigator.vibrate(type === 'light' ? 12 : type === 'medium' ? 35 : 65);
-}
+/* haptic moved to the shared @/lib/haptic implementation in
+   W1f, which routes through the Capacitor Haptics plugin in the
+   native shell. The old `navigator.vibrate`-only inline was a
+   no-op on iOS Safari — the iOS path now fires correctly. */
 
 // ── Live splits strip (last 3) ────────────────────────────────────────────────
 function SplitsStrip({ splits }: { splits: Split[] }) {
