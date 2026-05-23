@@ -11,7 +11,14 @@ permissions:
 
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  # Queue concurrent deploys rather than cancel the in-progress one.
+  # GitHub Pages only allows one publish at a time per repo (the
+  # `pages` group enforces that), so without this flag a rapid merge
+  # cascade would cancel every interim deploy and only the last commit
+  # would actually land in production. With `false`, every commit's
+  # deploy runs to completion in order — slower under heavy merge
+  # rates but no intermediate version is silently skipped.
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
