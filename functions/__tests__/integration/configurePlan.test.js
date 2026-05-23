@@ -116,11 +116,22 @@ beforeAll(() => {
 // consistent — this defensive poll only matters against the
 // emulator. Three attempts at 50ms intervals = 150ms ceiling, which
 // is still under the 30s vitest timeout by a large margin.
-async function getDocSettled(ref, attempts = 3) {
+// Defensive read with retry. The Firestore emulator occasionally
+// has a commit→read race where a doc just written via batch.commit()
+// isn't yet visible to a subsequent .get() against the same ref.
+// (See c7016e9 for the full diagnosis — Heisenbug only against
+// the emulator, production is strongly consistent.)
+//
+// 10 attempts × 100ms = 1000ms ceiling. Original budget was
+// 3 × 50ms = 150ms; that was enough until the auto-merge wave (PR
+// #698-era) ran multiple PR CI jobs in parallel and the
+// emulator-under-load latency exceeded 150ms. 1000ms is still well
+// under the 30s vitest timeout.
+async function getDocSettled(ref, attempts = 10) {
   for (let i = 0; i < attempts - 1; i++) {
     const doc = await ref.get();
     if (doc.exists) return doc;
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 100));
   }
   return ref.get();
 }
