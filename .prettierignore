@@ -1,0 +1,28 @@
+# Build output
+dist/
+build/
+.vite/
+
+# Dependency dirs
+node_modules/
+
+# Generated assets
+public/sw.js
+public/workbox-*.js
+public/registerSW.js
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Capacitor native projects (vendor-controlled formatting)
+ios/
+android/
+
+# Firebase Functions compiled output (if any)
+functions/lib/
+
+# Existing untouched code keeps its current formatting — Prettier
+# only runs on staged files via lint-staged, so unformatted files
+# aren't auto-rewritten unless explicitly staged.
