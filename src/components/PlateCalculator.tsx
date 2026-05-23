@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-
-const PLATE_SIZES = [25, 20, 15, 10, 5, 2.5, 1.25];
-const BAR_WEIGHT = 20;
+import { calculatePlates, BAR_WEIGHT_KG } from "@/lib/plateMath";
 
 const PLATE_COLORS: Record<number, string> = {
   25: "bg-red-500",
@@ -22,19 +20,6 @@ const PLATE_HEIGHTS: Record<number, number> = {
   2.5: 28,
   1.25: 24,
 };
-
-function calculatePlates(targetWeight: number): number[] {
-  let remaining = (targetWeight - BAR_WEIGHT) / 2;
-  if (remaining <= 0) return [];
-  const plates: number[] = [];
-  for (const plate of PLATE_SIZES) {
-    while (remaining >= plate - 0.001) {
-      plates.push(plate);
-      remaining -= plate;
-    }
-  }
-  return plates;
-}
 
 interface Props {
   weight?: number;
@@ -60,7 +45,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
 
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setWeight((w) => Math.max(BAR_WEIGHT, w - 2.5))}
+          onClick={() => setWeight((w) => Math.max(BAR_WEIGHT_KG, w - 2.5))}
           aria-label="Decrease weight"
           className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-foreground font-bold"
         >
@@ -68,7 +53,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
         </button>
         <div className="flex-1 text-center">
           <p className="text-2xl font-bold text-foreground tabular-nums">{weight}kg</p>
-          <p className="text-xs text-muted-foreground">Bar: {BAR_WEIGHT}kg</p>
+          <p className="text-xs text-muted-foreground">Bar: {BAR_WEIGHT_KG}kg</p>
         </div>
         <button
           onClick={() => setWeight((w) => w + 2.5)}
@@ -117,7 +102,7 @@ export function PlateCalculator({ weight: initialWeight, onClose }: Props) {
           </div>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground text-center">Bar only ({BAR_WEIGHT}kg)</p>
+        <p className="text-xs text-muted-foreground text-center">Bar only ({BAR_WEIGHT_KG}kg)</p>
       )}
     </div>
   );
