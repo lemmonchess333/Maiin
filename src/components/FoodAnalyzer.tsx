@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
@@ -67,22 +68,8 @@ type MealResult = {
   brand?: string;
 };
 
-function safeNum(val: unknown): number {
-  const n = Number(val);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function parseServingGrams(servingSize?: string): number | null {
-  if (!servingSize) return null;
-  const m = servingSize.match(/(\d+(\.\d+)?)\s*g/i);
-  if (!m) return null;
-  const grams = Number(m[1]);
-  return Number.isFinite(grams) && grams > 0 ? grams : null;
-}
-
-function round1(n: number) {
-  return Math.round(n * 10) / 10;
-}
+/* safeNum / parseServingGrams / round1 extracted to
+   `@/lib/foodParseHelpers` so they can be tested in isolation. */
 
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
