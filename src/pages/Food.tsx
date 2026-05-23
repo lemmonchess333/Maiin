@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { joinHumanList } from "@/lib/listFormat";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 12 },
@@ -299,21 +300,10 @@ export default function Food() {
     if (nlInput) setNlInput("");
   }
 
-  /**
-   * Join a list of strings into a human-readable phrase:
-   *   ["Lunch"]                  → "Lunch"
-   *   ["Breakfast","Lunch"]      → "Breakfast & Lunch"
-   *   ["Breakfast","Lunch","Dinner"] → "Breakfast, Lunch & Dinner"
-   * Used by the "Copy yesterday's …" button label and its success toast
-   * so the user sees exactly which meal slots are about to be / were
-   * just touched.
-   */
-  const joinHumanList = (items: string[]): string => {
-    if (items.length === 0) return "";
-    if (items.length === 1) return items[0];
-    if (items.length === 2) return `${items[0]} & ${items[1]}`;
-    return `${items.slice(0, -1).join(", ")} & ${items[items.length - 1]}`;
-  };
+  /* joinHumanList moved to `@/lib/listFormat` so the Tropos
+     enumeration style (`a & b` / `a, b & c`) can be reused on
+     other toast / caption surfaces without copy-pasting the
+     three-branch ladder. */
 
   const safeNum = (value: unknown): number => {
     const num = Number(value);
