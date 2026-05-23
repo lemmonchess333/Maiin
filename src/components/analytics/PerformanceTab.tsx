@@ -4,6 +4,7 @@ import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { getPlainLanguageSummary } from "@/lib/performanceSummary";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
 import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -138,35 +139,9 @@ function ScoreBar({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function getPlainLanguageSummary(
-  pi: number,
-  loadBand: string | undefined,
-  delta: number | null
-): { headline: string; body: string } {
-  const headline =
-    pi >= 80 ? "Strong week — your training is on track" :
-    pi >= 60 ? "Solid progress — keep building momentum" :
-    pi >= 40 ? "Moderate effort — room to push harder" :
-    "Light week — focus on recovery or ramp up";
-
-  const band = (loadBand ?? "").toLowerCase();
-  let body =
-    band === "overreach"
-      ? "You're pushing hard — recovery matters. Consider a lighter session."
-      : band === "high"
-      ? "High training load. Keep nutrition and sleep on point."
-      : band === "moderate"
-      ? "Balanced workload. Room to push harder or maintain."
-      : "Low training load. Good time to recover or increase intensity.";
-
-  if (delta !== null && Math.abs(delta) > 5) {
-    body += delta > 0
-      ? ` Trending up ${delta} pts from last week.`
-      : ` Down ${Math.abs(delta)} pts from last week.`;
-  }
-
-  return { headline, body };
-}
+/* getPlainLanguageSummary moved to `@/lib/performanceSummary`
+   so the copy contract can be tested in isolation + reused
+   anywhere PI is surfaced (Home hero, future deep-link cards). */
 
 export default function PerformanceTab() {
   const { weeks, currentWeek, loading } = usePerformanceWeeks(12);
