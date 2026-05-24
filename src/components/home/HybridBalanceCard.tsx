@@ -13,7 +13,14 @@ interface Props {
   targetRunSessions: number;
 }
 
-export default function HybridBalanceCard({ liftSessions, runSessions, liftTonnage, runKm, targetLiftSessions, targetRunSessions }: Props) {
+export default function HybridBalanceCard({
+  liftSessions,
+  runSessions,
+  liftTonnage,
+  runKm,
+  targetLiftSessions,
+  targetRunSessions,
+}: Props) {
   const prefersReducedMotion = useReducedMotion();
   const totalSessions = liftSessions + runSessions;
   if (totalSessions === 0 && liftTonnage === 0 && runKm === 0) {
@@ -21,27 +28,32 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
       <div className="p-4 rounded-2xl bg-card">
         <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
-          <Dumbbell className="w-6 h-6 mx-auto" style={{ color: THEME.lifting }} />
+          <Dumbbell
+            className="w-6 h-6 mx-auto"
+            style={{ color: THEME.lifting }}
+          />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
           <p className="text-xs text-muted-foreground">
             {targetLiftSessions > 0 && targetRunSessions > 0
-              ? `${targetLiftSessions} lift${targetLiftSessions !== 1 ? 's' : ''} · ${targetRunSessions} run${targetRunSessions !== 1 ? 's' : ''} planned`
+              ? `${targetLiftSessions} lift${targetLiftSessions !== 1 ? "s" : ""} · ${targetRunSessions} run${targetRunSessions !== 1 ? "s" : ""} planned`
               : targetLiftSessions > 0
-              ? `${targetLiftSessions} lift session${targetLiftSessions !== 1 ? 's' : ''} planned`
-              : targetRunSessions > 0
-              ? `${targetRunSessions} run${targetRunSessions !== 1 ? 's' : ''} planned`
-              : 'Log a workout or run to see your hybrid balance'}
+                ? `${targetLiftSessions} lift session${targetLiftSessions !== 1 ? "s" : ""} planned`
+                : targetRunSessions > 0
+                  ? `${targetRunSessions} run${targetRunSessions !== 1 ? "s" : ""} planned`
+                  : "Log a workout or run to see your hybrid balance"}
           </p>
         </div>
       </div>
     );
   }
 
-  const liftPct = totalSessions > 0 ? Math.round((liftSessions / totalSessions) * 100) : 0;
+  const liftPct =
+    totalSessions > 0 ? Math.round((liftSessions / totalSessions) * 100) : 0;
   const runPct = totalSessions > 0 ? 100 - liftPct : 0;
 
   const totalTarget = targetLiftSessions + targetRunSessions;
-  const targetLiftPct = totalTarget > 0 ? Math.round((targetLiftSessions / totalTarget) * 100) : 50;
+  const targetLiftPct =
+    totalTarget > 0 ? Math.round((targetLiftSessions / totalTarget) * 100) : 50;
 
   // Balance assessment
   const liftDiff = liftSessions - targetLiftSessions;
@@ -67,12 +79,13 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
   }
 
   // Volume display — show tonnes for 1000+, otherwise kg
-  const volumeDisplay = liftTonnage >= 1000
-    ? `${(liftTonnage / 1000).toFixed(1)}t`
-    : `${Math.round(liftTonnage)} kg`;
+  const volumeDisplay =
+    liftTonnage >= 1000
+      ? `${(liftTonnage / 1000).toFixed(1)}t`
+      : `${Math.round(liftTonnage)} kg`;
 
   return (
-    <Link to="/history?tab=performance">
+    <Link to="/history#performance">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -83,30 +96,56 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
         <div className="flex items-center justify-between">
           <p className="text-sm font-bold text-foreground">This Week</p>
           <div className="flex items-center gap-1">
-            <span className="text-xs font-medium" style={{ color: balanceColor }}>{balanceLabel}</span>
+            <span
+              className="text-xs font-medium"
+              style={{ color: balanceColor }}
+            >
+              {balanceLabel}
+            </span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
           </div>
         </div>
 
         {/* Balance bar */}
         <div className="space-y-1.5">
-          <div className="h-2.5 rounded-full overflow-hidden flex" style={{ backgroundColor: `${THEME.text.muted}10` }}>
+          <div
+            className="h-2.5 rounded-full overflow-hidden flex"
+            style={{ backgroundColor: `${THEME.text.muted}10` }}
+          >
             {liftPct > 0 && (
               <motion.div
                 className="h-full"
-                style={{ backgroundColor: THEME.lifting, borderRadius: runPct > 0 ? '9999px 0 0 9999px' : '9999px' }}
-                initial={prefersReducedMotion ? { width: `${liftPct}%` } : { width: 0 }}
+                style={{
+                  backgroundColor: THEME.lifting,
+                  borderRadius: runPct > 0 ? "9999px 0 0 9999px" : "9999px",
+                }}
+                initial={
+                  prefersReducedMotion ? { width: `${liftPct}%` } : { width: 0 }
+                }
                 animate={{ width: `${liftPct}%` }}
-                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { duration: 0.6, ease: "easeOut", delay: 0.2 }
+                }
               />
             )}
             {runPct > 0 && (
               <motion.div
                 className="h-full"
-                style={{ backgroundColor: THEME.running, borderRadius: liftPct > 0 ? '0 9999px 9999px 0' : '9999px' }}
-                initial={prefersReducedMotion ? { width: `${runPct}%` } : { width: 0 }}
+                style={{
+                  backgroundColor: THEME.running,
+                  borderRadius: liftPct > 0 ? "0 9999px 9999px 0" : "9999px",
+                }}
+                initial={
+                  prefersReducedMotion ? { width: `${runPct}%` } : { width: 0 }
+                }
                 animate={{ width: `${runPct}%` }}
-                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, ease: "easeOut", delay: 0.3 }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { duration: 0.6, ease: "easeOut", delay: 0.3 }
+                }
               />
             )}
           </div>
@@ -131,17 +170,35 @@ export default function HybridBalanceCard({ liftSessions, runSessions, liftTonna
             <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />
             <span className="text-muted-foreground">Lifts</span>
             <span className="font-mono tabular-nums">
-              <span className="font-semibold text-foreground">{liftSessions}</span><span className="text-muted-foreground">/{targetLiftSessions}</span>
+              <span className="font-semibold text-foreground">
+                {liftSessions}
+              </span>
+              <span className="text-muted-foreground">
+                /{targetLiftSessions}
+              </span>
             </span>
-            {liftTonnage > 0 && <span className="text-muted-foreground font-mono tabular-nums">· {volumeDisplay}</span>}
+            {liftTonnage > 0 && (
+              <span className="text-muted-foreground font-mono tabular-nums">
+                · {volumeDisplay}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
             <span className="text-muted-foreground">Runs</span>
             <span className="font-mono tabular-nums">
-              <span className="font-semibold text-foreground">{runSessions}</span><span className="text-muted-foreground">/{targetRunSessions}</span>
+              <span className="font-semibold text-foreground">
+                {runSessions}
+              </span>
+              <span className="text-muted-foreground">
+                /{targetRunSessions}
+              </span>
             </span>
-            {runKm > 0 && <span className="text-muted-foreground font-mono tabular-nums">· {runKm.toFixed(1)} km</span>}
+            {runKm > 0 && (
+              <span className="text-muted-foreground font-mono tabular-nums">
+                · {runKm.toFixed(1)} km
+              </span>
+            )}
           </div>
         </div>
       </motion.div>
