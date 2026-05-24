@@ -45,6 +45,7 @@ import {
   initialRunPhase,
 } from '../features/run/runSessionReducer';
 import { haptic } from '../lib/haptic';
+import { formatRaceDistance } from '../lib/runLabels';
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -168,15 +169,6 @@ function deriveStrip(
     }
   }
   return null;
-}
-
-function formatRaceDistance(distance: string | undefined): string {
-  if (!distance) return '';
-  if (distance === '5k') return '5K';
-  if (distance === '10k') return '10K';
-  if (distance === 'half') return 'Half Marathon';
-  if (distance === 'marathon') return 'Marathon';
-  return distance.toUpperCase();
 }
 
 export default function Run() {
