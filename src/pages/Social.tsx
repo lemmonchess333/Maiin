@@ -6,6 +6,7 @@ import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { useSuggestedPeople } from "../hooks/useSuggestedPeople";
 import { useSuggestedCrews } from "../hooks/useSuggestedCrews";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -371,78 +372,42 @@ export default function Social() {
   // Pull-to-refresh with iOS conflict fix (#9).
   // Soc5 cross-cutting pin: pull-to-refresh re-fetches the active
   // tab's data — feed view re-pulls the active feed, Crews tab
-  // re-pulls the crew list (and Suggested Crews in Phase 2). Ref
-  // is on the outer motion.div so the touch listener attaches once
-  // and stays attached across tab switches; the dispatch table
-  // resolves the right refresh action at touchend based on the
-  // current tab.
-  const [pullRefreshing, setPullRefreshing] = useState(false);
-  const pullStartY = useRef(0);
-  const isSwiping = useRef(false);
-  const pullContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    pullStartY.current = e.touches[0].clientY;
-    isSwiping.current = false;
-  };
-
-  useEffect(() => {
-    const el = pullContainerRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      const diff = e.touches[0].clientY - pullStartY.current;
-      if (diff > 0 && window.scrollY <= 0) {
-        isSwiping.current = true;
-        e.preventDefault();
-      }
-    };
-    el.addEventListener("touchmove", handler, { passive: false });
-    return () => el.removeEventListener("touchmove", handler);
-  }, []);
-
-  const handleTouchEnd = async (e: React.TouchEvent) => {
-    const diff = e.changedTouches[0].clientY - pullStartY.current;
-    if (diff > 80 && isSwiping.current && !pullRefreshing) {
-      setPullRefreshing(true);
-      try {
-        if (tab === "feed") {
-          await activeFeed.refresh();
-        } else if (tab === "crews") {
-          // Soc5 cross-cutting pin: single pull-to-refresh re-fetches
-          // BOTH the crew list AND friend-of-friend suggestions so
-          // the user gets a consistent fresh state.
-          await Promise.all([refreshCrews(), refreshSuggestedCrews()]);
-        }
-        // Find tab: search results are user-driven; no refresh action.
-      } finally {
-        setPullRefreshing(false);
-      }
+  // re-pulls the crew list (and Suggested Crews in Phase 2). Hook
+  // owns gesture state + state-machine; this page owns the per-tab
+  // refresh action via the onRefresh callback.
+  // Extracted into src/hooks/usePullToRefresh.ts so History + Food
+  // share the same gesture implementation rather than triplicating
+  // ~50 lines of identical touch-handling code.
+  const performRefresh = useCallback(async () => {
+    if (tab === "feed") {
+      await activeFeed.refresh();
+    } else if (tab === "crews") {
+      // Soc5 cross-cutting pin: single pull-to-refresh re-fetches
+      // BOTH the crew list AND friend-of-friend suggestions so
+      // the user gets a consistent fresh state.
+      await Promise.all([refreshCrews(), refreshSuggestedCrews()]);
     }
-    isSwiping.current = false;
-  };
+    // Find tab: search results are user-driven; no refresh action.
+  }, [tab, activeFeed, refreshCrews, refreshSuggestedCrews]);
+
+  const {
+    isRefreshing: pullRefreshing,
+    triggerRefresh,
+    bindProps: pullBindProps,
+  } = usePullToRefresh({ onRefresh: performRefresh });
 
   /* Soc5 cross-cutting pin (3): listen for the bottom-nav retap event
      dispatched by Layout.tsx when the user taps the already-active
-     Social tab. Re-uses the same per-tab refresh logic as pull-to-
-     refresh so behaviour stays consistent across the two entry points.
-     The actual scroll-to-top happens in Layout.tsx before the dispatch. */
+     Social tab. Reuses the hook's triggerRefresh so behaviour stays
+     consistent across the two entry points (gesture + retap). The
+     actual scroll-to-top happens in Layout.tsx before the dispatch. */
   useEffect(() => {
-    const onRetap = async () => {
-      if (pullRefreshing) return;
-      setPullRefreshing(true);
-      try {
-        if (tab === "feed") {
-          await activeFeed.refresh();
-        } else if (tab === "crews") {
-          await Promise.all([refreshCrews(), refreshSuggestedCrews()]);
-        }
-      } finally {
-        setPullRefreshing(false);
-      }
+    const onRetap = () => {
+      void triggerRefresh();
     };
     window.addEventListener("tropos:social-tab-retap", onRetap);
     return () => window.removeEventListener("tropos:social-tab-retap", onRetap);
-  }, [tab, activeFeed, refreshCrews, refreshSuggestedCrews, pullRefreshing]);
+  }, [triggerRefresh]);
 
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -491,9 +456,7 @@ export default function Social() {
 
   return (
     <motion.div
-      ref={pullContainerRef}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      {...pullBindProps}
       className="space-y-4"
       initial="hidden"
       animate="visible"
