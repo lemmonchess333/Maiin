@@ -73,88 +73,91 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 
 ## Pages (src/pages/)
 
-| Page | Route | Description |
-|------|-------|-------------|
-| `Home.tsx` | `/` | Main dashboard — WeekStrip, hero cards, energy, insights |
-| `Food.tsx` | `/food` | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here) |
-| `History.tsx` | `/history` | Workout & run history with analytics charts |
-| `Program.tsx` | `/program` | Workout program builder & scheduling |
-| `Run.tsx` | `/run` | Active GPS run tracking (full-screen, no nav) |
-| `RunSummary.tsx` | `/run-summary` | Post-run stats & map review |
-| `RunDetail.tsx` | `/run/:runId` | Historical run detail view |
-| `Social.tsx` | `/social` | Social feed, crews, leaderboards |
-| `UserProfile.tsx` | `/user/:uid` | User profile viewing |
-| `Settings.tsx` | `/settings` | User settings & preferences |
-| `Onboarding.tsx` | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete) |
-| `Login.tsx` | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated) |
-| `PrivacyPolicy.tsx` | `/privacy` | Legal |
-| `TermsOfService.tsx` | `/terms` | Legal |
+| Page                 | Route          | Description                                                                |
+| -------------------- | -------------- | -------------------------------------------------------------------------- |
+| `Home.tsx`           | `/`            | Main dashboard — WeekStrip, hero cards, energy, insights                   |
+| `Food.tsx`           | `/food`        | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here) |
+| `History.tsx`        | `/history`     | Workout & run history with analytics charts                                |
+| `Program.tsx`        | `/program`     | Workout program builder & scheduling                                       |
+| `Run.tsx`            | `/run`         | Active GPS run tracking (full-screen, no nav)                              |
+| `RunSummary.tsx`     | `/run-summary` | Post-run stats & map review                                                |
+| `RunDetail.tsx`      | `/run/:runId`  | Historical run detail view                                                 |
+| `Social.tsx`         | `/social`      | Social feed, crews, leaderboards                                           |
+| `UserProfile.tsx`    | `/user/:uid`   | User profile viewing                                                       |
+| `Settings.tsx`       | `/settings`    | User settings & preferences                                                |
+| `Onboarding.tsx`     | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete)                   |
+| `Login.tsx`          | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated)         |
+| `PrivacyPolicy.tsx`  | `/privacy`     | Legal                                                                      |
+| `TermsOfService.tsx` | `/terms`       | Legal                                                                      |
 
 ## Key Business Logic (src/lib/)
 
-| File | Purpose |
-|------|---------|
-| `performanceEngine.ts` | Weekly performance index (0-100), load bands, deload detection |
-| `adaptiveTDEE.ts` | Adaptive TDEE calculation from weight trends |
-| `tdee.ts` | Base TDEE calculation |
-| `plateauDetection.ts` | Detect stalling/regressing and adjust macros |
-| `phaseNutrition.ts` | Day-type specific macro adjustments (lift/run/rest) |
-| `calculateDailyMacros.ts` | Daily macro target computation |
-| `healthScore.ts` | Composite health score with graduated workout scoring |
-| `nutritionInsights.ts` | Nutrition insight generation |
-| `gps.ts` | Haversine, pace, splits, elevation, Kalman filter, GPX export |
-| `paceTrends.ts` | Running pace trend detection (PR/improving/consistent) |
-| `guidedRun.ts` | Guided run logic & coaching |
-| `weather.ts` | Weather API integration for runs |
-| `privacyZones.ts` | GPS privacy zone detection for runs |
-| `prTracking.ts` | Personal record tracking system |
-| `scheduleUtils.ts` | Weekly schedule generation (lift/run/rest) |
-| `exercises.ts` | Exercise database |
-| `workoutTemplates.ts` | Workout template library |
-| `rolloverCalories.ts` | Pro feature: unused calorie rollover |
-| `nlFoodParser.ts` | Natural language food parsing |
-| `voiceFoodParser.ts` | Voice-based food parsing |
-| `gemini.ts` | AI food analysis via Gemini API |
-| `socialApi.ts` | Firestore social operations (feed, kudos, follow, crews) |
-| `shareCardGenerator.ts` | Share card image generation (html-to-image) |
-| `analytics.ts` | Analytics computation |
-| `subscription.ts` | Pro subscription handling |
-| `firebase.ts` | Firebase app initialization & Firestore/Auth/Storage exports |
-| `auth.tsx` | AuthProvider, useAuth hook, UserProfile interface |
-| `api.ts` | API client helpers |
-| `haptic.ts` | Haptic feedback utility (Capacitor) |
-| `offlineQueue.ts` | Queues Firestore writes when offline, flushes on reconnect |
-| `errorReporting.ts` | Error reporting utilities |
-| `logger.ts` | Structured logging |
-| `notifications.ts` | Push notification setup |
-| `types.ts` | Shared TypeScript type definitions |
-| `performanceTypes.ts` | Performance engine type definitions |
-| `macroConstants.ts` | Macro/nutrition constants |
-| `colorUtils.ts` | Colour manipulation helpers |
-| `export.ts` | Data export utilities |
-| `exerciseDemo.ts` | Exercise demo/animation data |
-| `firestoreGuards.ts` | Firestore data validation guards |
-| `funComparisons.ts` | Fun stat comparison generators |
-| `purchaseProvider.ts` | In-app purchase provider (Capacitor) |
-| `register-sw.ts` | Service worker registration |
-| `timeAgo.ts` | Relative time formatting |
-| `theme.ts` | THEME object for chart colours & design tokens |
-| `utils.ts` | General utility functions |
+| File                      | Purpose                                                        |
+| ------------------------- | -------------------------------------------------------------- |
+| `performanceEngine.ts`    | Weekly performance index (0-100), load bands, deload detection |
+| `adaptiveTDEE.ts`         | Adaptive TDEE calculation from weight trends                   |
+| `tdee.ts`                 | Base TDEE calculation                                          |
+| `plateauDetection.ts`     | Detect stalling/regressing and adjust macros                   |
+| `phaseNutrition.ts`       | Day-type specific macro adjustments (lift/run/rest)            |
+| `calculateDailyMacros.ts` | Daily macro target computation                                 |
+| `healthScore.ts`          | Composite health score with graduated workout scoring          |
+| `nutritionInsights.ts`    | Nutrition insight generation                                   |
+| `gps.ts`                  | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
+| `paceTrends.ts`           | Running pace trend detection (PR/improving/consistent)         |
+| `guidedRun.ts`            | Guided run logic & coaching                                    |
+| `weather.ts`              | Weather API integration for runs                               |
+| `privacyZones.ts`         | GPS privacy zone detection for runs                            |
+| `prTracking.ts`           | Personal record tracking system                                |
+| `scheduleUtils.ts`        | Weekly schedule generation (lift/run/rest)                     |
+| `exercises.ts`            | Exercise database                                              |
+| `workoutTemplates.ts`     | Workout template library                                       |
+| `rolloverCalories.ts`     | Pro feature: unused calorie rollover                           |
+| `nlFoodParser.ts`         | Natural language food parsing                                  |
+| `voiceFoodParser.ts`      | Voice-based food parsing                                       |
+| `gemini.ts`               | AI food analysis via Gemini API                                |
+| `socialApi.ts`            | Firestore social operations (feed, kudos, follow, crews)       |
+| `shareCardGenerator.ts`   | Share card image generation (html-to-image)                    |
+| `analytics.ts`            | Analytics computation                                          |
+| `subscription.ts`         | Pro subscription handling                                      |
+| `firebase.ts`             | Firebase app initialization & Firestore/Auth/Storage exports   |
+| `auth.tsx`                | AuthProvider, useAuth hook, UserProfile interface              |
+| `api.ts`                  | API client helpers                                             |
+| `haptic.ts`               | Haptic feedback utility (Capacitor)                            |
+| `offlineQueue.ts`         | Queues Firestore writes when offline, flushes on reconnect     |
+| `errorReporting.ts`       | Error reporting utilities                                      |
+| `logger.ts`               | Structured logging                                             |
+| `notifications.ts`        | Push notification setup                                        |
+| `types.ts`                | Shared TypeScript type definitions                             |
+| `performanceTypes.ts`     | Performance engine type definitions                            |
+| `macroConstants.ts`       | Macro/nutrition constants                                      |
+| `colorUtils.ts`           | Colour manipulation helpers                                    |
+| `export.ts`               | Data export utilities                                          |
+| `exerciseDemo.ts`         | Exercise demo/animation data                                   |
+| `firestoreGuards.ts`      | Firestore data validation guards                               |
+| `funComparisons.ts`       | Fun stat comparison generators                                 |
+| `purchaseProvider.ts`     | In-app purchase provider (Capacitor)                           |
+| `register-sw.ts`          | Service worker registration                                    |
+| `timeAgo.ts`              | Relative time formatting                                       |
+| `theme.ts`                | THEME object for chart colours & design tokens                 |
+| `utils.ts`                | General utility functions                                      |
 
 ## Feature Modules (src/features/)
 
 ### challenges/
+
 - `useChallenges.ts` — Challenge data hook
 - `ChallengeList.tsx` / `ChallengeCard.tsx` — Challenge UI components
 - `__tests__/useChallenges.test.ts`
 
 ### streaks/
+
 - `useStreaks.ts` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
 - `__tests__/badges.test.ts`
 
 ### program/
+
 - `programEngine.ts` — Periodized workout program generation
 - `programTypes.ts` — TypeScript interfaces for program state
 - `useProgram.ts` — Program state management hook
@@ -190,16 +193,16 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 
 Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 
-| Function | Trigger | Purpose |
-|----------|---------|---------|
-| `completeOnboarding` | HTTPS callable | Onboarding profile + program setup via Admin SDK (bypasses security rules) |
-| `analyzeFood` | HTTPS request | Vertex AI image-based food analysis |
-| `analyzeFoodText` | HTTPS request | Vertex AI text-based food analysis (Pro feature) |
-| `computePerformanceWeek` | HTTPS callable | Manual performance rollup |
-| `weeklyPerformanceRollup` | Scheduled (Sun 23:15 UTC) | Automated weekly rollup for active users (30-day window) |
-| `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window) |
-| `onWorkoutCreated` | Firestore trigger | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance |
-| `onRunCreated` | Firestore trigger | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance |
+| Function                  | Trigger                     | Purpose                                                                              |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------------------------ |
+| `completeOnboarding`      | HTTPS callable              | Onboarding profile + program setup via Admin SDK (bypasses security rules)           |
+| `analyzeFood`             | HTTPS request               | Vertex AI image-based food analysis                                                  |
+| `analyzeFoodText`         | HTTPS request               | Vertex AI text-based food analysis (Pro feature)                                     |
+| `computePerformanceWeek`  | HTTPS callable              | Manual performance rollup                                                            |
+| `weeklyPerformanceRollup` | Scheduled (Sun 23:15 UTC)   | Automated weekly rollup for active users (30-day window)                             |
+| `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                  |
+| `onWorkoutCreated`        | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance |
+| `onRunCreated`            | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance          |
 
 Helper: `syncChallengeProgress()` — auto-updates challenge participant progress (workout_count, total_volume, total_km)
 
@@ -226,11 +229,13 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 ## Testing
 
 ### Unit Tests (Vitest)
+
 - Config: `vitest.config.ts`, setup: `src/test/setup.ts`
 - 31 test files in `src/lib/__tests__/`, 4 in `src/utils/__tests__/`, 2 in `src/hooks/__tests__/` (useOnlineStatus, useRunTimer), plus feature module tests (challenges, streaks)
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
 ### E2E Tests (Playwright)
+
 - Config: `playwright.config.ts`
 - Test files in `e2e/`: `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts`, `pwa.spec.ts`
 - Run: `npm run test:e2e` or `npm run test:e2e:ui` (interactive)
@@ -250,7 +255,7 @@ These lessons cost a full day to find. Read before changing the deploy pipeline.
 - **A cascade of failed deploys followed by one docs-only success is the worst case.** If billing or auth issues cause N consecutive deploys to fail at the deploy step, then the next PR happens to be docs-only and the dedup logic kicks in, the workflow reports success but production has been stranded for the entire N-day window. The build-marker step prevents this scenario, but the **`workflow_dispatch` trigger** is the escape hatch — re-run the workflow manually from the Actions UI without pushing a new commit.
 - **Blaze plan is required for any Cloud Functions deploy.** Scheduled functions (Pub/Sub), Apple/Stripe webhook secrets, and the build-step machinery all live behind Blaze. If billing is detached (card expiry, manual unlink, etc.), every functions/-touching PR fails with `Extensions require the Blaze plan` — which is misleading; Tropos has no extensions, the error is firebase-tools' generic guard for any Blaze-only feature.
 - **`maxInstances` is mandatory on every HTTP and Firestore-trigger function.** Cloud Functions v1 has NO default cap; a runaway client / DDoS / accidental call-in-render loop can spin up thousands of containers and rack up hundreds of pounds in hours. `functions/index.js` declares three tiers (`DEFAULT_HTTP_CAP = 100`, `ADMIN_HTTP_CAP = 10`, `TRIGGER_CAP = 50`) and uses `functions.runWith({...})` on each export. Don't add a new HTTP/trigger function without one of those caps.
-- **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a *necessary but not sufficient* signal — see the dedup gotcha above. After a deploy that touches `functions/`, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
+- **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. After a deploy that touches `functions/`, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
 
 ### Account-deletion safety rails
 
@@ -269,6 +274,18 @@ Tropos is pre-launch with one user. That is a temporary condition. Every UX, eng
 - **Never use "pre-launch" or "I'm the only user" as justification to defer or skip a design decision.** If a decision is hard, it's hard. Solve it now while the surface area is small, not later when migration cost rises.
 - **"Ship simple, iterate from real data" is not "ship broken, hope users tolerate it".** Ship the simplest thing that works correctly for the user base, not the simplest thing for the developer. The simplest correct answer is almost always more work than the easiest answer — that work is the actual job.
 - **Reject reasoning that appeals to single-user transience.** If a stress-test argument rests on "it's only me for now" or "it's just for a few days," that argument is invalid by construction.
+
+## Plan-file lock discipline
+
+Locked decisions live in `.claude/plans/programme-run-followups.md`. Each row is the source of truth for one decision; future agents read it during audits, grills, and implementation work. **A lock that isn't on main is invisible to the next agent.**
+
+Two-orphan investigation on 2026-05-24 surfaced this rule. Hist5 (`1aaa7bb`) and PI5 (`36fcf6e`) were both fully-articulated ~15KB lock rows — written, committed, and orphaned on ad-hoc branches that never merged. Their implementations shipped against those orphaned specs through PRs #590, #591, #638-#647. From main's perspective, the design tree appeared undocumented, and an audit had to re-derive the "what was decided?" question by reading code comments and reverse-engineering the design from PR titles. Recovery PR #720 cherry-picked both rows back to main with `STATUS 2026-05-24 — orphaned lock recovered` markers.
+
+- **Lock commits go on their own branch and get pushed and PR'd immediately.** Not "after the next coding session," not "once I've thought it over more" — immediately, even if the PR is a single-commit. The branch name should be `claude/lock-<id>` (e.g. `claude/lock-hist5`) so the intent is identifiable from the branch listing, and the PR should be small enough that review is one read-through.
+- **Never piggyback a plan-file lock on a branch named for an unrelated purpose.** Hist5 was orphaned on `claude/pr-k-taper-cap-and-label` — a branch about a taper/cap/label feature. The plan-file commit got smuggled into an unrelated branch and lost when the branch closed without merging. If you start a coding branch and realise mid-session you also want to lock a decision, switch to a fresh `claude/lock-<id>` branch for the lock; don't slip it into the coding PR.
+- **Before ending a session that wrote a lock, verify it's in main's ancestry.** `git merge-base --is-ancestor <lock-sha> origin/main && echo IN || echo ORPHAN` resolves this in one line. If the lock commit isn't an ancestor of `origin/main`, the lock is effectively orphaned the moment the session ends.
+- **Locks are append-only.** Once a row is in the plan file, don't rewrite the body in place — add a `STATUS YYYY-MM-DD` line at the row tail (the pattern Run7 / Soc5 / Home2 / Hist5 / PI5 use). Inline edits destroy the record of what was originally decided vs what got iterated later, and they make the row impossible to diff against historical context.
+- **If you discover an orphaned lock, recover it before doing other work in the affected arc.** Auditing or grilling against the orphan-implied state is wasted effort — the lock that was actually written is the truth, and re-deciding from scratch produces drift even when you arrive at the same conclusion. Search with `git log --all --oneline -- .claude/plans/programme-run-followups.md | head -30` before assuming a decision was never made.
 
 ## Common Gotchas
 
@@ -303,6 +320,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 ## Tropos Design System
 
 ### Visual Identity
+
 - **Aesthetic:** Clean, warm light mode (iOS-inspired #F2F2F7 grouped background). Cards on white. NOT a dark glass app in light mode — it's minimal and calm with subtle depth.
 - **Dark mode:** True dark glass aesthetic (bg #121214, surfaces #1A1A1F) — used when toggled
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
@@ -310,6 +328,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Logo:** Purple gradient hexagon with upward chevron cutout. Top-left of home screen with "TROPOS" wordmark.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
+
 - Purple brand: #7B72E9 (primary), #9590E0 (light), #6560C8 (dark)
 - Running coral: #D4637A
 - Nutrition orange: #D9884E / #e87316
@@ -321,6 +340,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - Text muted: #8E8E93 (iOS system grey)
 
 ### Typography (Plus Jakarta Sans + JetBrains Mono)
+
 - **Display font:** Plus Jakarta Sans (all UI text)
 - **Mono font:** JetBrains Mono (stat numbers — calories, weight, reps, volume)
 - **Scale (1.25 modular):**
@@ -335,6 +355,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
 
 ### Card Patterns
+
 - **Standard card:** bg-card (white), rounded-xl (12px), padding 3-4, shadow-card (very subtle)
 - **Hero card (Health Score, Water):** rounded-2xl (16px), padding 4, larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** rounded-xl, padding 3, bg-muted (slightly darker than white), 2-col grid
@@ -343,6 +364,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Section labels:** 10px uppercase with wider letter-spacing, muted colour
 
 ### Spacing
+
 - **Page horizontal padding:** px-4 (16px)
 - **Card internal padding:** p-3 (12px) for compact, p-4 (16px) for hero cards
 - **Card gap (vertical):** space-y-2 (8px) for dense stacks, space-y-3 (12px) for section breaks
@@ -351,6 +373,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Icon inside container:** w-4 h-4 (16px) standard, w-5 h-5 (20px) hero
 
 ### Interactive Patterns
+
 - **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
 - **Haptic:** Called on all button/card taps via haptic() utility
 - **Count-up animation:** Hero numbers animate from 0 on first load (useCountUp hook)
@@ -359,6 +382,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
 
 ### Component Architecture
+
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards (action pills + health/water/weight/steps) → TodayEnergy → HybridBalanceCard → InsightStrip
 - **Icons:** lucide-react (individual imports only)
@@ -368,6 +392,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Body diagram:** react-body-highlighter (Muscle Groups Trained)
 
 ### Design Principles (for Claude Code when improving UI)
+
 - **Keep the existing colour scheme** — the purple/coral/orange/teal semantic system is intentional and should not be changed
 - **Calm over flashy** — subtle shadows, soft tinted backgrounds, no harsh contrasts
 - **Breathing room over density** — generous padding, clear visual hierarchy
@@ -379,6 +404,7 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **When polishing:** Focus on typography weight consistency, spacing regularity, shadow subtlety, and icon container sizing. Don't introduce new colours, gradients, or decorative elements.
 
 ### Current Known Design Considerations
+
 - The Quick Log / Start Run / Log Food action pills were recently shrunk to make room for the hero cards (Health Score, Water). The visual weight difference between the large hero cards and small pills is intentional — the hero cards are glanceable data, the pills are secondary quick actions.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Section headers use 10px uppercase with tracking — this is a deliberate typographic choice, not an error

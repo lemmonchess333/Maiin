@@ -1,7 +1,16 @@
-import { useMemo, useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
@@ -18,28 +27,49 @@ import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
-import { track as trackHistoryEvent, type HistoryRange, type HistoryTab } from "@/lib/historyAnalytics";
+import {
+  track as trackHistoryEvent,
+  type HistoryRange,
+  type HistoryTab,
+} from "@/lib/historyAnalytics";
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
-const MuscleHeatMap = lazy(() => import("@/components/analytics/MuscleHeatMap"));
-const MacroDistribution = lazy(() => import("@/components/analytics/MacroDistribution"));
-const RunningHistorySection = lazy(() => import("@/components/run/RunningHistorySection"));
-const ShoeMileageSection = lazy(() => import("@/components/run/ShoeMileageSection"));
+const MuscleHeatMap = lazy(
+  () => import("@/components/analytics/MuscleHeatMap")
+);
+const MacroDistribution = lazy(
+  () => import("@/components/analytics/MacroDistribution")
+);
+const RunningHistorySection = lazy(
+  () => import("@/components/run/RunningHistorySection")
+);
+const ShoeMileageSection = lazy(
+  () => import("@/components/run/ShoeMileageSection")
+);
 /* Hist5b pin 3 — PerformanceTab is now lazy-loaded INSIDE
    PerformanceSection (the inline accordion's expanded body), not
    rendered as a top-level tab. The dedicated `performance` tab was
    removed; deep-links to /history#performance route to the section
    anchor inside Analytics. */
-const PerformanceSection = lazy(() => import("@/components/analytics/PerformanceSection"));
+const PerformanceSection = lazy(
+  () => import("@/components/analytics/PerformanceSection")
+);
 const PRsTab = lazy(() => import("@/components/analytics/PRsTab"));
-const BadgeGrid = lazy(() => import("@/features/streaks/BadgeGrid").then(m => ({ default: m.BadgeGrid })));
-const TrendWeight = lazy(() => import("@/components/progress/TrendWeight").then(m => ({ default: m.TrendWeight })));
-const CalorieBalanceChart = lazy(() => import("@/components/progress/CalorieBalanceChart"));
-
+const BadgeGrid = lazy(() =>
+  import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
+);
+const TrendWeight = lazy(() =>
+  import("@/components/progress/TrendWeight").then((m) => ({
+    default: m.TrendWeight,
+  }))
+);
+const CalorieBalanceChart = lazy(
+  () => import("@/components/progress/CalorieBalanceChart")
+);
 
 /* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
    Performance fold (PR 6) + PRs tab introduction (PR 7a).
@@ -82,9 +112,15 @@ const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
 // flags an in-component const). Mirrors TimeRangePills' default
 // options.
 const VALID_RANGES = ["1W", "1M", "3M", "6M", "1Y"] as const;
-type ValidRange = typeof VALID_RANGES[number];
+type ValidRange = (typeof VALID_RANGES)[number];
 
-function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: FilterTab) => void }) {
+function FilterPills({
+  filter,
+  setFilter,
+}: {
+  filter: FilterTab;
+  setFilter: (f: FilterTab) => void;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -113,9 +149,20 @@ function FilterPills({ filter, setFilter }: { filter: FilterTab; setFilter: (f: 
                 "shrink-0 text-xs px-4 py-2.5 rounded-full font-medium transition-all",
                 active ? "text-white" : "bg-muted text-muted-foreground",
               ].join(" ")}
-              style={active ? { backgroundColor: tabColor, boxShadow: `0 2px 12px ${tabColor}59` } : undefined}
+              style={
+                active
+                  ? {
+                      backgroundColor: tabColor,
+                      boxShadow: `0 2px 12px ${tabColor}59`,
+                    }
+                  : undefined
+              }
             >
-              {f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f === "analytics"
+                ? "Analytics"
+                : f === "prs"
+                  ? "PRs"
+                  : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           );
         })}
@@ -162,7 +209,8 @@ export default function History() {
      current render correct even before the rewrite lands. */
   const filter: FilterTab = (() => {
     if (!tabFromUrl) return "analytics";
-    if (VALID_TABS.includes(tabFromUrl as FilterTab)) return tabFromUrl as FilterTab;
+    if (VALID_TABS.includes(tabFromUrl as FilterTab))
+      return tabFromUrl as FilterTab;
     const redirected = LEGACY_TAB_REDIRECTS[tabFromUrl];
     if (redirected) return redirected;
     return "analytics";
@@ -176,10 +224,10 @@ export default function History() {
           else updated.set("tab", next);
           return updated;
         },
-        { replace: true },
+        { replace: true }
       );
     },
-    [setSearchParams],
+    [setSearchParams]
   );
 
   // One-shot reconciliation on mount: if the URL doesn't already
@@ -213,7 +261,7 @@ export default function History() {
         window.history.replaceState(
           null,
           "",
-          window.location.pathname + window.location.search + "#" + hashTarget,
+          window.location.pathname + window.location.search + "#" + hashTarget
         );
       }
     }
@@ -273,7 +321,7 @@ export default function History() {
         window.history.replaceState(
           null,
           "",
-          window.location.pathname + window.location.search,
+          window.location.pathname + window.location.search
         );
       }
     }
@@ -289,7 +337,9 @@ export default function History() {
   // we strip the param so /history reads cleanly. Matches the
   // pattern landed for Food6 ci5 (`?date=`) and Soc5 (`?tab=`).
   const rangeFromUrl = searchParams.get("range");
-  const timeRange: ValidRange = (VALID_RANGES as readonly string[]).includes(rangeFromUrl ?? "")
+  const timeRange: ValidRange = (VALID_RANGES as readonly string[]).includes(
+    rangeFromUrl ?? ""
+  )
     ? (rangeFromUrl as ValidRange)
     : "1M";
   const setTimeRange = useCallback(
@@ -304,14 +354,14 @@ export default function History() {
           else updated.set("range", next);
           return updated;
         },
-        { replace: true },
+        { replace: true }
       );
       trackHistoryEvent("history_range_changed", {
         range: next as HistoryRange,
         rangeType: "pill",
       });
     },
-    [setSearchParams],
+    [setSearchParams]
   );
   const rangeDays =
     timeRange === "1W"
@@ -324,7 +374,12 @@ export default function History() {
             ? 180
             : 365;
 
-  const { weeklyData, runs, loading: runsLoading, refresh: refreshRuns } = useRunningStats(rangeDays);
+  const {
+    weeklyData,
+    runs,
+    loading: runsLoading,
+    refresh: refreshRuns,
+  } = useRunningStats(rangeDays);
   const { workouts, loading: workoutsLoading } = useWorkouts();
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
@@ -346,54 +401,34 @@ export default function History() {
     if (dataLoading || renderReportedRef.current) return;
     if (renderStartRef.current === 0) return;
     const ms = performance.now() - renderStartRef.current;
-    trackHistoryEvent("history_initial_render_ms", { durationMs: Math.round(ms) });
+    trackHistoryEvent("history_initial_render_ms", {
+      durationMs: Math.round(ms),
+    });
     renderReportedRef.current = true;
   }, [dataLoading]);
 
   // Hist4: pull-to-refresh re-fetches the data source that actually
   // benefits from a re-pull (useRunningStats is a one-shot getDocs;
   // useWorkouts + useMeals are onSnapshot listeners already live).
-  // Same touch-handler shape as Social.tsx — ref on the outer
-  // motion.div so it attaches once and survives tab switches.
-  const [pullRefreshing, setPullRefreshing] = useState(false);
-  const pullStartY = useRef(0);
-  const isSwiping = useRef(false);
-  const pullContainerRef = useRef<HTMLDivElement>(null);
-
-  const handlePullStart = (e: React.TouchEvent) => {
-    pullStartY.current = e.touches[0].clientY;
-    isSwiping.current = false;
-  };
-
-  useEffect(() => {
-    const el = pullContainerRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      const diff = e.touches[0].clientY - pullStartY.current;
-      if (diff > 0 && window.scrollY <= 0) {
-        isSwiping.current = true;
-        e.preventDefault();
-      }
-    };
-    el.addEventListener("touchmove", handler, { passive: false });
-    return () => el.removeEventListener("touchmove", handler);
-  }, []);
-
-  const handlePullEnd = (e: React.TouchEvent) => {
-    const diff = e.changedTouches[0].clientY - pullStartY.current;
-    if (diff > 80 && isSwiping.current && !pullRefreshing) {
-      setPullRefreshing(true);
-      refreshRuns();
-      // useRunningStats.refresh kicks off a load — the loading flag
-      // will flip and back. Settle the spinner on the next paint via
-      // a short timeout; the more precise alternative would be to
-      // watch runsLoading directly, but that introduces a render
-      // dependency loop here. 600ms is enough to feel like
-      // confirmation without making the gesture feel stuck.
-      window.setTimeout(() => setPullRefreshing(false), 600);
-    }
-    isSwiping.current = false;
-  };
+  // Extracted into src/hooks/usePullToRefresh.ts (shared with
+  // Social + Food) — the previous inline implementation's own
+  // comment said "Same touch-handler shape as Social.tsx" so
+  // triplication was already a known smell.
+  //
+  // useRunningStats.refresh kicks off a load but doesn't return a
+  // settling promise — the loading flag will flip and back. Use
+  // the hook's minDisplayMs=600 to hold the spinner long enough
+  // to feel like confirmation without making the gesture feel
+  // stuck. The more precise alternative would be to watch
+  // runsLoading directly, but that introduces a render dependency
+  // loop here.
+  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
+    usePullToRefresh({
+      onRefresh: () => {
+        refreshRuns();
+      },
+      minDisplayMs: 600,
+    });
 
   // Goal-aware sentiment for nutrition deltas. On a cut, eating more is
   // off-plan (red), eating less is on-plan (green). On a lean bulk it
@@ -402,9 +437,7 @@ export default function History() {
   // generally good for any goal, so it's always "up-good".
   const goal = profile?.program?.goal;
   const calorieDirection: "up-good" | "down-good" | "neutral" =
-    goal === "cut" ? "down-good"
-    : goal === "lean bulk" ? "up-good"
-    : "neutral";
+    goal === "cut" ? "down-good" : goal === "lean bulk" ? "up-good" : "neutral";
   const macroTargets = profile?.macroTargets;
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
@@ -432,10 +465,7 @@ export default function History() {
   }, [workouts, meals, lifetimeRuns.runCount, lifetimeRuns.totalDistanceM]);
 
   const runningTotals = useMemo(() => {
-    const runCount = weeklyData.reduce(
-      (sum, week) => sum + week.runCount,
-      0
-    );
+    const runCount = weeklyData.reduce((sum, week) => sum + week.runCount, 0);
     const runDistance = weeklyData.reduce(
       (sum, week) => sum + week.totalDistance,
       0
@@ -444,9 +474,7 @@ export default function History() {
       .filter((w) => w.avgPace > 0)
       .map((w) => w.avgPace);
     const avgPace = paceSamples.length
-      ? Math.round(
-          paceSamples.reduce((a, b) => a + b, 0) / paceSamples.length
-        )
+      ? Math.round(paceSamples.reduce((a, b) => a + b, 0) / paceSamples.length)
       : 0;
 
     // Zero-padded weekly distance across every Sunday-anchored week
@@ -518,10 +546,12 @@ export default function History() {
        (GPS-verified). */
     const indoorEligible = runs.filter(
       (r) =>
-        requiresManualDistance(r.activityType as Parameters<typeof requiresManualDistance>[0])
-        && Number.isFinite(r.avgPace)
-        && r.avgPace > 0
-        && r.distance >= 500,
+        requiresManualDistance(
+          r.activityType as Parameters<typeof requiresManualDistance>[0]
+        ) &&
+        Number.isFinite(r.avgPace) &&
+        r.avgPace > 0 &&
+        r.distance >= 500
     );
 
     const fmtDate = (d: Date) =>
@@ -533,7 +563,7 @@ export default function History() {
        before. */
     const buildPRBucket = (
       pool: typeof paceEligible,
-      includeLongest: boolean,
+      includeLongest: boolean
     ) => {
       const runs1k = pool.filter((r) => r.distance >= 1000);
       const best1k = runs1k.length
@@ -545,11 +575,17 @@ export default function History() {
         ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
         : null;
 
-      const longest = includeLongest && pool.length
-        ? pool.reduce((best, r) => (r.distance > best.distance ? r : best))
-        : null;
+      const longest =
+        includeLongest && pool.length
+          ? pool.reduce((best, r) => (r.distance > best.distance ? r : best))
+          : null;
 
-      const cards: Array<{ label: string; value: string; date: string; isNew: boolean }> = [
+      const cards: Array<{
+        label: string;
+        value: string;
+        date: string;
+        isNew: boolean;
+      }> = [
         {
           label: "Fastest 1K",
           value: best1k ? formatPace(best1k.avgPace) : "--",
@@ -566,9 +602,7 @@ export default function History() {
       if (includeLongest) {
         cards.push({
           label: "Longest Run",
-          value: longest
-            ? (longest.distance / 1000).toFixed(1) + " km"
-            : "--",
+          value: longest ? (longest.distance / 1000).toFixed(1) + " km" : "--",
           date: longest ? fmtDate(longest.completedAt) : "",
           isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
         });
@@ -580,7 +614,7 @@ export default function History() {
       lifetime: buildPRBucket(paceEligible, /* includeLongest */ true),
       recent30d: buildPRBucket(
         paceEligible.filter((r) => r.completedAt >= thirtyDaysAgo),
-        /* includeLongest */ true,
+        /* includeLongest */ true
       ),
       indoor: buildPRBucket(indoorEligible, /* includeLongest */ false),
       hasAnyIndoor: indoorEligible.length > 0,
@@ -646,13 +680,20 @@ export default function History() {
       const d = new Date(w.date);
       const key = binKeyForDate(d, granularity);
       const vol = w.exercises.reduce(
-        (sum, ex) => sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0), 0
+        (sum, ex) =>
+          sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+        0
       );
       weekMap[key] = (weekMap[key] || 0) + vol;
       sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
     });
-    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) => a.localeCompare(b));
-    const weeklyVolume = sortedWeekKeys.map((week) => ({ week, volume: weekMap[week] }));
+    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) =>
+      a.localeCompare(b)
+    );
+    const weeklyVolume = sortedWeekKeys.map((week) => ({
+      week,
+      volume: weekMap[week],
+    }));
 
     // Zero-pad sparklines across every Sunday-anchored week in the
     // range. For activity (volume + sessions), missing weeks are
@@ -666,7 +707,7 @@ export default function History() {
       const end = new Date();
       end.setDate(end.getDate() - end.getDay());
       while (cursor <= end) {
-        allWeekKeys.push(cursor.toISOString().split('T')[0]);
+        allWeekKeys.push(cursor.toISOString().split("T")[0]);
         cursor.setDate(cursor.getDate() + 7);
       }
     }
@@ -679,7 +720,10 @@ export default function History() {
       w.exercises?.forEach((ex) => {
         ex.sets?.forEach((set) => {
           const e1rm = set.weightKg * (1 + set.reps / 30);
-          allTimeBest[ex.exerciseName] = Math.max(allTimeBest[ex.exerciseName] || 0, e1rm);
+          allTimeBest[ex.exerciseName] = Math.max(
+            allTimeBest[ex.exerciseName] || 0,
+            e1rm
+          );
         });
       });
     });
@@ -687,19 +731,26 @@ export default function History() {
     // Best set per exercise from the last 7 days only
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentWorkouts = workouts.filter((w) => new Date(w.date) >= sevenDaysAgo);
-    const prMap: Record<string, { weight: number; reps: number; date: string; isAllTimeBest: boolean }> = {};
+    const recentWorkouts = workouts.filter(
+      (w) => new Date(w.date) >= sevenDaysAgo
+    );
+    const prMap: Record<
+      string,
+      { weight: number; reps: number; date: string; isAllTimeBest: boolean }
+    > = {};
     recentWorkouts.forEach((w) => {
       w.exercises?.forEach((ex) => {
         const name = ex.exerciseName;
-        const exInfo = EXERCISES.find(e => e.name === name);
+        const exInfo = EXERCISES.find((e) => e.name === name);
         const isBWExercise = exInfo?.equipment === "Bodyweight";
         ex.sets?.forEach((set) => {
           if (!isBWExercise && set.weightKg <= 0) return;
           const e1rm = set.weightKg * (1 + set.reps / 30);
           const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
           const prevScore = prMap[name]
-            ? (isBWExercise && prMap[name].weight === 0 ? prMap[name].reps : prMap[name].weight * (1 + prMap[name].reps / 30))
+            ? isBWExercise && prMap[name].weight === 0
+              ? prMap[name].reps
+              : prMap[name].weight * (1 + prMap[name].reps / 30)
             : -1;
           if (score > prevScore) {
             prMap[name] = {
@@ -809,7 +860,20 @@ export default function History() {
       }))
       .sort((a, b) => b.date.localeCompare(a.date));
 
-    return { liftCount, liftVolume, muscleData, weeklyVolume, weeklyVolumeGranularity: granularity, prTimeline, lifetimePRs, recentLiftPRs, prevLiftCount, prevLiftVolume, volumeSparkline, sessionsSparkline };
+    return {
+      liftCount,
+      liftVolume,
+      muscleData,
+      weeklyVolume,
+      weeklyVolumeGranularity: granularity,
+      prTimeline,
+      lifetimePRs,
+      recentLiftPRs,
+      prevLiftCount,
+      prevLiftVolume,
+      volumeSparkline,
+      sessionsSparkline,
+    };
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
@@ -822,7 +886,8 @@ export default function History() {
     const bucketByDate = (ms: typeof meals) => {
       const byDate: Record<string, DayTotals> = {};
       for (const m of ms) {
-        if (!byDate[m.date]) byDate[m.date] = { cal: 0, prot: 0, carbs: 0, fat: 0 };
+        if (!byDate[m.date])
+          byDate[m.date] = { cal: 0, prot: 0, carbs: 0, fat: 0 };
         byDate[m.date].cal += m.totalCalories || 0;
         byDate[m.date].prot += m.totalProtein || 0;
         byDate[m.date].carbs += m.totalCarbs || 0;
@@ -831,9 +896,13 @@ export default function History() {
       return byDate;
     };
     const avg = (days: DayTotals[], key: keyof DayTotals) =>
-      days.length ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length) : 0;
+      days.length
+        ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length)
+        : 0;
 
-    const filtered = meals.filter((m) => new Date(m.date + "T00:00:00") >= since);
+    const filtered = meals.filter(
+      (m) => new Date(m.date + "T00:00:00") >= since
+    );
     const prevFiltered = meals.filter((m) => {
       const d = new Date(m.date + "T00:00:00");
       return d >= prevSince && d < since;
@@ -855,7 +924,8 @@ export default function History() {
 
     const daysLogged = Object.keys(byDate).length;
     const prevDaysLogged = Object.keys(prevByDate).length;
-    const adherence = daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
+    const adherence =
+      daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
 
     // Sparkline series: daily values from logged days only, in
     // chronological order. We deliberately do NOT zero-pad missing
@@ -913,7 +983,10 @@ export default function History() {
     };
   }, [meals, rangeDays]);
 
-  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+  const itemVariant = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
 
   // Range-adaptive prefix for stat-card labels. The values inside
   // those cards are TOTALS for the selected window (e.g. "Volume" is
@@ -922,12 +995,18 @@ export default function History() {
   // prefix to match the window the data actually covers.
   const periodLabel = (() => {
     switch (timeRange) {
-      case "1W": return "Weekly";
-      case "1M": return "Monthly";
-      case "3M": return "3-Month";
-      case "6M": return "6-Month";
-      case "1Y": return "Annual";
-      default: return "Weekly";
+      case "1W":
+        return "Weekly";
+      case "1M":
+        return "Monthly";
+      case "3M":
+        return "3-Month";
+      case "6M":
+        return "6-Month";
+      case "1Y":
+        return "Annual";
+      default:
+        return "Weekly";
     }
   })();
 
@@ -964,13 +1043,14 @@ export default function History() {
 
   return (
     <motion.div
-      ref={pullContainerRef}
-      onTouchStart={handlePullStart}
-      onTouchEnd={handlePullEnd}
+      {...pullBindProps}
       className="space-y-4 pt-2"
       initial="hidden"
       animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.06 } },
+      }}
     >
       <motion.header variants={itemVariant}>
         <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
@@ -999,33 +1079,41 @@ export default function History() {
           filter={filter}
           setFilter={(next) => {
             setFilter(next);
-            trackHistoryEvent("history_tab_selected", { tab: next as HistoryTab });
+            trackHistoryEvent("history_tab_selected", {
+              tab: next as HistoryTab,
+            });
           }}
         />
       </motion.div>
 
-      <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm animate-pulse">Loading analytics...</div>}>
-      {filter === "badges" ? (
-        <BadgeGrid />
-      ) : filter === "prs" ? (
-        <SectionErrorBoundary sectionName="prs-tab">
-          <PRsTab
-            runningPRs={runningPRs}
-            lifetimePRs={liftingData.lifetimePRs}
-            recentLiftPRs={liftingData.recentLiftPRs}
-            hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
-            hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
-          />
-        </SectionErrorBoundary>
-      ) : (
-        <>
-          <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+      <Suspense
+        fallback={
+          <div className="py-8 text-center text-muted-foreground text-sm animate-pulse">
+            Loading analytics...
+          </div>
+        }
+      >
+        {filter === "badges" ? (
+          <BadgeGrid />
+        ) : filter === "prs" ? (
+          <SectionErrorBoundary sectionName="prs-tab">
+            <PRsTab
+              runningPRs={runningPRs}
+              lifetimePRs={liftingData.lifetimePRs}
+              recentLiftPRs={liftingData.recentLiftPRs}
+              hasAnyLifetimeRun={lifetimeTotals.runCount > 0}
+              hasAnyLifetimeWorkout={lifetimeTotals.liftCount > 0}
+            />
+          </SectionErrorBoundary>
+        ) : (
+          <>
+            <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
-          {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
+            {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
               the Analytics tab AND only when there are 2+ sections
               to jump between (single-section users don't need an
               anchor menu — they ARE always on the only chip). */}
-          {/* Hist5 PR 7b follow-up: removed the sticky AnalyticsAnchorChips
+            {/* Hist5 PR 7b follow-up: removed the sticky AnalyticsAnchorChips
               row. Three pill rows stacked above the content (Tabs +
               TimeRange + sticky chips) read as chrome-heavy on iPhone,
               AND the chip row's `backdrop-blur-md` + `position:
@@ -1037,233 +1125,277 @@ export default function History() {
               who navigated by sport can still see each section's
               sport-coded header inline as they scroll. */}
 
-          {filter === "analytics" && (
-            dataLoading ? (
-              <div className="p-4 rounded-2xl bg-card space-y-3">
-                <Skeleton className="h-3 w-20" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
+            {filter === "analytics" &&
+              (dataLoading ? (
+                <div className="p-4 rounded-2xl bg-card space-y-3">
+                  <Skeleton className="h-3 w-20" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                    <Skeleton className="h-20 w-full rounded-xl" />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <PeriodOverview
-                runCount={runningTotals.runCount}
-                runDistance={runningTotals.runDistance}
-                liftCount={liftingData.liftCount}
-                liftVolume={liftingData.liftVolume}
-                avgCalories={nutrition.avgCalories}
-                nutritionAdherence={nutrition.adherence}
-                timeRange={timeRange}
-                rangeDays={rangeDays}
-              />
-            )
-          )}
+              ) : (
+                <PeriodOverview
+                  runCount={runningTotals.runCount}
+                  runDistance={runningTotals.runDistance}
+                  liftCount={liftingData.liftCount}
+                  liftVolume={liftingData.liftVolume}
+                  avgCalories={nutrition.avgCalories}
+                  nutritionAdherence={nutrition.adherence}
+                  timeRange={timeRange}
+                  rangeDays={rangeDays}
+                />
+              ))}
 
-          {/* Hist5b pin 3 — Performance fold. Compact PI strip with
+            {/* Hist5b pin 3 — Performance fold. Compact PI strip with
               inline-accordion expansion. Replaces the dedicated
               Performance tab; deep-links to /history#performance
               scroll to this section's anchor. */}
-          {filter === "analytics" && (
-            <SectionErrorBoundary sectionName="performance-section">
-              <PerformanceSection />
-            </SectionErrorBoundary>
-          )}
+            {filter === "analytics" && (
+              <SectionErrorBoundary sectionName="performance-section">
+                <PerformanceSection />
+              </SectionErrorBoundary>
+            )}
 
-          {showRunningSection && filter === "analytics" && (
-            <section id="analytics-running" aria-label="Running analytics">
-              <p
-                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                style={{ color: THEME.running }}
-              >
-                Running
-              </p>
-              {dataLoading ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <Skeleton className="h-24 w-full rounded-xl" />
-                  <Skeleton className="h-24 w-full rounded-xl" />
-                </div>
-              ) : renderRunningEmptyNote ? (
-                <p className="text-xs text-muted-foreground italic px-1">
-                  No runs in this period
+            {showRunningSection && filter === "analytics" && (
+              <section id="analytics-running" aria-label="Running analytics">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                  style={{ color: THEME.running }}
+                >
+                  Running
                 </p>
-              ) : runs.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <Footprints className="w-5 h-5 shrink-0" style={{ color: THEME.running }} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Complete your first run to see running analytics here</p>
-                  </div>
-                  <Link to="/run" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.running }}>
-                    Start Run
-                  </Link>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <StatCard
-                      label={`${periodLabel} Distance`}
-                      value={formatDistance(runningTotals.runDistance)}
-                      unit="km"
-                      direction="up-good"
-                      sparklineData={runningTotals.distanceSparkline}
-                      accentColor={THEME.running}
-                    />
-                    <StatCard
-                      label="Avg Pace"
-                      value={
-                        runningTotals.avgPace
-                          ? Math.floor(runningTotals.avgPace / 60) +
-                            ":" +
-                            (runningTotals.avgPace % 60)
-                              .toString()
-                              .padStart(2, "0")
-                          : "--:--"
-                      }
-                      unit="/km"
-                      direction="down-good"
-                      sparklineData={runningTotals.paceSparkline}
-                      accentColor={THEME.running}
-                    />
-                  </div>
-                  {/* Hist5b PR 7a — Running PRs migrated off Analytics
-                      to the dedicated PRs tab (Tier 2 lifetime
-                      contract). Tap the PRs tab in the top filter
-                      to access them. */}
-                  <ShoeMileageSection />
-                  <RunningHistorySection />
-                </>
-              )}
-            </section>
-          )}
-
-          {showLiftingSection && filter === "analytics" && (
-            <section id="analytics-lifting" aria-label="Lifting analytics">
-              <p
-                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                style={{ color: THEME.lifting }}
-              >
-                Lifting
-              </p>
-              {dataLoading ? (
-                <div className="space-y-2">
+                {dataLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
                     <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
-                  <ChartSkeleton />
-                </div>
-              ) : renderLiftingEmptyNote ? (
-                <p className="text-xs text-muted-foreground italic px-1">
-                  No workouts in this period
-                </p>
-              ) : liftingData.liftCount === 0 ? (
-                <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <Trophy className="w-5 h-5 shrink-0" style={{ color: THEME.lifting }} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Log a workout to see your lifting analytics here</p>
+                ) : renderRunningEmptyNote ? (
+                  <p className="text-xs text-muted-foreground italic px-1">
+                    No runs in this period
+                  </p>
+                ) : runs.length === 0 ? (
+                  <div
+                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
+                    style={{ boxShadow: "var(--ds-shadow-card)" }}
+                  >
+                    <Footprints
+                      className="w-5 h-5 shrink-0"
+                      style={{ color: THEME.running }}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Complete your first run to see running analytics here
+                      </p>
+                    </div>
+                    <Link
+                      to="/run"
+                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                      style={{ background: THEME.running }}
+                    >
+                      Start Run
+                    </Link>
                   </div>
-                  <Link to="/program" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.lifting }}>
-                    Start Lift
-                  </Link>
-                </div>
-              ) : (
-              <>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <StatCard
-                  label={`${periodLabel} Volume`}
-                  value={formatVolume(liftingData.liftVolume).value}
-                  unit={formatVolume(liftingData.liftVolume).unit}
-                  delta={buildDelta(liftingData.liftVolume, liftingData.prevLiftVolume)}
-                  direction="up-good"
-                  sparklineData={liftingData.volumeSparkline}
-                  accentColor={THEME.lifting}
-                />
-                <StatCard
-                  label={`${periodLabel} Sessions`}
-                  value={String(liftingData.liftCount)}
-                  delta={buildDelta(liftingData.liftCount, liftingData.prevLiftCount)}
-                  direction="up-good"
-                  sparklineData={liftingData.sessionsSparkline}
-                  accentColor={THEME.lifting}
-                />
-              </div>
-              <SectionErrorBoundary sectionName="volume-chart">
-                <VolumeChart
-                  data={liftingData.weeklyVolume}
-                  accentColor={THEME.lifting}
-                  granularity={liftingData.weeklyVolumeGranularity}
-                />
-              </SectionErrorBoundary>
-              <SectionErrorBoundary sectionName="muscle-heatmap">
-                <MuscleHeatMap
-                  data={liftingData.muscleData}
-                  accentColor={THEME.lifting}
-                />
-              </SectionErrorBoundary>
-              {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <StatCard
+                        label={`${periodLabel} Distance`}
+                        value={formatDistance(runningTotals.runDistance)}
+                        unit="km"
+                        direction="up-good"
+                        sparklineData={runningTotals.distanceSparkline}
+                        accentColor={THEME.running}
+                      />
+                      <StatCard
+                        label="Avg Pace"
+                        value={
+                          runningTotals.avgPace
+                            ? Math.floor(runningTotals.avgPace / 60) +
+                              ":" +
+                              (runningTotals.avgPace % 60)
+                                .toString()
+                                .padStart(2, "0")
+                            : "--:--"
+                        }
+                        unit="/km"
+                        direction="down-good"
+                        sparklineData={runningTotals.paceSparkline}
+                        accentColor={THEME.running}
+                      />
+                    </div>
+                    {/* Hist5b PR 7a — Running PRs migrated off Analytics
+                      to the dedicated PRs tab (Tier 2 lifetime
+                      contract). Tap the PRs tab in the top filter
+                      to access them. */}
+                    <ShoeMileageSection />
+                    <RunningHistorySection />
+                  </>
+                )}
+              </section>
+            )}
+
+            {showLiftingSection && filter === "analytics" && (
+              <section id="analytics-lifting" aria-label="Lifting analytics">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                  style={{ color: THEME.lifting }}
+                >
+                  Lifting
+                </p>
+                {dataLoading ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                    </div>
+                    <ChartSkeleton />
+                  </div>
+                ) : renderLiftingEmptyNote ? (
+                  <p className="text-xs text-muted-foreground italic px-1">
+                    No workouts in this period
+                  </p>
+                ) : liftingData.liftCount === 0 ? (
+                  <div
+                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
+                    style={{ boxShadow: "var(--ds-shadow-card)" }}
+                  >
+                    <Trophy
+                      className="w-5 h-5 shrink-0"
+                      style={{ color: THEME.lifting }}
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Log a workout to see your lifting analytics here
+                      </p>
+                    </div>
+                    <Link
+                      to="/program"
+                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                      style={{ background: THEME.lifting }}
+                    >
+                      Start Lift
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <StatCard
+                        label={`${periodLabel} Volume`}
+                        value={formatVolume(liftingData.liftVolume).value}
+                        unit={formatVolume(liftingData.liftVolume).unit}
+                        delta={buildDelta(
+                          liftingData.liftVolume,
+                          liftingData.prevLiftVolume
+                        )}
+                        direction="up-good"
+                        sparklineData={liftingData.volumeSparkline}
+                        accentColor={THEME.lifting}
+                      />
+                      <StatCard
+                        label={`${periodLabel} Sessions`}
+                        value={String(liftingData.liftCount)}
+                        delta={buildDelta(
+                          liftingData.liftCount,
+                          liftingData.prevLiftCount
+                        )}
+                        direction="up-good"
+                        sparklineData={liftingData.sessionsSparkline}
+                        accentColor={THEME.lifting}
+                      />
+                    </div>
+                    <SectionErrorBoundary sectionName="volume-chart">
+                      <VolumeChart
+                        data={liftingData.weeklyVolume}
+                        accentColor={THEME.lifting}
+                        granularity={liftingData.weeklyVolumeGranularity}
+                      />
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="muscle-heatmap">
+                      <MuscleHeatMap
+                        data={liftingData.muscleData}
+                        accentColor={THEME.lifting}
+                      />
+                    </SectionErrorBoundary>
+                    {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
                   dedicated PRs tab (Tier 2 lifetime contract). The
                   prior surface was a 7-day-hardcoded view that
                   disagreed with the section's TimeRange-scoped
                   framing; the new home gives PRs their true
                   lifetime semantics. Tap the PRs tab in the top
                   filter to access them. */}
-              </>
-              )}
-            </section>
-          )}
+                  </>
+                )}
+              </section>
+            )}
 
-          {showNutritionSection && filter === "analytics" && (
-            <section id="analytics-nutrition" aria-label="Nutrition analytics">
-              <p
-                className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                style={{ color: THEME.success }}
+            {showNutritionSection && filter === "analytics" && (
+              <section
+                id="analytics-nutrition"
+                aria-label="Nutrition analytics"
               >
-                Nutrition
-              </p>
-              {dataLoading ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-24 w-full rounded-xl" />
-                    <Skeleton className="h-24 w-full rounded-xl" />
+                <p
+                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                  style={{ color: THEME.success }}
+                >
+                  Nutrition
+                </p>
+                {dataLoading ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                    </div>
+                    <ChartSkeleton />
                   </div>
-                  <ChartSkeleton />
-                </div>
-              ) : renderNutritionEmptyNote ? (
-                <>
-                  <p className="text-xs text-muted-foreground italic px-1">
-                    No meals logged in this period
-                  </p>
-                  {/* TrendWeight stays visible — weight is independent
+                ) : renderNutritionEmptyNote ? (
+                  <>
+                    <p className="text-xs text-muted-foreground italic px-1">
+                      No meals logged in this period
+                    </p>
+                    {/* TrendWeight stays visible — weight is independent
                       of meal logging. Returning users get their weight
                       chart even when nutrition is dormant for the
                       selected window. */}
-                  <SectionErrorBoundary sectionName="trend-weight">
-                    <TrendWeight />
-                  </SectionErrorBoundary>
-                </>
-              ) : nutrition.avgCalories === 0 ? (
-                <>
-                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                    <UtensilsCrossed className="w-5 h-5 shrink-0" style={{ color: THEME.success }} />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">Log meals to see your nutrition trends here</p>
+                    <SectionErrorBoundary sectionName="trend-weight">
+                      <TrendWeight />
+                    </SectionErrorBoundary>
+                  </>
+                ) : nutrition.avgCalories === 0 ? (
+                  <>
+                    <div
+                      className="p-4 rounded-2xl bg-card flex items-center gap-3"
+                      style={{ boxShadow: "var(--ds-shadow-card)" }}
+                    >
+                      <UtensilsCrossed
+                        className="w-5 h-5 shrink-0"
+                        style={{ color: THEME.success }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Log meals to see your nutrition trends here
+                        </p>
+                      </div>
+                      <Link
+                        to="/food"
+                        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                        style={{ background: THEME.success }}
+                      >
+                        Log Meal
+                      </Link>
                     </div>
-                    <Link to="/food" className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: THEME.success }}>
-                      Log Meal
-                    </Link>
-                  </div>
-                  {/* Weight tracking is independent of meal logging, so we
+                    {/* Weight tracking is independent of meal logging, so we
                       keep TrendWeight visible even when there's no nutrition
                       data yet — a user logging weight without meals still
                       gets a chart. */}
-                  <SectionErrorBoundary sectionName="trend-weight">
-                    <TrendWeight />
-                  </SectionErrorBoundary>
-                </>
-              ) : (
-              <>
-              {/* Adherence row — first-class signal, not a footnote.
+                    <SectionErrorBoundary sectionName="trend-weight">
+                      <TrendWeight />
+                    </SectionErrorBoundary>
+                  </>
+                ) : (
+                  <>
+                    {/* Adherence row — first-class signal, not a footnote.
                   For a sparse logger this IS the headline metric: the
                   averages below can't be trusted until logging is more
                   consistent. For a consistent logger it's quiet
@@ -1271,161 +1403,245 @@ export default function History() {
                     ≥80%   → green (data is reliable)
                     50–80% → muted (data is decent)
                     <50%   → amber (averages below are under-sampled) */}
-              {(() => {
-                const adh = nutrition.adherence;
-                const tone =
-                  adh >= 80
-                    ? { color: "#22c55e", bg: "#22c55e1A" }
-                    : adh >= 50
-                      ? { color: "var(--muted-foreground)", bg: "transparent" }
-                      : { color: "#f59e0b", bg: "#f59e0b1A" };
-                return (
-                  <div
-                    className="flex items-center justify-between mt-2 px-3 py-2 rounded-xl"
-                    style={{ background: tone.bg }}
-                  >
-                    <p className="text-xs text-foreground">
-                      Logged{" "}
-                      <span className="font-semibold font-mono tabular-nums">
-                        {nutrition.daysLogged}
-                      </span>{" "}
-                      of{" "}
-                      <span className="font-mono tabular-nums">{rangeDays}</span>{" "}
-                      days
-                    </p>
-                    <p
-                      className="text-xs font-semibold font-mono tabular-nums"
-                      style={{ color: tone.color }}
-                    >
-                      {adh}%
-                    </p>
-                  </div>
-                );
-              })()}
-              {/* Hist5c pin 9 — sample-size guard. The warning misfires at
+                    {(() => {
+                      const adh = nutrition.adherence;
+                      const tone =
+                        adh >= 80
+                          ? { color: "#22c55e", bg: "#22c55e1A" }
+                          : adh >= 50
+                            ? {
+                                color: "var(--muted-foreground)",
+                                bg: "transparent",
+                              }
+                            : { color: "#f59e0b", bg: "#f59e0b1A" };
+                      return (
+                        <div
+                          className="flex items-center justify-between mt-2 px-3 py-2 rounded-xl"
+                          style={{ background: tone.bg }}
+                        >
+                          <p className="text-xs text-foreground">
+                            Logged{" "}
+                            <span className="font-semibold font-mono tabular-nums">
+                              {nutrition.daysLogged}
+                            </span>{" "}
+                            of{" "}
+                            <span className="font-mono tabular-nums">
+                              {rangeDays}
+                            </span>{" "}
+                            days
+                          </p>
+                          <p
+                            className="text-xs font-semibold font-mono tabular-nums"
+                            style={{ color: tone.color }}
+                          >
+                            {adh}%
+                          </p>
+                        </div>
+                      );
+                    })()}
+                    {/* Hist5c pin 9 — sample-size guard. The warning misfires at
                   extreme sparsity: at 1W with 2/7 days logged (28%) the
                   warning fires AND the user is in cold-start mode where
                   the meta-warning adds noise rather than signal. Require
                   ≥5 logged days before the "too few logged days" message
                   appears — below that, the user already understands they
                   haven't logged much. */}
-              {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                <p className="text-[11px] text-amber-600 -mt-1 italic">
-                  Averages below are based on too few logged days to be reliable.
-                </p>
-              )}
-              {/* Top row: calories + protein. Sparkline + delta both
+                    {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
+                      <p className="text-[11px] text-amber-600 -mt-1 italic">
+                        Averages below are based on too few logged days to be
+                        reliable.
+                      </p>
+                    )}
+                    {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
                   showSparklines / showDelta in the nutrition memo). */}
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <StatCard
-                  label="Avg Calories"
-                  value={nutrition.avgCalories.toLocaleString()}
-                  unit="kcal/day"
-                  delta={nutrition.showDelta ? buildDelta(nutrition.avgCalories, nutrition.prevAvgCalories) : null}
-                  direction={calorieDirection}
-                  target={macroTargets?.calories ? `target ${macroTargets.calories.toLocaleString()} kcal` : undefined}
-                  sparklineData={nutrition.showSparklines ? nutrition.caloriesSparkline : undefined}
-                  accentColor={THEME.success}
-                />
-                <StatCard
-                  label="Protein"
-                  value={nutrition.avgProtein.toString()}
-                  unit="g/day"
-                  delta={nutrition.showDelta ? buildDelta(nutrition.avgProtein, nutrition.prevAvgProtein) : null}
-                  direction="up-good"
-                  target={macroTargets?.protein ? `target ${macroTargets.protein}g` : undefined}
-                  sparklineData={nutrition.showSparklines ? nutrition.proteinSparkline : undefined}
-                  accentColor={THEME.macros.protein}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <StatCard
-                  label="Carbs"
-                  value={nutrition.avgCarbs.toString()}
-                  unit="g/day"
-                  delta={nutrition.showDelta ? buildDelta(nutrition.avgCarbs, nutrition.prevAvgCarbs) : null}
-                  direction={calorieDirection}
-                  target={macroTargets?.carbs ? `target ${macroTargets.carbs}g` : undefined}
-                  sparklineData={nutrition.showSparklines ? nutrition.carbsSparkline : undefined}
-                  accentColor={THEME.macros.carbs}
-                />
-                <StatCard
-                  label="Fat"
-                  value={nutrition.avgFat.toString()}
-                  unit="g/day"
-                  delta={nutrition.showDelta ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat) : null}
-                  direction={calorieDirection}
-                  target={macroTargets?.fat ? `target ${macroTargets.fat}g` : undefined}
-                  sparklineData={nutrition.showSparklines ? nutrition.fatSparkline : undefined}
-                  accentColor={THEME.macros.fat}
-                />
-              </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <StatCard
+                        label="Avg Calories"
+                        value={nutrition.avgCalories.toLocaleString()}
+                        unit="kcal/day"
+                        delta={
+                          nutrition.showDelta
+                            ? buildDelta(
+                                nutrition.avgCalories,
+                                nutrition.prevAvgCalories
+                              )
+                            : null
+                        }
+                        direction={calorieDirection}
+                        target={
+                          macroTargets?.calories
+                            ? `target ${macroTargets.calories.toLocaleString()} kcal`
+                            : undefined
+                        }
+                        sparklineData={
+                          nutrition.showSparklines
+                            ? nutrition.caloriesSparkline
+                            : undefined
+                        }
+                        accentColor={THEME.success}
+                      />
+                      <StatCard
+                        label="Protein"
+                        value={nutrition.avgProtein.toString()}
+                        unit="g/day"
+                        delta={
+                          nutrition.showDelta
+                            ? buildDelta(
+                                nutrition.avgProtein,
+                                nutrition.prevAvgProtein
+                              )
+                            : null
+                        }
+                        direction="up-good"
+                        target={
+                          macroTargets?.protein
+                            ? `target ${macroTargets.protein}g`
+                            : undefined
+                        }
+                        sparklineData={
+                          nutrition.showSparklines
+                            ? nutrition.proteinSparkline
+                            : undefined
+                        }
+                        accentColor={THEME.macros.protein}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <StatCard
+                        label="Carbs"
+                        value={nutrition.avgCarbs.toString()}
+                        unit="g/day"
+                        delta={
+                          nutrition.showDelta
+                            ? buildDelta(
+                                nutrition.avgCarbs,
+                                nutrition.prevAvgCarbs
+                              )
+                            : null
+                        }
+                        direction={calorieDirection}
+                        target={
+                          macroTargets?.carbs
+                            ? `target ${macroTargets.carbs}g`
+                            : undefined
+                        }
+                        sparklineData={
+                          nutrition.showSparklines
+                            ? nutrition.carbsSparkline
+                            : undefined
+                        }
+                        accentColor={THEME.macros.carbs}
+                      />
+                      <StatCard
+                        label="Fat"
+                        value={nutrition.avgFat.toString()}
+                        unit="g/day"
+                        delta={
+                          nutrition.showDelta
+                            ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat)
+                            : null
+                        }
+                        direction={calorieDirection}
+                        target={
+                          macroTargets?.fat
+                            ? `target ${macroTargets.fat}g`
+                            : undefined
+                        }
+                        sparklineData={
+                          nutrition.showSparklines
+                            ? nutrition.fatSparkline
+                            : undefined
+                        }
+                        accentColor={THEME.macros.fat}
+                      />
+                    </div>
 
-              <MacroDistribution
-                protein={nutrition.avgProtein}
-                carbs={nutrition.avgCarbs}
-                fat={nutrition.avgFat}
-              />
+                    <MacroDistribution
+                      protein={nutrition.avgProtein}
+                      carbs={nutrition.avgCarbs}
+                      fat={nutrition.avgFat}
+                    />
 
-              <SectionErrorBoundary sectionName="trend-weight">
-                <TrendWeight />
-              </SectionErrorBoundary>
-              <SectionErrorBoundary sectionName="calorie-balance">
-                <CalorieBalanceChart />
-              </SectionErrorBoundary>
-              </>
+                    <SectionErrorBoundary sectionName="trend-weight">
+                      <TrendWeight />
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="calorie-balance">
+                      <CalorieBalanceChart />
+                    </SectionErrorBoundary>
+                  </>
+                )}
+              </section>
+            )}
+
+            {filter === "analytics" &&
+              !dataLoading &&
+              lifetimeTotals.runCount +
+                lifetimeTotals.liftCount +
+                lifetimeTotals.daysLogged >
+                0 && (
+                <section id="analytics-lifetime" aria-label="Lifetime totals">
+                  <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
+                    Lifetime
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div
+                      className="p-3 rounded-2xl bg-card text-center"
+                      style={{ boxShadow: "var(--ds-shadow-card)" }}
+                    >
+                      <Footprints
+                        className="w-4 h-4 mx-auto mb-1.5"
+                        style={{ color: THEME.running }}
+                      />
+                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                        {lifetimeTotals.runKm >= 1000
+                          ? (lifetimeTotals.runKm / 1000).toFixed(1) + "k"
+                          : Math.round(lifetimeTotals.runKm).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        km · {lifetimeTotals.runCount} runs
+                      </p>
+                    </div>
+                    <div
+                      className="p-3 rounded-2xl bg-card text-center"
+                      style={{ boxShadow: "var(--ds-shadow-card)" }}
+                    >
+                      <Trophy
+                        className="w-4 h-4 mx-auto mb-1.5"
+                        style={{ color: THEME.lifting }}
+                      />
+                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                        {formatVolume(lifetimeTotals.liftVolume).value}
+                        {formatVolume(lifetimeTotals.liftVolume).unit && (
+                          <span className="text-xs font-bold ml-0.5">
+                            {formatVolume(lifetimeTotals.liftVolume).unit}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        lifted · {lifetimeTotals.liftCount} sessions
+                      </p>
+                    </div>
+                    <div
+                      className="p-3 rounded-2xl bg-card text-center"
+                      style={{ boxShadow: "var(--ds-shadow-card)" }}
+                    >
+                      <UtensilsCrossed
+                        className="w-4 h-4 mx-auto mb-1.5"
+                        style={{ color: THEME.success }}
+                      />
+                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                        {lifetimeTotals.daysLogged.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        days logged
+                      </p>
+                    </div>
+                  </div>
+                </section>
               )}
-            </section>
-          )}
-
-          {filter === "analytics" && !dataLoading && (
-            lifetimeTotals.runCount + lifetimeTotals.liftCount + lifetimeTotals.daysLogged > 0
-          ) && (
-            <section id="analytics-lifetime" aria-label="Lifetime totals">
-              <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
-                Lifetime
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <Footprints className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.running }} />
-                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                    {lifetimeTotals.runKm >= 1000
-                      ? (lifetimeTotals.runKm / 1000).toFixed(1) + "k"
-                      : Math.round(lifetimeTotals.runKm).toLocaleString()}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    km · {lifetimeTotals.runCount} runs
-                  </p>
-                </div>
-                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <Trophy className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.lifting }} />
-                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                    {formatVolume(lifetimeTotals.liftVolume).value}
-                    {formatVolume(lifetimeTotals.liftVolume).unit && (
-                      <span className="text-xs font-bold ml-0.5">
-                        {formatVolume(lifetimeTotals.liftVolume).unit}
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    lifted · {lifetimeTotals.liftCount} sessions
-                  </p>
-                </div>
-                <div className="p-3 rounded-2xl bg-card text-center" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-                  <UtensilsCrossed className="w-4 h-4 mx-auto mb-1.5" style={{ color: THEME.success }} />
-                  <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                    {lifetimeTotals.daysLogged.toLocaleString()}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    days logged
-                  </p>
-                </div>
-              </div>
-            </section>
-          )}
-        </>
-      )}
+          </>
+        )}
       </Suspense>
     </motion.div>
   );
