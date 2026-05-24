@@ -23,6 +23,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 
@@ -48,7 +49,9 @@ vi.mock("firebase/firestore", () => ({
     mockDocData = { ...(mockDocData ?? ({} as ProgramState)), ...data };
     mockDocExists = true;
   }),
-  Timestamp: { fromDate: vi.fn((d: Date) => ({ seconds: d.getTime() / 1000 })) },
+  Timestamp: {
+    fromDate: vi.fn((d: Date) => ({ seconds: d.getTime() / 1000 })),
+  },
 }));
 
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -63,7 +66,10 @@ type MockProfile = {
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
   runMode?: "freeform" | "structured" | "race_prep";
-  raceGoal?: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string };
+  raceGoal?: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
   primaryGoal?: string;
   program?: { goal?: string };
 };
@@ -95,7 +101,9 @@ vi.mock("@/lib/shareComposer", () => ({
   showQueuedToast: vi.fn(),
 }));
 vi.mock("@/lib/workoutBurn", () => ({ estimateLiftBurn: vi.fn(() => 0) }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
 vi.mock("date-fns", () => ({ format: vi.fn(() => "2026-05-12") }));
 
 // ─── Test fixtures ───────────────────────────────────────────────────
@@ -114,7 +122,10 @@ function structuredProfile(overrides: Partial<MockProfile> = {}): MockProfile {
   };
 }
 
-function raceProfile(targetDate: string, overrides: Partial<MockProfile> = {}): MockProfile {
+function raceProfile(
+  targetDate: string,
+  overrides: Partial<MockProfile> = {}
+): MockProfile {
   return {
     ...structuredProfile(overrides),
     runMode: "race_prep",
@@ -155,7 +166,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     const { result } = renderHook(() => useProgram());
 
     // Wait for the load effect to complete and write the initial doc.
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
 
     // The most recent setDoc call carries the initial ProgramState.
     expect(setDocCalls.length).toBeGreaterThan(0);
@@ -182,7 +195,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockDocExists = false;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
 
     const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
     expect(lastWrite.runPlan).toBeDefined();
@@ -208,12 +223,19 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [], // empty so refresh writes
-      runPlan: { mode: "race_prep", raceGoal: mockProfile.raceGoal, totalWeeks: 6, currentWeek: 2 },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: mockProfile.raceGoal,
+        totalWeeks: 6,
+        currentWeek: 2,
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0; // reset to capture only the refresh write
 
     await act(async () => {
@@ -249,7 +271,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -265,8 +289,12 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Set profile.weekSchedule to all-rest; override with hybrid
     // 6+2; assert the override is what gets used.
     const staleSchedule = [
-      { day: 0, type: "rest" }, { day: 1, type: "rest" }, { day: 2, type: "rest" },
-      { day: 3, type: "rest" }, { day: 4, type: "rest" }, { day: 5, type: "rest" },
+      { day: 0, type: "rest" },
+      { day: 1, type: "rest" },
+      { day: 2, type: "rest" },
+      { day: 3, type: "rest" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "rest" },
       { day: 6, type: "rest" },
     ];
     mockProfile = structuredProfile({ weekSchedule: staleSchedule });
@@ -287,7 +315,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     const overrideSchedule = generateSchedule(6, 2);
@@ -324,7 +354,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -384,7 +416,9 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     // PR-0b-i's migration MAY have already aligned status on load
     // (writing back to Firestore). Reset the call log so we
     // capture only the post-load completeRunDay attempt.
@@ -419,7 +453,9 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -443,6 +479,16 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   // callers (per-day Run-tab select, Week-tab template <select>).
 
   function plannedRunDay(dayIndex: number, id: string): ScheduledRunDay {
+    // Use TODAY's week so the auto-rollover effect (useProgram.ts:440)
+    // doesn't fire and regenerate runDays with fresh IDs — which would
+    // wipe the hard-coded `id` this test relies on for the
+    // overrideRunDay lookup. Hard-coded dates like "2026-05-18" /
+    // "2026-05-17" were stable when written but go stale as the
+    // calendar advances; the rollover then runs as a silent
+    // side-effect and the test sees zero setDoc calls. Anchor to
+    // today instead.
+    const todayWeekKey = localWeekKey();
+    const todayDate = localDateString(addLocalDays(new Date(), 0));
     return {
       id,
       dayIndex,
@@ -452,8 +498,8 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       status: "planned",
       // Date + weekKey present (PR-0b-i shape) so migration on
       // load doesn't touch the row.
-      date: "2026-05-18",
-      weekKey: "2026-05-17",
+      date: todayDate,
+      weekKey: todayWeekKey,
     } as ScheduledRunDay;
   }
 
@@ -479,7 +525,9 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -489,7 +537,9 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     expect(setDocCalls.length).toBe(1);
     const written = setDocCalls[0].data as ProgramState;
     const updated = written.runDays!.find((rd) => rd.id === "runday_target_id");
-    const untouched = written.runDays!.find((rd) => rd.id === "runday_other_id");
+    const untouched = written.runDays!.find(
+      (rd) => rd.id === "runday_other_id"
+    );
     expect(updated!.templateId).toBe("tempo_20");
     expect(updated!.userOverride).toBe("tempo_20");
     // The other row stays on easy_30 — id lookup did not splash
@@ -517,7 +567,9 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -555,7 +607,9 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -666,7 +720,9 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -682,7 +738,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
 
     // Replace, not merge: the legacy marker IDs MUST NOT survive.
     const markerIdsFound = writtenRunDays.filter((rd) =>
-      rd.id?.startsWith("LEGACY_RACE_DAY_"),
+      rd.id?.startsWith("LEGACY_RACE_DAY_")
     );
     expect(markerIdsFound).toHaveLength(0);
 
@@ -733,7 +789,9 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -747,7 +805,9 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     const writtenRunDays = lastWrite.runDays ?? [];
 
     // Marker ID must not survive.
-    expect(writtenRunDays.some((rd) => rd.id?.startsWith("LEGACY_STRUCTURED_"))).toBe(false);
+    expect(
+      writtenRunDays.some((rd) => rd.id?.startsWith("LEGACY_STRUCTURED_"))
+    ).toBe(false);
     // runPlan flipped to race_prep with a goal.
     expect(lastWrite.runPlan?.mode).toBe("race_prep");
     expect(lastWrite.runPlan?.raceGoal?.distance).toBe("10k");
@@ -798,26 +858,34 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: raceDate } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: raceDate },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     // Allow the auto-transition effect to fire and write. PR-G's
     // auto-rollover runs immediately after and archives the
     // (now-race_no_show) runDay into weekHistory, so we can't
     // assert against the last write. Instead, scan ALL writes for
     // the one PR-D produced — that's the race_no_show write,
     // regardless of what PR-G does next.
-    await waitFor(() => {
-      const wroteRaceNoShow = setDocCalls.some((c) => {
-        const data = c.data as ProgramState | undefined;
-        const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
-        return raceRunDay?.status === "race_no_show";
-      });
-      expect(wroteRaceNoShow).toBe(true);
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        const wroteRaceNoShow = setDocCalls.some((c) => {
+          const data = c.data as ProgramState | undefined;
+          const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
+          return raceRunDay?.status === "race_no_show";
+        });
+        expect(wroteRaceNoShow).toBe(true);
+      },
+      { timeout: 2000 }
+    );
   });
 
   it("does NOT transition within the 3-day grace window", async () => {
@@ -846,12 +914,17 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: raceDate } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: raceDate },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
     // Wait a beat to ensure no auto-transition fires.
     await new Promise((r) => setTimeout(r, 100));
@@ -886,12 +959,17 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: raceDate } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: raceDate },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     expect(setDocCalls.length).toBe(0);
@@ -926,12 +1004,17 @@ describe("PR-D — completeRunDay accepts savedRunId and enters recovery phase",
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2099-09-15" } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -969,12 +1052,17 @@ describe("PR-D — completeRunDay accepts savedRunId and enters recovery phase",
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2099-09-15" } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -1012,12 +1100,17 @@ describe("PR-D — completeRunDay accepts savedRunId and enters recovery phase",
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2099-09-15" } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+      },
     } as ProgramState;
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -1074,7 +1167,9 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
 
     await act(async () => {
@@ -1128,14 +1223,21 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
 
     // The exit effect should fire and clear phase + recoveryEndDate.
-    await waitFor(() => {
-      const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as ProgramState | undefined;
-      expect(lastWrite?.runPlan?.phase).toBeUndefined();
-      expect(lastWrite?.runPlan?.recoveryEndDate).toBeUndefined();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as
+          | ProgramState
+          | undefined;
+        expect(lastWrite?.runPlan?.phase).toBeUndefined();
+        expect(lastWrite?.runPlan?.recoveryEndDate).toBeUndefined();
+      },
+      { timeout: 2000 }
+    );
   });
 
   it("recovery-exit effect does NOT fire within the 7-day grace window", async () => {
@@ -1171,7 +1273,9 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     // No writes during grace — phase preserved.
@@ -1224,16 +1328,23 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
 
     // Wait for the rollover effect to fire + save.
-    await waitFor(() => {
-      const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as ProgramState | undefined;
-      // After rollover, runDays[0].weekKey should match current week
-      expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
-      // weekHistory should have entries from the archived weeks
-      expect((lastWrite?.weekHistory?.length ?? 0)).toBeGreaterThan(0);
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as
+          | ProgramState
+          | undefined;
+        // After rollover, runDays[0].weekKey should match current week
+        expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
+        // weekHistory should have entries from the archived weeks
+        expect(lastWrite?.weekHistory?.length ?? 0).toBeGreaterThan(0);
+      },
+      { timeout: 2000 }
+    );
   });
 
   it("does not roll forward when runDays weekKey matches today's week", async () => {
@@ -1274,7 +1385,9 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     // No rollover write — current week, nothing to advance.
@@ -1300,7 +1413,9 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     mockDocExists = true;
 
     const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 2000 });
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     expect(setDocCalls.length).toBe(0);
