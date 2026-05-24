@@ -18,7 +18,8 @@ import { emit } from "./analyticsClient";
 export type HistoryEvent =
   | "history_tab_selected"
   | "history_range_changed"
-  | "history_initial_render_ms";
+  | "history_initial_render_ms"
+  | "history_chart_tap_attempted";
 
 export type HistoryTab =
   | "all"
@@ -31,6 +32,9 @@ export type HistoryTab =
 export type HistoryRange = "1W" | "1M" | "3M" | "6M" | "1Y";
 
 export type HistoryRangeType = "pill" | "custom";
+
+/** Hist5f S1 — which chart did the user tap. */
+export type HistoryChart = "volume" | "macro" | "pi";
 
 export interface HistoryEventMetadata {
   /** history_tab_selected: which top-level filter tab. */
@@ -47,8 +51,23 @@ export interface HistoryEventMetadata {
    *  non-loading render (target: <500ms p95 per Hist4 cross-cutting
    *  performance pin). */
   durationMs?: number;
+  /** history_chart_tap_attempted: which chart was tapped (Hist5f S1).
+   *  Lock body in PR #724 originally specced "analytics_chart_tap_
+   *  attempted" but the existing `history_*` prefix convention wins
+   *  per the established eventing pattern across this module. */
+  chart?: HistoryChart;
+  /** history_chart_tap_attempted: bin key (ISO date / week / month
+   *  per chartGranularity). */
+  binKey?: string;
+  /** history_chart_tap_attempted: value at the tapped data point —
+   *  volume kg for VolumeChart, calorie-share % for MacroDistribution,
+   *  PI 0-100 for PerformanceIndexChart. */
+  value?: number;
 }
 
-export function track(event: HistoryEvent, metadata: HistoryEventMetadata = {}): void {
+export function track(
+  event: HistoryEvent,
+  metadata: HistoryEventMetadata = {}
+): void {
   emit("history", event, metadata as Record<string, unknown>);
 }
