@@ -632,5 +632,28 @@ service cloud.firestore {
       // Operator review only; Admin SDK reads.
       allow read, write: if false;
     }
+
+    // ========================================
+    // Restricted-user marker (S4e lock — PR #722).
+    //
+    // Single doc per restricted UID. The doc's mere existence
+    // signals "this user is currently restricted from social
+    // actions" (Find-tab search/follow/invite). Schema per S4e
+    // critical implication (1): { uid, restrictedAt,
+    // restrictionEndsAt: null, lastActionedReport, strikes: null }.
+    // strikes/restrictionEndsAt null on manual restriction; future
+    // S4d-full auto-strike CF populates them.
+    //
+    // Reads: own-doc only — the user can read their own restriction
+    // state for the UI gate. No cross-user discovery: rules-deny on
+    // any uid != request.auth.uid.
+    //
+    // Writes: Admin SDK only via the resolveReport callable's
+    // restrictUser option. Direct client writes denied.
+    // ========================================
+    match /globalRestrictedUids/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
   }
 }

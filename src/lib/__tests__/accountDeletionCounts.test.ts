@@ -17,7 +17,10 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const inventoryPath = resolve(here, "../../../functions/accountDeletionInventory.json");
+const inventoryPath = resolve(
+  here,
+  "../../../functions/accountDeletionInventory.json"
+);
 const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 
 /**
@@ -32,7 +35,9 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
  *     separate billing-identity tombstone per Chunk 1.1 founder-decision
  *     #8).
  */
-export const EXPECTED_INCLUDED_COUNT = 40;
+// S4e (PR #722) bumped to 41 — added globalRestrictedUids entry for
+// the restricted-user marker cleanup.
+export const EXPECTED_INCLUDED_COUNT = 41;
 export const EXPECTED_EXCLUDED_COUNT = 7;
 
 describe("inventory counts are programmatically guarded", () => {
@@ -76,13 +81,25 @@ describe("inventory counts are programmatically guarded", () => {
     // collide on a coarser key (e.g. collectionGroup "users" appears in
     // both blocksReverse and kudosByMe but their pathFilters differ).
     const pairs = (inventory.included as InclEntry[]).map((e) => {
-      const target = e.pathFilter || e.path || e.sourcePath || e.perActivityCleanup || e.collectionGroup || "<unknown>";
+      const target =
+        e.pathFilter ||
+        e.path ||
+        e.sourcePath ||
+        e.perActivityCleanup ||
+        e.collectionGroup ||
+        "<unknown>";
       return `${e.key}::${target}::${e.strategy || "<no-strategy>"}`;
     });
     // The key is in the dedupe identifier so we're really checking that
     // (target, strategy) doesn't repeat across distinct keys.
     const targetStrategyPairs = (inventory.included as InclEntry[]).map((e) => {
-      const target = e.pathFilter || e.path || e.sourcePath || e.perActivityCleanup || e.collectionGroup || "<unknown>";
+      const target =
+        e.pathFilter ||
+        e.path ||
+        e.sourcePath ||
+        e.perActivityCleanup ||
+        e.collectionGroup ||
+        "<unknown>";
       return `${target}::${e.strategy || "<no-strategy>"}`;
     });
     const dupes: string[] = [];
@@ -108,7 +125,9 @@ describe("inventory shape is consumable by report regeneration", () => {
   });
 
   it("every included entry has a unique testCoverageKey", () => {
-    const keys = (inventory.included as { testCoverageKey?: string }[]).map((e) => e.testCoverageKey);
+    const keys = (inventory.included as { testCoverageKey?: string }[]).map(
+      (e) => e.testCoverageKey
+    );
     const seen = new Set<string>();
     const dupes: string[] = [];
     for (const k of keys) {

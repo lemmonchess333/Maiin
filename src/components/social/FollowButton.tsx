@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../lib/auth';
-import { isFollowing, followUser, unfollowUser } from '../../lib/socialApi';
-import { logger } from '../../lib/logger';
-import { haptic } from '../../lib/haptic';
-import { Spinner } from '@/components/ui/Spinner';
+import { useState, useEffect } from "react";
+import { useAuth } from "../../lib/auth";
+import { isFollowing, followUser, unfollowUser } from "../../lib/socialApi";
+import { logger } from "../../lib/logger";
+import { haptic } from "../../lib/haptic";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface FollowButtonProps {
   targetUid: string;
@@ -13,6 +13,15 @@ interface FollowButtonProps {
    * person once you follow them, leaderboards re-running, etc.
    */
   onFollowChange?: (following: boolean) => void;
+  /**
+   * S4e-restricted-user gate: when true, the button visibly renders
+   * but tap is suppressed (haptic + state machine skipped). Find tab
+   * passes this when useRestrictedStatus reports the current user is
+   * restricted. Distinct from showSpinner-disabled (which means a
+   * write is in-flight) — restricted users get the muted styling
+   * permanently, not a transient busy state.
+   */
+  disabled?: boolean;
 }
 
 /**
@@ -23,7 +32,11 @@ interface FollowButtonProps {
  * states, and the loading state uses a spinner instead of a literal
  * "..." string.
  */
-export default function FollowButton({ targetUid, onFollowChange }: FollowButtonProps) {
+export default function FollowButton({
+  targetUid,
+  onFollowChange,
+  disabled,
+}: FollowButtonProps) {
   const { user } = useAuth();
   const [following, setFollowing] = useState(false);
   const [initialising, setInitialising] = useState(true);
@@ -36,18 +49,27 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
       return;
     }
     isFollowing(user.uid, targetUid)
-      .then((v) => { if (!cancelled) setFollowing(v); })
-      .catch((err) => { if (!cancelled) logger.error('[FollowButton] isFollowing check failed', err); })
-      .finally(() => { if (!cancelled) setInitialising(false); });
-    return () => { cancelled = true; };
+      .then((v) => {
+        if (!cancelled) setFollowing(v);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          logger.error("[FollowButton] isFollowing check failed", err);
+      })
+      .finally(() => {
+        if (!cancelled) setInitialising(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user, targetUid]);
 
   const handleToggle = async () => {
-    if (!user || busy) return;
+    if (!user || busy || disabled) return;
     const nextFollowing = !following;
     // Tactile confirmation on the commit — follow is stronger haptic
     // (meaningful new relationship), unfollow is lighter (undo action).
-    haptic(nextFollowing ? 'medium' : 'light');
+    haptic(nextFollowing ? "medium" : "light");
     // Optimistic flip — snap the UI to the target state, reconcile
     // after the server write resolves.
     setFollowing(nextFollowing);
@@ -61,9 +83,9 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
       onFollowChange?.(nextFollowing);
     } catch (err) {
       // Revert on failure.
-      logger.error('[FollowButton] toggle failed', err);
+      logger.error("[FollowButton] toggle failed", err);
       setFollowing(!nextFollowing);
-      haptic('error');
+      haptic("error");
     } finally {
       setBusy(false);
     }
@@ -76,13 +98,19 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
   return (
     <button
       onClick={handleToggle}
-      disabled={showSpinner}
-      aria-label={following ? 'Unfollow user' : 'Follow user'}
+      disabled={showSpinner || disabled}
+      aria-label={
+        disabled
+          ? "Following actions are unavailable — your account is restricted"
+          : following
+            ? "Unfollow user"
+            : "Follow user"
+      }
       aria-busy={showSpinner}
-      className={`inline-flex items-center justify-center h-8 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-80 ${
+      className={`inline-flex items-center justify-center h-8 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
         following
-          ? 'bg-muted text-muted-foreground border border-border'
-          : 'bg-primary-strong text-white'
+          ? "bg-muted text-muted-foreground border border-border"
+          : "bg-primary-strong text-white"
       }`}
     >
       {showSpinner ? (
@@ -91,8 +119,16 @@ export default function FollowButton({ targetUid, onFollowChange }: FollowButton
         // Spinner inherits via variant="inverse" / "muted". Using
         // "inverse" universally because both states' contrast is
         // close enough — keeps the markup branch-free.
-        <Spinner size="xs" variant={following ? 'muted' : 'inverse'} label={following ? 'Unfollowing' : 'Following'} />
-      ) : following ? 'Following' : 'Follow'}
+        <Spinner
+          size="xs"
+          variant={following ? "muted" : "inverse"}
+          label={following ? "Unfollowing" : "Following"}
+        />
+      ) : following ? (
+        "Following"
+      ) : (
+        "Follow"
+      )}
     </button>
   );
 }

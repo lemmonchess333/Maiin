@@ -26,7 +26,7 @@ import { isAdminUid } from "@/lib/adminAuth";
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { toast } from "sonner";
-import { Loader2, ShieldAlert, EyeOff, Check } from "lucide-react";
+import { Loader2, ShieldAlert, EyeOff, Check, UserX } from "lucide-react";
 
 interface ReportTarget {
   authorId?: string;
@@ -48,6 +48,11 @@ interface Report {
   reporterId: string;
   targetType: "activity" | "comment" | "user";
   targetId: string;
+  /** S4e (PR #722) — uid of the reported user. Optional because
+   *  legacy report docs may pre-date the field; the Restrict-user
+   *  button hides when null and the CF rejects restrict-attempts
+   *  on reports missing it. */
+  targetUid: string | null;
   reason: "spam" | "harassment" | "inappropriate" | "other";
   details: string | null;
   createdAt: number | null;
@@ -88,7 +93,7 @@ export default function AdminModeration() {
     try {
       const callable = httpsCallable<unknown, { reports: Report[] }>(
         functions,
-        "listPendingReports",
+        "listPendingReports"
       );
       const result = await callable({});
       setReports(result.data.reports);
@@ -104,22 +109,38 @@ export default function AdminModeration() {
     void fetchReports();
   }, [isAdmin, fetchReports]);
 
-  const resolveReport = async (reportId: string, hideActivity: boolean) => {
+  /* S4e (PR #722): resolveReport callable gains optional `restrictUser`
+     param. Admin queue UI gets a third button (Restrict user) alongside
+     Dismiss + Hide content. Restricting writes to globalRestrictedUids/
+     {targetUid} atomically with the report resolution. */
+  const resolveReport = async (
+    reportId: string,
+    hideActivity: boolean,
+    restrictUser: boolean = false
+  ) => {
     setBusyReportId(reportId);
     try {
-      const callable = httpsCallable<{ reportId: string; hideActivity: boolean }, { ok: boolean }>(
-        functions,
-        "resolveReport",
-      );
-      await callable({ reportId, hideActivity });
-      toast.success(hideActivity ? "Hidden and resolved." : "Resolved.");
+      const callable = httpsCallable<
+        { reportId: string; hideActivity: boolean; restrictUser?: boolean },
+        { ok: boolean }
+      >(functions, "resolveReport");
+      await callable({ reportId, hideActivity, restrictUser });
+      const msg = restrictUser
+        ? hideActivity
+          ? "Hidden, user restricted, and resolved."
+          : "User restricted and resolved."
+        : hideActivity
+          ? "Hidden and resolved."
+          : "Resolved.";
+      toast.success(msg);
       // Optimistic: drop the report from the visible list rather
       // than re-fetching every time — the user can tap Refresh
       // for a clean re-read.
-      setReports((prev) => (prev ? prev.filter((r) => r.reportId !== reportId) : prev));
+      setReports((prev) =>
+        prev ? prev.filter((r) => r.reportId !== reportId) : prev
+      );
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Action failed.";
+      const message = err instanceof Error ? err.message : "Action failed.";
       toast.error(message);
     } finally {
       setBusyReportId(null);
@@ -229,12 +250,12 @@ export default function AdminModeration() {
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => void resolveReport(report.reportId, false)}
-                    className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg bg-muted text-foreground active:scale-95 transition-transform disabled:opacity-50"
+                    className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-muted text-foreground active:scale-95 transition-transform disabled:opacity-50"
                   >
                     Dismiss
                   </button>
@@ -243,10 +264,30 @@ export default function AdminModeration() {
                       type="button"
                       disabled={busy}
                       onClick={() => void resolveReport(report.reportId, true)}
-                      className="flex-1 text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                      className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
                       Hide content
+                    </button>
+                  )}
+                  {/* S4e (PR #722) — Restrict user button. Writes to
+                      globalRestrictedUids/{targetUid} atomically with
+                      the report resolution. Distinct from "Hide content"
+                      (which marks the activity flagged) — restriction
+                      gates the user from social actions on the Find tab.
+                      Both can be applied together for severe cases. */}
+                  {report.targetUid && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        void resolveReport(report.reportId, false, true)
+                      }
+                      aria-label="Restrict user — they can't search, follow, or invite from the Find tab until admin lifts."
+                      className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                    >
+                      <UserX className="w-3.5 h-3.5" aria-hidden="true" />
+                      Restrict user
                     </button>
                   )}
                 </div>

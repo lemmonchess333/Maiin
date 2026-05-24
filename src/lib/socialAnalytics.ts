@@ -19,7 +19,12 @@ export type SocialEvent =
   | "social_feed_subtab_changed"
   | "social_coachmark_dismissed"
   | "social_create_crew_tapped"
-  | "social_initial_render_ms";
+  | "social_initial_render_ms"
+  /** S4e-P13: Fires when the Find tab renders with the restricted-
+   *  user gate visible (search input disabled + restriction banner
+   *  shown). One event per Find-tab mount; tracks how often the
+   *  gate actually surfaces in production. */
+  | "social_restricted_gate_shown";
 
 export type SocialTab = "feed" | "crews" | "find";
 export type SocialFeedSubTab = "following" | "explore";
@@ -37,6 +42,9 @@ export interface SocialEventMetadata {
   durationMs?: number;
 }
 
-export function track(event: SocialEvent, metadata: SocialEventMetadata = {}): void {
+export function track(
+  event: SocialEvent,
+  metadata: SocialEventMetadata = {}
+): void {
   emit("social", event, metadata as Record<string, unknown>);
 }

@@ -7,6 +7,7 @@ import { useSuggestedPeople } from "../hooks/useSuggestedPeople";
 import { useSuggestedCrews } from "../hooks/useSuggestedCrews";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -246,6 +247,30 @@ export default function Social() {
     refresh: refreshSuggestions,
     remove: removeSuggestion,
   } = useSuggestedPeople(tab === "find", blockedUsers);
+
+  /* S4e-MVP — restricted-user gate on the Find tab. Hook subscribes
+     to the user's own `globalRestrictedUids/{uid}` doc; doc existence
+     = restricted. Search input + FollowButton + invite-share are
+     gated below when isRestricted. Loading state is treated as not-
+     restricted so we don't flash the gate on slow networks for the
+     vast majority of users who aren't restricted. */
+  const { isRestricted } = useRestrictedStatus(user?.uid);
+
+  /* S4e-P13: fire social_restricted_gate_shown once per Find-tab
+     mount where the gate actually renders. Guard with a ref so
+     remount (tab change → back) gets a fresh event but a re-render
+     inside the same tab visit does not. */
+  const restrictedGateShownRef = useRef(false);
+  useEffect(() => {
+    if (tab !== "find") {
+      restrictedGateShownRef.current = false;
+      return;
+    }
+    if (isRestricted && !restrictedGateShownRef.current) {
+      restrictedGateShownRef.current = true;
+      trackSocialEvent("social_restricted_gate_shown");
+    }
+  }, [tab, isRestricted]);
 
   // Crews
   const {
@@ -1305,6 +1330,24 @@ export default function Social() {
           {tab === "find" && (
             <section aria-label="People">
               <div className="space-y-6">
+                {/* S4e-MVP — restricted-user gate banner. Renders ABOVE
+                    all Find-tab content when useRestrictedStatus reports
+                    the current user is restricted. Search input +
+                    FollowButtons + invite-share below are disabled. Copy
+                    matches Soc5 #15 locked spec verbatim ("Your account
+                    is restricted · Contact support"). role="status" so
+                    screen readers announce on tab entry. */}
+                {isRestricted && (
+                  <div
+                    role="status"
+                    aria-label="Your account is restricted. Contact support."
+                    className="p-3 rounded-xl bg-destructive/10 border border-destructive/20"
+                  >
+                    <p className="text-xs text-destructive">
+                      Your account is restricted · Contact support
+                    </p>
+                  </div>
+                )}
                 {/* Section order rebuilt per audit: search-first because
               that's the highest-intent task on this surface. Suggested
               people next (most relevant social action). Popular crews
@@ -1342,8 +1385,13 @@ export default function Social() {
                           handleSearch();
                         }
                       }}
-                      aria-label="Search athletes"
-                      className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground"
+                      aria-label={
+                        isRestricted
+                          ? "Search is unavailable — your account is restricted"
+                          : "Search athletes"
+                      }
+                      disabled={isRestricted}
+                      className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     {searching ? (
                       <div
@@ -1407,7 +1455,10 @@ export default function Social() {
                               )}
                             </div>
                           </Link>
-                          <FollowButton targetUid={u.uid} />
+                          <FollowButton
+                            targetUid={u.uid}
+                            disabled={isRestricted}
+                          />
                         </div>
                       ))}
                     </div>
@@ -1527,6 +1578,7 @@ export default function Social() {
                           </div>
                           <FollowButton
                             targetUid={p.uid}
+                            disabled={isRestricted}
                             onFollowChange={(isFollowing) => {
                               // Moved from "Suggested" to the user's Following feed —
                               // remove from the suggestion list for immediate feedback.
@@ -1639,7 +1691,13 @@ export default function Social() {
                       >
                         <button
                           onClick={handleShareInvite}
-                          className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
+                          disabled={isRestricted}
+                          aria-label={
+                            isRestricted
+                              ? "Inviting is unavailable — your account is restricted"
+                              : undefined
+                          }
+                          className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ background: THEME.brandStrong }}
                         >
                           Share invite link
@@ -1648,7 +1706,13 @@ export default function Social() {
                     ) : (
                       <button
                         onClick={handleShareInvite}
-                        className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform"
+                        disabled={isRestricted}
+                        aria-label={
+                          isRestricted
+                            ? "Inviting is unavailable — your account is restricted"
+                            : undefined
+                        }
+                        className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ background: THEME.brandStrong }}
                       >
                         Share invite link
