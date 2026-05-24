@@ -1,11 +1,32 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
 import MealMacroBar from "./MealMacroBar";
 import { MEAL_LABELS, type MealKey } from "./mealConstants";
+import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
+
+/* Food6e: render-perf telemetry throttled to once per slot per day
+   per user. Key shape: tropos-food-slot-perf-<slotKey>-<YYYY-MM-DD>.
+   Without throttle the event fires 10-50 times/session per slot,
+   drowning the P95 signal the Food6e lock's re-evaluation triggers
+   depend on. */
+function shouldEmitSlotPerf(slotKey: MealKey): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const storageKey = `tropos-food-slot-perf-${slotKey}-${today}`;
+    if (sessionStorage.getItem(storageKey)) return false;
+    sessionStorage.setItem(storageKey, "1");
+    return true;
+  } catch {
+    /* private-mode / disabled storage — silently skip */
+    return false;
+  }
+}
 
 function safeNum(v: unknown): number {
   const n = Number(v);
@@ -28,11 +49,7 @@ interface FoodMealSectionProps {
   setOpenRowId: (id: string | null) => void;
   onTargetMeal: (m: MealKey) => void;
   onDelete: (mealIds: string[], foodName: string) => void;
-  onEdit: (group: {
-    id: string;
-    foodName: string;
-    meals: Meal[];
-  }) => void;
+  onEdit: (group: { id: string; foodName: string; meals: Meal[] }) => void;
 }
 
 /**
@@ -98,12 +115,47 @@ export default function FoodMealSection({
   }
   const groupedEntries = Array.from(grouped.values());
 
+  /* Food6e telemetry foundation (Food6e-S1 + Food6e-S2). Captures
+     render-start with performance.now() at render-call time and
+     emits in a post-mount useEffect with the elapsed delta. Throttled
+     to once per slot per day per user via the helper above. The
+     metric is order-of-magnitude (not microsecond-precise) because
+     the post-mount useEffect runs after React's commit phase, not at
+     exact paint time — accept this for the order-of-magnitude
+     signal we need for the Food6e re-evaluation triggers.
+     react-hooks/purity rule disabled here: `performance.now()` is
+     impure but the ref-initialiser pattern is the canonical way to
+     time render duration; the existing Home2 `home_initial_render_ms`
+     instrumentation uses the same shape via a post-mount effect to
+     side-step the rule, but here we need PER-RENDER timing, not
+     mount-only. */
+  // eslint-disable-next-line react-hooks/purity
+  const renderStartRef = useRef<number>(performance.now());
+  useEffect(() => {
+    /* Re-stamp on every render so the useEffect's elapsed delta
+       reflects THIS render cycle, not the first mount. The ref
+       initialiser runs once. */
+    const elapsed = performance.now() - renderStartRef.current;
+    renderStartRef.current = performance.now();
+    if (shouldEmitSlotPerf(mealKey)) {
+      trackFoodEvent("food_meal_slot_perf", {
+        slot: mealKey,
+        itemCount: groupedEntries.length,
+        renderDurationMs: Math.round(elapsed),
+      });
+    }
+  });
+
   return (
     <motion.div
       layout
       transition={{ duration: 0.22, ease: "easeOut" }}
       className="bg-card rounded-xl overflow-hidden"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
+      /* Food6e-S3: CSS `contain: layout paint` scopes layout/paint
+         invalidation to this slot so a re-render of one section
+         doesn't trigger reflow on siblings. Cheap browser-native
+         perf hint per Hist5f-pattern freebie value-add. */
+      style={{ boxShadow: "var(--ds-shadow-card)", contain: "layout paint" }}
     >
       {/* Header caption — meal name · item count · total kcal.
           Item count is more glanceable than "BREAKFAST · 12:09 AM"
@@ -112,7 +164,9 @@ export default function FoodMealSection({
           "Did I log all five things?" is answered at a glance. */}
       <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
         <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
-          <span className="font-semibold">{MEAL_LABELS[mealKey].toUpperCase()}</span>
+          <span className="font-semibold">
+            {MEAL_LABELS[mealKey].toUpperCase()}
+          </span>
           {groupedEntries.length > 0 && (
             <>
               {" · "}
@@ -130,7 +184,7 @@ export default function FoodMealSection({
             "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
             targetMeal === mealKey
               ? "bg-primary text-white"
-              : "border border-black/[0.12] text-muted-foreground",
+              : "border border-black/[0.12] text-muted-foreground"
           )}
         >
           <Plus className="w-3.5 h-3.5" />
@@ -188,9 +242,7 @@ export default function FoodMealSection({
                 // useMeals.editMeal flips the pill on. AI-refinement
                 // writes bump revisionCount but NOT userEditCount, so
                 // a refined-only group reads as un-edited (correct).
-                wasEdited: group.meals.some(
-                  (m) => (m.userEditCount ?? 0) > 0,
-                ),
+                wasEdited: group.meals.some((m) => (m.userEditCount ?? 0) > 0),
               };
               return (
                 <FoodRow
@@ -201,7 +253,7 @@ export default function FoodMealSection({
                   onDelete={() =>
                     onDelete(
                       group.meals.map((m) => m.id),
-                      group.foodName,
+                      group.foodName
                     )
                   }
                   onEdit={() => {
