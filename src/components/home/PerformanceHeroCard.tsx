@@ -4,6 +4,7 @@ import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useCountUp } from "@/hooks/useCountUp";
 import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getCardColour } from "@/lib/performanceColour";
 import {
   getVerb,
@@ -94,14 +95,24 @@ export default function PerformanceHeroCard({
     return (
       <Link
         to="/history#performance"
-        onClick={() => haptic()}
+        onClick={() => {
+          haptic();
+          trackHomeEvent("home_card_tapped", { card: "performance" });
+        }}
         className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
         style={{ boxShadow: "var(--ds-shadow-card)" }}
         aria-label="Performance — loading"
       >
         <div className="flex items-center gap-2 mb-3">
-          <Activity className="w-4 h-4" style={{ color: THEME.text.muted }} aria-hidden="true" />
-          <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>
+          <Activity
+            className="w-4 h-4"
+            style={{ color: THEME.text.muted }}
+            aria-hidden="true"
+          />
+          <p
+            className="text-xs font-medium"
+            style={{ color: THEME.text.muted }}
+          >
             Performance
           </p>
         </div>
@@ -118,14 +129,24 @@ export default function PerformanceHeroCard({
     return (
       <Link
         to="/history#performance"
-        onClick={() => haptic()}
+        onClick={() => {
+          haptic();
+          trackHomeEvent("home_card_tapped", { card: "performance" });
+        }}
         className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
         style={{ boxShadow: "var(--ds-shadow-card)" }}
         aria-label="Performance — no data yet"
       >
         <div className="flex items-center gap-2 mb-3">
-          <Activity className="w-4 h-4" style={{ color: THEME.text.muted }} aria-hidden="true" />
-          <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>
+          <Activity
+            className="w-4 h-4"
+            style={{ color: THEME.text.muted }}
+            aria-hidden="true"
+          />
+          <p
+            className="text-xs font-medium"
+            style={{ color: THEME.text.muted }}
+          >
             Performance
           </p>
         </div>
@@ -138,7 +159,8 @@ export default function PerformanceHeroCard({
      difference is the delta chip (hidden when low-confidence) and
      the line text (getLine handles sparse-data variants via
      signals.lifetimeWeeks / daysSinceLastTraining). */
-  const loadBand = (currentWeek.labels?.loadBand ?? currentWeek.loadBand) as LoadBand;
+  const loadBand = (currentWeek.labels?.loadBand ??
+    currentWeek.loadBand) as LoadBand;
   const deloadRecommended = currentWeek.flags?.deloadRecommended ?? false;
   const verb = getVerb(loadBand, deloadRecommended);
   const { hue, glowIntensity } = getCardColour(pi, loadBand, deloadRecommended);
@@ -149,8 +171,8 @@ export default function PerformanceHeroCard({
 
   const delta = previousWeek
     ? Math.round(
-        (currentWeek.performanceIndex ?? 0)
-          - (previousWeek.performanceIndex ?? 0),
+        (currentWeek.performanceIndex ?? 0) -
+          (previousWeek.performanceIndex ?? 0)
       )
     : null;
 
@@ -160,14 +182,21 @@ export default function PerformanceHeroCard({
   return (
     <Link
       to="/history#performance"
-      onClick={() => haptic()}
+      onClick={() => {
+        haptic();
+        trackHomeEvent("home_card_tapped", { card: "performance" });
+      }}
       className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
       style={{ boxShadow: "var(--ds-shadow-card)" }}
       aria-label={`Performance Index ${pi}, ${verb.label}`}
       aria-describedby={`perf-detail-${currentWeek.weekKey}`}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Activity className="w-4 h-4" style={{ color: hue }} aria-hidden="true" />
+        <Activity
+          className="w-4 h-4"
+          style={{ color: hue }}
+          aria-hidden="true"
+        />
         <p className="text-xs font-medium" style={{ color: THEME.text.muted }}>
           Performance
         </p>
@@ -255,8 +284,9 @@ export default function PerformanceHeroCard({
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-micro font-medium"
                 style={{
                   backgroundColor:
-                    (delta > 0 ? THEME.semantic.positive : THEME.semantic.vitals)
-                    + "1A",
+                    (delta > 0
+                      ? THEME.semantic.positive
+                      : THEME.semantic.vitals) + "1A",
                   color:
                     delta > 0 ? THEME.semantic.positive : THEME.semantic.vitals,
                 }}
@@ -276,10 +306,7 @@ export default function PerformanceHeroCard({
       {/* Screen-reader sibling for aria-describedby — carries the
           supporting line + delta + low-confidence note that the
           aria-label alone can't surface compactly. */}
-      <span
-        id={`perf-detail-${currentWeek.weekKey}`}
-        className="sr-only"
-      >
+      <span id={`perf-detail-${currentWeek.weekKey}`} className="sr-only">
         {line}
         {!lowConfidence && delta !== null && delta !== 0
           ? `, ${delta > 0 ? "up" : "down"} ${Math.abs(delta)} from last week`
