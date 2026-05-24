@@ -20,6 +20,7 @@ export type FoodEvent =
   | "food_date_navigated"
   | "food_composer_focused"
   | "food_initial_render_ms"
+  | "food_meal_slot_perf"
   | "food_pantry_eviction"
   | "food_pantry_graduated"
   | "food_pantry_chip_tapped"
@@ -27,7 +28,8 @@ export type FoodEvent =
   | "food_pantry_typeahead_selected";
 
 export interface FoodEventMetadata {
-  /** food_meal_slot_tapped: which slot ("breakfast" | "lunch" | "snacks" | "dinner"). */
+  /** food_meal_slot_tapped + food_meal_slot_perf: which slot
+   *  ("breakfast" | "lunch" | "snacks" | "dinner"). */
   slot?: MealKey;
   /** food_date_navigated: direction of navigation. */
   direction?: "prev" | "next" | "pick";
@@ -35,6 +37,15 @@ export interface FoodEventMetadata {
    *  render. Captures the Food page's perceived initial-render budget
    *  (target: <500ms p95 per Food6 cross-cutting performance pin). */
   durationMs?: number;
+  /** food_meal_slot_perf: number of meals in the slot at render
+   *  time. Drives the Food6e re-evaluation trigger T1 (P95
+   *  itemCount). */
+  itemCount?: number;
+  /** food_meal_slot_perf: ms to render the FoodMealSection,
+   *  measured via performance.now() captured at render-start vs
+   *  next useEffect cycle. Drives the Food6e re-evaluation
+   *  trigger T1 (P95 renderDurationMs > 100). */
+  renderDurationMs?: number;
   /** food_pantry_*: the doc id of the favourite involved. */
   favouriteId?: string;
   /** food_pantry_eviction / _graduated / _chip_tapped: useCount of
@@ -52,6 +63,9 @@ export interface FoodEventMetadata {
   source?: string;
 }
 
-export function track(event: FoodEvent, metadata: FoodEventMetadata = {}): void {
+export function track(
+  event: FoodEvent,
+  metadata: FoodEventMetadata = {}
+): void {
   emit("food", event, metadata as Record<string, unknown>);
 }
