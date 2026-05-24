@@ -111,8 +111,16 @@
       "type": "userSubcollection",
       "path": "users/{uid}/bodyweightLogs",
       "aliases": [
-        { "key": "userBodyweightLogsLegacyBodyweight", "path": "users/{uid}/bodyweight", "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success" },
-        { "key": "userBodyweightLogsLegacyWeights", "path": "users/{uid}/weights", "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success" }
+        {
+          "key": "userBodyweightLogsLegacyBodyweight",
+          "path": "users/{uid}/bodyweight",
+          "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success"
+        },
+        {
+          "key": "userBodyweightLogsLegacyWeights",
+          "path": "users/{uid}/weights",
+          "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success"
+        }
       ],
       "containsPersonalData": true,
       "piiCategory": "healthFitness",
@@ -130,7 +138,11 @@
       "type": "userSubcollection",
       "path": "users/{uid}/waterLog",
       "aliases": [
-        { "key": "userWaterLogLegacyWater", "path": "users/{uid}/water", "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success" }
+        {
+          "key": "userWaterLogLegacyWater",
+          "path": "users/{uid}/water",
+          "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success"
+        }
       ],
       "containsPersonalData": true,
       "piiCategory": "healthFitness",
@@ -148,7 +160,11 @@
       "type": "userSubcollection",
       "path": "users/{uid}/foodFavourites",
       "aliases": [
-        { "key": "userFoodFavouritesLegacyFavorites", "path": "users/{uid}/favorites", "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success" }
+        {
+          "key": "userFoodFavouritesLegacyFavorites",
+          "path": "users/{uid}/favorites",
+          "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success"
+        }
       ],
       "containsPersonalData": true,
       "piiCategory": "userContent",
@@ -198,7 +214,11 @@
       "type": "userSubcollection",
       "path": "users/{uid}/settings",
       "aliases": [
-        { "key": "userSettingsLegacyPreferences", "path": "users/{uid}/preferences", "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success" }
+        {
+          "key": "userSettingsLegacyPreferences",
+          "path": "users/{uid}/preferences",
+          "reason": "Pre-rename collection name; cleanup-time-only sweep; missing = success"
+        }
       ],
       "containsPersonalData": true,
       "piiCategory": "userContent",
@@ -484,6 +504,23 @@
       "docIdPattern": "bare uid (verified in functions/index.js:166)",
       "reason": "Monthly AI food-scan quota counter. Server-only writes. Doc ID is bare uid. Uid is PII per piiCategory:uid even though no other fields are personal.",
       "testCoverageKey": "smoke::topLevelOwn::scanUsage",
+      "testCoverageStatus": "planned"
+    },
+    {
+      "key": "globalRestrictedUids",
+      "domain": "F_usage",
+      "type": "topLevelByUid",
+      "path": "globalRestrictedUids/{uid}",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "moderation",
+      "strategy": "deleteKnownDocIfExists",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "docIdPattern": "bare uid (verified in functions/index.js resolveReport — S4e PR #722 sets doc at `globalRestrictedUids/{report.targetUid}`)",
+      "reason": "Restricted-user marker per S4e (PR #722). Single doc per restricted UID; doc existence = restricted. Schema: { uid, restrictedAt, restrictionEndsAt: null on manual restriction, lastActionedReport, strikes: null on manual restriction }. Cleanup is mandatory because (a) the doc ID IS the user's uid (PII), (b) restriction is forward-looking with no value after the user is deleted, (c) the report that triggered the restriction is preserved separately in the reports/* collection with anonymised reporter. S4e is the MVP — full strike-counter automation (S4d-original) is deferred per the lock's D2.",
+      "testCoverageKey": "smoke::topLevelOwn::globalRestrictedUids",
       "testCoverageStatus": "planned"
     },
     {
@@ -775,9 +812,21 @@
       "reviewedBy": "R1A-Deletion-Chunk2 (founder decided Option C interim 2026-05-11)",
       "renderSafetyAudit": {
         "renderers": [
-          { "file": "src/components/social/CommentSheet.tsx", "line": "139-144", "verdict": "safe — uses BlockAwareAvatar which handles null uid + null photoURL; displayName 'Deleted user' renders normally; text 'Comment deleted' renders normally" },
-          { "file": "src/components/social/CommentSection.tsx", "line": "1-50", "verdict": "safe — same BlockAwareAvatar pattern" },
-          { "file": "src/components/social/BlockAwareAvatar.tsx", "line": "44-60", "verdict": "safe — accepts null/undefined uid and null photoURL by design; falls back to initials from displayName" }
+          {
+            "file": "src/components/social/CommentSheet.tsx",
+            "line": "139-144",
+            "verdict": "safe — uses BlockAwareAvatar which handles null uid + null photoURL; displayName 'Deleted user' renders normally; text 'Comment deleted' renders normally"
+          },
+          {
+            "file": "src/components/social/CommentSection.tsx",
+            "line": "1-50",
+            "verdict": "safe — same BlockAwareAvatar pattern"
+          },
+          {
+            "file": "src/components/social/BlockAwareAvatar.tsx",
+            "line": "44-60",
+            "verdict": "safe — accepts null/undefined uid and null photoURL by design; falls back to initials from displayName"
+          }
         ],
         "tapToProfileSafety": "No tap-to-profile route on comment author in CommentSheet.tsx or CommentSection.tsx — authorId is not wrapped in a Link or click handler. Deleted-user comments cannot route to /profile/null.",
         "originalTextLeakageAudit": "Renderers read only c.text / c.authorName / c.authorId / c.authorPhotoURL — no client reader accesses originalText. firestore.rules denies client reads of originalText (Chunk 2 rule update).",
@@ -796,8 +845,23 @@
       "recordPurpose": "moderation",
       "strategy": "anonymiseMinimisedShape",
       "minimisedShape": {
-        "retainedFields": ["reportId", "reason", "type", "createdAt", "targetIdHash"],
-        "strippedFields": ["targetId (replaced with HMAC hash for abuse-pattern detection)", "targetDisplayName", "targetPhotoURL", "targetProfileLink", "screenshots", "routeContext", "commentSnippets", "deepLinks"],
+        "retainedFields": [
+          "reportId",
+          "reason",
+          "type",
+          "createdAt",
+          "targetIdHash"
+        ],
+        "strippedFields": [
+          "targetId (replaced with HMAC hash for abuse-pattern detection)",
+          "targetDisplayName",
+          "targetPhotoURL",
+          "targetProfileLink",
+          "screenshots",
+          "routeContext",
+          "commentSnippets",
+          "deepLinks"
+        ],
         "targetIdHashPolicy": "HMAC-SHA256(uid, server-side secret) — bounded-decay 365 days post-deletion, then full removal. Abuse-pattern detection (re-registration under same email by a deleted bad actor) works within the 365-day window without indefinite uid retention.",
         "abuseIdentityHashSpec": "DESIGN ONLY — implementation requires server-side HMAC secret in Firebase Functions config (functions.config().moderation.hmac_secret). Setting the secret is a manual setup checklist item; if absent, executor falls back to anonymiseAuthorOnly with full targetId removal (no re-registration detection)."
       },
@@ -816,8 +880,18 @@
       "recordPurpose": "moderation",
       "strategy": "anonymiseMinimisedShape",
       "minimisedShape": {
-        "retainedFields": ["reportId", "reason", "type", "createdAt", "targetId"],
-        "strippedFields": ["reporterId", "reporterDisplayName", "reporterPhotoURL"],
+        "retainedFields": [
+          "reportId",
+          "reason",
+          "type",
+          "createdAt",
+          "targetId"
+        ],
+        "strippedFields": [
+          "reporterId",
+          "reporterDisplayName",
+          "reporterPhotoURL"
+        ],
         "anonymiseFields": { "reporterId": null }
       },
       "retentionWindow": "365 days post-deletion (then full removal)",

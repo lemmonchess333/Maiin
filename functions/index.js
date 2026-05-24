@@ -81,7 +81,7 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
   if (!allowed.includes("https://troposfit.com")) {
     functions.logger.error(
       "stripe.allowlist.misconfigured: production origin missing",
-      { allowed },
+      { allowed }
     );
   }
 }
@@ -131,58 +131,61 @@ const TRIGGER_CAP = { maxInstances: 50 };
 // subcollection + author-keyed top-level collection, then deletes
 // the Auth user as the final step. Partial failure leaves the user
 // logged in and retryable rather than stranded.
-exports.deleteMyAccount = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
-  }
-  // R1A-Deletion Chunk 2 — server-side recent-auth check. Closes the
-  // security gap where Admin SDK Auth deletion bypasses the client
-  // requires-recent-login check; getIdToken(true) refreshes the token
-  // but does NOT update auth_time. A stale session token must be
-  // rejected here before any deletion work begins.
-  try {
-    accountDeletionAuth.assertRecentAuth(context);
-  } catch (err) {
-    throw new functions.https.HttpsError(
-      "failed-precondition",
-      err.message,
-      { errorCode: err.errorCode || "requires-recent-auth" },
-    );
-  }
-  const uid = context.auth.uid;
-
-  try {
-    await accountDeletion.deleteAccount({
-      firestore: admin.firestore(),
-      auth: admin.auth(),
-      storageBucket: admin.storage().bucket(),
-      uid,
-      // functions.logger emits structured Cloud Logging payloads so
-      // the dotted event names (`deleteAccount.kill_switch_*`)
-      // become queryable jsonPayload fields, not opaque textPayload.
-      logger: functions.logger,
-    });
-    return { ok: true };
-  } catch (err) {
-    // Kill-switch trip is an intentional operator-controlled abort,
-    // not an internal failure. Surface as `failed-precondition` with
-    // a structured `details.reason` so the client can branch on a
-    // typed code instead of substring-matching the message.
-    if (err && err.code === "executor-disabled") {
-      functions.logger.warn("deleteMyAccount.kill_switch_trip", { uid });
+exports.deleteMyAccount = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
       throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Account deletion is temporarily paused. Please try again later.",
-        { reason: "executor-disabled" },
+        "unauthenticated",
+        "Sign-in required."
       );
     }
-    functions.logger.error("deleteMyAccount.error", {
-      uid,
-      message: err && err.message,
-    });
-    throw new functions.https.HttpsError("internal", err.message);
-  }
-});
+    // R1A-Deletion Chunk 2 — server-side recent-auth check. Closes the
+    // security gap where Admin SDK Auth deletion bypasses the client
+    // requires-recent-login check; getIdToken(true) refreshes the token
+    // but does NOT update auth_time. A stale session token must be
+    // rejected here before any deletion work begins.
+    try {
+      accountDeletionAuth.assertRecentAuth(context);
+    } catch (err) {
+      throw new functions.https.HttpsError("failed-precondition", err.message, {
+        errorCode: err.errorCode || "requires-recent-auth",
+      });
+    }
+    const uid = context.auth.uid;
+
+    try {
+      await accountDeletion.deleteAccount({
+        firestore: admin.firestore(),
+        auth: admin.auth(),
+        storageBucket: admin.storage().bucket(),
+        uid,
+        // functions.logger emits structured Cloud Logging payloads so
+        // the dotted event names (`deleteAccount.kill_switch_*`)
+        // become queryable jsonPayload fields, not opaque textPayload.
+        logger: functions.logger,
+      });
+      return { ok: true };
+    } catch (err) {
+      // Kill-switch trip is an intentional operator-controlled abort,
+      // not an internal failure. Surface as `failed-precondition` with
+      // a structured `details.reason` so the client can branch on a
+      // typed code instead of substring-matching the message.
+      if (err && err.code === "executor-disabled") {
+        functions.logger.warn("deleteMyAccount.kill_switch_trip", { uid });
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Account deletion is temporarily paused. Please try again later.",
+          { reason: "executor-disabled" }
+        );
+      }
+      functions.logger.error("deleteMyAccount.error", {
+        uid,
+        message: err && err.message,
+      });
+      throw new functions.https.HttpsError("internal", err.message);
+    }
+  });
 
 // ══════════════════════════════════════════════
 // RATE LIMITER — per-user, Firestore-backed
@@ -213,7 +216,13 @@ const _pruneOldTimestamps = helpers.pruneOldTimestamps;
  */
 /** Delegates to rateLimiter.isRateLimited — see rateLimiter.js for docs. */
 async function isRateLimited(uid, action, maxCalls, windowMs) {
-  return rateLimiter.isRateLimited(admin.firestore(), uid, action, maxCalls, windowMs);
+  return rateLimiter.isRateLimited(
+    admin.firestore(),
+    uid,
+    action,
+    maxCalls,
+    windowMs
+  );
 }
 
 // ══════════════════════════════════════════════
@@ -330,141 +339,183 @@ async function isFlagEnabled(key) {
 
 const { validatePlanPayload } = require("./lib/validatePlanPayload");
 
-exports.completeOnboarding = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
-  // R1A-Deletion: callable-actor lock — deleting accounts cannot
-  // (re-)onboard. The user doc would otherwise be recreated mid-cascade.
-  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
-
-  // Rate limit: 5 onboarding attempts per 10 minutes
-  const limited = await isRateLimited(uid, "onboarding", 5, 600_000);
-  if (limited) {
-    throw new functions.https.HttpsError("resource-exhausted", "Too many attempts. Please wait.");
-  }
-
-  try {
-    // Validate required fields
-    const {profileData: rawProfileData, programState, weekSchedule: rawWeekSchedule} = data;
-    if (!rawProfileData || typeof rawProfileData !== "object" || Array.isArray(rawProfileData)) {
-      throw new functions.https.HttpsError("invalid-argument", "profileData is required.");
+exports.completeOnboarding = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
-    if (!programState || typeof programState !== "object") {
-      throw new functions.https.HttpsError("invalid-argument", "programState is required.");
+    const uid = context.auth.uid;
+    // R1A-Deletion: callable-actor lock — deleting accounts cannot
+    // (re-)onboard. The user doc would otherwise be recreated mid-cascade.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+
+    // Rate limit: 5 onboarding attempts per 10 minutes
+    const limited = await isRateLimited(uid, "onboarding", 5, 600_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Please wait."
+      );
     }
 
-    // Allow-list + per-field sanitise. Unknown fields, off-allowlist
-    // photoURL schemes, out-of-range numbers etc. are dropped to
-    // undefined and never reach the Firestore write — closes the
-    // stored-data surface from PR audit. The returned object is a
-    // *new* object; we use it instead of mutating rawProfileData so
-    // any later reads of `rawProfileData` see the original shape.
-    const profileData = profileSanitizer.sanitizeProfileData(rawProfileData);
-
-    // Required-field gate runs AFTER sanitise — a value that failed
-    // its validator is now `undefined` here, which surfaces as
-    // "Missing required field" rather than a more specific error.
-    // That's deliberate: the client's required-field UI already
-    // prevented the empty case, so a request that hits this branch
-    // is either an out-of-range value (which we want to reject) or
-    // a malicious caller (who shouldn't get diagnostic detail).
-    const requiredFields = ["weightKg", "heightCm", "age", "sex", "activityLevel"];
-    for (const field of requiredFields) {
-      if (profileData[field] === undefined || profileData[field] === null || profileData[field] === "") {
-        throw new functions.https.HttpsError("invalid-argument", `Missing required field: ${field}`);
-      }
-    }
-
-    // P0-4: v7 plan-payload gate. Activates whenever the request
-    // looks like a v7 onboarding submission (weekSchedule present,
-    // either as a top-level field or threaded onto profileData). The
-    // sanitiser already validates structural shape of weekSchedule;
-    // this layer pins the cross-document invariants the sanitiser
-    // can't see (schema versions present, runMode/raceGoal
-    // consistency, runDay status enum, no UTC ISO leaks).
-    //
-    // Legacy clients (no weekSchedule + no v7 fields) keep working —
-    // the early-return is the migration bridge until every shipped
-    // client is on v7.
-    const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
-      ? rawWeekSchedule
-      : profileData.weekSchedule;
-    const isV7Payload =
-      Array.isArray(effectiveWeekSchedule) ||
-      profileData.weekScheduleVersion !== undefined ||
-      programState.programSchemaVersion !== undefined ||
-      Array.isArray(programState.runDays);
-    if (isV7Payload) {
-      const errors = validatePlanPayload({
-        profileData,
+    try {
+      // Validate required fields
+      const {
+        profileData: rawProfileData,
         programState,
-        weekSchedule: effectiveWeekSchedule,
-      });
-      if (errors.length > 0) {
+        weekSchedule: rawWeekSchedule,
+      } = data;
+      if (
+        !rawProfileData ||
+        typeof rawProfileData !== "object" ||
+        Array.isArray(rawProfileData)
+      ) {
         throw new functions.https.HttpsError(
           "invalid-argument",
-          `Invalid plan payload: ${errors.join("; ")}`,
+          "profileData is required."
         );
       }
-    }
-
-    // Force correct ownership + subscription tier. These overwrite
-    // any sanitiser-passing values from the input — they're
-    // server-managed regardless of what the client sent.
-    profileData.uid = uid;
-    profileData.subscriptionTier = "free";
-    profileData.onboardingComplete = true;
-
-    const db = admin.firestore();
-
-    // Check if profile already exists (preserve trialExpiresAt, createdAt)
-    const userRef = db.collection("users").doc(uid);
-    const existing = await userRef.get();
-
-    if (existing.exists) {
-      // Don't overwrite protected fields on update
-      delete profileData.trialExpiresAt;
-      delete profileData.createdAt;
-    } else {
-      // New profile: set defaults
-      if (!profileData.trialExpiresAt) {
-        const d = new Date();
-        d.setDate(d.getDate() + 7);
-        profileData.trialExpiresAt = d.toISOString();
+      if (!programState || typeof programState !== "object") {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is required."
+        );
       }
-      if (!profileData.createdAt) {
-        profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+
+      // Allow-list + per-field sanitise. Unknown fields, off-allowlist
+      // photoURL schemes, out-of-range numbers etc. are dropped to
+      // undefined and never reach the Firestore write — closes the
+      // stored-data surface from PR audit. The returned object is a
+      // *new* object; we use it instead of mutating rawProfileData so
+      // any later reads of `rawProfileData` see the original shape.
+      const profileData = profileSanitizer.sanitizeProfileData(rawProfileData);
+
+      // Required-field gate runs AFTER sanitise — a value that failed
+      // its validator is now `undefined` here, which surfaces as
+      // "Missing required field" rather than a more specific error.
+      // That's deliberate: the client's required-field UI already
+      // prevented the empty case, so a request that hits this branch
+      // is either an out-of-range value (which we want to reject) or
+      // a malicious caller (who shouldn't get diagnostic detail).
+      const requiredFields = [
+        "weightKg",
+        "heightCm",
+        "age",
+        "sex",
+        "activityLevel",
+      ];
+      for (const field of requiredFields) {
+        if (
+          profileData[field] === undefined ||
+          profileData[field] === null ||
+          profileData[field] === ""
+        ) {
+          throw new functions.https.HttpsError(
+            "invalid-argument",
+            `Missing required field: ${field}`
+          );
+        }
       }
-    }
 
-    // P0-4: atomic batch write so profile + programState land
-    // together. Pre-P0-4 wrote them sequentially; if the second
-    // write failed, the user was left with a hydrated profile but no
-    // programState — onboarding completed flag set, but Programme
-    // tab crashed on its first render. A batch commits both or
-    // neither, matching the contract the spec expects.
-    const programRef = userRef.collection("programState").doc("current");
-    const batch = db.batch();
-    if (existing.exists) {
-      batch.set(userRef, profileData, {merge: true});
-    } else {
-      batch.set(userRef, profileData);
-    }
-    batch.set(programRef, programState);
-    await batch.commit();
+      // P0-4: v7 plan-payload gate. Activates whenever the request
+      // looks like a v7 onboarding submission (weekSchedule present,
+      // either as a top-level field or threaded onto profileData). The
+      // sanitiser already validates structural shape of weekSchedule;
+      // this layer pins the cross-document invariants the sanitiser
+      // can't see (schema versions present, runMode/raceGoal
+      // consistency, runDay status enum, no UTC ISO leaks).
+      //
+      // Legacy clients (no weekSchedule + no v7 fields) keep working —
+      // the early-return is the migration bridge until every shipped
+      // client is on v7.
+      const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
+        ? rawWeekSchedule
+        : profileData.weekSchedule;
+      const isV7Payload =
+        Array.isArray(effectiveWeekSchedule) ||
+        profileData.weekScheduleVersion !== undefined ||
+        programState.programSchemaVersion !== undefined ||
+        Array.isArray(programState.runDays);
+      if (isV7Payload) {
+        const errors = validatePlanPayload({
+          profileData,
+          programState,
+          weekSchedule: effectiveWeekSchedule,
+        });
+        if (errors.length > 0) {
+          throw new functions.https.HttpsError(
+            "invalid-argument",
+            `Invalid plan payload: ${errors.join("; ")}`
+          );
+        }
+      }
 
-    return {success: true};
-  } catch (err) {
-    // Re-throw HttpsError as-is (validation errors, etc.)
-    if (err instanceof functions.https.HttpsError) {
-      throw err;
+      // Force correct ownership + subscription tier. These overwrite
+      // any sanitiser-passing values from the input — they're
+      // server-managed regardless of what the client sent.
+      profileData.uid = uid;
+      profileData.subscriptionTier = "free";
+      profileData.onboardingComplete = true;
+
+      const db = admin.firestore();
+
+      // Check if profile already exists (preserve trialExpiresAt, createdAt)
+      const userRef = db.collection("users").doc(uid);
+      const existing = await userRef.get();
+
+      if (existing.exists) {
+        // Don't overwrite protected fields on update
+        delete profileData.trialExpiresAt;
+        delete profileData.createdAt;
+      } else {
+        // New profile: set defaults
+        if (!profileData.trialExpiresAt) {
+          const d = new Date();
+          d.setDate(d.getDate() + 7);
+          profileData.trialExpiresAt = d.toISOString();
+        }
+        if (!profileData.createdAt) {
+          profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+        }
+      }
+
+      // P0-4: atomic batch write so profile + programState land
+      // together. Pre-P0-4 wrote them sequentially; if the second
+      // write failed, the user was left with a hydrated profile but no
+      // programState — onboarding completed flag set, but Programme
+      // tab crashed on its first render. A batch commits both or
+      // neither, matching the contract the spec expects.
+      const programRef = userRef.collection("programState").doc("current");
+      const batch = db.batch();
+      if (existing.exists) {
+        batch.set(userRef, profileData, { merge: true });
+      } else {
+        batch.set(userRef, profileData);
+      }
+      batch.set(programRef, programState);
+      await batch.commit();
+
+      return { success: true };
+    } catch (err) {
+      // Re-throw HttpsError as-is (validation errors, etc.)
+      if (err instanceof functions.https.HttpsError) {
+        throw err;
+      }
+      console.error("completeOnboarding error:", {
+        uid,
+        message: err.message,
+        stack: err.stack,
+      });
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to complete onboarding."
+      );
     }
-    console.error("completeOnboarding error:", { uid, message: err.message, stack: err.stack });
-    throw new functions.https.HttpsError("internal", "Failed to complete onboarding.");
-  }
-});
+  });
 
 // ══════════════════════════════════════════════
 // CONFIGURE PLAN — atomic plan rebuild for existing users (P0-4)
@@ -492,297 +543,398 @@ exports.completeOnboarding = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(as
 // `planBuilder().profileUpdates`), not a full profile — Configure
 // Plan is an edit operation, not a create. Existing fields on
 // `users/{uid}` outside the patch are preserved via `merge: true`.
-exports.configurePlan = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
-
-  // Same rate-limit envelope as onboarding. The Configure Plan
-  // wizard is a deliberate user action with a confirm step, not a
-  // hot path, so 5/10min is plenty even on retake flows.
-  const limited = await isRateLimited(uid, "configurePlan", 5, 600_000);
-  if (limited) {
-    throw new functions.https.HttpsError("resource-exhausted", "Too many attempts. Please wait.");
-  }
-
-  try {
-    const {
-      profileUpdates: rawProfileUpdates,
-      programState,
-      weekSchedule: rawWeekSchedule,
-    } = data;
-
-    if (!rawProfileUpdates || typeof rawProfileUpdates !== "object" || Array.isArray(rawProfileUpdates)) {
-      throw new functions.https.HttpsError("invalid-argument", "profileUpdates is required.");
+exports.configurePlan = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
-    if (!programState || typeof programState !== "object") {
-      throw new functions.https.HttpsError("invalid-argument", "programState is required.");
-    }
+    const uid = context.auth.uid;
 
-    // Reuse the onboarding sanitiser — the field set is a subset of
-    // what onboarding accepts, so anything that's safe to write on
-    // first-time onboarding is safe to write on a plan rebuild.
-    // Unknown fields drop to undefined; the resulting object is the
-    // patch that lands on Firestore via merge: true.
-    const profileUpdates = profileSanitizer.sanitizeProfileData(rawProfileUpdates);
-
-    // Configure Plan is always a v7 path — no legacy bypass. The
-    // client must send a valid plan; nothing else makes sense for
-    // this endpoint. weekSchedule may arrive top-level or inside
-    // profileUpdates, same as onboarding.
-    const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
-      ? rawWeekSchedule
-      : profileUpdates.weekSchedule;
-    const errors = validatePlanPayload({
-      profileData: profileUpdates,
-      programState,
-      weekSchedule: effectiveWeekSchedule,
-    });
-    if (errors.length > 0) {
+    // Same rate-limit envelope as onboarding. The Configure Plan
+    // wizard is a deliberate user action with a confirm step, not a
+    // hot path, so 5/10min is plenty even on retake flows.
+    const limited = await isRateLimited(uid, "configurePlan", 5, 600_000);
+    if (limited) {
       throw new functions.https.HttpsError(
-        "invalid-argument",
-        `Invalid plan payload: ${errors.join("; ")}`,
+        "resource-exhausted",
+        "Too many attempts. Please wait."
       );
     }
 
-    // Server-managed fields — Configure Plan must never let the
-    // client rewrite ownership, subscription, or onboarding state.
-    delete profileUpdates.uid;
-    delete profileUpdates.subscriptionTier;
-    delete profileUpdates.onboardingComplete;
-    delete profileUpdates.trialExpiresAt;
-    delete profileUpdates.createdAt;
+    try {
+      const {
+        profileUpdates: rawProfileUpdates,
+        programState,
+        weekSchedule: rawWeekSchedule,
+      } = data;
 
-    const db = admin.firestore();
-    const userRef = db.collection("users").doc(uid);
-    const programRef = userRef.collection("programState").doc("current");
+      if (
+        !rawProfileUpdates ||
+        typeof rawProfileUpdates !== "object" ||
+        Array.isArray(rawProfileUpdates)
+      ) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "profileUpdates is required."
+        );
+      }
+      if (!programState || typeof programState !== "object") {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is required."
+        );
+      }
 
-    // Atomic — same rationale as completeOnboarding above. The
-    // profile patch and programState rebuild commit together or
-    // not at all.
-    const batch = db.batch();
-    batch.set(userRef, profileUpdates, {merge: true});
-    batch.set(programRef, programState);
-    await batch.commit();
+      // Reuse the onboarding sanitiser — the field set is a subset of
+      // what onboarding accepts, so anything that's safe to write on
+      // first-time onboarding is safe to write on a plan rebuild.
+      // Unknown fields drop to undefined; the resulting object is the
+      // patch that lands on Firestore via merge: true.
+      const profileUpdates =
+        profileSanitizer.sanitizeProfileData(rawProfileUpdates);
 
-    return {success: true};
-  } catch (err) {
-    if (err instanceof functions.https.HttpsError) {
-      throw err;
+      // Configure Plan is always a v7 path — no legacy bypass. The
+      // client must send a valid plan; nothing else makes sense for
+      // this endpoint. weekSchedule may arrive top-level or inside
+      // profileUpdates, same as onboarding.
+      const effectiveWeekSchedule = Array.isArray(rawWeekSchedule)
+        ? rawWeekSchedule
+        : profileUpdates.weekSchedule;
+      const errors = validatePlanPayload({
+        profileData: profileUpdates,
+        programState,
+        weekSchedule: effectiveWeekSchedule,
+      });
+      if (errors.length > 0) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          `Invalid plan payload: ${errors.join("; ")}`
+        );
+      }
+
+      // Server-managed fields — Configure Plan must never let the
+      // client rewrite ownership, subscription, or onboarding state.
+      delete profileUpdates.uid;
+      delete profileUpdates.subscriptionTier;
+      delete profileUpdates.onboardingComplete;
+      delete profileUpdates.trialExpiresAt;
+      delete profileUpdates.createdAt;
+
+      const db = admin.firestore();
+      const userRef = db.collection("users").doc(uid);
+      const programRef = userRef.collection("programState").doc("current");
+
+      // Atomic — same rationale as completeOnboarding above. The
+      // profile patch and programState rebuild commit together or
+      // not at all.
+      const batch = db.batch();
+      batch.set(userRef, profileUpdates, { merge: true });
+      batch.set(programRef, programState);
+      await batch.commit();
+
+      return { success: true };
+    } catch (err) {
+      if (err instanceof functions.https.HttpsError) {
+        throw err;
+      }
+      console.error("configurePlan error:", {
+        uid,
+        message: err.message,
+        stack: err.stack,
+      });
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to configure plan."
+      );
     }
-    console.error("configurePlan error:", { uid, message: err.message, stack: err.stack });
-    throw new functions.https.HttpsError("internal", "Failed to configure plan.");
-  }
-});
+  });
 
 // ══════════════════════════════════════════════
 // EXISTING — analyzeFood (untouched)
 // ══════════════════════════════════════════════
 
-exports.analyzeFood = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    try {
-      if (req.method !== "POST") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-      }
-
-      let authUser;
+exports.analyzeFood = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
       try {
-        authUser = await verifyAuth(req.headers.authorization);
-      } catch (_) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-
-      // R1A-Deletion: actor lock. analyzeFood writes scanUsage/{uid}
-      // and rateLimits/{uid}_analyzeFood (server-only, system-writer
-      // class), so a deleting account must be rejected before any
-      // write. HTTPS response uses 409 Conflict to distinguish from
-      // auth/quota errors.
-      try {
-        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), authUser.uid);
-      } catch (err) {
-        if (err.details && err.details.errorCode) {
-          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
-        } else {
-          throw err;
-        }
-        return;
-      }
-
-      // Remote kill switch — operators flip `geminiEnabled=false` in
-      // config/flags to cut off scans instantly if costs spike or
-      // Vertex AI is returning bad data. Checked before rate limit so
-      // disabled-state requests don't eat a user's quota window.
-      if (!(await isFlagEnabled("geminiEnabled"))) {
-        res.status(503).json({ error: "AI food scan is temporarily unavailable. Please use manual entry." });
-        return;
-      }
-
-      // Rate limit: 10 image analyses per 10 minutes
-      const limited = await isRateLimited(authUser.uid, "analyzeFood", 10, 600_000);
-      if (limited) {
-        res.status(429).json({ error: "Rate limit reached. Please wait before analyzing more food." });
-        return;
-      }
-
-      // Monthly scan quota — PR C: transactional + fail-closed.
-      // `error: "quota-check-failed"` signals a transient Firestore
-      // problem rather than an exhausted quota; surface a different
-      // message so the client retries instead of treating it as a
-      // hard limit.
-      const quota = await checkMonthlyQuota(authUser.uid);
-      if (!quota.allowed) {
-        if (quota.error === "quota-check-failed") {
-          res.status(503).json({
-            error: "Couldn't verify your scan quota. Please try again in a moment.",
-            transient: true,
-          });
+        if (req.method !== "POST") {
+          res.status(405).json({ error: "Method not allowed" });
           return;
         }
-        res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
-        return;
-      }
 
-      const { imageBase64 } = req.body;
-      if (!imageBase64) {
-        res.status(400).json({ error: "No image provided" });
-        return;
-      }
+        let authUser;
+        try {
+          authUser = await verifyAuth(req.headers.authorization);
+        } catch (_) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-      const projectId = process.env.GCLOUD_PROJECT;
-      const accessToken = await admin.credential.applicationDefault().getAccessToken();
-
-      const prompt = "Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {\"foodName\": \"name of the food/meal\", \"items\": [{\"name\": \"item name\", \"portionSize\": \"estimated portion\", \"calories\": 0, \"protein\": 0, \"carbs\": 0, \"fat\": 0}], \"totalCalories\": 0, \"totalProtein\": 0, \"totalCarbs\": 0, \"totalFat\": 0, \"confidence\": \"high/medium/low\"}";
-
-      const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" + projectId + "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + accessToken.access_token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{
-            role: "user",
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 1024,
+        // R1A-Deletion: actor lock. analyzeFood writes scanUsage/{uid}
+        // and rateLimits/{uid}_analyzeFood (server-only, system-writer
+        // class), so a deleting account must be rejected before any
+        // write. HTTPS response uses 409 Conflict to distinguish from
+        // auth/quota errors.
+        try {
+          await accountDeletionLocks.assertCallableActorNotDeleting(
+            admin.firestore(),
+            authUser.uid
+          );
+        } catch (err) {
+          if (err.details && err.details.errorCode) {
+            res
+              .status(409)
+              .json({ error: err.message, errorCode: err.details.errorCode });
+          } else {
+            throw err;
           }
-        })
-      });
+          return;
+        }
 
-      const data = await response.json();
-      console.log("Vertex AI response:", JSON.stringify(data));
+        // Remote kill switch — operators flip `geminiEnabled=false` in
+        // config/flags to cut off scans instantly if costs spike or
+        // Vertex AI is returning bad data. Checked before rate limit so
+        // disabled-state requests don't eat a user's quota window.
+        if (!(await isFlagEnabled("geminiEnabled"))) {
+          res
+            .status(503)
+            .json({
+              error:
+                "AI food scan is temporarily unavailable. Please use manual entry.",
+            });
+          return;
+        }
 
-      if (!response.ok) {
-        console.error("Vertex AI error:", JSON.stringify(data));
-        res.status(500).json({ error: "AI service error" });
-        return;
+        // Rate limit: 10 image analyses per 10 minutes
+        const limited = await isRateLimited(
+          authUser.uid,
+          "analyzeFood",
+          10,
+          600_000
+        );
+        if (limited) {
+          res
+            .status(429)
+            .json({
+              error:
+                "Rate limit reached. Please wait before analyzing more food.",
+            });
+          return;
+        }
+
+        // Monthly scan quota — PR C: transactional + fail-closed.
+        // `error: "quota-check-failed"` signals a transient Firestore
+        // problem rather than an exhausted quota; surface a different
+        // message so the client retries instead of treating it as a
+        // hard limit.
+        const quota = await checkMonthlyQuota(authUser.uid);
+        if (!quota.allowed) {
+          if (quota.error === "quota-check-failed") {
+            res.status(503).json({
+              error:
+                "Couldn't verify your scan quota. Please try again in a moment.",
+              transient: true,
+            });
+            return;
+          }
+          res
+            .status(429)
+            .json({
+              error:
+                "Monthly scan limit reached. Upgrade to Pro for more scans.",
+              remaining: 0,
+              limit: quota.limit,
+            });
+          return;
+        }
+
+        const { imageBase64 } = req.body;
+        if (!imageBase64) {
+          res.status(400).json({ error: "No image provided" });
+          return;
+        }
+
+        const projectId = process.env.GCLOUD_PROJECT;
+        const accessToken = await admin.credential
+          .applicationDefault()
+          .getAccessToken();
+
+        const prompt =
+          'Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {"foodName": "name of the food/meal", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}';
+
+        const url =
+          "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
+          projectId +
+          "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + accessToken.access_token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: prompt },
+                  { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
+
+        const data = await response.json();
+        console.log("Vertex AI response:", JSON.stringify(data));
+
+        if (!response.ok) {
+          console.error("Vertex AI error:", JSON.stringify(data));
+          res.status(500).json({ error: "AI service error" });
+          return;
+        }
+
+        let responseText = "";
+        if (
+          data.candidates &&
+          data.candidates[0] &&
+          data.candidates[0].content &&
+          data.candidates[0].content.parts
+        ) {
+          responseText = data.candidates[0].content.parts[0].text;
+        } else if (data.predictions && data.predictions[0]) {
+          responseText = data.predictions[0];
+        } else {
+          console.error("Unexpected response format:", JSON.stringify(data));
+          res.status(500).json({ error: "Unexpected AI response format" });
+          return;
+        }
+
+        const cleaned = responseText
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "")
+          .trim();
+        const nutrition = JSON.parse(cleaned);
+
+        res.status(200).json(nutrition);
+      } catch (error) {
+        console.error("Error analyzing food:", error);
+        res.status(500).json({ error: "Failed to analyze food image" });
       }
-
-      let responseText = "";
-      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-        responseText = data.candidates[0].content.parts[0].text;
-      } else if (data.predictions && data.predictions[0]) {
-        responseText = data.predictions[0];
-      } else {
-        console.error("Unexpected response format:", JSON.stringify(data));
-        res.status(500).json({ error: "Unexpected AI response format" });
-        return;
-      }
-
-      const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const nutrition = JSON.parse(cleaned);
-
-      res.status(200).json(nutrition);
-    } catch (error) {
-      console.error("Error analyzing food:", error);
-      res.status(500).json({ error: "Failed to analyze food image" });
-    }
+    });
   });
-});
 
 // ══════════════════════════════════════════════
 // AI TEXT FOOD PARSING (Pro feature)
 // ══════════════════════════════════════════════
 
-exports.analyzeFoodText = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    try {
-      if (req.method !== "POST") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-      }
-
-      let authUser;
+exports.analyzeFoodText = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) => {
+    cors(req, res, async () => {
       try {
-        authUser = await verifyAuth(req.headers.authorization);
-      } catch (_) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-
-      // R1A-Deletion: actor lock. analyzeFoodText writes the same
-      // per-uid quota/rate-limit docs as analyzeFood.
-      try {
-        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), authUser.uid);
-      } catch (err) {
-        if (err.details && err.details.errorCode) {
-          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
-        } else {
-          throw err;
-        }
-        return;
-      }
-
-      // Remote kill switch — shared flag with analyzeFood. One toggle
-      // disables both modalities so scan pricing stays predictable.
-      if (!(await isFlagEnabled("geminiEnabled"))) {
-        res.status(503).json({ error: "AI food scan is temporarily unavailable. Please use manual entry." });
-        return;
-      }
-
-      // Rate limit: 15 text analyses per 10 minutes
-      const limited = await isRateLimited(authUser.uid, "analyzeFoodText", 15, 600_000);
-      if (limited) {
-        res.status(429).json({ error: "Rate limit reached. Please wait before analyzing more food." });
-        return;
-      }
-
-      // Monthly scan quota (shares counter with image analysis).
-      // PR C: same transient-vs-exhausted split as analyzeFood.
-      const quota = await checkMonthlyQuota(authUser.uid);
-      if (!quota.allowed) {
-        if (quota.error === "quota-check-failed") {
-          res.status(503).json({
-            error: "Couldn't verify your scan quota. Please try again in a moment.",
-            transient: true,
-          });
+        if (req.method !== "POST") {
+          res.status(405).json({ error: "Method not allowed" });
           return;
         }
-        res.status(429).json({ error: "Monthly scan limit reached. Upgrade to Pro for more scans.", remaining: 0, limit: quota.limit });
-        return;
-      }
 
-      const { text } = req.body;
-      if (!text || !text.trim()) {
-        res.status(400).json({ error: "No text provided" });
-        return;
-      }
+        let authUser;
+        try {
+          authUser = await verifyAuth(req.headers.authorization);
+        } catch (_) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-      const projectId = process.env.GCLOUD_PROJECT;
-      const accessToken = await admin.credential.applicationDefault().getAccessToken();
+        // R1A-Deletion: actor lock. analyzeFoodText writes the same
+        // per-uid quota/rate-limit docs as analyzeFood.
+        try {
+          await accountDeletionLocks.assertCallableActorNotDeleting(
+            admin.firestore(),
+            authUser.uid
+          );
+        } catch (err) {
+          if (err.details && err.details.errorCode) {
+            res
+              .status(409)
+              .json({ error: err.message, errorCode: err.details.errorCode });
+          } else {
+            throw err;
+          }
+          return;
+        }
 
-      const prompt = `You are a nutrition expert. Parse this food description and estimate accurate macronutrient values per serving.
+        // Remote kill switch — shared flag with analyzeFood. One toggle
+        // disables both modalities so scan pricing stays predictable.
+        if (!(await isFlagEnabled("geminiEnabled"))) {
+          res
+            .status(503)
+            .json({
+              error:
+                "AI food scan is temporarily unavailable. Please use manual entry.",
+            });
+          return;
+        }
+
+        // Rate limit: 15 text analyses per 10 minutes
+        const limited = await isRateLimited(
+          authUser.uid,
+          "analyzeFoodText",
+          15,
+          600_000
+        );
+        if (limited) {
+          res
+            .status(429)
+            .json({
+              error:
+                "Rate limit reached. Please wait before analyzing more food.",
+            });
+          return;
+        }
+
+        // Monthly scan quota (shares counter with image analysis).
+        // PR C: same transient-vs-exhausted split as analyzeFood.
+        const quota = await checkMonthlyQuota(authUser.uid);
+        if (!quota.allowed) {
+          if (quota.error === "quota-check-failed") {
+            res.status(503).json({
+              error:
+                "Couldn't verify your scan quota. Please try again in a moment.",
+              transient: true,
+            });
+            return;
+          }
+          res
+            .status(429)
+            .json({
+              error:
+                "Monthly scan limit reached. Upgrade to Pro for more scans.",
+              remaining: 0,
+              limit: quota.limit,
+            });
+          return;
+        }
+
+        const { text } = req.body;
+        if (!text || !text.trim()) {
+          res.status(400).json({ error: "No text provided" });
+          return;
+        }
+
+        const projectId = process.env.GCLOUD_PROJECT;
+        const accessToken = await admin.credential
+          .applicationDefault()
+          .getAccessToken();
+
+        const prompt = `You are a nutrition expert. Parse this food description and estimate accurate macronutrient values per serving.
 Return ONLY a valid JSON object with this exact format, no other text:
 {"foodName": "short summary name", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}
 
@@ -790,130 +942,171 @@ Be accurate with calorie and macro estimates. Use standard serving sizes unless 
 
 Food description: "${text.replace(/"/g, '\\"')}"`;
 
-      const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" + projectId + "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+        const url =
+          "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
+          projectId +
+          "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + accessToken.access_token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{
-            role: "user",
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1024,
-          }
-        })
-      });
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + accessToken.access_token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        console.error("Vertex AI error:", JSON.stringify(data));
-        res.status(500).json({ error: "AI service error" });
-        return;
+        if (!response.ok) {
+          console.error("Vertex AI error:", JSON.stringify(data));
+          res.status(500).json({ error: "AI service error" });
+          return;
+        }
+
+        let responseText = "";
+        if (
+          data.candidates &&
+          data.candidates[0] &&
+          data.candidates[0].content &&
+          data.candidates[0].content.parts
+        ) {
+          responseText = data.candidates[0].content.parts[0].text;
+        } else {
+          console.error("Unexpected response format:", JSON.stringify(data));
+          res.status(500).json({ error: "Unexpected AI response format" });
+          return;
+        }
+
+        const cleaned = responseText
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "")
+          .trim();
+        const nutrition = JSON.parse(cleaned);
+
+        res.status(200).json(nutrition);
+      } catch (error) {
+        console.error("Error analyzing food text:", error);
+        res.status(500).json({ error: "Failed to analyze food description" });
       }
-
-      let responseText = "";
-      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-        responseText = data.candidates[0].content.parts[0].text;
-      } else {
-        console.error("Unexpected response format:", JSON.stringify(data));
-        res.status(500).json({ error: "Unexpected AI response format" });
-        return;
-      }
-
-      const cleaned = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const nutrition = JSON.parse(cleaned);
-
-      res.status(200).json(nutrition);
-    } catch (error) {
-      console.error("Error analyzing food text:", error);
-      res.status(500).json({ error: "Failed to analyze food description" });
-    }
+    });
   });
-});
 
 // ══════════════════════════════════════════════
 // GEMINI TEXT PROXY — keeps API key server-side
 // ══════════════════════════════════════════════
 
-exports.askGeminiText = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
-  // R1A-Deletion: actor lock. askGeminiText writes rateLimits/{uid}_askGemini.
-  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
-
-  // Rate limit: 5 calls per 60 seconds per user
-  const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
-  if (limited) {
-    throw new functions.https.HttpsError(
-      "resource-exhausted",
-      "Rate limit reached. Please wait a moment before trying again.",
+exports.askGeminiText = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    // R1A-Deletion: actor lock. askGeminiText writes rateLimits/{uid}_askGemini.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
     );
-  }
 
-  const { prompt } = data;
-  if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
-    throw new functions.https.HttpsError("invalid-argument", "prompt is required.");
-  }
+    // Rate limit: 5 calls per 60 seconds per user
+    const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Rate limit reached. Please wait a moment before trying again."
+      );
+    }
 
-  // Cap prompt length to prevent abuse
-  if (prompt.length > 5000) {
-    throw new functions.https.HttpsError("invalid-argument", "Prompt too long (max 5000 characters).");
-  }
+    const { prompt } = data;
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "prompt is required."
+      );
+    }
 
-  try {
-    const projectId = process.env.GCLOUD_PROJECT;
-    const accessToken = await admin.credential.applicationDefault().getAccessToken();
+    // Cap prompt length to prevent abuse
+    if (prompt.length > 5000) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Prompt too long (max 5000 characters)."
+      );
+    }
 
-    const url = "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-      projectId + "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+    try {
+      const projectId = process.env.GCLOUD_PROJECT;
+      const accessToken = await admin.credential
+        .applicationDefault()
+        .getAccessToken();
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + accessToken.access_token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 1024,
+      const url =
+        "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
+        projectId +
+        "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken.access_token,
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1024,
+          },
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (!response.ok) {
-      console.error("askGeminiText: Vertex AI error:", JSON.stringify(result));
-      throw new functions.https.HttpsError("internal", "AI service error");
+      if (!response.ok) {
+        console.error(
+          "askGeminiText: Vertex AI error:",
+          JSON.stringify(result)
+        );
+        throw new functions.https.HttpsError("internal", "AI service error");
+      }
+
+      let responseText = "";
+      if (
+        result.candidates &&
+        result.candidates[0] &&
+        result.candidates[0].content &&
+        result.candidates[0].content.parts
+      ) {
+        responseText = result.candidates[0].content.parts[0].text;
+      } else {
+        console.error(
+          "askGeminiText: unexpected response format:",
+          JSON.stringify(result)
+        );
+        throw new functions.https.HttpsError(
+          "internal",
+          "Unexpected AI response format"
+        );
+      }
+
+      return { text: responseText };
+    } catch (err) {
+      if (err instanceof functions.https.HttpsError) throw err;
+      console.error("askGeminiText error:", err.message);
+      throw new functions.https.HttpsError("internal", "AI request failed");
     }
-
-    let responseText = "";
-    if (result.candidates && result.candidates[0] &&
-        result.candidates[0].content && result.candidates[0].content.parts) {
-      responseText = result.candidates[0].content.parts[0].text;
-    } else {
-      console.error("askGeminiText: unexpected response format:", JSON.stringify(result));
-      throw new functions.https.HttpsError("internal", "Unexpected AI response format");
-    }
-
-    return { text: responseText };
-  } catch (err) {
-    if (err instanceof functions.https.HttpsError) throw err;
-    console.error("askGeminiText error:", err.message);
-    throw new functions.https.HttpsError("internal", "AI request failed");
-  }
-});
+  });
 
 // ══════════════════════════════════════════════
 // STRIPE CHECKOUT SESSION
@@ -939,198 +1132,232 @@ const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 // FOLLOWUP(payment-security): tighten per-uid rate limiting on
 //   createCheckoutSession; the existing 5/10min check uses body.uid
 //   pre-reorder semantics and should re-key on authUser.uid.
-exports.createCheckoutSession = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest((req, res) => {
-  corsForPayments(req, res, async () => {
-    try {
-      if (req.method !== "POST") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-      }
-
-      // Auth runs BEFORE any body validation. An unauthenticated
-      // POST with bad checkout fields must surface as 401, not 400 —
-      // otherwise the response shape leaks which validation layer
-      // ran and how the handler is ordered. See the auth-ordering
-      // test in __tests__/createCheckoutSession.test.js.
-      let authUser;
+exports.createCheckoutSession = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest((req, res) => {
+    corsForPayments(req, res, async () => {
       try {
-        authUser = await verifyAuth(req.headers.authorization);
-      } catch (_) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-
-      // Shape guard — req.body can be null / string / array on
-      // malformed requests; destructuring those would throw and
-      // surface as a 500.
-      if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-        res.status(400).json({ error: "Invalid request body." });
-        return;
-      }
-
-      const { uid, email, priceId, successPath, cancelPath } = req.body;
-
-      // Ownership check before field-presence so a client passing a
-      // mismatched uid gets 403 (not a generic 400). authUser.uid is
-      // the source of truth for everything downstream.
-      if (uid && authUser.uid !== uid) {
-        res.status(403).json({ error: "Forbidden" });
-        return;
-      }
-
-      if (!priceId || !successPath || !cancelPath) {
-        res.status(400).json({ error: "Missing required fields: priceId, successPath, cancelPath" });
-        return;
-      }
-
-      // Server-synthesized return URLs from a closed set of path
-      // tokens. The client only chooses *which app page* to land
-      // on; the function builds the full URL itself from a
-      // deploy-resolved base origin. Closes the client-controlled
-      // URL surface entirely.
-      const successUrl = _buildStripeReturnUrl(successPath, "success");
-      const cancelUrl = _buildStripeReturnUrl(cancelPath, "cancelled");
-
-      if (!successUrl || !cancelUrl) {
-        functions.logger.warn("createCheckoutSession.rejected_return_path", {
-          uid: authUser.uid,
-          invalidField: !successUrl ? "successPath" : "cancelPath",
-        });
-        res.status(400).json({
-          error: "Invalid checkout return path.",
-          code: "INVALID_RETURN_PATH",
-          field: !successUrl ? "successPath" : "cancelPath",
-        });
-        return;
-      }
-
-      // Defence-in-depth: even though the URL was built server-side,
-      // run it through the existing allowlist. A misconfigured
-      // PUBLIC_APP_BASE_URL env var (e.g. accidentally pointing at a
-      // non-allowlisted origin) would produce a URL that fails this
-      // check — better to refuse to create the session than to send
-      // the user to an unlisted destination. The module-load
-      // self-check above this handler logs that misconfig at boot
-      // time too, so an operator sees it in Cloud Logging.
-      const successAllowed = _isAllowedStripeReturnUrl(successUrl);
-      const cancelAllowed = _isAllowedStripeReturnUrl(cancelUrl);
-
-      if (!successAllowed || !cancelAllowed) {
-        functions.logger.error("createCheckoutSession.built_url_off_allowlist", {
-          uid: authUser.uid,
-          successOrigin: safeOriginForLog(successUrl),
-          cancelOrigin: safeOriginForLog(cancelUrl),
-          invalidField: !successAllowed ? "successUrl" : "cancelUrl",
-        });
-        res.status(500).json({
-          error: "Payment service misconfigured.",
-          code: "RETURN_URL_MISCONFIGURED",
-        });
-        return;
-      }
-
-      // PR D: price allowlist. Mode is derived from the allowlist entry,
-      // not from substring-matching the client-supplied price ID.
-      const allowlist = _getStripePriceAllowlist();
-      const priceConfig = allowlist[priceId];
-      if (!priceConfig) {
-        functions.logger.warn("createCheckoutSession.rejected_price", {
-          uid: authUser.uid,
-        });
-        res.status(400).json({ error: "Unknown plan." });
-        return;
-      }
-      // R1A-Deletion: actor lock. createCheckoutSession writes
-      // users/{uid}.stripeCustomerId — deleting accounts cannot start
-      // a new checkout that would recreate the user doc.
-      try {
-        await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
-      } catch (err) {
-        if (err.details && err.details.errorCode) {
-          res.status(409).json({ error: err.message, errorCode: err.details.errorCode });
+        if (req.method !== "POST") {
+          res.status(405).json({ error: "Method not allowed" });
           return;
         }
-        throw err;
-      }
 
-      // Rate limit: 5 checkout attempts per 10 minutes
-      const limited = await isRateLimited(authUser.uid, "checkout", 5, 600_000);
-      if (limited) {
-        res.status(429).json({ error: "Too many checkout attempts. Please wait." });
-        return;
-      }
+        // Auth runs BEFORE any body validation. An unauthenticated
+        // POST with bad checkout fields must surface as 401, not 400 —
+        // otherwise the response shape leaks which validation layer
+        // ran and how the handler is ordered. See the auth-ordering
+        // test in __tests__/createCheckoutSession.test.js.
+        let authUser;
+        try {
+          authUser = await verifyAuth(req.headers.authorization);
+        } catch (_) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-      // Stripe secret key from Firebase config or environment
-      const stripeKey = process.env.STRIPE_SECRET_KEY ||
-        (functions.config().stripe && functions.config().stripe.secret_key);
+        // Shape guard — req.body can be null / string / array on
+        // malformed requests; destructuring those would throw and
+        // surface as a 500.
+        if (
+          !req.body ||
+          typeof req.body !== "object" ||
+          Array.isArray(req.body)
+        ) {
+          res.status(400).json({ error: "Invalid request body." });
+          return;
+        }
 
-      if (!stripeKey) {
-        functions.logger.error("createCheckoutSession.stripe_key_missing");
-        res.status(500).json({ error: "Payment service not configured" });
-        return;
-      }
+        const { uid, email, priceId, successPath, cancelPath } = req.body;
 
-      const stripe = require("stripe")(stripeKey);
+        // Ownership check before field-presence so a client passing a
+        // mismatched uid gets 403 (not a generic 400). authUser.uid is
+        // the source of truth for everything downstream.
+        if (uid && authUser.uid !== uid) {
+          res.status(403).json({ error: "Forbidden" });
+          return;
+        }
 
-      // Look up or create Stripe customer
-      const userDoc = await admin.firestore().collection("users").doc(authUser.uid).get();
-      const userData = userDoc.exists ? userDoc.data() : {};
-      let customerId = userData.stripeCustomerId;
+        if (!priceId || !successPath || !cancelPath) {
+          res
+            .status(400)
+            .json({
+              error:
+                "Missing required fields: priceId, successPath, cancelPath",
+            });
+          return;
+        }
 
-      if (!customerId) {
-        const customer = await stripe.customers.create({
-          email: authUser.email || email,
-          metadata: { firebaseUid: authUser.uid },
-        });
-        customerId = customer.id;
-        await admin.firestore().collection("users").doc(authUser.uid).set(
-          { stripeCustomerId: customerId },
-          { merge: true },
+        // Server-synthesized return URLs from a closed set of path
+        // tokens. The client only chooses *which app page* to land
+        // on; the function builds the full URL itself from a
+        // deploy-resolved base origin. Closes the client-controlled
+        // URL surface entirely.
+        const successUrl = _buildStripeReturnUrl(successPath, "success");
+        const cancelUrl = _buildStripeReturnUrl(cancelPath, "cancelled");
+
+        if (!successUrl || !cancelUrl) {
+          functions.logger.warn("createCheckoutSession.rejected_return_path", {
+            uid: authUser.uid,
+            invalidField: !successUrl ? "successPath" : "cancelPath",
+          });
+          res.status(400).json({
+            error: "Invalid checkout return path.",
+            code: "INVALID_RETURN_PATH",
+            field: !successUrl ? "successPath" : "cancelPath",
+          });
+          return;
+        }
+
+        // Defence-in-depth: even though the URL was built server-side,
+        // run it through the existing allowlist. A misconfigured
+        // PUBLIC_APP_BASE_URL env var (e.g. accidentally pointing at a
+        // non-allowlisted origin) would produce a URL that fails this
+        // check — better to refuse to create the session than to send
+        // the user to an unlisted destination. The module-load
+        // self-check above this handler logs that misconfig at boot
+        // time too, so an operator sees it in Cloud Logging.
+        const successAllowed = _isAllowedStripeReturnUrl(successUrl);
+        const cancelAllowed = _isAllowedStripeReturnUrl(cancelUrl);
+
+        if (!successAllowed || !cancelAllowed) {
+          functions.logger.error(
+            "createCheckoutSession.built_url_off_allowlist",
+            {
+              uid: authUser.uid,
+              successOrigin: safeOriginForLog(successUrl),
+              cancelOrigin: safeOriginForLog(cancelUrl),
+              invalidField: !successAllowed ? "successUrl" : "cancelUrl",
+            }
+          );
+          res.status(500).json({
+            error: "Payment service misconfigured.",
+            code: "RETURN_URL_MISCONFIGURED",
+          });
+          return;
+        }
+
+        // PR D: price allowlist. Mode is derived from the allowlist entry,
+        // not from substring-matching the client-supplied price ID.
+        const allowlist = _getStripePriceAllowlist();
+        const priceConfig = allowlist[priceId];
+        if (!priceConfig) {
+          functions.logger.warn("createCheckoutSession.rejected_price", {
+            uid: authUser.uid,
+          });
+          res.status(400).json({ error: "Unknown plan." });
+          return;
+        }
+        // R1A-Deletion: actor lock. createCheckoutSession writes
+        // users/{uid}.stripeCustomerId — deleting accounts cannot start
+        // a new checkout that would recreate the user doc.
+        try {
+          await accountDeletionLocks.assertCallableActorNotDeleting(
+            admin.firestore(),
+            uid
+          );
+        } catch (err) {
+          if (err.details && err.details.errorCode) {
+            res
+              .status(409)
+              .json({ error: err.message, errorCode: err.details.errorCode });
+            return;
+          }
+          throw err;
+        }
+
+        // Rate limit: 5 checkout attempts per 10 minutes
+        const limited = await isRateLimited(
+          authUser.uid,
+          "checkout",
+          5,
+          600_000
         );
-      }
+        if (limited) {
+          res
+            .status(429)
+            .json({ error: "Too many checkout attempts. Please wait." });
+          return;
+        }
 
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        payment_method_types: ["card"],
-        line_items: [{ price: priceId, quantity: 1 }],
-        mode: priceConfig.mode,
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        metadata: { firebaseUid: authUser.uid, planKind: priceConfig.kind },
-      });
+        // Stripe secret key from Firebase config or environment
+        const stripeKey =
+          process.env.STRIPE_SECRET_KEY ||
+          (functions.config().stripe && functions.config().stripe.secret_key);
 
-      // Audit-log the successful session creation. Fire-and-forget
-      // semantics: an audit-write failure must NOT block the user's
-      // checkout — the Stripe session already exists, and the user
-      // has been served the redirect URL by the time this log lands.
-      // A logger.error here is enough signal for an operator to spot
-      // a persistent audit-pipeline outage in Cloud Logging without
-      // taking the payment flow down.
-      try {
-        await auditLog.recordCheckoutAuditEntry(admin.firestore(), {
-          uid: authUser.uid,
-          stripeSessionId: session.id,
-          priceId,
-          planKind: priceConfig.kind,
+        if (!stripeKey) {
+          functions.logger.error("createCheckoutSession.stripe_key_missing");
+          res.status(500).json({ error: "Payment service not configured" });
+          return;
+        }
+
+        const stripe = require("stripe")(stripeKey);
+
+        // Look up or create Stripe customer
+        const userDoc = await admin
+          .firestore()
+          .collection("users")
+          .doc(authUser.uid)
+          .get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        let customerId = userData.stripeCustomerId;
+
+        if (!customerId) {
+          const customer = await stripe.customers.create({
+            email: authUser.email || email,
+            metadata: { firebaseUid: authUser.uid },
+          });
+          customerId = customer.id;
+          await admin
+            .firestore()
+            .collection("users")
+            .doc(authUser.uid)
+            .set({ stripeCustomerId: customerId }, { merge: true });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          payment_method_types: ["card"],
+          line_items: [{ price: priceId, quantity: 1 }],
           mode: priceConfig.mode,
-          successOrigin: safeOriginForLog(successUrl),
-          cancelOrigin: safeOriginForLog(cancelUrl),
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          metadata: { firebaseUid: authUser.uid, planKind: priceConfig.kind },
         });
-      } catch (auditErr) {
-        functions.logger.error("createCheckoutSession.audit_failed", {
-          uid: authUser.uid,
-          stripeSessionId: session.id,
-          message: auditErr.message,
-        });
-      }
 
-      res.status(200).json({ url: session.url });
-    } catch (error) {
-      functions.logger.error("createCheckoutSession.error", { message: error.message });
-      res.status(500).json({ error: "Failed to create checkout session" });
-    }
+        // Audit-log the successful session creation. Fire-and-forget
+        // semantics: an audit-write failure must NOT block the user's
+        // checkout — the Stripe session already exists, and the user
+        // has been served the redirect URL by the time this log lands.
+        // A logger.error here is enough signal for an operator to spot
+        // a persistent audit-pipeline outage in Cloud Logging without
+        // taking the payment flow down.
+        try {
+          await auditLog.recordCheckoutAuditEntry(admin.firestore(), {
+            uid: authUser.uid,
+            stripeSessionId: session.id,
+            priceId,
+            planKind: priceConfig.kind,
+            mode: priceConfig.mode,
+            successOrigin: safeOriginForLog(successUrl),
+            cancelOrigin: safeOriginForLog(cancelUrl),
+          });
+        } catch (auditErr) {
+          functions.logger.error("createCheckoutSession.audit_failed", {
+            uid: authUser.uid,
+            stripeSessionId: session.id,
+            message: auditErr.message,
+          });
+        }
+
+        res.status(200).json({ url: session.url });
+      } catch (error) {
+        functions.logger.error("createCheckoutSession.error", {
+          message: error.message,
+        });
+        res.status(500).json({ error: "Failed to create checkout session" });
+      }
+    });
   });
-});
 
 exports._getStripePriceAllowlist = _getStripePriceAllowlist;
 exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
@@ -1139,262 +1366,327 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
 
-exports.stripeWebhook = functions.runWith(DEFAULT_HTTP_CAP).https.onRequest(async (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  const stripeKey = process.env.STRIPE_SECRET_KEY ||
-    (functions.config().stripe && functions.config().stripe.secret_key);
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ||
-    (functions.config().stripe && functions.config().stripe.webhook_secret);
-
-  if (!stripeKey || !webhookSecret) {
-    console.error("stripeWebhook: Stripe keys not configured");
-    res.status(500).json({ error: "Webhook not configured" });
-    return;
-  }
-
-  const stripe = require("stripe")(stripeKey);
-
-  let event;
-  try {
-    const sig = req.headers["stripe-signature"];
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-  } catch (err) {
-    console.error("stripeWebhook: signature verification failed:", err.message);
-    res.status(400).json({ error: "Invalid signature" });
-    return;
-  }
-
-  const dbRef = admin.firestore();
-
-  // PR D (audit P0 #2): idempotency via stripeEvents/{event.id}.
-  // Stripe retries every webhook on 5xx; without a dedup record a
-  // duplicate delivery re-runs the same write. We claim the event
-  // before processing and finalise after. If `claim` already exists
-  // we acknowledge (200) and skip — Stripe stops retrying.
-  const eventRef = dbRef.collection("stripeEvents").doc(event.id);
-  try {
-    const existing = await eventRef.get();
-    if (existing.exists) {
-      console.log(`stripeWebhook: duplicate delivery for ${event.id}, skipping`);
-      res.status(200).json({ received: true, duplicate: true });
+exports.stripeWebhook = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onRequest(async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method not allowed" });
       return;
     }
-  } catch (err) {
-    // Failure to read the dedup doc shouldn't break webhook processing
-    // entirely, but log it loudly — we lose idempotency for this event.
-    console.error(`stripeWebhook: idempotency lookup failed for ${event.id}:`, err.message);
-  }
 
-  try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const firebaseUid = session.metadata?.firebaseUid;
-        if (!firebaseUid) {
-          console.warn("stripeWebhook: checkout.session.completed missing firebaseUid metadata");
-          break;
-        }
+    const stripeKey =
+      process.env.STRIPE_SECRET_KEY ||
+      (functions.config().stripe && functions.config().stripe.secret_key);
+    const webhookSecret =
+      process.env.STRIPE_WEBHOOK_SECRET ||
+      (functions.config().stripe && functions.config().stripe.webhook_secret);
 
-        // R1A-Deletion: system-writer guard. If the uid is mid-deletion
-        // or tombstoned, do NOT recreate users/{uid} — log a minimised
-        // event to paymentEventsPostDeletion for operator review.
-        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, firebaseUid, "stripeWebhook:checkout.session.completed"))) {
-          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
-            provider: "stripe",
-            externalTxnId: session.id,
-            providerEventId: event.id, // Stripe-native idempotency key
-            eventType: "checkout.session.completed",
-            uid: firebaseUid,
-          });
-          break;
-        }
-
-        const update = {
-          subscriptionTier: "pro",
-          stripeCustomerId: session.customer,
-          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
-        };
-
-        // For subscription mode, store the subscription ID
-        if (session.subscription) {
-          update.stripeSubscriptionId = session.subscription;
-        }
-
-        // Lifetime kind comes from server-side allowlist via
-        // metadata.planKind — recorded so subsequent subscription
-        // events can't downgrade a lifetime entitlement.
-        if (session.metadata?.planKind === "lifetime") {
-          update.planKind = "lifetime";
-        }
-
-        await dbRef.collection("users").doc(firebaseUid).set(update, { merge: true });
-        console.log(`stripeWebhook: activated pro for ${firebaseUid}`);
-        break;
-      }
-
-      case "customer.subscription.updated": {
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
-
-        // Look up user by stripeCustomerId
-        const usersSnap = await dbRef.collection("users")
-          .where("stripeCustomerId", "==", customerId)
-          .limit(1)
-          .get();
-
-        if (usersSnap.empty) {
-          console.warn(`stripeWebhook: no user found for customer ${customerId}`);
-          break;
-        }
-
-        const userDoc = usersSnap.docs[0];
-
-        // R1A-Deletion: per-write tombstone guard runs FIRST. If the
-        // resolved uid is mid-deletion or tombstoned, log the event
-        // to paymentEventsPostDeletion and stop — no further checks
-        // are meaningful for an account that no longer exists.
-        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, userDoc.id, "stripeWebhook:subscription.updated"))) {
-          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
-            provider: "stripe",
-            externalTxnId: subscription.id,
-            providerEventId: event.id,
-            eventType: "customer.subscription.updated",
-            uid: userDoc.id,
-          });
-          break;
-        }
-
-        const userData = userDoc.data();
-
-        // PR D: out-of-order guard. If a newer event has already
-        // updated this user, ignore the stale one. Compare against
-        // subscriptionUpdatedAt (Unix seconds, written by previous
-        // webhooks).
-        const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
-        if (event.created && event.created <= lastUpdate) {
-          console.log(`stripeWebhook: ignoring stale subscription.updated for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`);
-          break;
-        }
-
-        // PR D: lifetime entitlement protection. A subscription
-        // event must NEVER downgrade a lifetime purchase.
-        if (userData.planKind === "lifetime") {
-          console.log(`stripeWebhook: skipping subscription.updated for ${userDoc.id} — lifetime entitlement`);
-          break;
-        }
-
-        const status = subscription.status;
-
-        // Active statuses that grant pro access
-        const activeStatuses = ["active", "trialing"];
-        const tier = activeStatuses.includes(status) ? "pro" : "free";
-
-        await userDoc.ref.set({
-          subscriptionTier: tier,
-          stripeSubscriptionId: subscription.id,
-          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
-        }, { merge: true });
-
-        console.log(`stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`);
-        break;
-      }
-
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-        const customerId = subscription.customer;
-
-        const usersSnap = await dbRef.collection("users")
-          .where("stripeCustomerId", "==", customerId)
-          .limit(1)
-          .get();
-
-        if (usersSnap.empty) {
-          console.warn(`stripeWebhook: no user found for customer ${customerId}`);
-          break;
-        }
-
-        const userDoc = usersSnap.docs[0];
-
-        // R1A-Deletion: per-write tombstone guard runs FIRST.
-        if (!(await accountDeletionLocks.shouldSystemWriteProceed(dbRef, userDoc.id, "stripeWebhook:subscription.deleted"))) {
-          await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
-            provider: "stripe",
-            externalTxnId: subscription.id,
-            providerEventId: event.id,
-            eventType: "customer.subscription.deleted",
-            uid: userDoc.id,
-          });
-          break;
-        }
-
-        const userData = userDoc.data();
-
-        // PR D: out-of-order + subscription-id-match + lifetime
-        // protection. Three reasons we might want to ignore a
-        // `deleted` event:
-        //   (a) lifetime entitlement — never downgraded by sub events.
-        //   (b) the stored subscription ID doesn't match — a
-        //       different subscription was deleted, ours is still
-        //       active.
-        //   (c) staleness — a newer update already happened.
-        if (userData.planKind === "lifetime") {
-          console.log(`stripeWebhook: skipping subscription.deleted for ${userDoc.id} — lifetime entitlement`);
-          break;
-        }
-
-        if (
-          userData.stripeSubscriptionId &&
-          userData.stripeSubscriptionId !== subscription.id
-        ) {
-          console.log(`stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — sub IDs differ (stored=${userData.stripeSubscriptionId}, event=${subscription.id})`);
-          break;
-        }
-
-        const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
-        if (event.created && event.created <= lastUpdate) {
-          console.log(`stripeWebhook: ignoring stale subscription.deleted for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`);
-          break;
-        }
-
-        await userDoc.ref.set({
-          subscriptionTier: "free",
-          stripeSubscriptionId: admin.firestore.FieldValue.delete(),
-          subscriptionUpdatedAt: event.created || Math.floor(Date.now() / 1000),
-        }, { merge: true });
-
-        console.log(`stripeWebhook: deactivated pro for ${userDoc.id}`);
-        break;
-      }
-
-      default:
-        console.log(`stripeWebhook: unhandled event type ${event.type}`);
+    if (!stripeKey || !webhookSecret) {
+      console.error("stripeWebhook: Stripe keys not configured");
+      res.status(500).json({ error: "Webhook not configured" });
+      return;
     }
 
-    // PR D: finalise idempotency record AFTER successful processing.
-    // Storing the event.id with a TTL-ish expiresAt for ops cleanup.
+    const stripe = require("stripe")(stripeKey);
+
+    let event;
     try {
-      await eventRef.set({
-        type: event.type,
-        created: event.created || null,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      const sig = req.headers["stripe-signature"];
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
     } catch (err) {
-      // Already processed but we couldn't write the record — Stripe
-      // may retry. The handlers above are idempotent on retry because
-      // of the out-of-order/sub-id-match guards.
-      console.error(`stripeWebhook: failed to record processed event ${event.id}:`, err.message);
+      console.error(
+        "stripeWebhook: signature verification failed:",
+        err.message
+      );
+      res.status(400).json({ error: "Invalid signature" });
+      return;
     }
 
-    res.status(200).json({ received: true });
-  } catch (err) {
-    console.error("stripeWebhook: processing error:", err.message);
-    res.status(500).json({ error: "Webhook processing failed" });
-  }
-});
+    const dbRef = admin.firestore();
+
+    // PR D (audit P0 #2): idempotency via stripeEvents/{event.id}.
+    // Stripe retries every webhook on 5xx; without a dedup record a
+    // duplicate delivery re-runs the same write. We claim the event
+    // before processing and finalise after. If `claim` already exists
+    // we acknowledge (200) and skip — Stripe stops retrying.
+    const eventRef = dbRef.collection("stripeEvents").doc(event.id);
+    try {
+      const existing = await eventRef.get();
+      if (existing.exists) {
+        console.log(
+          `stripeWebhook: duplicate delivery for ${event.id}, skipping`
+        );
+        res.status(200).json({ received: true, duplicate: true });
+        return;
+      }
+    } catch (err) {
+      // Failure to read the dedup doc shouldn't break webhook processing
+      // entirely, but log it loudly — we lose idempotency for this event.
+      console.error(
+        `stripeWebhook: idempotency lookup failed for ${event.id}:`,
+        err.message
+      );
+    }
+
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          const firebaseUid = session.metadata?.firebaseUid;
+          if (!firebaseUid) {
+            console.warn(
+              "stripeWebhook: checkout.session.completed missing firebaseUid metadata"
+            );
+            break;
+          }
+
+          // R1A-Deletion: system-writer guard. If the uid is mid-deletion
+          // or tombstoned, do NOT recreate users/{uid} — log a minimised
+          // event to paymentEventsPostDeletion for operator review.
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              dbRef,
+              firebaseUid,
+              "stripeWebhook:checkout.session.completed"
+            ))
+          ) {
+            await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+              provider: "stripe",
+              externalTxnId: session.id,
+              providerEventId: event.id, // Stripe-native idempotency key
+              eventType: "checkout.session.completed",
+              uid: firebaseUid,
+            });
+            break;
+          }
+
+          const update = {
+            subscriptionTier: "pro",
+            stripeCustomerId: session.customer,
+            subscriptionUpdatedAt:
+              event.created || Math.floor(Date.now() / 1000),
+          };
+
+          // For subscription mode, store the subscription ID
+          if (session.subscription) {
+            update.stripeSubscriptionId = session.subscription;
+          }
+
+          // Lifetime kind comes from server-side allowlist via
+          // metadata.planKind — recorded so subsequent subscription
+          // events can't downgrade a lifetime entitlement.
+          if (session.metadata?.planKind === "lifetime") {
+            update.planKind = "lifetime";
+          }
+
+          await dbRef
+            .collection("users")
+            .doc(firebaseUid)
+            .set(update, { merge: true });
+          console.log(`stripeWebhook: activated pro for ${firebaseUid}`);
+          break;
+        }
+
+        case "customer.subscription.updated": {
+          const subscription = event.data.object;
+          const customerId = subscription.customer;
+
+          // Look up user by stripeCustomerId
+          const usersSnap = await dbRef
+            .collection("users")
+            .where("stripeCustomerId", "==", customerId)
+            .limit(1)
+            .get();
+
+          if (usersSnap.empty) {
+            console.warn(
+              `stripeWebhook: no user found for customer ${customerId}`
+            );
+            break;
+          }
+
+          const userDoc = usersSnap.docs[0];
+
+          // R1A-Deletion: per-write tombstone guard runs FIRST. If the
+          // resolved uid is mid-deletion or tombstoned, log the event
+          // to paymentEventsPostDeletion and stop — no further checks
+          // are meaningful for an account that no longer exists.
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              dbRef,
+              userDoc.id,
+              "stripeWebhook:subscription.updated"
+            ))
+          ) {
+            await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+              provider: "stripe",
+              externalTxnId: subscription.id,
+              providerEventId: event.id,
+              eventType: "customer.subscription.updated",
+              uid: userDoc.id,
+            });
+            break;
+          }
+
+          const userData = userDoc.data();
+
+          // PR D: out-of-order guard. If a newer event has already
+          // updated this user, ignore the stale one. Compare against
+          // subscriptionUpdatedAt (Unix seconds, written by previous
+          // webhooks).
+          const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
+          if (event.created && event.created <= lastUpdate) {
+            console.log(
+              `stripeWebhook: ignoring stale subscription.updated for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`
+            );
+            break;
+          }
+
+          // PR D: lifetime entitlement protection. A subscription
+          // event must NEVER downgrade a lifetime purchase.
+          if (userData.planKind === "lifetime") {
+            console.log(
+              `stripeWebhook: skipping subscription.updated for ${userDoc.id} — lifetime entitlement`
+            );
+            break;
+          }
+
+          const status = subscription.status;
+
+          // Active statuses that grant pro access
+          const activeStatuses = ["active", "trialing"];
+          const tier = activeStatuses.includes(status) ? "pro" : "free";
+
+          await userDoc.ref.set(
+            {
+              subscriptionTier: tier,
+              stripeSubscriptionId: subscription.id,
+              subscriptionUpdatedAt:
+                event.created || Math.floor(Date.now() / 1000),
+            },
+            { merge: true }
+          );
+
+          console.log(
+            `stripeWebhook: updated ${userDoc.id} to ${tier} (status: ${status})`
+          );
+          break;
+        }
+
+        case "customer.subscription.deleted": {
+          const subscription = event.data.object;
+          const customerId = subscription.customer;
+
+          const usersSnap = await dbRef
+            .collection("users")
+            .where("stripeCustomerId", "==", customerId)
+            .limit(1)
+            .get();
+
+          if (usersSnap.empty) {
+            console.warn(
+              `stripeWebhook: no user found for customer ${customerId}`
+            );
+            break;
+          }
+
+          const userDoc = usersSnap.docs[0];
+
+          // R1A-Deletion: per-write tombstone guard runs FIRST.
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              dbRef,
+              userDoc.id,
+              "stripeWebhook:subscription.deleted"
+            ))
+          ) {
+            await accountDeletionLocks.recordPaymentEventPostDeletion(dbRef, {
+              provider: "stripe",
+              externalTxnId: subscription.id,
+              providerEventId: event.id,
+              eventType: "customer.subscription.deleted",
+              uid: userDoc.id,
+            });
+            break;
+          }
+
+          const userData = userDoc.data();
+
+          // PR D: out-of-order + subscription-id-match + lifetime
+          // protection. Three reasons we might want to ignore a
+          // `deleted` event:
+          //   (a) lifetime entitlement — never downgraded by sub events.
+          //   (b) the stored subscription ID doesn't match — a
+          //       different subscription was deleted, ours is still
+          //       active.
+          //   (c) staleness — a newer update already happened.
+          if (userData.planKind === "lifetime") {
+            console.log(
+              `stripeWebhook: skipping subscription.deleted for ${userDoc.id} — lifetime entitlement`
+            );
+            break;
+          }
+
+          if (
+            userData.stripeSubscriptionId &&
+            userData.stripeSubscriptionId !== subscription.id
+          ) {
+            console.log(
+              `stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — sub IDs differ (stored=${userData.stripeSubscriptionId}, event=${subscription.id})`
+            );
+            break;
+          }
+
+          const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
+          if (event.created && event.created <= lastUpdate) {
+            console.log(
+              `stripeWebhook: ignoring stale subscription.deleted for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`
+            );
+            break;
+          }
+
+          await userDoc.ref.set(
+            {
+              subscriptionTier: "free",
+              stripeSubscriptionId: admin.firestore.FieldValue.delete(),
+              subscriptionUpdatedAt:
+                event.created || Math.floor(Date.now() / 1000),
+            },
+            { merge: true }
+          );
+
+          console.log(`stripeWebhook: deactivated pro for ${userDoc.id}`);
+          break;
+        }
+
+        default:
+          console.log(`stripeWebhook: unhandled event type ${event.type}`);
+      }
+
+      // PR D: finalise idempotency record AFTER successful processing.
+      // Storing the event.id with a TTL-ish expiresAt for ops cleanup.
+      try {
+        await eventRef.set({
+          type: event.type,
+          created: event.created || null,
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch (err) {
+        // Already processed but we couldn't write the record — Stripe
+        // may retry. The handlers above are idempotent on retry because
+        // of the out-of-order/sub-id-match guards.
+        console.error(
+          `stripeWebhook: failed to record processed event ${event.id}:`,
+          err.message
+        );
+      }
+
+      res.status(200).json({ received: true });
+    } catch (err) {
+      console.error("stripeWebhook: processing error:", err.message);
+      res.status(500).json({ error: "Webhook processing failed" });
+    }
+  });
 
 // ══════════════════════════════════════════════
 // PERFORMANCE ENGINE
@@ -1412,30 +1704,38 @@ const db = admin.firestore();
 
 // ── 1) Callable: manual / on-demand compute ──
 
-exports.computePerformanceWeek = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
-  // R1A-Deletion: actor lock. Writes users/{uid}/performance.
-  await accountDeletionLocks.assertCallableActorNotDeleting(admin.firestore(), uid);
+exports.computePerformanceWeek = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    // R1A-Deletion: actor lock. Writes users/{uid}/performance.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
 
-  // Rate limit: 10 manual computes per 10 minutes
-  const limited = await isRateLimited(uid, "computePerformance", 10, 600_000);
-  if (limited) {
-    throw new functions.https.HttpsError("resource-exhausted", "Too many requests. Please wait.");
-  }
+    // Rate limit: 10 manual computes per 10 minutes
+    const limited = await isRateLimited(uid, "computePerformance", 10, 600_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Please wait."
+      );
+    }
 
-  const weekKey = data.weekKey || null;
+    const weekKey = data.weekKey || null;
 
-  try {
-    const result = await computeAndWritePerformanceForUser(uid, weekKey);
-    return result;
-  } catch (err) {
-    console.error("computePerformanceWeek error:", err);
-    throw new functions.https.HttpsError("internal", err.message);
-  }
-});
+    try {
+      const result = await computeAndWritePerformanceForUser(uid, weekKey);
+      return result;
+    } catch (err) {
+      console.error("computePerformanceWeek error:", err);
+      throw new functions.https.HttpsError("internal", err.message);
+    }
+  });
 
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
 
@@ -1452,17 +1752,23 @@ exports.weeklyPerformanceRollup = functions.pubsub
 
       let usersSnap;
       try {
-        usersSnap = await db.collection("users")
+        usersSnap = await db
+          .collection("users")
           .where("lastActiveAt", ">=", cutoffTs)
           .get();
       } catch (err) {
         // Fail loud — do NOT fall back to processing all users (runaway cost risk)
-        console.error("weeklyPerformanceRollup: lastActiveAt query failed, skipping run:", err.message);
+        console.error(
+          "weeklyPerformanceRollup: lastActiveAt query failed, skipping run:",
+          err.message
+        );
         return null;
       }
 
       const uids = usersSnap.docs.map((d) => d.id);
-      console.log(`weeklyPerformanceRollup: computing for ${uids.length} users`);
+      console.log(
+        `weeklyPerformanceRollup: computing for ${uids.length} users`
+      );
 
       for (let i = 0; i < uids.length; i += 10) {
         const batch = uids.slice(i, i + 10);
@@ -1474,20 +1780,32 @@ exports.weeklyPerformanceRollup = functions.pubsub
               // user may have started deletion since. Per spec
               // systemWriterCheckTiming: check immediately before each
               // per-uid write, not only at function entry.
-              if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "weeklyPerformanceRollup"))) {
+              if (
+                !(await accountDeletionLocks.shouldSystemWriteProceed(
+                  db,
+                  uid,
+                  "weeklyPerformanceRollup"
+                ))
+              ) {
                 return;
               }
               await computeAndWritePerformanceForUser(uid, null);
             } catch (err) {
-              console.error(`weeklyPerformanceRollup: failed for ${uid}:`, err.message);
+              console.error(
+                `weeklyPerformanceRollup: failed for ${uid}:`,
+                err.message
+              );
             }
-          }),
+          })
         );
       }
 
       console.log("weeklyPerformanceRollup: done");
     } catch (err) {
-      console.error("weeklyPerformanceRollup: fatal error:", { message: err.message, stack: err.stack });
+      console.error("weeklyPerformanceRollup: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
     }
     return null;
   });
@@ -1507,16 +1825,21 @@ exports.dailyPerformanceRefresh = functions.pubsub
 
       let usersSnap;
       try {
-        usersSnap = await db.collection("users")
+        usersSnap = await db
+          .collection("users")
           .where("lastActiveAt", ">=", cutoffTs)
           .get();
       } catch (_) {
-        console.log("dailyPerformanceRefresh: lastActiveAt query failed, skipping");
+        console.log(
+          "dailyPerformanceRefresh: lastActiveAt query failed, skipping"
+        );
         return null;
       }
 
       const uids = usersSnap.docs.map((d) => d.id);
-      console.log(`dailyPerformanceRefresh: computing for ${uids.length} users`);
+      console.log(
+        `dailyPerformanceRefresh: computing for ${uids.length} users`
+      );
 
       for (let i = 0; i < uids.length; i += 10) {
         const batch = uids.slice(i, i + 10);
@@ -1525,20 +1848,32 @@ exports.dailyPerformanceRefresh = functions.pubsub
             try {
               // R1A-Deletion: per-uid tombstone guard (same rationale
               // as weeklyPerformanceRollup).
-              if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "dailyPerformanceRefresh"))) {
+              if (
+                !(await accountDeletionLocks.shouldSystemWriteProceed(
+                  db,
+                  uid,
+                  "dailyPerformanceRefresh"
+                ))
+              ) {
                 return;
               }
               await computeAndWritePerformanceForUser(uid, null);
             } catch (err) {
-              console.error(`dailyPerformanceRefresh: failed for ${uid}:`, err.message);
+              console.error(
+                `dailyPerformanceRefresh: failed for ${uid}:`,
+                err.message
+              );
             }
-          }),
+          })
         );
       }
 
       console.log("dailyPerformanceRefresh: done");
     } catch (err) {
-      console.error("dailyPerformanceRefresh: fatal error:", { message: err.message, stack: err.stack });
+      console.error("dailyPerformanceRefresh: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
     }
     return null;
   });
@@ -1555,15 +1890,19 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
     for (const doc of challengesSnap.docs) {
       const challenge = doc.data();
       // Only update active challenges matching this metric
-      const endDate = challenge.endDate && challenge.endDate.toDate
-        ? challenge.endDate.toDate()
-        : null;
+      const endDate =
+        challenge.endDate && challenge.endDate.toDate
+          ? challenge.endDate.toDate()
+          : null;
       if (endDate && endDate < now) continue;
       if (challenge.metric !== metric) continue;
 
       // Check if user is a participant
-      const participantRef = db.collection("challenges").doc(doc.id)
-        .collection("participants").doc(uid);
+      const participantRef = db
+        .collection("challenges")
+        .doc(doc.id)
+        .collection("participants")
+        .doc(uid);
       const participantSnap = await participantRef.get();
       if (!participantSnap.exists()) continue;
 
@@ -1577,10 +1916,16 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
       else if (newValue >= (tiers.silver || Infinity)) tierAchieved = "silver";
       else if (newValue >= (tiers.bronze || Infinity)) tierAchieved = "bronze";
 
-      await participantRef.set({ currentValue: newValue, tierAchieved }, { merge: true });
+      await participantRef.set(
+        { currentValue: newValue, tierAchieved },
+        { merge: true }
+      );
     }
   } catch (err) {
-    console.error(`syncChallengeProgress: error for ${uid}/${metric}:`, err.message);
+    console.error(
+      `syncChallengeProgress: error for ${uid}/${metric}:`,
+      err.message
+    );
   }
 }
 
@@ -1594,37 +1939,47 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
  * Caller is the onRunCreated trigger; this is its own function rather
  * than an extension of syncChallengeProgress so the SUM logic stays
  * boring and obvious for the four metrics that use it. */
-async function syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds) {
+async function syncFastestEffortProgress(
+  uid,
+  runDistanceMeters,
+  runDurationSeconds
+) {
   try {
     if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
 
-    const challengesSnap = await db.collection("challenges")
+    const challengesSnap = await db
+      .collection("challenges")
       .where("metric", "==", "fastest_effort")
       .get();
     const now = new Date();
 
     for (const doc of challengesSnap.docs) {
       const challenge = doc.data();
-      const endDate = challenge.endDate && challenge.endDate.toDate
-        ? challenge.endDate.toDate()
-        : null;
+      const endDate =
+        challenge.endDate && challenge.endDate.toDate
+          ? challenge.endDate.toDate()
+          : null;
       if (endDate && endDate < now) continue;
 
       const target = challenge.targetDistance || 0;
       if (target <= 0) continue;
       if (runDistanceMeters < target) continue; // run didn't reach target
 
-      const participantRef = db.collection("challenges").doc(doc.id)
-        .collection("participants").doc(uid);
+      const participantRef = db
+        .collection("challenges")
+        .doc(doc.id)
+        .collection("participants")
+        .doc(uid);
       const participantSnap = await participantRef.get();
       if (!participantSnap.exists()) continue;
 
       const existingBest = participantSnap.data().currentValue || 0;
       // 0 = no best yet, so first qualifying run always wins.
       // Otherwise keep the lower (faster) time.
-      const newBest = existingBest === 0
-        ? Math.round(runDurationSeconds)
-        : Math.min(existingBest, Math.round(runDurationSeconds));
+      const newBest =
+        existingBest === 0
+          ? Math.round(runDurationSeconds)
+          : Math.min(existingBest, Math.round(runDurationSeconds));
 
       // For fastest_effort, tiers are time thresholds: lower is better.
       // Gold tier = quickest threshold; user qualifies if newBest <= tier.
@@ -1634,7 +1989,10 @@ async function syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeco
       else if (tiers.silver && newBest <= tiers.silver) tierAchieved = "silver";
       else if (tiers.bronze && newBest <= tiers.bronze) tierAchieved = "bronze";
 
-      await participantRef.set({ currentValue: newBest, tierAchieved }, { merge: true });
+      await participantRef.set(
+        { currentValue: newBest, tierAchieved },
+        { merge: true }
+      );
     }
   } catch (err) {
     console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
@@ -1643,8 +2001,9 @@ async function syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeco
 
 // ── 4) Trigger: instant recompute on new workout ──
 
-exports.onWorkoutCreated = functions.runWith(TRIGGER_CAP).firestore
-  .document("users/{uid}/workouts/{workoutId}")
+exports.onWorkoutCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
     // R1A-Deletion: system-writer guard + compensating delete.
@@ -1656,21 +2015,32 @@ exports.onWorkoutCreated = functions.runWith(TRIGGER_CAP).firestore
     // Chunk 3's post-cleanup verification also sweeps these paths;
     // compensating delete shrinks the orphan-doc window from "until
     // next sweep" to "trigger latency".
-    if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onWorkoutCreated"))) {
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onWorkoutCreated"
+      ))
+    ) {
       try {
         await snap.ref.delete();
       } catch (err) {
-        console.warn(`onWorkoutCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+        console.warn(
+          `onWorkoutCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`
+        );
       }
       return;
     }
     try {
       const data = snap.data();
 
-      await db.collection("users").doc(uid).set(
-        { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
-        { merge: true },
-      );
+      await db
+        .collection("users")
+        .doc(uid)
+        .set(
+          { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
+          { merge: true }
+        );
 
       // Auto-progress workout_count challenges
       await syncChallengeProgress(uid, "workout_count", 1);
@@ -1685,7 +2055,9 @@ exports.onWorkoutCreated = functions.runWith(TRIGGER_CAP).firestore
         // PI1a: skip recompute when the workout falls outside the
         // rolling 7-day window (was: outside the current Sunday-week).
         if (!isInRollingWindow(data.date, currentKey)) {
-          console.log(`onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window ending ${currentKey}`);
+          console.log(
+            `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window ending ${currentKey}`
+          );
           return null;
         }
       }
@@ -1702,29 +2074,45 @@ exports.onWorkoutCreated = functions.runWith(TRIGGER_CAP).firestore
         console.log(`onWorkoutCreated: computed performance for ${uid}`);
       } catch (err) {
         await releaseLock(uid, false, err.message);
-        console.error(`onWorkoutCreated: compute error for ${uid}:`, err.message);
+        console.error(
+          `onWorkoutCreated: compute error for ${uid}:`,
+          err.message
+        );
       }
     } catch (err) {
-      console.error("onWorkoutCreated: fatal error:", { uid, message: err.message, stack: err.stack });
+      console.error("onWorkoutCreated: fatal error:", {
+        uid,
+        message: err.message,
+        stack: err.stack,
+      });
     }
     return null;
   });
 
 // ── 5) Trigger: instant recompute on new run ──
 
-exports.onRunCreated = functions.runWith(TRIGGER_CAP).firestore
-  .document("users/{uid}/runs/{runId}")
+exports.onRunCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid } = context.params;
     // R1A-Deletion: system-writer guard + compensating delete. Same
     // Blocker 6 trigger pattern as onWorkoutCreated — delete the
     // source run doc and skip downstream writes if the user is
     // tombstoned/mid-deletion.
-    if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "onRunCreated"))) {
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onRunCreated"
+      ))
+    ) {
       try {
         await snap.ref.delete();
       } catch (err) {
-        console.warn(`onRunCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`);
+        console.warn(
+          `onRunCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`
+        );
       }
       return;
     }
@@ -1737,10 +2125,13 @@ exports.onRunCreated = functions.runWith(TRIGGER_CAP).firestore
       // (weeklyPerformanceRollup / dailyPerformanceRefresh) drop
       // users who only ever save-anyway short runs. Out of scope
       // per the P0.5 plan.
-      await db.collection("users").doc(uid).set(
-        { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
-        { merge: true },
-      );
+      await db
+        .collection("users")
+        .doc(uid)
+        .set(
+          { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
+          { merge: true }
+        );
 
       // P0.5 follow-up: gate challenge + fastest-effort updates on
       // the same volume-eligibility predicate the app-side
@@ -1761,35 +2152,48 @@ exports.onRunCreated = functions.runWith(TRIGGER_CAP).firestore
 
       if (isCountable) {
         // Auto-progress km-based challenges
-        const distanceKm = data.distanceKm || (data.distance ? data.distance / 1000 : 0);
+        const distanceKm =
+          data.distanceKm || (data.distance ? data.distance / 1000 : 0);
         if (distanceKm > 0) {
-          await syncChallengeProgress(uid, "total_km", Math.round(distanceKm * 100) / 100);
+          await syncChallengeProgress(
+            uid,
+            "total_km",
+            Math.round(distanceKm * 100) / 100
+          );
         }
 
         // PR 5: fastest_effort uses MIN-update semantics, separate
         // sync path. Pass distance in metres + duration in seconds;
         // the helper gates on runDistance >= challenge.targetDistance.
-        const runDistanceMeters = data.distance || (distanceKm * 1000) || 0;
+        const runDistanceMeters = data.distance || distanceKm * 1000 || 0;
         const runDurationSeconds = data.duration || 0;
         if (runDistanceMeters > 0 && runDurationSeconds > 0) {
-          await syncFastestEffortProgress(uid, runDistanceMeters, runDurationSeconds);
+          await syncFastestEffortProgress(
+            uid,
+            runDistanceMeters,
+            runDurationSeconds
+          );
         }
       } else {
         console.log(
           `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
-          `(isInvalid=${data.isInvalid === true}, savedAnyway=${data.savedAnyway === true}, ` +
-          `distance=${data.distance}, duration=${data.duration})`,
+            `(isInvalid=${data.isInvalid === true}, savedAnyway=${data.savedAnyway === true}, ` +
+            `distance=${data.distance}, duration=${data.duration})`
         );
       }
 
       if (data.completedAt) {
-        const runDate = data.completedAt.toDate ? data.completedAt.toDate() : new Date(data.completedAt);
+        const runDate = data.completedAt.toDate
+          ? data.completedAt.toDate()
+          : new Date(data.completedAt);
         const runDateStr = runDate.toISOString().split("T")[0];
         const currentKey = getWeekKey(new Date());
         // PI1a: skip recompute when the run falls outside the rolling
         // 7-day window (was: outside the current Sunday-week).
         if (!isInRollingWindow(runDateStr, currentKey)) {
-          console.log(`onRunCreated: skipping recompute for ${uid}, run on ${runDateStr} outside rolling window ending ${currentKey}`);
+          console.log(
+            `onRunCreated: skipping recompute for ${uid}, run on ${runDateStr} outside rolling window ending ${currentKey}`
+          );
           return null;
         }
       }
@@ -1809,7 +2213,11 @@ exports.onRunCreated = functions.runWith(TRIGGER_CAP).firestore
         console.error(`onRunCreated: compute error for ${uid}:`, err.message);
       }
     } catch (err) {
-      console.error("onRunCreated: fatal error:", { uid, message: err.message, stack: err.stack });
+      console.error("onRunCreated: fatal error:", {
+        uid,
+        message: err.message,
+        stack: err.stack,
+      });
     }
     return null;
   });
@@ -1850,7 +2258,9 @@ function _startOfIsoWeekUtc(date) {
 function _isoWeekKey(date) {
   // ISO week year-week — used as the leaderboardWeek tag so the client
   // can show "Week of …" without a separate parse.
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const d = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
   const day = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - day);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
@@ -1867,13 +2277,19 @@ function _toDateKey(date) {
 
 async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
   const [runsSnap, workoutsSnap] = await Promise.all([
-    db.collection("users").doc(uid).collection("runs")
+    db
+      .collection("users")
+      .doc(uid)
+      .collection("runs")
       .where("completedAt", ">=", weekStartTs)
       .orderBy("completedAt")
       .limit(100)
       .get()
       .catch(() => ({ docs: [] })),
-    db.collection("users").doc(uid).collection("workouts")
+    db
+      .collection("users")
+      .doc(uid)
+      .collection("workouts")
       .where("date", ">=", weekStartKey)
       .orderBy("date")
       .limit(100)
@@ -1947,23 +2363,32 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
 
       let crewsSnap;
       try {
-        crewsSnap = await db.collection("groups")
+        crewsSnap = await db
+          .collection("groups")
           .where("memberCount", ">", 0)
           .limit(CREW_MAX_PER_RUN)
           .get();
       } catch (err) {
-        console.error("crewWeeklyLeaderboardRollup: crews query failed:", err.message);
+        console.error(
+          "crewWeeklyLeaderboardRollup: crews query failed:",
+          err.message
+        );
         return null;
       }
 
-      console.log(`crewWeeklyLeaderboardRollup: rolling up ${crewsSnap.size} crews for ${weekIso}`);
+      console.log(
+        `crewWeeklyLeaderboardRollup: rolling up ${crewsSnap.size} crews for ${weekIso}`
+      );
 
       for (const crewDoc of crewsSnap.docs) {
         try {
           const crew = crewDoc.data();
           const metric = crew.leaderboardMetric || "hybrid_score";
 
-          const membersSnap = await crewDoc.ref.collection("members").limit(100).get();
+          const membersSnap = await crewDoc.ref
+            .collection("members")
+            .limit(100)
+            .get();
           if (membersSnap.empty) continue;
 
           const standings = [];
@@ -1978,11 +2403,21 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
             // remove the member doc itself; this guard handles the
             // window between deletion-status flip and member-doc
             // removal.
-            if (!(await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "crewWeeklyLeaderboardRollup"))) {
+            if (
+              !(await accountDeletionLocks.shouldSystemWriteProceed(
+                db,
+                uid,
+                "crewWeeklyLeaderboardRollup"
+              ))
+            ) {
               continue;
             }
             try {
-              const totals = await _computeMemberWeekTotals(uid, weekStartTs, weekStartKey);
+              const totals = await _computeMemberWeekTotals(
+                uid,
+                weekStartTs,
+                weekStartKey
+              );
               standings.push({
                 uid,
                 displayName: memberData.displayName || "Athlete",
@@ -1993,12 +2428,17 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
                 runCount: totals.runCount,
               });
             } catch (err) {
-              console.warn(`crewWeeklyLeaderboardRollup: member ${uid} compute failed:`, err.message);
+              console.warn(
+                `crewWeeklyLeaderboardRollup: member ${uid} compute failed:`,
+                err.message
+              );
             }
           }
 
           standings.sort((a, b) => b.score - a.score);
-          const top = standings.slice(0, CREW_LEADERBOARD_TOP_N).map((s, i) => ({ ...s, rank: i + 1 }));
+          const top = standings
+            .slice(0, CREW_LEADERBOARD_TOP_N)
+            .map((s, i) => ({ ...s, rank: i + 1 }));
 
           await crewDoc.ref.update({
             currentLeaderboard: top,
@@ -2007,13 +2447,19 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
             leaderboardUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         } catch (err) {
-          console.error(`crewWeeklyLeaderboardRollup: failed for crew ${crewDoc.id}:`, err.message);
+          console.error(
+            `crewWeeklyLeaderboardRollup: failed for crew ${crewDoc.id}:`,
+            err.message
+          );
         }
       }
 
       console.log("crewWeeklyLeaderboardRollup: done");
     } catch (err) {
-      console.error("crewWeeklyLeaderboardRollup: fatal:", { message: err.message, stack: err.stack });
+      console.error("crewWeeklyLeaderboardRollup: fatal:", {
+        message: err.message,
+        stack: err.stack,
+      });
     }
     return null;
   });
@@ -2024,62 +2470,76 @@ exports.crewWeeklyLeaderboardRollup = functions.pubsub
 // pull-to-refresh-like fallback when you've just logged something
 // and want the standings to reflect it). Only the user's primary
 // crewId is allowed — no arbitrary crew computes from the client.
-exports.refreshMyCrewLeaderboard = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
-  const userSnap = await db.collection("users").doc(uid).get();
-  const userCrewId = userSnap.exists ? userSnap.data().crewId : null;
-  if (!userCrewId) {
-    throw new functions.https.HttpsError("failed-precondition", "Not in a crew.");
-  }
-
-  const crewRef = db.collection("groups").doc(userCrewId);
-  const crewSnap = await crewRef.get();
-  if (!crewSnap.exists) {
-    throw new functions.https.HttpsError("not-found", "Crew not found.");
-  }
-  const crew = crewSnap.data();
-  const metric = crew.leaderboardMetric || "hybrid_score";
-
-  const now = new Date();
-  const weekStart = _startOfIsoWeekUtc(now);
-  const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
-  const weekStartKey = _toDateKey(weekStart);
-  const weekIso = _isoWeekKey(weekStart);
-
-  const membersSnap = await crewRef.collection("members").limit(100).get();
-  const standings = [];
-  for (const memberDoc of membersSnap.docs) {
-    const memberUid = memberDoc.id;
-    const memberData = memberDoc.data();
-    try {
-      const totals = await _computeMemberWeekTotals(memberUid, weekStartTs, weekStartKey);
-      standings.push({
-        uid: memberUid,
-        displayName: memberData.displayName || "Athlete",
-        score: _scoreFor(metric, totals),
-        km: totals.km,
-        kg: totals.kg,
-        workoutCount: totals.workoutCount,
-        runCount: totals.runCount,
-      });
-    } catch (err) {
-      console.warn(`refreshMyCrewLeaderboard: member ${memberUid} compute failed:`, err.message);
+exports.refreshMyCrewLeaderboard = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
-  }
-  standings.sort((a, b) => b.score - a.score);
-  const top = standings.slice(0, CREW_LEADERBOARD_TOP_N).map((s, i) => ({ ...s, rank: i + 1 }));
+    const uid = context.auth.uid;
+    const userSnap = await db.collection("users").doc(uid).get();
+    const userCrewId = userSnap.exists ? userSnap.data().crewId : null;
+    if (!userCrewId) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Not in a crew."
+      );
+    }
 
-  await crewRef.update({
-    currentLeaderboard: top,
-    leaderboardMetric: metric,
-    leaderboardWeek: weekIso,
-    leaderboardUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    const crewRef = db.collection("groups").doc(userCrewId);
+    const crewSnap = await crewRef.get();
+    if (!crewSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Crew not found.");
+    }
+    const crew = crewSnap.data();
+    const metric = crew.leaderboardMetric || "hybrid_score";
+
+    const now = new Date();
+    const weekStart = _startOfIsoWeekUtc(now);
+    const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
+    const weekStartKey = _toDateKey(weekStart);
+    const weekIso = _isoWeekKey(weekStart);
+
+    const membersSnap = await crewRef.collection("members").limit(100).get();
+    const standings = [];
+    for (const memberDoc of membersSnap.docs) {
+      const memberUid = memberDoc.id;
+      const memberData = memberDoc.data();
+      try {
+        const totals = await _computeMemberWeekTotals(
+          memberUid,
+          weekStartTs,
+          weekStartKey
+        );
+        standings.push({
+          uid: memberUid,
+          displayName: memberData.displayName || "Athlete",
+          score: _scoreFor(metric, totals),
+          km: totals.km,
+          kg: totals.kg,
+          workoutCount: totals.workoutCount,
+          runCount: totals.runCount,
+        });
+      } catch (err) {
+        console.warn(
+          `refreshMyCrewLeaderboard: member ${memberUid} compute failed:`,
+          err.message
+        );
+      }
+    }
+    standings.sort((a, b) => b.score - a.score);
+    const top = standings
+      .slice(0, CREW_LEADERBOARD_TOP_N)
+      .map((s, i) => ({ ...s, rank: i + 1 }));
+
+    await crewRef.update({
+      currentLeaderboard: top,
+      leaderboardMetric: metric,
+      leaderboardWeek: weekIso,
+      leaderboardUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { ok: true, count: top.length, weekIso };
   });
-  return { ok: true, count: top.length, weekIso };
-});
 
 // ══════════════════════════════════════════════
 // BACKFILL — activity muscleGroups
@@ -2107,15 +2567,102 @@ exports.refreshMyCrewLeaderboard = functions.runWith(DEFAULT_HTTP_CAP).https.onC
 /* Port of src/lib/exerciseMovementCategory.ts. Keep in sync if the
  * source file gains new categories or rules. */
 const _BACKFILL_CATEGORY_RULES = [
-  { category: "hip_dominant", keywords: ["deadlift", "rdl", "good morning", "hip thrust", "glute bridge", "kettlebell swing", "swing"] },
-  { category: "knee_dominant", keywords: ["squat", "lunge", "leg press", "leg extension", "step up", "split squat", "pistol", "calf raise", "leg curl"] },
-  { category: "vertical_pull", keywords: ["pull-up", "pull up", "pullup", "chin-up", "chin up", "chinup", "lat pulldown", "pulldown"] },
+  {
+    category: "hip_dominant",
+    keywords: [
+      "deadlift",
+      "rdl",
+      "good morning",
+      "hip thrust",
+      "glute bridge",
+      "kettlebell swing",
+      "swing",
+    ],
+  },
+  {
+    category: "knee_dominant",
+    keywords: [
+      "squat",
+      "lunge",
+      "leg press",
+      "leg extension",
+      "step up",
+      "split squat",
+      "pistol",
+      "calf raise",
+      "leg curl",
+    ],
+  },
+  {
+    category: "vertical_pull",
+    keywords: [
+      "pull-up",
+      "pull up",
+      "pullup",
+      "chin-up",
+      "chin up",
+      "chinup",
+      "lat pulldown",
+      "pulldown",
+    ],
+  },
   { category: "horizontal_pull", keywords: ["row", "face pull"] },
-  { category: "vertical_push", keywords: ["overhead press", "shoulder press", "military press", "push press", "ohp", "lateral raise", "front raise", "upright row"] },
-  { category: "horizontal_push", keywords: ["bench press", "bench", "chest press", "push-up", "push up", "pushup", "dip", "fly", "flye", "incline press", "decline press"] },
-  { category: "arms_triceps", keywords: ["tricep", "skullcrusher", "skull crusher", "pushdown", "kickback", "extension"] },
+  {
+    category: "vertical_push",
+    keywords: [
+      "overhead press",
+      "shoulder press",
+      "military press",
+      "push press",
+      "ohp",
+      "lateral raise",
+      "front raise",
+      "upright row",
+    ],
+  },
+  {
+    category: "horizontal_push",
+    keywords: [
+      "bench press",
+      "bench",
+      "chest press",
+      "push-up",
+      "push up",
+      "pushup",
+      "dip",
+      "fly",
+      "flye",
+      "incline press",
+      "decline press",
+    ],
+  },
+  {
+    category: "arms_triceps",
+    keywords: [
+      "tricep",
+      "skullcrusher",
+      "skull crusher",
+      "pushdown",
+      "kickback",
+      "extension",
+    ],
+  },
   { category: "arms_biceps", keywords: ["curl"] },
-  { category: "core", keywords: ["plank", "crunch", "sit-up", "sit up", "situp", "leg raise", "ab", "russian twist", "rollout", "hollow"] },
+  {
+    category: "core",
+    keywords: [
+      "plank",
+      "crunch",
+      "sit-up",
+      "sit up",
+      "situp",
+      "leg raise",
+      "ab",
+      "russian twist",
+      "rollout",
+      "hollow",
+    ],
+  },
 ];
 
 function _inferCategoryForBackfill(name, exerciseId) {
@@ -2128,56 +2675,64 @@ function _inferCategoryForBackfill(name, exerciseId) {
   return "core";
 }
 
-exports.backfillMyActivityCategories = functions.runWith(DEFAULT_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-  }
-  const uid = context.auth.uid;
+exports.backfillMyActivityCategories = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
 
-  const activitiesSnap = await db.collection("activities")
-    .where("authorId", "==", uid)
-    .where("type", "==", "workout")
-    .limit(500)
-    .get();
+    const activitiesSnap = await db
+      .collection("activities")
+      .where("authorId", "==", uid)
+      .where("type", "==", "workout")
+      .limit(500)
+      .get();
 
-  let scanned = 0;
-  let updated = 0;
-  let skipped = 0;
+    let scanned = 0;
+    let updated = 0;
+    let skipped = 0;
 
-  for (const docSnap of activitiesSnap.docs) {
-    scanned++;
-    const data = docSnap.data();
-    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
-    if (exercises.length === 0) {
-      skipped++;
-      continue;
+    for (const docSnap of activitiesSnap.docs) {
+      scanned++;
+      const data = docSnap.data();
+      const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+      if (exercises.length === 0) {
+        skipped++;
+        continue;
+      }
+
+      const fresh = [];
+      for (const ex of exercises) {
+        const name = typeof ex.name === "string" ? ex.name : "";
+        const exerciseId =
+          typeof ex.exerciseId === "string" ? ex.exerciseId : "";
+        const cat = _inferCategoryForBackfill(name, exerciseId);
+        if (!fresh.includes(cat)) fresh.push(cat);
+      }
+      if (fresh.length === 0) {
+        skipped++;
+        continue;
+      }
+
+      const existing = Array.isArray(data.muscleGroups)
+        ? data.muscleGroups
+        : [];
+      const same =
+        existing.length === fresh.length &&
+        existing.every((m, i) => m === fresh[i]);
+      if (same) {
+        skipped++;
+        continue;
+      }
+
+      await docSnap.ref.update({ muscleGroups: fresh });
+      updated++;
     }
 
-    const fresh = [];
-    for (const ex of exercises) {
-      const name = typeof ex.name === "string" ? ex.name : "";
-      const exerciseId = typeof ex.exerciseId === "string" ? ex.exerciseId : "";
-      const cat = _inferCategoryForBackfill(name, exerciseId);
-      if (!fresh.includes(cat)) fresh.push(cat);
-    }
-    if (fresh.length === 0) {
-      skipped++;
-      continue;
-    }
-
-    const existing = Array.isArray(data.muscleGroups) ? data.muscleGroups : [];
-    const same = existing.length === fresh.length && existing.every((m, i) => m === fresh[i]);
-    if (same) {
-      skipped++;
-      continue;
-    }
-
-    await docSnap.ref.update({ muscleGroups: fresh });
-    updated++;
-  }
-
-  return { ok: true, scanned, updated, skipped };
-});
+    return { ok: true, scanned, updated, skipped };
+  });
 
 // ══════════════════════════════════════════════
 // MODERATION — UGC profanity triggers + admin callables
@@ -2218,8 +2773,9 @@ exports.backfillMyActivityCategories = functions.runWith(DEFAULT_HTTP_CAP).https
  * feed fan-out, but leaves the doc intact so the author can
  * appeal and a moderator can review.
  */
-exports.onActivityCreated = functions.runWith(TRIGGER_CAP).firestore
-  .document("activities/{activityId}")
+exports.onActivityCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("activities/{activityId}")
   .onCreate(async (snap, context) => {
     try {
       const data = snap.data();
@@ -2266,8 +2822,9 @@ exports.onActivityCreated = functions.runWith(TRIGGER_CAP).firestore
  * Stores a redacted record under /commentModeration/{auto-id}
  * so the report queue can audit deletion volume.
  */
-exports.onCommentCreated = functions.runWith(TRIGGER_CAP).firestore
-  .document("comments/{activityId}/items/{commentId}")
+exports.onCommentCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("comments/{activityId}/items/{commentId}")
   .onCreate(async (snap, context) => {
     try {
       const data = snap.data();
@@ -2281,18 +2838,21 @@ exports.onCommentCreated = functions.runWith(TRIGGER_CAP).firestore
 
       // Write the audit record FIRST so a partial failure on
       // delete still leaves a trace.
-      await admin.firestore().collection("commentModeration").add({
-        action: "auto_delete",
-        reason: "profanity",
-        activityId: context.params.activityId,
-        commentId: context.params.commentId,
-        authorId: data.authorId || null,
-        // Redact the offending text — the audit record holds the
-        // cleaned form, not the original. Moderators don't need
-        // to re-read the slur.
-        textRedacted: profanityFilter.cleanProfanity(data.text || ""),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await admin
+        .firestore()
+        .collection("commentModeration")
+        .add({
+          action: "auto_delete",
+          reason: "profanity",
+          activityId: context.params.activityId,
+          commentId: context.params.commentId,
+          authorId: data.authorId || null,
+          // Redact the offending text — the audit record holds the
+          // cleaned form, not the original. Moderators don't need
+          // to re-read the slur.
+          textRedacted: profanityFilter.cleanProfanity(data.text || ""),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
       await snap.ref.delete();
       // Best-effort: decrement the parent activity's commentCount
@@ -2327,95 +2887,109 @@ exports.onCommentCreated = functions.runWith(TRIGGER_CAP).firestore
  * a runaway list of pending reports means we need to add
  * pagination + filtering, not return 10k docs to the client.
  */
-exports.listPendingReports = functions.runWith(ADMIN_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
-  }
-  adminAuth.assertAdminCallable(context.auth.uid);
+exports.listPendingReports = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
 
-  const reportsSnap = await admin
-    .firestore()
-    .collection("reports")
-    .where("status", "==", "pending")
-    .orderBy("createdAt", "desc")
-    .limit(50)
-    .get();
+    const reportsSnap = await admin
+      .firestore()
+      .collection("reports")
+      .where("status", "==", "pending")
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
 
-  const reports = [];
-  for (const reportDoc of reportsSnap.docs) {
-    const r = reportDoc.data();
-    let target = null;
-    try {
-      if (r.targetType === "activity" && r.targetId) {
-        const tSnap = await admin.firestore().doc(`activities/${r.targetId}`).get();
-        if (tSnap.exists) {
-          const t = tSnap.data();
-          target = {
-            authorId: t.authorId,
-            authorName: t.authorName || null,
-            type: t.type,
-            caption: t.caption || null,
-            workoutName: t.workoutName || null,
-            runName: t.runName || null,
-            visibility: t.visibility || null,
-            flagged: t.flagged === true,
-          };
-        }
-      } else if (r.targetType === "comment" && r.targetId) {
-        // Comment IDs are scoped under activities; clients send
-        // them as `activityId:commentId`. If a different shape
-        // arrives the lookup silently fails and target stays
-        // null — the moderator sees the report with no target
-        // preview rather than a 500.
-        const [aId, cId] = String(r.targetId).split(":");
-        if (aId && cId) {
+    const reports = [];
+    for (const reportDoc of reportsSnap.docs) {
+      const r = reportDoc.data();
+      let target = null;
+      try {
+        if (r.targetType === "activity" && r.targetId) {
           const tSnap = await admin
             .firestore()
-            .doc(`comments/${aId}/items/${cId}`)
+            .doc(`activities/${r.targetId}`)
             .get();
           if (tSnap.exists) {
             const t = tSnap.data();
             target = {
               authorId: t.authorId,
               authorName: t.authorName || null,
-              text: t.text || null,
-              activityId: aId,
+              type: t.type,
+              caption: t.caption || null,
+              workoutName: t.workoutName || null,
+              runName: t.runName || null,
+              visibility: t.visibility || null,
+              flagged: t.flagged === true,
+            };
+          }
+        } else if (r.targetType === "comment" && r.targetId) {
+          // Comment IDs are scoped under activities; clients send
+          // them as `activityId:commentId`. If a different shape
+          // arrives the lookup silently fails and target stays
+          // null — the moderator sees the report with no target
+          // preview rather than a 500.
+          const [aId, cId] = String(r.targetId).split(":");
+          if (aId && cId) {
+            const tSnap = await admin
+              .firestore()
+              .doc(`comments/${aId}/items/${cId}`)
+              .get();
+            if (tSnap.exists) {
+              const t = tSnap.data();
+              target = {
+                authorId: t.authorId,
+                authorName: t.authorName || null,
+                text: t.text || null,
+                activityId: aId,
+              };
+            }
+          }
+        } else if (r.targetType === "user" && r.targetId) {
+          const tSnap = await admin
+            .firestore()
+            .doc(`users/${r.targetId}/public/profile`)
+            .get();
+          if (tSnap.exists) {
+            const t = tSnap.data();
+            target = {
+              uid: r.targetId,
+              displayName: t.displayName || null,
             };
           }
         }
-      } else if (r.targetType === "user" && r.targetId) {
-        const tSnap = await admin
-          .firestore()
-          .doc(`users/${r.targetId}/public/profile`)
-          .get();
-        if (tSnap.exists) {
-          const t = tSnap.data();
-          target = {
-            uid: r.targetId,
-            displayName: t.displayName || null,
-          };
-        }
+      } catch (_) {
+        // Target lookup failed (rules race, deleted doc); leave
+        // target null. The report itself is still surfaced so the
+        // moderator can dismiss / annotate.
       }
-    } catch (_) {
-      // Target lookup failed (rules race, deleted doc); leave
-      // target null. The report itself is still surfaced so the
-      // moderator can dismiss / annotate.
+      reports.push({
+        reportId: reportDoc.id,
+        reporterId: r.reporterId,
+        targetType: r.targetType,
+        targetId: r.targetId,
+        // S4e (PR #722): expose targetUid in the admin queue payload
+        // so the Restrict-user button can gate on its presence (the
+        // CF requires it; surfacing nullability here lets the UI hide
+        // the button rather than fail the call).
+        targetUid: r.targetUid || null,
+        reason: r.reason,
+        details: r.details || null,
+        createdAt:
+          (r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis()) ||
+          null,
+        target,
+      });
     }
-    reports.push({
-      reportId: reportDoc.id,
-      reporterId: r.reporterId,
-      targetType: r.targetType,
-      targetId: r.targetId,
-      reason: r.reason,
-      details: r.details || null,
-      createdAt:
-        (r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis()) || null,
-      target,
-    });
-  }
 
-  return { reports };
-});
+    return { reports };
+  });
 
 /**
  * Admin-only: mark a report as resolved. Optional `hideActivity`
@@ -2423,47 +2997,110 @@ exports.listPendingReports = functions.runWith(ADMIN_HTTP_CAP).https.onCall(asyn
  * visibility: 'private'` in the same call so a moderator can
  * dismiss + hide in one click.
  */
-exports.resolveReport = functions.runWith(ADMIN_HTTP_CAP).https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Sign-in required.");
-  }
-  adminAuth.assertAdminCallable(context.auth.uid);
+// S4e (PR #722): resolveReport gains an optional `restrictUser` field
+// that atomically writes to globalRestrictedUids/{targetUid} alongside
+// the report resolution. S4e is the manual-restriction MVP — full
+// strike-counter automation (S4d-original) is deferred per the lock's
+// D2. Schema per S4e critical implication (1): { uid, restrictedAt,
+// restrictionEndsAt: null, lastActionedReport, strikes: null }. The
+// nulls signal "manually restricted via admin action, not auto-strike"
+// — schema forward-compatible with S4d-full where strikes/endsAt get
+// populated by the future auto-strike trigger.
+exports.resolveReport = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
 
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    throw new functions.https.HttpsError("invalid-argument", "Request body required.");
-  }
-  const { reportId, hideActivity } = data;
-  if (typeof reportId !== "string" || !reportId) {
-    throw new functions.https.HttpsError("invalid-argument", "reportId required.");
-  }
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Request body required."
+      );
+    }
+    const { reportId, hideActivity, restrictUser } = data;
+    if (typeof reportId !== "string" || !reportId) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "reportId required."
+      );
+    }
 
-  const reportRef = admin.firestore().doc(`reports/${reportId}`);
-  const reportSnap = await reportRef.get();
-  if (!reportSnap.exists) {
-    throw new functions.https.HttpsError("not-found", "Report not found.");
-  }
-  const report = reportSnap.data();
+    const reportRef = admin.firestore().doc(`reports/${reportId}`);
+    const reportSnap = await reportRef.get();
+    if (!reportSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Report not found.");
+    }
+    const report = reportSnap.data();
 
-  const batch = admin.firestore().batch();
-  batch.update(reportRef, {
-    status: "resolved",
-    resolvedBy: context.auth.uid,
-    resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
-    hideAppliedByAdmin: hideActivity === true,
-  });
+    // S4e: restrictUser requires a targetUid on the report. Reports
+    // about activities carry the activity author's uid as report.targetUid
+    // (set when reportContent is called by the client). Reject restrict
+    // requests if we can't identify the user to restrict.
+    if (
+      restrictUser === true &&
+      (typeof report.targetUid !== "string" || !report.targetUid)
+    ) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Cannot restrict user: report is missing targetUid."
+      );
+    }
 
-  if (hideActivity === true && report.targetType === "activity" && report.targetId) {
-    const targetRef = admin.firestore().doc(`activities/${report.targetId}`);
-    batch.update(targetRef, {
-      flagged: true,
-      flaggedBy: "admin",
-      flaggedByAdminUid: context.auth.uid,
-      flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-      visibility: "private",
+    const batch = admin.firestore().batch();
+    batch.update(reportRef, {
+      status: "resolved",
+      resolvedBy: context.auth.uid,
+      resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      hideAppliedByAdmin: hideActivity === true,
+      restrictAppliedByAdmin: restrictUser === true,
     });
-  }
 
-  await batch.commit();
-  return { ok: true };
-});
+    if (
+      hideActivity === true &&
+      report.targetType === "activity" &&
+      report.targetId
+    ) {
+      const targetRef = admin.firestore().doc(`activities/${report.targetId}`);
+      batch.update(targetRef, {
+        flagged: true,
+        flaggedBy: "admin",
+        flaggedByAdminUid: context.auth.uid,
+        flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+        visibility: "private",
+      });
+    }
 
+    // S4e: atomic restriction write. set() with merge:true so calling
+    // resolveReport with restrictUser:true on an already-restricted user
+    // updates lastActionedReport + restrictedAt without resetting other
+    // fields. Atomicity preserved by being in the same batch as the
+    // report-resolution update.
+    if (restrictUser === true) {
+      const restrictionRef = admin
+        .firestore()
+        .doc(`globalRestrictedUids/${report.targetUid}`);
+      batch.set(
+        restrictionRef,
+        {
+          uid: report.targetUid,
+          restrictedAt: admin.firestore.FieldValue.serverTimestamp(),
+          // S4e-P1: null on manual restriction; future S4d-full
+          // auto-strike trigger populates restrictionEndsAt (30-day
+          // window) and strikes (count toward auto-restrict at 3).
+          restrictionEndsAt: null,
+          strikes: null,
+          lastActionedReport: reportId,
+        },
+        { merge: true }
+      );
+    }
+
+    await batch.commit();
+    return { ok: true };
+  });

@@ -84,26 +84,31 @@ export const EXPECTED_PROTECTED_PATH_COUNT = PROTECTED_PATHS.length;
 const EXPLICITLY_EXEMPT = [
   {
     path: "match /activities/{activityId}",
-    reason: "Cross-user UGC. Deleting users CAN technically create new activities mid-deletion; Chunk 3 executor sweeps activities where authorId==uid in Phase D so any mid-deletion create is cleaned. Adding a freeze here would deny legitimate post-creation kudos/comment bumps from OTHER users which is the dominant write path. Re-evaluate if Chunk 3 experiences race issues.",
+    reason:
+      "Cross-user UGC. Deleting users CAN technically create new activities mid-deletion; Chunk 3 executor sweeps activities where authorId==uid in Phase D so any mid-deletion create is cleaned. Adding a freeze here would deny legitimate post-creation kudos/comment bumps from OTHER users which is the dominant write path. Re-evaluate if Chunk 3 experiences race issues.",
   },
   {
     path: "match /kudos/{activityId}/users/{userId}",
-    reason: "Cross-user write — kudos giver is request.auth.uid. Freeze would require !isDeleting(userId), but kudos creation rate is high and the Chunk 3 executor sweeps kudosByMe via collectionGroup. Same race-cleanup posture as activities.",
+    reason:
+      "Cross-user write — kudos giver is request.auth.uid. Freeze would require !isDeleting(userId), but kudos creation rate is high and the Chunk 3 executor sweeps kudosByMe via collectionGroup. Same race-cleanup posture as activities.",
   },
   {
     path: "match /comments/{activityId}/items/{commentId}",
-    reason: "Cross-user write — comment authorId is request.auth.uid. Anonymisation strategy (Option C interim) means comments by a deleting user become 'Comment deleted' anyway. Freezing creation here would only narrow the orphan-comment window slightly.",
+    reason:
+      "Cross-user write — comment authorId is request.auth.uid. Anonymisation strategy (Option C interim) means comments by a deleting user become 'Comment deleted' anyway. Freezing creation here would only narrow the orphan-comment window slightly.",
   },
   {
     path: "match /challenges/{challengeId}",
-    reason: "Global challenge metadata, not user-keyed. Client-seeded for the global challenge UI. No user data persists on the doc itself.",
+    reason:
+      "Global challenge metadata, not user-keyed. Client-seeded for the global challenge UI. No user data persists on the doc itself.",
   },
   {
     // Parser sees this as bare `match /participants/{uid}` because it's
     // nested inside `match /challenges/{challengeId}`. The semantic
     // path is `challenges/{challengeId}/participants/{uid}`.
     path: "match /participants/{uid}",
-    reason: "Nested under challenges/{challengeId}. PENDING Chunk 3 — freeze should be added when challengeParticipations cleanup lands. Adding it mid-Chunk-2.C would create a deadlock with the seedChallenges initialisation flow. Tracked as Chunk 3 prerequisite.",
+    reason:
+      "Nested under challenges/{challengeId}. PENDING Chunk 3 — freeze should be added when challengeParticipations cleanup lands. Adding it mid-Chunk-2.C would create a deadlock with the seedChallenges initialisation flow. Tracked as Chunk 3 prerequisite.",
   },
 ];
 
@@ -119,6 +124,11 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /users/{uid}/performance/{doc}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
+  // S4e (PR #722) — restricted-user marker. Admin SDK writes only
+  // (Cloud Function resolveReport sets the doc); clients can read
+  // their own doc but cannot write. R1A cleanup is wired via the
+  // accountDeletionInventory entry (key: globalRestrictedUids).
+  "match /globalRestrictedUids/{uid}",
   "match /config/{doc}",
   "match /accountDeletionRequests/{uid}",
   "match /deletedAccounts/{uid}",
@@ -163,7 +173,10 @@ function blockHasClientWrites(pattern: string): boolean {
   }
   const body = rulesText.slice(openIdx + 1, i - 1);
   // Look for any allow-write rule.
-  const writeRules = body.match(/allow\s+(create|update|delete|write|create,\s*delete|create,\s*update|create,\s*update,\s*delete)[^:]*:\s*(if\s+([^;]+);|if\s+([^;]+)$)/gm) || [];
+  const writeRules =
+    body.match(
+      /allow\s+(create|update|delete|write|create,\s*delete|create,\s*update|create,\s*update,\s*delete)[^:]*:\s*(if\s+([^;]+);|if\s+([^;]+)$)/gm
+    ) || [];
   // A rule with `if false` is vacuously frozen — not a client-write.
   for (const rule of writeRules) {
     if (/if\s+false/.test(rule)) continue;
@@ -191,7 +204,7 @@ describe("write-rules snapshot — drift detection", () => {
     const unclassified = uniqueBlocks.filter((b) => !classified.has(b));
     if (unclassified.length > 0) {
       throw new Error(
-        `Unclassified match block(s) found in firestore.rules — every new write rule must be added to PROTECTED_PATHS, EXPLICITLY_EXEMPT, or INFRASTRUCTURE_AND_READ_ONLY before merge:\n  ${unclassified.join("\n  ")}`,
+        `Unclassified match block(s) found in firestore.rules — every new write rule must be added to PROTECTED_PATHS, EXPLICITLY_EXEMPT, or INFRASTRUCTURE_AND_READ_ONLY before merge:\n  ${unclassified.join("\n  ")}`
       );
     }
     expect(unclassified).toEqual([]);
@@ -202,7 +215,10 @@ describe("write-rules snapshot — drift detection", () => {
     for (const path of PROTECTED_PATHS) {
       if (!blockHasClientWrites(path)) phantoms.push(path);
     }
-    expect(phantoms, `PROTECTED_PATHS entries without writable rules: ${phantoms.join(", ")}`).toEqual([]);
+    expect(
+      phantoms,
+      `PROTECTED_PATHS entries without writable rules: ${phantoms.join(", ")}`
+    ).toEqual([]);
   });
 
   it("EXPECTED_PROTECTED_PATH_COUNT matches the array length", () => {
@@ -211,7 +227,10 @@ describe("write-rules snapshot — drift detection", () => {
 
   it("EXPLICITLY_EXEMPT entries all have specific reasons (>60 chars)", () => {
     for (const exempt of EXPLICITLY_EXEMPT) {
-      expect(exempt.reason.length, `${exempt.path} exemption reason too short`).toBeGreaterThan(60);
+      expect(
+        exempt.reason.length,
+        `${exempt.path} exemption reason too short`
+      ).toBeGreaterThan(60);
     }
   });
 
