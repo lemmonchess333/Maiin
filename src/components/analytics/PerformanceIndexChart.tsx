@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import { THEME } from "@/lib/theme";
+import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -46,12 +47,40 @@ export default function PerformanceIndexChart({ weeks }: Props) {
   return (
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-foreground">Performance Index</h3>
-        <span className="text-xs text-muted-foreground">0–100 · last {data.length}w</span>
+        <h3 className="text-sm font-semibold text-foreground">
+          Performance Index
+        </h3>
+        <span className="text-xs text-muted-foreground">
+          0–100 · last {data.length}w
+        </span>
       </div>
 
       <ResponsiveContainer width="100%" height={180}>
-        <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 4, right: 4, bottom: 0, left: -10 }}
+          /* Hist5f S1: tap-attempt telemetry on the PI chart.
+             onClick on the AreaChart fires when a data-point's
+             activeDot is tapped. activePayload[0].payload is the
+             tapped week's full record; we only emit chart + binKey
+             + the PI value (not the sub-scores) per the locked
+             event payload.
+             Recharts' typed MouseHandlerDataParam omits the
+             `activePayload` field that exists at runtime — narrow
+             via a local cast. */
+          onClick={(state) => {
+            const s = state as {
+              activePayload?: Array<{ payload?: { week: string; pi: number } }>;
+            };
+            const payload = s.activePayload?.[0]?.payload;
+            if (!payload) return;
+            trackHistoryEvent("history_chart_tap_attempted", {
+              chart: "pi",
+              binKey: payload.week,
+              value: payload.pi,
+            });
+          }}
+        >
           <defs>
             <linearGradient id="pi-gradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={THEME.brand} stopOpacity={0.35} />
@@ -59,11 +88,25 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             </linearGradient>
           </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="hsl(var(--border))"
+            vertical={false}
+          />
 
           {/* Zone reference lines */}
-          <ReferenceLine y={70} stroke={THEME.warning} strokeDasharray="4 4" strokeOpacity={0.4} />
-          <ReferenceLine y={85} stroke={THEME.danger} strokeDasharray="4 4" strokeOpacity={0.4} />
+          <ReferenceLine
+            y={70}
+            stroke={THEME.warning}
+            strokeDasharray="4 4"
+            strokeOpacity={0.4}
+          />
+          <ReferenceLine
+            y={85}
+            stroke={THEME.danger}
+            strokeDasharray="4 4"
+            strokeOpacity={0.4}
+          />
 
           <XAxis
             dataKey="week"
@@ -124,7 +167,11 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             strokeWidth={2.5}
             fill="url(#pi-gradient)"
             dot={(props) => {
-              const { cx, cy, payload } = props as { cx: number; cy: number; payload: { week: string; band: string } };
+              const { cx, cy, payload } = props as {
+                cx: number;
+                cy: number;
+                payload: { week: string; band: string };
+              };
               return (
                 <circle
                   key={payload.week}
@@ -152,7 +199,10 @@ export default function PerformanceIndexChart({ weeks }: Props) {
           { label: "Overreach", color: THEME.danger },
         ].map((z) => (
           <div key={z.label} className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: z.color }} />
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: z.color }}
+            />
             <span className="text-xs text-muted-foreground">{z.label}</span>
           </div>
         ))}
