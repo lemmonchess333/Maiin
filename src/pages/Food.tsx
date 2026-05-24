@@ -13,8 +13,13 @@ const itemVariant = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
-const ManualFoodLogger = lazy(() => import("@/components/ManualFoodLogger").then(m => ({ default: m.ManualFoodLogger })));
+const ManualFoodLogger = lazy(() =>
+  import("@/components/ManualFoodLogger").then((m) => ({
+    default: m.ManualFoodLogger,
+  }))
+);
 import { useMeals, type Meal } from "@/hooks/useMeals";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
@@ -42,7 +47,11 @@ import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
 import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown";
-import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
+import {
+  MEAL_ORDER,
+  MEAL_LABELS,
+  type MealKey,
+} from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 
 const DEFAULT_QUICK_MEALS = [
@@ -103,7 +112,10 @@ export default function Food() {
   const [searchParams, setSearchParams] = useSearchParams();
   const FOOD_TAP_BACK_DAYS = 90;
   const todayStr = format(new Date(), "yyyy-MM-dd");
-  const minDateStr = format(addDays(new Date(), -FOOD_TAP_BACK_DAYS), "yyyy-MM-dd");
+  const minDateStr = format(
+    addDays(new Date(), -FOOD_TAP_BACK_DAYS),
+    "yyyy-MM-dd"
+  );
   const selectedDate = useMemo(() => {
     const fromUrl = searchParams.get("date");
     if (
@@ -124,7 +136,7 @@ export default function Food() {
         else updated.set("date", next);
         return updated;
       },
-      { replace: true },
+      { replace: true }
     );
   };
   const [scanOpen, setScanOpen] = useState(false);
@@ -192,7 +204,7 @@ export default function Food() {
      Lives up here (not next to handleRemoveFavourite below) because
      quickMeals useMemo reads from it — `useState` ordering matters. */
   const [pendingRemovalIds, setPendingRemovalIds] = useState<Set<string>>(
-    () => new Set(),
+    () => new Set()
   );
   /* Stable per-date order cache. The frequency map underneath
      would otherwise reshuffle chips on every log (each new entry
@@ -249,22 +261,39 @@ export default function Food() {
      was warned about, even if state changes mid-prompt. */
   const [nlWarnTitle, setNlWarnTitle] = useState<string | null>(null);
   const [nlWarnDescription, setNlWarnDescription] = useState<string>("");
-  const [nlPendingSave, setNlPendingSave] = useState<(() => Promise<void>) | null>(null);
+  const [nlPendingSave, setNlPendingSave] = useState<
+    (() => Promise<void>) | null
+  >(null);
 
-  const selectedDateObj = useMemo(() => new Date(selectedDate + "T12:00:00"), [selectedDate]);
+  const selectedDateObj = useMemo(
+    () => new Date(selectedDate + "T12:00:00"),
+    [selectedDate]
+  );
   // Training-aware: returns planned values when adjustCaloriesForTraining is
   // off; otherwise effectiveBonus = max(strategicBonus, actualBurn).
   const dailyTargets = useEffectiveTargets(selectedDateObj);
   const scanUsage = useScanUsage();
-  const handleUpgrade = () => { window.location.href = `${import.meta.env.BASE_URL}upgrade`; };
+  const handleUpgrade = () => {
+    window.location.href = `${import.meta.env.BASE_URL}upgrade`;
+  };
   const scanOverrides = useScanButtonOverrides(
     scanUsage.remaining,
     scanUsage.isUnlimited,
     handleUpgrade,
-    () => { haptic(); setScanOpen(!scanOpen); },
+    () => {
+      haptic();
+      setScanOpen(!scanOpen);
+    }
   );
 
-  const { meals, getMealsForDate, getDailyTotals, deleteMeal, editMeal, loading: mealsLoading } = useMeals();
+  const {
+    meals,
+    getMealsForDate,
+    getDailyTotals,
+    deleteMeal,
+    editMeal,
+    loading: mealsLoading,
+  } = useMeals();
 
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
   // takes its first-paint timestamp from the post-mount effect (rather
@@ -312,19 +341,26 @@ export default function Food() {
 
   const getMealCategory = (item: Meal | undefined): string => {
     // Check explicit meal field first (used by copied items and meal targeting)
-    if (item?.meal && ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)) return item.meal;
+    if (
+      item?.meal &&
+      ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)
+    )
+      return item.meal;
     // Fall back to time-based derivation (snacks is never auto-assigned — use + button to target)
     const createdAt = item?.createdAt;
     /* `Meal.createdAt` is typed `unknown` because it round-trips
        Firestore Timestamps — narrow defensively rather than trust
        the type. */
-    if (!createdAt || typeof (createdAt as { toDate?: unknown }).toDate !== "function") return "lunch";
+    if (
+      !createdAt ||
+      typeof (createdAt as { toDate?: unknown }).toDate !== "function"
+    )
+      return "lunch";
     const hour = (createdAt as { toDate: () => Date }).toDate().getHours();
     if (hour < 11) return "breakfast";
     if (hour < 17) return "lunch";
     return "dinner";
   };
-
 
   // Visible meals = all of today's meals minus any that are pending delete.
   // Used for meal sections, hero card totals, and the food row list so the
@@ -363,7 +399,12 @@ export default function Food() {
   }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
 
   const mealSegmentedMeals = useMemo(() => {
-    const segments: Record<string, typeof visibleTodaysMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+    const segments: Record<string, typeof visibleTodaysMeals> = {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+    };
     for (const meal of visibleTodaysMeals) {
       const cat = getMealCategory(meal);
       segments[cat].push(meal);
@@ -372,10 +413,19 @@ export default function Food() {
   }, [visibleTodaysMeals]);
 
   // Yesterday's meals for "Copy from yesterday" feature
-  const yesterdayDate = useMemo(() => format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"), [selectedDate]);
+  const yesterdayDate = useMemo(
+    () =>
+      format(addDays(new Date(selectedDate + "T12:00:00"), -1), "yyyy-MM-dd"),
+    [selectedDate]
+  );
   const yesterdayMeals = getMealsForDate(yesterdayDate);
   const yesterdaySegmented = useMemo(() => {
-    const segments: Record<string, typeof yesterdayMeals> = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+    const segments: Record<string, typeof yesterdayMeals> = {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+    };
     for (const meal of yesterdayMeals) {
       const cat = getMealCategory(meal);
       segments[cat].push(meal);
@@ -437,11 +487,13 @@ export default function Food() {
       // exactly what happened, not just an opaque item count.
       toast.success(
         `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
-        { id: "food-copy-yesterday" },
+        { id: "food-copy-yesterday" }
       );
     } catch (err) {
       logger.error("[copy-all] Failed:", err);
-      toast.error("Couldn't copy from yesterday", { id: "food-copy-yesterday" });
+      toast.error("Couldn't copy from yesterday", {
+        id: "food-copy-yesterday",
+      });
     } finally {
       setCopyingMealKey(null);
     }
@@ -479,7 +531,9 @@ export default function Food() {
     const next = format(addDays(d, delta), "yyyy-MM-dd");
     if (next < minDateStr || next > todayStr) return;
     setSelectedDate(next);
-    trackFoodEvent("food_date_navigated", { direction: delta < 0 ? "prev" : "next" });
+    trackFoodEvent("food_date_navigated", {
+      direction: delta < 0 ? "prev" : "next",
+    });
   };
 
   const isToday = selectedDate === todayStr;
@@ -547,7 +601,12 @@ export default function Food() {
      with zero matches and we have no local suggestions to show.
      Without that fallback the dropdown silently disappeared and
      the user had no signal that the search returned nothing. */
-  const showSuggestions = suggestionsActive && (pantrySuggestions.length > 0 || suggestions.length > 0 || offResults.length > 0 || (offEmpty && offSearchQuery !== null));
+  const showSuggestions =
+    suggestionsActive &&
+    (pantrySuggestions.length > 0 ||
+      suggestions.length > 0 ||
+      offResults.length > 0 ||
+      (offEmpty && offSearchQuery !== null));
 
   const [prevOffQuery, setPrevOffQuery] = useState(offSearchQuery);
   if (offSearchQuery !== prevOffQuery) {
@@ -576,8 +635,10 @@ export default function Food() {
         const data = await res.json();
         const products: OFFResult[] = (data.products || [])
           .filter(
-            (p: { product_name?: string; nutriments?: Record<string, number> }) =>
-              p.product_name && p.nutriments
+            (p: {
+              product_name?: string;
+              nutriments?: Record<string, number>;
+            }) => p.product_name && p.nutriments
           )
           .map(
             (p: {
@@ -589,10 +650,13 @@ export default function Food() {
               name: p.product_name || "Unknown",
               brand: p.brands || "",
               calories: Math.round(
-                p.nutriments?.["energy-kcal_100g"] || p.nutriments?.["energy-kcal"] || 0
+                p.nutriments?.["energy-kcal_100g"] ||
+                  p.nutriments?.["energy-kcal"] ||
+                  0
               ),
               protein: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
-              carbs: Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
+              carbs:
+                Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
               fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
               servingSize: p.serving_size || "100g",
               // F2: macro nutrients above all come from the
@@ -654,7 +718,8 @@ export default function Food() {
         items: [
           {
             name: food.name,
-            portionSize: s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
+            portionSize:
+              s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
             calories: Math.round(food.calories * s),
             protein: Math.round(food.protein * s),
             carbs: Math.round(food.carbs * s),
@@ -674,7 +739,9 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+      toast.error("Failed to save. Please try again.", {
+        id: "food-save-error",
+      });
     }
   };
 
@@ -712,7 +779,9 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Could not parse any foods. Try a different description.", { id: "food-nl-error" });
+      toast.error("Could not parse any foods. Try a different description.", {
+        id: "food-nl-error",
+      });
       setNlParsing(false);
       return;
     }
@@ -788,9 +857,8 @@ export default function Food() {
           .filter(Boolean).length;
         const mergedCount = inputSegmentCount - items.length;
         const itemNoun = items.length > 1 ? "items" : "item";
-        const mergedSuffix = mergedCount > 0
-          ? ` (${mergedCount} combined)`
-          : "";
+        const mergedSuffix =
+          mergedCount > 0 ? ` (${mergedCount} combined)` : "";
         /* Source-aware success copy. AI-parsed entries surface
            "Logged from AI estimate" so the user understands the
            numbers came from an AI guess and can review them.
@@ -799,7 +867,9 @@ export default function Food() {
         if (confidence === "ai-parse") {
           toast.success("Logged from AI estimate", { id: "food-nl-success" });
         } else {
-          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, { id: "food-nl-success" });
+          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, {
+            id: "food-nl-success",
+          });
         }
 
         /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget
@@ -823,7 +893,9 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+        toast.error("Failed to save. Please try again.", {
+          id: "food-save-error",
+        });
       }
       setNlParsing(false);
     };
@@ -844,9 +916,23 @@ export default function Food() {
   // Edit-servings state. The sheet itself (EditServingsSheet) owns
   // the stepper's target value — Food.tsx just tracks which group is
   // open and persists the change when the user taps Save.
-  const [editingGroup, setEditingGroup] = useState<{ id: string; foodName: string; meals: Meal[] } | null>(null);
+  const [editingGroup, setEditingGroup] = useState<{
+    id: string;
+    foodName: string;
+    meals: Meal[];
+  } | null>(null);
 
-  const applyServingsChange = async (changes: { targetCount: number; targetMeal: MealKey | null; targetName: string | null; targetMacros: { totalCalories?: number; totalProtein?: number; totalCarbs?: number; totalFat?: number } | null }) => {
+  const applyServingsChange = async (changes: {
+    targetCount: number;
+    targetMeal: MealKey | null;
+    targetName: string | null;
+    targetMacros: {
+      totalCalories?: number;
+      totalProtein?: number;
+      totalCarbs?: number;
+      totalFat?: number;
+    } | null;
+  }) => {
     if (!user || !editingGroup) return;
     const { meals: groupMeals, foodName } = editingGroup;
     const currentCount = groupMeals.length;
@@ -867,12 +953,12 @@ export default function Food() {
               ...(targetMeal ? { meal: targetMeal } : {}),
               ...(targetName ? { foodName: targetName } : {}),
               ...(targetMacros ?? {}),
-            }),
-          ),
+            })
+          )
         );
       } catch (err) {
-        logger.error('[Food] meal edit failed', err);
-        toast.error('Could not save changes');
+        logger.error("[Food] meal edit failed", err);
+        toast.error("Could not save changes");
       }
     }
     if (targetCount === currentCount || targetCount < 1) {
@@ -921,9 +1007,12 @@ export default function Food() {
         }
         setEditingGroup(null);
         setOpenRowId(null);
-        toast.success(`Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`, {
-          id: `food-edit-${foodName}`,
-        });
+        toast.success(
+          `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
+          {
+            id: `food-edit-${foodName}`,
+          }
+        );
       } else {
         /* Decrement branch — actual data loss. Mirrors the
            handleDeleteMeal pattern (line 733+): optimistically
@@ -947,20 +1036,23 @@ export default function Food() {
           for (const id of idsToRemove) deleteMeal(id);
         }, 3000);
 
-        toast.success(`Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`, {
-          id: `food-edit-${foodName}`,
-          action: {
-            label: "Undo",
-            onClick: () => {
-              clearTimeout(timeoutId);
-              setPendingDeleteIds((prev) => {
-                const next = new Set(prev);
-                for (const id of idsToRemove) next.delete(id);
-                return next;
-              });
+        toast.success(
+          `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
+          {
+            id: `food-edit-${foodName}`,
+            action: {
+              label: "Undo",
+              onClick: () => {
+                clearTimeout(timeoutId);
+                setPendingDeleteIds((prev) => {
+                  const next = new Set(prev);
+                  for (const id of idsToRemove) next.delete(id);
+                  return next;
+                });
+              },
             },
-          },
-        });
+          }
+        );
       }
     } catch {
       toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
@@ -1066,7 +1158,15 @@ export default function Food() {
        to claim their stable slot). */
     const current = new Map<string, QuickAddItem>();
 
-    const push = (entry: { name: string; cal: number; pro: number; carb: number; fat: number; portionSize: string; favouriteId?: string }) => {
+    const push = (entry: {
+      name: string;
+      cal: number;
+      pro: number;
+      carb: number;
+      fat: number;
+      portionSize: string;
+      favouriteId?: string;
+    }) => {
       const key = entry.name.toLowerCase().trim();
       if (!key || current.has(key)) return;
       /* Legacy hygiene: filter generic / unidentifiable AI names
@@ -1118,7 +1218,7 @@ export default function Food() {
     })();
     const freq = new Map<
       string,
-      { count: number; lastLogged: string; meal: typeof meals[number] }
+      { count: number; lastLogged: string; meal: (typeof meals)[number] }
     >();
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
@@ -1188,13 +1288,19 @@ export default function Food() {
     return orderQuickAddItems(
       quickAddOrderCache.current.get(selectedDate) ?? [],
       current,
-      5,
+      5
     );
     /* timeRelevantHour added explicitly so eslint-react-hooks
        can verify the dep wiring — even though it derives from
        selectedDate, an explicit dep makes the freeze contract
        readable to future maintainers (and to the linter). */
-  }, [meals, getTimeRelevant, selectedDate, timeRelevantHour, pendingRemovalIds]);
+  }, [
+    meals,
+    getTimeRelevant,
+    selectedDate,
+    timeRelevantHour,
+    pendingRemovalIds,
+  ]);
 
   /* Reset Quick Add scroll position whenever the rendered chips
      change. Without this, the carousel keeps its previous scrollLeft
@@ -1224,7 +1330,7 @@ export default function Food() {
     try {
       if (
         window.localStorage.getItem(
-          "tropos-coach-marks-dismissed:quickAdd-firstGraduation-v1",
+          "tropos-coach-marks-dismissed:quickAdd-firstGraduation-v1"
         )
       ) {
         return;
@@ -1332,7 +1438,9 @@ export default function Food() {
       setTargetMeal(null);
       // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+      toast.error("Failed to save. Please try again.", {
+        id: "food-save-error",
+      });
     }
     setQuickAdding(null);
   };
@@ -1343,7 +1451,9 @@ export default function Food() {
      "Quick Add chip" vs "typed and picked from pantry" funnels.
      Clears the NL input + dismisses the dropdown so the user sees
      the meal land in the diary rather than the dropdown lingering. */
-  const handlePantrySelect = async (fav: (typeof pantrySuggestions)[number]) => {
+  const handlePantrySelect = async (
+    fav: (typeof pantrySuggestions)[number]
+  ) => {
     if (!user || quickAdding) return;
     trackFoodEvent("food_pantry_typeahead_selected", {
       favouriteId: fav.id,
@@ -1388,14 +1498,36 @@ export default function Food() {
       setSuggestionsActive(false);
       setTargetMeal(null);
     } catch {
-      toast.error("Failed to save. Please try again.", { id: "food-save-error" });
+      toast.error("Failed to save. Please try again.", {
+        id: "food-save-error",
+      });
     }
     setQuickAdding(null);
   };
 
+  /* Food6 F1: pull-to-refresh on the Food page via the shared
+     usePullToRefresh hook (same gesture as Social + History).
+     useMeals is onSnapshot-driven so the page is already auto-
+     fresh; the gesture is intentionally cosmetic — minDisplayMs
+     gives the user UX-acknowledgement that they CAN refresh,
+     matches the convention they expect from Social/History.
+     excludeSelector guards against FoodRow swipe-to-delete: if
+     a touch starts on a row, the page-level pull-to-refresh
+     suppresses for that touch sequence so the swipe gesture
+     doesn't double-fire. */
+  const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
+    usePullToRefresh({
+      onRefresh: () => {
+        /* No-op: useMeals onSnapshot keeps the page live. The
+           indicator alone is the user-visible feedback. */
+      },
+      minDisplayMs: 600,
+      excludeSelector: "[data-food-row]",
+    });
 
   return (
     <motion.div
+      {...pullBindProps}
       /* Bottom padding hooks into the canonical --page-bottom-pad
          token (tab-bar height + env(safe-area-inset-bottom) +
          1rem) so the last meal section / Copy yesterday button
@@ -1404,11 +1536,26 @@ export default function Food() {
          and could clip on devices with deeper insets. Same pattern
          as RunSummary.tsx. */
       className="space-y-4.5"
-      style={{ paddingBottom: 'var(--page-bottom-pad)' }}
+      style={{ paddingBottom: "var(--page-bottom-pad)" }}
       initial="hidden"
       animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.06 } },
+      }}
     >
+      {pullRefreshing && (
+        <div
+          className="flex justify-center py-2"
+          role="status"
+          aria-label="Refreshing"
+        >
+          <div
+            className="h-1 w-12 rounded-full bg-muted animate-pulse"
+            aria-hidden="true"
+          />
+        </div>
+      )}
       <FoodDateBar
         selectedDate={selectedDate}
         isToday={isToday}
@@ -1505,7 +1652,13 @@ export default function Food() {
       </motion.div>
 
       {scanOpen && (
-        <Suspense fallback={<div className="py-12 text-center text-muted-foreground text-sm animate-pulse">Loading scanner...</div>}>
+        <Suspense
+          fallback={
+            <div className="py-12 text-center text-muted-foreground text-sm animate-pulse">
+              Loading scanner...
+            </div>
+          }
+        >
           <FoodAnalyzer
             date={selectedDate}
             meal={targetMeal}
@@ -1516,7 +1669,10 @@ export default function Food() {
                bonus calories) via useEffectiveTargets, so the
                threshold scales with the user's planned day. */
             effectiveDailyTarget={dailyTargets.finalTarget}
-            onSaved={() => { setScanOpen(false); setTargetMeal(null); }}
+            onSaved={() => {
+              setScanOpen(false);
+              setTargetMeal(null);
+            }}
             onRequestManualLog={() => {
               // AI photo failure fallback. The camera modal stays
               // open after AI errors (single-tap retry intent), so
@@ -1578,7 +1734,6 @@ export default function Food() {
         )}
       </motion.div>
 
-
       {/* Meal sections — Food6d locks per-slot independent empty
           states: all four slots always render so mixed states
           (breakfast logged, lunch empty) read as intentional rather
@@ -1607,27 +1762,28 @@ export default function Food() {
             two or more collapses to the generic `Copy yesterday's meals`
             — listing every slot was verbose and the user can read the
             toast after tapping to see what was copied where. */}
-        {slotsToCopyFromYesterday.length > 0 && (() => {
-          const inFlight = copyingMealKey === "__all__";
-          const label =
-            slotsToCopyFromYesterday.length === 1
-              ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
-              : "Copy yesterday's meals";
-          return (
-            <div className="flex justify-center pt-2">
-              <button
-                type="button"
-                onClick={handleCopyAllMissingFromYesterday}
-                disabled={inFlight}
-                aria-label={label}
-                className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            </div>
-          );
-        })()}
+        {slotsToCopyFromYesterday.length > 0 &&
+          (() => {
+            const inFlight = copyingMealKey === "__all__";
+            const label =
+              slotsToCopyFromYesterday.length === 1
+                ? `Copy yesterday's ${MEAL_LABELS[slotsToCopyFromYesterday[0]].toLowerCase()}`
+                : "Copy yesterday's meals";
+            return (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleCopyAllMissingFromYesterday}
+                  disabled={inFlight}
+                  aria-label={label}
+                  className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              </div>
+            );
+          })()}
       </motion.div>
 
       <Suspense fallback={null}>
@@ -1660,10 +1816,22 @@ export default function Food() {
           source={{
             foodName: editingGroup.foodName,
             currentCount: editingGroup.meals.length,
-            currentTotalCalories: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCalories), 0),
-            currentTotalProtein: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalProtein), 0),
-            currentTotalCarbs: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0),
-            currentTotalFat: editingGroup.meals.reduce((s, m) => s + safeNum(m.totalFat), 0),
+            currentTotalCalories: editingGroup.meals.reduce(
+              (s, m) => s + safeNum(m.totalCalories),
+              0
+            ),
+            currentTotalProtein: editingGroup.meals.reduce(
+              (s, m) => s + safeNum(m.totalProtein),
+              0
+            ),
+            currentTotalCarbs: editingGroup.meals.reduce(
+              (s, m) => s + safeNum(m.totalCarbs),
+              0
+            ),
+            currentTotalFat: editingGroup.meals.reduce(
+              (s, m) => s + safeNum(m.totalFat),
+              0
+            ),
             // F5a: if all docs in the group share one slot, that's
             // the current. Mixed-state groups (rare, e.g. user moved
             // one of two duplicates) get null so the picker renders
@@ -1672,7 +1840,7 @@ export default function Food() {
             currentMeal: (() => {
               const first = editingGroup.meals[0]?.meal ?? null;
               const allSame = editingGroup.meals.every(
-                (m) => (m.meal ?? null) === first,
+                (m) => (m.meal ?? null) === first
               );
               return allSame ? first : null;
             })(),
