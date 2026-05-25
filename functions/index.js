@@ -21,6 +21,7 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const checkoutTrial = require("./lib/checkoutTrial");
+const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -1520,8 +1521,35 @@ exports.stripeWebhook = functions
             break;
           }
 
+          // Sub1 P2 — read current state for cross-platform overlap
+          // detection. Same lookup the customer.subscription.* cases
+          // already perform; activation here mirrors the contract.
+          const existingDoc = await dbRef
+            .collection("users")
+            .doc(firebaseUid)
+            .get();
+          const existingData = existingDoc.exists ? existingDoc.data() : {};
+          const completedDecision =
+            subscriptionReconciliation.resolveSubscriptionUpdate({
+              currentTier: existingData.subscriptionTier,
+              currentSource: existingData.subscriptionSource,
+              incomingTier: "pro",
+              incomingSource: subscriptionReconciliation.SOURCE_STRIPE,
+            });
+          if (completedDecision.conflict) {
+            functions.logger.warn(
+              "stripeWebhook.checkout.session.completed.cross_platform_conflict",
+              {
+                uid: firebaseUid,
+                conflictReason: completedDecision.conflictReason,
+                newSource: completedDecision.writeSource,
+              }
+            );
+          }
+
           const update = {
-            subscriptionTier: "pro",
+            subscriptionTier: completedDecision.writeTier,
+            subscriptionSource: completedDecision.writeSource,
             stripeCustomerId: session.customer,
             subscriptionUpdatedAt:
               event.created || Math.floor(Date.now() / 1000),
@@ -1620,9 +1648,31 @@ exports.stripeWebhook = functions
           // invisible to the user.
           const tier = checkoutTrial.mapSubscriptionStatusToTier(status);
 
+          // Sub1 P2 — write both tier + source atomically. Helper
+          // detects cross-platform overlap (Pro/stripe overwriting
+          // Pro/ios_iap) and surfaces a forensic alert.
+          const updateDecision =
+            subscriptionReconciliation.resolveSubscriptionUpdate({
+              currentTier: userData.subscriptionTier,
+              currentSource: userData.subscriptionSource,
+              incomingTier: tier,
+              incomingSource: subscriptionReconciliation.SOURCE_STRIPE,
+            });
+          if (updateDecision.conflict) {
+            functions.logger.warn(
+              "stripeWebhook.customer.subscription.updated.cross_platform_conflict",
+              {
+                uid: userDoc.id,
+                conflictReason: updateDecision.conflictReason,
+                newSource: updateDecision.writeSource,
+              }
+            );
+          }
+
           await userDoc.ref.set(
             {
-              subscriptionTier: tier,
+              subscriptionTier: updateDecision.writeTier,
+              subscriptionSource: updateDecision.writeSource,
               stripeSubscriptionId: subscription.id,
               subscriptionUpdatedAt:
                 event.created || Math.floor(Date.now() / 1000),
@@ -1708,9 +1758,13 @@ exports.stripeWebhook = functions
             break;
           }
 
+          // Sub1 P2 — downgrade nulls the source field per the
+          // reconciliation contract. Helper returns conflict=false
+          // unconditionally for free writes.
           await userDoc.ref.set(
             {
               subscriptionTier: "free",
+              subscriptionSource: null,
               stripeSubscriptionId: admin.firestore.FieldValue.delete(),
               subscriptionUpdatedAt:
                 event.created || Math.floor(Date.now() / 1000),
