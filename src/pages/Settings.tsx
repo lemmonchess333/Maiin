@@ -5,11 +5,7 @@ import { calculateTDEE } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Crown,
-  ChevronRight,
-  Target,
-} from "lucide-react";
+import { Crown, ChevronRight, Target } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import {
@@ -28,6 +24,7 @@ import ShoesSection from "@/components/settings/ShoesSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
 import AccountSection from "@/components/settings/AccountSection";
+import AiUsageSection from "@/components/settings/AiUsageSection";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 import SupportLegalSection from "@/components/settings/SupportLegalSection";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
@@ -49,33 +46,60 @@ export default function Settings() {
   const [mealsTarget, setMealsTarget] = useState(
     Math.min(profile?.weeklyMealsTarget || 10, 20)
   );
-  const [autoRestTimer, setAutoRestTimer] = useState(profile?.autoRestTimer ?? true);
-  const [defaultRestSeconds, setDefaultRestSeconds] = useState(profile?.defaultRestSeconds ?? 120);
-  const [defaultVisibility, setDefaultVisibility] = useState<"public" | "followers" | "private">(profile?.defaultVisibility ?? "public");
-  const [autoPostRuns, setAutoPostRuns] = useState(profile?.autoPostRuns ?? true);
-  const [autoPostWorkouts, setAutoPostWorkouts] = useState(profile?.autoPostWorkouts ?? false);
+  const [autoRestTimer, setAutoRestTimer] = useState(
+    profile?.autoRestTimer ?? true
+  );
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState(
+    profile?.defaultRestSeconds ?? 120
+  );
+  const [defaultVisibility, setDefaultVisibility] = useState<
+    "public" | "followers" | "private"
+  >(profile?.defaultVisibility ?? "public");
+  const [autoPostRuns, setAutoPostRuns] = useState(
+    profile?.autoPostRuns ?? true
+  );
+  const [autoPostWorkouts, setAutoPostWorkouts] = useState(
+    profile?.autoPostWorkouts ?? false
+  );
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
   const [age, setAge] = useState(profile?.age ?? 25);
-  const [activityLevel, setActivityLevel] = useState<ActivityLevel>((profile?.activityLevel as ActivityLevel) ?? "moderate");
-  const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
-    (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp"
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
+    (profile?.activityLevel as ActivityLevel) ?? "moderate"
   );
+  const [trainingPhase, setTrainingPhase] = useState<
+    "cut" | "lean bulk" | "recomp"
+  >((profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp");
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
-  const { reminders: mealReminders, updateReminders: updateMealReminders } = useMealReminders();
-  const { reminders: workoutReminders, updateReminders: updateWorkoutReminders } = useWorkoutReminders();
-  const { prefs: streakReminder, updatePrefs: updateStreakReminder } = useStreakReminder();
+  const { reminders: mealReminders, updateReminders: updateMealReminders } =
+    useMealReminders();
+  const {
+    reminders: workoutReminders,
+    updateReminders: updateWorkoutReminders,
+  } = useWorkoutReminders();
+  const { prefs: streakReminder, updatePrefs: updateStreakReminder } =
+    useStreakReminder();
 
   const tdee = useMemo(() => {
-    return calculateTDEE(weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex || "male");
+    return calculateTDEE(
+      weightKg,
+      heightCm,
+      age,
+      activityLevel,
+      trainingPhase,
+      profile?.sex || "male"
+    );
   }, [weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex]);
 
   // Reactive TDEE persistence — auto-save derived values when inputs change
   const prevTdeeRef = useRef(tdee);
   const hasMounted = useRef(false);
   useEffect(() => {
-    if (!hasMounted.current) { hasMounted.current = true; return; }
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     if (prevTdeeRef.current.targetCalories !== tdee.targetCalories) {
       updateProfile({
         tdeeBase: tdee.targetCalories,
@@ -86,7 +110,7 @@ export default function Settings() {
       });
     }
     prevTdeeRef.current = tdee;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tdee]);
 
   const handlePhaseChange = async (phase: "cut" | "lean bulk" | "recomp") => {
@@ -127,29 +151,43 @@ export default function Settings() {
     // doesn't see a flicker (theme stays applied) while their setting
     // was never saved.
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem('tropos-dark-mode', String(next));
+    localStorage.setItem("tropos-dark-mode", String(next));
     const result = await updateProfile({ darkMode: next });
     if (!result.ok) {
       document.documentElement.classList.toggle("dark", prev);
-      localStorage.setItem('tropos-dark-mode', String(prev));
+      localStorage.setItem("tropos-dark-mode", String(prev));
     }
   };
 
   if (!profile) return null;
 
-  const itemVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+  const itemVariant = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
 
   return (
-    <motion.div className="space-y-4" initial="hidden" animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}>
+    <motion.div
+      className="space-y-4"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.04 } },
+      }}
+    >
       {/* Header with avatar */}
       <motion.header variants={itemVariant}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SettingsAvatar profile={profile} />
             <div>
-              <h1 className="text-xl font-extrabold text-foreground">Settings</h1>
-              <p className="text-sm text-muted-foreground">Customize your experience</p>
+              <h1 className="text-xl font-extrabold text-foreground">
+                Settings
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Customize your experience
+              </p>
             </div>
           </div>
           {user && (
@@ -292,7 +330,9 @@ export default function Settings() {
           <div className="flex items-center gap-3">
             <Crown className="w-5 h-5 text-primary" />
             <div className="text-left">
-              <p className="text-sm font-medium text-foreground">Subscription</p>
+              <p className="text-sm font-medium text-foreground">
+                Subscription
+              </p>
               <p className="text-xs text-muted-foreground">
                 {tier === "pro"
                   ? "Pro — Full access"
@@ -306,22 +346,23 @@ export default function Settings() {
         </button>
       </TrackSettingsSectionView>
 
+      {/* 9b. AI usage — F1b lock pin #6 daily-usage pill */}
+      <TrackSettingsSectionView section="ai_usage">
+        <AiUsageSection />
+      </TrackSettingsSectionView>
+
       {/* 10. Support & Legal */}
       <SupportLegalSection />
 
       {/* 11. Account */}
       <TrackSettingsSectionView section="account">
-        <AccountSection
-          user={user}
-          signOut={signOut}
-        />
+        <AccountSection user={user} signOut={signOut} />
       </TrackSettingsSectionView>
 
       {/* Footer */}
       <p className="text-center text-xs text-muted-foreground">
         Tropos v{__APP_VERSION__}
       </p>
-
     </motion.div>
   );
 }
