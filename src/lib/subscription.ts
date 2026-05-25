@@ -34,7 +34,8 @@ import { useAuth } from "./auth";
 //   - `AdaptiveSummary.tsx` — Apply button gated by direct
 //     `isPro` check
 //   - `useScanUsage.ts` — `isUnlimited = isPro || isInTrial`
-//     drives the monthly AI-scan ceiling
+//     drives the AI-scan ceiling. Post-F1b uses daily windows +
+//     per-action counters (DAILY_AI_LIMITS below).
 //   - `Program.tsx` — `!isPro` derives `phaseLocked` which gates
 //     the program-configuration buttons (Configure / Settings /
 //     Refresh)
@@ -43,6 +44,24 @@ import { useAuth } from "./auth";
 // source of truth that ProModal, Upgrade.tsx, and AdaptiveSummary
 // all consume. This module owns tier / trial / access logic only.
 
+/**
+ * F1b — daily AI scan limits, per action. Mirror of
+ * `functions/lib/aiScanQuota.js DAILY_LIMITS`. Both must move
+ * together if the lock is renegotiated. Image-AI is Pro-only
+ * (free=0); the Scan Meal CTA on the Food page reads
+ * `image_ai.limit === 0` to render an upgrade prompt instead of
+ * the camera button for free users.
+ */
+export const DAILY_AI_LIMITS = {
+  free: { text_ai: 10, image_ai: 0 },
+  pro: { text_ai: 100, image_ai: 100 },
+} as const;
+
+/**
+ * @deprecated Pre-F1b shared monthly counter. Retained only for
+ * legacy callsites; new code should consume `DAILY_AI_LIMITS` via
+ * `useScanUsage(action)`. Will be removed once all callers migrate.
+ */
 export const SCAN_LIMITS = {
   free: 10,
   pro: 300,

@@ -22,6 +22,7 @@ const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
+const aiScanQuota = require("./lib/aiScanQuota");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -765,12 +766,15 @@ exports.analyzeFood = functions
           return;
         }
 
-        // Monthly scan quota — PR C: transactional + fail-closed.
-        // `error: "quota-check-failed"` signals a transient Firestore
-        // problem rather than an exhausted quota; surface a different
-        // message so the client retries instead of treating it as a
+        // F1b — daily AI scan quota with per-action counters.
+        // Image-AI is Pro-only (free=0/day, pro=100/day).
+        // Fail-closed via `error: "quota-check-failed"`; the client
+        // retries on transient errors rather than treating them as a
         // hard limit.
-        const quota = await checkMonthlyQuota(authUser.uid);
+        const quota = await aiScanQuota.checkDailyAiQuota(admin.firestore(), {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_IMAGE_AI,
+        });
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
@@ -780,8 +784,12 @@ exports.analyzeFood = functions
             });
             return;
           }
+          // Free user hitting image_ai (limit=0) — same 429 surface
+          // as the daily cap exhaustion path. Client message stays
+          // tier-neutral; the Settings usage pill is the dedicated
+          // upsell surface (lock pin #6).
           res.status(429).json({
-            error: "Monthly scan limit reached. Upgrade to Pro for more scans.",
+            error: "Daily image-AI limit reached. Upgrade to Pro for more.",
             remaining: 0,
             limit: quota.limit,
           });
@@ -934,9 +942,12 @@ exports.analyzeFoodText = functions
           return;
         }
 
-        // Monthly scan quota (shares counter with image analysis).
-        // PR C: same transient-vs-exhausted split as analyzeFood.
-        const quota = await checkMonthlyQuota(authUser.uid);
+        // F1b — daily text-AI scan quota. Independent of image_ai
+        // (lock pin #7). Free=10/day, Pro=100/day server-side cap.
+        const quota = await aiScanQuota.checkDailyAiQuota(admin.firestore(), {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_TEXT_AI,
+        });
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
@@ -947,7 +958,7 @@ exports.analyzeFoodText = functions
             return;
           }
           res.status(429).json({
-            error: "Monthly scan limit reached. Upgrade to Pro for more scans.",
+            error: "Daily text-AI limit reached. Upgrade to Pro for more.",
             remaining: 0,
             limit: quota.limit,
           });
