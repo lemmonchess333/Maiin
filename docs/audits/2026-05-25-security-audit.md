@@ -78,3 +78,21 @@
 - Unit tests for prod env ensuring staging origins are rejected.
 - Integration test forcing feature-flag read error and asserting fail-closed for selected flags.
 - Endpoint tests showing revoked token rejection on protected routes.
+
+
+## Auditor Notes on Dependency Scan Environment
+
+- The `npm audit` failures in this run appear environmental (HTTP 403 from the advisory endpoint), not evidence of a repository defect.
+- In constrained CI/agent environments this commonly comes from egress policy, missing npm auth token, or registry-side IP/rate blocking on audit-specific routes.
+- This does **not** invalidate the three source-derived findings above, which came from static review of repository code and rules.
+
+### Recommended CI fallback sequence
+
+1. Retry with explicit registry and auth token:
+   - `npm audit --omit=dev --json --registry=https://registry.npmjs.org`
+   - with `NPM_TOKEN` configured in CI secrets.
+2. If advisory endpoint is still blocked, run alternate scanners:
+   - `npx audit-ci`
+   - `npx better-npm-audit audit`
+   - `osv-scanner` against lockfiles.
+3. Archive scanner output as build artifacts and treat dependency findings as a separate track from application-logic findings.
