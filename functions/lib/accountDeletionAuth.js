@@ -98,9 +98,81 @@ function assertRecentAuth(context, nowFn) {
   if (err) throw err;
 }
 
+/**
+ * Security audit 2026-05-25 finding #3 follow-up — revocation-aware
+ * token verification for `deleteMyAccount`.
+ *
+ * Firebase callable framework verifies the ID token signature +
+ * audience but does NOT check `tokensValidAfterTime` (the per-user
+ * revocation timestamp Admin SDK writes when an operator force-revokes
+ * sessions). A user whose tokens were revoked (e.g. "Sign out all
+ * sessions" / compromised-account incident response) keeps a working
+ * `context.auth` until their token naturally expires (up to 1 hour).
+ *
+ * For high-blast-radius callables like account deletion, that gap is
+ * unacceptable. This helper extracts the raw Bearer token from
+ * `context.rawRequest` and runs `verifyIdToken(token, true)` — the
+ * second arg makes Firebase Admin SDK fetch the user record and
+ * compare `tokensValidAfterTime` against the token's `iat`.
+ *
+ * Throws shape-compatible HttpsError objects:
+ *   - `failed-precondition` / `token-revoked` — revoked session
+ *   - `unauthenticated` / `invalid-token` — anything else (missing
+ *     header, malformed bearer, signature failure, audience mismatch).
+ *
+ * The verifyIdToken function is injected so unit tests can drive it
+ * with a stub (no firebase-admin boot). Production wiring passes
+ * `(token, checkRevoked) => admin.auth().verifyIdToken(token, checkRevoked)`.
+ */
+function makeRevokedError(message) {
+  const err = new Error(message);
+  err.code = "failed-precondition";
+  err.errorCode = "token-revoked";
+  err.httpsErrorCode = "failed-precondition";
+  return err;
+}
+
+function makeUnauthenticatedError(message) {
+  const err = new Error(message);
+  err.code = "unauthenticated";
+  err.errorCode = "invalid-token";
+  err.httpsErrorCode = "unauthenticated";
+  return err;
+}
+
+async function assertTokenNotRevoked({ rawRequest, verifyIdToken }) {
+  const header =
+    rawRequest && rawRequest.headers && rawRequest.headers.authorization;
+  if (typeof header !== "string" || !header.startsWith("Bearer ")) {
+    throw makeUnauthenticatedError("Authorization header missing or malformed.");
+  }
+  const token = header.slice("Bearer ".length).trim();
+  if (!token) {
+    throw makeUnauthenticatedError("Authorization header missing bearer token.");
+  }
+  try {
+    await verifyIdToken(token, true);
+  } catch (err) {
+    // Firebase Admin SDK uses `auth/id-token-revoked` for the
+    // revocation case specifically. Anything else is generic
+    // verification failure.
+    if (err && err.code === "auth/id-token-revoked") {
+      throw makeRevokedError(
+        "Session revoked. Please sign in again before deleting your account.",
+      );
+    }
+    throw makeUnauthenticatedError(
+      "Token verification failed; sign in again before retrying.",
+    );
+  }
+}
+
 module.exports = {
   RECENT_AUTH_MAX_AGE_SECONDS,
   checkRecentAuth,
   assertRecentAuth,
   makeRequiresRecentAuthError,
+  assertTokenNotRevoked,
+  makeRevokedError,
+  makeUnauthenticatedError,
 };
