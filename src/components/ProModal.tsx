@@ -30,6 +30,7 @@
  *      can't diverge on loading / error / auth handling.
  */
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
   PRO_PLANS,
@@ -42,14 +43,7 @@ import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import { track } from "@/lib/paywallAnalytics";
-import {
-  X,
-  Sparkles,
-  Zap,
-  BarChart2,
-  Utensils,
-  Brain,
-} from "lucide-react";
+import { X, Sparkles, Zap, BarChart2, Utensils, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -93,7 +87,9 @@ const FEATURE_PREVIEWS: Partial<
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
           <div className="flex flex-col items-center gap-1">
             <Brain className="w-7 h-7" style={{ color: THEME.teal }} />
-            <p className="text-xs font-semibold text-foreground">Unlock insights</p>
+            <p className="text-xs font-semibold text-foreground">
+              Unlock insights
+            </p>
           </div>
         </div>
       </div>
@@ -132,7 +128,9 @@ const FEATURE_PREVIEWS: Partial<
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
           <div className="flex flex-col items-center gap-1">
             <Utensils className="w-7 h-7" style={{ color: THEME.warning }} />
-            <p className="text-xs font-semibold text-foreground">Unlock AI logging</p>
+            <p className="text-xs font-semibold text-foreground">
+              Unlock AI logging
+            </p>
           </div>
         </div>
       </div>
@@ -190,9 +188,17 @@ interface Props {
 
 export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(
-    initialPlan ?? DEFAULT_PLAN,
+    initialPlan ?? DEFAULT_PLAN
   );
   const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
+  const { profile } = useAuth();
+
+  // Sub1a P1 — trial offer eligibility (client-side hint; server is
+  // authoritative via `hasUsedTrial` in checkoutTrial.js). Missing
+  // profile (cold-start, race) defaults to true so the more generous
+  // CTA wins on uncertainty — the server still rejects a second
+  // trial if the user actually has `hasUsedTrial: true`.
+  const withTrial = !profile || !profile.hasUsedTrial;
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
   const showRestore = isNativeIOS();
@@ -230,6 +236,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
     void startCheckout(selectedPlan, {
       source: featureKey ? "feature_gate" : "unknown",
       featureKey,
+      withTrial,
     });
   };
 
@@ -253,10 +260,12 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   };
 
   // CTA label flips when there's no user — never leave a checkout
-  // button disabled with no explanation.
+  // button disabled with no explanation. When the user is eligible
+  // for the Sub1a P1 free trial, the trial CTA copy supersedes the
+  // plan-priced default.
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
-    : getCheckoutCtaLabel(selectedPlan);
+    : getCheckoutCtaLabel(selectedPlan, withTrial);
 
   // Reset selection if the parent remounts the modal with a different
   // initialPlan (defensive — current callsites always remount on open
@@ -282,7 +291,10 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           the primitive lets us own this layout; BottomSheet emits a
           sr-only Drawer.Title + Drawer.Description for SRs. */}
       <div className="relative shrink-0 px-5 pt-3 pb-2">
-        <div className="w-10 h-1 rounded-full bg-border mx-auto" aria-hidden="true" />
+        <div
+          className="w-10 h-1 rounded-full bg-border mx-auto"
+          aria-hidden="true"
+        />
         <button
           type="button"
           onClick={onClose}
@@ -304,7 +316,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           >
             {hero.icon}
           </div>
-          <h2 className="text-xl font-extrabold text-foreground">{hero.title}</h2>
+          <h2 className="text-xl font-extrabold text-foreground">
+            {hero.title}
+          </h2>
           <p className="text-sm text-muted-foreground max-w-[320px] mx-auto leading-relaxed">
             {hero.tagline}
           </p>
@@ -360,7 +374,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                   "disabled:opacity-60 disabled:cursor-not-allowed",
                   isSelected
                     ? "border-primary bg-primary/10"
-                    : "border-border bg-card hover:border-primary/40",
+                    : "border-border bg-card hover:border-primary/40"
                 )}
               >
                 {plan.topBadge ? (
@@ -373,7 +387,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                   <div
                     className={cn(
                       "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                      isSelected ? "border-primary" : "border-border",
+                      isSelected ? "border-primary" : "border-border"
                     )}
                     aria-hidden="true"
                   >
@@ -429,7 +443,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             "flex items-center justify-center gap-2",
             "active:scale-[0.98] transition-transform duration-150",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            "disabled:opacity-60 disabled:cursor-not-allowed",
+            "disabled:opacity-60 disabled:cursor-not-allowed"
           )}
           style={{
             background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
