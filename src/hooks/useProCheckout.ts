@@ -41,6 +41,13 @@ export interface StartCheckoutOptions {
   /** Feature gate that triggered the modal, when relevant — only
    *  forwarded to analytics. */
   featureKey?: ProFeatureKey;
+  /** Sub1a P1 — request a 7-day free trial on this checkout. The
+   *  server is authoritative (it checks `hasUsedTrial` inside a
+   *  Firestore transaction and either grants the trial or ignores
+   *  the flag); the client sends this purely to express the user's
+   *  intent. Apple IAP defers to the App Store introductory-offer
+   *  config; this flag affects only the Stripe pipeline. */
+  withTrial?: boolean;
 }
 
 /**
@@ -63,7 +70,10 @@ const SIGN_IN_MESSAGE = "Sign in to start Pro.";
 export interface UseProCheckoutResult {
   loading: boolean;
   error: string | null;
-  startCheckout: (plan: PlanId, options?: StartCheckoutOptions) => Promise<void>;
+  startCheckout: (
+    plan: PlanId,
+    options?: StartCheckoutOptions
+  ) => Promise<void>;
   clearError: () => void;
   /** True when the auth context has no user — callers can flip the
    *  CTA label to "Sign in to start Pro" rather than rendering a
@@ -115,9 +125,11 @@ export function useProCheckout(): UseProCheckoutResult {
           user.uid,
           user.email || "",
           {
-            entryPoint: options.entryPoint ?? entryPointFromPath(location.pathname),
+            entryPoint:
+              options.entryPoint ?? entryPointFromPath(location.pathname),
             source: options.source,
-          },
+            withTrial: options.withTrial,
+          }
         );
         if (!result.success) {
           const message =
@@ -155,7 +167,7 @@ export function useProCheckout(): UseProCheckoutResult {
         setLoading(false);
       }
     },
-    [loading, user, location.pathname],
+    [loading, user, location.pathname]
   );
 
   const clearError = useCallback(() => setError(null), []);
