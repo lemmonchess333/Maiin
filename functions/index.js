@@ -20,6 +20,7 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+const checkoutTrial = require("./lib/checkoutTrial");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -1196,7 +1197,8 @@ exports.createCheckoutSession = functions
           return;
         }
 
-        const { uid, email, priceId, successPath, cancelPath } = req.body;
+        const { uid, email, priceId, successPath, cancelPath, withTrial } =
+          req.body;
 
         // Ownership check before field-presence so a client passing a
         // mismatched uid gets 403 (not a generic 400). authUser.uid is
@@ -1340,15 +1342,47 @@ exports.createCheckoutSession = functions
             .set({ stripeCustomerId: customerId }, { merge: true });
         }
 
-        const session = await stripe.checkout.sessions.create({
-          customer: customerId,
-          payment_method_types: ["card"],
-          line_items: [{ price: priceId, quantity: 1 }],
-          mode: priceConfig.mode,
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-          metadata: { firebaseUid: authUser.uid, planKind: priceConfig.kind },
-        });
+        // Sub1a P1: trial decision + `hasUsedTrial` atomic write live
+        // in lib/checkoutTrial.js so they're testable against stub
+        // Stripe / Firestore handles. The helper enforces:
+        //   - withTrial=true + hasUsedTrial=false → trial_period_days=7
+        //   - withTrial=true + hasUsedTrial=true  → no trial (no second use)
+        //   - withTrial=false (or undefined)      → no trial
+        // The hasUsedTrial write is in the same Firestore transaction
+        // as the read so two parallel checkout attempts can't both
+        // consume the trial slot. Subscription checkouts only —
+        // one-off `payment` mode plans don't support trials.
+        const { session } =
+          priceConfig.mode === "subscription"
+            ? await checkoutTrial.createTrialCheckoutSession({
+                stripe,
+                firestore: admin.firestore(),
+                uid: authUser.uid,
+                priceId,
+                mode: priceConfig.mode,
+                withTrial: Boolean(withTrial),
+                successUrl,
+                cancelUrl,
+                customerId,
+                metadata: {
+                  firebaseUid: authUser.uid,
+                  planKind: priceConfig.kind,
+                },
+              })
+            : {
+                session: await stripe.checkout.sessions.create({
+                  customer: customerId,
+                  payment_method_types: ["card"],
+                  line_items: [{ price: priceId, quantity: 1 }],
+                  mode: priceConfig.mode,
+                  success_url: successUrl,
+                  cancel_url: cancelUrl,
+                  metadata: {
+                    firebaseUid: authUser.uid,
+                    planKind: priceConfig.kind,
+                  },
+                }),
+              };
 
         // Audit-log the successful session creation. Fire-and-forget
         // semantics: an audit-write failure must NOT block the user's
@@ -1579,9 +1613,12 @@ exports.stripeWebhook = functions
 
           const status = subscription.status;
 
-          // Active statuses that grant pro access
-          const activeStatuses = ["active", "trialing"];
-          const tier = activeStatuses.includes(status) ? "pro" : "free";
+          // Sub1a P1: status→tier mapping lives in lib/checkoutTrial.js
+          // so the `trialing → active` transition contract is pinned by
+          // a unit test (checkoutTrial.test.js cycle 4). Both `active`
+          // and `trialing` resolve to "pro" — trial conversion is
+          // invisible to the user.
+          const tier = checkoutTrial.mapSubscriptionStatusToTier(status);
 
           await userDoc.ref.set(
             {

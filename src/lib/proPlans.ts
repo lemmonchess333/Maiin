@@ -81,8 +81,12 @@ export function getPlan(id: PlanId): ProPlan {
 export const DEFAULT_PLAN: PlanId =
   PRO_PLANS.find((p) => p.recommended)?.id ?? "yearly";
 
-/** CTA copy for the checkout button — e.g. "Start Pro — £34.99/yr". */
-export function getCheckoutCtaLabel(id: PlanId): string {
+/** CTA copy for the checkout button. When `withTrial` is true, returns
+ *  the Sub1a P1 trial CTA (single string regardless of plan — the
+ *  plan choice still flows through, just not surfaced in the label).
+ *  Otherwise returns the plan-priced CTA — e.g. "Start Pro — £34.99/yr". */
+export function getCheckoutCtaLabel(id: PlanId, withTrial = false): string {
+  if (withTrial) return "Start your 7-day free trial";
   const plan = getPlan(id);
   return `Start Pro — ${plan.price}/${plan.shortPeriod}`;
 }
@@ -101,7 +105,7 @@ export function getCheckoutCtaLabel(id: PlanId): string {
  */
 export function getRenewalDisclosure(
   id: PlanId,
-  platform: "web" | "ios" | "android" = "web",
+  platform: "web" | "ios" | "android" = "web"
 ): string {
   const plan = getPlan(id);
   if (platform === "ios") {

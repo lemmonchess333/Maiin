@@ -90,6 +90,17 @@ export interface UserProfileSubscription {
    *  warning, since Apple has no admin-cancellation API for standard IAP
    *  subscriptions (Sub1 R1A pin b, P0b). */
   appleOriginalTransactionId?: string;
+  /** Sub1a P1 — lifetime trial-shopping protection.
+   *  Set to true by `functions/lib/checkoutTrial.js` when a trial
+   *  Stripe checkout session is created, in the same Firestore txn
+   *  as the user-doc read (race-safe). True = the user has consumed
+   *  their lifetime free-trial slot and no further `withTrial`
+   *  checkout will grant the 7-day intro. Abandoned trials still
+   *  flip this flag — that's intentional (prevents
+   *  click-trial-bail-retry-trial loops, Sub1a pin #1). Apple IAP
+   *  introductory offers are enforced by the App Store side; this
+   *  flag is the Stripe-pipeline equivalent. */
+  hasUsedTrial?: boolean;
   trialExpiryPromptShown?: boolean;
 }
 
@@ -264,12 +275,6 @@ export const PUBLIC_PROFILE_FIELDS = [
    HELPERS
 ================================ */
 
-function getTrialExpiresAt(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 7);
-  return d.toISOString();
-}
-
 function syncDarkMode(dark: boolean) {
   if (dark) {
     document.documentElement.classList.add("dark");
@@ -312,7 +317,15 @@ function createDefaultProfile(
     preferredHeightUnit: "cm",
     darkMode: false,
     onboardingComplete: false,
-    trialExpiresAt: getTrialExpiresAt(),
+    // Sub1a P1 — new users start in true free tier. The 7-day free
+    // trial is now opt-in (tapped from ProModal / Upgrade) and goes
+    // through Stripe `trial_period_days: 7` or Apple IAP
+    // introductory offer. The legacy "auto-grant trial at signup"
+    // model was the audit's finding #2 (Sub1 STATUS 2026-05-24a).
+    // Existing accounts keep their `trialExpiresAt` via the
+    // `backfillTrialFlag` migration which sets `hasUsedTrial: true`
+    // so they can't claim a second trial.
+    trialExpiresAt: null,
     subscriptionTier: "free",
     currentStreak: 0,
     longestStreak: 0,
@@ -595,6 +608,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     "stripeCustomerId",
     "stripeSubscriptionId",
     "appleOriginalTransactionId",
+    "hasUsedTrial",
     "trialExpiresAt",
   ] as const;
 
