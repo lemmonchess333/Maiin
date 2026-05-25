@@ -32,6 +32,11 @@
  * touching the network.
  */
 
+const {
+  resolveSubscriptionUpdate,
+  SOURCE_IOS_IAP,
+} = require("./lib/subscriptionReconciliation");
+
 const BUNDLE_ID = "com.tropos.app";
 
 /**
@@ -108,7 +113,7 @@ async function applySubscriptionToUser({
     // downgrade a one-time purchase entitlement.
     if (userData.planKind === "lifetime") {
       logger.log(
-        `applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`,
+        `applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`
       );
       return {
         tier: userData.subscriptionTier || "pro",
@@ -130,7 +135,7 @@ async function applySubscriptionToUser({
     if (storedExpiresMs > expiresMs) {
       logger.log(
         `applySubscriptionToUser: skipping stale tx for uid=${uid} ` +
-          `(stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`,
+          `(stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`
       );
       return {
         tier: userData.subscriptionTier || "free",
@@ -139,21 +144,47 @@ async function applySubscriptionToUser({
       };
     }
 
+    // Sub1 P2 — every Pro write is platform-tagged so the
+    // cross-platform reconciliation guard (Upgrade.tsx + the
+    // duplicate-detection alert layer) can compare current vs new
+    // source. Helper handles downgrades by nulling the source.
+    const { writeTier, writeSource, conflict, conflictReason } =
+      resolveSubscriptionUpdate({
+        currentTier: userData.subscriptionTier,
+        currentSource: userData.subscriptionSource,
+        incomingTier: isActive ? "pro" : "free",
+        incomingSource: isActive ? SOURCE_IOS_IAP : SOURCE_IOS_IAP,
+      });
+
     txn.set(
       userRef,
       {
-        subscriptionTier: isActive ? "pro" : "free",
+        subscriptionTier: writeTier,
+        subscriptionSource: writeSource,
         appleOriginalTransactionId: originalTransactionId,
         appleProductId: productId,
         subscriptionExpiresAt: expiresAt.toISOString(),
         updatedAt: serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
 
+    if (conflict) {
+      // Forensic-review breadcrumb. Production wires Cloud Logging
+      // (structured) so an operator sees the cross-platform overlap
+      // and can manually cancel/refund the older platform's sub
+      // (Sub1 P2.5, deferred — auto-refund not wired in this slice).
+      logger.warn("applySubscriptionToUser.cross_platform_conflict", {
+        uid,
+        conflictReason,
+        newSource: writeSource,
+      });
+    }
+
     return {
-      tier: isActive ? "pro" : "free",
+      tier: writeTier,
       expiresAt: expiresAt.toISOString(),
+      crossPlatformConflict: conflict,
     };
   });
 }
