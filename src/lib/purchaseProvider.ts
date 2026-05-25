@@ -56,12 +56,18 @@ export interface PurchaseOptions {
   entryPoint?: CheckoutEntryPoint;
   /** Analytics dimension — propagated through paywallAnalytics. */
   source?: string;
+  /** Sub1a P1 — request 7-day free trial. Forwarded to the
+   *  `createCheckoutSession` Cloud Function which is authoritative
+   *  (it checks `hasUsedTrial` server-side). Ignored on Apple IAP:
+   *  Apple's introductory-offer config in App Store Connect drives
+   *  the trial mechanic there. */
+  withTrial?: boolean;
 }
 
 // Detect if running inside a native iOS Capacitor shell
 export function isNativeIOS(): boolean {
   return (
-    typeof window !== 'undefined' &&
+    typeof window !== "undefined" &&
     !!(window as unknown as Record<string, unknown>).Capacitor &&
     /iPhone|iPad|iPod/i.test(navigator.userAgent)
   );
@@ -72,14 +78,16 @@ export function isNativeIOS(): boolean {
 // and the product IDs registered in App Store Connect. If you change the
 // bundle ID, update these product ID prefixes accordingly.
 const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
-  monthly: 'com.tropos.app.pro.monthly',
-  yearly: 'com.tropos.app.pro.yearly',
+  monthly: "com.tropos.app.pro.monthly",
+  yearly: "com.tropos.app.pro.yearly",
 };
 
 // IAP store interface (cordova-plugin-purchase or similar)
 interface IAPStore {
   register: (product: { id: string; type: string }) => void;
-  order: (id: string) => { then: (fn: () => void) => { error: (fn: (e: Error) => void) => void } };
+  order: (id: string) => {
+    then: (fn: () => void) => { error: (fn: (e: Error) => void) => void };
+  };
   refresh: () => void;
   PAID_SUBSCRIPTION: string;
   NON_CONSUMABLE: string;
@@ -99,18 +107,30 @@ interface IAPTransaction {
   appStoreReceipt?: string;
 }
 
-function getIAPStore(): (IAPStore & { latestTransaction?: IAPTransaction }) | undefined {
+function getIAPStore():
+  | (IAPStore & { latestTransaction?: IAPTransaction })
+  | undefined {
   const w = window as unknown as Record<string, Record<string, unknown>>;
-  return (w.CdvPurchase?.store as (IAPStore & { latestTransaction?: IAPTransaction }) | undefined)
-    ?? ((window as unknown as Record<string, unknown>).store as (IAPStore & { latestTransaction?: IAPTransaction }) | undefined);
+  return (
+    (w.CdvPurchase?.store as
+      | (IAPStore & { latestTransaction?: IAPTransaction })
+      | undefined) ??
+    ((window as unknown as Record<string, unknown>).store as
+      | (IAPStore & { latestTransaction?: IAPTransaction })
+      | undefined)
+  );
 }
 
-function readSignedTransactionInfo(tx: IAPTransaction | undefined): string | undefined {
+function readSignedTransactionInfo(
+  tx: IAPTransaction | undefined
+): string | undefined {
   if (!tx) return undefined;
   return tx.signedTransactionInfo ?? tx.nativePurchase?.signedTransactionInfo;
 }
 
-function readOriginalTransactionId(tx: IAPTransaction | undefined): string | undefined {
+function readOriginalTransactionId(
+  tx: IAPTransaction | undefined
+): string | undefined {
   if (!tx) return undefined;
   return tx.originalTransactionId ?? tx.nativePurchase?.originalTransactionId;
 }
@@ -123,7 +143,10 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
   try {
     const store = getIAPStore();
     if (!store) {
-      return { success: false, error: 'In-app purchases are not available on this device.' };
+      return {
+        success: false,
+        error: "In-app purchases are not available on this device.",
+      };
     }
 
     const productId = APPLE_PRODUCT_IDS[plan];
@@ -133,21 +156,28 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
     store.refresh();
 
     return new Promise((resolve) => {
-      store.order(productId)
+      store
+        .order(productId)
         .then(async () => {
           try {
-            const signedTransactionInfo = readSignedTransactionInfo(store.latestTransaction);
+            const signedTransactionInfo = readSignedTransactionInfo(
+              store.latestTransaction
+            );
             if (!signedTransactionInfo) {
-              resolve({ success: false, error: 'No signed transaction to verify.' });
+              resolve({
+                success: false,
+                error: "No signed transaction to verify.",
+              });
               return;
             }
-            const verify = httpsCallable(functions, 'verifyApplePurchase');
+            const verify = httpsCallable(functions, "verifyApplePurchase");
             await verify({ signedTransactionInfo });
             resolve({ success: true });
           } catch (err) {
             resolve({
               success: false,
-              error: err instanceof Error ? err.message : 'Verification failed.',
+              error:
+                err instanceof Error ? err.message : "Verification failed.",
             });
           }
         })
@@ -156,7 +186,10 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'IAP not available. Please try again.',
+      error:
+        err instanceof Error
+          ? err.message
+          : "IAP not available. Please try again.",
     };
   }
 }
@@ -175,22 +208,22 @@ async function purchaseWithStripe(
   plan: PlanId,
   uid: string,
   email: string,
-  options: PurchaseOptions = {},
+  options: PurchaseOptions = {}
 ): Promise<PurchaseResult> {
   const PRICE_IDS = {
-    monthly: import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || 'price_monthly',
-    yearly: import.meta.env.VITE_STRIPE_YEARLY_PRICE_ID || 'price_yearly',
+    monthly: import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || "price_monthly",
+    yearly: import.meta.env.VITE_STRIPE_YEARLY_PRICE_ID || "price_yearly",
   };
 
   const CREATE_CHECKOUT_URL =
-    import.meta.env.VITE_STRIPE_CHECKOUT_URL || '/api/create-checkout-session';
+    import.meta.env.VITE_STRIPE_CHECKOUT_URL || "/api/create-checkout-session";
 
   const entryPoint: CheckoutEntryPoint = options.entryPoint ?? "settings";
 
   try {
     const response = await fetch(CREATE_CHECKOUT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         priceId: PRICE_IDS[plan],
         uid,
@@ -202,21 +235,26 @@ async function purchaseWithStripe(
         // without a wire-format change.
         successPath: entryPoint,
         cancelPath: entryPoint,
+        // Sub1a P1 — server is authoritative; the flag just
+        // expresses the client's intent. Omitted body field reads
+        // as `undefined` server-side which the helper treats as
+        // false (no trial).
+        withTrial: options.withTrial ?? false,
       }),
     });
 
-    if (!response.ok) throw new Error('Failed to create checkout session');
+    if (!response.ok) throw new Error("Failed to create checkout session");
 
     const { url } = await response.json();
     if (url) {
       window.location.href = url;
       return { success: true };
     }
-    throw new Error('No checkout URL returned');
+    throw new Error("No checkout URL returned");
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Something went wrong',
+      error: err instanceof Error ? err.message : "Something went wrong",
     };
   }
 }
@@ -233,7 +271,7 @@ export async function purchase(
   plan: PlanId,
   uid: string,
   email: string,
-  options: PurchaseOptions = {},
+  options: PurchaseOptions = {}
 ): Promise<PurchaseResult> {
   if (isNativeIOS()) {
     return purchaseWithAppleIAP(plan);
@@ -296,24 +334,28 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
  */
 export async function restorePurchases(): Promise<PurchaseResult> {
   if (!isNativeIOS()) {
-    return { success: false, error: 'Restore is only available on iOS.' };
+    return { success: false, error: "Restore is only available on iOS." };
   }
 
   try {
     const store = getIAPStore();
-    if (!store) return { success: false, error: 'IAP not available on this device.' };
+    if (!store)
+      return { success: false, error: "IAP not available on this device." };
     store.refresh();
-    const originalTransactionId = readOriginalTransactionId(store.latestTransaction);
+    const originalTransactionId = readOriginalTransactionId(
+      store.latestTransaction
+    );
     if (!originalTransactionId) {
-      return { success: false, error: 'No prior purchases found.' };
+      return { success: false, error: "No prior purchases found." };
     }
-    const restore = httpsCallable(functions, 'restoreApplePurchases');
+    const restore = httpsCallable(functions, "restoreApplePurchases");
     await restore({ originalTransactionId });
     return { success: true };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Failed to restore purchases.',
+      error:
+        err instanceof Error ? err.message : "Failed to restore purchases.",
     };
   }
 }
