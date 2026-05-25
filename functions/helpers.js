@@ -70,9 +70,7 @@ const PROD_STRIPE_RETURN_URL_ORIGINS = [
   "https://www.troposfit.com",
 ];
 
-const STAGING_STRIPE_RETURN_URL_ORIGINS = [
-  "https://lemmonchess333.github.io",
-];
+const STAGING_STRIPE_RETURN_URL_ORIGINS = ["https://lemmonchess333.github.io"];
 
 const LOCAL_STRIPE_RETURN_URL_ORIGINS = [
   "http://localhost:4173",
@@ -86,8 +84,11 @@ const LOCAL_STRIPE_RETURN_URL_ORIGINS = [
 // Stripe Checkout web flow inside the iOS WebView would risk app
 // rejection. Do not add capacitor://localhost.
 //
-// FOLLOWUP(payment-security): split this allowlist by deploy
-//   environment so staging origins only ship in staging builds.
+// Deploy-env split lives in getDefaultStripeReturnUrlOrigins below
+// (was the previous FOLLOWUP item from the 2026-05-25 security
+// audit; resolved by gating staging origins behind
+// TROPOS_DEPLOY_ENV=staging).
+//
 // FOLLOWUP(payment-security): audit other endpoints accepting
 //   client-controlled URLs (password reset, share links, OAuth
 //   redirect, webhook callbacks).
@@ -102,10 +103,29 @@ function normalizeOriginEntry(entry) {
 }
 
 function getDefaultStripeReturnUrlOrigins() {
-  // FUNCTIONS_EMULATOR is "true" only when running via firebase
-  // emulators:start. Localhost origins are intentionally limited
-  // to emulator runs so deployed prod functions cannot redirect
-  // Stripe Checkout back to a developer's machine.
+  // Three deployment surfaces — different allowlists for each:
+  //
+  //   - emulator (FUNCTIONS_EMULATOR=true): prod + staging + local
+  //     so a developer can checkout against any environment from
+  //     their machine.
+  //   - staging (TROPOS_DEPLOY_ENV=staging): prod + staging — the
+  //     staging deploy serves the staging origin AND has to accept
+  //     prod returns for any cross-env test flows.
+  //   - production (default — no TROPOS_DEPLOY_ENV set, or any
+  //     value other than "staging" / "emulator"): PROD ONLY.
+  //
+  // Fail-secure default: if the env var is missing / typo'd, we
+  // get production-strict behaviour. A staging deploy that forgets
+  // to set TROPOS_DEPLOY_ENV=staging is the safe failure mode (the
+  // staging origin gets rejected, ops sees the rejection, fixes
+  // config — no exfil / open-redirect exposure).
+  //
+  // Operators can still extend or replace via the
+  // STRIPE_RETURN_URL_ORIGINS env var (see
+  // getConfiguredStripeReturnUrlOrigins).
+  //
+  // Audit reference: `docs/audits/2026-05-25-security-audit.md`
+  // finding #1.
   if (process.env.FUNCTIONS_EMULATOR === "true") {
     return [
       ...PROD_STRIPE_RETURN_URL_ORIGINS,
@@ -113,25 +133,27 @@ function getDefaultStripeReturnUrlOrigins() {
       ...LOCAL_STRIPE_RETURN_URL_ORIGINS,
     ];
   }
-  return [
-    ...PROD_STRIPE_RETURN_URL_ORIGINS,
-    ...STAGING_STRIPE_RETURN_URL_ORIGINS,
-  ];
+  if (process.env.TROPOS_DEPLOY_ENV === "staging") {
+    return [
+      ...PROD_STRIPE_RETURN_URL_ORIGINS,
+      ...STAGING_STRIPE_RETURN_URL_ORIGINS,
+    ];
+  }
+  // Production deploy or unrecognised deploy env — strict prod.
+  return [...PROD_STRIPE_RETURN_URL_ORIGINS];
 }
 
 function getConfiguredStripeReturnUrlOrigins() {
   const raw = process.env.STRIPE_RETURN_URL_ORIGINS;
   if (!raw || !raw.trim()) return null;
-  const normalized = raw
-    .split(",")
-    .map(normalizeOriginEntry)
-    .filter(Boolean);
+  const normalized = raw.split(",").map(normalizeOriginEntry).filter(Boolean);
   return normalized.length ? [...new Set(normalized)] : null;
 }
 
 function getAllowedStripeReturnUrlOrigins() {
-  return getConfiguredStripeReturnUrlOrigins() ||
-    getDefaultStripeReturnUrlOrigins();
+  return (
+    getConfiguredStripeReturnUrlOrigins() || getDefaultStripeReturnUrlOrigins()
+  );
 }
 
 /**
@@ -237,18 +259,17 @@ function getAppCorsOptions() {
  * each entry represents a deploy-blessed landing page; do not grow
  * it casually.
  */
-const ALLOWED_RETURN_PATHS = Object.freeze([
-  "settings",
-  "upgrade",
-  "home",
-]);
+const ALLOWED_RETURN_PATHS = Object.freeze(["settings", "upgrade", "home"]);
 
 const ALLOWED_CHECKOUT_OUTCOMES = Object.freeze(["success", "cancelled"]);
 
 function getStripeReturnBaseUrl() {
   // Configurable per deploy. Trailing slash is normalised in so the
   // path concatenation below is invariant to how the env var was set.
-  if (process.env.PUBLIC_APP_BASE_URL && process.env.PUBLIC_APP_BASE_URL.trim()) {
+  if (
+    process.env.PUBLIC_APP_BASE_URL &&
+    process.env.PUBLIC_APP_BASE_URL.trim()
+  ) {
     const raw = process.env.PUBLIC_APP_BASE_URL.trim();
     return raw.endsWith("/") ? raw : `${raw}/`;
   }
