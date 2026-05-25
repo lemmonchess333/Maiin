@@ -97,6 +97,7 @@ async function deleteAccount({
   storageBucket,
   uid,
   logger = console,
+  cancelStripeSubscription,
 }) {
   /* R1A Stress 7 kill-switch — operator-controlled emergency stop
      via `system/config.deletionExecutorEnabled`. Read at start; if
@@ -155,19 +156,65 @@ async function deleteAccount({
     throw killSwitchError;
   }
 
+  // 0. Sub1 R1A pin (b) — cancel active Stripe subscription BEFORE
+  // purging user data. The stripeSubscriptionId lives on the user
+  // doc, which step 5 deletes — so we must read + cancel here
+  // first. Apple IAP subs aren't handled server-side (Apple has no
+  // admin-cancellation API for standard IAP subs; that path is
+  // handled client-side in AccountSection.tsx via the warn-and-
+  // deep-link modal).
+  if (cancelStripeSubscription) {
+    try {
+      const snap = await firestore.collection("users").doc(uid).get();
+      if (snap.exists) {
+        const data = snap.data();
+        if (data && data.stripeSubscriptionId) {
+          await cancelStripeSubscription({
+            uid,
+            stripeSubscriptionId: data.stripeSubscriptionId,
+            logger,
+          });
+        }
+      }
+    } catch (err) {
+      // Locked semantic: provider cancellation MUST NOT block
+      // deletion. Surface the failure to Cloud Logging so an
+      // operator can manually cancel via the Stripe dashboard,
+      // but proceed with the data delete regardless.
+      logger.warn("deleteAccount.subscription_cancel_failed", {
+        uid,
+        error: err && err.message,
+      });
+    }
+  }
+
   // 1. User's own subcollections
   for (const sub of USER_SUBCOLLECTIONS) {
-    const snap = await firestore.collection("users").doc(uid).collection(sub).get();
+    const snap = await firestore
+      .collection("users")
+      .doc(uid)
+      .collection(sub)
+      .get();
     if (!snap.empty) {
-      await deleteRefsInBatches(firestore, snap.docs.map((d) => d.ref));
+      await deleteRefsInBatches(
+        firestore,
+        snap.docs.map((d) => d.ref)
+      );
     }
   }
 
   // 2. Top-level collections keyed by user id
   for (const { parent, sub } of TOP_LEVEL_USER_KEYED_COLLECTIONS) {
-    const snap = await firestore.collection(parent).doc(uid).collection(sub).get();
+    const snap = await firestore
+      .collection(parent)
+      .doc(uid)
+      .collection(sub)
+      .get();
     if (!snap.empty) {
-      await deleteRefsInBatches(firestore, snap.docs.map((d) => d.ref));
+      await deleteRefsInBatches(
+        firestore,
+        snap.docs.map((d) => d.ref)
+      );
     }
   }
 
@@ -180,13 +227,19 @@ async function deleteAccount({
     .where("authorId", "==", uid)
     .get();
   if (!activitiesSnap.empty) {
-    await deleteRefsInBatches(firestore, activitiesSnap.docs.map((d) => d.ref));
+    await deleteRefsInBatches(
+      firestore,
+      activitiesSnap.docs.map((d) => d.ref)
+    );
   }
 
   // 4. Public profile projection — `.catch(() => {})` because a
   // missing doc (e.g. user never finished onboarding) shouldn't
   // block the rest of the flow.
-  await firestore.doc(`users/${uid}/public/profile`).delete().catch(() => {});
+  await firestore
+    .doc(`users/${uid}/public/profile`)
+    .delete()
+    .catch(() => {});
 
   // 5. The user document itself
   await firestore.collection("users").doc(uid).delete();
@@ -197,7 +250,10 @@ async function deleteAccount({
     try {
       await storageBucket.deleteFiles({ prefix });
     } catch (e) {
-      logger.warn(`deleteAccount: storage cleanup for ${prefix} failed`, e.message);
+      logger.warn(
+        `deleteAccount: storage cleanup for ${prefix} failed`,
+        e.message
+      );
     }
   }
 

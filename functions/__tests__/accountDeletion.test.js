@@ -16,7 +16,7 @@
  * mocks (no firebase-admin boot) and assert the order. If the
  * ordering ever regresses — even subtly — the test surfaces it.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -48,9 +48,20 @@ function makeStubs() {
       collection: (sub) => ({
         get: async () => {
           calls.push(`firestore.users.${uid}.${sub}.get`);
-          return opts.userSubSnap ? opts.userSubSnap(sub) : { empty: true, docs: [] };
+          return opts.userSubSnap
+            ? opts.userSubSnap(sub)
+            : { empty: true, docs: [] };
         },
       }),
+      // P0a — user-doc .get() so the new step 0 (read subscription
+      // IDs before purge) doesn't TypeError on the existing stubs.
+      // Default: empty doc, so existing tests skip the subscription-
+      // cancel branch entirely. `makeStubsWithUserDoc` overrides
+      // this to return populated data when the test needs it.
+      get: async () => {
+        calls.push(`firestore.users.${uid}.get`);
+        return { exists: false, data: () => ({}) };
+      },
       delete: async () => {
         calls.push(`firestore.users.${uid}.delete`);
         if (opts.userDocDeleteThrows) throw new Error(opts.userDocDeleteThrows);
@@ -146,11 +157,11 @@ describe("deleteAccount — call ordering", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     const userDocDeleteIdx = stubs.calls.findIndex(
-      (c) => c === `firestore.users.${TEST_UID}.delete`,
+      (c) => c === `firestore.users.${TEST_UID}.delete`
     );
     for (const sub of USER_SUBCOLLECTIONS) {
       const subGetIdx = stubs.calls.findIndex(
-        (c) => c === `firestore.users.${TEST_UID}.${sub}.get`,
+        (c) => c === `firestore.users.${TEST_UID}.${sub}.get`
       );
       expect(subGetIdx).toBeGreaterThanOrEqual(0);
       expect(subGetIdx).toBeLessThan(userDocDeleteIdx);
@@ -161,8 +172,12 @@ describe("deleteAccount — call ordering", () => {
     const stubs = makeStubs();
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
-    const storageIdx = stubs.calls.findIndex((c) => c.startsWith("storage.deleteFiles"));
-    const authIdx = stubs.calls.findIndex((c) => c.startsWith("auth.deleteUser"));
+    const storageIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("storage.deleteFiles")
+    );
+    const authIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("auth.deleteUser")
+    );
     expect(storageIdx).toBeGreaterThanOrEqual(0);
     expect(authIdx).toBeGreaterThan(storageIdx);
   });
@@ -175,9 +190,11 @@ describe("deleteAccount — call ordering", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     const userDocDeleteIdx = stubs.calls.findIndex(
-      (c) => c === `firestore.users.${TEST_UID}.delete`,
+      (c) => c === `firestore.users.${TEST_UID}.delete`
     );
-    const storageIdx = stubs.calls.findIndex((c) => c.startsWith("storage.deleteFiles"));
+    const storageIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("storage.deleteFiles")
+    );
     expect(userDocDeleteIdx).toBeGreaterThanOrEqual(0);
     expect(storageIdx).toBeGreaterThan(userDocDeleteIdx);
   });
@@ -209,7 +226,7 @@ describe("deleteAccount — failure semantics", () => {
     };
 
     await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow(
-      "firestore boom",
+      "firestore boom"
     );
 
     const authCalled = stubs.calls.some((c) => c.startsWith("auth.deleteUser"));
@@ -245,7 +262,9 @@ describe("deleteAccount — failure semantics", () => {
 
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
-    const prefixesCalled = stubs.calls.filter((c) => c.startsWith("storage.deleteFiles"));
+    const prefixesCalled = stubs.calls.filter((c) =>
+      c.startsWith("storage.deleteFiles")
+    );
     expect(prefixesCalled).toHaveLength(2);
     expect(prefixesCalled[0]).toContain("progress-photos/");
     expect(prefixesCalled[1]).toContain("profile-photos/");
@@ -271,7 +290,9 @@ describe("deleteAccount — failure semantics", () => {
     };
 
     // Should NOT throw — the missing doc is absorbed.
-    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).resolves.toBeUndefined();
+    await expect(
+      deleteAccount({ ...stubs, uid: TEST_UID })
+    ).resolves.toBeUndefined();
     const authCalled = stubs.calls.some((c) => c.startsWith("auth.deleteUser"));
     expect(authCalled).toBe(true);
   });
@@ -286,7 +307,9 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     for (const sub of USER_SUBCOLLECTIONS) {
-      const called = stubs.calls.includes(`firestore.users.${TEST_UID}.${sub}.get`);
+      const called = stubs.calls.includes(
+        `firestore.users.${TEST_UID}.${sub}.get`
+      );
       expect(called).toBe(true);
     }
   });
@@ -296,7 +319,9 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     for (const { parent, sub } of TOP_LEVEL_USER_KEYED_COLLECTIONS) {
-      const called = stubs.calls.includes(`firestore.${parent}.${TEST_UID}.${sub}.get`);
+      const called = stubs.calls.includes(
+        `firestore.${parent}.${TEST_UID}.${sub}.get`
+      );
       expect(called).toBe(true);
     }
   });
@@ -309,10 +334,10 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     const activityQuery = stubs.calls.find((c) =>
-      c.startsWith("firestore.activities.where."),
+      c.startsWith("firestore.activities.where.")
     );
     expect(activityQuery).toBe(
-      `firestore.activities.where.authorId.==.${TEST_UID}.get`,
+      `firestore.activities.where.authorId.==.${TEST_UID}.get`
     );
   });
 
@@ -321,7 +346,7 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
     const publicDelete = stubs.calls.find((c) =>
-      c.includes(`users/${TEST_UID}/public/profile`),
+      c.includes(`users/${TEST_UID}/public/profile`)
     );
     expect(publicDelete).toBeDefined();
   });
@@ -371,6 +396,147 @@ describe("deleteAccount — coverage of cleanup targets", () => {
 
     const commitCall = stubs.calls.find((c) => c.startsWith("batch.commit"));
     expect(commitCall).toBe("batch.commit(2)");
+  });
+});
+
+/**
+ * P0a — Sub1 R1A pin (b) zombie-charge fix.
+ *
+ * Apple was verified 2026-05-24 to have NO admin-cancellation API
+ * for standard IAP subscriptions — that path is handled entirely
+ * client-side (P0b, see AccountSection.tsx) via the warn-and-deep-
+ * link modal. The server-side executor therefore only handles
+ * Stripe via the `cancelStripeSubscription` injection.
+ *
+ * The cancellation step MUST run BEFORE the user-doc delete (step
+ * 5) because that's where `stripeSubscriptionId` lives. If we
+ * deleted the doc first, the cancellation call would have no ID
+ * to act on. The test asserts ordering via the shared `calls` log.
+ */
+
+/** Extends `makeStubs()` so `firestore.collection("users").doc(uid)`
+ *  also supports `.get()` returning `{exists, data()}` — needed for
+ *  the executor's new step 0 (read subscription IDs before purge).
+ */
+function makeStubsWithUserDoc({ userData = null, userDocExists = true } = {}) {
+  const stubs = makeStubs();
+  const calls = stubs.calls;
+  const origCollection = stubs.firestore.collection;
+  stubs.firestore.collection = function (name) {
+    const sub = origCollection.call(this, name);
+    if (name === "users") {
+      return {
+        doc: (uid) => {
+          const inner = sub.doc(uid);
+          return {
+            ...inner,
+            get: async () => {
+              calls.push(`firestore.users.${uid}.get`);
+              return {
+                exists: userDocExists,
+                data: () => userData ?? {},
+              };
+            },
+          };
+        },
+      };
+    }
+    return sub;
+  };
+  return stubs;
+}
+
+describe("deleteAccount — P0a Stripe-subscription cancellation", () => {
+  it("completes the deletion even when cancelStripeSubscription throws (locked: provider failure must not block deletion)", async () => {
+    const stubs = makeStubsWithUserDoc({
+      userData: { stripeSubscriptionId: "sub_failing" },
+    });
+    const cancelStripeSubscription = vi
+      .fn()
+      .mockRejectedValue(new Error("stripe-network-blip"));
+    const warnSpy = vi.fn();
+    stubs.logger = { warn: warnSpy };
+
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      cancelStripeSubscription,
+    });
+
+    // The cancel was attempted...
+    expect(cancelStripeSubscription).toHaveBeenCalledTimes(1);
+    // ...the failure was absorbed + logged...
+    expect(warnSpy).toHaveBeenCalledWith(
+      "deleteAccount.subscription_cancel_failed",
+      expect.objectContaining({ uid: TEST_UID })
+    );
+    // ...and deletion still reached the final auth-user delete.
+    expect(stubs.calls).toContain(`auth.deleteUser(${TEST_UID})`);
+  });
+
+  it("does NOT call cancelStripeSubscription when the user doc doesn't exist (already-purged or never-onboarded)", async () => {
+    const stubs = makeStubsWithUserDoc({ userDocExists: false });
+    const cancelStripeSubscription = vi.fn();
+
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      cancelStripeSubscription,
+    });
+
+    expect(cancelStripeSubscription).not.toHaveBeenCalled();
+    // Deletion proceeded — missing user doc is not a blocker.
+    expect(stubs.calls).toContain(`auth.deleteUser(${TEST_UID})`);
+  });
+
+  it("does NOT call cancelStripeSubscription when the user doc lacks stripeSubscriptionId (free user)", async () => {
+    const stubs = makeStubsWithUserDoc({
+      userData: { displayName: "free user, no sub" },
+    });
+    const cancelStripeSubscription = vi.fn();
+
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      cancelStripeSubscription,
+    });
+
+    expect(cancelStripeSubscription).not.toHaveBeenCalled();
+    // Deletion still proceeded all the way to auth.
+    expect(stubs.calls).toContain(`auth.deleteUser(${TEST_UID})`);
+  });
+
+  it("calls cancelStripeSubscription with the user's stripeSubscriptionId BEFORE the user-doc is deleted", async () => {
+    const stubs = makeStubsWithUserDoc({
+      userData: { stripeSubscriptionId: "sub_abc123" },
+    });
+    const cancelStripeSubscription = vi.fn(async ({ stripeSubscriptionId }) => {
+      stubs.calls.push(`cancelStripeSubscription(${stripeSubscriptionId})`);
+    });
+
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      cancelStripeSubscription,
+    });
+
+    // The injected function was called with the right ID.
+    expect(cancelStripeSubscription).toHaveBeenCalledTimes(1);
+    expect(cancelStripeSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ stripeSubscriptionId: "sub_abc123" })
+    );
+
+    // Sequencing pin: cancellation happens before the user-doc
+    // delete (step 5). If we ever invert this we lose the ID.
+    const cancelIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("cancelStripeSubscription(")
+    );
+    const userDeleteIdx = stubs.calls.indexOf(
+      `firestore.users.${TEST_UID}.delete`
+    );
+    expect(cancelIdx).toBeGreaterThanOrEqual(0);
+    expect(userDeleteIdx).toBeGreaterThanOrEqual(0);
+    expect(cancelIdx).toBeLessThan(userDeleteIdx);
   });
 });
 
