@@ -58,7 +58,7 @@ describe("pruneOldTimestamps", () => {
     const result = pruneOldTimestamps(
       [9_500, "9500", null, undefined, 9_800],
       10_000,
-      1_000,
+      1_000
     );
     expect(result).toEqual([9_500, 9_800]);
   });
@@ -83,27 +83,27 @@ describe("computeEffectiveTier", () => {
       computeEffectiveTier({
         subscriptionTier: "pro",
         trialExpiresAt: "2020-01-01T00:00:00Z",
-      }),
+      })
     ).toBe("pro");
   });
 
   it("returns 'pro' for an unexpired trial", () => {
     const future = new Date(Date.now() + 86_400_000).toISOString();
-    expect(
-      computeEffectiveTier({ trialExpiresAt: future }, new Date()),
-    ).toBe("pro");
+    expect(computeEffectiveTier({ trialExpiresAt: future }, new Date())).toBe(
+      "pro"
+    );
   });
 
   it("returns 'free' for an expired trial", () => {
     const past = new Date(Date.now() - 86_400_000).toISOString();
-    expect(
-      computeEffectiveTier({ trialExpiresAt: past }, new Date()),
-    ).toBe("free");
+    expect(computeEffectiveTier({ trialExpiresAt: past }, new Date())).toBe(
+      "free"
+    );
   });
 
   it("returns 'free' when trialExpiresAt is malformed", () => {
     expect(
-      computeEffectiveTier({ trialExpiresAt: "not-a-date" }, new Date()),
+      computeEffectiveTier({ trialExpiresAt: "not-a-date" }, new Date())
     ).toBe("free");
   });
 
@@ -119,17 +119,27 @@ describe("currentMonthCount", () => {
   });
 
   it("returns 0 when the stored month differs (rollover)", () => {
-    expect(currentMonthCount({ month: "2026-04", count: 9 }, "2026-05")).toBe(0);
+    expect(currentMonthCount({ month: "2026-04", count: 9 }, "2026-05")).toBe(
+      0
+    );
   });
 
   it("returns the count when months match", () => {
-    expect(currentMonthCount({ month: "2026-05", count: 7 }, "2026-05")).toBe(7);
+    expect(currentMonthCount({ month: "2026-05", count: 7 }, "2026-05")).toBe(
+      7
+    );
   });
 
   it("coerces non-number count to 0 via Number()", () => {
-    expect(currentMonthCount({ month: "2026-05", count: "5" }, "2026-05")).toBe(5);
-    expect(currentMonthCount({ month: "2026-05", count: null }, "2026-05")).toBe(0);
-    expect(currentMonthCount({ month: "2026-05", count: NaN }, "2026-05")).toBe(0);
+    expect(currentMonthCount({ month: "2026-05", count: "5" }, "2026-05")).toBe(
+      5
+    );
+    expect(
+      currentMonthCount({ month: "2026-05", count: null }, "2026-05")
+    ).toBe(0);
+    expect(currentMonthCount({ month: "2026-05", count: NaN }, "2026-05")).toBe(
+      0
+    );
   });
 });
 
@@ -202,20 +212,37 @@ describe("isAllowedStripeReturnUrl", () => {
 
   it("allows the deployed prod origin by default", () => {
     // Bedrock: the canonical prod origin must always be on the list.
-    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings?x=1")).toBe(true);
+    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings?x=1")).toBe(
+      true
+    );
   });
 
   it("allows the www variant in defaults", () => {
     // www.troposfit.com is listed alongside the bare domain so a
     // user landing on the www host doesn't get a checkout bounce.
-    expect(isAllowedStripeReturnUrl("https://www.troposfit.com/settings")).toBe(true);
+    expect(isAllowedStripeReturnUrl("https://www.troposfit.com/settings")).toBe(
+      true
+    );
   });
 
-  it("allows the deployed GitHub Pages staging origin by default", () => {
-    // GitHub Pages is currently the staging surface; staying in
-    // defaults until per-env STRIPE_RETURN_URL_ORIGINS wiring lands.
+  it("REJECTS the GitHub Pages staging origin in default-prod mode (security audit 2026-05-25 #1)", () => {
+    // Pre-fix this test asserted that staging was allowed by
+    // default — that was the audit finding. Production deploys
+    // must reject staging origins unless TROPOS_DEPLOY_ENV=staging
+    // (or operator explicitly sets STRIPE_RETURN_URL_ORIGINS).
     expect(
-      isAllowedStripeReturnUrl("https://lemmonchess333.github.io/Maiin/settings?checkout=success"),
+      isAllowedStripeReturnUrl(
+        "https://lemmonchess333.github.io/Maiin/settings?checkout=success"
+      )
+    ).toBe(false);
+  });
+
+  it("allows the GitHub Pages staging origin when TROPOS_DEPLOY_ENV=staging", () => {
+    process.env.TROPOS_DEPLOY_ENV = "staging";
+    expect(
+      isAllowedStripeReturnUrl(
+        "https://lemmonchess333.github.io/Maiin/settings?checkout=success"
+      )
     ).toBe(true);
   });
 
@@ -223,8 +250,12 @@ describe("isAllowedStripeReturnUrl", () => {
     // Without FUNCTIONS_EMULATOR=true, localhost is intentionally
     // off the allowlist so a prod deploy can never redirect back to
     // a developer's box.
-    expect(isAllowedStripeReturnUrl("http://localhost:4173/Maiin/settings")).toBe(false);
-    expect(isAllowedStripeReturnUrl("http://127.0.0.1:4173/Maiin/settings")).toBe(false);
+    expect(
+      isAllowedStripeReturnUrl("http://localhost:4173/Maiin/settings")
+    ).toBe(false);
+    expect(
+      isAllowedStripeReturnUrl("http://127.0.0.1:4173/Maiin/settings")
+    ).toBe(false);
   });
 
   it("allows localhost origins only when FUNCTIONS_EMULATOR=true", () => {
@@ -232,15 +263,25 @@ describe("isAllowedStripeReturnUrl", () => {
     // the only context where developer-machine origins are valid
     // return targets.
     process.env.FUNCTIONS_EMULATOR = "true";
-    expect(isAllowedStripeReturnUrl("http://localhost:4173/Maiin/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("http://127.0.0.1:4173/Maiin/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("http://localhost:5173/Maiin/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("http://127.0.0.1:5173/Maiin/settings")).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl("http://localhost:4173/Maiin/settings")
+    ).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl("http://127.0.0.1:4173/Maiin/settings")
+    ).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl("http://localhost:5173/Maiin/settings")
+    ).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl("http://127.0.0.1:5173/Maiin/settings")
+    ).toBe(true);
   });
 
   it("rejects arbitrary external origins", () => {
     // The negative bedrock: anything off-allowlist must reject.
-    expect(isAllowedStripeReturnUrl("https://evil.example/checkout-done")).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://evil.example/checkout-done")).toBe(
+      false
+    );
   });
 
   it("rejects protocol-relative URLs", () => {
@@ -255,7 +296,7 @@ describe("isAllowedStripeReturnUrl", () => {
     // Even though they parse cleanly as URLs, the protocol gate
     // drops them before the allowlist lookup runs.
     expect(
-      isAllowedStripeReturnUrl("data:text/html,<script>alert(1)</script>"),
+      isAllowedStripeReturnUrl("data:text/html,<script>alert(1)</script>")
     ).toBe(false);
   });
 
@@ -280,9 +321,9 @@ describe("isAllowedStripeReturnUrl", () => {
     // A naive `endsWith("troposfit.com")` check would let
     // `https://troposfit.com.evil.com/x` through. Origin-equality
     // is what stops it.
-    expect(
-      isAllowedStripeReturnUrl("https://troposfit.com.evil.com/x"),
-    ).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://troposfit.com.evil.com/x")).toBe(
+      false
+    );
   });
 
   it("Unicode lookalike of a listed origin collapses via IDNA to the legit origin", () => {
@@ -298,38 +339,35 @@ describe("isAllowedStripeReturnUrl", () => {
     // domain visually similar to a real one) would also normalise,
     // but normalises to that attacker-owned ASCII form which is
     // not on the allowlist — see next test.
-    expect(
-      isAllowedStripeReturnUrl(
-        "https://lemmonchess333．github．io/x",
-      ),
-    ).toBe(true);
+    // Pre-audit this test used a staging origin (lemmonchess333.github.io)
+    // as the lookalike target; switching to the prod origin because
+    // staging is no longer on the default allowlist post-#audit-#1.
+    expect(isAllowedStripeReturnUrl("https://troposfit．com/x")).toBe(true);
   });
 
   it("rejects Unicode lookalike pointing at an unlisted origin", () => {
     // The dangerous case: an attacker-owned domain (`evil.com`)
     // wrapped in full-width characters. IDNA normalises to plain
     // `evil.com`, which is not on the allowlist → rejected.
-    expect(
-      isAllowedStripeReturnUrl("https://ｅvil．com/x"),
-    ).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://ｅvil．com/x")).toBe(false);
   });
 
   it("rejects non-default-port mismatches", () => {
     // `parsed.origin` includes the port when it differs from the
     // protocol's default — `https://troposfit.com:8443` has origin
     // `https://troposfit.com:8443`, which is not on the allowlist.
-    expect(
-      isAllowedStripeReturnUrl("https://troposfit.com:8443/x"),
-    ).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://troposfit.com:8443/x")).toBe(
+      false
+    );
   });
 
   it("rejects userinfo confusion", () => {
     // `https://troposfit.com@evil.com/x` — naive substring checks
     // see "troposfit.com" and accept. Origin-equality drops it
     // because `parsed.origin` is `https://evil.com`.
-    expect(
-      isAllowedStripeReturnUrl("https://troposfit.com@evil.com/x"),
-    ).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://troposfit.com@evil.com/x")).toBe(
+      false
+    );
   });
 
   it("rejects malformed values and non-strings", () => {
@@ -344,14 +382,16 @@ describe("isAllowedStripeReturnUrl", () => {
   it("normalises case in scheme and host", () => {
     // `new URL(...)` lowercases scheme + host into `.origin`, so
     // mixed-case input matches the lower-case allowlist entry.
-    expect(
-      isAllowedStripeReturnUrl("HTTPS://Troposfit.COM/settings?x=1"),
-    ).toBe(true);
+    expect(isAllowedStripeReturnUrl("HTTPS://Troposfit.COM/settings?x=1")).toBe(
+      true
+    );
   });
 
   it("normalises default ports out of the origin", () => {
     // `:443` is the default for https, so `parsed.origin` drops it.
-    expect(isAllowedStripeReturnUrl("https://troposfit.com:443/settings")).toBe(true);
+    expect(isAllowedStripeReturnUrl("https://troposfit.com:443/settings")).toBe(
+      true
+    );
   });
 
   it("STRIPE_RETURN_URL_ORIGINS replaces, not extends, defaults (and normalises trailing slash)", () => {
@@ -361,23 +401,43 @@ describe("isAllowedStripeReturnUrl", () => {
     // default allowlist is NOT also active — production-by-default
     // origins must reject.
     process.env.STRIPE_RETURN_URL_ORIGINS = "https://app.example.com/";
-    expect(isAllowedStripeReturnUrl("https://app.example.com/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings")).toBe(false);
+    expect(isAllowedStripeReturnUrl("https://app.example.com/settings")).toBe(
+      true
+    );
+    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings")).toBe(
+      false
+    );
   });
 
   it("honours STRIPE_RETURN_URL_ORIGINS comma-separated lists", () => {
-    process.env.STRIPE_RETURN_URL_ORIGINS = "https://app.example.com, https://staging.example.com";
-    expect(isAllowedStripeReturnUrl("https://app.example.com/settings?checkout=success")).toBe(true);
-    expect(isAllowedStripeReturnUrl("https://staging.example.com/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("https://lemmonchess333.github.io/Maiin/settings?checkout=success")).toBe(false);
+    process.env.STRIPE_RETURN_URL_ORIGINS =
+      "https://app.example.com, https://staging.example.com";
+    expect(
+      isAllowedStripeReturnUrl(
+        "https://app.example.com/settings?checkout=success"
+      )
+    ).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl("https://staging.example.com/settings")
+    ).toBe(true);
+    expect(
+      isAllowedStripeReturnUrl(
+        "https://lemmonchess333.github.io/Maiin/settings?checkout=success"
+      )
+    ).toBe(false);
   });
 
   it("ignores invalid entries in STRIPE_RETURN_URL_ORIGINS", () => {
     // A garbage entry shouldn't poison the rest of the list — and
     // shouldn't fall through to the defaults either (replace-not-extend).
-    process.env.STRIPE_RETURN_URL_ORIGINS = "not-a-url, https://app.example.com";
-    expect(isAllowedStripeReturnUrl("https://app.example.com/settings")).toBe(true);
-    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings")).toBe(false);
+    process.env.STRIPE_RETURN_URL_ORIGINS =
+      "not-a-url, https://app.example.com";
+    expect(isAllowedStripeReturnUrl("https://app.example.com/settings")).toBe(
+      true
+    );
+    expect(isAllowedStripeReturnUrl("https://troposfit.com/settings")).toBe(
+      false
+    );
   });
 });
 
@@ -427,13 +487,17 @@ describe("getStripeReturnBaseUrl", () => {
     // Deployed prod with no env override → staging origin (today's
     // only HTTPS surface). Switch the default to troposfit.com once
     // that origin is live.
-    expect(getStripeReturnBaseUrl()).toBe("https://lemmonchess333.github.io/Maiin/");
+    expect(getStripeReturnBaseUrl()).toBe(
+      "https://lemmonchess333.github.io/Maiin/"
+    );
   });
 
   it("ignores a blank/whitespace PUBLIC_APP_BASE_URL", () => {
     // A whitespace-only env var should not be treated as configured.
     process.env.PUBLIC_APP_BASE_URL = "   ";
-    expect(getStripeReturnBaseUrl()).toBe("https://lemmonchess333.github.io/Maiin/");
+    expect(getStripeReturnBaseUrl()).toBe(
+      "https://lemmonchess333.github.io/Maiin/"
+    );
   });
 });
 
@@ -452,14 +516,14 @@ describe("buildStripeReturnUrl", () => {
   it("builds a success URL for a listed path", () => {
     process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
     expect(buildStripeReturnUrl("settings", "success")).toBe(
-      "https://troposfit.com/settings?checkout=success",
+      "https://troposfit.com/settings?checkout=success"
     );
   });
 
   it("builds a cancelled URL for a listed path", () => {
     process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
     expect(buildStripeReturnUrl("upgrade", "cancelled")).toBe(
-      "https://troposfit.com/upgrade?checkout=cancelled",
+      "https://troposfit.com/upgrade?checkout=cancelled"
     );
   });
 
@@ -494,7 +558,7 @@ describe("buildStripeReturnUrl", () => {
     process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
     for (const path of ALLOWED_RETURN_PATHS) {
       expect(buildStripeReturnUrl(path, "success")).toBe(
-        `https://troposfit.com/${path}?checkout=success`,
+        `https://troposfit.com/${path}?checkout=success`
       );
     }
   });
@@ -504,7 +568,7 @@ describe("buildStripeReturnUrl", () => {
     process.env.PUBLIC_APP_BASE_URL = "https://troposfit.com/";
     for (const outcome of ALLOWED_CHECKOUT_OUTCOMES) {
       expect(buildStripeReturnUrl("settings", outcome)).toBe(
-        `https://troposfit.com/settings?checkout=${outcome}`,
+        `https://troposfit.com/settings?checkout=${outcome}`
       );
     }
   });
@@ -513,12 +577,13 @@ describe("buildStripeReturnUrl", () => {
 describe("isAllowedAppOrigin", () => {
   // Same env-snapshot pattern as the rest of the suite — each test
   // starts from a clean "deployed-prod function" baseline; tests
-  // that need emulator semantics opt in explicitly.
+  // that need emulator / staging semantics opt in explicitly.
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
     delete process.env.STRIPE_RETURN_URL_ORIGINS;
     delete process.env.FUNCTIONS_EMULATOR;
+    delete process.env.TROPOS_DEPLOY_ENV;
   });
 
   afterEach(() => {
@@ -533,8 +598,38 @@ describe("isAllowedAppOrigin", () => {
     expect(isAllowedAppOrigin("https://www.troposfit.com")).toBe(true);
   });
 
-  it("permits the GitHub Pages staging origin", () => {
+  // Sub1 P2 / security audit 2026-05-25 finding #1:
+  // staging origins are NOT permitted in default production deploys.
+  // Production deploys ship with TROPOS_DEPLOY_ENV unset (or set to
+  // anything other than "staging"/"emulator"), which yields the
+  // strict prod allowlist.
+  it("REJECTS the GitHub Pages staging origin in default-prod mode", () => {
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(false);
+  });
+
+  it("permits the GitHub Pages staging origin when TROPOS_DEPLOY_ENV=staging", () => {
+    process.env.TROPOS_DEPLOY_ENV = "staging";
     expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(true);
+    // Staging deploys still accept production origins (cross-env test flows).
+    expect(isAllowedAppOrigin("https://troposfit.com")).toBe(true);
+  });
+
+  it("permits the GitHub Pages staging origin when FUNCTIONS_EMULATOR=true", () => {
+    process.env.FUNCTIONS_EMULATOR = "true";
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(true);
+  });
+
+  it("falls through to prod-strict for typo'd / unknown deploy env values", () => {
+    // Fail-secure: unrecognised env var values must NOT silently
+    // grant staging access. A misconfigured staging deploy gets
+    // staging-origin rejection (visible failure) rather than
+    // silently inheriting the relaxed allowlist.
+    process.env.TROPOS_DEPLOY_ENV = "stagingg"; // typo
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(false);
+    process.env.TROPOS_DEPLOY_ENV = "STAGING"; // case sensitivity
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(false);
+    process.env.TROPOS_DEPLOY_ENV = "prod";
+    expect(isAllowedAppOrigin("https://lemmonchess333.github.io")).toBe(false);
   });
 
   it("rejects an arbitrary external origin", () => {
@@ -615,7 +710,7 @@ describe("getAppCorsOptions", () => {
     // Access-Control-Allow-Origin to the allowed value.
     const { err, allowed } = await invokeOrigin(
       getAppCorsOptions(),
-      "https://troposfit.com",
+      "https://troposfit.com"
     );
     expect(err).toBeNull();
     expect(allowed).toBe(true);
@@ -631,7 +726,10 @@ describe("getAppCorsOptions", () => {
     // The Error path short-circuits cors and returns a 500 to the
     // caller — the inner handler never runs, so a forbidden origin
     // can't even attempt a Stripe call.
-    const { err } = await invokeOrigin(getAppCorsOptions(), "https://evil.example");
+    const { err } = await invokeOrigin(
+      getAppCorsOptions(),
+      "https://evil.example"
+    );
     expect(err).toBeInstanceOf(Error);
     expect(err.message).toMatch(/CORS/i);
   });
@@ -641,7 +739,7 @@ describe("getAppCorsOptions", () => {
     // wired correctly into the cors config (not just the predicate).
     const { err } = await invokeOrigin(
       getAppCorsOptions(),
-      "http://localhost:4173",
+      "http://localhost:4173"
     );
     expect(err).toBeInstanceOf(Error);
   });
@@ -650,7 +748,7 @@ describe("getAppCorsOptions", () => {
     process.env.FUNCTIONS_EMULATOR = "true";
     const { err, allowed } = await invokeOrigin(
       getAppCorsOptions(),
-      "http://localhost:4173",
+      "http://localhost:4173"
     );
     expect(err).toBeNull();
     expect(allowed).toBe(true);
