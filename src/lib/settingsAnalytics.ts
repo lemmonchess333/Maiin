@@ -29,6 +29,7 @@ export type SettingsSection =
   | "shoes"
   | "notifications"
   | "subscription"
+  | "ai_usage"
   | "data_storage"
   | "account";
 
@@ -64,7 +65,7 @@ export interface SettingsEventMetadata {
 
 export function track(
   event: SettingsEvent,
-  metadata: SettingsEventMetadata = {},
+  metadata: SettingsEventMetadata = {}
 ): void {
   emit("settings", event, metadata as Record<string, unknown>);
 }
