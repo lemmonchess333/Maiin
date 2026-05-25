@@ -155,6 +155,25 @@ exports.deleteMyAccount = functions
         errorCode: err.errorCode || "requires-recent-auth",
       });
     }
+    // Security audit 2026-05-25 finding #3 follow-up — revocation-aware
+    // re-verification. Callable framework verifies the token signature
+    // + audience but skips `tokensValidAfterTime`, so a revoked-session
+    // user still has a working context.auth until natural expiry. For
+    // an irreversible Admin-SDK delete that's an unacceptable gap;
+    // we extract the raw token and run verifyIdToken(token, true) to
+    // catch the revocation case explicitly.
+    try {
+      await accountDeletionAuth.assertTokenNotRevoked({
+        rawRequest: context.rawRequest,
+        verifyIdToken: (token, checkRevoked) =>
+          admin.auth().verifyIdToken(token, checkRevoked),
+      });
+    } catch (err) {
+      const httpsCode = err.httpsErrorCode || "failed-precondition";
+      throw new functions.https.HttpsError(httpsCode, err.message, {
+        errorCode: err.errorCode || "token-revoked",
+      });
+    }
     const uid = context.auth.uid;
 
     try {
