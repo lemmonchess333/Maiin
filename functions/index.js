@@ -164,6 +164,49 @@ exports.deleteMyAccount = functions
         // the dotted event names (`deleteAccount.kill_switch_*`)
         // become queryable jsonPayload fields, not opaque textPayload.
         logger: functions.logger,
+        // Sub1 R1A pin (b) — cancel active Stripe sub before purge.
+        // Apple IAP has no admin-cancellation API (verified
+        // 2026-05-24); that path is handled client-side via the
+        // warn-and-deep-link modal in AccountSection.tsx.
+        // Errors are absorbed inside deleteAccount — this fn must
+        // throw to signal failure, the executor logs + proceeds.
+        cancelStripeSubscription: async ({
+          stripeSubscriptionId,
+          logger: log,
+        }) => {
+          const stripeKey =
+            process.env.STRIPE_SECRET_KEY ||
+            (functions.config().stripe && functions.config().stripe.secret_key);
+          if (!stripeKey) {
+            // Missing key is operator misconfiguration, not user
+            // error — let the executor log + proceed; an operator
+            // alert via Cloud Logging gets the human attention.
+            throw new Error(
+              "cancelStripeSubscription: STRIPE_SECRET_KEY not configured"
+            );
+          }
+          const stripe = require("stripe")(stripeKey);
+          try {
+            await stripe.subscriptions.cancel(stripeSubscriptionId);
+            log.info("deleteAccount.subscription_canceled", {
+              uid,
+              stripeSubscriptionId,
+            });
+          } catch (err) {
+            // Stripe returns 404 (resource_missing) when the sub
+            // is already cancelled or never existed — that's our
+            // desired end state, not a failure. Surface other
+            // errors so the executor's catch can absorb + log.
+            if (err && err.code === "resource_missing") {
+              log.info("deleteAccount.subscription_already_gone", {
+                uid,
+                stripeSubscriptionId,
+              });
+              return;
+            }
+            throw err;
+          }
+        },
       });
       return { ok: true };
     } catch (err) {
@@ -698,12 +741,10 @@ exports.analyzeFood = functions
         // Vertex AI is returning bad data. Checked before rate limit so
         // disabled-state requests don't eat a user's quota window.
         if (!(await isFlagEnabled("geminiEnabled"))) {
-          res
-            .status(503)
-            .json({
-              error:
-                "AI food scan is temporarily unavailable. Please use manual entry.",
-            });
+          res.status(503).json({
+            error:
+              "AI food scan is temporarily unavailable. Please use manual entry.",
+          });
           return;
         }
 
@@ -715,12 +756,10 @@ exports.analyzeFood = functions
           600_000
         );
         if (limited) {
-          res
-            .status(429)
-            .json({
-              error:
-                "Rate limit reached. Please wait before analyzing more food.",
-            });
+          res.status(429).json({
+            error:
+              "Rate limit reached. Please wait before analyzing more food.",
+          });
           return;
         }
 
@@ -739,14 +778,11 @@ exports.analyzeFood = functions
             });
             return;
           }
-          res
-            .status(429)
-            .json({
-              error:
-                "Monthly scan limit reached. Upgrade to Pro for more scans.",
-              remaining: 0,
-              limit: quota.limit,
-            });
+          res.status(429).json({
+            error: "Monthly scan limit reached. Upgrade to Pro for more scans.",
+            remaining: 0,
+            limit: quota.limit,
+          });
           return;
         }
 
@@ -874,12 +910,10 @@ exports.analyzeFoodText = functions
         // Remote kill switch — shared flag with analyzeFood. One toggle
         // disables both modalities so scan pricing stays predictable.
         if (!(await isFlagEnabled("geminiEnabled"))) {
-          res
-            .status(503)
-            .json({
-              error:
-                "AI food scan is temporarily unavailable. Please use manual entry.",
-            });
+          res.status(503).json({
+            error:
+              "AI food scan is temporarily unavailable. Please use manual entry.",
+          });
           return;
         }
 
@@ -891,12 +925,10 @@ exports.analyzeFoodText = functions
           600_000
         );
         if (limited) {
-          res
-            .status(429)
-            .json({
-              error:
-                "Rate limit reached. Please wait before analyzing more food.",
-            });
+          res.status(429).json({
+            error:
+              "Rate limit reached. Please wait before analyzing more food.",
+          });
           return;
         }
 
@@ -912,14 +944,11 @@ exports.analyzeFoodText = functions
             });
             return;
           }
-          res
-            .status(429)
-            .json({
-              error:
-                "Monthly scan limit reached. Upgrade to Pro for more scans.",
-              remaining: 0,
-              limit: quota.limit,
-            });
+          res.status(429).json({
+            error: "Monthly scan limit reached. Upgrade to Pro for more scans.",
+            remaining: 0,
+            limit: quota.limit,
+          });
           return;
         }
 
@@ -1178,12 +1207,9 @@ exports.createCheckoutSession = functions
         }
 
         if (!priceId || !successPath || !cancelPath) {
-          res
-            .status(400)
-            .json({
-              error:
-                "Missing required fields: priceId, successPath, cancelPath",
-            });
+          res.status(400).json({
+            error: "Missing required fields: priceId, successPath, cancelPath",
+          });
           return;
         }
 
