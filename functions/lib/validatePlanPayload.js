@@ -146,6 +146,13 @@ function validatePlanPayload({ profileData, programState, weekSchedule }) {
   // future migrations recognise old payloads; if we ship a CF that
   // accepts unversioned writes, those rows can never be safely
   // migrated without a full reverse-engineering pass.
+  //
+  // RP4d gap (deferred to v3 work, see docs/proposals/schema-
+  // versioning.md): this validator does NOT yet cross-check declared
+  // version against payload shape. A client declaring v2 but sending
+  // v3-only fields, or declaring v3 while omitting v3-required
+  // fields, is currently caught only by the per-field gates above.
+  // Closing this gap is the first step of any v2→v3 work.
   if (typeof profileData.weekScheduleVersion !== "number" || profileData.weekScheduleVersion < 1) {
     errors.push("profileData.weekScheduleVersion required (number >= 1)");
   }
