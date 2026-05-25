@@ -48,7 +48,7 @@
     "framer-motion": "^12.34.2",
     "html-to-image": "^1.11.13",
     "leo-profanity": "^1.9.0",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^1.16.0",
     "maplibre-gl": "^5.19.0",
     "react": "^19.2.0",
     "react-body-highlighter": "^2.0.5",
