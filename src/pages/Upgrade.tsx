@@ -61,6 +61,23 @@ export default function Upgrade() {
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Sub1 P2 — cross-platform Pro guard. When the user holds an
+  // active Pro entitlement that originated on a DIFFERENT platform
+  // than the surface they're currently viewing, route them back to
+  // the platform of record instead of offering checkout (would
+  // double-charge) or the standard Manage button (would open the
+  // wrong portal). Apple has no admin-cancellation API for IAP, so
+  // for ios_iap-Pro the message is unconditional (the user must
+  // self-serve through the App Store sheet).
+  const subscriptionSource = profile?.subscriptionSource ?? null;
+  const currentPlatform: "stripe" | "ios_iap" = isNativeIOS()
+    ? "ios_iap"
+    : "stripe";
+  const crossPlatformPro =
+    isPro && subscriptionSource && subscriptionSource !== currentPlatform
+      ? subscriptionSource
+      : null;
+
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
 
@@ -218,8 +235,61 @@ export default function Upgrade() {
         </div>
       )}
 
-      {/* Already-Pro state */}
-      {tier === "pro" && !isInTrial && (
+      {/* Sub1 P2 — Cross-platform Pro notice. Replaces the standard
+          Manage button when the user is Pro on a different platform.
+          Same visual frame as the regular Pro tile (consistent layout)
+          but the copy + action route them to the correct platform. */}
+      {crossPlatformPro === "ios_iap" && (
+        <div
+          className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3"
+          role="note"
+        >
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
+            <p className="text-base font-semibold text-foreground">
+              You&apos;re a Pro member via the App Store
+            </p>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Manage your subscription from your Apple ID — Apple doesn&apos;t let
+            us cancel or refund App Store subscriptions on your behalf.
+          </p>
+          <a
+            href="https://apps.apple.com/account/subscriptions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "w-full flex items-center justify-center gap-2 min-h-[44px] mt-1 rounded-xl",
+              "bg-muted text-foreground text-sm font-semibold",
+              "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150"
+            )}
+          >
+            <ExternalLink className="w-4 h-4" aria-hidden="true" />
+            <span>Open App Store subscriptions</span>
+          </a>
+        </div>
+      )}
+
+      {crossPlatformPro === "stripe" && (
+        <div
+          className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3"
+          role="note"
+        >
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
+            <p className="text-base font-semibold text-foreground">
+              You&apos;re a Pro member on the web
+            </p>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Manage your subscription at tropos.app — Apple&apos;s App Store
+            isn&apos;t the billing platform for this account.
+          </p>
+        </div>
+      )}
+
+      {/* Already-Pro state — same-platform Pro user, standard Manage flow */}
+      {!crossPlatformPro && tier === "pro" && !isInTrial && (
         <div className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
@@ -292,8 +362,10 @@ export default function Upgrade() {
 
       {/* Comparison + pricing — shown when not paid Pro (trial users
           still see this so they can subscribe before their trial
-          runs out). */}
-      {(!isPro || isInTrial) && (
+          runs out). Sub1 P2 — also suppressed when the user holds an
+          active Pro entitlement on a different platform; checkout
+          would create a duplicate subscription. */}
+      {(!isPro || isInTrial) && !crossPlatformPro && (
         <div className="space-y-3">
           {/* Free vs Pro comparison */}
           <div className="bg-card rounded-2xl p-4 space-y-3">

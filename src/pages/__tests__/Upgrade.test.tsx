@@ -30,12 +30,16 @@ import { MemoryRouter } from "react-router-dom";
 // Sub1a P1 — default profile to `hasUsedTrial: true` so the
 // plan-priced CTA ("Start Pro — £X/yr") is the rendered baseline
 // for the existing tests (which all predate the trial-eligibility
-// branching). Trial-eligibility cycles for Upgrade live alongside
-// ProModal's; this file keeps the Upgrade-specific behaviours.
+// branching). Sub1 P2 — same hoisted-ref pattern as ProModal so
+// trial + cross-platform cycles can override per-test.
+const authProfileMock = vi.fn<() => Record<string, unknown> | null>(() => ({
+  hasUsedTrial: true,
+}));
+
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "test-uid", email: "test@example.com" },
-    profile: { hasUsedTrial: true },
+    profile: authProfileMock(),
     loading: false,
   }),
 }));
@@ -53,6 +57,20 @@ vi.mock("@/lib/purchaseProvider", () => ({
   isNativeIOS: () => isNativeIOSMock(),
 }));
 
+const useSubscriptionMock = vi.fn<
+  () => {
+    tier: "free" | "pro";
+    isInTrial: boolean;
+    trialDaysLeft: number;
+    isPro: boolean;
+  }
+>(() => ({
+  tier: "free",
+  isInTrial: false,
+  trialDaysLeft: 0,
+  isPro: false,
+}));
+
 vi.mock("@/lib/subscription", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/subscription")>(
@@ -60,12 +78,7 @@ vi.mock("@/lib/subscription", async () => {
     );
   return {
     ...actual,
-    useSubscription: () => ({
-      tier: "free",
-      isInTrial: false,
-      trialDaysLeft: 0,
-      isPro: false,
-    }),
+    useSubscription: () => useSubscriptionMock(),
   };
 });
 
@@ -83,7 +96,18 @@ beforeEach(() => {
   purchaseMock.mockReset();
   manageSubscriptionMock.mockReset();
   isNativeIOSMock.mockReset();
+  authProfileMock.mockReset();
+  useSubscriptionMock.mockReset();
   isNativeIOSMock.mockReturnValue(false);
+  // Baseline: free user on web with the post-trial flag set (so the
+  // existing pricing-page tests rendering "Start Pro — £X" still pass).
+  authProfileMock.mockReturnValue({ hasUsedTrial: true });
+  useSubscriptionMock.mockReturnValue({
+    tier: "free",
+    isInTrial: false,
+    trialDaysLeft: 0,
+    isPro: false,
+  });
 });
 
 afterEach(cleanup);
@@ -238,5 +262,84 @@ describe("Upgrade — checkout return banner", () => {
     renderWithQuery("?checkout=cancelled");
     const banner = screen.getByRole("status");
     expect(banner.textContent).toContain("Checkout cancelled");
+  });
+});
+
+describe("Upgrade — Sub1 P2 cross-platform Pro guard", () => {
+  it("Cycle 8: iOS-IAP Pro user on web sees a 'manage on App Store' notice and NO checkout CTA", () => {
+    // User purchased Pro via Apple IAP on iOS; now opens the web
+    // Upgrade page in a browser. Without the guard, the page would
+    // either offer a Stripe checkout (double-charge risk) or send
+    // them to the Stripe billing portal (which has no record of
+    // their IAP sub). The guard surfaces the platform of record.
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "ios_iap",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+    });
+    isNativeIOSMock.mockReturnValue(false); // web
+    renderPage();
+    // The cross-platform notice text — must reference Apple/App Store
+    // so the user recognises where to go. `getAllByText` because the
+    // copy mentions "App Store" multiple times across heading + body.
+    expect(screen.getAllByText(/App Store/i).length).toBeGreaterThan(0);
+    // No checkout CTA visible (no double-charging path).
+    expect(screen.queryByRole("button", { name: /Start Pro/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeNull();
+  });
+
+  it("Cycle 9: Stripe Pro user on web sees the standard Manage subscription button (no cross-platform notice)", () => {
+    // Regression guard for the same-platform case — Stripe Pro on
+    // web is the canonical path. The cross-platform notice must NOT
+    // appear; the existing Manage subscription button drives the
+    // billing portal.
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "stripe",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+    });
+    isNativeIOSMock.mockReturnValue(false);
+    renderPage();
+    expect(
+      screen.getByRole("button", { name: /Manage subscription/ })
+    ).toBeTruthy();
+    // The cross-platform notice copy says "App Store" — must NOT
+    // render for a stripe-Pro user on web.
+    expect(screen.queryByText(/App Store/i)).toBeNull();
+  });
+
+  it("Cycle 10: Stripe Pro user opening the iOS shell sees the 'manage on web' notice", () => {
+    // Inverse of cycle 8. User bought Pro on the web, now opens the
+    // iOS app — Apple's IAP store has nothing for them. The notice
+    // routes them back to the web account.
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "stripe",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+    });
+    isNativeIOSMock.mockReturnValue(true); // native iOS
+    renderPage();
+    // Notice mentions the web origin so the user knows where to go.
+    expect(
+      screen.getAllByText(/tropos\.app|on the web/i).length
+    ).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /Start Pro/ })).toBeNull();
   });
 });
