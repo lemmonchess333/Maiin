@@ -9,28 +9,26 @@
 # genuine conflict, the API call fails for that PR and the user gets
 # notified via the PR conversation; we log + continue with the others.
 #
-# Why we use a PAT, not GITHUB_TOKEN:
+# PAT vs GITHUB_TOKEN — known trade-off:
 #   Pushes made by GITHUB_TOKEN do NOT trigger other workflows on the
 #   same repo (GitHub's anti-loop policy — see
 #   https://docs.github.com/en/actions/using-workflows/triggering-a-workflow).
-#   That means the merge commit this workflow creates does NOT fire
-#   `emulator-tests` on the PR's new head SHA. The PR then sits
-#   forever with `mergeable_state: "blocked"`, waiting for required
-#   checks that will never run.
+#   That means a merge commit pushed by this workflow under
+#   GITHUB_TOKEN does NOT fire `emulator-tests` on the PR's new head
+#   SHA, so the PR sits at `mergeable_state: "blocked"` until someone
+#   nudges its branch manually (empty commit, push from a clone, etc).
 #
-#   The empirical evidence: 2026-05-25 main-merge wave left four PRs
-#   (#735 #737 #739 #740) with `total_count: 0` for check_runs on
-#   the post-auto-merge head — all needed a manual empty-commit nudge
-#   to unstick. The earlier comment here ("check status carries over")
-#   turned out to be optimistic; branch protection treats each head SHA
-#   as a distinct check target.
+#   The cure is a PAT (Personal Access Token) scoped to this repo
+#   with `contents: write` + `pull-requests: write`, stored as repo
+#   secret `AUTO_UPDATE_PR_BRANCHES_PAT`. PAT-attributed pushes DO
+#   trigger downstream workflows, so emulator-tests re-runs on the
+#   merge commit automatically.
 #
-#   Fix: push via a PAT (Personal Access Token) scoped to this repo
-#   with `contents: write` + `pull-requests: write`. PAT-attributed
-#   pushes DO trigger downstream workflows. Store the token as the
-#   repo secret `AUTO_UPDATE_PR_BRANCHES_PAT`. If the secret is
-#   absent, the workflow fails loudly (don't silently fall back to
-#   GITHUB_TOKEN — that just reintroduces the stalled-CI bug).
+#   When the PAT is present we use it. When it's absent we fall back
+#   to GITHUB_TOKEN with a loud warning in the job log: PR branches
+#   still get auto-updated (the main goal), but each will need a
+#   manual nudge before merge. This avoids red-crossing every main
+#   push in the repos that haven't configured the secret yet.
 #
 # This workflow is intentionally tolerant — `|| true` on each
 # update-branch call so one failing PR doesn't abort the loop.
@@ -56,30 +54,30 @@ jobs:
   update-branches:
     runs-on: ubuntu-latest
     steps:
-      - name: Fail loud if PAT secret missing
-        # Better to fail at workflow-start than silently fall back to
-        # GITHUB_TOKEN and have CI stall on every PR. The error
-        # message tells the operator exactly what to do.
-        env:
-          PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
-        run: |
-          if [ -z "$PAT" ]; then
-            echo "::error::Secret AUTO_UPDATE_PR_BRANCHES_PAT not configured."
-            echo "::error::This workflow needs a PAT (not GITHUB_TOKEN) so the merge"
-            echo "::error::commits it pushes will trigger emulator-tests on each PR."
-            echo "::error::Create a fine-grained PAT for this repo with permissions:"
-            echo "::error::  - Contents: Read and write"
-            echo "::error::  - Pull requests: Read and write"
-            echo "::error::Then add it as repository secret AUTO_UPDATE_PR_BRANCHES_PAT."
-            exit 1
-          fi
-
       - name: Update every open PR branch with main
         env:
-          # PAT, not GITHUB_TOKEN — see workflow-level comment for why.
-          GH_TOKEN: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
+          # Prefer the PAT; fall back to GITHUB_TOKEN. See workflow
+          # comment for the trade-off: GITHUB_TOKEN doesn't retrigger
+          # emulator-tests on the new head SHA (anti-loop policy), so
+          # auto-updated PRs will need a manual nudge before merging.
+          PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
+          if [ -n "$PAT" ]; then
+            export GH_TOKEN="$PAT"
+            echo "Using AUTO_UPDATE_PR_BRANCHES_PAT — emulator-tests will re-run on each auto-updated PR."
+          else
+            export GH_TOKEN="$GITHUB_TOKEN"
+            echo "::warning::AUTO_UPDATE_PR_BRANCHES_PAT not configured — falling back to GITHUB_TOKEN."
+            echo "::warning::PR branches will still be auto-updated, but emulator-tests will NOT re-run"
+            echo "::warning::on the merge commits (GitHub's anti-loop policy). Each affected PR needs a"
+            echo "::warning::manual nudge (e.g. empty commit) before it can be merged."
+            echo "::warning::To restore automatic re-runs, create a fine-grained PAT for this repo with"
+            echo "::warning::Contents: Read and write + Pull requests: Read and write, and add it as the"
+            echo "::warning::repository secret AUTO_UPDATE_PR_BRANCHES_PAT."
+          fi
+
           # List all open PRs targeting main.
           PR_NUMBERS=$(gh pr list --repo "$REPO" --base main --state open --json number --jq '.[].number')
           if [ -z "$PR_NUMBERS" ]; then
