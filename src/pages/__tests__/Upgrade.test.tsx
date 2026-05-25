@@ -49,9 +49,10 @@ vi.mock("@/lib/purchaseProvider", () => ({
 }));
 
 vi.mock("@/lib/subscription", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/subscription")>(
-    "@/lib/subscription",
-  );
+  const actual =
+    await vi.importActual<typeof import("@/lib/subscription")>(
+      "@/lib/subscription"
+    );
   return {
     ...actual,
     useSubscription: () => ({
@@ -59,7 +60,6 @@ vi.mock("@/lib/subscription", async () => {
       isInTrial: false,
       trialDaysLeft: 0,
       isPro: false,
-      features: actual.featureAccess.free,
     }),
   };
 });
@@ -70,7 +70,7 @@ function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/upgrade"]}>
       <Upgrade />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -127,7 +127,7 @@ describe("Upgrade — plan radiogroup (free user)", () => {
     fireEvent.click(radios.find((r) => r.textContent?.includes("Monthly"))!);
     fireEvent.click(radios.find((r) => r.textContent?.includes("Yearly"))!);
     expect(
-      screen.queryByRole("button", { name: /Close upgrade modal/i }),
+      screen.queryByRole("button", { name: /Close upgrade modal/i })
     ).toBeNull();
   });
 });
@@ -219,7 +219,7 @@ describe("Upgrade — checkout return banner", () => {
     return render(
       <MemoryRouter initialEntries={[`/upgrade${query}`]}>
         <Upgrade />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 

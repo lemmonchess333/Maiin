@@ -44,8 +44,21 @@ import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 
 import { useFocusTrap } from "@/hooks/useFocusTrap";
-import { DndContext, closestCenter, TouchSensor, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  closestCenter,
+  TouchSensor,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import { Spinner } from "@/components/ui/Spinner";
@@ -62,11 +75,9 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
  * Fix: split into a gate component (subscription only) + inner component (program hook).
  */
 
-
-
 export default function Program() {
-  const { features } = useSubscription();
-  return <ProgramInner phaseLocked={!features.phaseModes} />;
+  const { isPro } = useSubscription();
+  return <ProgramInner phaseLocked={!isPro} />;
 }
 
 function formatVolume(kg: number): string {
@@ -151,10 +162,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
         if (maxWeight > 0) {
           // Filter out warm-up sets (< 50% of heaviest)
-          const workingSets = wex.sets.filter((s) => s.weightKg >= maxWeight * 0.5);
+          const workingSets = wex.sets.filter(
+            (s) => s.weightKg >= maxWeight * 0.5
+          );
           // Best set: heaviest weight, then highest reps
           const best = workingSets.reduce((a, b) =>
-            b.weightKg > a.weightKg || (b.weightKg === a.weightKg && b.reps > a.reps) ? b : a
+            b.weightKg > a.weightKg ||
+            (b.weightKg === a.weightKg && b.reps > a.reps)
+              ? b
+              : a
           );
           map.set(wex.exerciseId, { weight: best.weightKg, reps: best.reps });
         } else {
@@ -212,16 +228,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     }
   }, [activeTab, reorderMode]);
   const [showAddPicker, setShowAddPicker] = useState(false);
-  const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ dayIndex: number; exIndex: number; x: number; y: number } | null>(null);
-  const [replaceTarget, setReplaceTarget] = useState<{ dayIndex: number; exIndex: number } | null>(null);
+  const [addPickerDayIndex, setAddPickerDayIndex] = useState<number | null>(
+    null
+  );
+  const [contextMenu, setContextMenu] = useState<{
+    dayIndex: number;
+    exIndex: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<{
+    dayIndex: number;
+    exIndex: number;
+  } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Exercise management helpers — accept dayIdx to work on any day (auto-save to Firestore)
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
     if (!programState) return;
     const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) } : d
+      i === dayIdx
+        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) }
+        : d
     );
     await saveProgram({ ...programState, workouts: updated });
   };
@@ -230,20 +258,31 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (!programState) return;
     const exercises = programState.workouts[dayIdx]?.exercises;
     if (!exercises) return;
-    const lastIdx = exercises.map(ex => ex.exerciseId).lastIndexOf(exerciseId);
+    const lastIdx = exercises
+      .map((ex) => ex.exerciseId)
+      .lastIndexOf(exerciseId);
     if (lastIdx === -1) return;
     const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) } : d
+      i === dayIdx
+        ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== lastIdx) }
+        : d
     );
     await saveProgram({ ...programState, workouts: updated });
   };
 
-  const moveExercise = async (dayIdx: number, exIndex: number, direction: -1 | 1) => {
+  const moveExercise = async (
+    dayIdx: number,
+    exIndex: number,
+    direction: -1 | 1
+  ) => {
     if (!programState) return;
     const exercises = [...programState.workouts[dayIdx].exercises];
     const newIdx = exIndex + direction;
     if (newIdx < 0 || newIdx >= exercises.length) return;
-    [exercises[exIndex], exercises[newIdx]] = [exercises[newIdx], exercises[exIndex]];
+    [exercises[exIndex], exercises[newIdx]] = [
+      exercises[newIdx],
+      exercises[exIndex],
+    ];
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises } : d
     );
@@ -251,7 +290,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     setContextMenu(null);
   };
 
-  const replaceExercise = async (dayIdx: number, exIndex: number, newEx: Exercise) => {
+  const replaceExercise = async (
+    dayIdx: number,
+    exIndex: number,
+    newEx: Exercise
+  ) => {
     if (!programState) return;
     const old = programState.workouts[dayIdx].exercises[exIndex];
     // Don't preserve old.movementCategory — let normalizeExercise infer
@@ -263,11 +306,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // them post-replacement if the new exercise needs different
     // prescription.
     const replacement = normalizeExercise({
-      name: newEx.name, exerciseId: newEx.id,
-      sets: old.sets, reps: old.reps, weight: old.weight,
+      name: newEx.name,
+      exerciseId: newEx.id,
+      sets: old.sets,
+      reps: old.reps,
+      weight: old.weight,
     });
     const updated = programState.workouts.map((d, i) =>
-      i === dayIdx ? { ...d, exercises: d.exercises.map((ex, ei) => ei === exIndex ? replacement : ex) } : d
+      i === dayIdx
+        ? {
+            ...d,
+            exercises: d.exercises.map((ex, ei) =>
+              ei === exIndex ? replacement : ex
+            ),
+          }
+        : d
     );
     await saveProgram({ ...programState, workouts: updated });
     setReplaceTarget(null);
@@ -280,7 +333,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // "horizontal_push" was tagging every added exercise (including
     // pulls, legs, isolations) as a horizontal press, contaminating
     // analytics, MuscleHeatMap input, and social-post muscle groups.
-    const newExs = exercises.map(e => normalizeExercise({ name: e.name, exerciseId: e.id, sets: 3, reps: 10, weight: 0 }));
+    const newExs = exercises.map((e) =>
+      normalizeExercise({
+        name: e.name,
+        exerciseId: e.id,
+        sets: 3,
+        reps: 10,
+        weight: 0,
+      })
+    );
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx ? { ...d, exercises: [...d.exercises, ...newExs] } : d
     );
@@ -288,7 +349,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     setShowAddPicker(false);
   };
 
-  const handleLongPressStart = (dayIdx: number, exIndex: number, e: React.TouchEvent) => {
+  const handleLongPressStart = (
+    dayIdx: number,
+    exIndex: number,
+    e: React.TouchEvent
+  ) => {
     if (reorderMode) return;
     const touch = e.touches[0];
     const x = touch.clientX;
@@ -300,16 +365,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   };
 
   const handleLongPressCancel = () => {
-    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
 
   // Save feedback states
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor)
   );
 
   const handleDragEnd = async (dayIndex: number, event: DragEndEvent) => {
@@ -317,8 +387,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (!over || active.id === over.id || !programState) return;
 
     const exercises = programState.workouts[dayIndex].exercises;
-    const oldIdx = exercises.findIndex((_, i) => `ex-${dayIndex}-${i}` === active.id);
-    const newIdx = exercises.findIndex((_, i) => `ex-${dayIndex}-${i}` === over.id);
+    const oldIdx = exercises.findIndex(
+      (_, i) => `ex-${dayIndex}-${i}` === active.id
+    );
+    const newIdx = exercises.findIndex(
+      (_, i) => `ex-${dayIndex}-${i}` === over.id
+    );
     if (oldIdx < 0 || newIdx < 0) return;
 
     const reordered = arrayMove(exercises, oldIdx, newIdx);
@@ -335,26 +409,27 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     await saveProgram(updatedState);
   };
 
-
   // Today index: first incomplete workout (respects nextWorkoutOverride)
   const todayIndex = useMemo(() => {
     if (!programState || viewingHistoryIndex !== null) return -1;
     if (programState.nextWorkoutOverride != null) {
       const oi = programState.workouts.findIndex(
-        (d, i) => i === programState.nextWorkoutOverride && !d.completed && !d.skipped,
+        (d, i) =>
+          i === programState.nextWorkoutOverride && !d.completed && !d.skipped
       );
       if (oi >= 0) return oi;
     }
-    return programState.workouts.findIndex(d => !d.completed && !d.skipped);
+    return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
   }, [programState, viewingHistoryIndex]);
 
   // Auto-select on week change (not on individual completion)
   const prevWeekKeyRef = useRef("");
   useEffect(() => {
     if (!programState) return;
-    const weekKey = viewingHistoryIndex !== null
-      ? `h${viewingHistoryIndex}`
-      : `w${programState.weekNumber}`;
+    const weekKey =
+      viewingHistoryIndex !== null
+        ? `h${viewingHistoryIndex}`
+        : `w${programState.weekNumber}`;
     if (prevWeekKeyRef.current !== weekKey) {
       prevWeekKeyRef.current = weekKey;
       const target = todayIndex >= 0 ? todayIndex : 0;
@@ -378,7 +453,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   if (!programState || !prescription) {
     return (
       <div className="p-6 flex flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted-foreground">Failed to load programme</p>
+        <p className="text-sm text-muted-foreground">
+          Failed to load programme
+        </p>
         <button
           onClick={() => window.location.reload()}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
@@ -391,14 +468,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // ── Computed values ──
   const isViewingHistory = viewingHistoryIndex !== null;
-  const displayWorkouts = isViewingHistory ? (viewedWorkouts ?? []) : programState.workouts;
-  const displayWeekNumber = isViewingHistory ? (viewedWeekNumber ?? 1) : programState.weekNumber;
-  const allComplete = displayWorkouts.length > 0 && displayWorkouts.every((d) => d.completed || d.skipped);
-  const settings = programState.settings ?? { autoProgression: true, microloading: true };
+  const displayWorkouts = isViewingHistory
+    ? (viewedWorkouts ?? [])
+    : programState.workouts;
+  const displayWeekNumber = isViewingHistory
+    ? (viewedWeekNumber ?? 1)
+    : programState.weekNumber;
+  const allComplete =
+    displayWorkouts.length > 0 &&
+    displayWorkouts.every((d) => d.completed || d.skipped);
+  const settings = programState.settings ?? {
+    autoProgression: true,
+    microloading: true,
+  };
   const history = programState.weekHistory ?? [];
 
   // Clamp selectedDayIndex
-  const idx = displayWorkouts.length > 0 ? Math.min(selectedDayIndex, displayWorkouts.length - 1) : 0;
+  const idx =
+    displayWorkouts.length > 0
+      ? Math.min(selectedDayIndex, displayWorkouts.length - 1)
+      : 0;
   if (idx !== selectedDayIndex) setSelectedDayIndex(idx);
 
   const selectedWorkout = displayWorkouts[idx];
@@ -432,17 +521,27 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Session metadata
   const exerciseCount = selectedWorkout?.exercises.length ?? 0;
-  const estimatedMinutes = Math.round((selectedWorkout?.exercises.reduce((s, ex) => s + ex.sets, 0) ?? 0) * 2.5);
-  const totalVolume = selectedWorkout?.exercises.reduce((sum, ex) => sum + ex.sets * ex.reps * ex.weight, 0) ?? 0;
+  const estimatedMinutes = Math.round(
+    (selectedWorkout?.exercises.reduce((s, ex) => s + ex.sets, 0) ?? 0) * 2.5
+  );
+  const totalVolume =
+    selectedWorkout?.exercises.reduce(
+      (sum, ex) => sum + ex.sets * ex.reps * ex.weight,
+      0
+    ) ?? 0;
 
   function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
-    const groups = exercises.map(ex => getExerciseById(ex.exerciseId)?.category).filter(Boolean);
+    const groups = exercises
+      .map((ex) => getExerciseById(ex.exerciseId)?.category)
+      .filter(Boolean);
     const unique = [...new Set(groups)] as string[];
     if (unique.length === 0) return "";
     if (unique.length <= 3) return unique.join(" · ");
     return unique.slice(0, 3).join(" · ") + " + more";
   }
-  const muscleGroups = selectedWorkout ? getDayMuscleGroups(selectedWorkout.exercises) : "";
+  const muscleGroups = selectedWorkout
+    ? getDayMuscleGroups(selectedWorkout.exercises)
+    : "";
 
   // ── Handlers ──
   const handleSelect = (newIndex: number) => {
@@ -483,7 +582,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return `Built for ${goalText} · ${splitLabel(programState.splitType)} · ${daysLabel}`;
   })();
 
-  const handleRegenerate = async (goalOverride?: string, weeklyTargetOverride?: number) => {
+  const handleRegenerate = async (
+    goalOverride?: string,
+    weeklyTargetOverride?: number
+  ) => {
     setRegenerating(true);
     await regenerateProgram(goalOverride, weeklyTargetOverride);
     setRegenerating(false);
@@ -516,7 +618,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
     let el = e.target as HTMLElement;
@@ -538,63 +643,65 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {/* ── Header Zone ── */}
       <div>
         <header>
-        <div className="flex items-center justify-between pt-1 pb-1">
-          <div>
-            <h1 className="text-xl font-extrabold text-foreground">Programme</h1>
-            <p className="text-xs text-muted-foreground">
-              {programHeaderLine}
-            </p>
-          </div>
-          {/* Right utility cluster — running entry leads, then reorder
+          <div className="flex items-center justify-between pt-1 pb-1">
+            <div>
+              <h1 className="text-xl font-extrabold text-foreground">
+                Programme
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {programHeaderLine}
+              </p>
+            </div>
+            {/* Right utility cluster — running entry leads, then reorder
               + overflow. Running icon is colour-distinct (coral) but
               smaller than its greyscale neighbours; the tint carries
               the affordance so size doesn't have to. First-use
               Coachmark explains the otherwise-unlabelled icon —
               storage key versioned so a later redesign can re-trigger
               by bumping the suffix. */}
-          <div className="flex items-center gap-1">
-            <Coachmark
-              storageKey="program-running-nav-v1"
-              content="Track a run from here"
-              placement="bottom"
-            >
-              <RunningNavIcon />
-            </Coachmark>
-            {/* PR-2: reorder toggle only renders where it works —
+            <div className="flex items-center gap-1">
+              <Coachmark
+                storageKey="program-running-nav-v1"
+                content="Track a run from here"
+                placement="bottom"
+              >
+                <RunningNavIcon />
+              </Coachmark>
+              {/* PR-2: reorder toggle only renders where it works —
                 Lift tab AND the user actually has lift workouts in
                 their programState. Pre-PR-2 the button lived
                 outside the activeTab guard, so users on Today/Week/
                 Run saw an inert icon that toggled hidden state. */}
-            {activeTab === "lift" && (programState?.workouts?.length ?? 0) > 0 && (
-              reorderMode ? (
-                <button
-                  onClick={() => setReorderMode(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
-                >
-                  Done
-                </button>
-              ) : (
-                <button
-                  onClick={() => setReorderMode(true)}
-                  aria-label="Reorder exercises"
-                  className="p-2 rounded-lg hover:bg-muted transition-colors"
-                  style={{ minWidth: 44, minHeight: 44 }}
-                >
-                  <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )
-            )}
-            <button
-              onClick={() => setShowOverflow(true)}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
-              style={{ minWidth: 44, minHeight: 44 }}
-              aria-label="More options"
-            >
-              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-            </button>
+              {activeTab === "lift" &&
+                (programState?.workouts?.length ?? 0) > 0 &&
+                (reorderMode ? (
+                  <button
+                    onClick={() => setReorderMode(false)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
+                  >
+                    Done
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setReorderMode(true)}
+                    aria-label="Reorder exercises"
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    style={{ minWidth: 44, minHeight: 44 }}
+                  >
+                    <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                ))}
+              <button
+                onClick={() => setShowOverflow(true)}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                style={{ minWidth: 44, minHeight: 44 }}
+                aria-label="More options"
+              >
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
         {/* PR-3: 2-tab segmented control. Today / Week were retired —
             Home owns today-glance, DayActionSheet owns per-day
@@ -606,10 +713,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             className="grid grid-cols-2 gap-1 p-1 rounded-xl"
             style={{ background: "hsl(var(--muted) / 0.5)" }}
           >
-            {([
-              { id: "lift", label: "Lift" },
-              { id: "run", label: "Run" },
-            ] as { id: ProgramTab; label: string }[]).map((t) => (
+            {(
+              [
+                { id: "lift", label: "Lift" },
+                { id: "run", label: "Run" },
+              ] as { id: ProgramTab; label: string }[]
+            ).map((t) => (
               <button
                 key={t.id}
                 role="tab"
@@ -665,7 +774,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <DayStepper
                   days={stepperDays}
                   selectedIndex={idx}
-                  todayIndex={!isViewingHistory && todayIndex >= 0 ? todayIndex : null}
+                  todayIndex={
+                    !isViewingHistory && todayIndex >= 0 ? todayIndex : null
+                  }
                   onSelect={handleSelect}
                 />
               </div>
@@ -675,18 +786,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       </div>
 
       {/* ── Advance Week (all complete, current week) — lift tab only. */}
-      {activeTab === "lift" && allComplete && !isViewingHistory && !phaseLocked && (
-        <div className="pt-4 pb-2">
-          <button
-            onClick={handleAdvanceWeek}
-            disabled={advancing}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            <FastForward className="w-4 h-4" />
-            {advancing ? "Advancing..." : "Advance to Next Week"}
-          </button>
-        </div>
-      )}
+      {activeTab === "lift" &&
+        allComplete &&
+        !isViewingHistory &&
+        !phaseLocked && (
+          <div className="pt-4 pb-2">
+            <button
+              onClick={handleAdvanceWeek}
+              disabled={advancing}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <FastForward className="w-4 h-4" />
+              {advancing ? "Advancing..." : "Advance to Next Week"}
+            </button>
+          </div>
+        )}
 
       {/* ── RUN tab — ProgrammeRunSection (PR-4). The section owns
             every state (freeform hero / structured next-run /
@@ -710,217 +824,364 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
       {/* ── Session Content — LIFT tab only ── */}
       {activeTab === "lift" && (
-      <>
-      <TrackProgrammeSectionView section="session_card">
-      <div className="pt-4" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-        <AnimatePresence
-          mode="wait"
-          custom={direction}
-          onExitComplete={() => { isAnimating.current = false; }}
-        >
-          <motion.div
-            key={idx}
-            custom={direction}
-            variants={{
-              enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
-              center: { opacity: 1, x: 0 },
-              exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
-            }}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            style={{ willChange: "transform" }}
-          >
-            {selectedWorkout && (
-              <div className="space-y-3">
-                {/* ── Session Header ── */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
-                    style={{
-                      backgroundColor:
-                        status === "completed" || status === "skipped"
-                          ? "rgba(76,175,80,0.1)"
-                          : status === "today"
-                            ? "rgba(124,107,240,0.1)"
-                            : "hsl(var(--muted))",
-                    }}
-                  >
-                    {status === "completed" ? (
-                      <Check className="w-[18px] h-[18px]" style={{ color: "#4CAF50" }} strokeWidth={2.5} />
-                    ) : (
-                      <Dumbbell className={`w-[18px] h-[18px] ${status === "today" ? "" : "text-muted-foreground"}`} style={status === "today" ? { color: "#7C6BF0" } : undefined} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-lg font-bold truncate text-foreground">
-                        Day {idx + 1} · {selectedWorkout.dayName}
-                      </p>
-                      {status === "completed" && (
-                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#4CAF50", backgroundColor: "rgba(76,175,80,0.1)", padding: "2px 8px", borderRadius: 6 }}>
-                          Done
-                        </span>
-                      )}
-                      {status === "skipped" && (
-                        <span className="text-[11px] font-semibold shrink-0 text-muted-foreground bg-muted" style={{ padding: "2px 8px", borderRadius: 6 }}>
-                          Skipped
-                        </span>
-                      )}
-                      {status === "today" && (
-                        <span className="text-[11px] font-semibold shrink-0" style={{ color: "#7C6BF0", backgroundColor: "rgba(124,107,240,0.1)", padding: "2px 8px", borderRadius: 6 }}>
-                          Today
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[13px] text-muted-foreground" style={{ marginTop: 2 }}>
-                      {exerciseCount} exercises · ~{estimatedMinutes} min{muscleGroups ? ` · ${muscleGroups}` : ""}
-                    </p>
-                  </div>
-                </div>
-
-                {/* ── Exercise Cards ── */}
-                {reorderMode ? (
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleDragEnd(idx, event)}>
-                    <SortableContext items={selectedWorkout.exercises.map((_, i) => `ex-${idx}-${i}`)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-2">
-                        {selectedWorkout.exercises.map((ex, i) => {
-                          const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-                          const lastPerf = lastPerformanceMap.get(ex.exerciseId);
-                          return (
-                            <SortableExerciseRow key={`ex-${idx}-${i}`} id={`ex-${idx}-${i}`} justDropped={justDroppedId === `ex-${idx}-${i}`} showHandle={true}>
-                              <div data-swipe-card="true" className="p-3 rounded-xl bg-card">
-                                <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                                </p>
-                                {lastPerf && (
-                                  <p className="text-xs mt-0.5 text-muted-foreground">
-                                    Last: {lastPerf.weight > 0
-                                      ? `${lastPerf.weight} kg × ${lastPerf.reps}`
-                                      : isBW
-                                        ? `BW × ${lastPerf.reps}`
-                                        : `— × ${lastPerf.reps}`}
-                                  </p>
-                                )}
-                              </div>
-                            </SortableExerciseRow>
-                          );
-                        })}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <div className="space-y-2">
-                    {selectedWorkout.exercises.map((ex, i) => {
-                      const isBW = getExerciseById(ex.exerciseId)?.equipment === "Bodyweight";
-                      const lastPerf = lastPerformanceMap.get(ex.exerciseId);
-                      return (
-                        <div key={`ex-${idx}-${i}`} data-swipe-card="true">
-                          <SortableExerciseRow id={`ex-${idx}-${i}`} showHandle={false} onDelete={() => removeExFromDay(idx, i)}>
-                            <button
-                              onClick={() => navigate(`/history/exercise/${encodeURIComponent(ex.name)}`, { state: { initialTab: "form" } })}
-                              className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
-                              onTouchStart={(e) => handleLongPressStart(idx, i, e)}
-                              onTouchMove={handleLongPressCancel}
-                              onTouchEnd={handleLongPressCancel}
-                            >
-                              <p className="text-sm font-semibold text-foreground truncate">{ex.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {ex.sets} sets × {ex.reps} reps{!isBW && ex.weight > 0 ? ` · ${ex.weight}kg` : ""}
-                              </p>
-                              {lastPerf && (
-                                <p className="text-xs mt-0.5" style={{ color: "#999" }}>
-                                  Last: {lastPerf.weight > 0 ? `${lastPerf.weight} kg × ${lastPerf.reps}` : `${lastPerf.reps} reps`}
-                                </p>
-                              )}
-                            </button>
-                          </SortableExerciseRow>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* ── + Add Exercise (not on completed/skipped) ── */}
-                {status !== "completed" && status !== "skipped" && (
-                  <button
-                    onClick={() => { setAddPickerDayIndex(idx); setShowAddPicker(true); }}
-                    className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
-                  >
-                    <Plus className="w-4 h-4" /> Add Exercise
-                  </button>
-                )}
-
-                {/* ── Completed Session Summary ── */}
-                {status === "completed" && (
-                  <div className="rounded-xl p-3" style={{ backgroundColor: "rgba(76,175,80,0.05)", border: "1px solid rgba(76,175,80,0.15)" }}>
-                    <div className="flex justify-around items-center">
-                      <div className="text-center">
-                        <p className="text-base font-bold text-foreground">~{estimatedMinutes} min</p>
-                        <p className="text-[11px] font-medium text-muted-foreground">Duration</p>
-                      </div>
-                      <div className="bg-border/60" style={{ width: 1, height: 24 }} />
-                      <div className="text-center">
-                        <p className="text-base font-bold text-foreground">{formatVolume(totalVolume)}</p>
-                        <p className="text-[11px] font-medium text-muted-foreground">Volume</p>
-                      </div>
-                      <div className="bg-border/60" style={{ width: 1, height: 24 }} />
-                      <div className="text-center">
-                        <p className="text-base font-bold text-foreground">{exerciseCount}</p>
-                        <p className="text-[11px] font-medium text-muted-foreground">Exercises</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* ── CTA Zone ── */}
-      <div className="mt-4">
-        {status === "today" && !selectedWorkout?.completed ? (
-          <>
-            <button
-              onClick={() => { haptic("light"); setSessionDayIndex(idx); }}
-              className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-              style={{ background: THEME.gradient.brand }}
+        <>
+          <TrackProgrammeSectionView section="session_card">
+            <div
+              className="pt-4"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
-              <Play className="w-4 h-4" /> Begin Workout
-            </button>
-            <div className="flex items-center justify-center mt-2">
-              <button
-                onClick={() => { setSkipTargetDay(idx); setShowSkipConfirm(true); }}
-                className="text-[13px] font-medium text-muted-foreground"
+              <AnimatePresence
+                mode="wait"
+                custom={direction}
+                onExitComplete={() => {
+                  isAnimating.current = false;
+                }}
               >
-                Skip Session
-              </button>
+                <motion.div
+                  key={idx}
+                  custom={direction}
+                  variants={{
+                    enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
+                    center: { opacity: 1, x: 0 },
+                    exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
+                  }}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  style={{ willChange: "transform" }}
+                >
+                  {selectedWorkout && (
+                    <div className="space-y-3">
+                      {/* ── Session Header ── */}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+                          style={{
+                            backgroundColor:
+                              status === "completed" || status === "skipped"
+                                ? "rgba(76,175,80,0.1)"
+                                : status === "today"
+                                  ? "rgba(124,107,240,0.1)"
+                                  : "hsl(var(--muted))",
+                          }}
+                        >
+                          {status === "completed" ? (
+                            <Check
+                              className="w-[18px] h-[18px]"
+                              style={{ color: "#4CAF50" }}
+                              strokeWidth={2.5}
+                            />
+                          ) : (
+                            <Dumbbell
+                              className={`w-[18px] h-[18px] ${status === "today" ? "" : "text-muted-foreground"}`}
+                              style={
+                                status === "today"
+                                  ? { color: "#7C6BF0" }
+                                  : undefined
+                              }
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-lg font-bold truncate text-foreground">
+                              Day {idx + 1} · {selectedWorkout.dayName}
+                            </p>
+                            {status === "completed" && (
+                              <span
+                                className="text-[11px] font-semibold shrink-0"
+                                style={{
+                                  color: "#4CAF50",
+                                  backgroundColor: "rgba(76,175,80,0.1)",
+                                  padding: "2px 8px",
+                                  borderRadius: 6,
+                                }}
+                              >
+                                Done
+                              </span>
+                            )}
+                            {status === "skipped" && (
+                              <span
+                                className="text-[11px] font-semibold shrink-0 text-muted-foreground bg-muted"
+                                style={{ padding: "2px 8px", borderRadius: 6 }}
+                              >
+                                Skipped
+                              </span>
+                            )}
+                            {status === "today" && (
+                              <span
+                                className="text-[11px] font-semibold shrink-0"
+                                style={{
+                                  color: "#7C6BF0",
+                                  backgroundColor: "rgba(124,107,240,0.1)",
+                                  padding: "2px 8px",
+                                  borderRadius: 6,
+                                }}
+                              >
+                                Today
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            className="text-[13px] text-muted-foreground"
+                            style={{ marginTop: 2 }}
+                          >
+                            {exerciseCount} exercises · ~{estimatedMinutes} min
+                            {muscleGroups ? ` · ${muscleGroups}` : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* ── Exercise Cards ── */}
+                      {reorderMode ? (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event) => handleDragEnd(idx, event)}
+                        >
+                          <SortableContext
+                            items={selectedWorkout.exercises.map(
+                              (_, i) => `ex-${idx}-${i}`
+                            )}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="space-y-2">
+                              {selectedWorkout.exercises.map((ex, i) => {
+                                const isBW =
+                                  getExerciseById(ex.exerciseId)?.equipment ===
+                                  "Bodyweight";
+                                const lastPerf = lastPerformanceMap.get(
+                                  ex.exerciseId
+                                );
+                                return (
+                                  <SortableExerciseRow
+                                    key={`ex-${idx}-${i}`}
+                                    id={`ex-${idx}-${i}`}
+                                    justDropped={
+                                      justDroppedId === `ex-${idx}-${i}`
+                                    }
+                                    showHandle={true}
+                                  >
+                                    <div
+                                      data-swipe-card="true"
+                                      className="p-3 rounded-xl bg-card"
+                                    >
+                                      <p className="text-sm font-semibold text-foreground truncate">
+                                        {ex.name}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {ex.sets} sets × {ex.reps} reps
+                                        {!isBW && ex.weight > 0
+                                          ? ` · ${ex.weight}kg`
+                                          : ""}
+                                      </p>
+                                      {lastPerf && (
+                                        <p className="text-xs mt-0.5 text-muted-foreground">
+                                          Last:{" "}
+                                          {lastPerf.weight > 0
+                                            ? `${lastPerf.weight} kg × ${lastPerf.reps}`
+                                            : isBW
+                                              ? `BW × ${lastPerf.reps}`
+                                              : `— × ${lastPerf.reps}`}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </SortableExerciseRow>
+                                );
+                              })}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      ) : (
+                        <div className="space-y-2">
+                          {selectedWorkout.exercises.map((ex, i) => {
+                            const isBW =
+                              getExerciseById(ex.exerciseId)?.equipment ===
+                              "Bodyweight";
+                            const lastPerf = lastPerformanceMap.get(
+                              ex.exerciseId
+                            );
+                            return (
+                              <div
+                                key={`ex-${idx}-${i}`}
+                                data-swipe-card="true"
+                              >
+                                <SortableExerciseRow
+                                  id={`ex-${idx}-${i}`}
+                                  showHandle={false}
+                                  onDelete={() => removeExFromDay(idx, i)}
+                                >
+                                  <button
+                                    onClick={() =>
+                                      navigate(
+                                        `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                        { state: { initialTab: "form" } }
+                                      )
+                                    }
+                                    className="w-full p-3 rounded-xl bg-card text-left active:scale-[0.97] transition-transform"
+                                    onTouchStart={(e) =>
+                                      handleLongPressStart(idx, i, e)
+                                    }
+                                    onTouchMove={handleLongPressCancel}
+                                    onTouchEnd={handleLongPressCancel}
+                                  >
+                                    <p className="text-sm font-semibold text-foreground truncate">
+                                      {ex.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {ex.sets} sets × {ex.reps} reps
+                                      {!isBW && ex.weight > 0
+                                        ? ` · ${ex.weight}kg`
+                                        : ""}
+                                    </p>
+                                    {lastPerf && (
+                                      <p
+                                        className="text-xs mt-0.5"
+                                        style={{ color: "#999" }}
+                                      >
+                                        Last:{" "}
+                                        {lastPerf.weight > 0
+                                          ? `${lastPerf.weight} kg × ${lastPerf.reps}`
+                                          : `${lastPerf.reps} reps`}
+                                      </p>
+                                    )}
+                                  </button>
+                                </SortableExerciseRow>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* ── + Add Exercise (not on completed/skipped) ── */}
+                      {status !== "completed" && status !== "skipped" && (
+                        <button
+                          onClick={() => {
+                            setAddPickerDayIndex(idx);
+                            setShowAddPicker(true);
+                          }}
+                          className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
+                        >
+                          <Plus className="w-4 h-4" /> Add Exercise
+                        </button>
+                      )}
+
+                      {/* ── Completed Session Summary ── */}
+                      {status === "completed" && (
+                        <div
+                          className="rounded-xl p-3"
+                          style={{
+                            backgroundColor: "rgba(76,175,80,0.05)",
+                            border: "1px solid rgba(76,175,80,0.15)",
+                          }}
+                        >
+                          <div className="flex justify-around items-center">
+                            <div className="text-center">
+                              <p className="text-base font-bold text-foreground">
+                                ~{estimatedMinutes} min
+                              </p>
+                              <p className="text-[11px] font-medium text-muted-foreground">
+                                Duration
+                              </p>
+                            </div>
+                            <div
+                              className="bg-border/60"
+                              style={{ width: 1, height: 24 }}
+                            />
+                            <div className="text-center">
+                              <p className="text-base font-bold text-foreground">
+                                {formatVolume(totalVolume)}
+                              </p>
+                              <p className="text-[11px] font-medium text-muted-foreground">
+                                Volume
+                              </p>
+                            </div>
+                            <div
+                              className="bg-border/60"
+                              style={{ width: 1, height: 24 }}
+                            />
+                            <div className="text-center">
+                              <p className="text-base font-bold text-foreground">
+                                {exerciseCount}
+                              </p>
+                              <p className="text-[11px] font-medium text-muted-foreground">
+                                Exercises
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </>
-        ) : status === "completed" ? (
-          <div className="flex items-center justify-center gap-2 py-3.5 rounded-[14px]" style={{ backgroundColor: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.12)" }}>
-            <Check className="w-4 h-4" style={{ color: "#4CAF50" }} strokeWidth={2.5} />
-            <span className="text-sm font-semibold" style={{ color: "#4CAF50" }}>
-              Completed · ~{estimatedMinutes} min · {formatVolume(totalVolume)}
-            </span>
-          </div>
-        ) : status === "skipped" ? (
-          <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
-            <span className="text-sm font-medium text-muted-foreground">Skipped</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
-            <span className="text-sm font-medium text-muted-foreground">Scheduled</span>
-          </div>
-        )}
-      </div>
-      </TrackProgrammeSectionView>
-      </>
+
+            {/* ── CTA Zone ── */}
+            <div className="mt-4">
+              {status === "today" && !selectedWorkout?.completed ? (
+                <>
+                  <button
+                    onClick={() => {
+                      haptic("light");
+                      setSessionDayIndex(idx);
+                    }}
+                    className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
+                    style={{ background: THEME.gradient.brand }}
+                  >
+                    <Play className="w-4 h-4" /> Begin Workout
+                  </button>
+                  <div className="flex items-center justify-center mt-2">
+                    <button
+                      onClick={() => {
+                        setSkipTargetDay(idx);
+                        setShowSkipConfirm(true);
+                      }}
+                      className="text-[13px] font-medium text-muted-foreground"
+                    >
+                      Skip Session
+                    </button>
+                  </div>
+                </>
+              ) : status === "completed" ? (
+                <div
+                  className="flex items-center justify-center gap-2 py-3.5 rounded-[14px]"
+                  style={{
+                    backgroundColor: "rgba(76,175,80,0.06)",
+                    border: "1px solid rgba(76,175,80,0.12)",
+                  }}
+                >
+                  <Check
+                    className="w-4 h-4"
+                    style={{ color: "#4CAF50" }}
+                    strokeWidth={2.5}
+                  />
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: "#4CAF50" }}
+                  >
+                    Completed · ~{estimatedMinutes} min ·{" "}
+                    {formatVolume(totalVolume)}
+                  </span>
+                </div>
+              ) : status === "skipped" ? (
+                <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Skipped
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Scheduled
+                  </span>
+                </div>
+              )}
+            </div>
+          </TrackProgrammeSectionView>
+        </>
       )}
 
       {/* Saved routines (PR 4) — workouts the user copied from the
@@ -934,26 +1195,70 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <AnimatePresence>
         {contextMenu && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200]" onClick={() => setContextMenu(null)} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200]"
+              onClick={() => setContextMenu(null)}
+            />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
               className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
-              style={{ top: Math.min(contextMenu.y, window.innerHeight - 220), left: Math.min(contextMenu.x - 80, window.innerWidth - 200), width: 200 }}
+              style={{
+                top: Math.min(contextMenu.y, window.innerHeight - 220),
+                left: Math.min(contextMenu.x - 80, window.innerWidth - 200),
+                width: 200,
+              }}
             >
-              <button onClick={() => { setReplaceTarget({ dayIndex: contextMenu.dayIndex, exIndex: contextMenu.exIndex }); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30">
-                <Repeat className="w-4 h-4 text-muted-foreground" /> Replace Exercise
+              <button
+                onClick={() => {
+                  setReplaceTarget({
+                    dayIndex: contextMenu.dayIndex,
+                    exIndex: contextMenu.exIndex,
+                  });
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
+              >
+                <Repeat className="w-4 h-4 text-muted-foreground" /> Replace
+                Exercise
               </button>
-              <button onClick={() => { removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex); setContextMenu(null); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors border-b border-border/30">
+              <button
+                onClick={() => {
+                  removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex);
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors border-b border-border/30"
+              >
                 <Trash2 className="w-4 h-4" /> Remove Exercise
               </button>
-              <button onClick={() => { moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1); }} disabled={contextMenu.exIndex === 0} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30">
+              <button
+                onClick={() => {
+                  moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1);
+                }}
+                disabled={contextMenu.exIndex === 0}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
+              >
                 <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
               </button>
-              <button onClick={() => { moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1); }} disabled={contextMenu.exIndex >= (displayWorkouts[contextMenu.dayIndex]?.exercises.length ?? 1) - 1} className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30">
-                <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move Down
+              <button
+                onClick={() => {
+                  moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1);
+                }}
+                disabled={
+                  contextMenu.exIndex >=
+                  (displayWorkouts[contextMenu.dayIndex]?.exercises.length ??
+                    1) -
+                    1
+                }
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
+              >
+                <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move
+                Down
               </button>
             </motion.div>
           </>
@@ -963,14 +1268,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
         open={showSkipConfirm}
-        sessionName={skipTargetDay !== null ? (displayWorkouts[skipTargetDay]?.dayName ?? "") : ""}
+        sessionName={
+          skipTargetDay !== null
+            ? (displayWorkouts[skipTargetDay]?.dayName ?? "")
+            : ""
+        }
         onConfirm={async () => {
           if (skipTargetDay !== null) {
             await skipWorkoutDay(skipTargetDay);
             haptic("medium");
             // Auto-advance to next incomplete day
             const nextIncomplete = displayWorkouts.findIndex(
-              (d, i) => i !== skipTargetDay && !d.completed && !d.skipped,
+              (d, i) => i !== skipTargetDay && !d.completed && !d.skipped
             );
             if (nextIncomplete >= 0) {
               handleSelect(nextIncomplete);
@@ -979,7 +1288,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           setShowSkipConfirm(false);
           setSkipTargetDay(null);
         }}
-        onCancel={() => { setShowSkipConfirm(false); setSkipTargetDay(null); }}
+        onCancel={() => {
+          setShowSkipConfirm(false);
+          setSkipTargetDay(null);
+        }}
       />
 
       {/* Settings Panel */}
@@ -1012,11 +1324,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <ExercisePicker
         open={showAddPicker}
         headerTitle="Add Exercise"
-        existingExerciseIds={programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(ex => ex.exerciseId) ?? []}
+        existingExerciseIds={
+          programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(
+            (ex) => ex.exerciseId
+          ) ?? []
+        }
         onSelect={(ex) => addExercisesToDay(addPickerDayIndex ?? idx, [ex])}
-        onMultiSelect={(exs) => addExercisesToDay(addPickerDayIndex ?? idx, exs)}
-        onClose={() => { setShowAddPicker(false); setAddPickerDayIndex(null); }}
-        onRemoveExercise={(id) => removeExFromDayById(addPickerDayIndex ?? idx, id)}
+        onMultiSelect={(exs) =>
+          addExercisesToDay(addPickerDayIndex ?? idx, exs)
+        }
+        onClose={() => {
+          setShowAddPicker(false);
+          setAddPickerDayIndex(null);
+        }}
+        onRemoveExercise={(id) =>
+          removeExFromDayById(addPickerDayIndex ?? idx, id)
+        }
       />
 
       {/* Exercise Picker — Replace mode */}
@@ -1024,11 +1347,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <ExercisePicker
           open={true}
           headerTitle={`Replace ${programState.workouts[replaceTarget.dayIndex]?.exercises[replaceTarget.exIndex]?.name || "Exercise"}`}
-          onSelect={(ex) => replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)}
+          onSelect={(ex) =>
+            replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)
+          }
           onClose={() => setReplaceTarget(null)}
         />
       )}
-
 
       {/* PR-2: Edit weekly layout sheet. Returns null when closed —
           so the body component (and its useProgrammeScheduleEditor
@@ -1065,7 +1389,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <AnimatePresence>
         {showOverflow && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowOverflow(false)} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowOverflow(false)}
+            />
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -1093,7 +1423,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <CalendarDays className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Edit weekly layout</span>
+                  <span className="text-sm font-medium text-foreground flex-1">
+                    Edit weekly layout
+                  </span>
                 </button>
                 {/* P0-9: Configure programme wizard — runs planBuilder +
                     configurePlan CF on Confirm. Deliberate plan-shape
@@ -1101,26 +1433,42 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { openConfigurePlan(); }
+                    if (phaseLocked) {
+                      setShowProSheet(true);
+                    } else {
+                      openConfigurePlan();
+                    }
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
                   <Sparkles className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Configure programme</span>
-                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  <span className="text-sm font-medium text-foreground flex-1">
+                    Configure programme
+                  </span>
+                  {phaseLocked && (
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
                 </button>
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { setShowSettings(true); }
+                    if (phaseLocked) {
+                      setShowProSheet(true);
+                    } else {
+                      setShowSettings(true);
+                    }
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
                   <Settings2 className="w-4.5 h-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">Programme settings</span>
-                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  <span className="text-sm font-medium text-foreground flex-1">
+                    Programme settings
+                  </span>
+                  {phaseLocked && (
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
                 </button>
                 {/* PR-2: "Reset programme" replaces "Refresh Programme".
                     `regenerateProgram` resets weekNumber to 1 and clears
@@ -1130,15 +1478,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <button
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) { setShowProSheet(true); } else { setShowRefreshConfirm(true); }
+                    if (phaseLocked) {
+                      setShowProSheet(true);
+                    } else {
+                      setShowRefreshConfirm(true);
+                    }
                   }}
                   disabled={regenerating}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <RefreshCw className={cn("w-4.5 h-4.5 text-muted-foreground", regenerating && "animate-spin")} />
-                  <span className="text-sm font-medium text-foreground flex-1">Reset programme</span>
-                  {phaseLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  <RefreshCw
+                    className={cn(
+                      "w-4.5 h-4.5 text-muted-foreground",
+                      regenerating && "animate-spin"
+                    )}
+                  />
+                  <span className="text-sm font-medium text-foreground flex-1">
+                    Reset programme
+                  </span>
+                  {phaseLocked && (
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -1172,11 +1533,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               transition={{ duration: 0.15 }}
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
             >
-              <h3 className="text-sm font-semibold text-foreground">Reset your programme?</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Reset your programme?
+              </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                This rebuilds your lift split for the current nutrition phase and training days,
-                restarts you at Week&nbsp;1, and clears the week-by-week summary history. Logged
-                workouts and runs in History are not affected.
+                This rebuilds your lift split for the current nutrition phase
+                and training days, restarts you at Week&nbsp;1, and clears the
+                week-by-week summary history. Logged workouts and runs in
+                History are not affected.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
@@ -1204,7 +1568,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       <AnimatePresence>
         {showProSheet && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowProSheet(false)} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setShowProSheet(false)}
+            />
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -1217,16 +1587,29 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${THEME.lifting}15` }}>
-                    <Lock className="w-5 h-5" style={{ color: THEME.lifting }} />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${THEME.lifting}15` }}
+                  >
+                    <Lock
+                      className="w-5 h-5"
+                      style={{ color: THEME.lifting }}
+                    />
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-foreground">Upgrade to Pro</p>
-                    <p className="text-xs text-muted-foreground">Unlock advanced periodisation and AI adjustments</p>
+                    <p className="text-base font-semibold text-foreground">
+                      Upgrade to Pro
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Unlock advanced periodisation and AI adjustments
+                    </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => { setShowProSheet(false); navigate("/upgrade"); }}
+                  onClick={() => {
+                    setShowProSheet(false);
+                    navigate("/upgrade");
+                  }}
                   className="w-full py-3 rounded-xl text-white text-sm font-semibold"
                   style={{ background: THEME.gradient.brand }}
                 >
