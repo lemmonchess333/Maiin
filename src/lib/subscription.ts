@@ -3,11 +3,43 @@ import { useMemo } from "react";
 import { useAuth } from "./auth";
 
 /* ================================
-   FEATURE ACCESS
+   PRO GATING — where it actually lives
 ================================ */
 //
-// Display pricing was previously duplicated here as a `pricing`
-// object. Pricing now lives in `src/lib/proPlans.ts` — the single
+// As of the 2026-05-24 Sub2 audit, the `featureAccess` flag map
+// previously exported from this module was cosmetic — 6 of 7 flags
+// were never read, and the one that was (`phaseModes`, in
+// `src/pages/Program.tsx`) gated the program-configuration buttons
+// rather than the day-type macros its name implied. The map has
+// been removed; this comment is the contributor-facing pointer to
+// where Pro gating actually happens.
+//
+// To add a new Pro gate:
+//   1. Decide whether the gate is a wholesale-card wrapper or
+//      surface-level (Sub2d pin #1 prefers surface-level lock icons
+//      over whole-card blur). Add a new `ProFeatureKey` to
+//      `src/lib/proFeatures.ts` for the modal hero copy.
+//   2. Wrap the gated surface in `<ProGate featureKey="...">` for
+//      the wholesale pattern, OR consult `useSubscription().isPro`
+//      directly for partial gating (the post-Sub2c-#3 pattern in
+//      `AdaptiveTDEECard.tsx`).
+//   3. If you need the user-visible copy to live on a feature
+//      registry rather than scattered in components, extend
+//      `proFeatures.ts`.
+//
+// Current real Pro gates (search `<ProGate` + `useSubscription`
+// destructuring across `src/`):
+//   - `AdaptiveTDEECard.tsx` — adaptive_tdee partial gating
+//     (Sub2c pin #3; header free, callouts Pro)
+//   - `AdaptiveSummary.tsx` — Apply button gated by direct
+//     `isPro` check
+//   - `useScanUsage.ts` — `isUnlimited = isPro || isInTrial`
+//     drives the monthly AI-scan ceiling
+//   - `Program.tsx` — `!isPro` derives `phaseLocked` which gates
+//     the program-configuration buttons (Configure / Settings /
+//     Refresh)
+//
+// Display pricing lives in `src/lib/proPlans.ts` — the single
 // source of truth that ProModal, Upgrade.tsx, and AdaptiveSummary
 // all consume. This module owns tier / trial / access logic only.
 
@@ -16,43 +48,8 @@ export const SCAN_LIMITS = {
   pro: 300,
 } as const;
 
-// Sub2 — Pro scope shrinkage (locked in /grill-me). Two flags moved
-// from Pro to free per Sub2c's "safety + observability features stay
-// free" principle:
-//   - plateauDetection: a SAFETY feature flagging stalling/regressing
-//     users. Gating safety behind Pro is hostile + drives churn
-//     before users see Tropos's value.
-//   - performanceInsights: P2 made the Performance Index a Home-card
-//     hero + iOS Widget + Watch Smart Stack. Pre-Sub2 the underlying
-//     score was Pro-gated which contradicted the hero positioning.
-//
-// Pro still gates aiAdjustments (adaptive macros), phaseModes
-// (day-type-specific macros), and the AI-augmented food / coaching
-// features — anything where AI cost or compounding-optimisation
-// value justifies the paywall.
-export const featureAccess = {
-  free: {
-    workoutLogging: true,
-    foodLogging: true,
-    basicSummary: true,
-    aiAdjustments: false,
-    plateauDetection: true,
-    phaseModes: false,
-    performanceInsights: true,
-  },
-  pro: {
-    workoutLogging: true,
-    foodLogging: true,
-    basicSummary: true,
-    aiAdjustments: true,
-    plateauDetection: true,
-    phaseModes: true,
-    performanceInsights: true,
-  },
-};
-
 /* ================================
-   TRIAL + SUBSCRIPTION INFO (from feature branch)
+   TRIAL + SUBSCRIPTION INFO
 ================================ */
 
 export type Tier = "free" | "pro";
@@ -62,19 +59,18 @@ export interface SubscriptionInfo {
   isInTrial: boolean;
   trialDaysLeft: number;
   isPro: boolean;
-  features: typeof featureAccess.free;
 }
 
 export function getSubscriptionInfo(
   profile: UserProfile | null
 ): SubscriptionInfo {
   if (!profile) {
-    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
+    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
   }
 
   // Dev override or Stripe webhook: subscriptionTier manually set to "pro"
   if (profile.subscriptionTier === "pro") {
-    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true, features: featureAccess.pro };
+    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true };
   }
 
   // Check trial
@@ -90,13 +86,12 @@ export function getSubscriptionInfo(
         isInTrial: true,
         trialDaysLeft: daysLeft,
         isPro: true, // During trial, user has full Pro access
-        features: featureAccess.pro,
       };
     }
   }
 
   // No trial, no pro subscription
-  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false, features: featureAccess.free };
+  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
 }
 
 /* ================================
