@@ -1,14 +1,15 @@
 import { useReducer, useState } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
-import {
-  Download,
-  LogOut,
-  Trash2,
-} from "lucide-react";
+import { Download, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
+import {
+  exportWorkoutsCSV,
+  exportMealsCSV,
+  exportBodyweightCSV,
+  downloadCSV,
+} from "@/lib/export";
 import { deleteAccount } from "@/lib/socialApi";
 import {
   reauthWithPassword,
@@ -18,14 +19,19 @@ import {
   type SupportedReauthProviderId,
 } from "@/lib/reauth";
 import { friendlyAuthError } from "@/lib/authErrors";
-import {
-  modalReducer,
-  initialModalState,
-} from "./accountDeletionReducer";
+import { modalReducer, initialModalState } from "./accountDeletionReducer";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Spinner } from "@/components/ui/Spinner";
+import { useAuth } from "@/lib/auth";
+
+/** Apple manage-subscriptions deep-link. Works on iOS (opens
+ *  Settings → Apple ID → Subscriptions) and on web (opens the
+ *  App Store account page). Per Apple's official account-
+ *  deletion guidance. */
+const APPLE_MANAGE_SUBSCRIPTIONS_URL =
+  "https://apps.apple.com/account/subscriptions";
 
 interface AccountSectionProps {
   user: User | null;
@@ -80,6 +86,14 @@ export default function AccountSection({
   signOut,
   inline = false,
 }: AccountSectionProps) {
+  const { profile } = useAuth();
+  // Sub1 R1A pin (b) P0b — presence of appleOriginalTransactionId
+  // means the user purchased Pro via IAP at some point. Since
+  // Apple has no admin-cancellation API, we surface a pre-deletion
+  // warning + deep-link so the user knows billing continues until
+  // they cancel via App Store settings.
+  const hasAppleSubscription = !!profile?.appleOriginalTransactionId;
+  const [showAppleWarning, setShowAppleWarning] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -87,7 +101,7 @@ export default function AccountSection({
   const [reauthError, setReauthError] = useState<string | null>(null);
   const [modalState, dispatchModal] = useReducer(
     modalReducer,
-    initialModalState,
+    initialModalState
   );
   const deleteModalRef = useFocusTrap<HTMLDivElement>(showDeleteModal);
 
@@ -119,13 +133,16 @@ export default function AccountSection({
         code?: string;
         details?: { reason?: string };
       } | null;
-      const msg = err instanceof Error ? err.message : "Failed to delete account";
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete account";
 
       if (
         fe?.code === "functions/failed-precondition" &&
         fe?.details?.reason === "executor-disabled"
       ) {
-        toast.error("Account deletion is temporarily paused. Please try again later.");
+        toast.error(
+          "Account deletion is temporarily paused. Please try again later."
+        );
         closeAndReset();
       } else if (msg.includes("requires-recent-login")) {
         /* The reason Chunk 4 exists. If we got here on a retry
@@ -135,27 +152,35 @@ export default function AccountSection({
            If we hit it on retry, something's wrong upstream; fall
            through to the strikeout flow rather than looping. */
         if (isRetry) {
-          logger.error("deleteAccount: recent-auth still required after reauth");
-          toast.error(
-            "Sign in again to delete your account.",
-            {
-              action: { label: "Sign out", onClick: () => { signOut(); } },
-              duration: 10000,
-            },
+          logger.error(
+            "deleteAccount: recent-auth still required after reauth"
           );
+          toast.error("Sign in again to delete your account.", {
+            action: {
+              label: "Sign out",
+              onClick: () => {
+                signOut();
+              },
+            },
+            duration: 10000,
+          });
           closeAndReset();
         } else {
           /* First-pass: switch the modal to reauth mode. */
           dispatchModal({ type: "REQUIRE_REAUTH" });
         }
       } else if (msg.includes("executor-disabled")) {
-        toast.error("Account deletion is temporarily paused. Please try again later.");
+        toast.error(
+          "Account deletion is temporarily paused. Please try again later."
+        );
         closeAndReset();
       } else if (
         msg.includes("no user record") ||
         msg.includes("auth/user-not-found")
       ) {
-        toast.success("Account already deleted. Signing you out…", { duration: 4000 });
+        toast.success("Account already deleted. Signing you out…", {
+          duration: 4000,
+        });
         signOut();
       } else {
         toast.error(msg);
@@ -168,7 +193,9 @@ export default function AccountSection({
      Provider-aware. Returns to needs-reauth on failure with the
      attempt counter bumped; on success transitions to retrying
      and fires runDeleteAccount(true). */
-  const handleReauth = async (provider: SupportedReauthProviderId): Promise<void> => {
+  const handleReauth = async (
+    provider: SupportedReauthProviderId
+  ): Promise<void> => {
     if (!user) return;
     setReauthError(null);
     dispatchModal({ type: "REAUTH_START", provider });
@@ -194,18 +221,24 @@ export default function AccountSection({
         return;
       }
       logger.error("AccountSection reauth failed", err);
-      const next = modalState.phase === "reauthenticating"
-        ? Math.min(modalState.failedAttempts + 1, 3)
-        : 1;
+      const next =
+        modalState.phase === "reauthenticating"
+          ? Math.min(modalState.failedAttempts + 1, 3)
+          : 1;
       if (next >= 3) {
         /* 3-strike fallback — don't let users loop. Surface the
            manual sign-out toast and close the modal. */
         toast.error(
           "Couldn't verify your identity. Sign out and back in, then try again.",
           {
-            action: { label: "Sign out", onClick: () => { signOut(); } },
+            action: {
+              label: "Sign out",
+              onClick: () => {
+                signOut();
+              },
+            },
             duration: 10000,
-          },
+          }
         );
         closeAndReset();
         return;
@@ -226,13 +259,19 @@ export default function AccountSection({
   const displayedEmail = user ? displayEmail(user) : null;
   const inReauthFlight = modalState.phase === "reauthenticating";
   const showPasswordInput =
-    modalState.phase === "needs-reauth" || modalState.phase === "reauthenticating"
+    modalState.phase === "needs-reauth" ||
+    modalState.phase === "reauthenticating"
       ? providers.includes("password")
       : false;
 
   return (
     <>
-      <AccordionSection inline={inline} icon={<Download className="w-5 h-5 text-primary" />} title="Data & Account" subtitle="Export, sign out">
+      <AccordionSection
+        inline={inline}
+        icon={<Download className="w-5 h-5 text-primary" />}
+        title="Data & Account"
+        subtitle="Export, sign out"
+      >
         <div className="space-y-2">
           {[
             { label: "Export Workouts (CSV)", key: "workouts" },
@@ -247,11 +286,18 @@ export default function AccountSection({
                 setExporting(key);
                 try {
                   let csv: string;
-                  if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
-                  else if (key === "meals") csv = await exportMealsCSV(user.uid);
+                  if (key === "workouts")
+                    csv = await exportWorkoutsCSV(user.uid);
+                  else if (key === "meals")
+                    csv = await exportMealsCSV(user.uid);
                   else csv = await exportBodyweightCSV(user.uid);
-                  downloadCSV(csv, `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`);
-                  toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
+                  downloadCSV(
+                    csv,
+                    `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`
+                  );
+                  toast.success(
+                    `${key.charAt(0).toUpperCase() + key.slice(1)} exported!`
+                  );
                 } catch (err) {
                   toast.error("Couldn't export your data. Please try again.");
                   logger.error(err);
@@ -275,23 +321,99 @@ export default function AccountSection({
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
         <button
-          onClick={() => { haptic("error"); setShowDeleteModal(true); }}
+          onClick={() => {
+            haptic("error");
+            // P0b: route through the Apple-cancel warning when the
+            // user has an IAP-originated subscription. Apple's API
+            // doesn't expose admin cancellation; we must hand them
+            // off to the App Store before purge.
+            if (hasAppleSubscription) {
+              setShowAppleWarning(true);
+            } else {
+              setShowDeleteModal(true);
+            }
+          }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="w-4 h-4" /> Delete Account
         </button>
       </AccordionSection>
 
+      {/* P0b — Apple-subscription pre-deletion warning. Surfaces
+          only when the profile carries `appleOriginalTransactionId`.
+          Required by Apple's "Offering account deletion" guidance
+          since standard IAP subs can't be cancelled via the
+          App Store Server API. */}
+      {showAppleWarning && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-[1000]"
+            role="button"
+            tabIndex={0}
+            aria-label="Close dialog"
+            onClick={() => setShowAppleWarning(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                setShowAppleWarning(false);
+            }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-live="polite"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
+          >
+            <h3 className="text-base font-semibold text-foreground">
+              Cancel your App Store subscription first
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Tropos can't cancel your iOS subscription for you — Apple bills
+              your account directly. Open subscription settings to cancel before
+              deleting your account, or delete anyway and continue to be charged
+              until you cancel.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                window.open(APPLE_MANAGE_SUBSCRIPTIONS_URL, "_blank");
+              }}
+              className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              Open subscription settings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAppleWarning(false);
+                setShowDeleteModal(true);
+              }}
+              className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+            >
+              Delete anyway
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAppleWarning(false)}
+              className="w-full px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
       {showDeleteModal && (
         <>
           <div
             className="fixed inset-0 bg-black/50 z-[1000]"
-            role="button" tabIndex={0} aria-label="Close dialog"
+            role="button"
+            tabIndex={0}
+            aria-label="Close dialog"
             onClick={inReauthFlight ? undefined : closeAndReset}
             onKeyDown={(e) => {
               if (inReauthFlight) return;
-              if (e.key === 'Enter' || e.key === ' ') closeAndReset();
+              if (e.key === "Enter" || e.key === " ") closeAndReset();
             }}
           />
           <div
@@ -302,14 +424,21 @@ export default function AccountSection({
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
           >
             {/* ── Phase: confirm / deleting ────────────────────────*/}
-            {(modalState.phase === "confirm" || modalState.phase === "deleting") && (
+            {(modalState.phase === "confirm" ||
+              modalState.phase === "deleting") && (
               <>
-                <h3 className="text-base font-semibold text-destructive">Delete Account</h3>
+                <h3 className="text-base font-semibold text-destructive">
+                  Delete Account
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  This will permanently delete your account and all associated data including workouts, meals, runs, and social activity. This action cannot be undone.
+                  This will permanently delete your account and all associated
+                  data including workouts, meals, runs, and social activity.
+                  This action cannot be undone.
                 </p>
                 <p className="text-sm text-foreground font-medium">
-                  Type <span className="text-destructive font-bold">DELETE</span> to confirm:
+                  Type{" "}
+                  <span className="text-destructive font-bold">DELETE</span> to
+                  confirm:
                 </p>
                 <input
                   type="text"
@@ -329,12 +458,19 @@ export default function AccountSection({
                   </button>
                   <button
                     onClick={handleSubmitDelete}
-                    disabled={deleteConfirmText !== "DELETE" || modalState.phase === "deleting"}
+                    disabled={
+                      deleteConfirmText !== "DELETE" ||
+                      modalState.phase === "deleting"
+                    }
                     className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {modalState.phase === "deleting" ? (
                       <>
-                        <Spinner size="sm" variant="inverse" label="Deleting account" />
+                        <Spinner
+                          size="sm"
+                          variant="inverse"
+                          label="Deleting account"
+                        />
                         Deleting…
                       </>
                     ) : (
@@ -346,13 +482,25 @@ export default function AccountSection({
             )}
 
             {/* ── Phase: needs-reauth / reauthenticating ───────────*/}
-            {(modalState.phase === "needs-reauth" || modalState.phase === "reauthenticating") && (
+            {(modalState.phase === "needs-reauth" ||
+              modalState.phase === "reauthenticating") && (
               <>
-                <h3 className="text-base font-semibold text-foreground">Confirm it's you</h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  Confirm it's you
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  For security, re-confirm your identity {displayedEmail
-                    ? <>for <span className="font-medium text-foreground">{displayedEmail}</span></>
-                    : "for this account"} before deleting. You won't be charged for anything new.
+                  For security, re-confirm your identity{" "}
+                  {displayedEmail ? (
+                    <>
+                      for{" "}
+                      <span className="font-medium text-foreground">
+                        {displayedEmail}
+                      </span>
+                    </>
+                  ) : (
+                    "for this account"
+                  )}{" "}
+                  before deleting. You won't be charged for anything new.
                 </p>
 
                 {reauthError && (
@@ -384,7 +532,11 @@ export default function AccountSection({
                     >
                       {inReauthFlight && modalState.provider === p ? (
                         <>
-                          <Spinner size="sm" variant="inverse" label="Confirming" />
+                          <Spinner
+                            size="sm"
+                            variant="inverse"
+                            label="Confirming"
+                          />
                           Confirming…
                         </>
                       ) : (
@@ -407,9 +559,12 @@ export default function AccountSection({
             {/* ── Phase: retrying (post-reauth, deletion in flight) */}
             {modalState.phase === "retrying" && (
               <>
-                <h3 className="text-base font-semibold text-destructive">Deleting account…</h3>
+                <h3 className="text-base font-semibold text-destructive">
+                  Deleting account…
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Confirmed. Removing your data — this should take a few seconds.
+                  Confirmed. Removing your data — this should take a few
+                  seconds.
                 </p>
                 <div className="flex justify-center py-3">
                   <Spinner size="md" label="Deleting account" />

@@ -85,6 +85,11 @@ export interface UserProfileSubscription {
   subscriptionTier: "free" | "pro";
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  /** Apple IAP — set on first IAP purchase by `functions/applePurchase.js`.
+   *  Used by `AccountSection.tsx` to surface the pre-deletion Apple-cancel
+   *  warning, since Apple has no admin-cancellation API for standard IAP
+   *  subscriptions (Sub1 R1A pin b, P0b). */
+  appleOriginalTransactionId?: string;
   trialExpiryPromptShown?: boolean;
 }
 
@@ -177,15 +182,16 @@ export interface UserProfileOnboarding {
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */
-export interface UserProfile extends
-  UserProfileCore,
-  UserProfileFitness,
-  UserProfileSubscription,
-  UserProfilePreferences,
-  UserProfileNutrition,
-  UserProfileSocial,
-  UserProfileRunning,
-  UserProfileOnboarding {}
+export interface UserProfile
+  extends
+    UserProfileCore,
+    UserProfileFitness,
+    UserProfileSubscription,
+    UserProfilePreferences,
+    UserProfileNutrition,
+    UserProfileSocial,
+    UserProfileRunning,
+    UserProfileOnboarding {}
 
 /**
  * Compact summary of earned badges mirrored onto the public profile doc.
@@ -270,7 +276,7 @@ function syncDarkMode(dark: boolean) {
   } else {
     document.documentElement.classList.remove("dark");
   }
-  localStorage.setItem('tropos-dark-mode', String(dark));
+  localStorage.setItem("tropos-dark-mode", String(dark));
 }
 
 /* ================================
@@ -290,7 +296,7 @@ function createDefaultProfile(
      hosts (Firebase Storage, lh3.googleusercontent.com,
      appleid.cdn-apple.com), so an unexpected value gets rejected at
      the rule layer rather than silently stored. */
-  photoURL: string | null = null,
+  photoURL: string | null = null
 ): UserProfile {
   return {
     uid,
@@ -320,9 +326,14 @@ function createDefaultProfile(
   };
 }
 
-function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName = "", fallbackEmail = ""): UserProfile {
+function hydrateProfile(
+  uid: string,
+  data: Record<string, unknown>,
+  fallbackName = "",
+  fallbackEmail = ""
+): UserProfile {
   return {
-    ...data as Partial<UserProfile>,
+    ...(data as Partial<UserProfile>),
     uid,
     displayName: (data.displayName as string) ?? fallbackName,
     email: (data.email as string) ?? fallbackEmail,
@@ -332,22 +343,33 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
     heightCm: (data.heightCm as number) ?? 170,
     weeklyWorkoutsTarget: (data.weeklyWorkoutsTarget as number) ?? 4,
     weeklyMealsTarget: (data.weeklyMealsTarget as number) ?? 10,
-    preferredWeightUnit: (data.preferredWeightUnit as UserProfile["preferredWeightUnit"]) ?? "kg",
-    preferredHeightUnit: (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
+    preferredWeightUnit:
+      (data.preferredWeightUnit as UserProfile["preferredWeightUnit"]) ?? "kg",
+    preferredHeightUnit:
+      (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
     darkMode: (data.darkMode as boolean) ?? false,
     onboardingComplete: (data.onboardingComplete as boolean) ?? false,
     trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
-    subscriptionTier: (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
+    subscriptionTier:
+      (data.subscriptionTier as UserProfile["subscriptionTier"]) ?? "free",
     currentStreak: (data.currentStreak as number) ?? 0,
     longestStreak: (data.longestStreak as number) ?? 0,
     lastLogDate: (data.lastLogDate as string | null) ?? null,
     // Training-aware calorie target — defaults to true for existing users who
     // don't have the field set yet.
-    adjustCaloriesForTraining: (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
+    adjustCaloriesForTraining:
+      (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
     program: {
-      goal: ((data.program as Record<string, unknown>)?.goal as UserProfile["program"] extends { goal: infer G } ? G : never) ?? "recomp",
-      startWeight: ((data.program as Record<string, unknown>)?.startWeight as number) ?? 0,
-      currentPhase: ((data.program as Record<string, unknown>)?.currentPhase as string) ?? "base",
+      goal:
+        ((data.program as Record<string, unknown>)
+          ?.goal as UserProfile["program"] extends { goal: infer G }
+          ? G
+          : never) ?? "recomp",
+      startWeight:
+        ((data.program as Record<string, unknown>)?.startWeight as number) ?? 0,
+      currentPhase:
+        ((data.program as Record<string, unknown>)?.currentPhase as string) ??
+        "base",
     },
   } as UserProfile;
 }
@@ -361,9 +383,7 @@ function hydrateProfile(uid: string, data: Record<string, unknown>, fallbackName
  * controls can now revert optimistic UI on failure rather than
  * silently lying after a swallowed error.
  */
-export type UpdateProfileResult =
-  | { ok: true }
-  | { ok: false; error: unknown };
+export type UpdateProfileResult = { ok: true } | { ok: false; error: unknown };
 
 interface AuthContextType {
   user: User | null;
@@ -385,7 +405,7 @@ interface AuthContextType {
    */
   updateProfile: (
     data: Partial<UserProfile>,
-    options?: { allowProtected?: boolean; throwOnError?: boolean },
+    options?: { allowProtected?: boolean; throwOnError?: boolean }
   ) => Promise<UpdateProfileResult>;
   /**
    * Re-fetch the user's Firestore profile and update local state.
@@ -426,7 +446,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
-            const safeProfile = hydrateProfile(firebaseUser.uid, data, "", firebaseUser.email ?? "");
+            const safeProfile = hydrateProfile(
+              firebaseUser.uid,
+              data,
+              "",
+              firebaseUser.email ?? ""
+            );
             setProfile(safeProfile);
             syncDarkMode(safeProfile.darkMode);
           } else {
@@ -434,7 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (err) {
           if (!isMounted) return;
-          logger.error('[AuthProvider] Failed to load profile', err);
+          logger.error("[AuthProvider] Failed to load profile", err);
           setProfile(null);
         }
       } else {
@@ -484,7 +509,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const newProfile = createDefaultProfile(cred.user.uid, "", cred.user.email || "");
+    const newProfile = createDefaultProfile(
+      cred.user.uid,
+      "",
+      cred.user.email || ""
+    );
     await writeNewProfileDocs(cred.user.uid, newProfile);
     setProfile(newProfile);
   };
@@ -504,20 +533,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         cred.user.uid,
         cred.user.displayName || "",
         cred.user.email || "",
-        cred.user.photoURL || null,
+        cred.user.photoURL || null
       );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
-      setProfile(hydrateProfile(cred.user.uid, data, cred.user.displayName ?? "", cred.user.email ?? ""));
+      setProfile(
+        hydrateProfile(
+          cred.user.uid,
+          data,
+          cred.user.displayName ?? "",
+          cred.user.email ?? ""
+        )
+      );
     }
   };
 
   const signInWithApple = async () => {
-    const provider = new OAuthProvider('apple.com');
-    provider.addScope('email');
-    provider.addScope('name');
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
     const cred = await signInWithPopup(auth, provider);
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
@@ -529,13 +565,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         cred.user.uid,
         cred.user.displayName || "",
         cred.user.email || "",
-        cred.user.photoURL || null,
+        cred.user.photoURL || null
       );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
     } else {
       const data = profileDoc.data();
-      setProfile(hydrateProfile(cred.user.uid, data, cred.user.displayName ?? "", cred.user.email ?? ""));
+      setProfile(
+        hydrateProfile(
+          cred.user.uid,
+          data,
+          cred.user.displayName ?? "",
+          cred.user.email ?? ""
+        )
+      );
     }
   };
 
@@ -544,24 +587,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     // Remove dark mode preference so next user gets their own setting from Firestore
     document.documentElement.classList.remove("dark");
-    localStorage.removeItem('tropos-dark-mode');
+    localStorage.removeItem("tropos-dark-mode");
   };
 
-  const PROTECTED_FIELDS = ["subscriptionTier", "stripeCustomerId", "stripeSubscriptionId", "trialExpiresAt"] as const;
+  const PROTECTED_FIELDS = [
+    "subscriptionTier",
+    "stripeCustomerId",
+    "stripeSubscriptionId",
+    "trialExpiresAt",
+  ] as const;
 
   // Subset of UserProfile fields that also need to be mirrored onto the
   // cross-user-readable public/profile doc when they change.
-  const PUBLIC_MIRRORED_FIELDS = ["displayName", "photoURL", "athleteType"] as const;
+  const PUBLIC_MIRRORED_FIELDS = [
+    "displayName",
+    "photoURL",
+    "athleteType",
+  ] as const;
 
   const updateProfile = async (
     data: Partial<UserProfile>,
-    options?: { allowProtected?: boolean; throwOnError?: boolean },
+    options?: { allowProtected?: boolean; throwOnError?: boolean }
   ): Promise<UpdateProfileResult> => {
     if (!user) return { ok: false, error: new Error("not-authenticated") };
     let writeData = data;
     if (!options?.allowProtected) {
       writeData = Object.fromEntries(
-        Object.entries(data).filter(([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key))
+        Object.entries(data).filter(
+          ([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key)
+        )
       ) as Partial<UserProfile>;
     }
 
@@ -582,7 +636,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        alongside displayName so the two are committed atomically. */
     if ("displayName" in writeData) {
       const dn = (writeData as Record<string, unknown>)["displayName"];
-      publicPatch["displayNameLower"] = typeof dn === "string" ? dn.toLowerCase() : null;
+      publicPatch["displayNameLower"] =
+        typeof dn === "string" ? dn.toLowerCase() : null;
     }
 
     // PR G (audit P1 #7): returns `{ ok }` so callers can revert
@@ -593,7 +648,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (Object.keys(publicPatch).length > 0) {
         const batch = writeBatch(db);
         batch.set(doc(db, "users", user.uid), writeData, { merge: true });
-        batch.set(doc(db, "users", user.uid, "public", "profile"), publicPatch, { merge: true });
+        batch.set(
+          doc(db, "users", user.uid, "public", "profile"),
+          publicPatch,
+          { merge: true }
+        );
         await batch.commit();
       } else {
         await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
@@ -626,12 +685,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser) return;
     const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
     if (snap.exists()) {
-      setProfile(hydrateProfile(
-        auth.currentUser.uid,
-        snap.data() as Record<string, unknown>,
-        auth.currentUser.displayName ?? "",
-        auth.currentUser.email ?? "",
-      ));
+      setProfile(
+        hydrateProfile(
+          auth.currentUser.uid,
+          snap.data() as Record<string, unknown>,
+          auth.currentUser.displayName ?? "",
+          auth.currentUser.email ?? ""
+        )
+      );
     }
   }, []);
 
@@ -661,4 +722,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-
