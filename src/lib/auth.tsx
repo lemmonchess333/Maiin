@@ -594,6 +594,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     "subscriptionTier",
     "stripeCustomerId",
     "stripeSubscriptionId",
+    "appleOriginalTransactionId",
     "trialExpiresAt",
   ] as const;
 
