@@ -9,21 +9,28 @@
 # genuine conflict, the API call fails for that PR and the user gets
 # notified via the PR conversation; we log + continue with the others.
 #
-# Caveat (worth knowing):
-#   The merge commit pushed by this Action is attributed to the
-#   workflow's GITHUB_TOKEN. GitHub's default behaviour is that pushes
-#   from GITHUB_TOKEN do not retrigger downstream workflows on the same
-#   repo (anti-loop policy). This means the PR's emulator-tests check
-#   may NOT auto re-run after the branch update, leaving the PR with
-#   stale check status.
+# Why we use a PAT, not GITHUB_TOKEN:
+#   Pushes made by GITHUB_TOKEN do NOT trigger other workflows on the
+#   same repo (GitHub's anti-loop policy — see
+#   https://docs.github.com/en/actions/using-workflows/triggering-a-workflow).
+#   That means the merge commit this workflow creates does NOT fire
+#   `emulator-tests` on the PR's new head SHA. The PR then sits
+#   forever with `mergeable_state: "blocked"`, waiting for required
+#   checks that will never run.
 #
-#   Mitigations:
-#     - The required check is `emulator-tests`; if it was green on the
-#       PR's previous head, it stays green on the merge commit (the
-#       check status carries over).
-#     - If you want CI to definitively re-run, push a no-op commit to
-#       the PR branch manually OR replace `secrets.GITHUB_TOKEN` below
-#       with a PAT that bypasses the anti-loop guard.
+#   The empirical evidence: 2026-05-25 main-merge wave left four PRs
+#   (#735 #737 #739 #740) with `total_count: 0` for check_runs on
+#   the post-auto-merge head — all needed a manual empty-commit nudge
+#   to unstick. The earlier comment here ("check status carries over")
+#   turned out to be optimistic; branch protection treats each head SHA
+#   as a distinct check target.
+#
+#   Fix: push via a PAT (Personal Access Token) scoped to this repo
+#   with `contents: write` + `pull-requests: write`. PAT-attributed
+#   pushes DO trigger downstream workflows. Store the token as the
+#   repo secret `AUTO_UPDATE_PR_BRANCHES_PAT`. If the secret is
+#   absent, the workflow fails loudly (don't silently fall back to
+#   GITHUB_TOKEN — that just reintroduces the stalled-CI bug).
 #
 # This workflow is intentionally tolerant — `|| true` on each
 # update-branch call so one failing PR doesn't abort the loop.
@@ -49,9 +56,28 @@ jobs:
   update-branches:
     runs-on: ubuntu-latest
     steps:
+      - name: Fail loud if PAT secret missing
+        # Better to fail at workflow-start than silently fall back to
+        # GITHUB_TOKEN and have CI stall on every PR. The error
+        # message tells the operator exactly what to do.
+        env:
+          PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::error::Secret AUTO_UPDATE_PR_BRANCHES_PAT not configured."
+            echo "::error::This workflow needs a PAT (not GITHUB_TOKEN) so the merge"
+            echo "::error::commits it pushes will trigger emulator-tests on each PR."
+            echo "::error::Create a fine-grained PAT for this repo with permissions:"
+            echo "::error::  - Contents: Read and write"
+            echo "::error::  - Pull requests: Read and write"
+            echo "::error::Then add it as repository secret AUTO_UPDATE_PR_BRANCHES_PAT."
+            exit 1
+          fi
+
       - name: Update every open PR branch with main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT, not GITHUB_TOKEN — see workflow-level comment for why.
+          GH_TOKEN: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
           REPO: ${{ github.repository }}
         run: |
           # List all open PRs targeting main.
