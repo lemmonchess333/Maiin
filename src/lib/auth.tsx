@@ -90,6 +90,16 @@ export interface UserProfileSubscription {
    *  warning, since Apple has no admin-cancellation API for standard IAP
    *  subscriptions (Sub1 R1A pin b, P0b). */
   appleOriginalTransactionId?: string;
+  /** Sub1 P2 — current platform of record for the user's active
+   *  Pro subscription. One of "stripe" | "ios_iap" | "android_iap".
+   *  Written server-side by `functions/lib/subscriptionReconciliation.js`
+   *  alongside `subscriptionTier`. Null/undefined when user is free
+   *  or when no Pro entitlement is active. Drives the Upgrade page's
+   *  cross-platform paywall guard — a Stripe-Pro user opening the
+   *  web Upgrade page sees the standard Manage flow, but an
+   *  ios_iap-Pro user opening the web page sees a "Manage on App
+   *  Store" message instead of a duplicate-charge checkout. */
+  subscriptionSource?: "stripe" | "ios_iap" | "android_iap" | null;
   /** Sub1a P1 — lifetime trial-shopping protection.
    *  Set to true by `functions/lib/checkoutTrial.js` when a trial
    *  Stripe checkout session is created, in the same Firestore txn
@@ -605,6 +615,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const PROTECTED_FIELDS = [
     "subscriptionTier",
+    "subscriptionSource",
     "stripeCustomerId",
     "stripeSubscriptionId",
     "appleOriginalTransactionId",
