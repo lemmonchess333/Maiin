@@ -330,15 +330,26 @@ exports._SCAN_LIMITS = SCAN_LIMITS;
 
 /**
  * Verifies a Firebase ID token from an Authorization header.
+ *
+ * Pass `{ checkRevoked: true }` for sensitive endpoints (account
+ * deletion, payment write paths). Revocation check adds a
+ * Firestore read per call (Firebase Admin SDK checks
+ * `tokensValidAfterTime` on the user record), so it's gated to
+ * the high-value endpoints rather than hot paths like
+ * `analyzeFoodText`. Per security audit 2026-05-25 finding #3.
+ *
  * @param {string} authHeader
+ * @param {{ checkRevoked?: boolean }} [options]
  * @returns {Promise<{uid: string, email: string}>}
  */
-async function verifyAuth(authHeader) {
+async function verifyAuth(authHeader, options = {}) {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw new Error("Unauthorized");
   }
   const token = authHeader.split("Bearer ")[1];
-  const decoded = await admin.auth().verifyIdToken(token);
+  const decoded = await admin
+    .auth()
+    .verifyIdToken(token, Boolean(options.checkRevoked));
   return { uid: decoded.uid, email: decoded.email || "" };
 }
 
@@ -357,9 +368,24 @@ async function verifyAuth(authHeader) {
  * while still letting an incident responder flip a switch and see effect
  * within a minute.
  *
+ * Per-flag failure policy (security audit 2026-05-25 finding #2):
+ * a transient Firestore read failure has to pick between fail-open
+ * (keep serving) and fail-closed (block to honour the kill-switch).
+ * The right choice depends on the flag's purpose:
+ *   - `fail-open` (default) — availability / performance toggles.
+ *     A Firestore blip mustn't take down food scan because the
+ *     flag itself is just a degrade-gracefully knob.
+ *   - `fail-closed` — true kill-switches. An ops "disable feature X"
+ *     incident response must NOT silently re-enable on a read blip.
+ * `FLAG_POLICIES` declares the policy per known flag; unknown keys
+ * default to `fail-open` (matches pre-audit behaviour for legacy
+ * callers).
+ *
  * @param {string} key
  * @returns {Promise<boolean>}
  */
+const flagPolicies = require("./lib/flagPolicies");
+
 const _flagCache = { value: null, at: 0 };
 const FLAG_CACHE_MS = 60_000;
 async function isFlagEnabled(key) {
@@ -370,9 +396,14 @@ async function isFlagEnabled(key) {
       _flagCache.value = snap.exists ? snap.data() : {};
       _flagCache.at = now;
     } catch (err) {
-      console.error("isFlagEnabled read failed:", err.message);
-      // Fail open — a Firestore read blip shouldn't take down food scan.
-      return true;
+      const policy = flagPolicies.flagPolicyFor(key);
+      console.error(
+        `isFlagEnabled read failed (key=${key}, policy=${policy}):`,
+        err.message
+      );
+      // Per-flag failure policy — see lib/flagPolicies.js for the
+      // policy map and the audit rationale.
+      return flagPolicies.fallbackForReadFailure(key);
     }
   }
   const v = _flagCache.value[key];
@@ -1189,9 +1220,18 @@ exports.createCheckoutSession = functions
         // otherwise the response shape leaks which validation layer
         // ran and how the handler is ordered. See the auth-ordering
         // test in __tests__/createCheckoutSession.test.js.
+        // Security audit 2026-05-25 finding #3: checkout is a
+        // sensitive write path (creates Stripe customers, mutates
+        // billing state) — opt into revocation-aware verification so
+        // a token from a session-revoked credential can't initiate
+        // a payment. Cost: one extra Firebase Admin SDK read per
+        // call; payment flow is not a hot path so the latency hit
+        // is acceptable.
         let authUser;
         try {
-          authUser = await verifyAuth(req.headers.authorization);
+          authUser = await verifyAuth(req.headers.authorization, {
+            checkRevoked: true,
+          });
         } catch (_) {
           res.status(401).json({ error: "Unauthorized" });
           return;
