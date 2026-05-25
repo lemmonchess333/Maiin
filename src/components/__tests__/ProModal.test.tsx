@@ -25,10 +25,16 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
+// Sub1a P1 — tests below vary `profile.hasUsedTrial` to exercise the
+// trial vs no-trial CTA paths. The hoisted ref pattern (mirroring
+// purchaseMock below) lets each test override the profile shape via
+// authProfileMock.mockReturnValueOnce(...).
+const authProfileMock = vi.fn<() => Record<string, unknown> | null>(() => null);
+
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "test-uid", email: "test@example.com" },
-    profile: null,
+    profile: authProfileMock(),
     loading: false,
   }),
 }));
@@ -51,7 +57,7 @@ function renderModal(props: Parameters<typeof ProModal>[0]) {
   return render(
     <MemoryRouter initialEntries={["/upgrade"]}>
       <ProModal {...props} />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -59,8 +65,15 @@ beforeEach(() => {
   purchaseMock.mockReset();
   restoreMock.mockReset();
   isNativeIOSMock.mockReset();
+  authProfileMock.mockReset();
   // Default: web (most common case)
   isNativeIOSMock.mockReturnValue(false);
+  // Sub1a P1 — default profile to a post-trial user so the
+  // plan-priced "Start Pro — £X" CTA is the rendered baseline.
+  // Pre-#P1 tests in this file all expect the priced CTA. Trial-
+  // eligibility cycles explicitly set `hasUsedTrial: false` or
+  // `null` to cover the trial path.
+  authProfileMock.mockReturnValue({ hasUsedTrial: true });
 });
 
 afterEach(cleanup);
@@ -215,6 +228,66 @@ describe("ProModal — checkout", () => {
   });
 });
 
+describe("ProModal — Sub1a P1 trial CTA", () => {
+  it("Cycle 5 (tracer): free user with hasUsedTrial=false sees 'Start your 7-day free trial' CTA", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderModal({ onClose: () => {} });
+    expect(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeTruthy();
+  });
+
+  it("Cycle 6: user with hasUsedTrial=true sees standard 'Start Pro — £X/mo' CTA (no trial language)", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: true });
+    renderModal({ onClose: () => {} });
+    const ctaButton = screen.getByRole("button", { name: /Start Pro/ });
+    expect(ctaButton).toBeTruthy();
+    expect(ctaButton.textContent).not.toMatch(/free trial/i);
+    expect(ctaButton.textContent).not.toMatch(/7-day/i);
+  });
+
+  it("Cycle 7: tapping the trial CTA passes withTrial=true to purchase()", async () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderModal({ onClose: () => {} });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    );
+    await waitFor(() => {
+      expect(purchaseMock).toHaveBeenCalledTimes(1);
+    });
+    const callArgs = purchaseMock.mock.calls[0];
+    // Signature: purchase(plan, uid, email, options)
+    expect(callArgs[3]).toBeTruthy();
+    expect((callArgs[3] as { withTrial?: boolean }).withTrial).toBe(true);
+  });
+
+  it("Cycle 8: tapping the no-trial CTA passes withTrial=false to purchase()", async () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: true });
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderModal({ onClose: () => {} });
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => {
+      expect(purchaseMock).toHaveBeenCalledTimes(1);
+    });
+    const callArgs = purchaseMock.mock.calls[0];
+    expect(callArgs[3]).toBeTruthy();
+    expect((callArgs[3] as { withTrial?: boolean }).withTrial).toBe(false);
+  });
+
+  it("Cycle 8 guard: missing profile (cold-start) defaults to trial CTA (treats unknown as never-used)", () => {
+    // Lock-out defence: if the profile hasn't loaded yet, surface
+    // the more generous offer rather than silently downgrading. The
+    // server-side `hasUsedTrial` check is authoritative — a stale
+    // client offer can't bypass the lifetime-trial guard.
+    authProfileMock.mockReturnValue(null);
+    renderModal({ onClose: () => {} });
+    expect(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeTruthy();
+  });
+});
+
 describe("ProModal — restore purchases visibility", () => {
   it("hides Restore purchases on web (where restore is a no-op)", () => {
     isNativeIOSMock.mockReturnValue(false);
@@ -233,7 +306,7 @@ describe("ProModal — close button", () => {
   it("close button has an accessible name", () => {
     renderModal({ onClose: () => {} });
     expect(
-      screen.getByRole("button", { name: /Close upgrade modal/i }),
+      screen.getByRole("button", { name: /Close upgrade modal/i })
     ).toBeTruthy();
   });
 
@@ -241,7 +314,7 @@ describe("ProModal — close button", () => {
     const onClose = vi.fn();
     renderModal({ onClose });
     fireEvent.click(
-      screen.getByRole("button", { name: /Close upgrade modal/i }),
+      screen.getByRole("button", { name: /Close upgrade modal/i })
     );
     expect(onClose).toHaveBeenCalledTimes(1);
   });

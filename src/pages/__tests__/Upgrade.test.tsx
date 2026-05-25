@@ -27,10 +27,15 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
+// Sub1a P1 — default profile to `hasUsedTrial: true` so the
+// plan-priced CTA ("Start Pro — £X/yr") is the rendered baseline
+// for the existing tests (which all predate the trial-eligibility
+// branching). Trial-eligibility cycles for Upgrade live alongside
+// ProModal's; this file keeps the Upgrade-specific behaviours.
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "test-uid", email: "test@example.com" },
-    profile: null,
+    profile: { hasUsedTrial: true },
     loading: false,
   }),
 }));

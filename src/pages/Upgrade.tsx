@@ -53,7 +53,11 @@ import { Spinner } from "@/components/ui/Spinner";
 
 export default function Upgrade() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  // Sub1a P1 — see ProModal.tsx for the corresponding logic;
+  // missing profile defaults to trial-eligible (server is
+  // authoritative).
+  const withTrial = !profile || !profile.hasUsedTrial;
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -80,7 +84,10 @@ export default function Upgrade() {
     if (checkoutStatus === "success") {
       track("checkout_success_returned", { source: "upgrade_page", platform });
     } else if (checkoutStatus === "cancelled") {
-      track("checkout_cancelled_returned", { source: "upgrade_page", platform });
+      track("checkout_cancelled_returned", {
+        source: "upgrade_page",
+        platform,
+      });
     }
     // Strip the query param after one render so a refresh doesn't
     // re-render the banner. Keep the rest of the search params.
@@ -110,6 +117,7 @@ export default function Upgrade() {
     void startCheckout(selectedPlan, {
       source: "upgrade_page",
       entryPoint: "upgrade",
+      withTrial,
     });
   };
 
@@ -128,10 +136,10 @@ export default function Upgrade() {
   // duration of this render — the effect above strips the URL param
   // on next paint, but we capture the status here so the banner
   // renders this paint.
-  const [statusBanner, setStatusBanner] = useState<
-    | { kind: "success" | "cancelled" | "error"; message: string }
-    | null
-  >(null);
+  const [statusBanner, setStatusBanner] = useState<{
+    kind: "success" | "cancelled" | "error";
+    message: string;
+  } | null>(null);
   useEffect(() => {
     if (checkoutStatus === "success") {
       setStatusBanner({
@@ -166,8 +174,12 @@ export default function Upgrade() {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div>
-            <h1 className="text-xl font-extrabold text-foreground">Upgrade to Pro</h1>
-            <p className="text-sm text-muted-foreground">Unlock the full experience</p>
+            <h1 className="text-xl font-extrabold text-foreground">
+              Upgrade to Pro
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Unlock the full experience
+            </p>
           </div>
         </div>
       </header>
@@ -184,14 +196,20 @@ export default function Upgrade() {
             statusBanner.kind === "cancelled" &&
               "bg-muted text-muted-foreground",
             statusBanner.kind === "error" &&
-              "bg-destructive/10 text-destructive",
+              "bg-destructive/10 text-destructive"
           )}
         >
           {statusBanner.kind === "success" && (
-            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+            <CheckCircle2
+              className="w-4 h-4 mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
           )}
           {statusBanner.kind === "cancelled" && (
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+            <AlertCircle
+              className="w-4 h-4 mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
           )}
           {statusBanner.kind === "error" && (
             <XCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
@@ -205,9 +223,13 @@ export default function Upgrade() {
         <div className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
-            <p className="text-base font-semibold text-foreground">You&apos;re on Pro</p>
+            <p className="text-base font-semibold text-foreground">
+              You&apos;re on Pro
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">Full access to all features.</p>
+          <p className="text-sm text-muted-foreground">
+            Full access to all features.
+          </p>
           <ul className="space-y-1.5 text-sm text-foreground">
             {[
               "Unlimited AI photo food logging",
@@ -216,7 +238,10 @@ export default function Upgrade() {
               "Advanced insights",
             ].map((f) => (
               <li key={f} className="flex items-start gap-1.5">
-                <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+                <Check
+                  className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0"
+                  aria-hidden="true"
+                />
                 <span>{f}</span>
               </li>
             ))}
@@ -230,11 +255,15 @@ export default function Upgrade() {
               "bg-muted text-foreground text-sm font-semibold",
               "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              "disabled:opacity-60 disabled:cursor-not-allowed",
+              "disabled:opacity-60 disabled:cursor-not-allowed"
             )}
           >
             {manageLoading ? (
-              <Spinner size="sm" variant="muted" label="Opening subscription management" />
+              <Spinner
+                size="sm"
+                variant="muted"
+                label="Opening subscription management"
+              />
             ) : (
               <>
                 <ExternalLink className="w-4 h-4" aria-hidden="true" />
@@ -250,11 +279,13 @@ export default function Upgrade() {
         <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
-            <p className="text-sm font-medium text-foreground">Full Pro access</p>
+            <p className="text-sm font-medium text-foreground">
+              Full Pro access
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">
-            {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left on your free trial.
-            Subscribe anytime to keep all Pro features.
+            {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left on your
+            free trial. Subscribe anytime to keep all Pro features.
           </p>
         </div>
       )}
@@ -292,7 +323,10 @@ export default function Upgrade() {
                     "Advanced insights",
                   ].map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+                      <Check
+                        className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0"
+                        aria-hidden="true"
+                      />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -326,7 +360,7 @@ export default function Upgrade() {
                     "disabled:opacity-60 disabled:cursor-not-allowed",
                     isSelected
                       ? "bg-primary/10 border-primary ring-2 ring-primary/30"
-                      : "bg-card border-border/50 hover:border-primary/50",
+                      : "bg-card border-border/50 hover:border-primary/50"
                   )}
                 >
                   {plan.topBadge ? (
@@ -338,7 +372,7 @@ export default function Upgrade() {
                     <div
                       className={cn(
                         "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                        isSelected ? "border-primary" : "border-border",
+                        isSelected ? "border-primary" : "border-border"
                       )}
                       aria-hidden="true"
                     >
@@ -392,7 +426,7 @@ export default function Upgrade() {
               "flex items-center justify-center gap-2",
               "active:scale-[0.98] transition-transform duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              "disabled:opacity-60 disabled:cursor-not-allowed",
+              "disabled:opacity-60 disabled:cursor-not-allowed"
             )}
             style={{
               background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
@@ -400,11 +434,15 @@ export default function Upgrade() {
           >
             {loading ? (
               <>
-                <Spinner size="sm" variant="inverse" label="Starting checkout" />
+                <Spinner
+                  size="sm"
+                  variant="inverse"
+                  label="Starting checkout"
+                />
                 <span>Starting checkout…</span>
               </>
             ) : (
-              <span>{getCheckoutCtaLabel(selectedPlan)}</span>
+              <span>{getCheckoutCtaLabel(selectedPlan, withTrial)}</span>
             )}
           </button>
 
