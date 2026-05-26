@@ -36,8 +36,22 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { SavedRunDoc } from "@/hooks/useClaimMap";
 
 const emptyClaimMap: Map<string, ClaimState> = new Map();
+const emptyUnclaimed: Map<string, SavedRunDoc[]> = new Map();
+
+function savedRun(overrides: Partial<SavedRunDoc> = {}): SavedRunDoc {
+  return {
+    id: "saved-1",
+    date: "2026-05-12",
+    distance: 5000,
+    avgPace: 330,
+    templateId: "easy_30",
+    type: "easy",
+    ...overrides,
+  };
+}
 
 function claimMapWith(
   entries: Array<[string, Partial<ClaimState>]>
@@ -152,6 +166,7 @@ describe("DayActionSheet — empty / null state", () => {
         profile={makeProfile([])}
         programState={null}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...commonCallbacks()}
       />
     );
@@ -176,6 +191,7 @@ describe("DayActionSheet — empty / null state", () => {
         ])}
         programState={makeProgramState([])}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...commonCallbacks()}
       />
     );
@@ -215,6 +231,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -234,6 +251,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -251,6 +269,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -268,6 +287,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -327,6 +347,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         profile={profile}
         programState={programState}
         claimMap={claimMapWith([[runDay.id!, { legacyCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -361,6 +382,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         profile={profile}
         programState={programState}
         claimMap={claimMapWith([[runDay.id!, { manualCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -390,6 +412,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         claimMap={claimMapWith([
           [runDay.id!, { claimedSavedRunId: "saved-1" }],
         ])}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -409,6 +432,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -427,6 +451,149 @@ describe("DayActionSheet — terminal run states locked", () => {
 // alongside the status itself. The reconciliation pattern in
 // RunSummary now writes completed_exact directly via
 // completeRunDay; no intermediate state is needed.
+
+describe("DayActionSheet — Q5 P74 same-date paradox hint (chunk B3f)", () => {
+  function setupPlanned(templateId = "easy_30") {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      }))
+    );
+    const runDay = makeRunDay({
+      id: "runday_paradox",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "planned",
+      templateId,
+    });
+    return {
+      profile,
+      programState: makeProgramState([runDay]),
+      callbacks: commonCallbacks(),
+      runDay,
+    };
+  }
+
+  it("renders the hint when a planned slot is unclaimed AND a same-date extra exists", () => {
+    // Scenario: user logged a 2km run (sub-70% threshold per Q1 P2)
+    // on a day where a 5km easy run was planned. Saved run lands in
+    // unclaimedByDate because the distance gate fails. Q5 P74 says
+    // the sheet should surface the hint so the user can resolve it
+    // with a one-tap manual completion.
+    const { profile, programState, callbacks } = setupPlanned();
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "extra-undersized", distance: 2000 })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.getByText(/An extra run is logged for this date/i)
+    ).toBeInTheDocument();
+    // Mark complete button is still there alongside the hint.
+    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+  });
+
+  it("does NOT render the hint when no extras exist for this date", () => {
+    const { profile, programState, callbacks } = setupPlanned();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the hint on race-day slots even when an extra exists (Q1 P4 / Q2 P21 inheritance)", () => {
+    // Race day is strictly real-saved-run-only. If the user runs an
+    // 18km half-marathon DNF (sub-95% per Q1 P4), the slot stays
+    // planned and the saved run sits as an extra. The hint must
+    // suppress so we don't offer a "mark complete" path that would
+    // bypass the race-day strict rule.
+    const { profile, programState, callbacks } = setupPlanned("race");
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "race-dnf", distance: 18000 })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("hint disappears once the user taps Mark complete (claim flips, gate hides the section)", () => {
+    // Sanity-check the interaction: after Mark complete the entire
+    // button block hides (B3d gate `!isCompleted`); the hint hides
+    // alongside it because it lives inside the same conditional.
+    const { profile, programState, callbacks, runDay } = setupPlanned();
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "extra-undersized", distance: 2000 })]],
+    ]);
+    const { rerender } = render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.getByText(/An extra run is logged for this date/i)
+    ).toBeInTheDocument();
+    rerender(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMapWith([[runDay.id!, { manualCompleted: true }]])}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+  });
+});
 
 describe("DayActionSheet — lift section", () => {
   function setup(workoutOverrides: Partial<WorkoutDay> = {}) {
@@ -453,6 +620,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -469,6 +637,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -486,6 +655,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
@@ -503,6 +673,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         {...callbacks}
       />
     );
