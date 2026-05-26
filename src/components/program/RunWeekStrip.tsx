@@ -44,6 +44,7 @@ import {
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
 import {
   isRunDayComplete,
+  getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
@@ -140,18 +141,33 @@ export default function RunWeekStrip({
           const isCompleted = !!(
             col.runDay?.id && isRunDayComplete(col.runDay.id, claimMap)
           );
+          // Q2 P24 (chunk B3k) — distinguish manual ✅ from real ✅
+          // so the user can read what kind of completion landed at a
+          // glance. Real ✅ → solid green Check. Manual ✅ → dimmed
+          // Check (same icon, lower opacity) to signal "marked, not
+          // logged". Legacy docs read as real per the helper
+          // (pre-reframe completions ARE real activity).
+          const completionKind = col.runDay?.id
+            ? getCompletionKind(col.runDay.id, claimMap)
+            : null;
           const isSkipped = status === "skipped";
           const isNoShow = status === "race_no_show";
 
           // Build the a11y label so SR users hear "Tuesday — Easy 30,
-          // completed" rather than just the bare day letter.
-          const stateSuffix = isCompleted
-            ? ", completed"
-            : isSkipped
-              ? ", skipped"
-              : isNoShow
-                ? ", race no-show"
-                : "";
+          // completed" rather than just the bare day letter. Q2 P24
+          // also distinguishes "completed" vs "marked complete" in
+          // the announcement so screen reader users get the same
+          // information channel as sighted users.
+          const stateSuffix =
+            completionKind === "real"
+              ? ", completed"
+              : completionKind === "manual"
+                ? ", marked complete"
+                : isSkipped
+                  ? ", skipped"
+                  : isNoShow
+                    ? ", race no-show"
+                    : "";
           const ariaLabel = `${DAY_LABELS[col.dayIndex]} ${col.templateName}${stateSuffix}${col.isToday ? " (today)" : ""}`;
 
           // Q5 P69 — extras for this date. Stacked below the day-tap
@@ -205,9 +221,18 @@ export default function RunWeekStrip({
                   {col.templateName}
                 </span>
                 {isCompleted ? (
+                  // Q2 P24 — real ✅ keeps the saturated green; manual ✅
+                  // dims to 50% so the user can tell "this slot is checked
+                  // because I logged the run" from "this slot is checked
+                  // because I marked it." Single-channel today
+                  // (opacity); icon shape stays consistent for visual
+                  // coherence across the strip.
                   <Check
                     aria-hidden="true"
-                    className="w-3 h-3 text-green-600"
+                    className={cn(
+                      "w-3 h-3 text-green-600",
+                      completionKind === "manual" && "opacity-50"
+                    )}
                   />
                 ) : isSkipped ? (
                   <ChevronsRight
